@@ -1,0 +1,19 @@
+= Efficient Graph Algorithms for Neo4j (pre-Alpha / WIP)
+
+This project aims to develop efficient, well tested graph algorithm implementations for Neo4j.
+
+Those algorithms will run on a clean API which is fed by loading data from Neo4j or running on Neo4j directly.
+
+The algorithms will be exposed as user defined procedures
+
+
+=== Building
+
+Currently aiming at Neo4j 3.1
+
+----
+mvn clean install
+cp target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+$NEO4J_HOME/bin/neo4j restart
+----
+
