@@ -10,6 +10,7 @@
   </parent>
 
   <artifactId>graph-algorithms-benchmark</artifactId>
+
   <name>Neo4j Graph Algorithms :: Benchmark</name>
   <description>JMH Benchmarks for Graph Algorithms</description>
   <packaging>jar</packaging>
@@ -21,7 +22,7 @@
   <dependencies>
     <dependency>
       <groupId>org.neo4j</groupId>
-      <artifactId>graph-algorithms-parent</artifactId>
+      <artifactId>graph-algorithms-algo</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

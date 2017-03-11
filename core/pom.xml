@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>core</artifactId>
+    <artifactId>graph-algrotihms-core</artifactId>
 
     <name>Neo4j Graph Algorithms :: Core</name>
 
