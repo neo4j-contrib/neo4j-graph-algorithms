@@ -11,7 +11,7 @@
 
     <artifactId>graph-algorithms-api</artifactId>
 
-    <name>Neo4j Graph Algorithm :: API</name>
+    <name>Neo4j Graph Algorithms :: API</name>
 
     <dependencies>
         <dependency>

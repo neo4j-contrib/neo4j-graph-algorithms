@@ -7,17 +7,41 @@
   <artifactId>graph-algorithms-parent</artifactId>
   <version>3.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Neo4j Graph Algorithms POM Parent</name>
+  <name>Neo4j Graph Algorithms</name>
 
   <prerequisites>
     <maven>3.0.5</maven>
   </prerequisites>
 
-  <modules>
-    <module>algo</module>
-    <module>benchmark</module>
-    <module>api</module>
-  </modules>
+  <profiles>
+    <profile>
+      <id>API</id>
+      <modules>
+        <module>api</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>Core</id>
+      <modules>
+        <module>core</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>Algo</id>
+      <modules>
+        <module>algo</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>Benchmark</id>
+      <modules>
+        <module>benchmark</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
