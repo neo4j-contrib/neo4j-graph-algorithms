@@ -16,6 +16,7 @@
   <modules>
     <module>algo</module>
     <module>benchmark</module>
+    <module>api</module>
   </modules>
 
   <properties>
