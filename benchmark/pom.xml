@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>graph-algorithms-benchmark</artifactId>
-  <name>Neo4j Graph Algorithms Bechmarks</name>
+  <name>Neo4j Graph Algorithms :: Benchmark</name>
   <description>JMH Benchmarks for Graph Algorithms</description>
   <packaging>jar</packaging>
 
