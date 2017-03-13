@@ -81,4 +81,12 @@ public class TestProcedureTest extends Neo4JTestCase {
         }
     }
 
+    @Test
+    public void testPageRankView() throws Exception {
+        final Result result = db.execute("CALL graphalgo.pagerank.view({label:'label', relationType:'relation', iterations:100, dampingFactor:0.85})");
+        while (result.hasNext()) {
+            System.out.println(result.next());
+        }
+    }
+
 }

@@ -33,18 +33,6 @@ public final class GraphLoaders {
                 relationshipWeightProperty);
     }
 
-    public static WeightedGraph multiArray(GraphDatabaseService graphDatabaseService) {
-        return multiArray(graphDatabaseService, null);
-    }
-
-    public static WeightedGraph multiArray(
-            GraphDatabaseService graphDatabaseService,
-            String relationshipWeightProperty) {
-        return new HeavyGraphLoader().load(
-                graphDatabaseService,
-                relationshipWeightProperty);
-    }
-
     private GraphLoaders() {
         throw new UnsupportedOperationException("No instances");
     }
