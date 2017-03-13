@@ -9,10 +9,6 @@
   <packaging>pom</packaging>
   <name>Neo4j Graph Algorithms</name>
 
-  <prerequisites>
-    <maven>3.0.5</maven>
-  </prerequisites>
-
   <profiles>
     <profile>
       <id>API</id>
@@ -39,6 +35,13 @@
       <id>Benchmark</id>
       <modules>
         <module>benchmark</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>Tests</id>
+      <modules>
+        <module>tests</module>
       </modules>
     </profile>
   </profiles>
