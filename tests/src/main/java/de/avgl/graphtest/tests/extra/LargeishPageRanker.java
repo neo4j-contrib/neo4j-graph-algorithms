@@ -1,0 +1,216 @@
+package de.avgl.graphtest.tests.extra;
+
+import org.neo4j.graphalgo.core.GraphLoaders;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
+import org.neo4j.graphalgo.core.leightweight.LightWeightGraph;
+import org.neo4j.graphalgo.impl.PageRankKernel;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.kernel.api.ReadOperations;
+import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.kernel.lifecycle.LifecycleException;
+
+import org.neo4j.graphalgo.api.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+public final class LargeishPageRanker {
+
+    public static void main(final String... args)
+    throws IOException, InterruptedException {
+        int iterations = 100;
+        Path graphDb = null;
+        Path prepare = null;
+        boolean gcLogs = true;
+        boolean useMultiImpl = false;
+
+        boolean hasErrors = false;
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            try {
+                switch (arg) {
+                    case "-graphdb":
+                        graphDb = Paths.get(args[++i]);
+                        break;
+                    case "-iterations":
+                        iterations = Integer.parseInt(args[++i]);
+                        break;
+                    case "-prepare":
+                        prepare = Paths.get(args[++i]);
+                        break;
+                    case "-nogclogs":
+                        gcLogs = false;
+                        break;
+                    case "-multi":
+                        useMultiImpl = true;
+                        break;
+                    case "-help":
+                        System.exit(helpAndExit());
+                    default:
+                        throw new IllegalArgumentException("Unknown parameter " + arg);
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+                hasErrors = true;
+                System.err.println("Missing parameter for argument " + arg);
+            } catch (NumberFormatException e) {
+                hasErrors = true;
+                System.err.println("Invalid parameter for argument " + arg);
+            } catch (IllegalArgumentException e) {
+                hasErrors = true;
+                System.err.println(e.getMessage());
+            }
+        }
+
+        if (hasErrors) {
+            System.exit(helpAndExit(1));
+        }
+        if (graphDb == null) {
+            System.err.println("-graphdb missing");
+            System.exit(helpAndExit(2));
+        }
+
+        final GcRunner gcRunner = gcLogs ? GcLogger.install() : (ignore) -> System.gc();
+
+        final Graph graph;
+        if (prepare != null) {
+
+            final AtomicLong size = new AtomicLong();
+            Files.walkFileTree(graphDb, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(
+                        final Path file,
+                        final BasicFileAttributes attrs)
+                throws IOException {
+                    size.addAndGet(attrs.size());
+                    return super.visitFile(file, attrs);
+                }
+            });
+
+            runGc("before building graph", gcRunner);
+
+            GraphDatabaseService db = new GraphDatabaseFactory()
+                    .newEmbeddedDatabaseBuilder(graphDb.toFile())
+                    .setConfig(GraphDatabaseSettings.read_only, "true")
+                    .setConfig(
+                            GraphDatabaseSettings.pagecache_memory,
+                            String.valueOf(size.get()))
+                    .newGraphDatabase();
+            Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+
+            final long nodeCount;
+            final long edgeCount;
+            try {
+                try (Transaction ignored = db.beginTx();
+                     Statement st = ((GraphDatabaseAPI) db)
+                             .getDependencyResolver()
+                             .resolveDependency(ThreadToStatementContextBridge.class)
+                             .get()) {
+                    ReadOperations readOperations = st.readOperations();
+                    nodeCount = readOperations.nodesGetCount();
+                    edgeCount = readOperations.relationshipsGetCount();
+                }
+                System.out.printf(
+                        "Building Graph with %d nodes and %d relationships...",
+                        nodeCount,
+                        edgeCount);
+                long t0 = System.nanoTime();
+                graph = useMultiImpl ? GraphLoaders.multiArray(db) : GraphLoaders.lowLevel(db);
+                long t1 = System.nanoTime();
+                System.out.printf(
+                        " done in %.2f seconds%n",
+                        TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
+            } finally {
+                try {
+                    db.shutdown();
+                } catch (LifecycleException readOperationsOnReadonlyIndexDuringShutdown) {
+                    // ignore
+                }
+            }
+
+            runGc("after building graph", gcRunner);
+            System.out.printf("serializing Graph...");
+            long t0 = System.nanoTime();
+            if (useMultiImpl) {
+                ((HeavyGraph) graph).serialize(prepare);
+            } else {
+                ((LightWeightGraph) graph).serialize(prepare);
+            }
+            long t1 = System.nanoTime();
+            System.out.printf(
+                    " done in %.2f seconds%n",
+                    TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
+            return;
+        } else {
+            runGc("before loading graph", gcRunner);
+            System.out.printf("Loading serialized Graph...");
+            long t0 = System.nanoTime();
+            graph = useMultiImpl ? GraphLoaders.serializedMultiArray(graphDb) : GraphLoaders.serializedLowLevel(graphDb);
+            long t1 = System.nanoTime();
+            System.out.printf(
+                    " done in %.2f seconds%n",
+                    TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
+            runGc("after loading graph", gcRunner);
+        }
+
+        System.out.printf(
+                "Running PageRank on %d nodes with %d iterations...",
+                graph.vertexCount(),
+                iterations);
+        PageRankKernel pageRankKernel = new PageRankKernel(graph, 0.85);
+        long t2 = System.nanoTime();
+        double[] ranks = pageRankKernel.compute(iterations);
+        long t3 = System.nanoTime();
+        System.out.printf(
+                " done in %.2f seconds (that's %.2f seconds per iteration)%n",
+                TimeUnit.NANOSECONDS.toMillis(t3 - t2) / 1000.0,
+                TimeUnit.NANOSECONDS.toMillis((t3 - t2) / iterations) / 1000.0);
+
+        System.out.println("PageRank for " + ranks.length + " nodes done!");
+
+        runGc("after running PageRank", gcRunner);
+    }
+
+    private static void runGc(String reason, GcRunner gcRunner)
+    throws InterruptedException {
+        gcRunner.runGc("Self initiated GC " + reason);
+    }
+
+    private static int helpAndExit() {
+        return helpAndExit(0);
+    }
+
+    private static int helpAndExit(int code) {
+        final StringWriter sw = new StringWriter();
+        try (PrintWriter out = new PrintWriter(sw)) {
+
+            //@formatter:off
+            out.println( "program -graphdb PATH_TO_GRAPH [options]"                                        );
+            out.println(                                                                                   );
+            out.println( "  To run PageRank, point -graphdb to the file that contains a serialized graph." );
+            out.println( "    e.g. `program -graphdb my.serialized.graph`"                                 );
+            out.println(                                                                                   );
+            out.println( "  To build a serialized graph, point -graphdb to a Neo4j graph.db file and"      );
+            out.println( "    define -prepare to point to the target file for the serialized graph."       );
+            out.println( "    e.g. `program -graphdb graph.db -prepare my.serialized.graph`"               );
+            out.println(                                                                                   );
+            out.println( "  Other options:"                                                                );
+            out.println( "       -iterations NUM    | run that many Page Rank iterations"                  );
+            out.println( "       -nogclogs          | disable verbose GC logging during execution"         );
+            out.println( "       -multi             | use the multi array implementation"                  );
+            out.println( "       -help              | show this help screen"                               );
+            //@formatter:on
+        }
+
+        System.out.println(sw.toString());
+        return 64 + code;
+    }
+}
