@@ -15,9 +15,10 @@
   <packaging>jar</packaging>
 
   <dependencies>
+
       <dependency>
           <groupId>org.neo4j</groupId>
-          <artifactId>graph-algorithms-api</artifactId>
+          <artifactId>graph-algrotihms-core</artifactId>
           <version>3.1.0-SNAPSHOT</version>
       </dependency>
 
@@ -34,6 +35,7 @@
       <artifactId>neo4j</artifactId>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>procedure-compiler</artifactId>
@@ -59,6 +61,11 @@
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-library</artifactId>
     </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+          <version>1.7.22</version>
+      </dependency>
   </dependencies>
 
   <build>

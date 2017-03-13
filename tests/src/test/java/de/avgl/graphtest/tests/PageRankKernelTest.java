@@ -4,7 +4,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.impl.PageRankKernel;
-import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 
 import static org.junit.Assert.assertEquals;

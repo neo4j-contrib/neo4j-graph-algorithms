@@ -4,7 +4,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.WeightedGraph;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstraKernel;
-import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
