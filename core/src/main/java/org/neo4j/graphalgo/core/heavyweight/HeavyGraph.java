@@ -20,7 +20,7 @@ import java.util.function.IntConsumer;
  *  
  * Cons:
  *  - has a higher memory consumption // TODO evaluate
- *  - grows it's matrix dynamically // TODO replace array growing if degree is known
+ *  - grows it's matrix dynamically by 1 // TODO replace array growing if degree is known
  * @author mknblch
  */
 public class HeavyGraph implements WeightedGraph {

@@ -75,7 +75,7 @@ public class TestProcedureTest extends Neo4JTestCase {
 
     @Test
     public void testPageRankKernel() throws Exception {
-        final Result result = db.execute("CALL graphalgo.pagerank.kernel({relationType:'relation', iterations:100, dampingFactor:0.85})");
+        final Result result = db.execute("CALL graphalgo.pagerank.kernel({label:'label', relationType:'relation', iterations:100, dampingFactor:0.85})");
         while (result.hasNext()) {
             System.out.println(result.next());
         }

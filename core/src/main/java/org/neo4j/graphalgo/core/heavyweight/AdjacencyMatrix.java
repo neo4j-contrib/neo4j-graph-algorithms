@@ -13,7 +13,7 @@ import java.util.Iterator;
 
 /**
  * Relation Container built of multiple arrays. The node capacity must be constant and the node IDs have to be
- * smaller then the capacity. The number of relations per node is limited to the maximum array size of the VM
+ * smaller then the capacity. The number of relations per node is limited only to the maximum array size of the VM
  * and connections can be added dynamically.
  *
  * @author mknobloch
