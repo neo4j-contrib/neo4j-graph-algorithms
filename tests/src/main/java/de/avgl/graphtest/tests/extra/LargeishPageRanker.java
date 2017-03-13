@@ -1,6 +1,7 @@
 package de.avgl.graphtest.tests.extra;
 
 import org.neo4j.graphalgo.core.GraphLoaders;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.leightweight.LightWeightGraph;
 import org.neo4j.graphalgo.impl.PageRankKernel;
@@ -14,7 +15,6 @@ import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.kernel.lifecycle.LifecycleException;
 
-import org.neo4j.graphalgo.api.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;

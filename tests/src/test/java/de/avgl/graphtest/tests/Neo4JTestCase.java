@@ -5,7 +5,6 @@ import org.junit.BeforeClass;
 import org.neo4j.graphalgo.api.WeightedGraph;
 import org.neo4j.graphalgo.core.GraphLoaders;
 import org.neo4j.graphdb.*;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 /**

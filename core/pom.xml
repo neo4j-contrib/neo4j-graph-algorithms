@@ -24,12 +24,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>graph-algorithms-api</artifactId>
-            <version>${neo4j.algorithm-api.version}</version>
-        </dependency>
-
         <!-- TODO -->
         <dependency>
             <groupId>com.carrotsearch</groupId>
