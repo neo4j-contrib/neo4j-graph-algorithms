@@ -32,7 +32,7 @@ public abstract class Neo4JTestCase {
 
     public static int newVertex() {
         try(Transaction transaction = db.beginTx()) {
-            final Node node = db.createNode(Label.label("Node"));
+            final Node node = db.createNode(Label.label("label"));
             transaction.success();
             final int id = Math.toIntExact(node.getId());
             return id;

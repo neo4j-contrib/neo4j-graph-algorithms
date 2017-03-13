@@ -41,6 +41,7 @@ public abstract class GraphLoader<G extends Graph> {
     public final G load(
             ReadOperations read,
             String relationshipWeightProperty) {
+
         long nodeCount = read.nodesGetCount();
         long relsCount = read.relationshipsGetCount();
         int weightProp = relationshipWeightProperty != null

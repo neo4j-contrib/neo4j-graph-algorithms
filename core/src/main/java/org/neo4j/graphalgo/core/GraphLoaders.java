@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.WeightedGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFileLoader;
-import org.neo4j.graphalgo.core.heavyweight.MUArrayNeo4jLoader;
 import org.neo4j.graphalgo.core.leightweight.LowLevelFileLoader;
 import org.neo4j.graphalgo.core.leightweight.LowLevelNeo4jLoader;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -41,7 +40,7 @@ public final class GraphLoaders {
     public static WeightedGraph multiArray(
             GraphDatabaseService graphDatabaseService,
             String relationshipWeightProperty) {
-        return new MUArrayNeo4jLoader().load(
+        return new HeavyGraphLoader().load(
                 graphDatabaseService,
                 relationshipWeightProperty);
     }
