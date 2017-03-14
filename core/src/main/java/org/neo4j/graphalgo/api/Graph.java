@@ -24,6 +24,10 @@ public interface Graph {
 
     Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction);
 
+    void forEachEdge(int vertexId, Direction direction, WeightedEdgeConsumer consumer);
+
+    Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, Direction direction);
+
     int toVertexId(long nodeId);
 
     long toNodeId(int vertexId);

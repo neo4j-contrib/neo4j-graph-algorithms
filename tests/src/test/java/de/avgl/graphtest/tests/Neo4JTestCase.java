@@ -2,9 +2,13 @@ package de.avgl.graphtest.tests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.neo4j.graphalgo.api.WeightedGraph;
-import org.neo4j.graphalgo.core.GraphLoaders;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.FileLoaders;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphLoader;
+import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
+import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 /**
@@ -13,7 +17,10 @@ import org.neo4j.test.TestGraphDatabaseFactory;
  */
 public abstract class Neo4JTestCase {
 
+    public static final String LABEL = "Node";
     public static final String WEIGHT_PROPERTY = "weight";
+    public static final String RELATION = "relation";
+
     protected static GraphDatabaseService db;
 
     @BeforeClass
@@ -63,15 +70,23 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static WeightedGraph lightGraph() {
-        return GraphLoaders.lowLevel(db);
+    public static Graph lightGraph() {
+        return new LightGraphLoader()
+                .setLabel(LABEL)
+                .setRelation(RELATION)
+                .setWeightProperty(WEIGHT_PROPERTY)
+                .load((GraphDatabaseAPI) db);
     }
 
-//    public static WeightedGraph neo4jView() {
-//        return new WeightedGraphView((GraphDatabaseAPI) db, "weight"); // TODO
-//    }
+    public static Graph neo4jView() {
+        return new GraphView((GraphDatabaseAPI) db, LABEL, WEIGHT_PROPERTY); // TODO
+    }
 
-    public static WeightedGraph heavyGraph() {
-        return GraphLoaders.multiArray(db, WEIGHT_PROPERTY);
+    public static Graph heavyGraph() {
+        return new HeavyGraphLoader()
+                .setLabel(LABEL)
+                .setRelation(RELATION)
+                .setWeightProperty(WEIGHT_PROPERTY)
+                .load((GraphDatabaseAPI) db);
     }
 }

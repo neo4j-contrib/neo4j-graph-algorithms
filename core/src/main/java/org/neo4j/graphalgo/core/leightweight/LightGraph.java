@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 
-public class LightWeightGraph implements WeightedGraph {
+public class LightGraph implements Graph {
 
     private final IdMap idMapping;
     private final WeightMapping weightMapping;
@@ -20,7 +20,7 @@ public class LightWeightGraph implements WeightedGraph {
     private final long[] outOffsets;
     private final IntArray.Cursor spare;
 
-    LightWeightGraph(
+    LightGraph(
             final IdMap idMapping,
             final WeightMapping weightMapping,
             final IntArray adjacency,

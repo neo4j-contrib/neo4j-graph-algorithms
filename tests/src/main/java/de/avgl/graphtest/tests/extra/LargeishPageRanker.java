@@ -1,9 +1,11 @@
 package de.avgl.graphtest.tests.extra;
 
-import org.neo4j.graphalgo.core.GraphLoaders;
+import org.neo4j.graphalgo.core.FileLoaders;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.leightweight.LightWeightGraph;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphLoader;
+import org.neo4j.graphalgo.core.leightweight.LightGraph;
+import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
 import org.neo4j.graphalgo.impl.PageRankKernel;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -123,7 +125,9 @@ public final class LargeishPageRanker {
                         nodeCount,
                         edgeCount);
                 long t0 = System.nanoTime();
-                graph = useMultiImpl ? GraphLoaders.multiArray(db) : GraphLoaders.lowLevel(db);
+                graph = useMultiImpl ?
+                        new HeavyGraphLoader().load((GraphDatabaseAPI) db) :
+                        new LightGraphLoader().load((GraphDatabaseAPI) db);
                 long t1 = System.nanoTime();
                 System.out.printf(
                         " done in %.2f seconds%n",
@@ -142,7 +146,7 @@ public final class LargeishPageRanker {
             if (useMultiImpl) {
                 ((HeavyGraph) graph).serialize(prepare);
             } else {
-                ((LightWeightGraph) graph).serialize(prepare);
+                ((LightGraph) graph).serialize(prepare);
             }
             long t1 = System.nanoTime();
             System.out.printf(
@@ -153,7 +157,7 @@ public final class LargeishPageRanker {
             runGc("before loading graph", gcRunner);
             System.out.printf("Loading serialized Graph...");
             long t0 = System.nanoTime();
-            graph = useMultiImpl ? GraphLoaders.serializedMultiArray(graphDb) : GraphLoaders.serializedLowLevel(graphDb);
+            graph = useMultiImpl ? FileLoaders.serializedMultiArray(graphDb) : FileLoaders.serializedLowLevel(graphDb);
             long t1 = System.nanoTime();
             System.out.printf(
                     " done in %.2f seconds%n",

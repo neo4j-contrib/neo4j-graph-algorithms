@@ -53,6 +53,7 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -62,9 +63,9 @@
       <artifactId>hamcrest-library</artifactId>
     </dependency>
       <dependency>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-          <version>1.7.22</version>
+          <groupId>org.neo4j</groupId>
+          <artifactId>neo4j-slf4j</artifactId>
+          <version>3.1.1</version>
       </dependency>
   </dependencies>
 

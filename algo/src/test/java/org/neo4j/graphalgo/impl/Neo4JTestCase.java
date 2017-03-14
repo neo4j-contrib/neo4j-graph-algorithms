@@ -6,7 +6,14 @@ import org.neo4j.graphdb.*;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
+import org.neo4j.logging.LogProvider;
+import org.neo4j.logging.slf4j.Slf4jLogProvider;
 import org.neo4j.test.TestGraphDatabaseFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author mknblch
@@ -20,6 +27,7 @@ public abstract class Neo4JTestCase {
     @BeforeClass
     public static void setup() {
         db = new TestGraphDatabaseFactory()
+                .setUserLogProvider(new Slf4jLogProvider(LoggerFactory.getILoggerFactory()))
                 .newImpermanentDatabaseBuilder()
                 .newGraphDatabase();
     }
