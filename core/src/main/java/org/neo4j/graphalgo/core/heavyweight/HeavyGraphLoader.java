@@ -49,7 +49,7 @@ public class HeavyGraphLoader extends AbstractGraphLoader {
     private void readNode(int relationId, IdMap idMap, AdjacencyMatrix matrix, WeightMapping weightMapping, Cursor<NodeItem> nodeItemCursor) {
         final NodeItem node = nodeItemCursor.get();
         final int outDegree = node.degree(Direction.OUTGOING);
-//        final int inDegree = node.degree(Direction.INCOMING);
+        final int inDegree = node.degree(Direction.INCOMING);
         final int nodeId = idMap.mapOrGet(node.id());
         matrix.armOut(nodeId, outDegree);
         try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING)) {
@@ -63,7 +63,17 @@ public class HeavyGraphLoader extends AbstractGraphLoader {
                         weightMapping.add(edgeId, weights.get().value());
                     }
                 }
-                matrix.add(nodeId, targetGraphId, edgeId);
+                matrix.addOutgoing(nodeId, targetGraphId, edgeId);
+            }
+        }
+        matrix.armIn(nodeId, inDegree);
+        try (Cursor<RelationshipItem> rels = node.relationships(Direction.INCOMING)) {
+            while (rels.next()) {
+                final RelationshipItem rel = rels.get();
+                final long targetNodeId = rel.otherNode(node.id());
+                final int targetGraphId = idMap.mapOrGet(targetNodeId);
+                final long edgeId = rel.id();
+                matrix.addIncoming(targetGraphId, nodeId, edgeId);
             }
         }
     }

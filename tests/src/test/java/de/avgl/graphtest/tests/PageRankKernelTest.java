@@ -76,7 +76,7 @@ public class PageRankKernelTest extends Neo4JTestCase {
     @Test
     public void testPageRankKernel() {
         // Act
-        Graph graph = lightGraph();
+        Graph graph = heavyGraph();
         final double[] ranks = new PageRankKernel(graph, 0.85).compute(100);
 
         for (int i = 0; i < ranks.length; i++) {

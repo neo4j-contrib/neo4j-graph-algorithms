@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -68,11 +67,19 @@ public class GraphComparisionTest {
     }
 
     @Test
+    public void testHeavy2() throws Exception {
+        final Result result = db.execute("CALL graphalgo.pagerank.heavy({iterations:20, dampingFactor:0.85})");
+        assertEquals(3697509, result.stream().count());
+    }
+
+    @Ignore
+    @Test
     public void testLight() throws Exception {
         final Result result = db.execute("CALL graphalgo.pagerank.light({iterations:20, dampingFactor:0.85})");
         assertEquals(3697509, result.stream().count());
     }
 
+    @Ignore
     @Test
     public void testAlgo() throws Exception {
         final Result result = db.execute("CALL algo.algo.pageRankWithCypher({iterations:20, write:false})");
