@@ -58,7 +58,7 @@ public class TestProcedure {
         final long iterations = (long) config.get("iterations");
         final double dampingFactor = (double) config.get("dampingFactor");
 
-        try(GraphView graph = new GraphView(graphDatabaseAPI, relationType)) {
+        try(GraphView graph = new GraphView(graphDatabaseAPI, label, relationType)) {
             final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
             return IntStream.range(0, ranking.length)
                     .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
