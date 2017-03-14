@@ -60,32 +60,25 @@ class AdjacencyMatrix {
 
     public void armOut(int sourceVertexId, int degree) {
         outgoing[sourceVertexId] = new int[degree];
+        outgoingIds[sourceVertexId] = new long[degree];
     }
 
     public void armIn(int targetVertexId, int degree) {
         incoming[targetVertexId] = new int[degree];
+        incomingIds[targetVertexId] = new long[degree];
     }
 
-    public void add(int sourceVertexId, int targetVertexId, long edgeId) {
-        addOutgoing(sourceVertexId, targetVertexId, edgeId);
-        addIncoming(targetVertexId, sourceVertexId, edgeId);
-//        addIncoming(sourceVertexId, targetVertexId, edgeId);
-    }
-
-    // TODO replace array growing if we know the degree beforehand
+//    public void add(int sourceVertexId, int targetVertexId, long edgeId) {
+//        addOutgoing(sourceVertexId, targetVertexId, edgeId);
+//        addIncoming(targetVertexId, sourceVertexId, edgeId);
+//    }
 
     public void addOutgoing(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = outOffsets[sourceVertexId];
         final int nextDegree = degree + 1;
 
-        final int[] outs = ArrayUtil.grow(outgoing[sourceVertexId], nextDegree);
-        outs[degree] = targetVertexId;
-        outgoing[sourceVertexId] = outs;
-
-        final long[] outIds = ArrayUtil.grow(outgoingIds[sourceVertexId], nextDegree);
-        outIds[degree] = edgeId;
-        outgoingIds[sourceVertexId] = outIds;
-
+        outgoing[sourceVertexId][degree] = targetVertexId;
+        outgoingIds[sourceVertexId][degree] = edgeId;
         outOffsets[sourceVertexId] = nextDegree;
     }
 
@@ -93,14 +86,8 @@ class AdjacencyMatrix {
         final int degree = inOffsets[targetVertexId];
         final int nextDegree = degree + 1;
 
-        final int[] ins = ArrayUtil.grow(incoming[targetVertexId], nextDegree);
-        ins[degree] = sourceVertexId;
-        incoming[targetVertexId] = ins;
-
-        final long[] inIds = ArrayUtil.grow(incomingIds[targetVertexId], nextDegree);
-        inIds[degree] = edgeId;
-        incomingIds[targetVertexId] = inIds;
-
+        incoming[targetVertexId][degree] = sourceVertexId;
+        incomingIds[targetVertexId][degree] = edgeId;
         inOffsets[targetVertexId] = nextDegree;
     }
 

@@ -3,8 +3,8 @@ package de.avgl.graphtest.tests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.FileLoaders;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphLoader;
+import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphdb.*;
@@ -38,7 +38,7 @@ public abstract class Neo4JTestCase {
 
     public static int newVertex() {
         try(Transaction transaction = db.beginTx()) {
-            final Node node = db.createNode(Label.label("Node"));
+            final Node node = db.createNode(Label.label(LABEL));
             transaction.success();
             final int id = Math.toIntExact(node.getId());
             return id;
@@ -51,7 +51,7 @@ public abstract class Neo4JTestCase {
             final Node target = db.getNodeById(targetVertexId);
             final Relationship relation = source.createRelationshipTo(
                     target,
-                    RelationshipType.withName("relation"));
+                    RelationshipType.withName(RELATION));
             transaction.success();
             return relation.getId() ;
         }
@@ -63,7 +63,7 @@ public abstract class Neo4JTestCase {
             final Node target = db.getNodeById(targetVertexId);
             final Relationship relation = source.createRelationshipTo(
                     target,
-                    RelationshipType.withName("relation"));
+                    RelationshipType.withName(RELATION));
             relation.setProperty(WEIGHT_PROPERTY, weight);
             transaction.success();
             return relation.getId() ;
@@ -71,11 +71,11 @@ public abstract class Neo4JTestCase {
     }
 
     public static Graph lightGraph() {
-        return new LightGraphLoader()
+        return new GraphLoader((GraphDatabaseAPI) db)
                 .setLabel(LABEL)
                 .setRelation(RELATION)
-                .setWeightProperty(WEIGHT_PROPERTY)
-                .load((GraphDatabaseAPI) db);
+                .setProperty(WEIGHT_PROPERTY)
+                .load(LightGraphLoader.class);
     }
 
     public static Graph neo4jView() {
@@ -83,10 +83,10 @@ public abstract class Neo4JTestCase {
     }
 
     public static Graph heavyGraph() {
-        return new HeavyGraphLoader()
+        return new GraphLoader((GraphDatabaseAPI) db)
                 .setLabel(LABEL)
                 .setRelation(RELATION)
-                .setWeightProperty(WEIGHT_PROPERTY)
-                .load((GraphDatabaseAPI) db);
+                .setProperty(WEIGHT_PROPERTY)
+                .load(HeavyGraphFactory.class);
     }
 }

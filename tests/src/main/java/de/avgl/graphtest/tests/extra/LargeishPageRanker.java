@@ -3,7 +3,7 @@ package de.avgl.graphtest.tests.extra;
 import org.neo4j.graphalgo.core.FileLoaders;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraph;
 import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
 import org.neo4j.graphalgo.impl.PageRankKernel;
@@ -119,19 +119,20 @@ public final class LargeishPageRanker {
                     ReadOperations readOperations = st.readOperations();
                     nodeCount = readOperations.nodesGetCount();
                     edgeCount = readOperations.relationshipsGetCount();
+
+                    System.out.printf(
+                            "Building Graph with %d nodes and %d relationships...",
+                            nodeCount,
+                            edgeCount);
+                    long t0 = System.nanoTime();
+                    graph = useMultiImpl ?
+                            new HeavyGraphFactory(readOperations, null, null, null).build() :
+                            new LightGraphLoader(readOperations, null, null, null).build();
+                    long t1 = System.nanoTime();
+                    System.out.printf(
+                            " done in %.2f seconds%n",
+                            TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
                 }
-                System.out.printf(
-                        "Building Graph with %d nodes and %d relationships...",
-                        nodeCount,
-                        edgeCount);
-                long t0 = System.nanoTime();
-                graph = useMultiImpl ?
-                        new HeavyGraphLoader().load((GraphDatabaseAPI) db) :
-                        new LightGraphLoader().load((GraphDatabaseAPI) db);
-                long t1 = System.nanoTime();
-                System.out.printf(
-                        " done in %.2f seconds%n",
-                        TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
             } finally {
                 try {
                     db.shutdown();
