@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayDeque;
 import org.neo4j.graphalgo.api.WeightedEdgeConsumer;
-import org.neo4j.graphalgo.api.WeightedGraph;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -10,7 +10,7 @@ import java.util.BitSet;
 
 public class ShortestPathDijkstraKernel {
 
-    private final WeightedGraph graph;
+    private final Graph graph;
 
     private final double[] costs;
     private final IntMinPriorityQueue queue;
@@ -18,7 +18,7 @@ public class ShortestPathDijkstraKernel {
     private final IntArrayDeque finalPath;
     private final BitSet visited;
 
-    public ShortestPathDijkstraKernel(WeightedGraph graph) {
+    public ShortestPathDijkstraKernel(Graph graph) {
         this.graph = graph;
         int nodeCount = graph.vertexCount();
         costs = new double[nodeCount];

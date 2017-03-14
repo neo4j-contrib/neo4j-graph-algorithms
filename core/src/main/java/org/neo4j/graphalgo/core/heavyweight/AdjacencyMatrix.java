@@ -58,6 +58,14 @@ class AdjacencyMatrix {
         this.incomingIds = incomingIds;
     }
 
+    public void armOut(int sourceVertexId, int degree) {
+        outgoing[sourceVertexId] = new int[degree];
+    }
+
+    public void armIn(int targetVertexId, int degree) {
+        incoming[targetVertexId] = new int[degree];
+    }
+
     public void add(int sourceVertexId, int targetVertexId, long edgeId) {
         addOutgoing(sourceVertexId, targetVertexId, edgeId);
         addIncoming(targetVertexId, sourceVertexId, edgeId);

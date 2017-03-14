@@ -1,17 +1,18 @@
 package org.neo4j.graphalgo.core.leightweight;
 
-import org.neo4j.graphalgo.api.WeightedGraph;
-import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.cursor.Cursor;
+import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
-public final class LowLevelNeo4jLoader extends GraphLoader<WeightedGraph> {
+public final class LightGraphLoader extends AbstractGraphLoader {
 
     private IdMap mapping;
     private long[] inOffsets;
@@ -19,29 +20,44 @@ public final class LowLevelNeo4jLoader extends GraphLoader<WeightedGraph> {
     private IntArray adjacency;
     private WeightMapping weights;
     private long adjacencyIdx;
-    private int weightProp;
 
     @Override
-    protected void prepare(
-            final long nodeCount,
-            final long relsCount,
-            final int weightProperty) {
+    protected Graph load(ReadOperations read, int labelId, int relationId, int weightId, int nodeCount, int relationCount) {
 
-        int intNodeCount = Math.toIntExact(nodeCount);
-        mapping = new IdMap(intNodeCount);
-        inOffsets = new long[intNodeCount];
-        outOffsets = new long[intNodeCount];
-        adjacency = IntArray.newArray(relsCount + nodeCount * 2L);
-        weightProp = weightProperty;
-        weights = weightProperty == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new WeightMapping(intNodeCount)
+        mapping = new IdMap(nodeCount);
+        inOffsets = new long[nodeCount];
+        outOffsets = new long[nodeCount];
+        adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
+        weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
+                ? new WeightMapping(nodeCount)
                 : new WeightMapping(0);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;
+
+        if (labelId == StatementConstants.NO_SUCH_LABEL) {
+            try(Cursor<NodeItem> cursor = read.nodeCursorGetAll()) {
+                while (cursor.next()) {
+                    readNode(cursor.get());
+                }
+            }
+        } else {
+            try(Cursor<NodeItem> cursor = read.nodeCursorGetForLabel(labelId)) {
+                while (cursor.next()) {
+                    readNode(cursor.get());
+                }
+            }
+        }
+
+        return new LightGraph(
+                mapping,
+                weights,
+                adjacency,
+                inOffsets,
+                outOffsets
+        );
     }
 
-    @Override
     protected void readNode(final NodeItem node) {
         long sourceNodeId = node.id();
         int sourceGraphId = mapping.mapOrGet(sourceNodeId);
@@ -60,17 +76,6 @@ public final class LowLevelNeo4jLoader extends GraphLoader<WeightedGraph> {
         );
     }
 
-    @Override
-    protected WeightedGraph build() {
-        return new LightWeightGraph(
-                mapping,
-                weights,
-                adjacency,
-                inOffsets,
-                outOffsets
-        );
-    }
-
     private void readRelationships(
             int sourceGraphId,
             NodeItem node,
@@ -86,7 +91,7 @@ public final class LowLevelNeo4jLoader extends GraphLoader<WeightedGraph> {
                 long targetNodeId = rel.otherNode(node.id());
                 int targetGraphId = mapping.mapOrGet(targetNodeId);
 
-                try (Cursor<PropertyItem> weights = rel.property(weightProp)) {
+                try (Cursor<PropertyItem> weights = rel.property(weightId)) {
                     while (weights.next()) {
                         this.weights.add(idx, weights.get().value());
                     }

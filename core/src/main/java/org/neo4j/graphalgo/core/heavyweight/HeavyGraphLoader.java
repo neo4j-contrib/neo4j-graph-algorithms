@@ -1,14 +1,12 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.cursor.Cursor;
-import org.neo4j.graphalgo.api.WeightedGraph;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
@@ -20,47 +18,10 @@ import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
 /**
  * @author mknobloch
  */
-public class HeavyGraphLoader {
+public class HeavyGraphLoader extends AbstractGraphLoader {
 
-    protected String label = null;
-
-    protected String relationType = null;
-
-    public HeavyGraphLoader setLabel(String label) {
-        this.label = label;
-        return this;
-    }
-
-    public HeavyGraphLoader setRelationType(String relationType) {
-        this.relationType = relationType;
-        return this;
-    }
-
-    public WeightedGraph load(GraphDatabaseAPI api) {
-        try(Transaction tx = api.beginTx();
-            Statement statement = api
-                    .getDependencyResolver()
-                    .resolveDependency(ThreadToStatementContextBridge.class)
-                    .get()) {
-            final ReadOperations readOperations = statement.readOperations();
-            final WeightedGraph graph = load(readOperations);
-            tx.success();
-            return graph;
-        }
-    }
-
-    private WeightedGraph load(ReadOperations read) {
-
-        final int labelId = read.labelGetForName(label);
-        final int relationId = read.relationshipTypeGetForName(relationType);
-        final int nodeCount = Math.toIntExact(read.countsForNode(labelId));
-
-        final Cursor<NodeItem> nodeItemCursor;
-        if (NO_SUCH_LABEL == labelId) {
-            nodeItemCursor = read.nodeCursorGetAll(); // TODO thr exception?
-        } else {
-            nodeItemCursor = read.nodeCursorGetForLabel(labelId);
-        }
+    @Override
+    protected Graph load(ReadOperations read, int labelId, int relationId, int weightId, int nodeCount, int relationCount) {
 
         final IdMap idMap = new IdMap(nodeCount);
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
@@ -68,24 +29,42 @@ public class HeavyGraphLoader {
                 ? new WeightMapping(0)
                 : new WeightMapping(nodeCount);
 
-        while (nodeItemCursor.next()) {
-            final NodeItem node = nodeItemCursor.get();
-            final int nodeId = idMap.mapOrGet(node.id());
-            try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING)) {
-                while (rels.next()) {
-                    final RelationshipItem rel = rels.get();
-                    final long targetNodeId = rel.otherNode(node.id());
-                    final int targetGraphId = idMap.mapOrGet(targetNodeId);
-                    final long edgeId = rel.id();
-                    try (Cursor<PropertyItem> weights = rel.property(relationId)) {
-                        while (weights.next()) {
-                            weightMapping.add(edgeId, weights.get().value());
-                        }
-                    }
-                    matrix.add(nodeId, targetGraphId, edgeId);
+        if (labelId == StatementConstants.NO_SUCH_LABEL) {
+            try(Cursor<NodeItem> cursor = read.nodeCursorGetAll()) {
+                while (cursor.next()) {
+                    readNode(relationId, idMap, matrix, weightMapping, cursor);
+                }
+            }
+        } else {
+            try(Cursor<NodeItem> cursor = read.nodeCursorGetForLabel(labelId)) {
+                while (cursor.next()) {
+                    readNode(relationId, idMap, matrix, weightMapping, cursor);
                 }
             }
         }
+
         return new HeavyGraph(idMap, matrix, weightMapping);
+    }
+
+    private void readNode(int relationId, IdMap idMap, AdjacencyMatrix matrix, WeightMapping weightMapping, Cursor<NodeItem> nodeItemCursor) {
+        final NodeItem node = nodeItemCursor.get();
+        final int outDegree = node.degree(Direction.OUTGOING);
+//        final int inDegree = node.degree(Direction.INCOMING);
+        final int nodeId = idMap.mapOrGet(node.id());
+        matrix.armOut(nodeId, outDegree);
+        try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING)) {
+            while (rels.next()) {
+                final RelationshipItem rel = rels.get();
+                final long targetNodeId = rel.otherNode(node.id());
+                final int targetGraphId = idMap.mapOrGet(targetNodeId);
+                final long edgeId = rel.id();
+                try (Cursor<PropertyItem> weights = rel.property(relationId)) {
+                    while (weights.next()) {
+                        weightMapping.add(edgeId, weights.get().value());
+                    }
+                }
+                matrix.add(nodeId, targetGraphId, edgeId);
+            }
+        }
     }
 }

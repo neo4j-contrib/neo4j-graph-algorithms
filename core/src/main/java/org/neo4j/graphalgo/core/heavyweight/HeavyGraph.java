@@ -23,7 +23,7 @@ import java.util.function.IntConsumer;
  *  - grows it's matrix dynamically by 1 // TODO replace array growing if degree is known
  * @author mknblch
  */
-public class HeavyGraph implements WeightedGraph {
+public class HeavyGraph implements Graph {
 
     private final IdMap nodeMap;
     private final AdjacencyMatrix container;

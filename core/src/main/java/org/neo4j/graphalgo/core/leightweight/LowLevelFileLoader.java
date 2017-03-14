@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import org.apache.lucene.store.DataInput;
-import org.neo4j.graphalgo.api.WeightedGraph;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.collection.primitive.Primitive;
@@ -22,7 +22,7 @@ import java.nio.file.Path;
  */
 public class LowLevelFileLoader {
 
-    public static WeightedGraph load(Path inFile) throws IOException {
+    public static Graph load(Path inFile) throws IOException {
         final File file = inFile.toFile();
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             final FileChannel channel = raf.getChannel();
@@ -83,7 +83,7 @@ public class LowLevelFileLoader {
                 weightMapping = new WeightMapping(capacity);
             }
 
-            return new LightWeightGraph(
+            return new LightGraph(
                     idMap, weightMapping, adjacency, inOffsets, outOffsets
             );
         }

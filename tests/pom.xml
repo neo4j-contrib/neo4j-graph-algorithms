@@ -55,6 +55,20 @@
 
         <dependency>
             <groupId>org.neo4j</groupId>
+            <artifactId>procedure-compiler</artifactId>
+            <version>${neo4j.version}</version>
+            <scope>compile</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-cypher</artifactId>
+            <version>${neo4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.neo4j</groupId>
             <artifactId>graph-algorithms-algo</artifactId>
             <version>${graph-algorithms-project.version}</version>
         </dependency>

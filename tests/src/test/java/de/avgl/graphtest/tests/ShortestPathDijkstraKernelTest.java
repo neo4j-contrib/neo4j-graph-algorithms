@@ -2,7 +2,7 @@ package de.avgl.graphtest.tests;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.api.WeightedGraph;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstraKernel;
 import org.slf4j.Logger;
 
@@ -47,7 +47,7 @@ public class ShortestPathDijkstraKernelTest extends Neo4JTestCase {
     @Test
     public void testShortestPathKernel() {
 
-        WeightedGraph graph = lightGraph();
+        Graph graph = lightGraph();
         int[] path = new ShortestPathDijkstraKernel(graph).compute(
                 graph.toVertexId(v0),
                 graph.toVertexId(v5));

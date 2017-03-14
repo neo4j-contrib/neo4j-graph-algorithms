@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
@@ -21,7 +22,7 @@ import java.util.function.IntConsumer;
 /**
  * @author mknobloch
  */
-public class GraphView implements WeightedGraph, AutoCloseable {
+public class GraphView implements Graph, AutoCloseable {
 
     private final Transaction transaction;
     private final Statement statement;
@@ -38,7 +39,8 @@ public class GraphView implements WeightedGraph, AutoCloseable {
                 .get();
         read = statement.readOperations();
         labelId = read.labelGetForName(label);
-        vertexCount = Math.toIntExact(read.countsForNode(labelId));
+//        vertexCount = Math.toIntExact(read.countsForNode(labelId));
+        vertexCount = Math.toIntExact(read.nodesGetCount());
         propertyKey = read.propertyKeyGetForName(propertyName);
     }
 
@@ -97,15 +99,26 @@ public class GraphView implements WeightedGraph, AutoCloseable {
 
     @Override
     public void forEachVertex(IntConsumer consumer) {
-        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
-            while (nodeItemCursor.next()) {
-                consumer.accept(toVertexId(nodeItemCursor.get().id()));
+        if (labelId == StatementConstants.NO_SUCH_LABEL) {
+            try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
+                while (nodeItemCursor.next()) {
+                    consumer.accept(toVertexId(nodeItemCursor.get().id()));
+                }
+            }
+        } else {
+            try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
+                while (nodeItemCursor.next()) {
+                    consumer.accept(toVertexId(nodeItemCursor.get().id()));
+                }
             }
         }
     }
 
     @Override
     public PrimitiveIntIterator vertexIterator() {
+        if (labelId == StatementConstants.NO_SUCH_LABEL) {
+            return new VertexIterator(this, read.nodesGetAll());
+        }
         return new VertexIterator(this, read.nodesGetForLabel(labelId));
     }
 
