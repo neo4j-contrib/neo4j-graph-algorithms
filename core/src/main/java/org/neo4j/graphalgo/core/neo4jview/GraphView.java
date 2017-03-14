@@ -26,23 +26,26 @@ public class GraphView implements WeightedGraph, AutoCloseable {
     private final Transaction transaction;
     private final Statement statement;
     private final ReadOperations read;
+
     private final int vertexCount;
-
     private final int propertyKey;
+    private final int labelId;
 
-    public GraphView(GraphDatabaseAPI db, String propertyName) {
+    public GraphView(GraphDatabaseAPI db, String label, String propertyName) {
         transaction = db.beginTx();
         statement = db.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class)
                 .get();
         read = statement.readOperations();
-        vertexCount = Math.toIntExact(read.nodesGetCount());
+        labelId = read.labelGetForName(label);
+        vertexCount = Math.toIntExact(read.countsForNode(labelId));
         propertyKey = read.propertyKeyGetForName(propertyName);
     }
 
     @Override
     public void forEachEdge(int vertexId, Direction direction, EdgeConsumer consumer) {
-        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(toNodeId(vertexId))) {
+        final long nodeId = toNodeId(vertexId);
+        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(nodeId)) {
             while (nodeItemCursor.next()) {
                 try (Cursor<RelationshipItem> relationships = nodeItemCursor
                         .get()
@@ -50,16 +53,9 @@ public class GraphView implements WeightedGraph, AutoCloseable {
 
                     while (relationships.next()) {
                         final RelationshipItem item = relationships.get();
-
-                        final long edgeId = item.id();
-                        consumer.accept(
-                                vertexId,
-                                toVertexId(item.otherNode(vertexId)),
-                                edgeId
-                        );
+                        consumer.accept(vertexId, toVertexId(item.otherNode(nodeId)), item.id());
                     }
                 }
-
             }
         }
     }
@@ -101,29 +97,16 @@ public class GraphView implements WeightedGraph, AutoCloseable {
 
     @Override
     public void forEachVertex(IntConsumer consumer) {
-        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
+        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
             while (nodeItemCursor.next()) {
-                final NodeItem nodeItem = nodeItemCursor.get();
-                consumer.accept(toVertexId(nodeItem.id()));
+                consumer.accept(toVertexId(nodeItemCursor.get().id()));
             }
         }
     }
 
     @Override
     public PrimitiveIntIterator vertexIterator() {
-        final PrimitiveLongIterator iterator = read.nodesGetAll();
-
-        return new PrimitiveIntIterator() { // TODO static class
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            @Override
-            public int next() {
-                return toVertexId(iterator.next());
-            }
-        };
+        return new VertexIterator(this, read.nodesGetForLabel(labelId));
     }
 
     @Override
@@ -138,8 +121,7 @@ public class GraphView implements WeightedGraph, AutoCloseable {
     @Override
     public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
         try {
-            final RelationshipIterator iterator = read.nodeGetRelationships(toNodeId(vertexId), direction);
-            return new EdgeIterator(vertexId, read, iterator);
+            return new EdgeIterator(vertexId, read, read.nodeGetRelationships(toNodeId(vertexId), direction));
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -162,4 +144,24 @@ public class GraphView implements WeightedGraph, AutoCloseable {
         transaction.close();
     }
 
+    private static class VertexIterator implements PrimitiveIntIterator {
+
+        private final Graph graph;
+        private final PrimitiveLongIterator iterator;
+
+        private VertexIterator(Graph graph, PrimitiveLongIterator iterator) {
+            this.graph = graph;
+            this.iterator = iterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public int next() {
+            return graph.toVertexId(iterator.next());
+        }
+    }
 }
