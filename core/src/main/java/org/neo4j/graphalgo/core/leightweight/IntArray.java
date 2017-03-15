@@ -8,6 +8,8 @@ import java.util.function.IntSupplier;
 
 /**
  * Abstraction of an array of integer values that can contain more than 2B elements.
+ *
+ * @author phorn@avantgarde-labs.de
  */
 public final class IntArray implements Iterable<IntArray.Cursor> {
 

@@ -6,6 +6,9 @@ import org.neo4j.graphalgo.core.WeightMapping;
 
 import java.util.Iterator;
 
+/**
+ * @author phorn@avantgarde-labs.de
+ */
 class WeightedEdgeIteratorImpl implements Iterator<WeightedEdgeCursor> {
 
     private final WeightedEdgeCursor cursor = new WeightedEdgeCursor();

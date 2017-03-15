@@ -5,7 +5,7 @@ import org.junit.BeforeClass;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -75,7 +75,7 @@ public abstract class Neo4JTestCase {
                 .setLabel(LABEL)
                 .setRelation(RELATION)
                 .setProperty(WEIGHT_PROPERTY)
-                .load(LightGraphLoader.class);
+                .load(LightGraphFactory.class);
     }
 
     public static Graph neo4jView() {

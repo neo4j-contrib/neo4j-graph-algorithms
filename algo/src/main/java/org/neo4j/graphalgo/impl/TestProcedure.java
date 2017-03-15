@@ -4,7 +4,7 @@ import org.neo4j.graphalgo.SimpleTimer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.logging.Log;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -78,7 +78,7 @@ public class TestProcedure {
         final Graph graph = new GraphLoader(graphDatabaseAPI)
                 .setLabel(label)
                 .setRelation(relationType)
-                .load(LightGraphLoader.class);
+                .load(LightGraphFactory.class);
 
         loading.stop().dump();
 

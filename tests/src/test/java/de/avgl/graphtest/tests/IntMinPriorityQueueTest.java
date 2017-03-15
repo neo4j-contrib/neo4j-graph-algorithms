@@ -2,7 +2,7 @@ package de.avgl.graphtest.tests;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
-import org.neo4j.graphalgo.impl.IntMinPriorityQueue;
+import org.neo4j.graphalgo.core.IntMinPriorityQueue;
 import org.neo4j.helpers.collection.Pair;
 
 import java.util.ArrayList;

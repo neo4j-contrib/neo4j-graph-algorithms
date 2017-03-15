@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.cursor.Cursor;
@@ -13,7 +12,7 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
-public final class LightGraphLoader extends GraphFactory {
+public final class LightGraphFactory extends GraphFactory {
 
     private IdMap mapping;
     private long[] inOffsets;
@@ -25,7 +24,7 @@ public final class LightGraphLoader extends GraphFactory {
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphLoader(ReadOperations readOp, String label, String relation, String property) {
+    public LightGraphFactory(ReadOperations readOp, String label, String relation, String property) {
         super(readOp, label, relation, property);
 
         nodeCount = Math.toIntExact(readOp.nodesGetCount());

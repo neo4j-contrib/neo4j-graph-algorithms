@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.kernel.api.ReadOperations;
@@ -17,7 +16,7 @@ import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_LABEL;
 import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
 
 /**
- * @author mknobloch
+ * @author mknblch
  */
 public class HeavyGraphFactory extends GraphFactory {
 

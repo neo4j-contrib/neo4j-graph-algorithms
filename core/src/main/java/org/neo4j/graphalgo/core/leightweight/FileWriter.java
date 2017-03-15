@@ -11,6 +11,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
+/**
+ * @author phorn@avantgarde-labs.de
+ */
 final class FileWriter {
 
     private static final long BYTES_BOOL = 1L;
