@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 import org.apache.lucene.util.ArrayUtil;
@@ -14,6 +14,8 @@ import java.util.NoSuchElementException;
  * Put()'s and pop()'s require log(size) time but the remove() cost implemented here is linear.
  * <p>
  * <b>NOTE</b>: Iteration order is not specified.
+ *
+ * @author phorn@avantgarde-labs.de
  */
 public final class IntMinPriorityQueue implements PrimitiveIntIterable {
     private static final int DEFAULT_CAPACITY = 14;

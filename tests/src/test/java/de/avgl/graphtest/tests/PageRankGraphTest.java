@@ -15,9 +15,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author mknobloch
  */
-public class PageRankKernelTest extends Neo4JTestCase {
+public class PageRankGraphTest extends Neo4JTestCase {
 
-    private static final Logger LOGGER = getLogger(PageRankKernelTest.class);
+    private static final Logger LOGGER = getLogger(PageRankGraphTest.class);
     private static int vertexA;
     private static int vertexB;
     private static int vertexC;
@@ -74,9 +74,22 @@ public class PageRankKernelTest extends Neo4JTestCase {
     }
 
     @Test
-    public void testPageRankKernel() {
+    public void testLightGraph() throws Exception {
+        testPageRank(lightGraph());
+    }
+
+    @Test
+    public void testHeavyGraph() throws Exception {
+        testPageRank(heavyGraph());
+    }
+
+    @Test
+    public void testView() throws Exception {
+        testPageRank(neo4jView());
+    }
+
+    private void testPageRank(Graph graph) {
         // Act
-        Graph graph = heavyGraph();
         final double[] ranks = new PageRankKernel(graph, 0.85).compute(100);
 
         for (int i = 0; i < ranks.length; i++) {

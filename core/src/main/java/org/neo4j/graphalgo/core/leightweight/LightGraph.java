@@ -11,6 +11,10 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 
+/**
+ *
+ * @author phorn@avantgarde-labs.de
+ */
 public class LightGraph implements Graph {
 
     private final IdMap idMapping;

@@ -13,7 +13,7 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
-public final class LightGraphLoader extends GraphFactory {
+public final class LightGraphFactory extends GraphFactory {
 
     private IdMap mapping;
     private long[] inOffsets;
@@ -25,7 +25,7 @@ public final class LightGraphLoader extends GraphFactory {
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphLoader(ReadOperations readOp, String label, String relation, String property) {
+    public LightGraphFactory(ReadOperations readOp, String label, String relation, String property) {
         super(readOp, label, relation, property);
 
         nodeCount = Math.toIntExact(readOp.nodesGetCount());

@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraph;
-import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.impl.PageRankKernel;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -127,7 +127,7 @@ public final class LargeishPageRanker {
                     long t0 = System.nanoTime();
                     graph = useMultiImpl ?
                             new HeavyGraphFactory(readOperations, null, null, null).build() :
-                            new LightGraphLoader(readOperations, null, null, null).build();
+                            new LightGraphFactory(readOperations, null, null, null).build();
                     long t1 = System.nanoTime();
                     System.out.printf(
                             " done in %.2f seconds%n",

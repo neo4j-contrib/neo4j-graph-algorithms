@@ -6,6 +6,9 @@ import org.neo4j.graphalgo.api.EdgeCursor;
 
 import java.util.Iterator;
 
+/**
+ * @author phorn@avantgarde-labs.de
+ */
 class EdgeIteratorImpl implements Iterator<EdgeCursor> {
 
     private final EdgeCursor cursor = new EdgeCursor();

@@ -12,6 +12,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+/**
+ * @author phorn@avantgarde-labs.de
+ */
 final class HeavyGraphFileWriter {
 
     private static final long BYTES_BOOL = 1L;

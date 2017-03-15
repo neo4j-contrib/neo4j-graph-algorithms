@@ -17,6 +17,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 /**
+ * @author phorn@avantgarde-labs.de
  */
 public class HeavyGraphFileLoader {
 
