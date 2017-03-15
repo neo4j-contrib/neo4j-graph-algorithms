@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author mknobloch
  */
+@Ignore("depends on local data")
 public class GraphComparisionTest {
 
     private static final Logger LOGGER = getLogger(GraphComparisionTest.class);
