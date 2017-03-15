@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
@@ -18,10 +19,25 @@ import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
 /**
  * @author mknobloch
  */
-public class HeavyGraphLoader extends AbstractGraphLoader {
+public class HeavyGraphFactory extends GraphFactory {
+
+    protected int labelId;
+    protected int relationId;
+    protected int nodeCount;
+    protected int relationCount;
+    protected int weightId;
+
+    public HeavyGraphFactory(ReadOperations readOp, String label, String relation, String property) {
+        super(readOp, label, relation, property);
+        labelId = readOp.labelGetForName(label);
+        relationId = readOp.relationshipTypeGetForName(relation);
+        nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
+        relationCount = Math.toIntExact(readOp.relationshipsGetCount());
+        weightId = readOp.propertyKeyGetForName(property);
+    }
 
     @Override
-    protected Graph load(ReadOperations read, int labelId, int relationId, int weightId, int nodeCount, int relationCount) {
+    public Graph build() {
 
         final IdMap idMap = new IdMap(nodeCount);
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
@@ -30,13 +46,13 @@ public class HeavyGraphLoader extends AbstractGraphLoader {
                 : new WeightMapping(nodeCount);
 
         if (labelId == StatementConstants.NO_SUCH_LABEL) {
-            try(Cursor<NodeItem> cursor = read.nodeCursorGetAll()) {
+            try(Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
                 while (cursor.next()) {
                     readNode(relationId, idMap, matrix, weightMapping, cursor);
                 }
             }
         } else {
-            try(Cursor<NodeItem> cursor = read.nodeCursorGetForLabel(labelId)) {
+            try(Cursor<NodeItem> cursor = readOp.nodeCursorGetForLabel(labelId)) {
                 while (cursor.next()) {
                     readNode(relationId, idMap, matrix, weightMapping, cursor);
                 }

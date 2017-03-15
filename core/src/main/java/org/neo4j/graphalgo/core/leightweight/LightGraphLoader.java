@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
@@ -12,7 +13,7 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
-public final class LightGraphLoader extends AbstractGraphLoader {
+public final class LightGraphLoader extends GraphFactory {
 
     private IdMap mapping;
     private long[] inOffsets;
@@ -20,9 +21,20 @@ public final class LightGraphLoader extends AbstractGraphLoader {
     private IntArray adjacency;
     private WeightMapping weights;
     private long adjacencyIdx;
+    protected int nodeCount;
+    protected int relationCount;
+    protected int weightId;
+
+    public LightGraphLoader(ReadOperations readOp, String label, String relation, String property) {
+        super(readOp, label, relation, property);
+
+        nodeCount = Math.toIntExact(readOp.nodesGetCount());
+        relationCount = Math.toIntExact(readOp.relationshipsGetCount());
+        weightId = property == null ? StatementConstants.NO_SUCH_PROPERTY_KEY : readOp.propertyKeyGetForName(property);
+    }
 
     @Override
-    protected Graph load(ReadOperations read, int labelId, int relationId, int weightId, int nodeCount, int relationCount) {
+    public Graph build() {
 
         mapping = new IdMap(nodeCount);
         inOffsets = new long[nodeCount];
@@ -35,17 +47,9 @@ public final class LightGraphLoader extends AbstractGraphLoader {
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;
 
-        if (labelId == StatementConstants.NO_SUCH_LABEL) {
-            try(Cursor<NodeItem> cursor = read.nodeCursorGetAll()) {
-                while (cursor.next()) {
-                    readNode(cursor.get());
-                }
-            }
-        } else {
-            try(Cursor<NodeItem> cursor = read.nodeCursorGetForLabel(labelId)) {
-                while (cursor.next()) {
-                    readNode(cursor.get());
-                }
+        try(Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
+            while (cursor.next()) {
+                readNode(cursor.get());
             }
         }
 
@@ -92,7 +96,7 @@ public final class LightGraphLoader extends AbstractGraphLoader {
                 int targetGraphId = mapping.mapOrGet(targetNodeId);
 
                 try (Cursor<PropertyItem> weights = rel.property(weightId)) {
-                    while (weights.next()) {
+                    while (weights.next()) { // TODO if/rm?
                         this.weights.add(idx, weights.get().value());
                     }
                 }

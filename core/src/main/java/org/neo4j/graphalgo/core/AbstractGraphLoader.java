@@ -14,7 +14,6 @@ public abstract class AbstractGraphLoader {
 
     private String label = null;
     private String relation = null;
-    private String relationType = null;
     private String weightProperty = null;
 
     protected int labelId;

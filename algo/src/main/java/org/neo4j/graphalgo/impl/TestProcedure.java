@@ -2,8 +2,8 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.SimpleTimer;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.FileLoaders;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphLoader;
+import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphLoader;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.logging.Log;
@@ -48,10 +48,10 @@ public class TestProcedure {
 
         final SimpleTimer loading = SimpleTimer.start("loading heavy graph");
 
-        final Graph graph = new HeavyGraphLoader()
+        final Graph graph = new GraphLoader(graphDatabaseAPI)
                 .setLabel(label)
                 .setRelation(relationType)
-                .load(graphDatabaseAPI);
+                .load(HeavyGraphFactory.class);
 
         loading.stop().dump();
 
@@ -75,10 +75,10 @@ public class TestProcedure {
 
         final SimpleTimer loading = SimpleTimer.start("loading light graph");
 
-        final Graph graph = new LightGraphLoader()
+        final Graph graph = new GraphLoader(graphDatabaseAPI)
                 .setLabel(label)
                 .setRelation(relationType)
-                .load(graphDatabaseAPI);
+                .load(LightGraphLoader.class);
 
         loading.stop().dump();
 
