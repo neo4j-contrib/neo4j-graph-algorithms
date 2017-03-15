@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.core.AbstractGraphLoader;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.cursor.Cursor;
