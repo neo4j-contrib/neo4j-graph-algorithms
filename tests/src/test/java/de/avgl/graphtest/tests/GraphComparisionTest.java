@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author mknobloch
  */
+@Ignore("depends on local data")
 public class GraphComparisionTest {
 
     private static final Logger LOGGER = getLogger(GraphComparisionTest.class);
@@ -54,7 +55,7 @@ public class GraphComparisionTest {
         db.shutdown();
     }
 
-    @Ignore("takes hours literally")
+    @Ignore("takes very long")
     @Test
     public void testView() throws Exception {
         final Result result = db.execute("CALL graphalgo.pagerank.view({label:'Node', iterations:1, dampingFactor:0.85})");
