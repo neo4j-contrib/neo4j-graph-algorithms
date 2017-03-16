@@ -12,6 +12,8 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
+import java.util.concurrent.ExecutorService;
+
 public final class LightGraphFactory extends GraphFactory {
 
     private IdMap mapping;
@@ -24,7 +26,7 @@ public final class LightGraphFactory extends GraphFactory {
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphFactory(GraphDatabaseAPI api, String label, String relation, String property) {
+    public LightGraphFactory(GraphDatabaseAPI api, String label, String relation, String property, ExecutorService executorService) {
         super(api, label, relation, property);
         withReadOps(readOp -> {
             nodeCount = Math.toIntExact(readOp.nodesGetCount());
