@@ -22,6 +22,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -34,6 +36,7 @@ public final class LargeishPageRanker {
         Path prepare = null;
         boolean gcLogs = true;
         boolean useMultiImpl = false;
+        boolean multiParallel = false;
 
         boolean hasErrors = false;
         for (int i = 0; i < args.length; i++) {
@@ -54,6 +57,10 @@ public final class LargeishPageRanker {
                         break;
                     case "-multi":
                         useMultiImpl = true;
+                        break;
+                    case "-par":
+                        useMultiImpl = true;
+                        multiParallel = true;
                         break;
                     case "-help":
                         System.exit(helpAndExit());
@@ -99,6 +106,11 @@ public final class LargeishPageRanker {
 
             runGc("before building graph", gcRunner);
 
+            ExecutorService pool = multiParallel
+                    ? Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+//                    ? Executors.newFixedThreadPool(1)
+                    : null;
+
             GraphDatabaseService db = new GraphDatabaseFactory()
                     .newEmbeddedDatabaseBuilder(graphDb.toFile())
                     .setConfig(GraphDatabaseSettings.read_only, "true")
@@ -106,13 +118,19 @@ public final class LargeishPageRanker {
                             GraphDatabaseSettings.pagecache_memory,
                             String.valueOf(size.get()))
                     .newGraphDatabase();
-            Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (pool != null) {
+                    pool.shutdownNow();
+                }
+                db.shutdown();
+            }));
 
             final long nodeCount;
             final long edgeCount;
             try {
-                try (Transaction ignored = db.beginTx();
-                     Statement st = ((GraphDatabaseAPI) db)
+                final GraphDatabaseAPI api = (GraphDatabaseAPI) db;
+                try (Transaction tx = db.beginTx();
+                     Statement st = api
                              .getDependencyResolver()
                              .resolveDependency(ThreadToStatementContextBridge.class)
                              .get()) {
@@ -124,17 +142,21 @@ public final class LargeishPageRanker {
                             "Building Graph with %d nodes and %d relationships...",
                             nodeCount,
                             edgeCount);
-                    long t0 = System.nanoTime();
-                    graph = useMultiImpl ?
-                            new HeavyGraphFactory(readOperations, null, null, null).build() :
-                            new LightGraphFactory(readOperations, null, null, null).build();
-                    long t1 = System.nanoTime();
-                    System.out.printf(
-                            " done in %.2f seconds%n",
-                            TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
+                    tx.success();
                 }
+                long t0 = System.nanoTime();
+                graph = useMultiImpl ?
+                        new HeavyGraphFactory(api, null, null, null, pool).build() :
+                        new LightGraphFactory(api, null, null, null).build();
+                long t1 = System.nanoTime();
+                System.out.printf(
+                        " done in %.2f seconds%n",
+                        TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
             } finally {
                 try {
+                    if (pool != null) {
+                        pool.shutdownNow();
+                    }
                     db.shutdown();
                 } catch (LifecycleException readOperationsOnReadonlyIndexDuringShutdown) {
                     // ignore
@@ -211,6 +233,8 @@ public final class LargeishPageRanker {
             out.println( "       -iterations NUM    | run that many Page Rank iterations"                  );
             out.println( "       -nogclogs          | disable verbose GC logging during execution"         );
             out.println( "       -multi             | use the multi array implementation"                  );
+            out.println( "       -par               | use the multi array impl with parallel loading "     );
+            out.println( "                          |     uses one thread per cpu; implies -multi"         );
             out.println( "       -help              | show this help screen"                               );
             //@formatter:on
         }
