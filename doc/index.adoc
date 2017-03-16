@@ -1,0 +1,86 @@
+= Neo4j Graph Algorithms
+
+== The Model
+
+The basic idea behind our model is to have a high throughput cache for the
+topology of the graph containing only relevant nodes, relations
+and in addition the weights. It implicitly maps (long) node-id's to
+a temporary integer-id in ascending order which ensures that no id gets bigger
+then the maximum node count. This approach allows us to use primitive
+arrays as container for different mappings.
+
+[NOTE]
+For better distinction between the neo4j API and the algorithm API we use the Terms Vertex
+and Edge rather then Node and Relation.
+
+The interface specifies Methods for iterating over all vertices of the
+graph as well as iterating over edges of a given vertex in the form of *forEach(..)*-
+and *iterator()*-Methods. The Graph knows the *nodeCount* and *degree* of each node and can *map*
+nodeId to vertexId and vice versa. The Iterator is implemented for (single-)weighted and unweighted edges.
+
+
+[ditaa]
+----
+
+                                  +--------------+
+                                  |    Graph     |
+                                  +--------------+
+                                  | - degree( )  |
+                                  | - forEach( ) |
+                                  | - iterator( )|
+                                  | - idMap( )   |
+                                  +--------------+
+                                    ^    ^     ^
+                        implements  |    |     | implements
+                      +-------------+    |     +----------+
+                      |                  |                |
+                      |                  |implements      |
+                 +----+-------+    +-----+------+     +---+-------+
+                 | HeavyGraph |    | LightGraph |     | GraphView |
+                 +------------+    +------------+     +-----------+
+
+----
+[NOTE]
+Currently we have 3 different implementations aiming for different goals like performance, memory
+consumption and accuracy.
+
+HeavyGraph::
+
+This implementations utilizes an int-matrix for storing connections between vertices.
+It has a high memory consumption but performs basic calculations on the graph
+around 3 times faster then the memory efficient implementation. Furthermore the
+number of edges per node is limited only to the maximum array size of the VM and
+connections can be added in arbitrary order.
+
+LightGraph::
+
+This implementation takes 3 times less heap due to a more intelligent
+memory layout. The drawback is the higher evaluation time.
+
+View::
+The View is just a single threaded Wrapper around the neo4j core api. It has been
+implemented for tests and benchmarks.
+
+== Import
+
+A fair amount of the work is to fetch all the relevant data from the neo4j core api
+and import it into our model.
+
+[ditaa]
+----
+
+             +------------------+         builds        +--------------+
+             | Abs.GraphFactory | - - - - - - - - - - > |    Graph     |
+             +---+------+-------+                       +---+-----+----+
+                 ^      ^                                   ^     ^
+                 |      |                                   |     |
+                 |      |                                   |     |
+                 |      |                                   |     |
+                 |      +---------+                   +-----+     +--+
+                 |                |                   |              |
+          +------+------+  +------+------+     +------+-----+ +------+-----+
+          | HeavyLoader |  |  LighLoader |     | HeavyGraph | | LightGraph |
+          +-------------+  +-------------+     +------------+ +------------+
+----
+
+Fortunately we can use a multithreading approach to fill the Graph.
