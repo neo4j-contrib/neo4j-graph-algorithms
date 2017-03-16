@@ -14,7 +14,7 @@ public abstract class GraphFactory {
     protected final String property;
 
     // TODO collections of label/rel/prop ?
-    protected GraphFactory(ReadOperations readOp, String label, String relation, String property) {
+    public GraphFactory(ReadOperations readOp, String label, String relation, String property) {
         this.readOp = readOp;
         this.label = label;
         this.relation = relation;

@@ -5,5 +5,8 @@ package org.neo4j.graphalgo.api;
  */
 public class WeightedEdgeCursor extends EdgeCursor {
 
+    /**
+     * The weight
+     */
     public double weight;
 }
