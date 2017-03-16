@@ -3,7 +3,9 @@ package org.neo4j.graphalgo.core;
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import com.carrotsearch.hppc.LongDoubleMap;
 
-
+/**
+ * single weight cache
+ */
 public final class WeightMapping {
 
     private final int capacity;
@@ -18,6 +20,9 @@ public final class WeightMapping {
         this.weights = weights;
     }
 
+    /**
+     * return the weight for id or 0.0 if unknown
+     */
     public double get(long id) {
         if (weights != null) {
             return weights.get(id);
@@ -25,10 +30,16 @@ public final class WeightMapping {
         return 0d;
     }
 
+    /**
+     * add weight
+     */
     public void add(long id, Object value) {
         add(id, extractValue(value));
     }
 
+    /**
+     * add weight
+     */
     public void add(long id, double weight) {
         if (weight != 0) {
             put(id, weight);
@@ -63,10 +74,16 @@ public final class WeightMapping {
         weights.addTo(key, value);
     }
 
+    /**
+     * return the capacity
+     */
     public int capacity() {
         return capacity;
     }
 
+    /**
+     * return primitive map for the weights
+     */
     public LongDoubleMap weights() {
         return weights;
     }

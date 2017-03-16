@@ -77,20 +77,24 @@ class AdjacencyMatrix {
     }
 
     /**
-     * initialize i
-     * @param sourceVertexId
-     * @param degree
+     * initialize array for outgoing connections
      */
     public void armOut(int sourceVertexId, int degree) {
         outgoing[sourceVertexId] = new int[degree];
         outgoingIds[sourceVertexId] = new long[degree];
     }
 
+    /**
+     * initialize array fro incoming connections
+     */
     public void armIn(int targetVertexId, int degree) {
         incoming[targetVertexId] = new int[degree];
         incomingIds[targetVertexId] = new long[degree];
     }
 
+    /**
+     * add outgoing edge
+     */
     public void addOutgoing(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = outOffsets[sourceVertexId];
         final int nextDegree = degree + 1;
@@ -100,6 +104,9 @@ class AdjacencyMatrix {
         outOffsets[sourceVertexId] = nextDegree;
     }
 
+    /**
+     * add incoming edge
+     */
     public void addIncoming(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = inOffsets[targetVertexId];
         final int nextDegree = degree + 1;
@@ -109,6 +116,9 @@ class AdjacencyMatrix {
         inOffsets[targetVertexId] = nextDegree;
     }
 
+    /**
+     * get the degree for vertex / direction
+     */
     public int degree(int vertexId, Direction direction) {
         switch (direction) {
             case OUTGOING: {
@@ -123,6 +133,9 @@ class AdjacencyMatrix {
         }
     }
 
+    /**
+     * return an iterator for unweighted edges
+     */
     public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
         switch (direction) {
             case OUTGOING:
@@ -135,6 +148,9 @@ class AdjacencyMatrix {
 
     }
 
+    /**
+     * return an iterator for weighted edges
+     */
     public Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, WeightMapping weights, Direction direction) {
         switch (direction) {
             case OUTGOING:
@@ -147,6 +163,9 @@ class AdjacencyMatrix {
 
     }
 
+    /**
+     * iterate over each edge at the given vertex using an unweighted consumer
+     */
     public void forEach(int vertexId, Direction direction, EdgeConsumer consumer) {
         switch (direction) {
             case OUTGOING:
@@ -162,6 +181,9 @@ class AdjacencyMatrix {
         }
     }
 
+    /**
+     * iterate over each edge at the given vertex using a weighted consumer
+     */
     public void forEach(int vertexId, Direction direction, WeightMapping weights, WeightedEdgeConsumer consumer) {
         switch (direction) {
             case OUTGOING:
