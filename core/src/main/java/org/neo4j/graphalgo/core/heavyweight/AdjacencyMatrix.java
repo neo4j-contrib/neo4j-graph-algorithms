@@ -23,11 +23,29 @@ class AdjacencyMatrix {
     private static final int[] EMPTY_INTS = new int[0];
     private static final long[] EMPTY_LONGS = new long[0];
 
+    /**
+     * mapping from nodeId to outgoing degree
+     */
     final int[] outOffsets;
+    /**
+     * mapping from nodeId to incoming degree
+     */
     final int[] inOffsets;
+    /**
+     * matrix nodeId x [outgoing edge-ids..]
+     */
     final int[][] outgoing;
+    /**
+     * matrix nodeId x [incoming edge-ids..]
+     */
     final int[][] incoming;
+    /**
+     * matrix nodeId x [outgoing relation-ids..]
+     */
     final long[][] outgoingIds;
+    /**
+     * matrix nodeId x [incoming relation-ids..]
+     */
     final long[][] incomingIds;
 
     AdjacencyMatrix(int nodeCount) {
@@ -58,6 +76,11 @@ class AdjacencyMatrix {
         this.incomingIds = incomingIds;
     }
 
+    /**
+     * initialize i
+     * @param sourceVertexId
+     * @param degree
+     */
     public void armOut(int sourceVertexId, int degree) {
         outgoing[sourceVertexId] = new int[degree];
         outgoingIds[sourceVertexId] = new long[degree];
@@ -67,11 +90,6 @@ class AdjacencyMatrix {
         incoming[targetVertexId] = new int[degree];
         incomingIds[targetVertexId] = new long[degree];
     }
-
-//    public void add(int sourceVertexId, int targetVertexId, long edgeId) {
-//        addOutgoing(sourceVertexId, targetVertexId, edgeId);
-//        addIncoming(targetVertexId, sourceVertexId, edgeId);
-//    }
 
     public void addOutgoing(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = outOffsets[sourceVertexId];
