@@ -13,7 +13,9 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.slf4j.Logger;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -56,6 +58,34 @@ public class TestProcedure {
         loading.stop().dump();
 
         final SimpleTimer evaluation = SimpleTimer.start("evaluation on heavy graph");
+
+        final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
+
+        evaluation.stop().dump();
+
+        return IntStream.range(0, ranking.length)
+                .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
+    }
+
+    @Procedure("graphalgo.pagerank.heavyPar")
+    public Stream<Ranking> pageRankKernelPar(@Name("config") Map<String, Object> config) {
+
+        final String label = (String) config.get("label");
+        final String relationType = (String) config.get("relation");
+        final long iterations = (long) config.get("iterations");
+        final double dampingFactor = (double) config.get("dampingFactor");
+
+        final SimpleTimer loading = SimpleTimer.start("loading parallel heavy graph");
+
+        final Graph graph = new GraphLoader(graphDatabaseAPI)
+                .setLabel(label)
+                .setRelation(relationType)
+                .setExecutorService(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
+                .load(HeavyGraphFactory.class);
+
+        loading.stop().dump();
+
+        final SimpleTimer evaluation = SimpleTimer.start("evaluation on parallel heavy graph");
 
         final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
 
