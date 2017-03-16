@@ -33,3 +33,4 @@ Thumbs.db
 .cache-main
 .cache-tests
 bin
+*diag*.png
