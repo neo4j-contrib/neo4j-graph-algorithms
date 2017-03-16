@@ -52,6 +52,17 @@ public final class IdMap {
         return intValue;
     }
 
+    public boolean add(long longValue) {
+        int intValue = nodeToGraphIds.get(longValue);
+        if (intValue == -1) {
+            intValue = nextGraphId++;
+            graphIds[intValue] = longValue;
+            nodeToGraphIds.put(longValue, intValue);
+            return true;
+        }
+        return false;
+    }
+
     public int get(long longValue) {
         return nodeToGraphIds.get(longValue);
     }

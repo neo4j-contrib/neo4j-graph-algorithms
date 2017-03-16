@@ -99,7 +99,16 @@ class AdjacencyMatrix {
         final int degree = outOffsets[sourceVertexId];
         final int nextDegree = degree + 1;
 
-        outgoing[sourceVertexId][degree] = targetVertexId;
+        try {
+            outgoing[sourceVertexId][degree] = targetVertexId;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.printf(
+                    "sourceVertexId = %d degree = %d outgoing.length = %d outgoing[sourceVertexId].length = %d%n",
+                    sourceVertexId,
+                    degree,
+                    outgoing.length,
+                    outgoing[sourceVertexId].length);
+        }
         outgoingIds[sourceVertexId][degree] = edgeId;
         outOffsets[sourceVertexId] = nextDegree;
     }
@@ -111,7 +120,16 @@ class AdjacencyMatrix {
         final int degree = inOffsets[targetVertexId];
         final int nextDegree = degree + 1;
 
-        incoming[targetVertexId][degree] = sourceVertexId;
+        try {
+            incoming[targetVertexId][degree] = sourceVertexId;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.printf(
+                    "targetVertexId = %d degree = %d incoming.length = %d incoming[targetVertexId].length = %d%n",
+                    targetVertexId,
+                    degree,
+                    incoming.length,
+                    incoming[targetVertexId].length);
+        }
         incomingIds[targetVertexId][degree] = edgeId;
         inOffsets[targetVertexId] = nextDegree;
     }

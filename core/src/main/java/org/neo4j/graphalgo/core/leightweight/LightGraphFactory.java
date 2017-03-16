@@ -5,8 +5,8 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.cursor.Cursor;
-import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
@@ -24,12 +24,13 @@ public final class LightGraphFactory extends GraphFactory {
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphFactory(ReadOperations readOp, String label, String relation, String property) {
-        super(readOp, label, relation, property);
-
-        nodeCount = Math.toIntExact(readOp.nodesGetCount());
-        relationCount = Math.toIntExact(readOp.relationshipsGetCount());
-        weightId = property == null ? StatementConstants.NO_SUCH_PROPERTY_KEY : readOp.propertyKeyGetForName(property);
+    public LightGraphFactory(GraphDatabaseAPI api, String label, String relation, String property) {
+        super(api, label, relation, property);
+        withReadOps(readOp -> {
+            nodeCount = Math.toIntExact(readOp.nodesGetCount());
+            relationCount = Math.toIntExact(readOp.relationshipsGetCount());
+            weightId = property == null ? StatementConstants.NO_SUCH_PROPERTY_KEY : readOp.propertyKeyGetForName(property);
+        });
     }
 
     @Override
@@ -46,11 +47,14 @@ public final class LightGraphFactory extends GraphFactory {
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;
 
-        try(Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
-            while (cursor.next()) {
-                readNode(cursor.get());
+        withReadOps(readOp -> {
+            try(Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
+                while (cursor.next()) {
+                    readNode(cursor.get());
+                }
             }
-        }
+        });
+
 
         return new LightGraph(
                 mapping,
