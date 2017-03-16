@@ -52,15 +52,19 @@ public final class IdMap {
         return intValue;
     }
 
-    public boolean add(long longValue) {
-        int intValue = nodeToGraphIds.get(longValue);
-        if (intValue == -1) {
-            intValue = nextGraphId++;
-            graphIds[intValue] = longValue;
-            nodeToGraphIds.put(longValue, intValue);
-            return true;
-        }
-        return false;
+    public void add(long longValue) {
+        int intValue = nextGraphId++;
+        graphIds[intValue] = longValue;
+        nodeToGraphIds.put(longValue, intValue);
+    }
+
+    public void addMap(IdMap other, int offset, int length) {
+        System.arraycopy(other.graphIds, 0, graphIds, offset, length);
+        nextGraphId += length;
+        other.nodeToGraphIds.visitEntries((key, value) -> {
+            nodeToGraphIds.put(key, value + offset);
+            return false;
+        });
     }
 
     public int get(long longValue) {

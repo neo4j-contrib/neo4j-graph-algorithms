@@ -99,16 +99,7 @@ class AdjacencyMatrix {
         final int degree = outOffsets[sourceVertexId];
         final int nextDegree = degree + 1;
 
-        try {
-            outgoing[sourceVertexId][degree] = targetVertexId;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.printf(
-                    "sourceVertexId = %d degree = %d outgoing.length = %d outgoing[sourceVertexId].length = %d%n",
-                    sourceVertexId,
-                    degree,
-                    outgoing.length,
-                    outgoing[sourceVertexId].length);
-        }
+        outgoing[sourceVertexId][degree] = targetVertexId;
         outgoingIds[sourceVertexId][degree] = edgeId;
         outOffsets[sourceVertexId] = nextDegree;
     }
@@ -120,16 +111,7 @@ class AdjacencyMatrix {
         final int degree = inOffsets[targetVertexId];
         final int nextDegree = degree + 1;
 
-        try {
-            incoming[targetVertexId][degree] = sourceVertexId;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.printf(
-                    "targetVertexId = %d degree = %d incoming.length = %d incoming[targetVertexId].length = %d%n",
-                    targetVertexId,
-                    degree,
-                    incoming.length,
-                    incoming[targetVertexId].length);
-        }
+        incoming[targetVertexId][degree] = sourceVertexId;
         incomingIds[targetVertexId][degree] = edgeId;
         inOffsets[targetVertexId] = nextDegree;
     }
@@ -215,6 +197,15 @@ class AdjacencyMatrix {
                 forEachOutgoing(vertexId, weights, consumer);
                 break;
         }
+    }
+
+    public void addMatrix(AdjacencyMatrix other, int offset, int length) {
+        System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
+        System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
+        System.arraycopy(other.outgoing, 0, outgoing, offset, length);
+        System.arraycopy(other.incoming, 0, incoming, offset, length);
+        System.arraycopy(other.outgoingIds, 0, outgoingIds, offset, length);
+        System.arraycopy(other.incomingIds, 0, incomingIds, offset, length);
     }
 
     private void forEachOutgoing(int vertexId, EdgeConsumer consumer) {

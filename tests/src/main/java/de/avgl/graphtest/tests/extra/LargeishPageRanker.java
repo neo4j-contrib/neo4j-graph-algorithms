@@ -147,7 +147,7 @@ public final class LargeishPageRanker {
                 long t0 = System.nanoTime();
                 graph = useMultiImpl ?
                         new HeavyGraphFactory(api, null, null, null, pool).build() :
-                        new LightGraphFactory(api, null, null, null).build();
+                        new LightGraphFactory(api, null, null, null, null).build();
                 long t1 = System.nanoTime();
                 System.out.printf(
                         " done in %.2f seconds%n",
