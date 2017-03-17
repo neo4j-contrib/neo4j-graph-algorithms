@@ -54,13 +54,13 @@ long toNodeId(int)::
 
 
 [NOTE]
-For better distinction between the neo4j API and the algorithm API we use the Terms Vertex
+For better distinction between the Neo4j API and the Algorithm API we use the Terms Vertex
 and Edge rather then Node and Relation.
 
 The interface specifies Methods for iterating over all vertices of the
 graph as well as iterating over edges of a given vertex in the form of *forEach(..)*-
 and *iterator()*-Methods. The Graph knows the *nodeCount* and *degree* of each node and can *map*
-nodeId to vertexId and vice versa. The Iterator is implemented for (single-)weighted and unweighted edges.
+nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weighted and unweighted edges.
 
 
 [ditaa]
@@ -103,14 +103,17 @@ This implementation takes 3 times less heap due to a more intelligent
 memory layout. The drawback is the higher evaluation time.
 
 View::
-The View is just a single threaded Wrapper around the neo4j core api. It has been
+The View is just a single threaded Wrapper around the Neo4j core api. It has been
 implemented for tests and benchmarks.
 
 == Import
 
-A fair amount of the work is to fetch all the relevant data from the neo4j core api
+A fair amount of the work is to fetch the relevant data from the neo4j core api
 and import it into our model. Fortunately we can use a multithreading approach to fill
 the Graph. This is part of current development.
+
+The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
+for creating the Graph using the core api.
 
 [ditaa]
 ----
@@ -122,21 +125,22 @@ the Graph. This is part of current development.
                     |   |                                   |     |
                     |   |                                   |     |
                     |   |                                   |     |
-                 +--+   +---------+                   +-----+     +--+
-                 |                |                   |              |
-          +------+------+  +------+------+     +------+-----+ +------+-----+
-          | HeavyLoader |  |  LighLoader |     | HeavyGraph | | LightGraph |
-          +-------------+  +-------------+     +------------+ +------------+
+                +---+   +--------+                   +------+     +--+
+                |                |                   |               |
+        +-------+------+  +------+-------+    +------+-----+  +------+-----+
+        | HeavyFactory |  | LightFactory |    | HeavyGraph |  | LightGraph |
+        +--------------+  +--------------+    +------------+  +------------+
 
 ----
 
-Loading the Graph is done by using a simple Builder Pattern.
+Loading the Graph is done by using the GraphLoader which implements a simple fluent Builder Pattern.
 
 ----
 final Graph graph = new GraphLoader( graphDatabaseAPI )
         .setLabel( .. )
         .setRelation( .. )
         .setProperty( .. )
+        .setThreadPool( .. )
         .load( FactoryImpl.class );
 ----
 
