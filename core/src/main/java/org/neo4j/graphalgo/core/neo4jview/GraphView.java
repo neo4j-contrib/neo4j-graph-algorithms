@@ -20,6 +20,8 @@ import java.util.Iterator;
 import java.util.function.IntConsumer;
 
 /**
+ * A Graph implemented as View on Neo4j Kernel API
+ *
  * @author mknobloch
  */
 public class GraphView implements Graph, AutoCloseable {

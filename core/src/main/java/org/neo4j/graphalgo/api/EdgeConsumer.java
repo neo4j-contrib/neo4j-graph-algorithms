@@ -2,9 +2,14 @@ package org.neo4j.graphalgo.api;
 
 /**
  * @author mknblch
- *         added 02.03.2017.
  */
 public interface EdgeConsumer {
 
+    /**
+     * Called for every Edge that matches a given relation-constraint
+     * @param sourceVertexId mapped source node id
+     * @param targetVertexId mapped target node id
+     * @param edgeId original relation/edge-id
+     */
     void accept(int sourceVertexId, int targetVertexId, long edgeId);
 }

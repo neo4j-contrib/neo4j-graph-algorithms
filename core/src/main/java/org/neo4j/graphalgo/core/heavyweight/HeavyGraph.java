@@ -20,7 +20,6 @@ import java.util.function.IntConsumer;
  *  
  * Cons:
  *  - has a higher memory consumption // TODO evaluate
- *  - grows it's matrix dynamically by 1 // TODO replace array growing if degree is known
  *
  * @author mknblch
  */

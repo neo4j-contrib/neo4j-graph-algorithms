@@ -23,11 +23,29 @@ class AdjacencyMatrix {
     private static final int[] EMPTY_INTS = new int[0];
     private static final long[] EMPTY_LONGS = new long[0];
 
+    /**
+     * mapping from nodeId to outgoing degree
+     */
     final int[] outOffsets;
+    /**
+     * mapping from nodeId to incoming degree
+     */
     final int[] inOffsets;
+    /**
+     * matrix nodeId x [outgoing edge-ids..]
+     */
     final int[][] outgoing;
+    /**
+     * matrix nodeId x [incoming edge-ids..]
+     */
     final int[][] incoming;
+    /**
+     * matrix nodeId x [outgoing relation-ids..]
+     */
     final long[][] outgoingIds;
+    /**
+     * matrix nodeId x [incoming relation-ids..]
+     */
     final long[][] incomingIds;
 
     AdjacencyMatrix(int nodeCount) {
@@ -58,21 +76,25 @@ class AdjacencyMatrix {
         this.incomingIds = incomingIds;
     }
 
+    /**
+     * initialize array for outgoing connections
+     */
     public void armOut(int sourceVertexId, int degree) {
         outgoing[sourceVertexId] = new int[degree];
         outgoingIds[sourceVertexId] = new long[degree];
     }
 
+    /**
+     * initialize array fro incoming connections
+     */
     public void armIn(int targetVertexId, int degree) {
         incoming[targetVertexId] = new int[degree];
         incomingIds[targetVertexId] = new long[degree];
     }
 
-//    public void add(int sourceVertexId, int targetVertexId, long edgeId) {
-//        addOutgoing(sourceVertexId, targetVertexId, edgeId);
-//        addIncoming(targetVertexId, sourceVertexId, edgeId);
-//    }
-
+    /**
+     * add outgoing edge
+     */
     public void addOutgoing(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = outOffsets[sourceVertexId];
         final int nextDegree = degree + 1;
@@ -82,6 +104,9 @@ class AdjacencyMatrix {
         outOffsets[sourceVertexId] = nextDegree;
     }
 
+    /**
+     * add incoming edge
+     */
     public void addIncoming(int sourceVertexId, int targetVertexId, long edgeId) {
         final int degree = inOffsets[targetVertexId];
         final int nextDegree = degree + 1;
@@ -91,6 +116,9 @@ class AdjacencyMatrix {
         inOffsets[targetVertexId] = nextDegree;
     }
 
+    /**
+     * get the degree for vertex / direction
+     */
     public int degree(int vertexId, Direction direction) {
         switch (direction) {
             case OUTGOING: {
@@ -105,6 +133,9 @@ class AdjacencyMatrix {
         }
     }
 
+    /**
+     * return an iterator for unweighted edges
+     */
     public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
         switch (direction) {
             case OUTGOING:
@@ -117,6 +148,9 @@ class AdjacencyMatrix {
 
     }
 
+    /**
+     * return an iterator for weighted edges
+     */
     public Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, WeightMapping weights, Direction direction) {
         switch (direction) {
             case OUTGOING:
@@ -129,6 +163,9 @@ class AdjacencyMatrix {
 
     }
 
+    /**
+     * iterate over each edge at the given vertex using an unweighted consumer
+     */
     public void forEach(int vertexId, Direction direction, EdgeConsumer consumer) {
         switch (direction) {
             case OUTGOING:
@@ -144,6 +181,9 @@ class AdjacencyMatrix {
         }
     }
 
+    /**
+     * iterate over each edge at the given vertex using a weighted consumer
+     */
     public void forEach(int vertexId, Direction direction, WeightMapping weights, WeightedEdgeConsumer consumer) {
         switch (direction) {
             case OUTGOING:
