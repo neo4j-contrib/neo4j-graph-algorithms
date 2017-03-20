@@ -41,7 +41,7 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-io</artifactId>
             <version>${neo4j.version}</version>
-            <scope>compile</scope>
+            <scope>test</scope>
             <type>test-jar</type>
         </dependency>
 
@@ -62,7 +62,7 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
             <version>3.1.1</version>
-            <scope>compile</scope>
+            <scope>test</scope>
             <type>test-jar</type>
         </dependency>
 
@@ -70,39 +70,28 @@
             <groupId>org.neo4j</groupId>
             <artifactId>procedure-compiler</artifactId>
             <version>${neo4j.version}</version>
-            <scope>compile</scope>
+            <scope>test</scope>
             <optional>true</optional>
         </dependency>
 
-        <dependency>
+<!--        <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-cypher</artifactId>
             <version>${neo4j.version}</version>
         </dependency>
+-->
 
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-primitive-collections</artifactId>
             <version>${neo4j.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -220,7 +209,7 @@
                             <finalName>test-assembly</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.neo4j.graphalgo.extra.LargeishPageRanker</mainClass>
+                                    <mainClass>org.neo4j.graphalgo.LargeishPageRanker</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>

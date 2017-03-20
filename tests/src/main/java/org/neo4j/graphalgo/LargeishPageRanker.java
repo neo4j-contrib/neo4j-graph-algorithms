@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.extra;
+package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.core.FileLoaders;
 import org.neo4j.graphalgo.api.Graph;

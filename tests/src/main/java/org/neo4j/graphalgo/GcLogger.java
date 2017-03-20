@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.extra;
+package org.neo4j.graphalgo;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
