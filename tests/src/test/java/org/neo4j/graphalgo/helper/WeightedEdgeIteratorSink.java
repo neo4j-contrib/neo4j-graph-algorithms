@@ -1,4 +1,4 @@
-package de.avgl.graphtest.tests.helper;
+package org.neo4j.graphalgo.helper;
 
 
 import org.neo4j.graphalgo.api.WeightedEdgeConsumer;

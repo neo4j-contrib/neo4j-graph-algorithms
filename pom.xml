@@ -10,35 +10,19 @@
     <name>Neo4j Graph Algorithms</name>
 
     <profiles>
-
-        <profile>
-            <id>Core</id>
-            <modules>
-                <module>core</module>
-            </modules>
-        </profile>
-
-        <profile>
-            <id>Algo</id>
-            <modules>
-                <module>algo</module>
-            </modules>
-        </profile>
-
         <profile>
             <id>Benchmark</id>
             <modules>
                 <module>benchmark</module>
             </modules>
         </profile>
-
-        <profile>
-            <id>Tests</id>
-            <modules>
-                <module>tests</module>
-            </modules>
-        </profile>
     </profiles>
+
+    <modules>
+        <module>core</module>
+        <module>algo</module>
+        <module>tests</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

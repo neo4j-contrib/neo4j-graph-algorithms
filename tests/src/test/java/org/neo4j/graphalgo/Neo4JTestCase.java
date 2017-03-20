@@ -1,4 +1,4 @@
-package de.avgl.graphtest.tests;
+package org.neo4j.graphalgo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

@@ -1,4 +1,4 @@
-package de.avgl.graphtest.tests.extra;
+package org.neo4j.graphalgo.extra;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;

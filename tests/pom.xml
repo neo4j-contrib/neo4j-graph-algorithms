@@ -9,20 +9,33 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>graph-algrotihms-tests</artifactId>
+    <artifactId>graph-algorithms-tests</artifactId>
 
     <name>Neo4j Graph Algorithms :: Tests</name>
 
     <properties>
+        <graph-algorithms-project.version>3.1.0-SNAPSHOT</graph-algorithms-project.version>
+
         <logback.version>1.0.13</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <junit.version>4.12</junit.version>
         <neo4j.version>3.1.1</neo4j.version>
         <rr.version>2.5.0</rr.version>
-        <graph-algorithms-project.version>3.1.0-SNAPSHOT</graph-algorithms-project.version>
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>graph-algorithms-algo</artifactId>
+            <version>${graph-algorithms-project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>graph-algorithms-core</artifactId>
+            <version>${graph-algorithms-project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.neo4j</groupId>
@@ -65,18 +78,6 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-cypher</artifactId>
             <version>${neo4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>graph-algorithms-algo</artifactId>
-            <version>${graph-algorithms-project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>graph-algrotihms-core</artifactId>
-            <version>${graph-algorithms-project.version}</version>
         </dependency>
 
         <dependency>
@@ -219,7 +220,7 @@
                             <finalName>test-assembly</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>de.avgl.graphtest.tests.extra.LargeishPageRanker</mainClass>
+                                    <mainClass>org.neo4j.graphalgo.extra.LargeishPageRanker</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>

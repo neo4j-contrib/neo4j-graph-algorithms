@@ -1,4 +1,4 @@
-package de.avgl.graphtest.tests;
+package org.neo4j.graphalgo;
 
 import algo.algo.PageRank;
 import org.junit.*;

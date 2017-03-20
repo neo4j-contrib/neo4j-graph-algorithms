@@ -1,4 +1,4 @@
-package de.avgl.graphtest.tests;
+package org.neo4j.graphalgo;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
