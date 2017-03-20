@@ -1,10 +1,9 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
-import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.graphalgo.api.EdgeConsumer;
-import org.neo4j.graphalgo.api.EdgeCursor;
-import org.neo4j.graphalgo.api.WeightedEdgeConsumer;
-import org.neo4j.graphalgo.api.WeightedEdgeCursor;
+import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.WeightedRelationConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationCursor;
 import org.neo4j.graphalgo.core.WeightMapping;
 import org.neo4j.graphdb.Direction;
 
@@ -32,19 +31,19 @@ class AdjacencyMatrix {
      */
     final int[] inOffsets;
     /**
-     * matrix nodeId x [outgoing edge-ids..]
+     * matrix nodeId x [outgoing edge-relationIds..]
      */
     final int[][] outgoing;
     /**
-     * matrix nodeId x [incoming edge-ids..]
+     * matrix nodeId x [incoming edge-relationIds..]
      */
     final int[][] incoming;
     /**
-     * matrix nodeId x [outgoing relation-ids..]
+     * matrix nodeId x [outgoing relation-relationIds..]
      */
     final long[][] outgoingIds;
     /**
-     * matrix nodeId x [incoming relation-ids..]
+     * matrix nodeId x [incoming relation-relationIds..]
      */
     final long[][] incomingIds;
 
@@ -79,56 +78,56 @@ class AdjacencyMatrix {
     /**
      * initialize array for outgoing connections
      */
-    public void armOut(int sourceVertexId, int degree) {
-        outgoing[sourceVertexId] = new int[degree];
-        outgoingIds[sourceVertexId] = new long[degree];
+    public void armOut(int sourceNodeId, int degree) {
+        outgoing[sourceNodeId] = new int[degree];
+        outgoingIds[sourceNodeId] = new long[degree];
     }
 
     /**
      * initialize array fro incoming connections
      */
-    public void armIn(int targetVertexId, int degree) {
-        incoming[targetVertexId] = new int[degree];
-        incomingIds[targetVertexId] = new long[degree];
+    public void armIn(int targetNodeId, int degree) {
+        incoming[targetNodeId] = new int[degree];
+        incomingIds[targetNodeId] = new long[degree];
     }
 
     /**
-     * add outgoing edge
+     * add outgoing relation
      */
-    public void addOutgoing(int sourceVertexId, int targetVertexId, long edgeId) {
-        final int degree = outOffsets[sourceVertexId];
+    public void addOutgoing(int sourceNodeId, int targetNodeId, long relationId) {
+        final int degree = outOffsets[sourceNodeId];
         final int nextDegree = degree + 1;
 
-        outgoing[sourceVertexId][degree] = targetVertexId;
-        outgoingIds[sourceVertexId][degree] = edgeId;
-        outOffsets[sourceVertexId] = nextDegree;
+        outgoing[sourceNodeId][degree] = targetNodeId;
+        outgoingIds[sourceNodeId][degree] = relationId;
+        outOffsets[sourceNodeId] = nextDegree;
     }
 
     /**
-     * add incoming edge
+     * add incoming relation
      */
-    public void addIncoming(int sourceVertexId, int targetVertexId, long edgeId) {
-        final int degree = inOffsets[targetVertexId];
+    public void addIncoming(int sourceNodeId, int targetNodeId, long relationId) {
+        final int degree = inOffsets[targetNodeId];
         final int nextDegree = degree + 1;
 
-        incoming[targetVertexId][degree] = sourceVertexId;
-        incomingIds[targetVertexId][degree] = edgeId;
-        inOffsets[targetVertexId] = nextDegree;
+        incoming[targetNodeId][degree] = sourceNodeId;
+        incomingIds[targetNodeId][degree] = relationId;
+        inOffsets[targetNodeId] = nextDegree;
     }
 
     /**
-     * get the degree for vertex / direction
+     * get the degree for node / direction
      */
-    public int degree(int vertexId, Direction direction) {
+    public int degree(int nodeId, Direction direction) {
         switch (direction) {
             case OUTGOING: {
-                return outOffsets[vertexId];
+                return outOffsets[nodeId];
             }
             case INCOMING: {
-                return inOffsets[vertexId];
+                return inOffsets[nodeId];
             }
             default: {
-                return inOffsets[vertexId] + outOffsets[vertexId];
+                return inOffsets[nodeId] + outOffsets[nodeId];
             }
         }
     }
@@ -136,12 +135,12 @@ class AdjacencyMatrix {
     /**
      * return an iterator for unweighted edges
      */
-    public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
+    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
         switch (direction) {
             case OUTGOING:
-                return new EdgeIterator(vertexId, outgoing[vertexId], outgoingIds[vertexId], outOffsets[vertexId]);
+                return new RelationIterator(nodeId, outgoing[nodeId], outgoingIds[nodeId], outOffsets[nodeId]);
             case INCOMING:
-                return new EdgeIterator(vertexId, incoming[vertexId], incomingIds[vertexId], inOffsets[vertexId]);
+                return new RelationIterator(nodeId, incoming[nodeId], incomingIds[nodeId], inOffsets[nodeId]);
             default:
                 throw new IllegalArgumentException("Direction " + direction + " not implemented");
         }
@@ -151,12 +150,12 @@ class AdjacencyMatrix {
     /**
      * return an iterator for weighted edges
      */
-    public Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, WeightMapping weights, Direction direction) {
+    public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, WeightMapping weights, Direction direction) {
         switch (direction) {
             case OUTGOING:
-                return new WeightedEdgeIterator(vertexId, outgoing[vertexId], outgoingIds[vertexId], outOffsets[vertexId], weights);
+                return new WeightedRelationIterator(nodeId, outgoing[nodeId], outgoingIds[nodeId], outOffsets[nodeId], weights);
             case INCOMING:
-                return new WeightedEdgeIterator(vertexId, incoming[vertexId], incomingIds[vertexId], inOffsets[vertexId], weights);
+                return new WeightedRelationIterator(nodeId, incoming[nodeId], incomingIds[nodeId], inOffsets[nodeId], weights);
             default:
                 throw new IllegalArgumentException("Direction " + direction + " not implemented");
         }
@@ -164,37 +163,37 @@ class AdjacencyMatrix {
     }
 
     /**
-     * iterate over each edge at the given vertex using an unweighted consumer
+     * iterate over each edge at the given node using an unweighted consumer
      */
-    public void forEach(int vertexId, Direction direction, EdgeConsumer consumer) {
+    public void forEach(int nodeId, Direction direction, RelationConsumer consumer) {
         switch (direction) {
             case OUTGOING:
-                forEachOutgoing(vertexId, consumer);
+                forEachOutgoing(nodeId, consumer);
                 break;
             case INCOMING:
-                forEachIncoming(vertexId, consumer);
+                forEachIncoming(nodeId, consumer);
                 break;
             default:
-                forEachIncoming(vertexId, consumer);
-                forEachOutgoing(vertexId, consumer);
+                forEachIncoming(nodeId, consumer);
+                forEachOutgoing(nodeId, consumer);
                 break;
         }
     }
 
     /**
-     * iterate over each edge at the given vertex using a weighted consumer
+     * iterate over each edge at the given node using a weighted consumer
      */
-    public void forEach(int vertexId, Direction direction, WeightMapping weights, WeightedEdgeConsumer consumer) {
+    public void forEach(int nodeId, Direction direction, WeightMapping weights, WeightedRelationConsumer consumer) {
         switch (direction) {
             case OUTGOING:
-                forEachOutgoing(vertexId, weights, consumer);
+                forEachOutgoing(nodeId, weights, consumer);
                 break;
             case INCOMING:
-                forEachIncoming(vertexId, weights, consumer);
+                forEachIncoming(nodeId, weights, consumer);
                 break;
             default:
-                forEachIncoming(vertexId, weights, consumer);
-                forEachOutgoing(vertexId, weights, consumer);
+                forEachIncoming(nodeId, weights, consumer);
+                forEachOutgoing(nodeId, weights, consumer);
                 break;
         }
     }
@@ -208,102 +207,102 @@ class AdjacencyMatrix {
         System.arraycopy(other.incomingIds, 0, incomingIds, offset, length);
     }
 
-    private void forEachOutgoing(int vertexId, EdgeConsumer consumer) {
-        final int degree = outOffsets[vertexId];
-        final int[] outs = outgoing[vertexId];
-        final long[] outIds = outgoingIds[vertexId];
+    private void forEachOutgoing(int nodeId, RelationConsumer consumer) {
+        final int degree = outOffsets[nodeId];
+        final int[] outs = outgoing[nodeId];
+        final long[] outIds = outgoingIds[nodeId];
         for (int i = 0; i < degree; i++) {
-            consumer.accept(vertexId, outs[i], outIds[i]);
+            consumer.accept(nodeId, outs[i], outIds[i]);
         }
     }
 
-    private void forEachIncoming(int vertexId, EdgeConsumer consumer) {
-        final int degree = inOffsets[vertexId];
-        final int[] ins = incoming[vertexId];
-        final long[] inIds = incomingIds[vertexId];
+    private void forEachIncoming(int nodeId, RelationConsumer consumer) {
+        final int degree = inOffsets[nodeId];
+        final int[] ins = incoming[nodeId];
+        final long[] inIds = incomingIds[nodeId];
         for (int i = 0; i < degree; i++) {
-            consumer.accept(vertexId, ins[i], inIds[i]);
+            consumer.accept(nodeId, ins[i], inIds[i]);
         }
     }
 
-    private void forEachOutgoing(int vertexId, WeightMapping weights, WeightedEdgeConsumer consumer) {
-        final int degree = outOffsets[vertexId];
-        final int[] outs = outgoing[vertexId];
-        final long[] outIds = outgoingIds[vertexId];
+    private void forEachOutgoing(int nodeId, WeightMapping weights, WeightedRelationConsumer consumer) {
+        final int degree = outOffsets[nodeId];
+        final int[] outs = outgoing[nodeId];
+        final long[] outIds = outgoingIds[nodeId];
         for (int i = 0; i < degree; i++) {
-            final long edgeId = outIds[i];
-            consumer.accept(vertexId, outs[i], edgeId, weights.get(edgeId));
+            final long relationId = outIds[i];
+            consumer.accept(nodeId, outs[i], relationId, weights.get(relationId));
         }
     }
 
-    private void forEachIncoming(int vertexId, WeightMapping weights, WeightedEdgeConsumer consumer) {
-        final int degree = inOffsets[vertexId];
-        final int[] ins = incoming[vertexId];
-        final long[] inIds = incomingIds[vertexId];
+    private void forEachIncoming(int nodeId, WeightMapping weights, WeightedRelationConsumer consumer) {
+        final int degree = inOffsets[nodeId];
+        final int[] ins = incoming[nodeId];
+        final long[] inIds = incomingIds[nodeId];
         for (int i = 0; i < degree; i++) {
-            final long edgeId = inIds[i];
-            consumer.accept(vertexId, ins[i], edgeId, weights.get(edgeId));
+            final long relationId = inIds[i];
+            consumer.accept(nodeId, ins[i], relationId, weights.get(relationId));
         }
     }
 
-    private static class EdgeIterator implements Iterator<EdgeCursor> {
+    private static class RelationIterator implements Iterator<RelationCursor> {
 
-        private final EdgeCursor cursor;
-        private final int[] data;
-        private final long[] ids;
-        private final int elements;
+        private final RelationCursor cursor;
+        private final int[] targetNodes;
+        private final long[] relationIds;
+        private final int nodeCount;
         private int offset = 0;
 
-        private EdgeIterator(int vertexId, int[] data, long[] ids, int elements) {
-            this.data = data;
-            this.ids = ids;
-            this.elements = elements;
-            cursor = new EdgeCursor();
-            cursor.sourceVertexId = vertexId;
+        private RelationIterator(int nodeId, int[] targetNodes, long[] originalRelationIds, int nodeCount) {
+            this.targetNodes = targetNodes;
+            this.relationIds = originalRelationIds;
+            this.nodeCount = nodeCount;
+            cursor = new RelationCursor();
+            cursor.sourceNodeId = nodeId;
         }
 
         @Override
         public boolean hasNext() {
-            return offset < elements;
+            return offset < nodeCount;
         }
 
         @Override
-        public EdgeCursor next() {
-            cursor.targetVertexId = data[offset];
-            cursor.edgeId = ids[offset++];
+        public RelationCursor next() {
+            cursor.targetNodeId = targetNodes[offset];
+            cursor.relationId = relationIds[offset++];
             return cursor;
         }
     }
 
-    private static class WeightedEdgeIterator implements Iterator<WeightedEdgeCursor> {
+    private static class WeightedRelationIterator implements Iterator<WeightedRelationCursor> {
 
-        private final WeightedEdgeCursor cursor;
-        private final int[] data;
-        private final long[] ids;
-        private final int elements;
+        private final WeightedRelationCursor cursor;
+        private final int[] targetNodes;
+        private final long[] relationIds;
+        private final int nodeCount;
         private final WeightMapping weights;
         private int offset = 0;
 
-        private WeightedEdgeIterator(int vertexId, int[] data, long[] ids, int elements, WeightMapping weights) {
-            this.data = data;
-            this.ids = ids;
-            this.elements = elements;
+        private WeightedRelationIterator(int nodeId, int[] targetNodes, long[] relationIds, int nodeCount, WeightMapping weights) {
+            this.targetNodes = targetNodes;
+            this.relationIds = relationIds;
+            this.nodeCount = nodeCount;
             this.weights = weights;
-            cursor = new WeightedEdgeCursor();
-            cursor.sourceVertexId = vertexId;
+            cursor = new WeightedRelationCursor();
+            cursor.sourceNodeId = nodeId;
         }
 
         @Override
         public boolean hasNext() {
-            return offset < elements;
+            return offset < nodeCount;
         }
 
         @Override
-        public WeightedEdgeCursor next() {
-            cursor.targetVertexId = data[offset];
-            final long edgeId = ids[offset++];
-            cursor.edgeId = edgeId;
-            cursor.weight = weights.get(edgeId);
+        public WeightedRelationCursor next() {
+            cursor.targetNodeId = targetNodes[offset];
+            final long relationId = relationIds[offset++];
+            cursor.relationId = relationId;
+            cursor.weight = weights.get(relationId);
             return cursor;
         }
     }

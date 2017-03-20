@@ -18,6 +18,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author mknblch
  *         added 23.02.2017.
+ *
+ *         TODO rm in algo
  */
 public abstract class Neo4JTestCase {
 
@@ -35,10 +37,10 @@ public abstract class Neo4JTestCase {
     @AfterClass
     public static void teardown() {
         // calling shutdown takes some 10 seconds or so :(
-        // db.shutdown();
+         db.shutdown();
     }
 
-    public static int newVertex() {
+    public static int newNode() {
         try(Transaction transaction = db.beginTx()) {
             final Node node = db.createNode(Label.label("label"));
             transaction.success();
@@ -47,10 +49,10 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static long newEdge(int sourceVertexId, int targetVertexId) {
+    public static long newRelation(int sourceNodeId, int targetNodeId) {
         try(Transaction transaction = db.beginTx()) {
-            final Node source = db.getNodeById(sourceVertexId);
-            final Node target = db.getNodeById(targetVertexId);
+            final Node source = db.getNodeById(sourceNodeId);
+            final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
                     target,
                     RelationshipType.withName("relation"));
@@ -59,10 +61,10 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static long newEdge(int sourceVertexId, int targetVertexId, double weight) {
+    public static long newRelation(int sourceNodeId, int targetNodeId, double weight) {
         try(Transaction transaction = db.beginTx()) {
-            final Node source = db.getNodeById(sourceVertexId);
-            final Node target = db.getNodeById(targetVertexId);
+            final Node source = db.getNodeById(sourceNodeId);
+            final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
                     target,
                     RelationshipType.withName("relation"));

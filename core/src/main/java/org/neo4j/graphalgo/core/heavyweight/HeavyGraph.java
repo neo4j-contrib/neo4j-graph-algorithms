@@ -25,71 +25,71 @@ import java.util.function.IntConsumer;
  */
 public class HeavyGraph implements Graph {
 
-    private final IdMap nodeMap;
+    private final IdMap nodeIdMap;
     private final AdjacencyMatrix container;
     private final WeightMapping weights;
 
-    public HeavyGraph(
-            IdMap nodeMap,
+    HeavyGraph(
+            IdMap nodeIdMap,
             AdjacencyMatrix container,
             final WeightMapping weights) {
-        this.nodeMap = nodeMap;
+        this.nodeIdMap = nodeIdMap;
         this.container = container;
         this.weights = weights;
     }
 
     @Override
-    public int vertexCount() {
-        return nodeMap.size();
+    public int nodeCount() {
+        return nodeIdMap.size();
     }
 
     @Override
-    public void forEachVertex(IntConsumer consumer) {
-        nodeMap.forEach(consumer);
+    public void forEachNode(IntConsumer consumer) {
+        nodeIdMap.forEach(consumer);
     }
 
     @Override
-    public PrimitiveIntIterator vertexIterator() {
-        return nodeMap.iterator();
+    public PrimitiveIntIterator nodeIterator() {
+        return nodeIdMap.iterator();
     }
 
     @Override
-    public int degree(int vertexId, Direction direction) {
-        return container.degree(vertexId, direction);
+    public int degree(int nodeId, Direction direction) {
+        return container.degree(nodeId, direction);
     }
 
     @Override
-    public void forEachEdge(int vertexId, Direction direction, EdgeConsumer consumer) {
-        container.forEach(vertexId, direction, consumer);
+    public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
+        container.forEach(nodeId, direction, consumer);
     }
 
     @Override
-    public void forEachEdge(
-            final int vertexId,
+    public void forEachRelation(
+            final int nodeId,
             final Direction direction,
-            final WeightedEdgeConsumer consumer) {
-        container.forEach(vertexId, direction, weights, consumer);
+            final WeightedRelationConsumer consumer) {
+        container.forEach(nodeId, direction, weights, consumer);
     }
 
     @Override
-    public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
-        return container.edgeIterator(vertexId, direction);
+    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
+        return container.relationIterator(nodeId, direction);
     }
 
     @Override
-    public Iterator<WeightedEdgeCursor> weightedEdgeIterator(
-            final int vertexId, final Direction direction) {
-        return container.weightedEdgeIterator(vertexId, weights, direction);
+    public Iterator<WeightedRelationCursor> weightedRelationIterator(
+            final int nodeId, final Direction direction) {
+        return container.weightedRelationIterator(nodeId, weights, direction);
     }
 
     @Override
-    public int toVertexId(long nodeId) {
-        return nodeMap.get(nodeId);
+    public int toMappedNodeId(long originalNodeId) {
+        return nodeIdMap.get(originalNodeId);
     }
 
     @Override
-    public long toNodeId(int vertexId) {
-        return nodeMap.unmap(vertexId);
+    public long toOriginalNodeId(int mappedNodeId) {
+        return nodeIdMap.unmap(mappedNodeId);
     }
 
     public void serialize(Path outFile) throws IOException {
@@ -101,8 +101,8 @@ public class HeavyGraph implements Graph {
                 container.incoming,
                 container.outgoingIds,
                 container.incomingIds,
-                nodeMap.size(),
-                nodeMap.mappedIds(),
+                nodeIdMap.size(),
+                nodeIdMap.mappedIds(),
                 weights.capacity(),
                 weights.weights()
         );

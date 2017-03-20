@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 
 /**
  * @author mknblch
- *         added 15.03.2017.
  */
 public abstract class GraphFactory {
 

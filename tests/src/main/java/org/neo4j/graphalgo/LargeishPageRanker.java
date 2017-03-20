@@ -190,7 +190,7 @@ public final class LargeishPageRanker {
 
         System.out.printf(
                 "Running PageRank on %d nodes with %d iterations...",
-                graph.vertexCount(),
+                graph.nodeCount(),
                 iterations);
         PageRankKernel pageRankKernel = new PageRankKernel(graph, 0.85);
         long t2 = System.nanoTime();

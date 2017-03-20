@@ -1,8 +1,8 @@
 package org.neo4j.graphalgo.helper;
 
 
-import org.neo4j.graphalgo.api.WeightedEdgeConsumer;
-import org.neo4j.graphalgo.api.WeightedEdgeCursor;
+import org.neo4j.graphalgo.api.WeightedRelationConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationCursor;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknobloch
  */
-public class WeightedEdgeIteratorSink implements WeightedEdgeConsumer {
+public class WeightedRelationIteratorSink implements WeightedRelationConsumer {
 
     public static final int MULTIPLIER = 1000000;
 
@@ -59,37 +59,37 @@ public class WeightedEdgeIteratorSink implements WeightedEdgeConsumer {
     }
     private final Set<E> data = new HashSet<>();
 
-    public WeightedEdgeIteratorSink consume(Iterator<WeightedEdgeCursor> iterator) {
+    public WeightedRelationIteratorSink consume(Iterator<WeightedRelationCursor> iterator) {
 
         while (iterator.hasNext()) {
-            final WeightedEdgeCursor next = iterator.next();
-            data.add(new E(next.sourceVertexId, next.targetVertexId, next.weight));
+            final WeightedRelationCursor next = iterator.next();
+            data.add(new E(next.sourceNodeId, next.targetNodeId, next.weight));
         }
         return this;
     }
 
-    public WeightedEdgeIteratorSink assertContains(int sourceVertexId, int targetVertexId, double weight) {
-        if (!data.contains(new E(sourceVertexId, targetVertexId, weight))) {
-            throw new AssertionError(sourceVertexId + " -> " + targetVertexId + " not element of data " + data);
+    public WeightedRelationIteratorSink assertContains(int sourceNodeId, int targetNodeId, double weight) {
+        if (!data.contains(new E(sourceNodeId, targetNodeId, weight))) {
+            throw new AssertionError(sourceNodeId + " -> " + targetNodeId + " not element of data " + data);
         }
         return this;
     }
 
 
-    public WeightedEdgeIteratorSink reset() {
+    public WeightedRelationIteratorSink reset() {
         data.clear();
         return this;
     }
 
 
-    public WeightedEdgeIteratorSink assertSize(int expected) {
+    public WeightedRelationIteratorSink assertSize(int expected) {
         assertEquals(data.toString(), expected, data.size());
         return this;
     }
 
     @Override
-    public void accept(int sourceVertexId, int targetVertexId, long edgeId, double weight) {
-        data.add(new E(sourceVertexId, targetVertexId, weight));
+    public void accept(int sourceNodeId, int targetNodeId, long relationId, double weight) {
+        data.add(new E(sourceNodeId, targetNodeId, weight));
     }
 
 }

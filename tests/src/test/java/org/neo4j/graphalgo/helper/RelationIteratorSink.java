@@ -1,8 +1,8 @@
 package org.neo4j.graphalgo.helper;
 
 
-import org.neo4j.graphalgo.api.EdgeConsumer;
-import org.neo4j.graphalgo.api.EdgeCursor;
+import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.RelationCursor;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknobloch
  */
-public class EdgeIteratorSink implements EdgeConsumer {
+public class RelationIteratorSink implements RelationConsumer {
 
     private static class E {
 
@@ -53,37 +53,37 @@ public class EdgeIteratorSink implements EdgeConsumer {
     }
     private final Set<E> data = new HashSet<>();
 
-    public EdgeIteratorSink consume(Iterator<EdgeCursor> iterator) {
+    public RelationIteratorSink consume(Iterator<RelationCursor> iterator) {
 
         while (iterator.hasNext()) {
-            final EdgeCursor next = iterator.next();
-            data.add(new E(next.sourceVertexId, next.targetVertexId));
+            final RelationCursor next = iterator.next();
+            data.add(new E(next.sourceNodeId, next.targetNodeId));
         }
         return this;
     }
 
-    public EdgeIteratorSink assertContains(int sourceVertexId, int targetVertexId) {
-        if (!data.contains(new E(sourceVertexId, targetVertexId))) {
-            throw new AssertionError(sourceVertexId + " -> " + targetVertexId + " not element of data " + data);
+    public RelationIteratorSink assertContains(int sourceNodeId, int targetNodeId) {
+        if (!data.contains(new E(sourceNodeId, targetNodeId))) {
+            throw new AssertionError(sourceNodeId + " -> " + targetNodeId + " not element of data " + data);
         }
         return this;
     }
 
 
-    public EdgeIteratorSink reset() {
+    public RelationIteratorSink reset() {
         data.clear();
         return this;
     }
 
 
-    public EdgeIteratorSink assertSize(int expected) {
+    public RelationIteratorSink assertSize(int expected) {
         assertEquals(data.toString(), expected, data.size());
         return this;
     }
 
     @Override
-    public void accept(int sourceVertexId, int targetVertexId, long edgeId) {
-        data.add(new E(sourceVertexId, targetVertexId));
+    public void accept(int sourceNodeId, int targetNodeId, long relationId) {
+        data.add(new E(sourceNodeId, targetNodeId));
     }
 
 

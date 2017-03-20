@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 
-import org.neo4j.graphalgo.api.WeightedEdgeCursor;
+import org.neo4j.graphalgo.api.WeightedRelationCursor;
 import org.neo4j.graphalgo.core.WeightMapping;
 
 import java.util.Iterator;
@@ -9,25 +9,25 @@ import java.util.Iterator;
 /**
  * @author phorn@avantgarde-labs.de
  */
-class WeightedEdgeIteratorImpl implements Iterator<WeightedEdgeCursor> {
+class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
 
-    private final WeightedEdgeCursor cursor = new WeightedEdgeCursor();
+    private final WeightedRelationCursor cursor = new WeightedRelationCursor();
     private final IntArray.Cursor adjCursor;
     private final WeightMapping weightMapping;
 
-    private long edgeId;
+    private long relationId;
 
     private int[] array;
     private int pos;
     private int limit;
 
-    WeightedEdgeIteratorImpl(
-        int sourceVertexId,
+    WeightedRelationIteratorImpl(
+        int sourceNodeId,
         long offset,
         long length,
         WeightMapping weightMapping,
         IntArray adjacency) {
-        this(sourceVertexId,
+        this(sourceNodeId,
                 offset,
                 length,
                 weightMapping,
@@ -35,16 +35,16 @@ class WeightedEdgeIteratorImpl implements Iterator<WeightedEdgeCursor> {
                 adjacency.newCursor());
     }
 
-    WeightedEdgeIteratorImpl(
-            int sourceVertexId,
+    WeightedRelationIteratorImpl(
+            int sourceNodeId,
             long offset,
             long length,
             WeightMapping weightMapping,
             IntArray adjacency,
             IntArray.Cursor adjCursor) {
         this.weightMapping = weightMapping;
-        edgeId = offset;
-        cursor.sourceVertexId = sourceVertexId;
+        relationId = offset;
+        cursor.sourceNodeId = sourceNodeId;
         this.adjCursor = adjacency.cursor(offset, length, adjCursor);
         nextPage();
     }
@@ -55,10 +55,10 @@ class WeightedEdgeIteratorImpl implements Iterator<WeightedEdgeCursor> {
     }
 
     @Override
-    public WeightedEdgeCursor next() {
-        cursor.weight = weightMapping.get(edgeId);
-        cursor.edgeId = edgeId++;
-        cursor.targetVertexId = array[pos++];
+    public WeightedRelationCursor next() {
+        cursor.weight = weightMapping.get(relationId);
+        cursor.relationId = relationId++;
+        cursor.targetNodeId = array[pos++];
         return cursor;
     }
 

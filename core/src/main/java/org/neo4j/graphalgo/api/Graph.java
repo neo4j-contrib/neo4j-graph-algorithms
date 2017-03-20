@@ -15,46 +15,46 @@ public interface Graph {
     /**
      * return the count of vertices in the graph
      */
-    int vertexCount();
+    int nodeCount();
 
     /**
-     * Calls consumer for each vertex id
+     * Calls consumer for each node id
      */
-    void forEachVertex(IntConsumer consumer);
+    void forEachNode(IntConsumer consumer);
 
     /**
-     * Returns an Iterator on vertex ids;
+     * Returns an Iterator on node ids;
      */
-    PrimitiveIntIterator vertexIterator();
+    PrimitiveIntIterator nodeIterator();
 
     /**
-     * Return the degree for the given vertex / direction
+     * Return the degree for the given node / direction
      */
-    int degree(int vertexId, Direction direction);
+    int degree(int nodeId, Direction direction);
 
-    void forEachEdge(int vertexId, Direction direction, EdgeConsumer consumer);
+    void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer);
 
     /**
-     * Iterates over each edge of the given vertex / direction
+     * Iterates over each edge of the given node / direction
      */
-    Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction);
+    Iterator<RelationCursor> relationIterator(int nodeId, Direction direction);
 
-    void forEachEdge(int vertexId, Direction direction, WeightedEdgeConsumer consumer);
+    void forEachRelation(int nodeId, Direction direction, WeightedRelationConsumer consumer);
 
     /**
-     * Iterates over each edge of the given vertex / direction.
+     * Iterates over each edge of the given node / direction.
      */
-    Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, Direction direction);
+    Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, Direction direction);
 
     /**
-     * Map node id to vertex id
+     * Map node id to node id
      */
-    int toVertexId(long nodeId);
+    int toMappedNodeId(long nodeId);
 
     /**
-     * Map vertex id back to original node id
-     * @param vertexId
+     * Map node id back to original node id
+     * @param nodeId
      * @return
      */
-    long toNodeId(int vertexId);
+    long toOriginalNodeId(int nodeId);
 }

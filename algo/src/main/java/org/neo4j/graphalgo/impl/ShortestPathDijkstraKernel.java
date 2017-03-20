@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayDeque;
-import org.neo4j.graphalgo.api.WeightedEdgeConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationConsumer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -21,7 +21,7 @@ public class ShortestPathDijkstraKernel {
 
     public ShortestPathDijkstraKernel(Graph graph) {
         this.graph = graph;
-        int nodeCount = graph.vertexCount();
+        int nodeCount = graph.nodeCount();
         costs = new double[nodeCount];
         queue = new IntMinPriorityQueue();
         path = new int[nodeCount];
@@ -35,8 +35,8 @@ public class ShortestPathDijkstraKernel {
         visited.clear();
         queue.clear();
 
-        int node = graph.toVertexId(startNode);
-        int goal = graph.toVertexId(goalNode);
+        int node = graph.toMappedNodeId(startNode);
+        int goal = graph.toMappedNodeId(goalNode);
         costs[node] = 0;
         queue.add(node, 0);
         run(goal);
@@ -60,10 +60,10 @@ public class ShortestPathDijkstraKernel {
             }
             visited.set(node);
             double costs = this.costs[node];
-            graph.forEachEdge(
+            graph.forEachRelation(
                 node,
                 Direction.OUTGOING,
-                    (WeightedEdgeConsumer)(source, target, weight, edge) -> {
+                    (WeightedRelationConsumer)(source, target, weight, edge) -> {
                     final double targetCost = updateCosts(source, target, weight, costs);
                     if (!visited.get(target)) {
                         queue.add(target, targetCost);

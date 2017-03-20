@@ -30,7 +30,7 @@ public class GraphView implements Graph, AutoCloseable {
     private final Statement statement;
     private final ReadOperations read;
 
-    private final int vertexCount;
+    private final int nodeCount;
     private final int propertyKey;
     private final int labelId;
 
@@ -41,15 +41,14 @@ public class GraphView implements Graph, AutoCloseable {
                 .get();
         read = statement.readOperations();
         labelId = read.labelGetForName(label);
-//        vertexCount = Math.toIntExact(read.countsForNode(labelId));
-        vertexCount = Math.toIntExact(read.nodesGetCount());
+        nodeCount = Math.toIntExact(read.nodesGetCount());
         propertyKey = read.propertyKeyGetForName(propertyName);
     }
 
     @Override
-    public void forEachEdge(int vertexId, Direction direction, EdgeConsumer consumer) {
-        final long nodeId = toNodeId(vertexId);
-        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(nodeId)) {
+    public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
+        final long originalNodeId = toOriginalNodeId(nodeId);
+        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
             while (nodeItemCursor.next()) {
                 try (Cursor<RelationshipItem> relationships = nodeItemCursor
                         .get()
@@ -57,7 +56,7 @@ public class GraphView implements Graph, AutoCloseable {
 
                     while (relationships.next()) {
                         final RelationshipItem item = relationships.get();
-                        consumer.accept(vertexId, toVertexId(item.otherNode(nodeId)), item.id());
+                        consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
                     }
                 }
             }
@@ -65,19 +64,19 @@ public class GraphView implements Graph, AutoCloseable {
     }
 
     @Override
-    public void forEachEdge(int vertexId, Direction direction, WeightedEdgeConsumer consumer) {
+    public void forEachRelation(int nodeId, Direction direction, WeightedRelationConsumer consumer) {
         try {
-            final RelationshipIterator iterator = read.nodeGetRelationships(vertexId, direction);
+            final RelationshipIterator iterator = read.nodeGetRelationships(nodeId, direction);
             while (iterator.hasNext()) {
-                final long edgeId = iterator.next();
-                final Cursor<RelationshipItem> relationshipItemCursor = read.relationshipCursor(edgeId);
+                final long relationId = iterator.next();
+                final Cursor<RelationshipItem> relationshipItemCursor = read.relationshipCursor(relationId);
                 relationshipItemCursor.next();
                 final RelationshipItem item = relationshipItemCursor.get();
                 consumer.accept(
-                        vertexId,
-                        toVertexId(item.otherNode(vertexId)),
-                        edgeId,
-                        (double) read.relationshipGetProperty(edgeId, propertyKey)
+                        nodeId,
+                        toMappedNodeId(item.otherNode(nodeId)),
+                        relationId,
+                        (double) read.relationshipGetProperty(relationId, propertyKey)
                 );
             }
         } catch (EntityNotFoundException e) {
@@ -86,70 +85,70 @@ public class GraphView implements Graph, AutoCloseable {
     }
 
     @Override
-    public Iterator<WeightedEdgeCursor> weightedEdgeIterator(int vertexId, Direction direction) {
+    public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, Direction direction) {
         try {
-            return new WeightedEdgeIterator(vertexId, read, read.nodeGetRelationships(toNodeId(vertexId), direction), propertyKey);
+            return new WeightedRelationIteratorImpl(nodeId, read, read.nodeGetRelationships(toOriginalNodeId(nodeId), direction), propertyKey);
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public int vertexCount() {
-        return vertexCount;
+    public int nodeCount() {
+        return nodeCount;
     }
 
     @Override
-    public void forEachVertex(IntConsumer consumer) {
+    public void forEachNode(IntConsumer consumer) {
         if (labelId == StatementConstants.NO_SUCH_LABEL) {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
                 while (nodeItemCursor.next()) {
-                    consumer.accept(toVertexId(nodeItemCursor.get().id()));
+                    consumer.accept(toMappedNodeId(nodeItemCursor.get().id()));
                 }
             }
         } else {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
                 while (nodeItemCursor.next()) {
-                    consumer.accept(toVertexId(nodeItemCursor.get().id()));
+                    consumer.accept(toMappedNodeId(nodeItemCursor.get().id()));
                 }
             }
         }
     }
 
     @Override
-    public PrimitiveIntIterator vertexIterator() {
+    public PrimitiveIntIterator nodeIterator() {
         if (labelId == StatementConstants.NO_SUCH_LABEL) {
-            return new VertexIterator(this, read.nodesGetAll());
+            return new NodeIterator(this, read.nodesGetAll());
         }
-        return new VertexIterator(this, read.nodesGetForLabel(labelId));
+        return new NodeIterator(this, read.nodesGetForLabel(labelId));
     }
 
     @Override
-    public int degree(int vertexId, Direction direction) {
+    public int degree(int nodeId, Direction direction) {
         try {
-            return read.nodeGetDegree(toNodeId(vertexId), direction);
+            return read.nodeGetDegree(toOriginalNodeId(nodeId), direction);
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Iterator<EdgeCursor> edgeIterator(int vertexId, Direction direction) {
+    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
         try {
-            return new EdgeIterator(vertexId, read, read.nodeGetRelationships(toNodeId(vertexId), direction));
+            return new RelationIteratorImpl(nodeId, read, read.nodeGetRelationships(toOriginalNodeId(nodeId), direction));
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public int toVertexId(long nodeId) {
+    public int toMappedNodeId(long nodeId) {
         return Math.toIntExact(nodeId);
     }
 
     @Override
-    public long toNodeId(int vertexId) {
-        return vertexId;
+    public long toOriginalNodeId(int nodeId) {
+        return nodeId;
     }
 
     @Override
@@ -159,12 +158,12 @@ public class GraphView implements Graph, AutoCloseable {
         transaction.close();
     }
 
-    private static class VertexIterator implements PrimitiveIntIterator {
+    private static class NodeIterator implements PrimitiveIntIterator {
 
         private final Graph graph;
         private final PrimitiveLongIterator iterator;
 
-        private VertexIterator(Graph graph, PrimitiveLongIterator iterator) {
+        private NodeIterator(Graph graph, PrimitiveLongIterator iterator) {
             this.graph = graph;
             this.iterator = iterator;
         }
@@ -176,7 +175,7 @@ public class GraphView implements Graph, AutoCloseable {
 
         @Override
         public int next() {
-            return graph.toVertexId(iterator.next());
+            return graph.toMappedNodeId(iterator.next());
         }
     }
 }

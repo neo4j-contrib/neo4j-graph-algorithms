@@ -35,8 +35,6 @@ public class HeavyGraphFactory extends GraphFactory {
     private final ExecutorService threadPool;
     private int labelId;
     private int relationId;
-    private int relationCount;
-    private int weightId;
     private int nodeCount;
 
     public HeavyGraphFactory(
@@ -51,8 +49,6 @@ public class HeavyGraphFactory extends GraphFactory {
             labelId = readOp.labelGetForName(label);
             relationId = readOp.relationshipTypeGetForName(relation);
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
-            relationCount = Math.toIntExact(readOp.relationshipsGetCount());
-            weightId = readOp.propertyKeyGetForName(property);
         });
     }
 
@@ -104,34 +100,34 @@ public class HeavyGraphFactory extends GraphFactory {
             LongToIntFunction idMap,
             int idOffset,
             AdjacencyMatrix matrix) {
-        final long nodeId = node.id();
-        final int vertexId = idMap.applyAsInt(nodeId) - idOffset;
+        final long originalNodeId = node.id();
+        final int nodeId = idMap.applyAsInt(originalNodeId) - idOffset;
         final int outDegree = node.degree(Direction.OUTGOING);
         final int inDegree = node.degree(Direction.INCOMING);
 
-        matrix.armOut(vertexId, outDegree);
+        matrix.armOut(nodeId, outDegree);
         try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING)) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
-                final long targetNodeId = rel.endNode();
-                final int targetVertexId = idMap.applyAsInt(targetNodeId);
-                final long edgeId = rel.id();
+                final long endNode = rel.endNode();
+                final int targetNodeId = idMap.applyAsInt(endNode);
+                final long relationId = rel.id();
                 //                try (Cursor<PropertyItem> weights = rel.property(weightPropId)) {
                 //                    while (weights.next()) {
-                //                        weightMapping.add(edgeId, weights.get().value());
+                //                        weightMapping.add(relationId, weights.get().value());
                 //                    }
                 //                }
-                matrix.addOutgoing(vertexId, targetVertexId, edgeId);
+                matrix.addOutgoing(nodeId, targetNodeId, relationId);
             }
         }
-        matrix.armIn(vertexId, inDegree);
+        matrix.armIn(nodeId, inDegree);
         try (Cursor<RelationshipItem> rels = node.relationships(Direction.INCOMING)) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
-                final long targetNodeId = rel.startNode();
-                final int targetVertexId = idMap.applyAsInt(targetNodeId);
-                final long edgeId = rel.id();
-                matrix.addIncoming(targetVertexId, vertexId, edgeId);
+                final long startNode = rel.startNode();
+                final int targetNodeId = idMap.applyAsInt(startNode);
+                final long relationId = rel.id();
+                matrix.addIncoming(targetNodeId, nodeId, relationId);
             }
         }
     }

@@ -7,12 +7,12 @@ import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 import java.util.function.IntConsumer;
 
 /**
- * This is basically a mapper between (long) node-ids and its according (int) vertex id. It
- * sorts the id's in ascending order so its guaranteed that there is no ID greater then nextGraphId / capacity
+ * This is basically a long to int mapper. It sorts the id's in ascending order so its
+ * guaranteed that there is no ID greater then nextGraphId / capacity
  */
 public final class IdMap {
 
-    private final GraphIdIterator iter;
+    private final IdIterator iter;
     private int nextGraphId;
     private long[] graphIds;
     private PrimitiveLongIntMap nodeToGraphIds;
@@ -23,7 +23,7 @@ public final class IdMap {
     public IdMap(final int capacity) {
         graphIds = new long[capacity];
         nodeToGraphIds = Primitive.longIntMap(capacity);
-        iter = new GraphIdIterator();
+        iter = new IdIterator();
     }
 
     /**
@@ -35,7 +35,7 @@ public final class IdMap {
         this.nextGraphId = graphIds.length;
         this.graphIds = graphIds;
         this.nodeToGraphIds = nodeToGraphIds;
-        iter = new GraphIdIterator();
+        iter = new IdIterator();
     }
 
     public PrimitiveIntIterator iterator() {
@@ -90,7 +90,7 @@ public final class IdMap {
         }
     }
 
-    private static final class GraphIdIterator implements PrimitiveIntIterator {
+    private static final class IdIterator implements PrimitiveIntIterator {
 
         private int current;
         private int limit;

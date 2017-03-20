@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo;
+package org.neo4j.graphalgo.core.utils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,20 +21,16 @@ public class SimpleTimer {
         return this;
     }
 
-    public void dump() {
+    public void print() {
         if (null == message) {
-            System.out.printf("measurement took %dms%n", duration);
+            System.out.printf("measurement took %d ms%n", duration);
         } else {
-            System.out.printf("%s took %dms%n", message, duration);
+            System.out.printf("%s took %d ms%n", message, duration);
         }
     }
 
     public long getDuration() {
         return duration;
-    }
-
-    public static SimpleTimer start() {
-        return new SimpleTimer(null);
     }
 
     public static SimpleTimer start(String message) {

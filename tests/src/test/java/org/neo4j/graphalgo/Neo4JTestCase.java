@@ -33,10 +33,10 @@ public abstract class Neo4JTestCase {
     @AfterClass
     public static void teardown() {
         // calling shutdown takes some 10 seconds or so :(
-        // db.shutdown();
+         db.shutdown();
     }
 
-    public static int newVertex() {
+    public static int newNode() {
         try(Transaction transaction = db.beginTx()) {
             final Node node = db.createNode(Label.label(LABEL));
             transaction.success();
@@ -45,10 +45,10 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static long newEdge(int sourceVertexId, int targetVertexId) {
+    public static long newRelation(int sourceNodeId, int targetNodeId) {
         try(Transaction transaction = db.beginTx()) {
-            final Node source = db.getNodeById(sourceVertexId);
-            final Node target = db.getNodeById(targetVertexId);
+            final Node source = db.getNodeById(sourceNodeId);
+            final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
                     target,
                     RelationshipType.withName(RELATION));
@@ -57,10 +57,10 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static long newEdge(int sourceVertexId, int targetVertexId, double weight) {
+    public static long newRelation(int sourceNodeId, int targetNodeId, double weight) {
         try(Transaction transaction = db.beginTx()) {
-            final Node source = db.getNodeById(sourceVertexId);
-            final Node target = db.getNodeById(targetVertexId);
+            final Node source = db.getNodeById(sourceNodeId);
+            final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
                     target,
                     RelationshipType.withName(RELATION));
@@ -79,7 +79,7 @@ public abstract class Neo4JTestCase {
     }
 
     public static Graph neo4jView() {
-        return new GraphView((GraphDatabaseAPI) db, LABEL, WEIGHT_PROPERTY); // TODO
+        return new GraphView((GraphDatabaseAPI) db, LABEL, WEIGHT_PROPERTY);
     }
 
     public static Graph heavyGraph() {

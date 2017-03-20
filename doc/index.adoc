@@ -18,7 +18,7 @@ int vertexCount()::
     Return the count of vertices in the graph
 
 
-void forEachVertex(IntConsumer)::
+void forEachNode(IntConsumer)::
 
     Calls consumer for each vertex id
 
@@ -44,18 +44,13 @@ Iterator<WeightedEdgeCursor> weightedEdgeIterator(int, Direction)::
 
     Iterates over each edge of the given vertex / direction.
 
-int toVertexId(long)::
+int toNodeId(long)::
 
      Map node id to vertex id
 
 long toNodeId(int)::
 
       Map vertex id back to it's original node id
-
-
-[NOTE]
-For better distinction between the Neo4j API and the Algorithm API we use the Terms Vertex
-and Edge rather then Node and Relation.
 
 The interface specifies Methods for iterating over all vertices of the
 graph as well as iterating over edges of a given vertex in the form of *forEach(..)*-
@@ -108,7 +103,7 @@ implemented for tests and benchmarks.
 
 == Import
 
-A fair amount of the work is to fetch the relevant data from the neo4j core api
+A fair amount of the work is to fetch the relevant targetNodes from the neo4j core api
 and import it into our model. Fortunately we can use a multithreading approach to fill
 the Graph. This is part of current development.
 

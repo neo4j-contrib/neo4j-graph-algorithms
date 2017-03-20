@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.SimpleTimer;
+import org.neo4j.graphalgo.core.utils.SimpleTimer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -13,7 +13,6 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -55,16 +54,16 @@ public class TestProcedure {
                 .setRelation(relationType)
                 .load(HeavyGraphFactory.class);
 
-        loading.stop().dump();
+        loading.stop().print();
 
         final SimpleTimer evaluation = SimpleTimer.start("evaluation on heavy graph");
 
         final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
 
-        evaluation.stop().dump();
+        evaluation.stop().print();
 
         return IntStream.range(0, ranking.length)
-                .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
+                .mapToObj(index -> new Ranking(graph.toOriginalNodeId(index), ranking[index]));
     }
 
     @Procedure("graphalgo.pagerank.heavyPar")
@@ -83,16 +82,16 @@ public class TestProcedure {
                 .setExecutorService(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
                 .load(HeavyGraphFactory.class);
 
-        loading.stop().dump();
+        loading.stop().print();
 
         final SimpleTimer evaluation = SimpleTimer.start("evaluation on parallel heavy graph");
 
         final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
 
-        evaluation.stop().dump();
+        evaluation.stop().print();
 
         return IntStream.range(0, ranking.length)
-                .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
+                .mapToObj(index -> new Ranking(graph.toOriginalNodeId(index), ranking[index]));
     }
 
     @Procedure("graphalgo.pagerank.light")
@@ -110,16 +109,16 @@ public class TestProcedure {
                 .setRelation(relationType)
                 .load(LightGraphFactory.class);
 
-        loading.stop().dump();
+        loading.stop().print();
 
         final SimpleTimer evaluation = SimpleTimer.start("evaluating light graph");
 
         final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
 
-        evaluation.stop().dump();
+        evaluation.stop().print();
 
         return IntStream.range(0, ranking.length)
-                .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
+                .mapToObj(index -> new Ranking(graph.toOriginalNodeId(index), ranking[index]));
     }
 
     @Procedure("graphalgo.pagerank.view")
@@ -134,9 +133,9 @@ public class TestProcedure {
 
         try(GraphView graph = new GraphView(graphDatabaseAPI, label, relationType)) {
             final double[] ranking = new PageRankKernel(graph, dampingFactor).compute((int) iterations);
-            evaluation.stop().dump();
+            evaluation.stop().print();
             return IntStream.range(0, ranking.length)
-                    .mapToObj(index -> new Ranking(graph.toNodeId(index), ranking[index]));
+                    .mapToObj(index -> new Ranking(graph.toOriginalNodeId(index), ranking[index]));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

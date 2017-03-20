@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.api.EdgeConsumer;
+import org.neo4j.graphalgo.api.RelationConsumer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
 
@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.function.IntConsumer;
 
 
-public class PageRankKernel implements IntConsumer, EdgeConsumer {
+public class PageRankKernel implements IntConsumer, RelationConsumer {
 
     private final double[] pageRank;
 
@@ -21,7 +21,7 @@ public class PageRankKernel implements IntConsumer, EdgeConsumer {
     public PageRankKernel(Graph graph, double dampingFactor) {
         this.graph = graph;
         this.dampingFactor = dampingFactor;
-        int nodeCount = graph.vertexCount();
+        int nodeCount = graph.nodeCount();
         pageRank = new double[nodeCount];
         this.alpha = nodeCount == 0 ? 1.0 - dampingFactor : (1.0 - dampingFactor) / nodeCount;
     }
@@ -32,7 +32,7 @@ public class PageRankKernel implements IntConsumer, EdgeConsumer {
     public double[] compute(int iterations) {
         Arrays.fill(pageRank, 1.0);
         for (int i = 0; i < iterations; i++) {
-            graph.forEachVertex(this);
+            graph.forEachNode(this);
         }
         return pageRank;
     }
@@ -40,14 +40,14 @@ public class PageRankKernel implements IntConsumer, EdgeConsumer {
     @Override
     public void accept(final int node) {
         sum = 0;
-        graph.forEachEdge(node, Direction.INCOMING, this);
+        graph.forEachRelation(node, Direction.INCOMING, this);
         final double value = alpha + dampingFactor * sum;
         pageRank[node] = value;
     }
 
     @Override
-    public void accept(int sourceVertexId, int targetVertexId, long edgeId) {
-        sum += evaluateSubNode(targetVertexId);
+    public void accept(int sourceNodeId, int targetNodeId, long relationId) {
+        sum += evaluateSubNode(targetNodeId);
     }
 
     private double evaluateSubNode(int node) {

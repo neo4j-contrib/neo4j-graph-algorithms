@@ -30,19 +30,19 @@ public class ShortestPathDijkstraKernelTest extends Neo4JTestCase {
     @BeforeClass
     public static void buildTestGraph() {
 
-        v0 = newVertex();
-        v1 = newVertex();
-        v2 = newVertex();
-        v3 = newVertex();
-        v4 = newVertex();
-        v5 = newVertex();
+        v0 = newNode();
+        v1 = newNode();
+        v2 = newNode();
+        v3 = newNode();
+        v4 = newNode();
+        v5 = newNode();
 
-        newEdge(v0, v1, 1.0);
-        newEdge(v1, v2, 1.0);
-        newEdge(v2, v4, 1.0);
+        newRelation(v0, v1, 1.0);
+        newRelation(v1, v2, 1.0);
+        newRelation(v2, v4, 1.0);
 
-        newEdge(v0, v3, 1.0);
-        newEdge(v3, v4, 1.0);
+        newRelation(v0, v3, 1.0);
+        newRelation(v3, v4, 1.0);
     }
 
     @Ignore("BufferAllocationException")
@@ -51,11 +51,11 @@ public class ShortestPathDijkstraKernelTest extends Neo4JTestCase {
 
         Graph graph = lightGraph();
         int[] path = new ShortestPathDijkstraKernel(graph).compute(
-                graph.toVertexId(v0),
-                graph.toVertexId(v4));
+                graph.toMappedNodeId(v0),
+                graph.toMappedNodeId(v4));
 
         for (int i : path) {
-            System.out.println(graph.toNodeId(i));
+            System.out.println(graph.toOriginalNodeId(i));
         }
         LOGGER.info("{}", path);
 //        assertArrayEquals(new int[]{

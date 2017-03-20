@@ -11,61 +11,61 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 public class TestProcedureTest extends Neo4JTestCase {
 
 
-    private static int vertexA;
-    private static int vertexB;
-    private static int vertexC;
-    private static int vertexD;
-    private static int vertexE;
-    private static int vertexF;
-    private static int vertexG;
-    private static int vertexH;
-    private static int vertexI;
-    private static int vertexJ;
-    private static int vertexK;
+    private static int nodeA;
+    private static int nodeB;
+    private static int nodeC;
+    private static int nodeD;
+    private static int nodeE;
+    private static int nodeF;
+    private static int nodeG;
+    private static int nodeH;
+    private static int nodeI;
+    private static int nodeJ;
+    private static int nodeK;
 
     @BeforeClass
     public static void buildTestGraph() throws KernelException {
 
         registerProcedure(TestProcedure.class);
 
-        vertexA = newVertex();
-        vertexB = newVertex();
-        vertexC = newVertex();
-        vertexD = newVertex();
-        vertexE = newVertex();
-        vertexF = newVertex();
-        vertexG = newVertex();
-        vertexH = newVertex();
-        vertexI = newVertex();
-        vertexJ = newVertex();
-        vertexK = newVertex();
+        nodeA = newNode();
+        nodeB = newNode();
+        nodeC = newNode();
+        nodeD = newNode();
+        nodeE = newNode();
+        nodeF = newNode();
+        nodeG = newNode();
+        nodeH = newNode();
+        nodeI = newNode();
+        nodeJ = newNode();
+        nodeK = newNode();
 
-        newEdge(vertexB, vertexC);
+        newRelation(nodeB, nodeC);
 
-        newEdge(vertexC, vertexB);
+        newRelation(nodeC, nodeB);
 
-        newEdge(vertexD, vertexA);
-        newEdge(vertexD, vertexB);
+        newRelation(nodeD, nodeA);
+        newRelation(nodeD, nodeB);
 
-        newEdge(vertexE, vertexB);
-        newEdge(vertexE, vertexD);
-        newEdge(vertexE, vertexF);
+        newRelation(nodeE, nodeB);
+        newRelation(nodeE, nodeD);
+        newRelation(nodeE, nodeF);
 
-        newEdge(vertexF, vertexB);
-        newEdge(vertexF, vertexE);
+        newRelation(nodeF, nodeB);
+        newRelation(nodeF, nodeE);
 
-        newEdge(vertexG, vertexB);
-        newEdge(vertexG, vertexE);
+        newRelation(nodeG, nodeB);
+        newRelation(nodeG, nodeE);
 
-        newEdge(vertexH, vertexB);
-        newEdge(vertexH, vertexE);
+        newRelation(nodeH, nodeB);
+        newRelation(nodeH, nodeE);
 
-        newEdge(vertexI, vertexB);
-        newEdge(vertexI, vertexE);
+        newRelation(nodeI, nodeB);
+        newRelation(nodeI, nodeE);
 
-        newEdge(vertexJ, vertexE);
+        newRelation(nodeJ, nodeE);
 
-        newEdge(vertexK, vertexE);
+        newRelation(nodeK, nodeE);
     }
 
     @Test
