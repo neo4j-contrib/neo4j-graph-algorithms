@@ -34,13 +34,7 @@ public class GraphTest extends Neo4JTestCase {
     private WeightedRelationConsumer weightedRelationConsumer;
 
     @Mock
-    private WeightedRelationSink weightedRelationSink;
-
-    @Mock
     private RelationConsumer relationConsumer;
-
-    @Mock
-    private RelationSink relationSink;
 
     @Mock
     private IntConsumer nodeConsumer;
@@ -56,15 +50,13 @@ public class GraphTest extends Neo4JTestCase {
         newRelation(v0, v2, 2.0);
         newRelation(v1, v2, 3.0);
 
-        graph = neo4jView();
+        graph = heavyGraph();
     }
 
     public void setupMock() {
         Mockito.reset(
                 relationConsumer,
-                relationSink,
                 weightedRelationConsumer,
-                weightedRelationSink,
                 nodeConsumer);
     }
 
@@ -131,81 +123,81 @@ public class GraphTest extends Neo4JTestCase {
 
     @Test
     public void testV0OutgoingIterator() throws Exception {
-        graph.relationIterator(v0, OUTGOING).forEachRemaining(consume(relationSink));
-        verify(relationSink, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationSink, times(1)).accept(eq(v0), eq(v1), anyLong());
-        verify(relationSink, times(1)).accept(eq(v0), eq(v1), anyLong());
+        graph.relationIterator(v0, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
     }
 
     @Test
     public void testV1OutgoingIterator() throws Exception {
-        graph.relationIterator(v1, OUTGOING).forEachRemaining(consume(relationSink));
-        verify(relationSink, times(1)).accept(eq(v1), eq(v2), anyLong());
+        graph.relationIterator(v1, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong());
     }
 
     @Test
     public void testV2OutgoingIterator() throws Exception {
-        graph.relationIterator(v2, OUTGOING).forEachRemaining(consume(relationSink));
-        verify(relationSink, never()).accept(anyInt(), anyInt(), anyLong());
+        graph.relationIterator(v2, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
     }
 
     @Test
     public void testV0IncomingIterator() throws Exception {
-        graph.relationIterator(v0, INCOMING).forEachRemaining(consume(relationSink));
-        verify(relationSink, never()).accept(anyInt(), anyInt(), anyLong());
+        graph.relationIterator(v0, INCOMING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
     }
 
     @Test
     public void testV1IncomingIterator() throws Exception {
-        graph.relationIterator(v1, INCOMING).forEachRemaining(consume(relationSink));
-        verify(relationSink, times(1)).accept(eq(v1), eq(v0), anyLong());
+        graph.relationIterator(v1, INCOMING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong());
     }
 
     @Test
     public void testV2IncomingIterator() throws Exception {
-        graph.relationIterator(v2, INCOMING).forEachRemaining(consume(relationSink));
-        verify(relationSink, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationSink, times(1)).accept(eq(v2), eq(v0), anyLong());
-        verify(relationSink, times(1)).accept(eq(v2), eq(v1), anyLong());
+        graph.relationIterator(v2, INCOMING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong());
     }
 
     @Test
     public void testV0OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v0, OUTGOING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, times(2)).accept(anyInt(), anyInt(), anyLong(), anyDouble());
-        verify(weightedRelationSink, times(1)).accept(eq(v0), eq(v1), anyLong(), eq(1.0));
-        verify(weightedRelationSink, times(1)).accept(eq(v0), eq(v2), anyLong(), eq(2.0));
+        graph.weightedRelationIterator(v0, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong(), anyDouble());
+        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong(), eq(1.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v2), anyLong(), eq(2.0));
     }
 
     @Test
     public void testV1OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v1, OUTGOING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, times(1)).accept(eq(v1), eq(v2), anyLong(), eq(3.0));
+        graph.weightedRelationIterator(v1, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong(), eq(3.0));
     }
 
     @Test
     public void testV2OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v2, OUTGOING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
+        graph.weightedRelationIterator(v2, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
     }
 
     @Test
     public void testV0IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v0, INCOMING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
+        graph.weightedRelationIterator(v0, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
     }
 
     @Test
     public void testV1IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v1, INCOMING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, times(1)).accept(eq(v1), eq(v0), anyLong(), eq(1.0));
+        graph.weightedRelationIterator(v1, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong(), eq(1.0));
     }
 
     @Test
     public void testV2IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v2, INCOMING).forEachRemaining(consume(weightedRelationSink));
-        verify(weightedRelationSink, times(1)).accept(eq(v2), eq(v0), anyLong(), eq(2.0));
-        verify(weightedRelationSink, times(1)).accept(eq(v2), eq(v1), anyLong(), eq(3.0));
+        graph.weightedRelationIterator(v2, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong(), eq(2.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong(), eq(3.0));
     }
 
     @Test
@@ -223,20 +215,13 @@ public class GraphTest extends Neo4JTestCase {
         assertEquals(2, graph.degree(v2, INCOMING));
     }
 
-    private Consumer<RelationCursor> consume(RelationSink sink) {
+    private Consumer<RelationCursor> consume(RelationConsumer sink) {
         return c -> sink.accept(c.sourceNodeId, c.targetNodeId, c.relationId);
     }
 
 
-    private Consumer<WeightedRelationCursor> consume(WeightedRelationSink sink) {
+    private Consumer<WeightedRelationCursor> consume(WeightedRelationConsumer sink) {
         return c -> sink.accept(c.sourceNodeId, c.targetNodeId, c.relationId, c.weight);
     }
 
-    private interface RelationSink {
-        void accept(int source, int target, long rel);
-    }
-
-    private interface WeightedRelationSink {
-        void accept(int source, int target, long rel, double weight);
-    }
 }

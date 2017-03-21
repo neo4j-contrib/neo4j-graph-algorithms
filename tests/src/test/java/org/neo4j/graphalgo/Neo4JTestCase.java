@@ -33,7 +33,7 @@ public abstract class Neo4JTestCase {
     @AfterClass
     public static void teardown() {
         // calling shutdown takes some 10 seconds or so :(
-         db.shutdown();
+//         db.shutdown();
     }
 
     public static int newNode() {
