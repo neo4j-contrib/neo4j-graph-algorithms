@@ -10,6 +10,7 @@ import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.api.exceptions.InvalidArgumentsException;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -45,21 +46,34 @@ public class GraphView implements Graph, AutoCloseable {
         propertyKey = read.propertyKeyGetForName(propertyName);
     }
 
-    @Override
+/*    @Override
     public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
             while (nodeItemCursor.next()) {
-                try (Cursor<RelationshipItem> relationships = nodeItemCursor
-                        .get()
-                        .relationships(direction == Direction.INCOMING ? org.neo4j.storageengine.api.Direction.INCOMING : org.neo4j.storageengine.api.Direction.OUTGOING)) {
-
+                final NodeItem nodeItem = nodeItemCursor.get();
+                try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction))) {
                     while (relationships.next()) {
                         final RelationshipItem item = relationships.get();
                         consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
                     }
                 }
             }
+        }
+    }*/
+
+    @Override
+    public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
+        final long originalNodeId = toOriginalNodeId(nodeId);
+        try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
+
+            nodeItemCursor.forAll(nodeItem -> {
+                try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction))) {
+                    relationships.forAll(item -> {
+                        consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
+                    });
+                }
+            });
         }
     }
 
@@ -158,9 +172,23 @@ public class GraphView implements Graph, AutoCloseable {
         transaction.close();
     }
 
+    private static org.neo4j.storageengine.api.Direction mediate(Direction direction) {
+        switch (direction) {
+            case INCOMING:
+                return org.neo4j.storageengine.api.Direction.INCOMING;
+            case OUTGOING:
+                return org.neo4j.storageengine.api.Direction.OUTGOING;
+            case BOTH:
+                return org.neo4j.storageengine.api.Direction.BOTH;
+        }
+        throw new IllegalArgumentException("Direction " + direction + " is unknown");
+    }
+
+
     private static class NodeIterator implements PrimitiveIntIterator {
 
         private final Graph graph;
+
         private final PrimitiveLongIterator iterator;
 
         private NodeIterator(Graph graph, PrimitiveLongIterator iterator) {

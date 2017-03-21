@@ -19,7 +19,7 @@ public abstract class Neo4JTestCase {
 
     public static final String LABEL = "Node";
     public static final String WEIGHT_PROPERTY = "weight";
-    public static final String RELATION = "relation";
+    public static final String RELATION = "RELATION";
 
     protected static GraphDatabaseService db;
 
@@ -84,9 +84,9 @@ public abstract class Neo4JTestCase {
 
     public static Graph heavyGraph() {
         return new GraphLoader((GraphDatabaseAPI) db)
-                .setLabel(LABEL)
-                .setRelation(RELATION)
-                .setProperty(WEIGHT_PROPERTY)
+//                .setLabel(LABEL)
+//                .setRelation(RELATION)
+//                .setProperty(WEIGHT_PROPERTY)
                 .load(HeavyGraphFactory.class);
     }
 }
