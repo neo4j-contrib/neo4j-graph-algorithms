@@ -1,12 +1,21 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.RelationCursor;
 import org.neo4j.graphdb.Direction;
 
+import java.util.function.Consumer;
+
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 import static org.neo4j.graphdb.Direction.*;
 
 /**
@@ -17,10 +26,11 @@ public class AdjacencyMatrixTest {
 
     private static AdjacencyMatrix matrix;
 
-
+    private static RelationConsumer relationConsumer = mock(RelationConsumer.class);
 
     @BeforeClass
     public static void setup() {
+
         matrix = new AdjacencyMatrix(3);
 
         // 0 -> {1, 2}
@@ -48,6 +58,11 @@ public class AdjacencyMatrixTest {
         matrix.addIncoming(1, 2, 2);
     }
 
+    @Before
+    public void resetMocks() {
+        Mockito.reset(relationConsumer);
+    }
+
     @Test
     public void testOutgoingDegree() throws Exception {
         assertEquals(2, matrix.degree(0, OUTGOING));
@@ -63,7 +78,78 @@ public class AdjacencyMatrixTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testV0Outgoing() throws Exception {
+        matrix.forEach(0, OUTGOING, relationConsumer);
+        verify(relationConsumer, times(1)).accept(eq(0), eq(1), eq(0L));
+        verify(relationConsumer, times(1)).accept(eq(0), eq(2), eq(1L));
+    }
 
+    @Test
+    public void testV0OutgoingIterator() throws Exception {
+        matrix.relationIterator(0, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(1)).accept(eq(0), eq(1), eq(0L));
+        verify(relationConsumer, times(1)).accept(eq(0), eq(2), eq(1L));
+    }
+
+    @Test
+    public void testV1Outgoing() throws Exception {
+        matrix.forEach(1, OUTGOING, relationConsumer);
+        verify(relationConsumer, times(1)).accept(eq(1), eq(2), eq(2L));
+    }
+
+    @Test
+    public void testV1OutgoingIterator() throws Exception {
+        matrix.relationIterator(1, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(1)).accept(eq(1), eq(2), eq(2L));
+    }
+
+    @Test
+    public void testV2Outgoing() throws Exception {
+        matrix.forEach(2, OUTGOING, relationConsumer);
+        verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
+    }
+
+    @Test
+    public void testV2OutgoingIterator() throws Exception {
+        matrix.relationIterator(2, OUTGOING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
+    }
+
+    @Test
+    public void testV0Incoming() throws Exception {
+        matrix.forEach(0, INCOMING, relationConsumer);
+        verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
+    }
+
+    @Test
+    public void testV1Incoming() throws Exception {
+        matrix.forEach(1, INCOMING, relationConsumer);
+        verify(relationConsumer, times(1)).accept(eq(1), eq(0), eq(0L));
+    }
+
+    @Test
+    public void testV1IncomingIterator() throws Exception {
+        matrix.relationIterator(1, INCOMING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(1)).accept(eq(1), eq(0), eq(0L));
+    }
+
+    @Test
+    public void testV2Incoming() throws Exception {
+        matrix.forEach(2, INCOMING, relationConsumer);
+        verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(2), eq(0), eq(1L));
+        verify(relationConsumer, times(1)).accept(eq(2), eq(1), eq(2L));
+    }
+
+    @Test
+    public void testV2IncomingIterator() throws Exception {
+        matrix.relationIterator(2, INCOMING).forEachRemaining(consume(relationConsumer));
+        verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(2), eq(0), eq(1L));
+        verify(relationConsumer, times(1)).accept(eq(2), eq(1), eq(2L));
+    }
+
+    private Consumer<RelationCursor> consume(RelationConsumer consumer) {
+        return r -> consumer.accept(r.sourceNodeId, r.targetNodeId, r.relationId);
     }
 }
