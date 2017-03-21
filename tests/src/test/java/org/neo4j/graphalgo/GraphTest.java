@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,22 +43,19 @@ public class GraphTest extends Neo4JTestCase {
     @BeforeClass
     public static void buildGraph() throws Exception {
 
-        v0 = newNode();
-        v1 = newNode();
-        v2 = newNode();
+        long n0 = newNode();
+        long n1 = newNode();
+        long n2 = newNode();
 
-        newRelation(v0, v1, 1.0);
-        newRelation(v0, v2, 2.0);
-        newRelation(v1, v2, 3.0);
+        newRelation(n0, n1, 1.0);
+        newRelation(n0, n2, 2.0);
+        newRelation(n1, n2, 3.0);
 
         graph = heavyGraph();
-    }
 
-    public void setupMock() {
-        Mockito.reset(
-                relationConsumer,
-                weightedRelationConsumer,
-                nodeConsumer);
+        v0 = graph.toMappedNodeId(n0);
+        v1 = graph.toMappedNodeId(n1);
+        v2 = graph.toMappedNodeId(n2);
     }
 
     @Test

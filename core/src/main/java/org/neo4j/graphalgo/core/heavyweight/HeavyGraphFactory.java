@@ -73,6 +73,7 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
             });
+
         } else {
             final int threads = parallelism(threadPool);
             final int batchSize = nodeCount / threads;

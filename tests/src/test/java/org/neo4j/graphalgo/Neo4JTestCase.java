@@ -57,7 +57,7 @@ public abstract class Neo4JTestCase {
         }
     }
 
-    public static long newRelation(int sourceNodeId, int targetNodeId, double weight) {
+    public static long newRelation(long sourceNodeId, long targetNodeId, double weight) {
         try(Transaction transaction = db.beginTx()) {
             final Node source = db.getNodeById(sourceNodeId);
             final Node target = db.getNodeById(targetNodeId);
