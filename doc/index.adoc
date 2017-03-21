@@ -103,12 +103,12 @@ implemented for tests and benchmarks.
 
 == Import
 
-A fair amount of the work is to fetch the relevant targetNodes from the neo4j core api
+A fair amount of the work is to fetch the relevant targetNodes from the neo4j core db
 and import it into our model. Fortunately we can use a multithreading approach to fill
 the Graph. This is part of current development.
 
 The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
-for creating the Graph using the core api.
+for creating the Graph using the core db.
 
 [ditaa]
 ----

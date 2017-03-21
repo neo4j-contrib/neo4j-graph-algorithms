@@ -69,24 +69,4 @@ public abstract class Neo4JTestCase {
             return relation.getId() ;
         }
     }
-
-    public static Graph lightGraph() {
-        return new GraphLoader((GraphDatabaseAPI) db)
-                .setLabel(LABEL)
-                .setRelation(RELATION)
-                .setProperty(WEIGHT_PROPERTY)
-                .load(LightGraphFactory.class);
-    }
-
-    public static Graph neo4jView() {
-        return new GraphView((GraphDatabaseAPI) db, LABEL, WEIGHT_PROPERTY);
-    }
-
-    public static Graph heavyGraph() {
-        return new GraphLoader((GraphDatabaseAPI) db)
-//                .setLabel(LABEL)
-//                .setRelation(RELATION)
-//                .setProperty(WEIGHT_PROPERTY)
-                .load(HeavyGraphFactory.class);
-    }
 }

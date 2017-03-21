@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core;
+package org.neo4j.graphalgo.core.utils;
 
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 import org.apache.lucene.util.ArrayUtil;

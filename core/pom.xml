@@ -13,10 +13,6 @@
 
     <name>Neo4j Graph Algorithms :: Core</name>
 
-    <properties>
-        <neo4j.algorithm-api.version>3.1.0-SNAPSHOT</neo4j.algorithm-api.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.neo4j</groupId>

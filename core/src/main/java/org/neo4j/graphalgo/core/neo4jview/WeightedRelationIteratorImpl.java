@@ -26,7 +26,12 @@ class WeightedRelationIteratorImpl extends AbstractRelationIterator<WeightedRela
         final RelationshipItem relationshipItem = relationshipItemCursor.get();
         cursor.targetNodeId = (int) relationshipItem.otherNode(nodeId);
         try {
-            cursor.weight = (double) read.relationshipGetProperty(next, propertyKey);
+            final Object o = read.relationshipGetProperty(next, propertyKey);
+            if (null == o) {
+                cursor.weight = 0;
+            } else {
+                cursor.weight = (double) o;
+            }
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }

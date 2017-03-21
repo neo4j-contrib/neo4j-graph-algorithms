@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo;
 
-import org.neo4j.graphalgo.core.FileLoaders;
+import org.neo4j.graphalgo.core.utils.FileLoaders;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;

@@ -1,11 +1,8 @@
 package org.neo4j.graphalgo;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
@@ -13,10 +10,11 @@ import org.neo4j.graphalgo.api.*;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.anyDouble;
 import static org.mockito.Mockito.*;
 import static org.neo4j.graphdb.Direction.INCOMING;
 import static org.neo4j.graphdb.Direction.OUTGOING;
@@ -25,11 +23,11 @@ import static org.neo4j.graphdb.Direction.OUTGOING;
  * @author mknobloch
  */
 @RunWith(MockitoJUnitRunner.class)
-public class GraphTest extends Neo4JTestCase {
+public abstract class SimpleGraphTestCase extends Neo4JTestCase {
 
-    private static Graph graph;
+    protected static Graph graph;
 
-    private static int v0, v1, v2;
+    protected static int v0, v1, v2;
 
     @Mock
     private WeightedRelationConsumer weightedRelationConsumer;
@@ -39,24 +37,6 @@ public class GraphTest extends Neo4JTestCase {
 
     @Mock
     private IntConsumer nodeConsumer;
-
-    @BeforeClass
-    public static void buildGraph() throws Exception {
-
-        long n0 = newNode();
-        long n1 = newNode();
-        long n2 = newNode();
-
-        newRelation(n0, n1, 1.0);
-        newRelation(n0, n2, 2.0);
-        newRelation(n1, n2, 3.0);
-
-        graph = heavyGraph();
-
-        v0 = graph.toMappedNodeId(n0);
-        v1 = graph.toMappedNodeId(n1);
-        v2 = graph.toMappedNodeId(n2);
-    }
 
     @Test
     public void testForEachNode() throws Exception {

@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core;
+package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFileLoader;
