@@ -77,14 +77,14 @@ public final class WeightMapping {
     /**
      * return the capacity
      */
-    public int capacity() {
+    int capacity() {
         return capacity;
     }
 
     /**
      * return primitive map for the weights
      */
-    public LongDoubleMap weights() {
+    LongDoubleMap weights() {
         return weights;
     }
 }

@@ -1,12 +1,10 @@
 package org.neo4j.graphalgo;
 
-import org.neo4j.graphalgo.core.utils.FileLoaders;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraph;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.impl.PageRankKernel;
+import org.neo4j.graphalgo.serialize.FileSerialization;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -166,11 +164,7 @@ public final class LargeishPageRanker {
             runGc("after building graph", gcRunner);
             System.out.printf("serializing Graph...");
             long t0 = System.nanoTime();
-            if (useMultiImpl) {
-                ((HeavyGraph) graph).serialize(prepare);
-            } else {
-                ((LightGraph) graph).serialize(prepare);
-            }
+            FileSerialization.writeGraph(graph, prepare);
             long t1 = System.nanoTime();
             System.out.printf(
                     " done in %.2f seconds%n",
@@ -180,7 +174,8 @@ public final class LargeishPageRanker {
             runGc("before loading graph", gcRunner);
             System.out.printf("Loading serialized Graph...");
             long t0 = System.nanoTime();
-            graph = useMultiImpl ? FileLoaders.serializedMultiArray(graphDb) : FileLoaders.serializedLowLevel(graphDb);
+            graph = useMultiImpl ? FileSerialization.loadHeavyGraph(graphDb) : FileSerialization
+                    .loadLightGraph(graphDb);
             long t1 = System.nanoTime();
             System.out.printf(
                     " done in %.2f seconds%n",

@@ -1,17 +1,15 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
-import com.carrotsearch.hppc.LongDoubleHashMap;
-import org.apache.lucene.store.DataInput;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
-import org.neo4j.collection.primitive.Primitive;
-import org.neo4j.collection.primitive.PrimitiveLongIntMap;
+import org.neo4j.graphalgo.core.WeightMappingSerialization;
+import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
+import org.neo4j.graphalgo.serialize.IdMapSerialization;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -29,7 +27,7 @@ public class HeavyGraphFileLoader {
                     FileChannel.MapMode.READ_ONLY,
                     0,
                     channel.size());
-            final BBDI in = new BBDI(mbb);
+            final ByteBufferDataInput in = new ByteBufferDataInput(mbb);
 
             final int outOffsetsLength = in.readVInt();
             final int[] outOffsets = new int[outOffsetsLength];
@@ -96,66 +94,11 @@ public class HeavyGraphFileLoader {
                     incomingIds
             );
 
-
-            final int nextGraphId = in.readVInt();
-            final long[] graphIds = new long[nextGraphId];
-            final PrimitiveLongIntMap map = Primitive.longIntMap(nextGraphId);
-            for (int i = 0; i < nextGraphId; i++) {
-                final long id = in.readVLong();
-                graphIds[i] = id;
-                map.put(id, i);
-            }
-            final IdMap idMap = new IdMap(graphIds, map);
-            final WeightMapping weightMapping;
-            final int capacity = in.readVInt();
-            final boolean hasWeights = in.readByte() == (byte) 1;
-            if (hasWeights) {
-                final int weightsSize = in.readVInt();
-                final LongDoubleHashMap weights = new LongDoubleHashMap(
-                        weightsSize);
-                for (int i = 0; i < weightsSize; i++) {
-                    weights.put(
-                            in.readVLong(),
-                            Double.longBitsToDouble(in.readLong()));
-                }
-                weightMapping = new WeightMapping(capacity, weights);
-            } else {
-                weightMapping = new WeightMapping(capacity);
-            }
+            final IdMap idMap = IdMapSerialization.read(in);
+            final WeightMapping weightMapping = WeightMappingSerialization.read(
+                    in);
 
             return new HeavyGraph(idMap, container, weightMapping);
         }
     }
-
-    private static final class BBDI extends DataInput {
-        private final ByteBuffer bb;
-
-        private BBDI(final ByteBuffer bb) {
-            this.bb = bb;
-        }
-
-        @Override
-        public byte readByte() throws IOException {
-            return bb.get();
-        }
-
-        @Override
-        public void readBytes(
-                final byte[] b,
-                final int offset,
-                final int len) throws IOException {
-            bb.get(b, offset, len);
-        }
-
-        @Override
-        public int readInt() throws IOException {
-            return bb.getInt();
-        }
-
-        @Override
-        public long readLong() throws IOException {
-            return bb.getLong();
-        }
-    }
-
 }

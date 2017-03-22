@@ -6,8 +6,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 
@@ -17,7 +15,7 @@ import java.util.function.IntConsumer;
  * Pro:
  *  - ~3 times faster due to little overhead in index lookups
  *  - connections can be added in arbitrary order
- *  
+ *
  * Cons:
  *  - has a higher memory consumption // TODO evaluate
  *
@@ -90,21 +88,5 @@ public class HeavyGraph implements Graph {
     @Override
     public long toOriginalNodeId(int mappedNodeId) {
         return nodeIdMap.unmap(mappedNodeId);
-    }
-
-    public void serialize(Path outFile) throws IOException {
-        HeavyGraphFileWriter.write(
-                outFile,
-                container.outOffsets,
-                container.inOffsets,
-                container.outgoing,
-                container.incoming,
-                container.outgoingIds,
-                container.incomingIds,
-                nodeIdMap.size(),
-                nodeIdMap.mappedIds(),
-                weights.capacity(),
-                weights.weights()
-        );
     }
 }

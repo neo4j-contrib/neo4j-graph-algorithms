@@ -6,8 +6,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 
@@ -226,18 +224,5 @@ public class LightGraph implements Graph {
                 consumer.accept(node, array[offset], offset++);
             }
         }
-    }
-
-    public void serialize(Path outFile) throws IOException {
-        FileWriter.write(
-                outFile,
-                adjacency,
-                inOffsets,
-                outOffsets,
-                idMapping.size(),
-                idMapping.mappedIds(),
-                weightMapping.capacity(),
-                weightMapping.weights()
-        );
     }
 }
