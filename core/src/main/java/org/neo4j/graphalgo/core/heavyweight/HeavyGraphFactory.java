@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -167,20 +168,13 @@ public class HeavyGraphFactory extends GraphFactory {
                 try {
                     future.get();
                 } catch (ExecutionException ee) {
-                    if (error == null) {
-                        error = ee.getCause();
-                    } else {
-                        error.addSuppressed(ee.getCause());
-                    }
+                    error = Exceptions.chain(error, ee.getCause());
                 } catch (CancellationException ignore) {
                 }
             }
             done = true;
         } catch (InterruptedException e) {
-            if (error != null) {
-                e.addSuppressed(error);
-            }
-            error = e;
+            error = Exceptions.chain(e, error);
         } finally {
             if (!done) {
                 for (final Future<?> future : futures) {
@@ -189,7 +183,7 @@ public class HeavyGraphFactory extends GraphFactory {
             }
         }
         if (error != null) {
-            throw new RuntimeException(error);
+            throw Exceptions.launderedException(error);
         }
     }
 
