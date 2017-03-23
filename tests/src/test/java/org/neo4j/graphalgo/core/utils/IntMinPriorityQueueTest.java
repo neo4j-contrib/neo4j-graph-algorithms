@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.utils;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
-import org.neo4j.graphalgo.core.utils.IntMinPriorityQueue;
 import org.neo4j.helpers.collection.Pair;
 
 import java.util.ArrayList;
@@ -21,9 +20,8 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
 
     @Test
     public void testIsEmpty() throws Exception {
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue(RandomizedTest.between(
-                10,
-                20));
+        final int capacity = RandomizedTest.between(10, 20);
+        final IntMinPriorityQueue queue = new IntMinPriorityQueue(capacity);
         assertEquals(queue.size(), 0);
     }
 

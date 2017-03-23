@@ -84,7 +84,13 @@ public class HeavyGraphFactory extends GraphFactory {
                         ? readOp.nodesGetAll()
                         : readOp.nodesGetForLabel(labelId);
                 for (int i = 0; i <= threads; i++) {
-                    tasks.add(new ImportTask(batchSize, idMap, nodeIds));
+                    final ImportTask importTask = new ImportTask(
+                            batchSize,
+                            idMap,
+                            nodeIds);
+                    if (importTask.nodeCount > 0) {
+                        tasks.add(importTask);
+                    }
                 }
             });
             run(tasks, threadPool);
@@ -158,17 +164,15 @@ public class HeavyGraphFactory extends GraphFactory {
         Throwable error = null;
         try {
             for (Future<?> future : futures) {
-                if (!future.isDone()) {
-                    try {
-                        future.get();
-                    } catch (ExecutionException ee) {
-                        if (error == null) {
-                            error = ee.getCause();
-                        } else {
-                            error.addSuppressed(ee.getCause());
-                        }
-                    } catch (CancellationException ignore) {
+                try {
+                    future.get();
+                } catch (ExecutionException ee) {
+                    if (error == null) {
+                        error = ee.getCause();
+                    } else {
+                        error.addSuppressed(ee.getCause());
                     }
+                } catch (CancellationException ignore) {
                 }
             }
             done = true;
