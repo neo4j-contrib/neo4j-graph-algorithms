@@ -17,6 +17,7 @@ public abstract class GraphFactory {
     protected final String label;
     protected final String relation;
     protected final String property;
+    private ThreadToStatementContextBridge contextBridge;
 
     // TODO collections of label/rel/prop ?
     public GraphFactory(
@@ -28,16 +29,16 @@ public abstract class GraphFactory {
         this.label = label;
         this.relation = relation;
         this.property = property;
+        contextBridge = api
+                .getDependencyResolver()
+                .resolveDependency(ThreadToStatementContextBridge.class);
     }
 
     public abstract Graph build();
 
     protected final void withReadOps(Consumer<ReadOperations> block) {
         try (final Transaction tx = api.beginTx();
-             Statement statement = api
-                     .getDependencyResolver()
-                     .resolveDependency(ThreadToStatementContextBridge.class)
-                     .get()) {
+             Statement statement = contextBridge.get()) {
             block.accept(statement.readOperations());
             tx.success();
         }
