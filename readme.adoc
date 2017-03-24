@@ -1,5 +1,7 @@
 = Efficient Graph Algorithms for Neo4j (pre-Alpha / WIP)
 
+image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.1["Build Status", link="https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms"]
+
 This project aims to develop efficient, well tested graph algorithm implementations for Neo4j.
 
 Those algorithms will run on a clean API which is fed by loading data from Neo4j or running on Neo4j directly.
