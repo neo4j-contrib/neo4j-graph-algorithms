@@ -69,8 +69,7 @@ public class HeavyGraphParallelLoadingTest {
             }
 
             try {
-                graph = new GraphLoader((GraphDatabaseAPI) db)
-                        .setExecutorService(pool)
+                graph = new GraphLoader((GraphDatabaseAPI) db, pool)
                         .load(HeavyGraphFactory.class);
             } catch (Exception e) {
                 hasFailures = true;
@@ -116,8 +115,7 @@ public class HeavyGraphParallelLoadingTest {
     public void shouldCollectErrors() throws Exception {
         String message = "oh noes";
         try {
-            new GraphLoader((GraphDatabaseAPI) db)
-                    .setExecutorService(new ThrowingThreadPool(3, message))
+            new GraphLoader((GraphDatabaseAPI) db, new ThrowingThreadPool(3, message))
                     .load(HeavyGraphFactory.class);
             fail("Should have thrown an Exception.");
         } catch (Exception e) {
