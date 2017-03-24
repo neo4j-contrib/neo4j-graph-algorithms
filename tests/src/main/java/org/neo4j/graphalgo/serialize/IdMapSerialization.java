@@ -1,9 +1,9 @@
 package org.neo4j.graphalgo.serialize;
 
+import com.carrotsearch.hppc.LongIntHashMap;
+import com.carrotsearch.hppc.LongIntMap;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.store.DataOutput;
-import org.neo4j.collection.primitive.Primitive;
-import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 import org.neo4j.graphalgo.core.IdMap;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public final class IdMapSerialization {
     public static IdMap read(DataInput in) throws IOException {
         final int nextGraphId = in.readVInt();
         final long[] graphIds = new long[nextGraphId];
-        final PrimitiveLongIntMap map = Primitive.longIntMap(nextGraphId);
+        final LongIntMap map = new LongIntHashMap(nextGraphId);
         for (int i = 0; i < nextGraphId; i++) {
             final long id = in.readVLong();
             graphIds[i] = id;
