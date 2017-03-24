@@ -1,8 +1,8 @@
 package org.neo4j.graphalgo.core;
 
-import org.neo4j.collection.primitive.Primitive;
+import com.carrotsearch.hppc.LongIntHashMap;
+import com.carrotsearch.hppc.LongIntMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 
 import java.util.function.IntConsumer;
 
@@ -15,14 +15,14 @@ public final class IdMap {
     private final IdIterator iter;
     private int nextGraphId;
     private long[] graphIds;
-    private PrimitiveLongIntMap nodeToGraphIds;
+    private LongIntMap nodeToGraphIds;
 
     /**
      * initialize the map with maximum node capacity
      */
     public IdMap(final int capacity) {
         graphIds = new long[capacity];
-        nodeToGraphIds = Primitive.longIntMap(capacity);
+        nodeToGraphIds = new LongIntHashMap(capacity, 0.99);
         iter = new IdIterator();
     }
 
@@ -31,7 +31,7 @@ public final class IdMap {
      */
     public IdMap(
             long[] graphIds,
-            PrimitiveLongIntMap nodeToGraphIds) {
+            LongIntMap nodeToGraphIds) {
         this.nextGraphId = graphIds.length;
         this.graphIds = graphIds;
         this.nodeToGraphIds = nodeToGraphIds;
@@ -56,15 +56,6 @@ public final class IdMap {
         int intValue = nextGraphId++;
         graphIds[intValue] = longValue;
         nodeToGraphIds.put(longValue, intValue);
-    }
-
-    public void addMap(IdMap other, int offset, int length) {
-        System.arraycopy(other.graphIds, 0, graphIds, offset, length);
-        nextGraphId += length;
-        other.nodeToGraphIds.visitEntries((key, value) -> {
-            nodeToGraphIds.put(key, value + offset);
-            return false;
-        });
     }
 
     public int get(long longValue) {
