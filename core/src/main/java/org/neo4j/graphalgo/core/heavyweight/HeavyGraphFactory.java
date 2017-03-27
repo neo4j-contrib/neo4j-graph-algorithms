@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
@@ -32,6 +30,8 @@ import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
  * @author mknblch
  */
 public class HeavyGraphFactory extends GraphFactory {
+
+    private static final int BATCH_SIZE = 100_000;
 
     private final ExecutorService threadPool;
     private int labelId;
@@ -55,6 +55,10 @@ public class HeavyGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
+        return build(BATCH_SIZE);
+    }
+
+    /* test-private */ Graph build(int batchSize) {
         final IdMap idMap = new IdMap(nodeCount);
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
@@ -62,7 +66,9 @@ public class HeavyGraphFactory extends GraphFactory {
                 ? new WeightMapping(0)
                 : new WeightMapping(nodeCount);
 
-        if (threadPool == null) {
+        int threads = (int) Math.ceil(nodeCount / (double) batchSize);
+
+        if (threadPool == null || threads == 1) {
             final IdMappingFunction mapOrGet = idMap::mapOrGet;
             withReadOps(readOp -> {
                 try (Cursor<NodeItem> cursor = labelId == StatementConstants.NO_SUCH_LABEL
@@ -76,10 +82,7 @@ public class HeavyGraphFactory extends GraphFactory {
             });
 
         } else {
-            final int threads = parallelism(threadPool);
-            final int batchSize = nodeCount / threads;
-
-            final List<ImportTask> tasks = new ArrayList<>(threads + 1);
+            final List<ImportTask> tasks = new ArrayList<>(threads);
             withReadOps(readOp -> {
                 final PrimitiveLongIterator nodeIds = labelId == StatementConstants.NO_SUCH_LABEL
                         ? readOp.nodesGetAll()
@@ -138,19 +141,6 @@ public class HeavyGraphFactory extends GraphFactory {
                 matrix.addIncoming(targetNodeId, nodeId, relationId);
             }
         }
-    }
-
-    private static int parallelism(final ExecutorService executorService) {
-        final int processors = Runtime.getRuntime().availableProcessors();
-        if (executorService instanceof ThreadPoolExecutor) {
-            return Math.min(
-                    ((ThreadPoolExecutor) executorService).getMaximumPoolSize(),
-                    2 * processors);
-        }
-        if (executorService instanceof ForkJoinPool) {
-            return ((ForkJoinPool) executorService).getParallelism();
-        }
-        return processors;
     }
 
     private static void run(
