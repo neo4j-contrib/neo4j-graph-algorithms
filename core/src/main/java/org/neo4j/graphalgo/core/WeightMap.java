@@ -2,48 +2,44 @@ package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import com.carrotsearch.hppc.LongDoubleMap;
+import org.neo4j.graphalgo.api.WeightMapping;
 
 /**
  * single weight cache
  */
-public final class WeightMapping {
+public final class WeightMap implements WeightMapping {
 
     private final int capacity;
     private LongDoubleMap weights;
+    private final double defaultValue;
 
-    public WeightMapping(final int capacity) {
+    public WeightMap(final int capacity, double defaultValue) {
         this.capacity = capacity;
+        this.defaultValue = defaultValue;
+        this.weights = new LongDoubleHashMap(capacity);
     }
 
-    public WeightMapping(final int capacity, LongDoubleMap weights) {
+    public WeightMap(final int capacity, LongDoubleMap weights, double defaultValue) {
         this.capacity = capacity;
         this.weights = weights;
+        this.defaultValue = defaultValue;
     }
 
     /**
-     * return the weight for id or 0.0 if unknown
+     * return the weight for id or defaultValue if unknown
      */
+    @Override
     public double get(long id) {
-        if (weights != null) {
-            return weights.get(id);
-        }
-        return 0d;
+        return weights.getOrDefault(id, defaultValue);
     }
 
-    /**
-     * add weight
-     */
-    public void add(long id, Object value) {
-        add(id, extractValue(value));
-    }
-
-    /**
-     * add weight
-     */
-    public void add(long id, double weight) {
-        if (weight != 0) {
-            put(id, weight);
+    @Override
+    public void set(long id, Object value) {
+        final double doubleVal = extractValue(value);
+        if (doubleVal == defaultValue) {
+            return;
         }
+        put(id, doubleVal);
     }
 
     private double extractValue(Object value) {
@@ -64,13 +60,10 @@ public final class WeightMapping {
         }
         // TODO: arrays
 
-        return 0d;
+        return defaultValue;
     }
 
     private void put(long key, double value) {
-        if (weights == null) {
-            weights = new LongDoubleHashMap(capacity);
-        }
         weights.addTo(key, value);
     }
 

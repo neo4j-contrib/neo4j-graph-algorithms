@@ -2,8 +2,10 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.NullWeightMap;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -43,8 +45,8 @@ public final class LightGraphFactory extends GraphFactory {
         outOffsets = new long[nodeCount];
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new WeightMapping(nodeCount)
-                : new WeightMapping(0);
+                ? new NullWeightMap(0.0) // TODO supply default value
+                : new WeightMap(nodeCount, 0.0);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;
@@ -101,8 +103,8 @@ public final class LightGraphFactory extends GraphFactory {
                 int targetGraphId = mapping.mapOrGet(targetNodeId);
 
                 try (Cursor<PropertyItem> weights = rel.property(weightId)) {
-                    while (weights.next()) { // TODO if/rm?
-                        this.weights.add(idx, weights.get().value());
+                    if (weights.next()) {
+                        this.weights.set(idx, weights.get().value());
                     }
                 }
 

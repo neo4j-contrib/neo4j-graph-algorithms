@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.ByteBufferDataOutput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
@@ -29,7 +29,7 @@ public final class LightGraphFileWriter {
             "idMapping");
     private static final MethodHandle WEIGHTS = PrivateLookup.field(
             LightGraph.class,
-            WeightMapping.class,
+            WeightMap.class,
             "weightMapping");
     private static final MethodHandle ADJACENCY = PrivateLookup.field(
             LightGraph.class,
@@ -48,7 +48,7 @@ public final class LightGraphFileWriter {
 
         try {
             IdMap idMapping = (IdMap) ID_MAP.invokeExact(graph);
-            WeightMapping weightMapping = (WeightMapping) WEIGHTS.invokeExact(
+            WeightMap weightMapping = (WeightMap) WEIGHTS.invokeExact(
                     graph);
             IntArray adjacency = (IntArray) ADJACENCY.invokeExact(graph);
             long[] inOffsets = (long[]) IN_OFFSETS.invokeExact(graph);
@@ -73,7 +73,7 @@ public final class LightGraphFileWriter {
             long[] inOffsets,
             long[] outOffsets,
             IdMap idMap,
-            WeightMapping weights) throws IOException {
+            WeightMap weights) throws IOException {
 
         final long adjSize = adjacency.size();
         final long requiredBytes = BYTES_LONG

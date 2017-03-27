@@ -4,15 +4,18 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.IdMappingFunction;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.NullWeightMap;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
+import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.util.ArrayList;
@@ -24,8 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
-
 /**
  * @author mknblch
  */
@@ -34,6 +35,7 @@ public class HeavyGraphFactory extends GraphFactory {
     private static final int BATCH_SIZE = 100_000;
 
     private final ExecutorService threadPool;
+    private int propertyId;
     private int labelId;
     private int relationId;
     private int nodeCount;
@@ -50,6 +52,7 @@ public class HeavyGraphFactory extends GraphFactory {
             labelId = readOp.labelGetForName(label);
             relationId = readOp.relationshipTypeGetForName(relation);
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
+            propertyId = readOp.propertyKeyGetForName(property);
         });
     }
 
@@ -62,9 +65,9 @@ public class HeavyGraphFactory extends GraphFactory {
         final IdMap idMap = new IdMap(nodeCount);
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
-        final WeightMapping weightMapping = relationId == NO_SUCH_PROPERTY_KEY
-                ? new WeightMapping(0)
-                : new WeightMapping(nodeCount);
+        final WeightMapping weightMap = propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
+                ? new NullWeightMap(0.0)
+                : new WeightMap(nodeCount, 0.0);
 
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);
 
@@ -76,7 +79,7 @@ public class HeavyGraphFactory extends GraphFactory {
                         : readOp.nodeCursorGetForLabel(labelId)) {
                     while (cursor.next()) {
                         final NodeItem node = cursor.get();
-                        readNode(node, mapOrGet, 0, matrix);
+                        readNode(node, mapOrGet, 0, matrix, propertyId, weightMap);
                     }
                 }
             });
@@ -91,7 +94,10 @@ public class HeavyGraphFactory extends GraphFactory {
                     final ImportTask importTask = new ImportTask(
                             batchSize,
                             idMap,
-                            nodeIds);
+                            nodeIds,
+                            weightMap,
+                            propertyId
+                    );
                     if (importTask.nodeCount > 0) {
                         tasks.add(importTask);
                     }
@@ -103,14 +109,17 @@ public class HeavyGraphFactory extends GraphFactory {
             }
         }
 
-        return new HeavyGraph(idMap, matrix, weightMapping);
+        return new HeavyGraph(idMap, matrix, weightMap);
     }
 
     private static void readNode(
             NodeItem node,
             IdMappingFunction idMap,
             int idOffset,
-            AdjacencyMatrix matrix) {
+            AdjacencyMatrix matrix,
+            int propertyId,
+            WeightMapping weightMapping
+    ) {
         final long originalNodeId = node.id();
         final int nodeId = idMap.mapId(originalNodeId) - idOffset;
         final int outDegree = node.degree(Direction.OUTGOING);
@@ -123,11 +132,13 @@ public class HeavyGraphFactory extends GraphFactory {
                 final long endNode = rel.endNode();
                 final int targetNodeId = idMap.mapId(endNode);
                 final long relationId = rel.id();
-                //                try (Cursor<PropertyItem> weights = rel.property(weightPropId)) {
-                //                    while (weights.next()) {
-                //                        weightMapping.add(relationId, weights.get().value());
-                //                    }
-                //                }
+
+                try (Cursor<PropertyItem> weights = rel.property(propertyId)) {
+                    if (weights.next()) {
+                        weightMapping.set(relationId, weights.get().value());
+                    }
+                }
+
                 matrix.addOutgoing(nodeId, targetNodeId, relationId);
             }
         }
@@ -183,9 +194,13 @@ public class HeavyGraphFactory extends GraphFactory {
         private final long[] nodeIds;
         private final int nodeOffset;
         private final int nodeCount;
+        private final WeightMapping weightMap;
+        private final int propertyId;
 
-        ImportTask(int batchSize, IdMap idMap, PrimitiveLongIterator nodes) {
+        ImportTask(int batchSize, IdMap idMap, PrimitiveLongIterator nodes, WeightMapping weightMap, int propertyId) {
             this.nodeOffset = idMap.size();
+            this.weightMap = weightMap;
+            this.propertyId = propertyId;
             int i;
             for (i = 0; i < batchSize && nodes.hasNext(); i++) {
                 final long nextId = nodes.next();
@@ -216,7 +231,7 @@ public class HeavyGraphFactory extends GraphFactory {
                                 cursor.get(),
                                 idMapper,
                                 nodeOffset,
-                                matrix);
+                                matrix, propertyId, weightMap);
                     }
                 }
             }

@@ -5,6 +5,7 @@ import com.carrotsearch.hppc.LongDoubleMap;
 import com.carrotsearch.hppc.cursors.LongDoubleCursor;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.store.DataOutput;
+import org.neo4j.graphalgo.api.WeightMapping;
 
 import java.io.IOException;
 
@@ -15,7 +16,7 @@ public final class WeightMappingSerialization {
     private static final long LONG_BYTES = Long.BYTES;
     private static final long DOUBLE_DOUBLE = Double.BYTES;
 
-    public static long bytes(WeightMapping weights) {
+    public static long bytes(WeightMap weights) {
         return INT_BYTES + BOOL_BYTES
                 + ((weights.weights() != null)
                 ? INT_BYTES + weights
@@ -24,7 +25,7 @@ public final class WeightMappingSerialization {
                 : 0L);
     }
 
-    public static void write(WeightMapping weightMapping, DataOutput out)
+    public static void write(WeightMap weightMapping, DataOutput out)
     throws IOException {
         int capacity = weightMapping.capacity();
         LongDoubleMap weights = weightMapping.weights();
@@ -54,9 +55,9 @@ public final class WeightMappingSerialization {
                         in.readVLong(),
                         Double.longBitsToDouble(in.readLong()));
             }
-            return new WeightMapping(capacity, weights);
+            return new WeightMap(capacity, weights, 0.0);
         }
-        return new WeightMapping(capacity);
+        return new NullWeightMap(0.0); // TODO supply default value
     }
 
     private WeightMappingSerialization() {

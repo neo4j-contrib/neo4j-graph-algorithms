@@ -1,10 +1,7 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
-import org.neo4j.graphalgo.api.RelationConsumer;
-import org.neo4j.graphalgo.api.RelationCursor;
-import org.neo4j.graphalgo.api.WeightedRelationConsumer;
-import org.neo4j.graphalgo.api.WeightedRelationCursor;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
