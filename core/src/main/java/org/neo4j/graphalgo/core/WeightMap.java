@@ -26,7 +26,7 @@ public final class WeightMap implements WeightMapping {
     }
 
     /**
-     * return the weight for id or 0.0 if unknown
+     * return the weight for id or defaultValue if unknown
      */
     @Override
     public double get(long id) {
@@ -35,7 +35,11 @@ public final class WeightMap implements WeightMapping {
 
     @Override
     public void set(long id, Object value) {
-        put(id, extractValue(value));
+        final double doubleVal = extractValue(value);
+        if (doubleVal == defaultValue) {
+            return;
+        }
+        put(id, doubleVal);
     }
 
     private double extractValue(Object value) {
