@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;

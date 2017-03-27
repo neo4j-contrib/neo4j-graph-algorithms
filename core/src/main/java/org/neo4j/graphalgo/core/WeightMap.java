@@ -2,20 +2,21 @@ package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import com.carrotsearch.hppc.LongDoubleMap;
+import org.neo4j.graphalgo.api.WeightMapping;
 
 /**
  * single weight cache
  */
-public final class WeightMapping {
+public final class WeightMap implements WeightMapping {
 
     private final int capacity;
     private LongDoubleMap weights;
 
-    public WeightMapping(final int capacity) {
+    public WeightMap(final int capacity) {
         this.capacity = capacity;
     }
 
-    public WeightMapping(final int capacity, LongDoubleMap weights) {
+    public WeightMap(final int capacity, LongDoubleMap weights) {
         this.capacity = capacity;
         this.weights = weights;
     }
@@ -23,27 +24,14 @@ public final class WeightMapping {
     /**
      * return the weight for id or 0.0 if unknown
      */
+    @Override
     public double get(long id) {
-        if (weights != null) {
-            return weights.get(id);
-        }
-        return 0d;
+        return weights.get(id);
     }
 
-    /**
-     * add weight
-     */
-    public void add(long id, Object value) {
-        add(id, extractValue(value));
-    }
-
-    /**
-     * add weight
-     */
-    public void add(long id, double weight) {
-        if (weight != 0) {
-            put(id, weight);
-        }
+    @Override
+    public void set(long id, Object value) {
+        put(id, extractValue(value));
     }
 
     private double extractValue(Object value) {
@@ -69,7 +57,7 @@ public final class WeightMapping {
 
     private void put(long key, double value) {
         if (weights == null) {
-            weights = new LongDoubleHashMap(capacity);
+            weights = new LongDoubleHashMap(capacity); // TODO move to ctor
         }
         weights.addTo(key, value);
     }

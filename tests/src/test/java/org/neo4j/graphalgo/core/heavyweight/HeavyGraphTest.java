@@ -8,7 +8,7 @@ import org.neo4j.graphalgo.SimpleGraphSetup;
 /**
  * @author mknobloch
  */
-@Ignore("weights not implemented yet")
+//@Ignore("weights not implemented yet")
 public class HeavyGraphTest extends SimpleGraphTestCase {
 
     @BeforeClass

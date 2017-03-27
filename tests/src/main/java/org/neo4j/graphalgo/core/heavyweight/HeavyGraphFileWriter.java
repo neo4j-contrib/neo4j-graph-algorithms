@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.ByteBufferDataOutput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
@@ -26,14 +26,14 @@ public final class HeavyGraphFileWriter {
 
     private static final MethodHandle CONTAINER = PrivateLookup.field(HeavyGraph.class, AdjacencyMatrix.class, "container");
     private static final MethodHandle ID_MAP = PrivateLookup.field(HeavyGraph.class, IdMap.class, "nodeIdMap");
-    private static final MethodHandle WEIGHTS = PrivateLookup.field(HeavyGraph.class, WeightMapping.class, "weights");
+    private static final MethodHandle WEIGHTS = PrivateLookup.field(HeavyGraph.class, WeightMap.class, "weights");
 
     public static void serialize(HeavyGraph graph, Path outFile) {
 
         try {
             AdjacencyMatrix container = (AdjacencyMatrix) CONTAINER.invokeExact(graph);
             IdMap nodeIdMap = (IdMap) ID_MAP.invokeExact(graph);
-            WeightMapping weights = (WeightMapping) WEIGHTS.invokeExact(graph);
+            WeightMap weights = (WeightMap) WEIGHTS.invokeExact(graph);
 
             write(
                     outFile,
@@ -60,7 +60,7 @@ public final class HeavyGraphFileWriter {
             long[][] outgoingIds,
             long[][] incomingIds,
             IdMap idMap,
-            WeightMapping weights) throws IOException {
+            WeightMap weights) throws IOException {
 
         final long requiredBytes = BYTES_INT + outOffsets.length * BYTES_INT
                 + BYTES_INT + inOffsets.length * BYTES_INT

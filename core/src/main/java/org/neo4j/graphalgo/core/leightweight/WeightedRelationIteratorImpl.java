@@ -1,8 +1,9 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 
+import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationCursor;
-import org.neo4j.graphalgo.core.WeightMapping;
+import org.neo4j.graphalgo.core.WeightMap;
 
 import java.util.Iterator;
 
