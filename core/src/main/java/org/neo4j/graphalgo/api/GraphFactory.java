@@ -17,6 +17,7 @@ public abstract class GraphFactory {
     protected final String label;
     protected final String relation;
     protected final String property;
+    protected final double propertyDefaultValue;
     private ThreadToStatementContextBridge contextBridge;
 
     // TODO collections of label/rel/prop ?
@@ -24,7 +25,8 @@ public abstract class GraphFactory {
             GraphDatabaseAPI api,
             String label,
             String relation,
-            String property) {
+            String property,
+            double propertyDefaultValue) {
         this.api = api;
         this.label = label;
         this.relation = relation;
@@ -32,6 +34,7 @@ public abstract class GraphFactory {
         contextBridge = api
                 .getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
+        this.propertyDefaultValue = propertyDefaultValue;
     }
 
     public abstract Graph build();

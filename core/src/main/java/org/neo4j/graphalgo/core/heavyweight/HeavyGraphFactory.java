@@ -27,8 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
-
 /**
  * @author mknblch
  */
@@ -47,8 +45,9 @@ public class HeavyGraphFactory extends GraphFactory {
             String label,
             String relation,
             String property,
+            double propertyDefaultValue,
             final ExecutorService threadPool) {
-        super(api, label, relation, property);
+        super(api, label, relation, property, propertyDefaultValue);
         this.threadPool = threadPool;
         withReadOps(readOp -> {
             labelId = readOp.labelGetForName(label);
@@ -68,7 +67,7 @@ public class HeavyGraphFactory extends GraphFactory {
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
         final WeightMapping weightMap = propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new NullWeightMap(0.0)
+                ? new NullWeightMap(propertyDefaultValue)
                 : new WeightMap(nodeCount);
 
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);

@@ -32,6 +32,7 @@ public class GraphLoader {
             String.class,
             String.class,
             String.class,
+            Double.TYPE,
             ExecutorService.class);
 
     private String label = null;
@@ -40,6 +41,7 @@ public class GraphLoader {
 
     private final GraphDatabaseAPI api;
     private final ExecutorService executorService;
+    private double defaultWeight;
 
     /**
      * Creates a new serial GraphLoader.
@@ -140,7 +142,19 @@ public class GraphLoader {
     }
 
     /**
+     * Set the default weight.
+     *
+     * @param weight the default weight
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDefaultWeight(double weight) {
+        this.defaultWeight = weight;
+        return this;
+    }
+
+    /**
      * Instructs the loader to not load any weights.
+     * The graph is initialized with the defaultWeight instead.
      *
      * @return itself to enable fluent interface
      */
@@ -178,6 +192,7 @@ public class GraphLoader {
                     label,
                     relation,
                     property,
+                    defaultWeight,
                     executorService);
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(

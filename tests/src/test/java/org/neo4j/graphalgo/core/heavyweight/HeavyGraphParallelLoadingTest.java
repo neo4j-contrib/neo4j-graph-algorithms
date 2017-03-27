@@ -88,6 +88,7 @@ public class HeavyGraphParallelLoadingTest {
                     null,
                     null,
                     null,
+                    0.0,
                     pool
             ).build(batchSize);
         } catch (Exception e) {
@@ -170,6 +171,7 @@ public class HeavyGraphParallelLoadingTest {
                         null,
                         null,
                         null,
+                        0.0,
                         new ThrowingThreadPool(3, message)
                 ).build(batchSize);
                 fail("Should have thrown an Exception.");

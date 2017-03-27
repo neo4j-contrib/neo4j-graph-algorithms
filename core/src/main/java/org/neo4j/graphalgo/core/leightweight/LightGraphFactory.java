@@ -28,8 +28,13 @@ public final class LightGraphFactory extends GraphFactory {
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphFactory(GraphDatabaseAPI api, String label, String relation, String property, ExecutorService executorService) {
-        super(api, label, relation, property);
+    public LightGraphFactory(GraphDatabaseAPI api,
+                             String label,
+                             String relation,
+                             String property,
+                             double propertyDefaultValue,
+                             ExecutorService executorService) {
+        super(api, label, relation, property, propertyDefaultValue);
         withReadOps(readOp -> {
             nodeCount = Math.toIntExact(readOp.nodesGetCount());
             relationCount = Math.toIntExact(readOp.relationshipsGetCount());
@@ -45,7 +50,7 @@ public final class LightGraphFactory extends GraphFactory {
         outOffsets = new long[nodeCount];
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new NullWeightMap(0.0) // TODO supply default value
+                ? new NullWeightMap(propertyDefaultValue)
                 : new WeightMap(nodeCount);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
