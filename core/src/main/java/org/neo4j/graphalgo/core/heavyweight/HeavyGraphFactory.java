@@ -27,8 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY_KEY;
-
 /**
  * @author mknblch
  */
@@ -69,7 +67,7 @@ public class HeavyGraphFactory extends GraphFactory {
 
         final WeightMapping weightMap = propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(0.0)
-                : new WeightMap(nodeCount);
+                : new WeightMap(nodeCount, 0.0);
 
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);
 

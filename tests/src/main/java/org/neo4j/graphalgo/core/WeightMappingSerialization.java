@@ -55,7 +55,7 @@ public final class WeightMappingSerialization {
                         in.readVLong(),
                         Double.longBitsToDouble(in.readLong()));
             }
-            return new WeightMap(capacity, weights);
+            return new WeightMap(capacity, weights, 0.0);
         }
         return new NullWeightMap(0.0); // TODO supply default value
     }
