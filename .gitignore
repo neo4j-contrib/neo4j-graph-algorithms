@@ -35,3 +35,4 @@ Thumbs.db
 bin
 *.cache
 *diag*.png
+*.jfr
