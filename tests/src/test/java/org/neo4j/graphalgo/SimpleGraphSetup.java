@@ -69,9 +69,9 @@ public class SimpleGraphSetup {
 
     public Graph build(Class<? extends GraphFactory> factory) {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
-                .setLabel(LABEL)
-                .setRelation(RELATION)
-                .setProperty(PROPERTY)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATION)
+                .withWeightsFromProperty(PROPERTY)
                 .load(factory);
         v0 = graph.toMappedNodeId(n0);
         v1 = graph.toMappedNodeId(n1);
