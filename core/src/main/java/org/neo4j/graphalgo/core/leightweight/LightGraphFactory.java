@@ -51,7 +51,7 @@ public final class LightGraphFactory extends GraphFactory {
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(propertyDefaultValue)
-                : new WeightMap(nodeCount);
+                : new WeightMap(nodeCount, propertyDefaultValue);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;

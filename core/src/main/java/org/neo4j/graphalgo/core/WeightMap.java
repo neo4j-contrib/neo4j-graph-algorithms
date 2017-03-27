@@ -11,27 +11,35 @@ public final class WeightMap implements WeightMapping {
 
     private final int capacity;
     private LongDoubleMap weights;
+    private final double defaultValue;
 
-    public WeightMap(final int capacity) {
+    public WeightMap(final int capacity, double defaultValue) {
         this.capacity = capacity;
+        this.defaultValue = defaultValue;
+        this.weights = new LongDoubleHashMap(capacity);
     }
 
-    public WeightMap(final int capacity, LongDoubleMap weights) {
+    public WeightMap(final int capacity, LongDoubleMap weights, double defaultValue) {
         this.capacity = capacity;
         this.weights = weights;
+        this.defaultValue = defaultValue;
     }
 
     /**
-     * return the weight for id or 0.0 if unknown
+     * return the weight for id or defaultValue if unknown
      */
     @Override
     public double get(long id) {
-        return weights.get(id);
+        return weights.getOrDefault(id, defaultValue);
     }
 
     @Override
     public void set(long id, Object value) {
-        put(id, extractValue(value));
+        final double doubleVal = extractValue(value);
+        if (doubleVal == defaultValue) {
+            return;
+        }
+        put(id, doubleVal);
     }
 
     private double extractValue(Object value) {
@@ -52,13 +60,10 @@ public final class WeightMap implements WeightMapping {
         }
         // TODO: arrays
 
-        return 0d;
+        return defaultValue;
     }
 
     private void put(long key, double value) {
-        if (weights == null) {
-            weights = new LongDoubleHashMap(capacity); // TODO move to ctor
-        }
         weights.addTo(key, value);
     }
 

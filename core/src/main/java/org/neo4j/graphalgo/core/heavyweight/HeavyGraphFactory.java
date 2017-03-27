@@ -68,7 +68,7 @@ public class HeavyGraphFactory extends GraphFactory {
 
         final WeightMapping weightMap = propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(propertyDefaultValue)
-                : new WeightMap(nodeCount);
+                : new WeightMap(nodeCount, propertyDefaultValue);
 
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);
 
