@@ -22,7 +22,7 @@ public final class IdMap {
      */
     public IdMap(final int capacity) {
         graphIds = new long[capacity];
-        nodeToGraphIds = new LongIntHashMap(capacity, 0.99);
+        nodeToGraphIds = new LongIntHashMap((int) Math.ceil(capacity / 0.99), 0.99);
         iter = new IdIterator();
     }
 
@@ -43,7 +43,7 @@ public final class IdMap {
     }
 
     public int mapOrGet(long longValue) {
-        int intValue = nodeToGraphIds.get(longValue);
+        int intValue = nodeToGraphIds.getOrDefault(longValue, -1);
         if (intValue == -1) {
             intValue = nextGraphId++;
             graphIds[intValue] = longValue;
@@ -59,7 +59,7 @@ public final class IdMap {
     }
 
     public int get(long longValue) {
-        return nodeToGraphIds.get(longValue);
+        return nodeToGraphIds.getOrDefault(longValue, -1);
     }
 
     public long unmap(int intValue) {
