@@ -1,9 +1,9 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 
+import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationCursor;
-import org.neo4j.graphalgo.core.WeightMap;
 
 import java.util.Iterator;
 
@@ -16,6 +16,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
     private final IntArray.Cursor adjCursor;
     private final WeightMapping weightMapping;
 
+    private final LongLongMap relationIdMapping;
     private long relationId;
 
     private int[] array;
@@ -23,15 +24,17 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
     private int limit;
 
     WeightedRelationIteratorImpl(
-        int sourceNodeId,
-        long offset,
-        long length,
-        WeightMapping weightMapping,
-        IntArray adjacency) {
+            int sourceNodeId,
+            long offset,
+            long length,
+            WeightMapping weightMapping,
+            LongLongMap relationIdMapping,
+            IntArray adjacency) {
         this(sourceNodeId,
                 offset,
                 length,
                 weightMapping,
+                relationIdMapping,
                 adjacency,
                 adjacency.newCursor());
     }
@@ -41,10 +44,12 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
             long offset,
             long length,
             WeightMapping weightMapping,
+            LongLongMap relationIdMapping,
             IntArray adjacency,
             IntArray.Cursor adjCursor) {
         this.weightMapping = weightMapping;
         relationId = offset;
+        this.relationIdMapping = relationIdMapping;
         cursor.sourceNodeId = sourceNodeId;
         this.adjCursor = adjacency.cursor(offset, length, adjCursor);
         nextPage();
@@ -58,7 +63,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
     @Override
     public WeightedRelationCursor next() {
         cursor.weight = weightMapping.get(relationId);
-        cursor.relationId = relationId++;
+        cursor.relationId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
         return cursor;
     }
