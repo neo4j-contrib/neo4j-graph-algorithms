@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Relationship;
@@ -33,7 +34,8 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"}
+                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }
 
