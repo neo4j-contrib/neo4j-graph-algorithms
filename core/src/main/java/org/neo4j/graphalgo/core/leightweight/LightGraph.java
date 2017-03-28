@@ -100,13 +100,13 @@ public class LightGraph implements Graph {
             case INCOMING: {
                 final long offset = inOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, offset + length, weightMapping, adjacency);
+                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, adjacency);
             }
 
             case OUTGOING: {
                 final long offset = outOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, offset + length, weightMapping, adjacency);
+                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, adjacency);
             }
             default: {
                 throw new IllegalArgumentException("Direction.BOTH not yet implemented");
