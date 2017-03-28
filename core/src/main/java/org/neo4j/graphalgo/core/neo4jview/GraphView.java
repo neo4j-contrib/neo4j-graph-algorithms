@@ -27,55 +27,24 @@ import java.util.function.*;
 public class GraphView implements Graph {
 
     private final ThreadToStatementContextBridge contextBridge;
-    private int nodeCount;
-
-    private int propertyKey;
-    private int labelId;
     private final GraphDatabaseAPI db;
 
-    public GraphView(GraphDatabaseAPI db, String label, String propertyName) {
+    private final double propertyDefaultWeight;
+    private int nodeCount;
+    private int propertyKey;
+    private int labelId;
+
+    public GraphView(GraphDatabaseAPI db, String label, String propertyName, double propertyDefaultWeight) {
         this.db = db;
         contextBridge = db.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
+        this.propertyDefaultWeight = propertyDefaultWeight;
 
         withinTransaction(read -> {
             labelId = read.labelGetForName(label);
             nodeCount = Math.toIntExact(read.nodesGetCount());
             propertyKey = read.propertyKeyGetForName(propertyName);
         });
-    }
-
-    private int withinTransactionInt(ToIntFunction<ReadOperations> block) {
-        try (final Transaction tx = db.beginTx();
-             Statement statement = contextBridge.get()) {
-            final int result = block.applyAsInt(statement.readOperations());
-            tx.success();
-            return result;
-        }
-    }
-
-    private <T> T withinTransactionTyped(Function<ReadOperations, T> block) {
-        try (final Transaction tx = db.beginTx();
-             Statement statement = contextBridge.get()) {
-            final T result = block.apply(statement.readOperations());
-            tx.success();
-            return result;
-        }
-    }
-
-    private <T> T withinUnclosedTransactionTyped(Function<ReadOperations, T> block) {
-        final Transaction tx = db.beginTx();
-        Statement statement = contextBridge.get();
-        final T result = block.apply(statement.readOperations());
-        return result;
-    }
-
-    private void withinTransaction(Consumer<ReadOperations> block) {
-        try (final Transaction tx = db.beginTx();
-             Statement statement = contextBridge.get()) {
-            block.accept(statement.readOperations());
-            tx.success();
-        }
     }
 
     @Override
@@ -96,7 +65,7 @@ public class GraphView implements Graph {
 
     @Override
     public void forEachRelation(int nodeId, Direction direction, WeightedRelationConsumer consumer) {
-        withinTransaction(read -> {
+        withinTransactionTyped(read -> {
             try {
                 final RelationshipIterator iterator = read.nodeGetRelationships(nodeId, direction);
                 while (iterator.hasNext()) {
@@ -114,19 +83,18 @@ public class GraphView implements Graph {
             } catch (EntityNotFoundException e) {
                 throw new RuntimeException(e);
             }
+            return null;
         });
     }
 
     @Override
     public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, Direction direction) {
-
-        return withinTransactionTyped(read -> {
-            try {
-                return new WeightedRelationIteratorImpl(nodeId, read, read.nodeGetRelationships(toOriginalNodeId(nodeId), direction), propertyKey);
-            } catch (EntityNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        final Transaction tx = db.beginTx();
+        try {
+            return new WeightedRelationIteratorImpl(this, db, tx, nodeId, direction, propertyKey, propertyDefaultWeight);
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -193,6 +161,40 @@ public class GraphView implements Graph {
     @Override
     public long toOriginalNodeId(int nodeId) {
         return nodeId;
+    }
+
+    private int withinTransactionInt(ToIntFunction<ReadOperations> block) {
+        try (final Transaction tx = db.beginTx();
+             Statement statement = contextBridge.get()) {
+            final int result = block.applyAsInt(statement.readOperations());
+            tx.success();
+            return result;
+        }
+    }
+
+    private <T> T withinTransactionTyped(Function<ReadOperations, T> block) {
+        try (final Transaction tx = db.beginTx();
+             Statement statement = contextBridge.get()) {
+            final T result = block.apply(statement.readOperations());
+            tx.success();
+            return result;
+        }
+    }
+
+    private <T> T withinUnclosedTransactionTyped(Function<ReadOperations, T> block) {
+        return block.apply(contextBridge.get().readOperations());
+    }
+
+    private <T> T withApi(Function<GraphDatabaseAPI, T> block) {
+        return block.apply(db);
+    }
+
+    private void withinTransaction(Consumer<ReadOperations> block) {
+        try (final Transaction tx = db.beginTx();
+             Statement statement = contextBridge.get()) {
+            block.accept(statement.readOperations());
+            tx.success();
+        }
     }
 
     private static org.neo4j.storageengine.api.Direction mediate(Direction direction) {
