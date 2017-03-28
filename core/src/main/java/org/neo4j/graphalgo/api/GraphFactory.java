@@ -13,28 +13,17 @@ import java.util.function.Consumer;
  */
 public abstract class GraphFactory {
 
-    protected final GraphDatabaseAPI api;
-    protected final String label;
-    protected final String relation;
-    protected final String property;
-    protected final double propertyDefaultValue;
     private ThreadToStatementContextBridge contextBridge;
 
-    // TODO collections of label/rel/prop ?
-    public GraphFactory(
-            GraphDatabaseAPI api,
-            String label,
-            String relation,
-            String property,
-            double propertyDefaultValue) {
+    protected final GraphDatabaseAPI api;
+    protected final GraphSetup setup;
+
+    public GraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         this.api = api;
-        this.label = label;
-        this.relation = relation;
-        this.property = property;
-        contextBridge = api
+        this.setup = setup;
+        this.contextBridge = api
                 .getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
-        this.propertyDefaultValue = propertyDefaultValue;
     }
 
     public abstract Graph build();

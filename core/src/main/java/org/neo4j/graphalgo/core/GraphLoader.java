@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.Exceptions;
@@ -29,11 +30,7 @@ public class GraphLoader {
     private static final MethodType CTOR_METHOD = MethodType.methodType(
             void.class,
             GraphDatabaseAPI.class,
-            String.class,
-            String.class,
-            String.class,
-            Double.TYPE,
-            ExecutorService.class);
+            GraphSetup.class);
 
     private String label = null;
     private String relation = null;
@@ -186,14 +183,17 @@ public class GraphLoader {
     }
 
     private GraphFactory invokeConstructor(MethodHandle constructor) {
+
+        final GraphSetup setup = new GraphSetup(
+                label,
+                null,
+                relation,
+                property,
+                defaultWeight,
+                executorService);
+
         try {
-            return (GraphFactory) constructor.invoke(
-                    api,
-                    label,
-                    relation,
-                    property,
-                    defaultWeight,
-                    executorService);
+            return (GraphFactory) constructor.invoke(api, setup);
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(
                     throwable.getMessage(),

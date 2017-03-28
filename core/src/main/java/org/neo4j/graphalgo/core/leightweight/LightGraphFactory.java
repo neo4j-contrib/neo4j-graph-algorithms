@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
@@ -29,16 +30,14 @@ public final class LightGraphFactory extends GraphFactory {
     protected int weightId;
 
     public LightGraphFactory(GraphDatabaseAPI api,
-                             String label,
-                             String relation,
-                             String property,
-                             double propertyDefaultValue,
-                             ExecutorService executorService) {
-        super(api, label, relation, property, propertyDefaultValue);
+                             GraphSetup setup) {
+        super(api, setup);
         withReadOps(readOp -> {
             nodeCount = Math.toIntExact(readOp.nodesGetCount());
             relationCount = Math.toIntExact(readOp.relationshipsGetCount());
-            weightId = property == null ? StatementConstants.NO_SUCH_PROPERTY_KEY : readOp.propertyKeyGetForName(property);
+            weightId = setup.loadAnyProperty()
+                    ? StatementConstants.NO_SUCH_PROPERTY_KEY
+                    : readOp.propertyKeyGetForName(setup.propertyName);
         });
     }
 
@@ -50,8 +49,8 @@ public final class LightGraphFactory extends GraphFactory {
         outOffsets = new long[nodeCount];
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new NullWeightMap(propertyDefaultValue)
-                : new WeightMap(nodeCount, propertyDefaultValue);
+                ? new NullWeightMap(setup.propertyDefaultValue)
+                : new WeightMap(nodeCount, setup.propertyDefaultValue);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;
@@ -63,7 +62,6 @@ public final class LightGraphFactory extends GraphFactory {
                 }
             }
         });
-
 
         return new LightGraph(
                 mapping,

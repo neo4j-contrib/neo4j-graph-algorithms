@@ -4,6 +4,7 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.IdMappingFunction;
@@ -42,18 +43,14 @@ public class HeavyGraphFactory extends GraphFactory {
 
     public HeavyGraphFactory(
             GraphDatabaseAPI api,
-            String label,
-            String relation,
-            String property,
-            double propertyDefaultValue,
-            final ExecutorService threadPool) {
-        super(api, label, relation, property, propertyDefaultValue);
-        this.threadPool = threadPool;
+            GraphSetup setup) {
+        super(api, setup);
+        this.threadPool = setup.executor;
         withReadOps(readOp -> {
-            labelId = readOp.labelGetForName(label);
-            relationId = readOp.relationshipTypeGetForName(relation);
+            labelId = readOp.labelGetForName(setup.startLabel);
+            relationId = readOp.relationshipTypeGetForName(setup.relationshipType);
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
-            propertyId = readOp.propertyKeyGetForName(property);
+            propertyId = readOp.propertyKeyGetForName(setup.propertyName);
         });
     }
 
@@ -67,8 +64,8 @@ public class HeavyGraphFactory extends GraphFactory {
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
         final WeightMapping weightMap = propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new NullWeightMap(propertyDefaultValue)
-                : new WeightMap(nodeCount, propertyDefaultValue);
+                ? new NullWeightMap(setup.propertyDefaultValue)
+                : new WeightMap(nodeCount, setup.propertyDefaultValue);
 
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);
 
