@@ -28,7 +28,7 @@ class RelationIteratorImpl implements Iterator<RelationCursor>, Closeable {
     private final RelationCursor cursor;
     private final long originalNodeId;
 
-    RelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction) throws EntityNotFoundException {
+    RelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction, int relationTypeId) throws EntityNotFoundException {
         this.graph = graph;
         this.api = api;
         transaction = api.beginTx();
@@ -37,7 +37,7 @@ class RelationIteratorImpl implements Iterator<RelationCursor>, Closeable {
                 .get();
         read = statement.readOperations();
         originalNodeId = graph.toOriginalNodeId(sourceNodeId);
-        iterator = read.nodeGetRelationships(originalNodeId, direction);
+        iterator = read.nodeGetRelationships(originalNodeId, direction, relationTypeId);
         cursor = new RelationCursor();
         cursor.sourceNodeId = sourceNodeId;
     }

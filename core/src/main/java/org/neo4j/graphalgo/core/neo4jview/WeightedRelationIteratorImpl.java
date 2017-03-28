@@ -11,6 +11,7 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
@@ -20,35 +21,33 @@ import java.util.Iterator;
 class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor>, Closeable {
 
     private final Graph graph;
-    private final GraphDatabaseAPI api;
     private final Statement statement;
     private final Transaction tx;
     private final int propertyKey;
-    private final RelationshipIterator iterator;
-    private final ReadOperations read;
     private final WeightedRelationCursor cursor;
     private final long originalNodeId;
+    private final Cursor<RelationshipItem> relationships;
     private double defaultWeight;
 
-    WeightedRelationIteratorImpl(Graph graph, GraphDatabaseAPI api, Transaction tx, int sourceNodeId, Direction direction, int propertyKey, double propertyDefaultWeight) throws EntityNotFoundException {
+    WeightedRelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction, int relationId, int propertyId, double propertyDefaultWeight) throws EntityNotFoundException {
         this.graph = graph;
-        this.api = api;
-        statement = api.getDependencyResolver()
+        this.propertyKey = propertyId;
+        this.defaultWeight = propertyDefaultWeight;
+        this.tx = api.beginTx();
+        this.statement = api.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class)
                 .get();
-        this.tx = tx;
-        this.propertyKey = propertyKey;
-        defaultWeight = propertyDefaultWeight;
-        read = statement.readOperations();
-        originalNodeId = graph.toOriginalNodeId(sourceNodeId);
-        iterator = read.nodeGetRelationships(originalNodeId, direction);
-        cursor = new WeightedRelationCursor();
+        this.originalNodeId = graph.toOriginalNodeId(sourceNodeId);
+        this.cursor = new WeightedRelationCursor();
         cursor.sourceNodeId = sourceNodeId;
+        final Cursor<NodeItem> nodeCursor = statement.readOperations().nodeCursor(originalNodeId);
+        nodeCursor.next();
+        this.relationships = nodeCursor.get().relationships(mediate(direction), relationId);
     }
 
     @Override
     public boolean hasNext() {
-        final boolean hasNext = iterator.hasNext();
+        final boolean hasNext = relationships.next();
         if (!hasNext) {
             close();
         }
@@ -57,23 +56,32 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor>, 
 
     @Override
     public WeightedRelationCursor next() {
-        final long relationId = iterator.next();
-        try(Cursor<RelationshipItem> relCursor = read.relationshipCursor(relationId)) {
-            relCursor.next();
-            final RelationshipItem item = relCursor.get();
-            cursor.targetNodeId = graph.toMappedNodeId(item.otherNode(originalNodeId));
-            cursor.relationId = relationId;
-            try(final Cursor<PropertyItem> itemCursor = item.property(propertyKey)) {
-                if (itemCursor.next()) {
-                    final PropertyItem propertyItem = itemCursor.get();
-                    cursor.weight = (double) propertyItem.value();
-                } else{
-                    cursor.weight = defaultWeight;
-                }
-            }
+
+        final RelationshipItem relationshipItem = relationships.get();
+        cursor.targetNodeId = graph.toMappedNodeId(relationshipItem.otherNode(originalNodeId));
+        final Cursor<PropertyItem> propertyCursor = relationshipItem.property(propertyKey);
+        if(!propertyCursor.next()) {
+            cursor.weight = defaultWeight;
+            return cursor;
         }
+
+        final PropertyItem propertyItem = propertyCursor.get();
+        cursor.weight = (double) propertyItem.value();
         return cursor;
     }
+
+    private static org.neo4j.storageengine.api.Direction mediate(Direction direction) {
+        switch (direction) {
+            case INCOMING:
+                return org.neo4j.storageengine.api.Direction.INCOMING;
+            case OUTGOING:
+                return org.neo4j.storageengine.api.Direction.OUTGOING;
+            case BOTH:
+                return org.neo4j.storageengine.api.Direction.BOTH;
+        }
+        throw new IllegalArgumentException("Direction " + direction + " is unknown");
+    }
+
 
     @Override
     public void close() {

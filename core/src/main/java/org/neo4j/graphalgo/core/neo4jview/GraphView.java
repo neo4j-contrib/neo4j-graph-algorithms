@@ -30,11 +30,12 @@ public class GraphView implements Graph {
     private final GraphDatabaseAPI db;
 
     private final double propertyDefaultWeight;
+    private int relationTypeId;
     private int nodeCount;
     private int propertyKey;
     private int labelId;
 
-    public GraphView(GraphDatabaseAPI db, String label, String propertyName, double propertyDefaultWeight) {
+    public GraphView(GraphDatabaseAPI db, String label, String relation, String propertyName, double propertyDefaultWeight) {
         this.db = db;
         contextBridge = db.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
@@ -43,6 +44,7 @@ public class GraphView implements Graph {
         withinTransaction(read -> {
             labelId = read.labelGetForName(label);
             nodeCount = Math.toIntExact(read.nodesGetCount());
+            relationTypeId = read.relationshipTypeGetForName(relation);
             propertyKey = read.propertyKeyGetForName(propertyName);
         });
     }
@@ -67,7 +69,7 @@ public class GraphView implements Graph {
     public void forEachRelation(int nodeId, Direction direction, WeightedRelationConsumer consumer) {
         withinTransactionTyped(read -> {
             try {
-                final RelationshipIterator iterator = read.nodeGetRelationships(nodeId, direction);
+                final RelationshipIterator iterator = read.nodeGetRelationships(nodeId, direction, relationTypeId);
                 while (iterator.hasNext()) {
                     final long relationId = iterator.next();
                     final Cursor<RelationshipItem> relationshipItemCursor = read.relationshipCursor(relationId);
@@ -89,9 +91,8 @@ public class GraphView implements Graph {
 
     @Override
     public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, Direction direction) {
-        final Transaction tx = db.beginTx();
         try {
-            return new WeightedRelationIteratorImpl(this, db, tx, nodeId, direction, propertyKey, propertyDefaultWeight);
+            return new WeightedRelationIteratorImpl(this, db, nodeId, direction, relationTypeId, propertyKey, propertyDefaultWeight);
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -135,7 +136,7 @@ public class GraphView implements Graph {
     public int degree(int nodeId, Direction direction) {
         return withinTransactionInt(read -> {
             try {
-                return read.nodeGetDegree(toOriginalNodeId(nodeId), direction);
+                return read.nodeGetDegree(toOriginalNodeId(nodeId), direction, relationTypeId);
             } catch (EntityNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -144,13 +145,11 @@ public class GraphView implements Graph {
 
     @Override
     public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
-        return withinUnclosedTransactionTyped(read -> {
-            try {
-                return new RelationIteratorImpl(this, db, nodeId, direction);
-            } catch (EntityNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            return new RelationIteratorImpl(this, db, nodeId, direction, relationTypeId);
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -179,14 +178,6 @@ public class GraphView implements Graph {
             tx.success();
             return result;
         }
-    }
-
-    private <T> T withinUnclosedTransactionTyped(Function<ReadOperations, T> block) {
-        return block.apply(contextBridge.get().readOperations());
-    }
-
-    private <T> T withApi(Function<GraphDatabaseAPI, T> block) {
-        return block.apply(db);
     }
 
     private void withinTransaction(Consumer<ReadOperations> block) {
