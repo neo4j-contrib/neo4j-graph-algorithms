@@ -21,6 +21,7 @@ public class GraphSetup {
     // default property is used for weighted relationships if property is not set.
     public final double propertyDefaultValue;
     // the executor service for parallel execution. null means single threaded evaluation.
+    @Deprecated
     public final ExecutorService executor;
 
     /**

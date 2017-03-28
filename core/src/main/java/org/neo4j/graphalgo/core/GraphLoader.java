@@ -128,10 +128,9 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load weights by reading the given property.
-     * If the property is not found, the propertyDefaultValue is used instead.
+     * If the property is not set, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a weight property, use {@link #withoutWeights(double)} or
-     * {@link #withoutWeights()} instead.
+     * @param property May not be null; to remove a weight property, use {@link #withoutWeights()} instead.
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -142,21 +141,21 @@ public class GraphLoader {
     }
 
     /**
-     * Instructs the loader to not load any weights.
-     * The graph is initialized with the propertyDefaultValue instead.
+     * Instructs the loader to not load any weights. Instead each weight is set
+     * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.
      * @return itself to enable fluent interface
      */
-    public GraphLoader withoutWeights(double propertyDefaultValue) {
+    public GraphLoader withDefaultWeight(double propertyDefaultValue) {
         this.property = null;
         this.propertyDefaultValue = propertyDefaultValue;
         return this;
     }
 
     /**
-     * Instructs the loader to not load any weights.
-     * The graph gets initialized with the weight 0.0 for each relation.
+     * Instructs the loader to not load any weights. The behavior of using weighted graph-functions
+     * on a graph without weights is not specified.
      *
      * @return itself to enable fluent interface
      */
