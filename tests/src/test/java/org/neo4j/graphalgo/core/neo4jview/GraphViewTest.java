@@ -10,7 +10,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 /**
  * @author mknobloch
  */
-@Ignore("weights faulty")
+//@Ignore("weights faulty")
 public class GraphViewTest extends SimpleGraphTestCase {
 
     @BeforeClass
