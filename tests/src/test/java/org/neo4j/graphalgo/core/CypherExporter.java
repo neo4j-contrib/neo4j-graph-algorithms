@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.heavyweight;
+package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
