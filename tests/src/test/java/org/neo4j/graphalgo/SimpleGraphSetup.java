@@ -18,7 +18,7 @@ public class SimpleGraphSetup {
 
     private static final String LABEL = "Node";
     private static final String RELATION = "RELATION";
-    private static final String PROPERTY = "property";
+    private static final String PROPERTY = "weight";
 
 
     private final GraphDatabaseService db;
