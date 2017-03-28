@@ -133,7 +133,7 @@ public class HeavyGraphFactoryTest {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withAnyLabel()
                 .withAnyRelationshipType()
-                .withWeightsFromProperty("prop1")
+                .withWeightsFromProperty("prop1", 0.0)
                 .load(HeavyGraphFactory.class);
 
         graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, weightedRelationConsumer);

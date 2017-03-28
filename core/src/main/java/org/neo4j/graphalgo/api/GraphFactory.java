@@ -9,6 +9,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.function.Consumer;
 
 /**
+ * The Abstract Factory defines the construction of the graph
+ *
  * @author mknblch
  */
 public abstract class GraphFactory {
@@ -28,6 +30,11 @@ public abstract class GraphFactory {
 
     public abstract Graph build();
 
+    /**
+     * executes a consumer within its own transaction
+     *
+     * @param block the consumer
+     */
     protected final void withReadOps(Consumer<ReadOperations> block) {
         try (final Transaction tx = api.beginTx();
              Statement statement = contextBridge.get()) {
