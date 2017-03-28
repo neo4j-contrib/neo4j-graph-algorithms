@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.Exceptions;
@@ -29,10 +30,7 @@ public class GraphLoader {
     private static final MethodType CTOR_METHOD = MethodType.methodType(
             void.class,
             GraphDatabaseAPI.class,
-            String.class,
-            String.class,
-            String.class,
-            ExecutorService.class);
+            GraphSetup.class);
 
     private String label = null;
     private String relation = null;
@@ -40,6 +38,7 @@ public class GraphLoader {
 
     private final GraphDatabaseAPI api;
     private final ExecutorService executorService;
+    private double propertyDefaultValue = 0.0;
 
     /**
      * Creates a new serial GraphLoader.
@@ -129,23 +128,41 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load weights by reading the given property.
-     * If the property is not found, no weights are loaded.
+     * If the property is not found, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a weight property, use {@link #withoutWeights()} instead.
+     * @param property May not be null; to remove a weight property, use {@link #withoutWeights(double)} or
+     * {@link #withoutWeights()} instead.
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
-    public GraphLoader withWeightsFromProperty(String property) {
+    public GraphLoader withWeightsFromProperty(String property, double propertyDefaultValue) {
         this.property = Objects.requireNonNull(property);
+        this.propertyDefaultValue = propertyDefaultValue;
         return this;
     }
 
     /**
      * Instructs the loader to not load any weights.
+     * The graph is initialized with the propertyDefaultValue instead.
+     *
+     * @param propertyDefaultValue the default value.
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withoutWeights(double propertyDefaultValue) {
+        this.property = null;
+        this.propertyDefaultValue = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any weights.
+     * The graph gets initialized with the weight 0.0 for each relation.
      *
      * @return itself to enable fluent interface
      */
     public GraphLoader withoutWeights() {
         this.property = null;
+        this.propertyDefaultValue = 0.0;
         return this;
     }
 
@@ -172,13 +189,17 @@ public class GraphLoader {
     }
 
     private GraphFactory invokeConstructor(MethodHandle constructor) {
+
+        final GraphSetup setup = new GraphSetup(
+                label,
+                null,
+                relation,
+                property,
+                propertyDefaultValue,
+                executorService);
+
         try {
-            return (GraphFactory) constructor.invoke(
-                    api,
-                    label,
-                    relation,
-                    property,
-                    executorService);
+            return (GraphFactory) constructor.invoke(api, setup);
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(
                     throwable.getMessage(),

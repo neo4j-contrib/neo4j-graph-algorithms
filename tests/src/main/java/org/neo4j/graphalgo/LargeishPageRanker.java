@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.impl.PageRankKernel;
@@ -143,9 +144,13 @@ public final class LargeishPageRanker {
                     tx.success();
                 }
                 long t0 = System.nanoTime();
+
+                final GraphSetup singleThreadSetup = new GraphSetup();
+                final GraphSetup multiThreadSetup = new GraphSetup(pool);
+
                 graph = useMultiImpl ?
-                        new HeavyGraphFactory(api, null, null, null, pool).build() :
-                        new LightGraphFactory(api, null, null, null, null).build();
+                        new HeavyGraphFactory(api, multiThreadSetup).build() :
+                        new LightGraphFactory(api, singleThreadSetup).build();
                 long t1 = System.nanoTime();
                 System.out.printf(
                         " done in %.2f seconds%n",

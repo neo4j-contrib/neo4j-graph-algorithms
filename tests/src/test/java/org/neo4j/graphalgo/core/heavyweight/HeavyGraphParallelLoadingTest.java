@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -85,10 +86,7 @@ public class HeavyGraphParallelLoadingTest {
         try {
             graph = new HeavyGraphFactory(
                     (GraphDatabaseAPI) db,
-                    null,
-                    null,
-                    null,
-                    pool
+                    new GraphSetup(pool)
             ).build(batchSize);
         } catch (Exception e) {
             hasFailures = true;
@@ -167,10 +165,8 @@ public class HeavyGraphParallelLoadingTest {
             try {
                 new HeavyGraphFactory(
                         (GraphDatabaseAPI) db,
-                        null,
-                        null,
-                        null,
-                        new ThrowingThreadPool(3, message)
+                        new GraphSetup(new ThrowingThreadPool(3, message))
+
                 ).build(batchSize);
                 fail("Should have thrown an Exception.");
             } catch (Exception e) {
