@@ -1,14 +1,12 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.neo4j.graphalgo.SimpleGraphTestCase;
 import org.neo4j.graphalgo.SimpleGraphSetup;
 
 /**
  * @author mknobloch
  */
-@Ignore("testV0OutgoingWeightedIterator broken")
 public class LightGraphTest extends SimpleGraphTestCase {
 
     @BeforeClass

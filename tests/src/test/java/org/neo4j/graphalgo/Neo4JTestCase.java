@@ -2,13 +2,12 @@ package org.neo4j.graphalgo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphView;
-import org.neo4j.graphdb.*;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 /**
@@ -37,7 +36,7 @@ public abstract class Neo4JTestCase {
     }
 
     public static int newNode() {
-        try(Transaction transaction = db.beginTx()) {
+        try (Transaction transaction = db.beginTx()) {
             final Node node = db.createNode(Label.label(LABEL));
             transaction.success();
             final int id = Math.toIntExact(node.getId());
@@ -46,19 +45,22 @@ public abstract class Neo4JTestCase {
     }
 
     public static long newRelation(int sourceNodeId, int targetNodeId) {
-        try(Transaction transaction = db.beginTx()) {
+        try (Transaction transaction = db.beginTx()) {
             final Node source = db.getNodeById(sourceNodeId);
             final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
                     target,
                     RelationshipType.withName(RELATION));
             transaction.success();
-            return relation.getId() ;
+            return relation.getId();
         }
     }
 
-    public static long newRelation(long sourceNodeId, long targetNodeId, double weight) {
-        try(Transaction transaction = db.beginTx()) {
+    public static long newRelation(
+            long sourceNodeId,
+            long targetNodeId,
+            double weight) {
+        try (Transaction transaction = db.beginTx()) {
             final Node source = db.getNodeById(sourceNodeId);
             final Node target = db.getNodeById(targetNodeId);
             final Relationship relation = source.createRelationshipTo(
@@ -66,7 +68,7 @@ public abstract class Neo4JTestCase {
                     RelationshipType.withName(RELATION));
             relation.setProperty(WEIGHT_PROPERTY, weight);
             transaction.success();
-            return relation.getId() ;
+            return relation.getId();
         }
     }
 }

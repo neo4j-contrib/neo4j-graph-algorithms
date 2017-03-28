@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.leightweight;
 
 
 
+import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.api.RelationCursor;
 
 import java.util.Iterator;
@@ -14,6 +15,7 @@ class RelationIteratorImpl implements Iterator<RelationCursor> {
     private final RelationCursor cursor = new RelationCursor();
     private final IntArray.Cursor adjCursor;
 
+    private final LongLongMap relationIdMapping;
     private long relationId;
 
     private int[] array;
@@ -21,20 +23,23 @@ class RelationIteratorImpl implements Iterator<RelationCursor> {
     private int limit;
 
     RelationIteratorImpl(
-        int sourceNodeId,
-        long offset,
-        long length,
-        IntArray adjacency) {
-        this(sourceNodeId, offset, length, adjacency, adjacency.newCursor());
+            int sourceNodeId,
+            long offset,
+            long length,
+            LongLongMap relationIdMapping,
+            IntArray adjacency) {
+        this(sourceNodeId, offset, length, relationIdMapping, adjacency, adjacency.newCursor());
     }
 
     RelationIteratorImpl(
             int sourceNodeId,
             long offset,
             long length,
+            LongLongMap relationIdMapping,
             IntArray adjacency,
             IntArray.Cursor adjCursor) {
         relationId = offset;
+        this.relationIdMapping = relationIdMapping;
         cursor.sourceNodeId = sourceNodeId;
         this.adjCursor = adjacency.cursor(offset, length, adjCursor);
         nextPage();
@@ -47,7 +52,7 @@ class RelationIteratorImpl implements Iterator<RelationCursor> {
 
     @Override
     public RelationCursor next() {
-        cursor.relationId = relationId++;
+        cursor.relationId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
         return cursor;
     }

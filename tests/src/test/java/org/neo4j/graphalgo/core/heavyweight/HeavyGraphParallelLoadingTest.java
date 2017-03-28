@@ -1,26 +1,18 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.RandomGraphTestCase;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -41,20 +33,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
-public class HeavyGraphParallelLoadingTest {
+public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
     private static final int NODE_COUNT = 100;
-    private static boolean hasFailures = false;
     private final int batchSize;
-
-    @Rule
-    public TestWatcher watcher = new TestWatcher() {
-        @Override
-        protected void failed(
-                final Throwable e,
-                final Description description) {
-            hasFailures = true;
-        }
-    };
 
     @Parameters
     public static Collection<Object[]> data() {
@@ -70,55 +51,20 @@ public class HeavyGraphParallelLoadingTest {
                 .collect(Collectors.toList());
     }
 
-    private static final String RANDOM_GRAPH =
-            "FOREACH (x IN range(1, 100) | CREATE ()) " +
-                    "WITH 0.1 AS p " +
-                    "MATCH (n1),(n2) WITH n1,n2 LIMIT 1000 WHERE rand() < p " +
-                    "CREATE (n1)-[:TYPE]->(n2)";
-
-
-    private static GraphDatabaseService db;
     private Graph graph;
 
     public HeavyGraphParallelLoadingTest(int batchSize) {
         this.batchSize = batchSize;
         final ExecutorService pool = Executors.newFixedThreadPool(3);
         try {
-            graph = new HeavyGraphFactory(
-                    (GraphDatabaseAPI) db,
-                    new GraphSetup(pool)
-            ).build(batchSize);
+            graph = new HeavyGraphFactory(db, new GraphSetup(pool))
+                    .build(batchSize);
         } catch (Exception e) {
-            hasFailures = true;
+            markFailure();
             throw e;
         } finally {
             pool.shutdown();
         }
-    }
-
-    @BeforeClass
-    public static void setupGraph() {
-        db = new TestGraphDatabaseFactory()
-                .newImpermanentDatabaseBuilder()
-                .newGraphDatabase();
-        try (Transaction tx = db.beginTx()) {
-            db.execute(RANDOM_GRAPH).close();
-            tx.success();
-        } catch (Exception e) {
-            hasFailures = true;
-            throw e;
-        }
-    }
-
-    @AfterClass
-    public static void shutdownGraph() throws Exception {
-        if (hasFailures) {
-            PrintWriter pw = new PrintWriter(System.out);
-            pw.println("Generated graph to reproduce any errors:");
-            pw.println();
-            CypherExporter.export(pw, db);
-        }
-        db.shutdown();
     }
 
     @Test
@@ -142,12 +88,14 @@ public class HeavyGraphParallelLoadingTest {
             }
 
             graph.forEachNode(nodeId -> {
-                assertEquals(true, nodeIds.remove(graph.toOriginalNodeId(nodeId)));
-                assertEquals(nodeId, graph.toMappedNodeId(graph.toOriginalNodeId(nodeId)));
+                assertEquals(
+                        true,
+                        nodeIds.remove(graph.toOriginalNodeId(nodeId)));
+                assertEquals(
+                        nodeId,
+                        graph.toMappedNodeId(graph.toOriginalNodeId(nodeId)));
             });
         }
-
-
     }
 
     @Test
@@ -164,9 +112,8 @@ public class HeavyGraphParallelLoadingTest {
             String message = "oh noes";
             try {
                 new HeavyGraphFactory(
-                        (GraphDatabaseAPI) db,
+                        db,
                         new GraphSetup(new ThrowingThreadPool(3, message))
-
                 ).build(batchSize);
                 fail("Should have thrown an Exception.");
             } catch (Exception e) {

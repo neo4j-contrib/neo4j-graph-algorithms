@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
+import com.carrotsearch.hppc.LongLongMap;
+import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
@@ -31,6 +33,10 @@ public final class LightGraphFileWriter {
             LightGraph.class,
             WeightMap.class,
             "weightMapping");
+    private static final MethodHandle RELMAP = PrivateLookup.field(
+            LightGraph.class,
+            LongLongMap.class,
+            "relationIdMapping");
     private static final MethodHandle ADJACENCY = PrivateLookup.field(
             LightGraph.class,
             IntArray.class,
@@ -48,8 +54,8 @@ public final class LightGraphFileWriter {
 
         try {
             IdMap idMapping = (IdMap) ID_MAP.invokeExact(graph);
-            WeightMap weightMapping = (WeightMap) WEIGHTS.invokeExact(
-                    graph);
+            WeightMap weightMapping = (WeightMap) WEIGHTS.invokeExact(graph);
+            LongLongMap relMap = (LongLongMap) RELMAP.invokeExact(graph);
             IntArray adjacency = (IntArray) ADJACENCY.invokeExact(graph);
             long[] inOffsets = (long[]) IN_OFFSETS.invokeExact(graph);
             long[] outOffsets = (long[]) OUT_OFFSETS.invokeExact(graph);
@@ -59,6 +65,7 @@ public final class LightGraphFileWriter {
                     adjacency,
                     inOffsets,
                     outOffsets,
+                    relMap,
                     idMapping,
                     weightMapping
             );
@@ -72,16 +79,19 @@ public final class LightGraphFileWriter {
             IntArray adjacency,
             long[] inOffsets,
             long[] outOffsets,
+            LongLongMap relMap,
             IdMap idMap,
             WeightMap weights) throws IOException {
 
         final long adjSize = adjacency.size();
         final long requiredBytes = BYTES_LONG
                 + adjSize * BYTES_INT
-                + Integer.BYTES
+                + BYTES_INT
                 + inOffsets.length * BYTES_LONG
-                + Integer.BYTES
+                + BYTES_INT
                 + outOffsets.length * BYTES_LONG
+                + BYTES_INT
+                + relMap.size() * 2 * BYTES_LONG
                 + IdMapSerialization.bytes(idMap)
                 + WeightMappingSerialization.bytes(weights);
 
@@ -110,6 +120,12 @@ public final class LightGraphFileWriter {
             out.writeVInt(outOffsets.length);
             for (long i : outOffsets) {
                 out.writeVLong(i);
+            }
+
+            out.writeVInt(relMap.size());
+            for (final LongLongCursor cursor : relMap) {
+                out.writeVLong(cursor.key);
+                out.writeVLong(cursor.value);
             }
 
             IdMapSerialization.write(idMap, out);

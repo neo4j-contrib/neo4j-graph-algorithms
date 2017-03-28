@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
+import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
@@ -17,6 +17,7 @@ public class LightGraph implements Graph {
 
     private final IdMap idMapping;
     private final WeightMapping weightMapping;
+    private final LongLongMap relationIdMapping;
     private final IntArray adjacency;
     private final long[] inOffsets;
     private final long[] outOffsets;
@@ -25,11 +26,13 @@ public class LightGraph implements Graph {
     LightGraph(
             final IdMap idMapping,
             final WeightMapping weightMapping,
+            final LongLongMap relationIdMapping,
             final IntArray adjacency,
             final long[] inOffsets,
             final long[] outOffsets) {
         this.idMapping = idMapping;
         this.weightMapping = weightMapping;
+        this.relationIdMapping = relationIdMapping;
         this.adjacency = adjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
@@ -100,13 +103,13 @@ public class LightGraph implements Graph {
             case INCOMING: {
                 final long offset = inOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, offset + length, weightMapping, adjacency);
+                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, relationIdMapping, adjacency);
             }
 
             case OUTGOING: {
                 final long offset = outOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, offset + length, weightMapping, adjacency);
+                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, relationIdMapping, adjacency);
             }
             default: {
                 throw new IllegalArgumentException("Direction.BOTH not yet implemented");
@@ -121,13 +124,13 @@ public class LightGraph implements Graph {
             case INCOMING: {
                 final long offset = inOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new RelationIteratorImpl(vertexId, offset + 1, length, adjacency);
+                return new RelationIteratorImpl(vertexId, offset + 1, length, relationIdMapping, adjacency);
             }
 
             case OUTGOING: {
                 final long offset = outOffsets[vertexId];
                 final int length = adjacency.get(offset);
-                return new RelationIteratorImpl(vertexId, offset + 1, length, adjacency);
+                return new RelationIteratorImpl(vertexId, offset + 1, length, relationIdMapping, adjacency);
             }
 
             default: {
@@ -202,12 +205,16 @@ public class LightGraph implements Graph {
             int node,
             IntArray.Cursor cursor,
             WeightedRelationConsumer consumer) {
+        //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
+        final WeightMapping weightMap = this.weightMapping;
+        //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
+        final LongLongMap relMap = this.relationIdMapping;
         while (cursor.next()) {
             final int[] array = cursor.array;
             int offset = cursor.offset;
             final int limit = cursor.length + offset;
             while (offset < limit) {
-                consumer.accept(node, array[offset], offset, weightMapping.get(offset++));
+                consumer.accept(node, array[offset], relMap.get(offset), weightMap.get(offset++));
             }
         }
     }
@@ -216,12 +223,14 @@ public class LightGraph implements Graph {
             int node,
             IntArray.Cursor cursor,
             RelationConsumer consumer) {
+        //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
+        final LongLongMap relMap = this.relationIdMapping;
         while (cursor.next()) {
             final int[] array = cursor.array;
             int offset = cursor.offset;
             final int limit = cursor.length + offset;
             while (offset < limit) {
-                consumer.accept(node, array[offset], offset++);
+                consumer.accept(node, array[offset], relMap.get(offset++));
             }
         }
     }

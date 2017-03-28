@@ -1,10 +1,10 @@
 package org.neo4j.graphalgo.core.leightweight;
 
+import com.carrotsearch.hppc.LongLongHashMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
 
@@ -53,11 +53,21 @@ public class LightGraphFileLoader {
                 outOffsets[i] = in.readVLong();
             }
 
+            final int relLength = in.readVInt();
+            final LongLongHashMap relMapping = new LongLongHashMap(
+                    (int) Math.ceil(relLength / 0.99),
+                    0.99);
+            for (int i = 0; i < relLength; i++) {
+                relMapping.put(in.readVLong(), in.readVLong());
+            }
+
             final IdMap idMap = IdMapSerialization.read(in);
             final WeightMapping weightMapping = WeightMappingSerialization.read(in);
 
             return new LightGraph(
-                    idMap, weightMapping, adjacency, inOffsets, outOffsets
+                    idMap, weightMapping,
+                    relMapping,
+                    adjacency, inOffsets, outOffsets
             );
         }
     }

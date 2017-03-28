@@ -1,5 +1,8 @@
 package org.neo4j.graphalgo.core.leightweight;
 
+import com.carrotsearch.hppc.LongLongHashMap;
+import com.carrotsearch.hppc.LongLongMap;
+import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
@@ -7,15 +10,12 @@ import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
-import org.neo4j.cursor.Cursor;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
-
-import java.util.concurrent.ExecutorService;
 
 public final class LightGraphFactory extends GraphFactory {
 
@@ -24,13 +24,15 @@ public final class LightGraphFactory extends GraphFactory {
     private long[] outOffsets;
     private IntArray adjacency;
     private WeightMapping weights;
+    private LongLongMap relationIdMapping;
     private long adjacencyIdx;
     protected int nodeCount;
     protected int relationCount;
     protected int weightId;
 
-    public LightGraphFactory(GraphDatabaseAPI api,
-                             GraphSetup setup) {
+    public LightGraphFactory(
+            GraphDatabaseAPI api,
+            GraphSetup setup) {
         super(api, setup);
         withReadOps(readOp -> {
             nodeCount = Math.toIntExact(readOp.nodesGetCount());
@@ -47,6 +49,9 @@ public final class LightGraphFactory extends GraphFactory {
         mapping = new IdMap(nodeCount);
         inOffsets = new long[nodeCount];
         outOffsets = new long[nodeCount];
+        relationIdMapping = new LongLongHashMap(
+                (int) Math.ceil(relationCount / 0.99),
+                0.99);
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.propertyDefaultValue)
@@ -56,7 +61,7 @@ public final class LightGraphFactory extends GraphFactory {
         adjacencyIdx = 1L;
 
         withReadOps(readOp -> {
-            try(Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
+            try (Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
                 while (cursor.next()) {
                     readNode(cursor.get());
                 }
@@ -66,6 +71,7 @@ public final class LightGraphFactory extends GraphFactory {
         return new LightGraph(
                 mapping,
                 weights,
+                relationIdMapping,
                 adjacency,
                 inOffsets,
                 outOffsets
@@ -104,6 +110,7 @@ public final class LightGraphFactory extends GraphFactory {
 
                 long targetNodeId = rel.otherNode(node.id());
                 int targetGraphId = mapping.mapOrGet(targetNodeId);
+                relationIdMapping.put(idx, rel.id());
 
                 try (Cursor<PropertyItem> weights = rel.property(weightId)) {
                     if (weights.next()) {
