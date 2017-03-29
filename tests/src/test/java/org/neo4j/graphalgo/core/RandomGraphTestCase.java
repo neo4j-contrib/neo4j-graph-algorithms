@@ -33,7 +33,7 @@ public abstract class RandomGraphTestCase {
             "FOREACH (x IN range(1, " + NODE_COUNT + ") | CREATE (:Label)) " +
                     "WITH 0.1 AS p " +
                     "MATCH (n1),(n2) WITH n1,n2 LIMIT 1000 WHERE rand() < p " +
-                    "CREATE (n1)-[:TYPE]->(n2)";
+                    "CREATE (n1)-[:TYPE {weight:ceil(10*rand())/10}]->(n2)";
 
     @BeforeClass
     public static void setupGraph() {
