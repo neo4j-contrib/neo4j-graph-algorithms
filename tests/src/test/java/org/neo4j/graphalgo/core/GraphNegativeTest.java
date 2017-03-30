@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Relationship;
@@ -16,10 +17,13 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.Pair;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,7 +37,8 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"}
+                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }
 
@@ -77,6 +82,24 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
+    public void shouldLoadWeightedRelationshipsNodesForNonExistingStringTypes() {
+        final Graph graph = new GraphLoader(RandomGraphTestCase.db)
+                .withRelationshipType("foo")
+                .withWeightsFromProperty("weight", 42.0)
+                .load(graphImpl);
+        testWeightedRelationships(graph);
+    }
+
+    @Test
+    public void shouldLoadWeightedRelationshipsNodesForNonExistingTypes() {
+        final Graph graph = new GraphLoader(RandomGraphTestCase.db)
+                .withRelationshipType(RelationshipType.withName("foo"))
+                .withWeightsFromProperty("weight", 42.0)
+                .load(graphImpl);
+        testWeightedRelationships(graph);
+    }
+
+    @Test
     public void shouldLoadDefaultWeightForNonExistingProperty() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withWeightsFromProperty("foo", 13.37)
@@ -89,29 +112,59 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     private void testRelationships(final Graph graph) {
+        testAnyRelationship(graph, (rs, rel) -> Pair.of(
+                graph.relationIterator(
+                        graph.toMappedNodeId(rel.getStartNode().getId()),
+                        Direction.OUTGOING),
+                cursor -> {}
+        ));
+    }
+
+    private void testWeightedRelationships(final Graph graph) {
+        testAnyRelationship(graph, (rs, rel) -> {
+            double weight = ((Number) rel.getProperty("weight")).doubleValue();
+            return Pair.of(
+                    graph.weightedRelationIterator(
+                            graph.toMappedNodeId(rel.getStartNode().getId()),
+                            Direction.OUTGOING),
+                    (cursor) -> assertEquals(
+                            rs + " wrong weight",
+                            weight,
+                            cursor.weight,
+                            0.001
+                    )
+            );
+        });
+    }
+
+    private <T extends RelationCursor> void testAnyRelationship(
+            Graph graph,
+            BiFunction<String, Relationship, Pair<Iterator<T>, Consumer<T>>> tester) {
         try (Transaction tx = db.beginTx()) {
-            final ResourceIterable<Relationship> rels = db.getAllRelationships();
+            ResourceIterable<Relationship> rels = db.getAllRelationships();
             ResourceIterator<Relationship> iterator = rels.iterator();
             while (iterator.hasNext()) {
-                final Relationship rel = iterator.next();
-                final String rs = String.format(
+                Relationship rel = iterator.next();
+                String rs = String.format(
                         "(%s)-[%s]->(%s)",
                         rel.getStartNode().getId(),
                         rel.getId(),
                         rel.getEndNode().getId());
+                Pair<Iterator<T>, Consumer<T>> test =
+                        tester.apply(rs, rel);
+
                 boolean hasRelation = false;
-                final Iterator<RelationCursor> relIter = graph.relationIterator(
-                        graph.toMappedNodeId(rel.getStartNode().getId()),
-                        Direction.OUTGOING);
+                Iterator<T> relIter = test.first();
                 while (relIter.hasNext()) {
-                    RelationCursor next = relIter.next();
-                    if (next.relationId == rel.getId()) {
+                    T cursor = relIter.next();
+                    if (cursor.relationId == rel.getId()) {
                         hasRelation = true;
                         assertEquals(
                                 rs,
-                                graph.toOriginalNodeId(next.targetNodeId),
-                                rel.getEndNode().getId()
+                                rel.getEndNode().getId(),
+                                graph.toOriginalNodeId(cursor.targetNodeId)
                         );
+                        test.other().accept(cursor);
                     }
                 }
                 assertTrue(
