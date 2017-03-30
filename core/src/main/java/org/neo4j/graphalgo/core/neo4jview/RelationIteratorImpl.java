@@ -14,13 +14,11 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Iterator;
 
 class RelationIteratorImpl implements Iterator<RelationCursor>, Closeable {
 
     private final Graph graph;
-    private final GraphDatabaseAPI api;
     private final Transaction transaction;
     private final Statement statement;
     private final RelationshipIterator iterator;
@@ -30,14 +28,17 @@ class RelationIteratorImpl implements Iterator<RelationCursor>, Closeable {
 
     RelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction, int relationTypeId) throws EntityNotFoundException {
         this.graph = graph;
-        this.api = api;
         transaction = api.beginTx();
         statement = api.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class)
                 .get();
         read = statement.readOperations();
         originalNodeId = graph.toOriginalNodeId(sourceNodeId);
-        iterator = read.nodeGetRelationships(originalNodeId, direction, relationTypeId);
+        if (relationTypeId == ReadOperations.ANY_RELATIONSHIP_TYPE) {
+            iterator = read.nodeGetRelationships(originalNodeId, direction);
+        } else {
+            iterator = read.nodeGetRelationships(originalNodeId, direction, relationTypeId);
+        }
         cursor = new RelationCursor();
         cursor.sourceNodeId = sourceNodeId;
     }

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Iterables;
@@ -24,15 +25,27 @@ final class CypherExporter {
                                     node.getRelationships(Direction.OUTGOING)
                             )
                     )
-                    .map(rel ->
-                            "  (n" + rel.getStartNode().getId() + ")"
-                                    + "-[:TYPE]->"
-                                    + "(n" + rel.getEndNode().getId() + ")"
-                    )
+                    .map(CypherExporter::rel)
                     .collect(Collectors.joining(",\n", "CREATE\n", "\n"))
             );
             tx.success();
         }
         out.flush();
+    }
+
+    private static String rel(Relationship rel) {
+        String props = rel.getAllProperties()
+                .entrySet()
+                .stream()
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(",", " {", "}"));
+        if (props.equals(" {}")) {
+            props = "";
+        }
+        return "  (n" + rel.getStartNode().getId() + ")"
+                + "-[:TYPE"
+                + props
+                + "]->"
+                + "(n" + rel.getEndNode().getId() + ")";
     }
 }
