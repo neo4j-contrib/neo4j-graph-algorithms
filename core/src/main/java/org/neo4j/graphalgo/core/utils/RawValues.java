@@ -1,19 +1,21 @@
 package org.neo4j.graphalgo.core.utils;
 
 /**
- * @author mknobloch
+ * TODO: find suitable name or move
+ *
+ * @author mknblch
  */
 public class RawValues {
 
     /**
-     * shifts up the head into the most significant 4 bytes of the long and
-     * places the tail in the least significant bytes
+     * shifts head into the most significant 4 bytes of the long
+     * and places the tail in the least significant bytes
      * @param head an arbitrary int value
      * @param tail an arbitrary int value
-     * @return the combination of head and
+     * @return combination of head and tail
      */
     public static long combineIntInt(int head, int tail) {
-        return ((long) head << 32) | tail;
+        return ((long) head << 32) | tail & 0xFFFFFFFFL ;
     }
 
     /**

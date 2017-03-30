@@ -9,6 +9,8 @@ import org.neo4j.graphdb.Direction;
 import static org.neo4j.graphalgo.core.utils.RawValues.*;
 
 /**
+ * work in progress
+ *
  * This implementation returns a Collection of long values where each long encodes
  * a transition from a sourceNodeId (carried in the 4 most significant bytes)
  * and its targetNodeId (in the 4 least significant bytes).
@@ -34,7 +36,7 @@ public class MSTPrim {
     public LongArrayList compute(int startNode) { // TODO replace OUTGOING with BOTH
 
         final LongMinPriorityQueue queue = new LongMinPriorityQueue();
-        final LongArrayList mst = new LongArrayList(); // TODO eval if we find a better container
+        final LongArrayList mst = new LongArrayList(graph.nodeCount()); // TODO better container
         final IntSet visited = new IntHashSet(); // TODO same
 
         // initially add all relations from startNode
