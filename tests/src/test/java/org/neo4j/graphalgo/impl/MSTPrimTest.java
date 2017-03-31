@@ -1,20 +1,22 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.cursors.LongCursor;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.IntBinaryConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.neo4j.graphalgo.core.utils.RawValues.*;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests if MSTPrim returns a correct MST
@@ -65,47 +67,67 @@ public class MSTPrimTest extends Neo4JTestCase {
     }
 
     @Test
-    public void testPrim() throws Exception {
-
-        final LongArrayList mst = new MSTPrim(graph).compute(a);
-
-        for (LongCursor cursor : mst) {
-            System.out.println(var(getHead(cursor.value)) + " -> " + var(getTail(cursor.value)));
-        }
-
-        assertTrue(mst.contains(combineIntInt(a, b)));
-        assertTrue(mst.contains(combineIntInt(a, c)));
-        assertTrue(mst.contains(combineIntInt(b, d)));
-        assertTrue(mst.contains(combineIntInt(c, e)));
+    public void testMstPrim() throws Exception {
+        final MSTPrim prim = new MSTPrim(graph);
+        verifyMst(prim.compute(a));
+        verifyMst(prim.compute(b));
+        verifyMst(prim.compute(c));
+        verifyMst(prim.compute(d));
+        verifyMst(prim.compute(e));
     }
 
-    @Ignore("current impl. only takes outgoing relations into account")
-    @Test
-    public void test2() throws Exception {
-        final LongArrayList mst = new MSTPrim(graph).compute(b);
-        assertEquals(4, mst.size());
-
-        for (LongCursor cursor : mst) {
-            System.out.println(var(getHead(cursor.value)) + " -> " + var(getTail(cursor.value)));
-        }
+    private void verifyMst(MSTPrim.MST mst) {
+        final AssertingTransitionConsumer consumer = new AssertingTransitionConsumer();
+        mst.forEach(consumer);
+        consumer.assertContains(a, b);
+        consumer.assertContains(a, c);
+        consumer.assertContains(b, d);
+        consumer.assertContains(c, e);
     }
 
-    public String var(int id) {
-        if (id == a) {
-            return "a";
+    private static class AssertingTransitionConsumer implements IntBinaryConsumer {
+
+        private static class Pair {
+            final int a;
+            final int b;
+            private Pair(int a, int b) {
+                this.a = a;
+                this.b = b;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+
+                Pair pair = (Pair) o;
+
+                if (a != pair.a) return false;
+                return b == pair.b;
+
+            }
+
+            @Override
+            public int hashCode() {
+                int result = a;
+                result = 31 * result + b;
+                return result;
+            }
         }
-        if (id == b) {
-            return "b";
+
+        private ArrayList<Pair> pairs = new ArrayList<>();
+
+        public void assertSize(int expected) {
+            assertEquals("size does not match", expected, pairs.size());
         }
-        if (id == c) {
-            return "c";
+
+        @Override
+        public void accept(int p, int q) {
+            pairs.add(new Pair(Math.min(p, q), Math.max(p, q)));
         }
-        if (id == d) {
-            return "d";
+
+        public void assertContains(int p, int q) {
+            assertTrue("{" + p + "," + q + "} not found", pairs.contains(new Pair(Math.min(p, q), Math.max(p, q))));
         }
-        if (id == e) {
-            return "e";
-        }
-        return "null";
     }
 }
