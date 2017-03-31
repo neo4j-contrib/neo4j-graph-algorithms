@@ -38,7 +38,7 @@ public class HeavyGraphFactory extends GraphFactory {
     private final ExecutorService threadPool;
     private int propertyId;
     private int labelId;
-    private int relationId;
+    private int[] relationId;
     private int nodeCount;
 
     public HeavyGraphFactory(
@@ -48,7 +48,9 @@ public class HeavyGraphFactory extends GraphFactory {
         this.threadPool = setup.executor;
         withReadOps(readOp -> {
             labelId = readOp.labelGetForName(setup.startLabel);
-            relationId = readOp.relationshipTypeGetForName(setup.relationshipType);
+            relationId = new int[] {
+                    readOp.relationshipTypeGetForName(setup.relationshipType)
+            };
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
             propertyId = readOp.propertyKeyGetForName(setup.propertyName);
         });
@@ -77,7 +79,7 @@ public class HeavyGraphFactory extends GraphFactory {
                         : readOp.nodeCursorGetForLabel(labelId)) {
                     while (cursor.next()) {
                         final NodeItem node = cursor.get();
-                        readNode(node, mapOrGet, 0, matrix, propertyId, weightMap);
+                        readNode(node, mapOrGet, 0, matrix, propertyId, weightMap, relationId);
                     }
                 }
             });
@@ -94,7 +96,8 @@ public class HeavyGraphFactory extends GraphFactory {
                             idMap,
                             nodeIds,
                             weightMap,
-                            propertyId
+                            propertyId,
+                            relationId
                     );
                     if (importTask.nodeCount > 0) {
                         tasks.add(importTask);
@@ -116,7 +119,8 @@ public class HeavyGraphFactory extends GraphFactory {
             int idOffset,
             AdjacencyMatrix matrix,
             int propertyId,
-            WeightMapping weightMapping
+            WeightMapping weightMapping,
+            int... relationType
     ) {
         final long originalNodeId = node.id();
         final int nodeId = idMap.mapId(originalNodeId) - idOffset;
@@ -124,7 +128,7 @@ public class HeavyGraphFactory extends GraphFactory {
         final int inDegree = node.degree(Direction.INCOMING);
 
         matrix.armOut(nodeId, outDegree);
-        try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING)) {
+        try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING, relationType)) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long endNode = rel.endNode();
@@ -141,7 +145,7 @@ public class HeavyGraphFactory extends GraphFactory {
             }
         }
         matrix.armIn(nodeId, inDegree);
-        try (Cursor<RelationshipItem> rels = node.relationships(Direction.INCOMING)) {
+        try (Cursor<RelationshipItem> rels = node.relationships(Direction.INCOMING, relationType)) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long startNode = rel.startNode();
@@ -193,11 +197,13 @@ public class HeavyGraphFactory extends GraphFactory {
         private final int nodeOffset;
         private final int nodeCount;
         private final WeightMapping weightMap;
+        private final int[] relationId;
         private final int propertyId;
 
-        ImportTask(int batchSize, IdMap idMap, PrimitiveLongIterator nodes, WeightMapping weightMap, int propertyId) {
+        ImportTask(int batchSize, IdMap idMap, PrimitiveLongIterator nodes, WeightMapping weightMap, int propertyId, int... relationId) {
             this.nodeOffset = idMap.size();
             this.weightMap = weightMap;
+            this.relationId = relationId;
             this.propertyId = propertyId;
             int i;
             for (i = 0; i < batchSize && nodes.hasNext(); i++) {
@@ -229,7 +235,10 @@ public class HeavyGraphFactory extends GraphFactory {
                                 cursor.get(),
                                 idMapper,
                                 nodeOffset,
-                                matrix, propertyId, weightMap);
+                                matrix,
+                                propertyId,
+                                weightMap,
+                                relationId);
                     }
                 }
             }
