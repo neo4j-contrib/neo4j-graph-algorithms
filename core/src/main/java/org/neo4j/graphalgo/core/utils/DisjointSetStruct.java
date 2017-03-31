@@ -7,14 +7,12 @@ package org.neo4j.graphalgo.core.utils;
  */
 public class DisjointSetStruct {
 
-    // parent array
     private final int[] parent;
-    // balancing weight
     private final int[] depth;
 
     /**
      *
-     * @param capacity the maximum
+     * @param capacity the capacity (maximum node id)
      */
     public DisjointSetStruct(int capacity) {
         parent = new int[capacity];
