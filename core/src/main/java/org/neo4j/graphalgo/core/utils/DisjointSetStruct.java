@@ -53,6 +53,9 @@ public class DisjointSetStruct {
      * @param q an item of Sq
      */
     public void union(int p, int q) {
+        if (p == q) {
+            return;
+        }
         final int pSet = find(p);
         final int qSet = find(q);
         if (pSet == qSet) {
