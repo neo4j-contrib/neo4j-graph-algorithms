@@ -28,10 +28,12 @@ public class DisjointSetStruct {
      * @return an id of the set it belongs to
      */
     public int find(int p) {
-        if (parent[p] == p) return p;
+        final int pFirst = parent[p];
+        if (pFirst == p) {
+            return p;
+        }
         // path compression optimization
-        parent[p] = find(parent[p]); // balance tree while traversing
-        return parent[p];
+        return parent[p] = find(pFirst); // balance tree while traversing
     }
 
     /**
