@@ -6,7 +6,6 @@ package org.neo4j.graphalgo.core.utils;
  * Implemented using a recursive path compression logic.
  *
  * TODO: naming
- *
  * @author mknblch
  */
 public class PathCompressingDSS extends AbstractDisjointSet {

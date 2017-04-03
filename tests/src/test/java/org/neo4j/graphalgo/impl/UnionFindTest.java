@@ -9,16 +9,25 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.PathCompressingDSS;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
+ *        A   D  F
+ *       / \  |
+ *      B--C  E
+ *
  * @author mknobloch
  */
 public class UnionFindTest extends Neo4JTestCase {
 
     private static Graph graph;
-    private static int a, b, c, d, e;
+    private static int a, b, c, d, e, f;
 
     @BeforeClass
     public static void setupGraph() {
@@ -28,6 +37,7 @@ public class UnionFindTest extends Neo4JTestCase {
         final int n3 = newNode();
         final int n4 = newNode();
         final int n5 = newNode();
+        final int n6 = newNode();
 
         newRelation(n1, n2);
         newRelation(n2, n3);
@@ -46,23 +56,19 @@ public class UnionFindTest extends Neo4JTestCase {
         c = graph.toMappedNodeId(n3);
         d = graph.toMappedNodeId(n4);
         e = graph.toMappedNodeId(n5);
+        f = graph.toMappedNodeId(n6);
     }
 
     @Test
     public void test() throws Exception {
-        final PathCompressingDSS struct = new UnionFind(graph).compute();
+        final Map<Integer, List<Integer>> struct = new UnionFind(graph).compute();
 
-        assertTrue(struct.connected(a, b));
-        assertTrue(struct.connected(a, c));
-        assertTrue(struct.connected(b, c));
+        assertEquals(3, struct.size());
 
-        assertTrue(struct.connected(d, e));
+        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c)));
+        assertTrue(struct.get(d).containsAll(Arrays.asList(d, e)));
+        assertTrue(struct.get(f).containsAll(Arrays.asList(f)));
 
-        assertFalse(struct.connected(a, d));
-        assertFalse(struct.connected(a, e));
-        assertFalse(struct.connected(b, d));
-        assertFalse(struct.connected(b, e));
-        assertFalse(struct.connected(c, d));
-        assertFalse(struct.connected(c, e));
+        System.out.println(struct);
     }
 }

@@ -8,6 +8,13 @@ package org.neo4j.graphalgo.core.utils;
 public interface DisjointSetStruct {
 
     /**
+     * get the element count
+     *
+     * @return the element count
+     */
+    int count();
+
+    /**
      * find setId of element p.
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to

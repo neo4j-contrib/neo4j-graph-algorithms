@@ -19,11 +19,13 @@ abstract class AbstractDisjointSet implements DisjointSetStruct {
         }
     }
 
+    @Override
+    public int count() {
+        return parent.length;
+    }
+
     /**
-     * check if p and q belong to the same set
-     * @param p a set item
-     * @param q a set item
-     * @return true if both items belong to the same set, false otherwise
+     * {@see DisjointSetStruct#connected}
      */
     @Override
     public boolean connected(int p, int q) {
@@ -31,10 +33,7 @@ abstract class AbstractDisjointSet implements DisjointSetStruct {
     }
 
     /**
-     * join set of p (Sp) with set of q (Sq)
-     *
-     * @param p an item of Sp
-     * @param q an item of Sq
+     * {@see DisjointSetStruct#union}
      */
     @Override
     public void union(int p, int q) {
