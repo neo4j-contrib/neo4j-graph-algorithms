@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationConsumer;
 import org.neo4j.graphalgo.core.utils.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.PathCompressingDSS;
 import org.neo4j.graphdb.Direction;
@@ -30,15 +31,22 @@ public class UnionFind {
         final Aggregator aggregator =
                 new Aggregator(new PathCompressingDSS(graph.nodeCount()));
 
-        forEachOutgoingRelation(aggregator);
+        graph.forEachNode(node -> {
+            graph.forEachRelation(node, Direction.OUTGOING, aggregator);
+        });
 
         return export(aggregator.struct);
     }
 
-    private void forEachOutgoingRelation(RelationConsumer aggregator) {
+    public Map<Integer, List<Integer>> compute(double threshold) {
+        final ThresholdAggregator aggregator =
+                new ThresholdAggregator(new PathCompressingDSS(graph.nodeCount()), threshold);
+
         graph.forEachNode(node -> {
             graph.forEachRelation(node, Direction.OUTGOING, aggregator);
         });
+
+        return export(aggregator.struct);
     }
 
     // TODO find a better container
@@ -67,6 +75,27 @@ public class UnionFind {
 
         @Override
         public void accept(int sourceNodeId, int targetNodeId, long relationId) {
+            if (!struct.connected(sourceNodeId, targetNodeId)) {
+                struct.union(sourceNodeId, targetNodeId);
+            }
+        }
+    }
+
+    private static class ThresholdAggregator implements WeightedRelationConsumer {
+
+        private final DisjointSetStruct struct;
+        private final double threshold;
+
+        private ThresholdAggregator(DisjointSetStruct struct, double threshold) {
+            this.struct = struct;
+            this.threshold = threshold;
+        }
+
+        @Override
+        public void accept(int sourceNodeId, int targetNodeId, long relationId, double weight) {
+            if (weight < threshold) {
+                return;
+            }
             if (!struct.connected(sourceNodeId, targetNodeId)) {
                 struct.union(sourceNodeId, targetNodeId);
             }
