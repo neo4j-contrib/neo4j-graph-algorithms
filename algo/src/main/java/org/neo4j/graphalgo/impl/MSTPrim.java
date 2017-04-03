@@ -51,6 +51,9 @@ public class MSTPrim {
             mst.add(transition);
             // add new candidates
             graph.forEachRelation(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+                if (visited.get(targetNodeId)) {
+                    return;
+                }
                 queue.add(combineIntInt(nodeId, targetNodeId), weight);
             });
         }

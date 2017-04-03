@@ -1,13 +1,12 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.DisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.PathCompressingDSS;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import static org.junit.Assert.assertFalse;
@@ -51,7 +50,7 @@ public class UnionFindTest extends Neo4JTestCase {
 
     @Test
     public void test() throws Exception {
-        final DisjointSetStruct struct = new UnionFind(graph).compute();
+        final PathCompressingDSS struct = new UnionFind(graph).compute();
 
         assertTrue(struct.connected(a, b));
         assertTrue(struct.connected(a, c));

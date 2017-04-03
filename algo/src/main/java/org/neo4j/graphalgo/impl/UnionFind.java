@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationConsumer;
-import org.neo4j.graphalgo.core.utils.DisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.PathCompressingDSS;
 import org.neo4j.graphdb.Direction;
 
 /**
@@ -15,14 +15,14 @@ import org.neo4j.graphdb.Direction;
 public class UnionFind implements RelationConsumer {
 
     private final Graph graph;
-    private DisjointSetStruct struct;
+    private PathCompressingDSS struct;
 
     public UnionFind(Graph graph) {
         this.graph = graph;
     }
 
-    public DisjointSetStruct compute() {
-        struct = new DisjointSetStruct(graph.nodeCount());
+    public PathCompressingDSS compute() {
+        struct = new PathCompressingDSS(graph.nodeCount());
         graph.forEachNode(node -> {
             graph.forEachRelation(node, Direction.OUTGOING, this);
         });
