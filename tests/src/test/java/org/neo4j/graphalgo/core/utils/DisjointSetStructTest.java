@@ -37,7 +37,7 @@ public class DisjointSetStructTest {
         // {0}{1}{2}{3}{4}{5}{6}
         assertFalse(struct.connected(0, 1));
 
-        struct.union(1, 0);
+        struct.union(0, 1);
         assertTrue(struct.connected(0, 1));
         // {0,1}{2}{3}{4}{5}{6}
         assertFalse(struct.connected(2, 3));
@@ -50,7 +50,7 @@ public class DisjointSetStructTest {
         assertFalse(struct.connected(1, 2));
         assertFalse(struct.connected(1, 3));
 
-        struct.union(0, 3);
+        struct.union(3, 0);
         assertTrue(struct.connected(0, 2));
         assertTrue(struct.connected(0, 3));
         assertTrue(struct.connected(1, 2));

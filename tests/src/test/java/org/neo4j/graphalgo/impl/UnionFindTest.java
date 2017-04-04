@@ -17,8 +17,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- *        A   D  F
+/**         1d
+ *        A---D  F
  *       / \  |
  *      B--C  E
  *
@@ -39,16 +39,18 @@ public class UnionFindTest extends Neo4JTestCase {
         final int n5 = newNode();
         final int n6 = newNode();
 
-        newRelation(n1, n2);
-        newRelation(n2, n3);
-        newRelation(n3, n1);
+        newRelation(n1, n2, 3d);
+        newRelation(n2, n3, 3d);
+        newRelation(n3, n1, 3d);
 
-        newRelation(n4, n5);
+        newRelation(n4, n5, 3d);
+
+        newRelation(n1, n4, 1d);
 
         graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withAnyLabel()
-                .withAnyRelationshipType()
-                .withDefaultWeight(0.0)
+                .withRelationshipType(RELATION)
+                .withWeightsFromProperty(WEIGHT_PROPERTY, 0.0)
                 .load(HeavyGraphFactory.class);
 
         a = graph.toMappedNodeId(n1);
@@ -62,13 +64,26 @@ public class UnionFindTest extends Neo4JTestCase {
     @Test
     public void test() throws Exception {
         final Map<Integer, List<Integer>> struct = new UnionFind(graph).compute();
+        System.out.println(struct);
+        assertEquals(2, struct.size());
+        assertEquals(5, struct.get(a).size());
+        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c, d, e)));
+        assertEquals(1, struct.get(f).size());
+        assertTrue(struct.get(f).contains(f));
+    }
 
-        assertEquals(3, struct.size());
+    @Test
+    public void testThreshold() throws Exception {
 
-        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c)));
-        assertTrue(struct.get(d).containsAll(Arrays.asList(d, e)));
-        assertTrue(struct.get(f).containsAll(Arrays.asList(f)));
+        final Map<Integer, List<Integer>> struct = new UnionFind(graph).compute(2d);
 
         System.out.println(struct);
+
+        assertEquals(3, struct.get(a).size());
+        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c)));
+        assertEquals(2, struct.get(d).size());
+        assertTrue(struct.get(d).containsAll(Arrays.asList(d, e)));
+        assertEquals(1, struct.get(f).size());
+        assertTrue(struct.get(f).contains(f));
     }
 }

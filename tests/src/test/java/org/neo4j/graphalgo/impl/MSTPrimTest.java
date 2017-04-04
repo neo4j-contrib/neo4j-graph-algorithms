@@ -19,7 +19,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Tests if MSTPrim returns a valid MST
+ * Tests if MSTPrim returns a valid MST for each node
  *
  *         a                a
  *     1 /   \ 2          /  \

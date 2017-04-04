@@ -75,9 +75,7 @@ public class UnionFind {
 
         @Override
         public void accept(int sourceNodeId, int targetNodeId, long relationId) {
-            if (!struct.connected(sourceNodeId, targetNodeId)) {
-                struct.union(sourceNodeId, targetNodeId);
-            }
+            struct.union(sourceNodeId, targetNodeId);
         }
     }
 
@@ -96,9 +94,7 @@ public class UnionFind {
             if (weight < threshold) {
                 return;
             }
-            if (!struct.connected(sourceNodeId, targetNodeId)) {
-                struct.union(sourceNodeId, targetNodeId);
-            }
+            struct.union(sourceNodeId, targetNodeId);
         }
     }
 }
