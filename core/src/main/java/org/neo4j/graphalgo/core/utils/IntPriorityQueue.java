@@ -5,7 +5,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 /**
  * A PriorityQueue specialized for ints that maintains a partial ordering of
@@ -26,6 +25,7 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
 
     /**
      * Creates a new queue with an initial capacity of {@link #DEFAULT_CAPACITY}.
+     *
      * @see #IntPriorityQueue(int)
      */
     protected IntPriorityQueue() {

@@ -36,9 +36,8 @@ public final class IntMinPriorityQueue extends IntPriorityQueue {
      * @return the new 'top' element in the queue.
      */
     public int add(int element, double cost) {
-        final int value = super.add(element);
         costs.addTo(element, cost);
-        return value;
+        return super.add(element);
     }
 
     @Override
