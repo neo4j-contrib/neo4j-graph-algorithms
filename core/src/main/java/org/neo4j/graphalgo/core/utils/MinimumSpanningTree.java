@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.core.utils;
 
-
-import org.neo4j.graphalgo.api.RelationCursor;
 import org.neo4j.graphalgo.api.WeightedRelationCursor;
 
 import java.util.Arrays;
@@ -40,18 +38,19 @@ public class MinimumSpanningTree implements Iterable<WeightedRelationCursor> {
     }
 
     public MinimumSpanningTree[] split(int k) {
+        final int[] offsets = new int[k];
+        final MinimumSpanningTree[] trees = new MinimumSpanningTree[k];
         k--;
-        int[] offsets = new int[k];
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i <= k; i++) {
             offsets[i] = queue.pop();
         }
         Arrays.sort(offsets);
-        final MinimumSpanningTree[] trees = new MinimumSpanningTree[k];
         int head = 0;
         for (int i = 0; i <= k; i++) {
             trees[i] = new MinimumSpanningTree(tuples.slice(head, offsets[i]));
             head = offsets[i];
         }
+        trees[k - 1] = new MinimumSpanningTree(tuples.slice(head, tuples.size()));
         return trees;
     }
 

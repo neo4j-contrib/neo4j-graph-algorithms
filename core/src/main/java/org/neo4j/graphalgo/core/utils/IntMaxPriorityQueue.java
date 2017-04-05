@@ -30,28 +30,19 @@ public final class IntMaxPriorityQueue extends IntPriorityQueue {
         this.costs = new IntDoubleScatterMap(initialCapacity);
     }
 
-    /**
-     * Adds an int associated with the given weight to a queue in log(size) time.
-     *
-     * @return the new 'top' element in the queue.
-     */
-    public int add(int element, double cost) {
-        return super.add(element, cost);
-    }
-
     @Override
     protected boolean lessThan(int a, int b) {
         return costs.get(a) > costs.get(b);
     }
 
     @Override
-    protected double cost(int element) {
-        return costs.get(element);
+    protected void addCost(int element, double cost) {
+        costs.put(element, cost);
     }
 
     @Override
-    protected void onRemove(final int element) {
-        costs.remove(element);
+    protected double cost(int element) {
+        return costs.get(element);
     }
 
     @Override

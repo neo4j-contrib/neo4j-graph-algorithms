@@ -9,4 +9,9 @@ public class WeightedRelationCursor extends RelationCursor {
      * The weight
      */
     public double weight;
+
+    @Override
+    public String toString() {
+        return "{" + sourceNodeId + ", " + targetNodeId + ", " + weight + "}";
+    }
 }
