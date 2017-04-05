@@ -4,8 +4,10 @@ import com.carrotsearch.hppc.IntDoubleMap;
 
 
 /**
- * An IntPriorityQueue that holds the smallest value on top and used a
+ * An IntPriorityQueue that holds the smallest value on top and uses a
  * shared map for the costs that are associated with the values.
+ * The queue will only ever read costs and never write them. It is up to the
+ * user of this queue to maintain the correct costs.
  *
  * @author phorn@avantgarde-labs.de
  */
@@ -39,5 +41,10 @@ public final class SharedIntMinPriorityQueue extends IntPriorityQueue {
     @Override
     protected double cost(final int element) {
         return costs.getOrDefault(element, defaultCost);
+    }
+
+    @Override
+    protected void addCost(final int element, final double cost) {
+        // does nothing, costs should be managed outside of this queue
     }
 }
