@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 /**
  * @author mknobloch
  */
-@Ignore("graph subset selection not yet implemented")
 @RunWith(MockitoJUnitRunner.class)
 public class HeavyGraphFactoryTest {
 
@@ -100,8 +99,8 @@ public class HeavyGraphFactoryTest {
                 .load(HeavyGraphFactory.class);
 
         graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, relationConsumer);
-        verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong());
         verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id3)), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong());
         Mockito.reset(relationConsumer);
 
         graph.forEachRelation(graph.toMappedNodeId(id2), Direction.OUTGOING, relationConsumer);
@@ -138,7 +137,7 @@ public class HeavyGraphFactoryTest {
 
         graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, weightedRelationConsumer);
         verify(weightedRelationConsumer, times(1))
-                .accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong(), eq(1));
+                .accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong(), eq(1.0));
     }
 
 }

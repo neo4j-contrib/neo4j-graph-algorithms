@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import com.carrotsearch.hppc.LongLongHashMap;
 import com.carrotsearch.hppc.LongLongMap;
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
@@ -75,6 +76,15 @@ public final class LightGraphFactory extends GraphFactory {
         adjacencyIdx = 1L;
 
         withReadOps(readOp -> {
+            final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
+                    ? readOp.nodesGetAll()
+                    : readOp.nodesGetForLabel(labelId);
+            while (nodeIds.hasNext()) {
+                final long nextId = nodeIds.next();
+                mapping.add(nextId);
+            }
+            mapping.buildMappedIds();
+
             try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodeCursorGetAll()
                     : readOp.nodeCursorGetForLabel(labelId)) {
@@ -83,6 +93,7 @@ public final class LightGraphFactory extends GraphFactory {
                 }
             }
         });
+        mapping.buildMappedIds();
 
         return new LightGraph(
                 mapping,
@@ -96,7 +107,7 @@ public final class LightGraphFactory extends GraphFactory {
 
     private void readNode(final NodeItem node) {
         long sourceNodeId = node.id();
-        int sourceGraphId = mapping.mapOrGet(sourceNodeId);
+        int sourceGraphId = mapping.get(sourceNodeId);
 
         readRelationships(
                 sourceGraphId,
@@ -124,11 +135,15 @@ public final class LightGraphFactory extends GraphFactory {
                 ? node.relationships(direction)
                 : node.relationships(direction, relationId)) {
             while (rels.next()) {
-                relDegree++;
                 RelationshipItem rel = rels.get();
 
                 long targetNodeId = rel.otherNode(node.id());
-                int targetGraphId = mapping.mapOrGet(targetNodeId);
+                int targetGraphId = mapping.get(targetNodeId);
+                if (targetGraphId == -1) {
+                    continue;
+                }
+
+                relDegree++;
                 relationIdMapping.put(idx, rel.id());
 
                 try (Cursor<PropertyItem> weights = rel.property(weightId)) {

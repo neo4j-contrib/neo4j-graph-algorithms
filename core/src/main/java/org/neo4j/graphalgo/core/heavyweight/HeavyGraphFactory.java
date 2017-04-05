@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.IdMappingFunction;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.helpers.Exceptions;
@@ -79,14 +78,22 @@ public class HeavyGraphFactory extends GraphFactory {
         int threads = (int) Math.ceil(nodeCount / (double) batchSize);
 
         if (threadPool == null || threads == 1) {
-            final IdMappingFunction mapOrGet = idMap::mapOrGet;
             withReadOps(readOp -> {
+                final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
+                        ? readOp.nodesGetAll()
+                        : readOp.nodesGetForLabel(labelId);
+                while (nodeIds.hasNext()) {
+                    final long nextId = nodeIds.next();
+                    idMap.add(nextId);
+                }
+                idMap.buildMappedIds();
+
                 try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
                         ? readOp.nodeCursorGetAll()
                         : readOp.nodeCursorGetForLabel(labelId)) {
                     while (cursor.next()) {
                         final NodeItem node = cursor.get();
-                        readNode(node, mapOrGet, 0, matrix, propertyId, weightMap, relationId);
+                        readNode(node, idMap, 0, matrix, propertyId, weightMap, relationId);
                     }
                 }
             });
@@ -110,18 +117,18 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
             });
+            idMap.buildMappedIds();
             run(tasks, threadPool);
             for (ImportTask task : tasks) {
                 matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
             }
         }
-
         return new HeavyGraph(idMap, matrix, weightMap);
     }
 
     private static void readNode(
             NodeItem node,
-            IdMappingFunction idMap,
+            IdMap idMap,
             int idOffset,
             AdjacencyMatrix matrix,
             int propertyId,
@@ -129,7 +136,7 @@ public class HeavyGraphFactory extends GraphFactory {
             int... relationType
     ) {
         final long originalNodeId = node.id();
-        final int nodeId = idMap.mapId(originalNodeId) - idOffset;
+        final int nodeId = idMap.get(originalNodeId) - idOffset;
         final int outDegree;
         final int inDegree;
         final Cursor<RelationshipItem> outCursor;
@@ -150,7 +157,10 @@ public class HeavyGraphFactory extends GraphFactory {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long endNode = rel.endNode();
-                final int targetNodeId = idMap.mapId(endNode);
+                final int targetNodeId = idMap.get(endNode);
+                if (targetNodeId == -1) {
+                    continue;
+                }
                 final long relationId = rel.id();
 
                 try (Cursor<PropertyItem> weights = rel.property(propertyId)) {
@@ -167,7 +177,10 @@ public class HeavyGraphFactory extends GraphFactory {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long startNode = rel.startNode();
-                final int targetNodeId = idMap.mapId(startNode);
+                final int targetNodeId = idMap.get(startNode);
+                if (targetNodeId == -1) {
+                    continue;
+                }
                 final long relationId = rel.id();
                 matrix.addIncoming(targetNodeId, nodeId, relationId);
             }
@@ -210,15 +223,15 @@ public class HeavyGraphFactory extends GraphFactory {
 
     private final class ImportTask implements Runnable, Consumer<ReadOperations> {
         private final AdjacencyMatrix matrix;
-        private final IdMappingFunction idMapper;
-        private final long[] nodeIds;
         private final int nodeOffset;
         private final int nodeCount;
+        private final IdMap idMap;
         private final WeightMapping weightMap;
         private final int[] relationId;
         private final int propertyId;
 
         ImportTask(int batchSize, IdMap idMap, PrimitiveLongIterator nodes, WeightMapping weightMap, int propertyId, int... relationId) {
+            this.idMap = idMap;
             this.nodeOffset = idMap.size();
             this.weightMap = weightMap;
             this.relationId = relationId;
@@ -229,8 +242,6 @@ public class HeavyGraphFactory extends GraphFactory {
                 idMap.add(nextId);
             }
             this.matrix = new AdjacencyMatrix(batchSize);
-            this.idMapper = idMap::get;
-            this.nodeIds = idMap.mappedIds();
             this.nodeCount = i;
         }
 
@@ -241,17 +252,15 @@ public class HeavyGraphFactory extends GraphFactory {
 
         @Override
         public void accept(final ReadOperations readOp) {
-            final long[] nodeIds = this.nodeIds;
+            final long[] nodeIds = idMap.mappedIds();
             final int nodeOffset = this.nodeOffset;
             final int nodeEnd = nodeCount + nodeOffset;
-            final IdMappingFunction idMapper = this.idMapper;
-            final AdjacencyMatrix matrix = this.matrix;
             for (int i = nodeOffset; i < nodeEnd; i++) {
                 try (Cursor<NodeItem> cursor = readOp.nodeCursor(nodeIds[i])) {
                     if (cursor.next()) {
                         HeavyGraphFactory.readNode(
                                 cursor.get(),
-                                idMapper,
+                                idMap,
                                 nodeOffset,
                                 matrix,
                                 propertyId,

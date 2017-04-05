@@ -33,9 +33,8 @@ public final class PageRankTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"}
-                // TODO: GraphView fails the tests
-//                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
+                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }
 
@@ -111,8 +110,8 @@ public final class PageRankTest {
 
         try (Transaction tx = db.beginTx()) {
             expected.put(db.findNode(label, "name", "a").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "b").getId(), 0.1956);
-            expected.put(db.findNode(label, "name", "c").getId(), 0.1812);
+            expected.put(db.findNode(label, "name", "b").getId(), 0.1968);
+            expected.put(db.findNode(label, "name", "c").getId(), 0.1822);
             expected.put(db.findNode(label, "name", "d").getId(), 0.0219);
             expected.put(db.findNode(label, "name", "e").getId(), 0.0243);
             expected.put(db.findNode(label, "name", "f").getId(), 0.0219);
@@ -129,6 +128,7 @@ public final class PageRankTest {
                 .load(graphImpl);
 
         final double[] ranks = new PageRankKernel(graph, 0.85).compute(20);
+        System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
             assertEquals(
