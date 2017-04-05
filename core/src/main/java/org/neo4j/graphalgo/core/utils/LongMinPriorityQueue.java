@@ -76,6 +76,10 @@ public final class LongMinPriorityQueue implements PrimitiveLongIterable {
         return heap[1];
     }
 
+    public double topCost() {
+        return costs.get(top());
+    }
+
     /**
      * Removes and returns the least element of the queue in log(size) time.
      *
@@ -87,6 +91,7 @@ public final class LongMinPriorityQueue implements PrimitiveLongIterable {
             heap[1] = heap[size];     // move last to first
             size--;
             downHeap(1);              // adjust heap
+            costs.remove(result);
             return result;
         } else {
             return -1;

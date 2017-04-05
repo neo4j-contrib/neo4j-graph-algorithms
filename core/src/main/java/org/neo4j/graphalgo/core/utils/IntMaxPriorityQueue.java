@@ -36,14 +36,17 @@ public final class IntMaxPriorityQueue extends IntPriorityQueue {
      * @return the new 'top' element in the queue.
      */
     public int add(int element, double cost) {
-        final int value = super.add(element);
-        costs.addTo(element, cost);
-        return value;
+        return super.add(element, cost);
     }
 
     @Override
     protected boolean lessThan(int a, int b) {
         return costs.get(a) > costs.get(b);
+    }
+
+    @Override
+    protected double cost(int element) {
+        return costs.get(element);
     }
 
     @Override

@@ -31,7 +31,7 @@ public class MSTPrim {
      */
     public MinimumSpanningTree compute(int startNode) {
 
-        final LongMinPriorityQueue queue = new LongMinPriorityQueue();
+        final LongMinPriorityQueue queue = new LongMinPriorityQueue(); // TODO tuple int prio queue
         final MinimumSpanningTree mst = new MinimumSpanningTree();
         final BitSet visited = new BitSet(graph.nodeCount());
 
@@ -42,6 +42,7 @@ public class MSTPrim {
         });
         while (!queue.isEmpty()) {
             // retrieve cheapest transition
+            final double cost = queue.topCost();
             final long transition = queue.pop();
             final int nodeId = getTail(transition);
             if (visited.get(nodeId)) {
@@ -49,7 +50,7 @@ public class MSTPrim {
             }
             visited.set(nodeId);
             // add to mst
-            mst.add(getHead(transition), getTail(transition), queue.getCost(transition));
+            mst.add(getHead(transition), getTail(transition), cost);
             // add new candidates
             graph.forEachRelation(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
                 if (visited.get(targetNodeId)) {

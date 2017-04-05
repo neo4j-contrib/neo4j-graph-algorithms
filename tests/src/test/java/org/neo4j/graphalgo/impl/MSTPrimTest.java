@@ -4,8 +4,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.WeightedRelationConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationCursor;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.MinimumSpanningTree;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
@@ -67,31 +70,32 @@ public class MSTPrimTest extends Neo4JTestCase {
     @Test
     public void testMstPrim() throws Exception {
         final MSTPrim prim = new MSTPrim(graph);
-        System.out.println(prim.compute(a).toString());
-//        verifyMst(prim.compute(a));
-//        verifyMst(prim.compute(b));
-//        verifyMst(prim.compute(c));
-//        verifyMst(prim.compute(d));
-//        verifyMst(prim.compute(e));
+        verifyMst(prim.compute(a));
+        verifyMst(prim.compute(b));
+        verifyMst(prim.compute(c));
+        verifyMst(prim.compute(d));
+        verifyMst(prim.compute(e));
     }
 
-//    private void verifyMst(MSTPrim.MST mst) {
-//        final AssertingTransitionConsumer consumer = new AssertingTransitionConsumer();
-//        mst.forEach(consumer);
-//        consumer.assertContains(a, b);
-//        consumer.assertContains(a, c);
-//        consumer.assertContains(b, d);
-//        consumer.assertContains(c, e);
-//    }
+    private void verifyMst(MinimumSpanningTree mst) {
+        final AssertingConsumer consumer = new AssertingConsumer();
+        mst.forEach(consumer);
+        System.out.println(mst);
+        consumer.assertContains(a, b, 1);
+        consumer.assertContains(a, c, 2);
+        consumer.assertContains(b, d, 4);
+        consumer.assertContains(c, e, 5);
+    }
 
-    private static class AssertingTransitionConsumer implements Consumer<int[]> {
+    private static class AssertingConsumer implements Consumer<WeightedRelationCursor> {
 
         private static class Pair {
+
             final int a;
             final int b;
-            final int c;
+            final double c;
 
-            private Pair(int a, int b, int c) {
+            private Pair(int a, int b, double c) {
                 this.a = a;
                 this.b = b;
                 this.c = c;
@@ -101,37 +105,43 @@ public class MSTPrimTest extends Neo4JTestCase {
             public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
-
                 Pair pair = (Pair) o;
-
                 if (a != pair.a) return false;
                 if (b != pair.b) return false;
-                return c == pair.c;
-
+                return Double.compare(pair.c, c) == 0;
             }
 
             @Override
             public int hashCode() {
-                int result = a;
+                int result;
+                long temp;
+                result = a;
                 result = 31 * result + b;
-                result = 31 * result + c;
+                temp = Double.doubleToLongBits(c);
+                result = 31 * result + (int) (temp ^ (temp >>> 32));
                 return result;
             }
         }
-
         private ArrayList<Pair> pairs = new ArrayList<>();
+
+        @Override
+        public void accept(WeightedRelationCursor cursor) {
+            pairs.add(new Pair(
+                    Math.min(cursor.sourceNodeId, cursor.targetNodeId),
+                    Math.max(cursor.sourceNodeId, cursor.targetNodeId),
+                    cursor.weight));
+
+        }
 
         public void assertSize(int expected) {
             assertEquals("size does not match", expected, pairs.size());
         }
 
-        @Override
-        public void accept(int[] array) {
-            pairs.add(new Pair(array[0], array[1], array[2]));
-        }
-
         public void assertContains(int a, int b, int c) {
-            assertTrue("{" + a + "," + b + "," + c + "} not found", pairs.contains(new Pair(a, b, c)));
+            assertTrue("{" + a + "," + b + "," + c + "} not found", pairs.contains(new Pair(
+                    Math.min(a, b),
+                    Math.max(a, b),
+                    c)));
         }
     }
 }
