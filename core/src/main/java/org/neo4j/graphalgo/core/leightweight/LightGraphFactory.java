@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
@@ -27,16 +28,25 @@ public final class LightGraphFactory extends GraphFactory {
     private LongLongMap relationIdMapping;
     private long adjacencyIdx;
     protected int nodeCount;
-    protected int relationCount;
-    protected int weightId;
+    private int relationCount;
+    private int labelId;
+    private int[] relationId;
+    private int weightId;
 
     public LightGraphFactory(
             GraphDatabaseAPI api,
             GraphSetup setup) {
         super(api, setup);
         withReadOps(readOp -> {
-            nodeCount = Math.toIntExact(readOp.nodesGetCount());
-            relationCount = Math.toIntExact(readOp.relationshipsGetCount());
+            labelId = readOp.labelGetForName(setup.startLabel);
+            relationId = new int[]{
+                    readOp.relationshipTypeGetForName(setup.relationshipType)
+            };
+            nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
+            relationCount = Math.toIntExact(readOp.countsForRelationship(
+                    labelId,
+                    relationId[0],
+                    ReadOperations.ANY_LABEL));
             weightId = setup.loadAnyProperty()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.propertyName);
@@ -61,7 +71,7 @@ public final class LightGraphFactory extends GraphFactory {
         adjacencyIdx = 1L;
 
         withReadOps(readOp -> {
-            try (Cursor<NodeItem> cursor = readOp.nodeCursorGetAll()) {
+            try (Cursor<NodeItem> cursor = readOp.nodeCursorGetForLabel(labelId)) {
                 while (cursor.next()) {
                     readNode(cursor.get());
                 }
@@ -78,7 +88,7 @@ public final class LightGraphFactory extends GraphFactory {
         );
     }
 
-    protected void readNode(final NodeItem node) {
+    private void readNode(final NodeItem node) {
         long sourceNodeId = node.id();
         int sourceGraphId = mapping.mapOrGet(sourceNodeId);
 
@@ -103,7 +113,7 @@ public final class LightGraphFactory extends GraphFactory {
             long[] offsets) {
         int relDegree = 0;
         long idx = adjacencyIdx + 1L;
-        try (Cursor<RelationshipItem> rels = node.relationships(direction)) {
+        try (Cursor<RelationshipItem> rels = node.relationships(direction, relationId)) {
             while (rels.next()) {
                 relDegree++;
                 RelationshipItem rel = rels.get();
