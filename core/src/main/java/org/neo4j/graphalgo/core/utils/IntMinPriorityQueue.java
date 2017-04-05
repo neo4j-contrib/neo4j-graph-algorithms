@@ -31,12 +31,6 @@ public final class IntMinPriorityQueue extends IntPriorityQueue {
     }
 
     @Override
-    public int add(final int element, final double cost) {
-        costs.put(element, cost);
-        return super.add(element, cost);
-    }
-
-    @Override
     protected boolean lessThan(int a, int b) {
         return costs.get(a) < costs.get(b);
     }
@@ -47,7 +41,12 @@ public final class IntMinPriorityQueue extends IntPriorityQueue {
     }
 
     @Override
-    protected void onRemove(final int element) {
+    protected void addCost(final int element, final double cost) {
+        costs.put(element, cost);
+    }
+
+    @Override
+    protected void elementRemoved(final int element) {
         costs.remove(element);
     }
 

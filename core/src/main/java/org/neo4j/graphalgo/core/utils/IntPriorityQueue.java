@@ -60,6 +60,11 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     protected abstract boolean lessThan(int a, int b);
 
     /**
+     * Adds the cost for the given element.
+     */
+    protected abstract void addCost(int element, double cost);
+
+    /**
      * Gets the cost for the given element.
      */
     protected abstract double cost(int element);
@@ -69,7 +74,7 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
      * from the heap. This method is only called from {@link #pop()}, not from
      * {@link #clear()}.
      */
-    protected void onRemove(int element) {
+    protected void elementRemoved(int element) {
         // empty default behavior
     }
 
@@ -81,7 +86,8 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
      *
      * @return the new 'top' element in the queue.
      */
-    public int add(int element, double cost) {
+    public final int add(int element, double cost) {
+        addCost(element, cost);
         size++;
         ensureCapacityForInsert();
         heap[size] = element;
@@ -92,7 +98,7 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     /**
      * @return the least element of the queue in constant time.
      */
-    public int top() {
+    public final int top() {
         // We don't need to check size here: if maxSize is 0,
         // then heap is length 2 array with both entries null.
         // If size is 0 then heap[1] is already null.
@@ -102,7 +108,7 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     /**
      * @return the costs of least element in constant time.
      */
-    public double topCost() {
+    public final double topCost() {
         return cost(top());
     }
 
@@ -111,13 +117,13 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
      *
      * @return the least element of the queue in log(size) time while removing it.
      */
-    public int pop() {
+    public final int pop() {
         if (size > 0) {
             int result = heap[1];    // save first value
             heap[1] = heap[size];    // move last to first
             size--;
             downHeap(1);           // adjust heap
-            onRemove(result);
+            elementRemoved(result);
             return result;
         } else {
             return -1;
@@ -127,21 +133,21 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     /**
      * @return the number of elements currently stored in the queue.
      */
-    public int size() {
+    public final int size() {
         return size;
     }
 
     /**
      * @return true iff there are currently no elements stored in the queue.
      */
-    public boolean isEmpty() {
+    public final boolean isEmpty() {
         return size == 0;
     }
 
     /**
      * @return true iff there is currently at least one element stored in the queue.
      */
-    public boolean nonEmpty() {
+    public final boolean nonEmpty() {
         return size != 0;
     }
 
