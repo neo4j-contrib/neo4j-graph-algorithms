@@ -105,7 +105,7 @@ public final class PageRankTest {
     }
 
     @Test
-    public void should() throws Exception {
+    public void test() throws Exception {
         final Label label = Label.label("Label1");
         final Map<Long, Double> expected = new HashMap<>();
 
