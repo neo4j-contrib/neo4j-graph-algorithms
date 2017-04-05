@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.IntBinaryConsumer;
 import org.neo4j.graphalgo.core.utils.LongMinPriorityQueue;
+import org.neo4j.graphalgo.core.utils.MinimumSpanningTree;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
@@ -28,10 +29,10 @@ public class MSTPrim {
      * @param startNode the node to start the evaluation from
      * @return a container of the transitions in the minimum spanning tree
      */
-    public MST compute(int startNode) {
+    public MinimumSpanningTree compute(int startNode) {
 
         final LongMinPriorityQueue queue = new LongMinPriorityQueue();
-        final MST mst = new MST(graph.nodeCount());
+        final MinimumSpanningTree mst = new MinimumSpanningTree();
         final BitSet visited = new BitSet(graph.nodeCount());
 
         // initially add all relations from startNode to the priority queue
@@ -48,7 +49,7 @@ public class MSTPrim {
             }
             visited.set(nodeId);
             // add to mst
-            mst.add(transition);
+            mst.add(getHead(transition), getTail(transition), queue.getCost(transition));
             // add new candidates
             graph.forEachRelation(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
                 if (visited.get(targetNodeId)) {
@@ -60,34 +61,4 @@ public class MSTPrim {
 
         return mst;
     }
-
-
-    public static class MST {
-
-        private final long[] data;
-        private int offset = 0;
-
-        public MST(int capacity) {
-            data = new long[capacity];
-        }
-
-        /**
-         * get the element count in this mst
-         */
-        public int size() {
-            return offset;
-        }
-
-        public void forEach(IntBinaryConsumer consumer) { // TODO RelationConsumer
-            for (int i = 0; i < offset; i++) {
-                final long value = data[i];
-                consumer.accept(getHead(value), getTail(value));
-            }
-        }
-
-        void add(long p) {
-            data[offset++] = p;
-        }
-    }
-
 }

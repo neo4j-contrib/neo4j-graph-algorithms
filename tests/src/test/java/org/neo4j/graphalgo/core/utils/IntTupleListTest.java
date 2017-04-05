@@ -5,10 +5,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -26,9 +29,9 @@ public class IntTupleListTest {
 
     @Before
     public void setup() throws Exception {
-        tuples.add(1, 1, -1);
-        tuples.add(2, 2, -1);
-        tuples.add(3, 3, -1);
+        tuples.add(1, -1, -1);
+        tuples.add(2, -2, -1);
+        tuples.add(3, -3, -1);
     }
 
     @Test
@@ -45,9 +48,45 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.forEach(adapter);
         verify(testConsumer, times(3)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
+    }
+
+    @Test
+    public void testElementIterator0() throws Exception {
+        PrimitiveIntIterator iterator = tuples.elementIterator(0);
+        assertTrue(iterator.hasNext());
+        assertEquals(1, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(2, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(3, iterator.next());
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testElementIterator1() throws Exception {
+        PrimitiveIntIterator iterator = tuples.elementIterator(1);
+        assertTrue(iterator.hasNext());
+        assertEquals(-1, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(-2, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(-3, iterator.next());
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testElementIterator2() throws Exception {
+        PrimitiveIntIterator iterator = tuples.elementIterator(2);
+        assertTrue(iterator.hasNext());
+        assertEquals(-1, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(-1, iterator.next());
+        assertTrue(iterator.hasNext());
+        assertEquals(-1, iterator.next());
+        assertFalse(iterator.hasNext());
     }
 
     @Test
@@ -80,7 +119,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 1).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
     }
 
     @Test
@@ -88,8 +127,8 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 2).forEach(adapter);
         verify(testConsumer, times(2)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
     }
 
     @Test
@@ -97,9 +136,9 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 3).forEach(adapter);
         verify(testConsumer, times(3)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
     }
 
     @Test
@@ -107,7 +146,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(2, 3).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
     }
 
     @Test
@@ -115,7 +154,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(1, 2).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
     }
 
     @Test
@@ -123,8 +162,8 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(1, 3).forEach(adapter);
         verify(testConsumer, times(2)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
     }
 
     @Test
@@ -153,7 +192,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 2).slice(0, 1).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
     }
 
     @Test
@@ -161,7 +200,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 3).slice(0, 1).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(1), eq(1), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(1), eq(-1), eq(-1));
     }
 
     @Test
@@ -169,7 +208,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(0, 3).slice(2, 3).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
     }
 
     @Test
@@ -177,7 +216,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(1, 3).slice(0, 1).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(2), eq(2), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(2), eq(-2), eq(-1));
     }
 
     @Test
@@ -185,7 +224,7 @@ public class IntTupleListTest {
         Consumer<int[]> adapter = adapter();
         tuples.slice(2, 3).slice(0, 1).forEach(adapter);
         verify(testConsumer, times(1)).consume(anyInt(), anyInt(), anyInt());
-        verify(testConsumer, times(1)).consume(eq(3), eq(3), eq(-1));
+        verify(testConsumer, times(1)).consume(eq(3), eq(-3), eq(-1));
     }
 
     private interface TestConsumer {

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.utils;
 import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -18,7 +19,6 @@ public class IntTupleList implements Iterable<int[]> {
     private int[] data;
     private final int startIndex;
     private int offset;
-    private int index;
 
     /**
      * @param elements number of elements in the tuple
@@ -71,6 +71,11 @@ public class IntTupleList implements Iterable<int[]> {
         return new ElementIterator(data, elements, element, startIndex, offset);
     }
 
+    @Override
+    public String toString() {
+        return Arrays.toString(data);
+    }
+
     private void grow(int newElementCount) {
         if (newElementCount <= data.length) {
             return;
@@ -111,7 +116,6 @@ public class IntTupleList implements Iterable<int[]> {
     private static class ElementIterator implements PrimitiveIntIterator {
 
         private final int[] data;
-        private final int[] tuple;
         private final int end;
         private final int elements;
         private final int element;
@@ -120,7 +124,6 @@ public class IntTupleList implements Iterable<int[]> {
         private ElementIterator(int[] data, int elements, int key, int start, int size) {
             this.data = data;
             this.elements = elements;
-            this.tuple = new int[elements];
             this.element = key;
             this.offset = start;
             this.end = size;
@@ -133,7 +136,9 @@ public class IntTupleList implements Iterable<int[]> {
 
         @Override
         public int next() {
-            return data[offset + element];
+            int ret = data[offset + element];
+            offset += elements;
+            return ret;
         }
     }
 }

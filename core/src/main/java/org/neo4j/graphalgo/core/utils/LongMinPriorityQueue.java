@@ -57,9 +57,13 @@ public final class LongMinPriorityQueue implements PrimitiveLongIterable {
         size++;
         ensureCapacityForInsert();
         heap[size] = element;
-        costs.addTo(element, cost);
+        costs.put(element, cost);
         upHeap(size);
         return heap[1];
+    }
+
+    public double getCost(long element) {
+        return costs.get(element);
     }
 
     /**
@@ -83,7 +87,6 @@ public final class LongMinPriorityQueue implements PrimitiveLongIterable {
             heap[1] = heap[size];     // move last to first
             size--;
             downHeap(1);              // adjust heap
-            costs.remove(result);
             return result;
         } else {
             return -1;
