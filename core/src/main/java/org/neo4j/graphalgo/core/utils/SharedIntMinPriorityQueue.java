@@ -35,4 +35,9 @@ public final class SharedIntMinPriorityQueue extends IntPriorityQueue {
     protected boolean lessThan(int a, int b) {
         return costs.getOrDefault(a, defaultCost) < costs.getOrDefault(b, defaultCost);
     }
+
+    @Override
+    protected double cost(final int element) {
+        return costs.getOrDefault(element, defaultCost);
+    }
 }

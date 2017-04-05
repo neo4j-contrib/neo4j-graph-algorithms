@@ -30,20 +30,20 @@ public final class IntMinPriorityQueue extends IntPriorityQueue {
         this.costs = new IntDoubleScatterMap(initialCapacity);
     }
 
-    /**
-     * Adds an int associated with the given weight to a queue in log(size) time.
-     *
-     * @return the new 'top' element in the queue.
-     */
-    public int add(int element, double cost) {
-        final int value = super.add(element);
-        costs.addTo(element, cost);
-        return value;
+    @Override
+    public int add(final int element, final double cost) {
+        costs.put(element, cost);
+        return super.add(element, cost);
     }
 
     @Override
     protected boolean lessThan(int a, int b) {
         return costs.get(a) < costs.get(b);
+    }
+
+    @Override
+    protected double cost(final int element) {
+        return costs.get(element);
     }
 
     @Override
