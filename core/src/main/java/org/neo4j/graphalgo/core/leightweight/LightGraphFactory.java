@@ -38,18 +38,22 @@ public final class LightGraphFactory extends GraphFactory {
             GraphSetup setup) {
         super(api, setup);
         withReadOps(readOp -> {
-            labelId = readOp.labelGetForName(setup.startLabel);
-            relationId = new int[]{
-                    readOp.relationshipTypeGetForName(setup.relationshipType)
-            };
-            nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
-            relationCount = Math.toIntExact(readOp.countsForRelationship(
-                    labelId,
-                    relationId[0],
-                    ReadOperations.ANY_LABEL));
+            labelId = setup.loadAnyLabel()
+                    ? ReadOperations.ANY_LABEL
+                    : readOp.labelGetForName(setup.startLabel);
+            if (!setup.loadAnyRelationshipType()) {
+                int relId = readOp.relationshipTypeGetForName(setup.relationshipType);
+                if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
+                    relationId = new int[]{relId};
+                }
+            }
             weightId = setup.loadAnyProperty()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.propertyName);
+            nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
+            relationCount = Math.toIntExact(relationId == null
+                    ? readOp.countsForRelationship(labelId, ReadOperations.ANY_RELATIONSHIP_TYPE, ReadOperations.ANY_LABEL)
+                    : readOp.countsForRelationship(labelId, relationId[0], ReadOperations.ANY_LABEL));
         });
     }
 
@@ -71,7 +75,9 @@ public final class LightGraphFactory extends GraphFactory {
         adjacencyIdx = 1L;
 
         withReadOps(readOp -> {
-            try (Cursor<NodeItem> cursor = readOp.nodeCursorGetForLabel(labelId)) {
+            try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
+                    ? readOp.nodeCursorGetAll()
+                    : readOp.nodeCursorGetForLabel(labelId)) {
                 while (cursor.next()) {
                     readNode(cursor.get());
                 }
@@ -113,7 +119,10 @@ public final class LightGraphFactory extends GraphFactory {
             long[] offsets) {
         int relDegree = 0;
         long idx = adjacencyIdx + 1L;
-        try (Cursor<RelationshipItem> rels = node.relationships(direction, relationId)) {
+
+        try (Cursor<RelationshipItem> rels = relationId == null
+                ? node.relationships(direction)
+                : node.relationships(direction, relationId)) {
             while (rels.next()) {
                 relDegree++;
                 RelationshipItem rel = rels.get();

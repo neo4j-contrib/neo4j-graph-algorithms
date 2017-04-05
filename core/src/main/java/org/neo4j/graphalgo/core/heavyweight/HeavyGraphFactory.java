@@ -47,12 +47,19 @@ public class HeavyGraphFactory extends GraphFactory {
         super(api, setup);
         this.threadPool = setup.executor;
         withReadOps(readOp -> {
-            labelId = readOp.labelGetForName(setup.startLabel);
-            relationId = new int[] {
-                    readOp.relationshipTypeGetForName(setup.relationshipType)
-            };
+            labelId = setup.loadAnyLabel()
+                    ? ReadOperations.ANY_LABEL
+                    : readOp.labelGetForName(setup.startLabel);
+            if (!setup.loadAnyRelationshipType()) {
+                int relId = readOp.relationshipTypeGetForName(setup.relationshipType);
+                if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
+                    relationId = new int[]{relId};
+                }
+            }
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
-            propertyId = readOp.propertyKeyGetForName(setup.propertyName);
+            propertyId = setup.loadAnyProperty()
+                    ? StatementConstants.NO_SUCH_PROPERTY_KEY
+                    : readOp.propertyKeyGetForName(setup.propertyName);
         });
     }
 
@@ -74,7 +81,7 @@ public class HeavyGraphFactory extends GraphFactory {
         if (threadPool == null || threads == 1) {
             final IdMappingFunction mapOrGet = idMap::mapOrGet;
             withReadOps(readOp -> {
-                try (Cursor<NodeItem> cursor = labelId == StatementConstants.NO_SUCH_LABEL
+                try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
                         ? readOp.nodeCursorGetAll()
                         : readOp.nodeCursorGetForLabel(labelId)) {
                     while (cursor.next()) {
@@ -83,11 +90,10 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
             });
-
         } else {
             final List<ImportTask> tasks = new ArrayList<>(threads);
             withReadOps(readOp -> {
-                final PrimitiveLongIterator nodeIds = labelId == StatementConstants.NO_SUCH_LABEL
+                final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                         ? readOp.nodesGetAll()
                         : readOp.nodesGetForLabel(labelId);
                 for (int i = 0; i <= threads; i++) {
@@ -124,11 +130,23 @@ public class HeavyGraphFactory extends GraphFactory {
     ) {
         final long originalNodeId = node.id();
         final int nodeId = idMap.mapId(originalNodeId) - idOffset;
-        final int outDegree = node.degree(Direction.OUTGOING);
-        final int inDegree = node.degree(Direction.INCOMING);
-
+        final int outDegree;
+        final int inDegree;
+        final Cursor<RelationshipItem> outCursor;
+        final Cursor<RelationshipItem> inCursor;
+        if (relationType == null) {
+            outDegree = node.degree(Direction.OUTGOING);
+            inDegree = node.degree(Direction.INCOMING);
+            outCursor = node.relationships(Direction.OUTGOING);
+            inCursor = node.relationships(Direction.INCOMING);
+        } else {
+            outDegree = node.degree(Direction.OUTGOING, relationType[0]);
+            inDegree = node.degree(Direction.INCOMING, relationType[0]);
+            outCursor = node.relationships(Direction.OUTGOING, relationType);
+            inCursor = node.relationships(Direction.INCOMING, relationType);
+        }
         matrix.armOut(nodeId, outDegree);
-        try (Cursor<RelationshipItem> rels = node.relationships(Direction.OUTGOING, relationType)) {
+        try (Cursor<RelationshipItem> rels = outCursor) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long endNode = rel.endNode();
@@ -145,7 +163,7 @@ public class HeavyGraphFactory extends GraphFactory {
             }
         }
         matrix.armIn(nodeId, inDegree);
-        try (Cursor<RelationshipItem> rels = node.relationships(Direction.INCOMING, relationType)) {
+        try (Cursor<RelationshipItem> rels = inCursor) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long startNode = rel.startNode();
