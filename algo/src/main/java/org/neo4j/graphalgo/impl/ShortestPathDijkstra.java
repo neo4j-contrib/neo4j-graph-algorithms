@@ -41,7 +41,7 @@ public class ShortestPathDijkstra {
         int node = graph.toMappedNodeId(startNode);
         int goal = graph.toMappedNodeId(goalNode);
         costs.put(node, 0);
-        queue.add(node);
+        queue.add(node, 0);
         run(goal);
 
         finalPath.clear();
@@ -69,7 +69,7 @@ public class ShortestPathDijkstra {
                     (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
-                            queue.add(target);
+                            queue.add(target, 0);
                         }
                     });
         }

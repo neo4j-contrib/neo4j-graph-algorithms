@@ -60,6 +60,11 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     protected abstract boolean lessThan(int a, int b);
 
     /**
+     * Gets the cost for the given element.
+     */
+    protected abstract double cost(int element);
+
+    /**
      * Optional callback for subclasses to get informed, when a value is removed
      * from the heap. This method is only called from {@link #pop()}, not from
      * {@link #clear()}.
@@ -69,11 +74,14 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     }
 
     /**
-     * Adds an int to a queue in log(size) time.
+     * Adds an int associated with the given weight to a queue in log(size) time.
+     * <p>
+     * NOTE: The default implementation does nothing with the cost parameter.
+     * It is up to the implementation how the cost parameter is used.
      *
      * @return the new 'top' element in the queue.
      */
-    public int add(int element) {
+    public int add(int element, double cost) {
         size++;
         ensureCapacityForInsert();
         heap[size] = element;
@@ -89,6 +97,13 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
         // then heap is length 2 array with both entries null.
         // If size is 0 then heap[1] is already null.
         return heap[1];
+    }
+
+    /**
+     * @return the costs of least element in constant time.
+     */
+    public double topCost() {
+        return cost(top());
     }
 
     /**
