@@ -41,7 +41,7 @@ public class DirectedGraph {
         final int p = addOrGetNode(sourceNodeId);
         final int q = addOrGetNode(targetNodeId);
         growNode(p);
-        final int offset = frames[p][0]++;
+        final int offset = frames[p][0]++ * frameSize + 1;
         frames[p][offset] = q; // first spot targetNode
     }
 
