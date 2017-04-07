@@ -83,7 +83,7 @@ public class PageRankBenchmark {
             tx.success();
         }
 
-        neo4jView = new GraphView(db, null, null);
+        neo4jView = new GraphView(db, null, null, null, 1.0d);
         lightGraph = loadLight();
         heavyGraph = loadHeavy();
     }
