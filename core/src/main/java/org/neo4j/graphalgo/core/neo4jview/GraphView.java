@@ -43,7 +43,7 @@ public class GraphView implements Graph {
 
         withinTransaction(read -> {
             labelId = read.labelGetForName(label);
-            nodeCount = Math.toIntExact(read.nodesGetCount());
+            nodeCount = Math.toIntExact(read.countsForNode(labelId));
             relationTypeId = read.relationshipTypeGetForName(relation);
             propertyKey = read.propertyKeyGetForName(propertyName);
         });
@@ -55,7 +55,7 @@ public class GraphView implements Graph {
         withinTransaction(read -> {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
                 nodeItemCursor.forAll(nodeItem -> {
-                    try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction))) {
+                    try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction), relationTypeId)) {
                         relationships.forAll(item -> {
                             consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
                         });
