@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayDeque;
-import org.neo4j.graphalgo.api.WeightedRelationConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -60,10 +60,10 @@ public class ShortestPathDijkstraKernel {
             }
             visited.set(node);
             double costs = this.costs[node];
-            graph.forEachRelation(
+            graph.forEachRelationship(
                 node,
                 Direction.OUTGOING,
-                    (WeightedRelationConsumer)(source, target, weight, edge) -> {
+                    (WeightedRelationshipConsumer)(source, target, weight, edge) -> {
                     final double targetCost = updateCosts(source, target, weight, costs);
                     if (!visited.get(target)) {
                         queue.add(target, targetCost);

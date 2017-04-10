@@ -6,8 +6,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.neo4j.graphalgo.api.RelationConsumer;
-import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipCursor;
 
 import java.util.function.Consumer;
 
@@ -25,7 +25,7 @@ public class AdjacencyMatrixTest {
 
     private static AdjacencyMatrix matrix;
 
-    private static RelationConsumer relationConsumer = mock(RelationConsumer.class);
+    private static RelationshipConsumer relationConsumer = mock(RelationshipConsumer.class);
 
     @BeforeClass
     public static void setup() {
@@ -148,7 +148,7 @@ public class AdjacencyMatrixTest {
         verify(relationConsumer, times(1)).accept(eq(2), eq(1), eq(2L));
     }
 
-    private Consumer<RelationCursor> consume(RelationConsumer consumer) {
+    private Consumer<RelationshipCursor> consume(RelationshipConsumer consumer) {
         return r -> consumer.accept(r.sourceNodeId, r.targetNodeId, r.relationId);
     }
 }

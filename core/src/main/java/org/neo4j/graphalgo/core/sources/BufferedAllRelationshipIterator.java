@@ -1,21 +1,21 @@
 package org.neo4j.graphalgo.core.sources;
 
-import com.carrotsearch.hppc.LongArrayDeque;
 import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongContainer;
 import com.carrotsearch.hppc.cursors.LongCursor;
-import org.neo4j.graphalgo.api.AllRelationIterator;
-import org.neo4j.graphalgo.api.RelationConsumer;
-import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.AllRelationshipIterator;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.utils.RawValues;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
 
 /**
+ * Buffered AllRelationshipIterator based on hppc container
+ *
  * @author mknblch
  */
-public class BufferedAllRelationIterator implements AllRelationIterator {
+public class BufferedAllRelationshipIterator implements AllRelationshipIterator {
 
     private final LongArrayList container;
 
@@ -23,12 +23,12 @@ public class BufferedAllRelationIterator implements AllRelationIterator {
         container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
     }
 
-    public BufferedAllRelationIterator(int expectedElements) {
+    public BufferedAllRelationshipIterator(int expectedElements) {
         container = new LongArrayList(expectedElements);
     }
 
     @Override
-    public void forEachRelation(RelationConsumer consumer) {
+    public void forEachRelationship(RelationshipConsumer consumer) {
         container.forEach((Consumer<LongCursor>) longCursor ->
                 consumer.accept(
                         RawValues.getHead(longCursor.value),
@@ -37,14 +37,14 @@ public class BufferedAllRelationIterator implements AllRelationIterator {
     }
 
     @Override
-    public Iterator<RelationCursor> allRelationIterator() {
+    public Iterator<RelationshipCursor> allRelationshipIterator() {
         return new AllIterator(container.iterator());
     }
 
-    private static class AllIterator implements Iterator<RelationCursor> {
+    private static class AllIterator implements Iterator<RelationshipCursor> {
 
         private final Iterator<LongCursor> iterator;
-        private final RelationCursor relationCursor = new RelationCursor();
+        private final RelationshipCursor relationCursor = new RelationshipCursor();
 
         public AllIterator(Iterator<LongCursor> iterator) {
             this.iterator = iterator;
@@ -57,7 +57,7 @@ public class BufferedAllRelationIterator implements AllRelationIterator {
         }
 
         @Override
-        public RelationCursor next() {
+        public RelationshipCursor next() {
             final LongCursor cursor = iterator.next();
             relationCursor.sourceNodeId = RawValues.getHead(cursor.value);
             relationCursor.targetNodeId = RawValues.getTail(cursor.value);

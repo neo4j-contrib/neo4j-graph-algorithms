@@ -6,6 +6,6 @@ package org.neo4j.graphalgo.api;
  *         added 02.03.2017.
  */
 @Deprecated
-public interface Graph extends IdMapping, Degrees, NodeIterator, RelationIterator, WeightedRelationIterator {
+public interface Graph extends IdMapping, Degrees, NodeIterator, RelationshipIterator, WeightedRelationshipIterator {
 
 }

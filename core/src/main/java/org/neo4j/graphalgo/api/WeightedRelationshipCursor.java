@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.api;
 /**
  * @author mknobloch
  */
-public class WeightedRelationCursor extends RelationCursor {
+public class WeightedRelationshipCursor extends RelationshipCursor {
 
     /**
      * The weight

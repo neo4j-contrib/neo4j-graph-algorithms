@@ -3,16 +3,16 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.api.WeightedRelationCursor;
+import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
 
 import java.util.Iterator;
 
 /**
  * @author phorn@avantgarde-labs.de
  */
-class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
+class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCursor> {
 
-    private final WeightedRelationCursor cursor = new WeightedRelationCursor();
+    private final WeightedRelationshipCursor cursor = new WeightedRelationshipCursor();
     private final IntArray.Cursor adjCursor;
     private final WeightMapping weightMapping;
 
@@ -61,7 +61,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor> {
     }
 
     @Override
-    public WeightedRelationCursor next() {
+    public WeightedRelationshipCursor next() {
         cursor.weight = weightMapping.get(relationId);
         cursor.relationId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];

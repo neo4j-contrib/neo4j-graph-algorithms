@@ -7,15 +7,15 @@ import java.util.Iterator;
  *
  * @author mknblch
  */
-public interface AllRelationIterator {
+public interface AllRelationshipIterator {
 
     /**
      * called once for each relation
      */
-    void forEachRelation(RelationConsumer consumer);
+    void forEachRelationship(RelationshipConsumer consumer);
 
     /**
      * get an iterator for each relation
      */
-    Iterator<RelationCursor> allRelationIterator();
+    Iterator<RelationshipCursor> allRelationshipIterator();
 }

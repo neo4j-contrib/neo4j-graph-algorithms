@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.api;
 /**
  * @author mknobloch
  */
-public class RelationCursor {
+public class RelationshipCursor {
 
     /**
      * the mapped source node id

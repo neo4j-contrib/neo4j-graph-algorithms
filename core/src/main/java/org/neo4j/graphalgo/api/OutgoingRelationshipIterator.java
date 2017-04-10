@@ -7,19 +7,19 @@ import java.util.Iterator;
  *
  * @author mknblch
  */
-public interface OutgoingRelations {
+public interface OutgoingRelationshipIterator {
 
     /**
      * iterate over each outgoing relation
      * @param nodeId graph-NodeId
      * @param consumer the relation Consumer
      */
-    void forEachOutgoing(int nodeId, RelationConsumer consumer);
+    void forEachOutgoing(int nodeId, RelationshipConsumer consumer);
 
     /**
      * get an iterator for outgoing relations
      * @param nodeId graph-NodeId
      * @return Iterator for outgoing graph-nodeIds
      */
-    Iterator<RelationCursor> outgoingIterator(int nodeId);
+    Iterator<RelationshipCursor> outgoingIterator(int nodeId);
 }

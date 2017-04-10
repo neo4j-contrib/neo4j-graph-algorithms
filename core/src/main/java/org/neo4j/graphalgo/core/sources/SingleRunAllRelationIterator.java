@@ -9,44 +9,39 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.Iterator;
 
 /**
- *
+ * Unbuffered RelationshipIterator which is directly
  * @author mknblch
  */
-public class SingleRunAllRelationIterator implements AllRelationIterator, AutoCloseable {
+public class SingleRunAllRelationIterator implements AllRelationshipIterator {
 
     private final GraphDatabaseAPI api;
-    private final Transaction transaction;
     private final IdMapping idMapping;
 
     public SingleRunAllRelationIterator(GraphDatabaseAPI api, IdMapping idMapping) {
         this.api = api;
-        transaction = api.beginTx();
         this.idMapping = idMapping;
     }
 
     @Override
-    public void forEachRelation(RelationConsumer consumer) {
-        final ReadOperations readOperations = api.getDependencyResolver()
-                .resolveDependency(ThreadToStatementContextBridge.class)
-                .get()
-                .readOperations();
-        readOperations.relationshipCursorGetAll().forAll(c -> {
-            long startNode = c.startNode();
-            consumer.accept(
-                    idMapping.toMappedNodeId(startNode),
-                    idMapping.toMappedNodeId(c.otherNode(startNode)),
-                    -1L);
-        });
+    public void forEachRelationship(RelationshipConsumer consumer) {
+        try (Transaction transaction = api.beginTx()) {
+            final ReadOperations readOperations = api.getDependencyResolver()
+                    .resolveDependency(ThreadToStatementContextBridge.class)
+                    .get()
+                    .readOperations();
+            readOperations.relationshipCursorGetAll().forAll(c -> {
+                long startNode = c.startNode();
+                consumer.accept(
+                        idMapping.toMappedNodeId(startNode),
+                        idMapping.toMappedNodeId(c.otherNode(startNode)),
+                        -1L);
+            });
+            transaction.success();
+        }
     }
 
     @Override
-    public Iterator<RelationCursor> allRelationIterator() {
+    public Iterator<RelationshipCursor> allRelationshipIterator() {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void close() {
-        transaction.success();
-        transaction.close();
     }
 }

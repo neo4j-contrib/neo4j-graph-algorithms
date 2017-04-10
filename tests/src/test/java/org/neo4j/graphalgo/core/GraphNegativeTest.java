@@ -6,7 +6,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphdb.Direction;
@@ -81,7 +81,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withWeightsFromProperty("foo", 13.37)
                 .load(graphImpl);
-        graph.forEachNode(node -> graph.forEachRelation(
+        graph.forEachNode(node -> graph.forEachRelationship(
                 node,
                 Direction.OUTGOING,
                 (start, end, rel, weight) ->
@@ -100,11 +100,11 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
                         rel.getId(),
                         rel.getEndNode().getId());
                 boolean hasRelation = false;
-                final Iterator<RelationCursor> relIter = graph.relationIterator(
+                final Iterator<RelationshipCursor> relIter = graph.relationIterator(
                         graph.toMappedNodeId(rel.getStartNode().getId()),
                         Direction.OUTGOING);
                 while (relIter.hasNext()) {
-                    RelationCursor next = relIter.next();
+                    RelationshipCursor next = relIter.next();
                     if (next.relationId == rel.getId()) {
                         hasRelation = true;
                         assertEquals(

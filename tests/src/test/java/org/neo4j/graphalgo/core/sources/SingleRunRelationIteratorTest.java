@@ -8,11 +8,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.SimpleGraphSetup;
-import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-
-import java.util.function.IntConsumer;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -31,7 +28,7 @@ public class SingleRunRelationIteratorTest extends Neo4JTestCase {
     private static SingleRunAllRelationIterator iterator;
 
     @Mock
-    private RelationConsumer relationConsumer;
+    private RelationshipConsumer relationConsumer;
 
     @BeforeClass
     public static void setupGraph() {
@@ -43,14 +40,9 @@ public class SingleRunRelationIteratorTest extends Neo4JTestCase {
         v2 = idMapper.toMappedNodeId(setup.getN2());
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        iterator.close();
-    }
-
     @Test
     public void testRelations() throws Exception {
-        iterator.forEachRelation(relationConsumer);
+        iterator.forEachRelationship(relationConsumer);
         verify(relationConsumer, times(3)).accept(anyInt(), anyInt(), anyLong());
         verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
         verify(relationConsumer, times(1)).accept(eq(v0), eq(v2), anyLong());

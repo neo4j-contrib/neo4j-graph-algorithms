@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.api;
 /**
  * @author mknblch
  */
-public interface RelationConsumer {
+public interface RelationshipConsumer {
 
     /**
      * Called for every edge that matches a given relation-constraint

@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
@@ -57,25 +56,25 @@ public class HeavyGraph implements Graph {
     }
 
     @Override
-    public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
+    public void forEachRelation(int nodeId, Direction direction, RelationshipConsumer consumer) {
         container.forEach(nodeId, direction, consumer);
     }
 
     @Override
-    public void forEachRelation(
+    public void forEachRelationship(
             final int nodeId,
             final Direction direction,
-            final WeightedRelationConsumer consumer) {
+            final WeightedRelationshipConsumer consumer) {
         container.forEach(nodeId, direction, weights, consumer);
     }
 
     @Override
-    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
+    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
         return container.relationIterator(nodeId, direction);
     }
 
     @Override
-    public Iterator<WeightedRelationCursor> weightedRelationIterator(
+    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
             final int nodeId, final Direction direction) {
         return container.weightedRelationIterator(nodeId, weights, direction);
     }
