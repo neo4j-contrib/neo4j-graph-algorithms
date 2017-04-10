@@ -6,10 +6,10 @@ package org.neo4j.graphalgo.api;
 public interface RelationConsumer {
 
     /**
-     * Called for every Edge that matches a given relation-constraint
+     * Called for every edge that matches a given relation-constraint
      * @param sourceNodeId mapped source node id
      * @param targetNodeId mapped target node id
-     * @param relationId original relation/edge-id
+     * @param relationId deprecated
      */
     void accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId);
 }

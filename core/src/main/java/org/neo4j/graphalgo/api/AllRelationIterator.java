@@ -3,11 +3,15 @@ package org.neo4j.graphalgo.api;
 import java.util.Iterator;
 
 /**
- * iterate once
+ * iterates over each relation
+ *
  * @author mknblch
  */
 public interface AllRelationIterator {
 
+    /**
+     *
+     */
     void forEachRelation(RelationConsumer consumer);
 
     Iterator<RelationCursor> allRelationIterator();

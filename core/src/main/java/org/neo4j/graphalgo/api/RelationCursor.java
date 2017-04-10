@@ -16,7 +16,7 @@ public class RelationCursor {
     public int targetNodeId;
 
     /**
-     * the original edge id
+     * deprecated
      */
     @Deprecated
     public long relationId;
