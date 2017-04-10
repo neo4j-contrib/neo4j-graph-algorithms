@@ -141,7 +141,7 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
                 .collect(Collectors.toMap(
                         Relationship::getId,
                         Function.identity()));
-        graph.forEachRelation(
+        graph.forEachRelationship(
                 nodeId,
                 direction,
                 (sourceId, targetId, relationId) -> {

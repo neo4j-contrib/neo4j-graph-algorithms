@@ -52,7 +52,7 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor> {
 
     @Override
     public RelationshipCursor next() {
-        cursor.relationId = relationIdMapping.get(relationId++);
+        cursor.relationshipId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
         return cursor;
     }

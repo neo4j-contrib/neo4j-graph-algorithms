@@ -63,7 +63,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
     @Override
     public WeightedRelationshipCursor next() {
         cursor.weight = weightMapping.get(relationId);
-        cursor.relationId = relationIdMapping.get(relationId++);
+        cursor.relationshipId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
         return cursor;
     }

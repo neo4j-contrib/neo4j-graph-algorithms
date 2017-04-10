@@ -55,7 +55,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachRelation(int vertexId, Direction direction, RelationshipConsumer consumer) {
+    public void forEachRelationship(int vertexId, Direction direction, RelationshipConsumer consumer) {
         switch (direction) {
             case INCOMING:
                 forEachIncoming(vertexId, consumer);
@@ -118,7 +118,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public Iterator<RelationshipCursor> relationIterator(int vertexId, Direction direction) {
+    public Iterator<RelationshipCursor> relationshipIterator(int vertexId, Direction direction) {
 
         switch (direction) {
             case INCOMING: {

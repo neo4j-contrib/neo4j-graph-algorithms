@@ -265,7 +265,7 @@ class AdjacencyMatrix {
         @Override
         public RelationshipCursor next() {
             cursor.targetNodeId = targetNodes[offset];
-            cursor.relationId = relationIds[offset++];
+            cursor.relationshipId = relationIds[offset++];
             return cursor;
         }
     }
@@ -297,7 +297,7 @@ class AdjacencyMatrix {
         public WeightedRelationshipCursor next() {
             cursor.targetNodeId = targetNodes[offset];
             final long relationId = relationIds[offset++];
-            cursor.relationId = relationId;
+            cursor.relationshipId = relationId;
             cursor.weight = weights.get(relationId);
             return cursor;
         }

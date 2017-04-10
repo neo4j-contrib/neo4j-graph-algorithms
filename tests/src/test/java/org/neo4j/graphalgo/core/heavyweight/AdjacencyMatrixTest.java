@@ -149,6 +149,6 @@ public class AdjacencyMatrixTest {
     }
 
     private Consumer<RelationshipCursor> consume(RelationshipConsumer consumer) {
-        return r -> consumer.accept(r.sourceNodeId, r.targetNodeId, r.relationId);
+        return r -> consumer.accept(r.sourceNodeId, r.targetNodeId, r.relationshipId);
     }
 }

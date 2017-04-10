@@ -113,7 +113,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
 
     private void testRelationships(final Graph graph) {
         testAnyRelationship(graph, (rs, rel) -> Pair.of(
-                graph.relationIterator(
+                graph.relationshipIterator(
                         graph.toMappedNodeId(rel.getStartNode().getId()),
                         Direction.OUTGOING),
                 cursor -> {}
@@ -157,7 +157,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
                 Iterator<T> relIter = test.first();
                 while (relIter.hasNext()) {
                     T cursor = relIter.next();
-                    if (cursor.relationId == rel.getId()) {
+                    if (cursor.relationshipId == rel.getId()) {
                         hasRelation = true;
                         assertEquals(
                                 rs,

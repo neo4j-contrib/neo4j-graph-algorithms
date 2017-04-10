@@ -48,7 +48,7 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
 
         public AllIterator(Iterator<LongCursor> iterator) {
             this.iterator = iterator;
-            relationCursor.relationId = -1;
+            relationCursor.relationshipId = -1;
         }
 
         @Override

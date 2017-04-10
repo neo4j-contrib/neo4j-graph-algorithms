@@ -19,6 +19,6 @@ public class RelationshipCursor {
      * deprecated
      */
     @Deprecated
-    public long relationId;
+    public long relationshipId;
 
 }
