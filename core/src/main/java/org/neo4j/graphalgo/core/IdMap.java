@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.LongIntMap;
+import com.carrotsearch.hppc.cursors.LongIntCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
@@ -23,7 +24,6 @@ public final class IdMap implements IdMapping, NodeIterator{
      * initialize the map with maximum node capacity
      */
     public IdMap(final int capacity) {
-        graphIds = new long[capacity];
         nodeToGraphIds = new LongIntHashMap((int) Math.ceil(capacity / 0.99), 0.99);
         iter = new IdIterator();
     }
@@ -48,7 +48,6 @@ public final class IdMap implements IdMapping, NodeIterator{
         int intValue = nodeToGraphIds.getOrDefault(longValue, -1);
         if (intValue == -1) {
             intValue = nextGraphId++;
-            graphIds[intValue] = longValue;
             nodeToGraphIds.put(longValue, intValue);
         }
         return intValue;
@@ -56,7 +55,6 @@ public final class IdMap implements IdMapping, NodeIterator{
 
     public void add(long longValue) {
         int intValue = nextGraphId++;
-        graphIds[intValue] = longValue;
         nodeToGraphIds.put(longValue, intValue);
     }
 
@@ -66,6 +64,13 @@ public final class IdMap implements IdMapping, NodeIterator{
 
     public long unmap(int intValue) {
         return graphIds[intValue];
+    }
+
+    public void buildMappedIds() {
+        graphIds = new long[nodeToGraphIds.size()];
+        for (final LongIntCursor cursor : nodeToGraphIds) {
+            graphIds[cursor.value] = cursor.key;
+        }
     }
 
     public int size() {

@@ -43,7 +43,7 @@ public class GraphView implements Graph {
 
         withinTransaction(read -> {
             labelId = read.labelGetForName(label);
-            nodeCount = Math.toIntExact(read.nodesGetCount());
+            nodeCount = Math.toIntExact(read.countsForNode(labelId));
             relationTypeId = read.relationshipTypeGetForName(relation);
             propertyKey = read.propertyKeyGetForName(propertyName);
         });
@@ -55,7 +55,7 @@ public class GraphView implements Graph {
         withinTransaction(read -> {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
                 nodeItemCursor.forAll(nodeItem -> {
-                    try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction))) {
+                    try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction), relationTypeId)) {
                         relationships.forAll(item -> {
                             consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
                         });
@@ -67,9 +67,10 @@ public class GraphView implements Graph {
 
     @Override
     public void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer) {
+        final long originalNodeId = toOriginalNodeId(nodeId);
         withinTransactionTyped(read -> {
             try {
-                final RelationshipIterator iterator = read.nodeGetRelationships(nodeId, direction, relationTypeId);
+                final RelationshipIterator iterator = read.nodeGetRelationships(originalNodeId, direction, relationTypeId);
                 while (iterator.hasNext()) {
                     final long relationId = iterator.next();
                     final Cursor<RelationshipItem> relationshipItemCursor = read.relationshipCursor(relationId);
@@ -77,9 +78,9 @@ public class GraphView implements Graph {
                     final RelationshipItem item = relationshipItemCursor.get();
                     consumer.accept(
                             nodeId,
-                            toMappedNodeId(item.otherNode(nodeId)),
+                            toMappedNodeId(item.otherNode(originalNodeId)),
                             relationId,
-                            (double) read.relationshipGetProperty(relationId, propertyKey)
+                            ((Number) read.relationshipGetProperty(relationId, propertyKey)).doubleValue()
                     );
                 }
             } catch (EntityNotFoundException e) {
