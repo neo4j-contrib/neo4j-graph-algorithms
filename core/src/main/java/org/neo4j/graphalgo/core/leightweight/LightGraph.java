@@ -171,13 +171,13 @@ public class LightGraph implements Graph {
         return idMapping.unmap(vertexId);
     }
 
-    private void forEachIncoming(
+    public void forEachIncoming(
             final int node,
             final RelationConsumer consumer) {
         consumeNodes(node, cursor(node, inOffsets), consumer);
     }
 
-    private void forEachOutgoing(
+    public void forEachOutgoing(
             final int node,
             final RelationConsumer consumer) {
         consumeNodes(node, cursor(node, outOffsets), consumer);

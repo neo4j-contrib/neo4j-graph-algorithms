@@ -11,5 +11,5 @@ public interface RelationConsumer {
      * @param targetNodeId mapped target node id
      * @param relationId original relation/edge-id
      */
-    void accept(int sourceNodeId, int targetNodeId, long relationId);
+    void accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId);
 }

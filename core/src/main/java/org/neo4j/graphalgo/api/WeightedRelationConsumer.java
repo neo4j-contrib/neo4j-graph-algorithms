@@ -15,5 +15,5 @@ public interface WeightedRelationConsumer {
      * @param relationId relation id
      * @param weight the weight/cost of this edge
      */
-    void accept(int sourceNodeId, int targetNodeId, long relationId, double weight);
+    void accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId, double weight);
 }

@@ -107,4 +107,15 @@ public class SimpleGraphSetup {
         return r2;
     }
 
+    public long getN0() {
+        return n0;
+    }
+
+    public long getN1() {
+        return n1;
+    }
+
+    public long getN2() {
+        return n2;
+    }
 }
