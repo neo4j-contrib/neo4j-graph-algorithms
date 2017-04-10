@@ -64,7 +64,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
         final Cursor<RelationshipItem> relCursor = read.relationshipCursor(relationId);
         relCursor.next();
         final RelationshipItem item = relCursor.get();
-        cursor.relationId = relationId;
+        cursor.relationshipId = relationId;
         cursor.targetNodeId = graph.toMappedNodeId(item.otherNode(originalNodeId));
         final Cursor<PropertyItem> propertyCursor = item.property(propertyKey);
         if (propertyCursor.next()) {

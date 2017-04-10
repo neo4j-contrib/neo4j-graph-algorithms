@@ -50,7 +50,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public void forEachRelation(int nodeId, Direction direction, RelationshipConsumer consumer) {
+    public void forEachRelationship(int nodeId, Direction direction, RelationshipConsumer consumer) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         withinTransaction(read -> {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
@@ -145,7 +145,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
+    public Iterator<RelationshipCursor> relationshipIterator(int nodeId, Direction direction) {
         try {
             return new RelationIteratorImpl(this, db, nodeId, direction, relationTypeId);
         } catch (EntityNotFoundException e) {

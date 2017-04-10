@@ -56,7 +56,7 @@ public class HeavyGraph implements Graph {
     }
 
     @Override
-    public void forEachRelation(int nodeId, Direction direction, RelationshipConsumer consumer) {
+    public void forEachRelationship(int nodeId, Direction direction, RelationshipConsumer consumer) {
         container.forEach(nodeId, direction, consumer);
     }
 
@@ -69,7 +69,7 @@ public class HeavyGraph implements Graph {
     }
 
     @Override
-    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
+    public Iterator<RelationshipCursor> relationshipIterator(int nodeId, Direction direction) {
         return container.relationIterator(nodeId, direction);
     }
 

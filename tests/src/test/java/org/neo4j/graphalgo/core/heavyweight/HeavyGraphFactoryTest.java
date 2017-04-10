@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -98,12 +97,12 @@ public class HeavyGraphFactoryTest {
                 .withAnyRelationshipType()
                 .load(HeavyGraphFactory.class);
 
-        graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, relationConsumer);
+        graph.forEachRelationship(graph.toMappedNodeId(id1), Direction.OUTGOING, relationConsumer);
         verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id3)), anyLong());
         verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong());
         Mockito.reset(relationConsumer);
 
-        graph.forEachRelation(graph.toMappedNodeId(id2), Direction.OUTGOING, relationConsumer);
+        graph.forEachRelationship(graph.toMappedNodeId(id2), Direction.OUTGOING, relationConsumer);
         verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id2)), eq(graph.toMappedNodeId(id3)), anyLong());
         Mockito.reset(relationConsumer);
     }
@@ -116,12 +115,12 @@ public class HeavyGraphFactoryTest {
                 .withRelationshipType("REL1")
                 .load(HeavyGraphFactory.class);
 
-        graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, relationConsumer);
+        graph.forEachRelationship(graph.toMappedNodeId(id1), Direction.OUTGOING, relationConsumer);
         verify(relationConsumer, times(1)).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong());
         verify(relationConsumer, never()).accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id3)), anyLong());
         Mockito.reset(relationConsumer);
 
-        graph.forEachRelation(graph.toMappedNodeId(id2), Direction.OUTGOING, relationConsumer);
+        graph.forEachRelationship(graph.toMappedNodeId(id2), Direction.OUTGOING, relationConsumer);
         verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
         Mockito.reset(relationConsumer);
     }

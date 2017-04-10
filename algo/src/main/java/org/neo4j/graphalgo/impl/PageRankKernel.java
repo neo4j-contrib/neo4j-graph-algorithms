@@ -40,7 +40,7 @@ public class PageRankKernel implements IntConsumer, RelationshipConsumer {
     @Override
     public void accept(final int node) {
         sum = 0;
-        graph.forEachRelation(node, Direction.INCOMING, this);
+        graph.forEachRelationship(node, Direction.INCOMING, this);
         final double value = alpha + dampingFactor * sum;
         pageRank[node] = value;
     }
