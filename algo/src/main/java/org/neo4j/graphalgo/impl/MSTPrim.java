@@ -36,7 +36,7 @@ public class MSTPrim {
 
         // initially add all relations from startNode to the priority queue
         visited.set(startNode);
-        graph.forEachRelation(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+        graph.forEachRelationship(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
             queue.add(combineIntInt(startNode, targetNodeId), weight);
         });
         while (!queue.isEmpty()) {
@@ -50,7 +50,7 @@ public class MSTPrim {
             // add to mst
             mst.add(transition);
             // add new candidates
-            graph.forEachRelation(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+            graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
                 queue.add(combineIntInt(nodeId, targetNodeId), weight);
             });
         }

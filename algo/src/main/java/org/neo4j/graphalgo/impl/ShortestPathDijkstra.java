@@ -63,7 +63,7 @@ public class ShortestPathDijkstra {
 
             visited.put(node);
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
-            graph.forEachRelation(
+            graph.forEachRelationship(
                     node,
                     Direction.OUTGOING,
                     (source, target, relId, weight) -> {

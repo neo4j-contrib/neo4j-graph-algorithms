@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.core.neo4jview;
 
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.WeightedRelationCursor;
+import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -17,13 +17,13 @@ import org.neo4j.storageengine.api.RelationshipItem;
 import java.io.Closeable;
 import java.util.Iterator;
 
-class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor>, Closeable {
+class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCursor>, Closeable {
 
     private final Graph graph;
     private final Statement statement;
     private final Transaction tx;
     private final int propertyKey;
-    private final WeightedRelationCursor cursor;
+    private final WeightedRelationshipCursor cursor;
     private final long originalNodeId;
     private final RelationshipIterator relationships;
     private final ReadOperations read;
@@ -44,7 +44,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor>, 
         } else {
             relationships = read.nodeGetRelationships(originalNodeId, direction, relationId);
         }
-        this.cursor = new WeightedRelationCursor();
+        this.cursor = new WeightedRelationshipCursor();
         cursor.sourceNodeId = sourceNodeId;
     }
 
@@ -58,7 +58,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationCursor>, 
     }
 
     @Override
-    public WeightedRelationCursor next() {
+    public WeightedRelationshipCursor next() {
 
         final long relationId = relationships.next();
         final Cursor<RelationshipItem> relCursor = read.relationshipCursor(relationId);

@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -132,7 +131,7 @@ class AdjacencyMatrix {
     /**
      * return an iterator for unweighted edges
      */
-    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
+    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
         switch (direction) {
             case OUTGOING:
                 return new RelationIterator(nodeId, outgoing[nodeId], outgoingIds[nodeId], outOffsets[nodeId]);
@@ -147,7 +146,7 @@ class AdjacencyMatrix {
     /**
      * return an iterator for weighted edges
      */
-    public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, WeightMapping weights, Direction direction) {
+    public Iterator<WeightedRelationshipCursor> weightedRelationIterator(int nodeId, WeightMapping weights, Direction direction) {
         switch (direction) {
             case OUTGOING:
                 return new WeightedRelationIterator(nodeId, outgoing[nodeId], outgoingIds[nodeId], outOffsets[nodeId], weights);
@@ -162,7 +161,7 @@ class AdjacencyMatrix {
     /**
      * iterate over each edge at the given node using an unweighted consumer
      */
-    public void forEach(int nodeId, Direction direction, RelationConsumer consumer) {
+    public void forEach(int nodeId, Direction direction, RelationshipConsumer consumer) {
         switch (direction) {
             case OUTGOING:
                 forEachOutgoing(nodeId, consumer);
@@ -180,7 +179,7 @@ class AdjacencyMatrix {
     /**
      * iterate over each edge at the given node using a weighted consumer
      */
-    public void forEach(int nodeId, Direction direction, WeightMapping weights, WeightedRelationConsumer consumer) {
+    public void forEach(int nodeId, Direction direction, WeightMapping weights, WeightedRelationshipConsumer consumer) {
         switch (direction) {
             case OUTGOING:
                 forEachOutgoing(nodeId, weights, consumer);
@@ -204,7 +203,7 @@ class AdjacencyMatrix {
         System.arraycopy(other.incomingIds, 0, incomingIds, offset, length);
     }
 
-    private void forEachOutgoing(int nodeId, RelationConsumer consumer) {
+    private void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
         final int degree = outOffsets[nodeId];
         final int[] outs = outgoing[nodeId];
         final long[] outIds = outgoingIds[nodeId];
@@ -213,7 +212,7 @@ class AdjacencyMatrix {
         }
     }
 
-    private void forEachIncoming(int nodeId, RelationConsumer consumer) {
+    private void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
         final int degree = inOffsets[nodeId];
         final int[] ins = incoming[nodeId];
         final long[] inIds = incomingIds[nodeId];
@@ -222,7 +221,7 @@ class AdjacencyMatrix {
         }
     }
 
-    private void forEachOutgoing(int nodeId, WeightMapping weights, WeightedRelationConsumer consumer) {
+    private void forEachOutgoing(int nodeId, WeightMapping weights, WeightedRelationshipConsumer consumer) {
         final int degree = outOffsets[nodeId];
         final int[] outs = outgoing[nodeId];
         final long[] outIds = outgoingIds[nodeId];
@@ -232,7 +231,7 @@ class AdjacencyMatrix {
         }
     }
 
-    private void forEachIncoming(int nodeId, WeightMapping weights, WeightedRelationConsumer consumer) {
+    private void forEachIncoming(int nodeId, WeightMapping weights, WeightedRelationshipConsumer consumer) {
         final int degree = inOffsets[nodeId];
         final int[] ins = incoming[nodeId];
         final long[] inIds = incomingIds[nodeId];
@@ -242,9 +241,9 @@ class AdjacencyMatrix {
         }
     }
 
-    private static class RelationIterator implements Iterator<RelationCursor> {
+    private static class RelationIterator implements Iterator<RelationshipCursor> {
 
-        private final RelationCursor cursor;
+        private final RelationshipCursor cursor;
         private final int[] targetNodes;
         private final long[] relationIds;
         private final int nodeCount;
@@ -254,7 +253,7 @@ class AdjacencyMatrix {
             this.targetNodes = targetNodes;
             this.relationIds = originalRelationIds;
             this.nodeCount = nodeCount;
-            cursor = new RelationCursor();
+            cursor = new RelationshipCursor();
             cursor.sourceNodeId = nodeId;
         }
 
@@ -264,16 +263,16 @@ class AdjacencyMatrix {
         }
 
         @Override
-        public RelationCursor next() {
+        public RelationshipCursor next() {
             cursor.targetNodeId = targetNodes[offset];
             cursor.relationId = relationIds[offset++];
             return cursor;
         }
     }
 
-    private static class WeightedRelationIterator implements Iterator<WeightedRelationCursor> {
+    private static class WeightedRelationIterator implements Iterator<WeightedRelationshipCursor> {
 
-        private final WeightedRelationCursor cursor;
+        private final WeightedRelationshipCursor cursor;
         private final int[] targetNodes;
         private final long[] relationIds;
         private final int nodeCount;
@@ -285,7 +284,7 @@ class AdjacencyMatrix {
             this.relationIds = relationIds;
             this.nodeCount = nodeCount;
             this.weights = weights;
-            cursor = new WeightedRelationCursor();
+            cursor = new WeightedRelationshipCursor();
             cursor.sourceNodeId = nodeId;
         }
 
@@ -295,7 +294,7 @@ class AdjacencyMatrix {
         }
 
         @Override
-        public WeightedRelationCursor next() {
+        public WeightedRelationshipCursor next() {
             cursor.targetNodeId = targetNodes[offset];
             final long relationId = relationIds[offset++];
             cursor.relationId = relationId;

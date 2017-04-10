@@ -55,7 +55,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachRelation(int vertexId, Direction direction, RelationConsumer consumer) {
+    public void forEachRelation(int vertexId, Direction direction, RelationshipConsumer consumer) {
         switch (direction) {
             case INCOMING:
                 forEachIncoming(vertexId, consumer);
@@ -76,7 +76,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachRelation(int vertexId, Direction direction, WeightedRelationConsumer consumer) {
+    public void forEachRelationship(int vertexId, Direction direction, WeightedRelationshipConsumer consumer) {
         switch (direction) {
             case INCOMING:
                 forEachIncoming(vertexId, consumer);
@@ -97,7 +97,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public Iterator<WeightedRelationCursor> weightedRelationIterator(int vertexId, Direction direction) {
+    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(int vertexId, Direction direction) {
 
         switch (direction) {
             case INCOMING: {
@@ -118,7 +118,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public Iterator<RelationCursor> relationIterator(int vertexId, Direction direction) {
+    public Iterator<RelationshipCursor> relationIterator(int vertexId, Direction direction) {
 
         switch (direction) {
             case INCOMING: {
@@ -171,27 +171,27 @@ public class LightGraph implements Graph {
         return idMapping.unmap(vertexId);
     }
 
-    private void forEachIncoming(
+    public void forEachIncoming(
             final int node,
-            final RelationConsumer consumer) {
+            final RelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, inOffsets), consumer);
     }
 
-    private void forEachOutgoing(
+    public void forEachOutgoing(
             final int node,
-            final RelationConsumer consumer) {
+            final RelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, outOffsets), consumer);
     }
 
     private void forEachIncoming(
             final int node,
-            final WeightedRelationConsumer consumer) {
+            final WeightedRelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, inOffsets), consumer);
     }
 
     private void forEachOutgoing(
             final int node,
-            final WeightedRelationConsumer consumer) {
+            final WeightedRelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, outOffsets), consumer);
     }
 
@@ -204,7 +204,7 @@ public class LightGraph implements Graph {
     private void consumeNodes(
             int node,
             IntArray.Cursor cursor,
-            WeightedRelationConsumer consumer) {
+            WeightedRelationshipConsumer consumer) {
         //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
         final WeightMapping weightMap = this.weightMapping;
         //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
@@ -222,7 +222,7 @@ public class LightGraph implements Graph {
     private void consumeNodes(
             int node,
             IntArray.Cursor cursor,
-            RelationConsumer consumer) {
+            RelationshipConsumer consumer) {
         //noinspection UnnecessaryLocalVariable – prefer access of local var in loop
         final LongLongMap relMap = this.relationIdMapping;
         while (cursor.next()) {

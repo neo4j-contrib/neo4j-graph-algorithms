@@ -8,8 +8,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.RelationConsumer;
-import org.neo4j.graphalgo.api.WeightedRelationConsumer;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -36,10 +36,10 @@ public class HeavyGraphFactoryTest {
     private static long id3;
 
     @Mock
-    private RelationConsumer relationConsumer;
+    private RelationshipConsumer relationConsumer;
 
     @Mock
-    private WeightedRelationConsumer weightedRelationConsumer;
+    private WeightedRelationshipConsumer weightedRelationConsumer;
 
     @BeforeClass
     public static void setup() {
@@ -135,7 +135,7 @@ public class HeavyGraphFactoryTest {
                 .withWeightsFromProperty("prop1", 0.0)
                 .load(HeavyGraphFactory.class);
 
-        graph.forEachRelation(graph.toMappedNodeId(id1), Direction.OUTGOING, weightedRelationConsumer);
+        graph.forEachRelationship(graph.toMappedNodeId(id1), Direction.OUTGOING, weightedRelationConsumer);
         verify(weightedRelationConsumer, times(1))
                 .accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong(), eq(1.0));
     }

@@ -30,10 +30,10 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     protected static int v0, v1, v2;
 
     @Mock
-    private WeightedRelationConsumer weightedRelationConsumer;
+    private WeightedRelationshipConsumer weightedRelationConsumer;
 
     @Mock
-    private RelationConsumer relationConsumer;
+    private RelationshipConsumer relationConsumer;
 
     @Mock
     private IntConsumer nodeConsumer;
@@ -141,7 +141,7 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
 
     @Test
     public void testV0OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v0, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v0, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong(), anyDouble());
         verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong(), eq(1.0));
         verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v2), anyLong(), eq(2.0));
@@ -149,31 +149,31 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
 
     @Test
     public void testV1OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v1, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v1, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong(), eq(3.0));
     }
 
     @Test
     public void testV2OutgoingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v2, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v2, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
     }
 
     @Test
     public void testV0IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v0, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v0, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, never()).accept(anyInt(), anyInt(), anyLong(), anyDouble());
     }
 
     @Test
     public void testV1IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v1, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v1, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong(), eq(1.0));
     }
 
     @Test
     public void testV2IncomingWeightedIterator() throws Exception {
-        graph.weightedRelationIterator(v2, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
+        graph.weightedRelationshipIterator(v2, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong(), eq(2.0));
         verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong(), eq(3.0));
     }
@@ -193,12 +193,12 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
         assertEquals(2, graph.degree(v2, INCOMING));
     }
 
-    private Consumer<RelationCursor> consume(RelationConsumer sink) {
+    private Consumer<RelationshipCursor> consume(RelationshipConsumer sink) {
         return c -> sink.accept(c.sourceNodeId, c.targetNodeId, c.relationId);
     }
 
 
-    private Consumer<WeightedRelationCursor> consume(WeightedRelationConsumer sink) {
+    private Consumer<WeightedRelationshipCursor> consume(WeightedRelationshipConsumer sink) {
         return c -> sink.accept(c.sourceNodeId, c.targetNodeId, c.relationId, c.weight);
     }
 

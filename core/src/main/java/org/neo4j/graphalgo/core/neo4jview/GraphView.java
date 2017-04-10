@@ -50,7 +50,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public void forEachRelation(int nodeId, Direction direction, RelationConsumer consumer) {
+    public void forEachRelation(int nodeId, Direction direction, RelationshipConsumer consumer) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         withinTransaction(read -> {
             try (Cursor<NodeItem> nodeItemCursor = read.nodeCursor(originalNodeId)) {
@@ -66,7 +66,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public void forEachRelation(int nodeId, Direction direction, WeightedRelationConsumer consumer) {
+    public void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         withinTransactionTyped(read -> {
             try {
@@ -91,7 +91,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public Iterator<WeightedRelationCursor> weightedRelationIterator(int nodeId, Direction direction) {
+    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(int nodeId, Direction direction) {
         try {
             return new WeightedRelationIteratorImpl(this, db, nodeId, direction, relationTypeId, propertyKey, propertyDefaultWeight);
         } catch (EntityNotFoundException e) {
@@ -145,7 +145,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public Iterator<RelationCursor> relationIterator(int nodeId, Direction direction) {
+    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
         try {
             return new RelationIteratorImpl(this, db, nodeId, direction, relationTypeId);
         } catch (EntityNotFoundException e) {

@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.api;
 /**
  * @author mknobloch
  */
-public class RelationCursor {
+public class RelationshipCursor {
 
     /**
      * the mapped source node id
@@ -16,8 +16,9 @@ public class RelationCursor {
     public int targetNodeId;
 
     /**
-     * the original edge id
+     * deprecated
      */
+    @Deprecated
     public long relationId;
 
 }

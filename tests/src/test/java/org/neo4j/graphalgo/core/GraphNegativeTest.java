@@ -6,7 +6,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
@@ -104,7 +104,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withWeightsFromProperty("foo", 13.37)
                 .load(graphImpl);
-        graph.forEachNode(node -> graph.forEachRelation(
+        graph.forEachNode(node -> graph.forEachRelationship(
                 node,
                 Direction.OUTGOING,
                 (start, end, rel, weight) ->
@@ -124,7 +124,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         testAnyRelationship(graph, (rs, rel) -> {
             double weight = ((Number) rel.getProperty("weight")).doubleValue();
             return Pair.of(
-                    graph.weightedRelationIterator(
+                    graph.weightedRelationshipIterator(
                             graph.toMappedNodeId(rel.getStartNode().getId()),
                             Direction.OUTGOING),
                     (cursor) -> assertEquals(
@@ -137,7 +137,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         });
     }
 
-    private <T extends RelationCursor> void testAnyRelationship(
+    private <T extends RelationshipCursor> void testAnyRelationship(
             Graph graph,
             BiFunction<String, Relationship, Pair<Iterator<T>, Consumer<T>>> tester) {
         try (Transaction tx = db.beginTx()) {
