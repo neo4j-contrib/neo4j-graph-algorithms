@@ -10,9 +10,12 @@ import java.util.Iterator;
 public interface AllRelationIterator {
 
     /**
-     *
+     * called once for each relation
      */
     void forEachRelation(RelationConsumer consumer);
 
+    /**
+     * get an iterator for each relation
+     */
     Iterator<RelationCursor> allRelationIterator();
 }
