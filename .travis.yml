@@ -13,7 +13,9 @@ jdk:
   - oraclejdk8
 
 before_deploy:
-  - mkdir benchmark/results
+  - git clone --depth 1 --branch benchmark-results https://github.com/neo4j-contrib/neo4j-graph-algorithms.git benchmark/results
+  - rm -rf benchmark/results/.git
+  - rm benchmark/results/deployed*
   - mvn -DskipTests -PBenchmark -pl benchmark package
   - java -jar benchmark/target/benchmark.jar -jvmArgs "-server -d64 -Xmx1g -Xms1g" -prof gc -rf csv -rff benchmark/results/b${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}.csv
 
