@@ -30,7 +30,7 @@ public class RelationshipContainer {
 
     private final int[][] data;
 
-    public RelationshipContainer(int nodeCount) {
+    private RelationshipContainer(int nodeCount) {
         data = new int[nodeCount][];
     }
 

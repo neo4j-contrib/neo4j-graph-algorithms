@@ -34,6 +34,12 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
                 .resolveDependency(ThreadToStatementContextBridge.class);
     }
 
+    /**
+     * instructs the importer to use constraints set in the GraphSetup
+     *
+     * @param setup the setup object
+     * @return this for method chaining
+     */
     public ME withGraphSetup(GraphSetup setup) {
         this.setup = setup;
 
@@ -52,6 +58,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.propertyName);
         });
+
         return me();
     }
 
@@ -70,7 +77,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
 
     /**
      * getThis-trick for method chaining in child classes
-     * @return
+     * @return return self
      */
     protected abstract ME me();
 
