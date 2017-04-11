@@ -19,12 +19,15 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
 
     private final LongArrayList container;
 
-    public void add(int sourceNodeId, int targetNodeId) {
-        container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
-    }
-
     public BufferedAllRelationshipIterator(int expectedElements) {
         container = new LongArrayList(expectedElements);
+    }
+
+    /**
+     * add connection between source and target
+     */
+    public void add(int sourceNodeId, int targetNodeId) {
+        container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
     }
 
     @Override
