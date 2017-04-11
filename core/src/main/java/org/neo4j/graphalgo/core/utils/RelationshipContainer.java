@@ -34,6 +34,11 @@ public class RelationshipContainer {
         data = new int[nodeCount][];
     }
 
+    /**
+     * called for each relationship for nodeId
+     * @param nodeId the source nodeid
+     * @param consumer the relation consumer
+     */
     public void forEach(int nodeId, RelationshipConsumer consumer) {
         if (nodeId >= data.length) {
             return;
@@ -44,11 +49,32 @@ public class RelationshipContainer {
         }
     }
 
+    /**
+     * get an iterator for each relation
+     */
     public Iterator<RelationshipCursor> iterator(int nodeId) {
         if (nodeId >= data.length) {
             return EMPTY_IT;
         }
         return new RelationIterator(data, nodeId);
+    }
+
+    /**
+     * get RelationContainer.Builder to ease construction of the container
+     * @param nodeCount the nodeCount
+     * @return a Builder for RelationContainers
+     */
+    public static Builder builder(int nodeCount) {
+        return new Builder(nodeCount);
+    }
+
+    /**
+     * get an Importer object to ease the import from neo4j
+     * @param api the core api
+     * @return an Importer for RelationContainer
+     */
+    public static RCImporter importer(GraphDatabaseAPI api) {
+        return new RCImporter(api);
     }
 
     private static class RelationIterator implements Iterator<RelationshipCursor> {
@@ -77,14 +103,6 @@ public class RelationshipContainer {
         }
     }
 
-    public static Builder builder(int nodeCount) {
-        return new Builder(nodeCount);
-    }
-
-    public static RCImporter importer(GraphDatabaseAPI api) {
-        return new RCImporter(api);
-    }
-
     public static class Builder {
 
         private final RelationshipContainer container;
@@ -92,10 +110,17 @@ public class RelationshipContainer {
         private int nodeId;
         private int offset;
 
-        public Builder(int nodeCount) {
+        private Builder(int nodeCount) {
             container = new RelationshipContainer(nodeCount);
         }
 
+        /**
+         * set the builder to aim for nodeId and initialize its underlying connection array
+         *
+         * @param nodeId the current (mapped) nodeId
+         * @param degree the degree for the node
+         * @return this instance for method chaining
+         */
         public Builder aim(int nodeId, int degree) {
             this.nodeId = nodeId;
             offset = 0;
@@ -103,11 +128,19 @@ public class RelationshipContainer {
             return this;
         }
 
+        /**
+         * Adds a new connection from the node which the Builder is pointing to.
+         * @param targetNodeId the targetNodeId
+         * @return itself for method chaining
+         */
         public Builder add(int targetNodeId) {
             container.data[nodeId][offset++] = targetNodeId;
             return this;
         }
 
+        /**
+         * builds the container
+         */
         public RelationshipContainer build() {
             return container;
         }
@@ -118,21 +151,21 @@ public class RelationshipContainer {
         private IdMapping idMapping;
         private Direction direction;
 
-        public RCImporter(GraphDatabaseAPI api) {
+        private RCImporter(GraphDatabaseAPI api) {
             super(api);
         }
 
-        @Override
-        protected RCImporter me() {
-            return this;
-        }
-
-
+        /**
+         * set the idmapping function to use
+         */
         public RCImporter withIdMapping(IdMapping idMapping) {
             this.idMapping = idMapping;
             return this;
         }
 
+        /**
+         * set the direction to use
+         */
         public RCImporter withDirection(org.neo4j.graphdb.Direction direction) {
             switch (direction) {
                 case OUTGOING:
@@ -150,16 +183,17 @@ public class RelationshipContainer {
             return this;
         }
 
+        /**
+         * build the container
+         */
         @Override
         public RelationshipContainer build() {
-
             if (null == idMapping) {
                 throw new IllegalArgumentException("No IdMapping given");
             }
             if (null == direction) {
                 throw new IllegalArgumentException("No Direction given");
             }
-
             final Builder builder = RelationshipContainer.builder(nodeCount);
             withinTransaction(read -> {
                 read.nodeCursorGetAll().forAll(nodeItem -> {
@@ -169,9 +203,13 @@ public class RelationshipContainer {
                         builder.add(idMapping.toMappedNodeId(ri.otherNode(neo4jId)));
                     });
                 });
-
             });
             return builder.build();
+        }
+
+        @Override
+        protected RCImporter me() {
+            return this;
         }
     }
 }

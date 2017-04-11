@@ -56,7 +56,6 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
         a = idMapper.toMappedNodeId(a);
         b = idMapper.toMappedNodeId(b);
         c = idMapper.toMappedNodeId(c);
-
     }
 
     @Test
@@ -100,7 +99,6 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
         container.iterator(42).forEachRemaining(consume(consumer));
         verify(consumer, never()).accept(anyInt(), anyInt(), anyLong());
     }
-
 
     private static Consumer<RelationshipCursor> consume(RelationshipConsumer consumer) {
         return cursor -> consumer.accept(cursor.sourceNodeId, cursor.targetNodeId, -1L);

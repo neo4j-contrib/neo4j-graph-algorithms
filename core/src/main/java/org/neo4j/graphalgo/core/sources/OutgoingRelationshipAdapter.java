@@ -8,6 +8,8 @@ import org.neo4j.graphalgo.core.utils.RelationshipContainer;
 import java.util.Iterator;
 
 /**
+ * Adapter class for RelationContainer -> OutgoingRelationContainer
+ *
  * @author mknblch
  */
 public class OutgoingRelationshipAdapter implements OutgoingRelationshipIterator {

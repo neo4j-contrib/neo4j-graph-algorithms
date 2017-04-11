@@ -9,6 +9,8 @@ import org.neo4j.graphalgo.core.utils.RelationshipContainer;
 import java.util.Iterator;
 
 /**
+ * Adapter class for RelationshipContainer -> IncomingRelationIterator
+ *
  * @author mknblch
  */
 public class IncomingRelationshipAdapter implements IncomingRelationshipIterator {
