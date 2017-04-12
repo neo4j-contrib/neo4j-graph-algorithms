@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
+import org.neo4j.storageengine.api.NodeItem;
 
 import java.util.Iterator;
 
@@ -167,19 +168,7 @@ public class RelationshipContainer {
          * set the direction to use
          */
         public RCImporter withDirection(org.neo4j.graphdb.Direction direction) {
-            switch (direction) {
-                case OUTGOING:
-                    this.direction = Direction.OUTGOING;
-                    break;
-                case INCOMING:
-                    this.direction = Direction.INCOMING;
-                    break;
-                case BOTH:
-                    this.direction = Direction.BOTH;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown direction");
-            }
+            this.direction = Directions.mediate(direction);
             return this;
         }
 
@@ -187,7 +176,7 @@ public class RelationshipContainer {
          * build the container
          */
         @Override
-        public RelationshipContainer build() {
+        protected RelationshipContainer buildT() {
             if (null == idMapping) {
                 throw new IllegalArgumentException("No IdMapping given");
             }
@@ -195,16 +184,21 @@ public class RelationshipContainer {
                 throw new IllegalArgumentException("No Direction given");
             }
             final Builder builder = RelationshipContainer.builder(nodeCount);
-            withinTransaction(read -> {
-                read.nodeCursorGetAll().forAll(nodeItem -> {
-                    final long neo4jId = nodeItem.id();
-                    builder.aim(idMapping.toMappedNodeId(neo4jId), nodeItem.degree(direction));
-                    nodeItem.relationships(direction, relationId).forAll(ri -> {
-                        builder.add(idMapping.toMappedNodeId(ri.otherNode(neo4jId)));
-                    });
-                });
-            });
+            forEachNodeItem(nodeItem -> importNode(builder, nodeItem));
             return builder.build();
+        }
+
+        private void importNode(Builder builder, NodeItem nodeItem) {
+            final long neo4jId = nodeItem.id();
+            final int nodeId = idMapping.toMappedNodeId(neo4jId);
+            if (null == relationId) {
+                builder.aim(nodeId, nodeItem.degree(direction));
+            } else {
+                builder.aim(nodeId, nodeItem.degree(direction, relationId[0]));
+            }
+            nodeItem.relationships(direction, relationId).forAll(ri -> {
+                builder.add(idMapping.toMappedNodeId(ri.otherNode(neo4jId)));
+            });
         }
 
         @Override
