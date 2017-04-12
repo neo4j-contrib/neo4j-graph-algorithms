@@ -3,16 +3,16 @@ package org.neo4j.graphalgo.core.leightweight;
 
 
 import com.carrotsearch.hppc.LongLongMap;
-import org.neo4j.graphalgo.api.RelationCursor;
+import org.neo4j.graphalgo.api.RelationshipCursor;
 
 import java.util.Iterator;
 
 /**
  * @author phorn@avantgarde-labs.de
  */
-class RelationIteratorImpl implements Iterator<RelationCursor> {
+class RelationIteratorImpl implements Iterator<RelationshipCursor> {
 
-    private final RelationCursor cursor = new RelationCursor();
+    private final RelationshipCursor cursor = new RelationshipCursor();
     private final IntArray.Cursor adjCursor;
 
     private final LongLongMap relationIdMapping;
@@ -51,8 +51,8 @@ class RelationIteratorImpl implements Iterator<RelationCursor> {
     }
 
     @Override
-    public RelationCursor next() {
-        cursor.relationId = relationIdMapping.get(relationId++);
+    public RelationshipCursor next() {
+        cursor.relationshipId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
         return cursor;
     }

@@ -6,28 +6,30 @@ import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.PathCompressingDSS;
+import org.neo4j.graphalgo.core.sources.LazyIdMapper;
+import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
+import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**         1d
- *        A---D  F
- *       / \  |
- *      B--C  E
+ *        A---D   F
+ *       / \   \
+ *      B--C    E
  *
  * @author mknobloch
  */
 public class UnionFindTest extends Neo4JTestCase {
 
-    private static Graph graph;
     private static int a, b, c, d, e, f;
+
+    private static SingleRunAllRelationIterator iterator;
+    private static LazyIdMapper idMapper;
 
     @BeforeClass
     public static void setupGraph() {
@@ -39,51 +41,52 @@ public class UnionFindTest extends Neo4JTestCase {
         final int n5 = newNode();
         final int n6 = newNode();
 
-        newRelation(n1, n2, 3d);
-        newRelation(n2, n3, 3d);
-        newRelation(n3, n1, 3d);
+        newRelation(n1, n2);
+        newRelation(n2, n3);
+        newRelation(n3, n1);
 
-        newRelation(n4, n5, 3d);
+        newRelation(n4, n5);
 
-        newRelation(n1, n4, 1d);
+        newRelation(n1, n4);
 
-        graph = new GraphLoader((GraphDatabaseAPI) db)
-                .withAnyLabel()
-                .withRelationshipType(RELATION)
-                .withWeightsFromProperty(WEIGHT_PROPERTY, 0.0)
-                .load(HeavyGraphFactory.class);
+        idMapper = new LazyIdMapper();
+        iterator = new SingleRunAllRelationIterator((GraphDatabaseAPI) db, idMapper);
 
-        a = graph.toMappedNodeId(n1);
-        b = graph.toMappedNodeId(n2);
-        c = graph.toMappedNodeId(n3);
-        d = graph.toMappedNodeId(n4);
-        e = graph.toMappedNodeId(n5);
-        f = graph.toMappedNodeId(n6);
+        a = idMapper.toMappedNodeId(n1);
+        b = idMapper.toMappedNodeId(n2);
+        c = idMapper.toMappedNodeId(n3);
+        d = idMapper.toMappedNodeId(n4);
+        e = idMapper.toMappedNodeId(n5);
+        f = idMapper.toMappedNodeId(n6);
     }
 
+    /**
+     * should split the graph into 2 distinct sets
+     *
+     * @throws Exception
+     */
     @Test
     public void test() throws Exception {
-        final Map<Integer, List<Integer>> struct = new UnionFind(graph).compute();
-        System.out.println(struct);
-        assertEquals(2, struct.size());
-        assertEquals(5, struct.get(a).size());
-        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c, d, e)));
-        assertEquals(1, struct.get(f).size());
-        assertTrue(struct.get(f).contains(f));
+        final DisjointSetStruct struct = new UnionFind(idMapper, iterator).compute();
+        assertAllSameSet(struct, a, b, c, d, e);
+        assertAllNotSameSet(struct, f, a, b, c, d, e);
     }
 
-    @Test
-    public void testThreshold() throws Exception {
+    public static void assertAllSameSet(DisjointSetStruct dss, int needle, int... elements) {
+        final int setId = dss.find(needle);
+        for (int i = 0; i < elements.length; i++) {
+            assertEquals("element " + elements[i] + " does not belong to set " + setId,
+                    setId,
+                    dss.find(elements[i]));
+        }
+    }
 
-        final Map<Integer, List<Integer>> struct = new UnionFind(graph).compute(2d);
-
-        System.out.println(struct);
-
-        assertEquals(3, struct.get(a).size());
-        assertTrue(struct.get(a).containsAll(Arrays.asList(a, b, c)));
-        assertEquals(2, struct.get(d).size());
-        assertTrue(struct.get(d).containsAll(Arrays.asList(d, e)));
-        assertEquals(1, struct.get(f).size());
-        assertTrue(struct.get(f).contains(f));
+    public static void assertAllNotSameSet(DisjointSetStruct dss, int needle, int... elements) {
+        final int setId = dss.find(needle);
+        for (int i = 0; i < elements.length; i++) {
+            assertNotEquals("element " + elements[i] + " belongs to set " + setId + " but should not",
+                    setId,
+                    dss.find(elements[i]));
+        }
     }
 }

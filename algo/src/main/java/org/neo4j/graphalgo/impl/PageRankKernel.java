@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.api.RelationConsumer;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
 
@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.function.IntConsumer;
 
 
-public class PageRankKernel implements IntConsumer, RelationConsumer {
+public class PageRankKernel implements IntConsumer, RelationshipConsumer {
 
     private final double[] pageRank;
 
@@ -40,7 +40,7 @@ public class PageRankKernel implements IntConsumer, RelationConsumer {
     @Override
     public void accept(final int node) {
         sum = 0;
-        graph.forEachRelation(node, Direction.INCOMING, this);
+        graph.forEachRelationship(node, Direction.INCOMING, this);
         final double value = alpha + dampingFactor * sum;
         pageRank[node] = value;
     }

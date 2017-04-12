@@ -16,10 +16,9 @@ import org.neo4j.test.TestGraphDatabaseFactory;
  */
 public class SimpleGraphSetup {
 
-    private static final String LABEL = "Node";
-    private static final String RELATION = "RELATION";
-    private static final String PROPERTY = "weight";
-
+    public static final String LABEL = "Node";
+    public static final String RELATION = "RELATION";
+    public static final String PROPERTY = "weight";
 
     private final GraphDatabaseService db;
 
@@ -107,4 +106,15 @@ public class SimpleGraphSetup {
         return r2;
     }
 
+    public long getN0() {
+        return n0;
+    }
+
+    public long getN1() {
+        return n1;
+    }
+
+    public long getN2() {
+        return n2;
+    }
 }

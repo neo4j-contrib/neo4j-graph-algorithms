@@ -1,12 +1,13 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.IntBinaryConsumer;
-import org.neo4j.graphalgo.core.utils.LongMinPriorityQueue;
-import org.neo4j.graphalgo.core.utils.MinimumSpanningTree;
+import com.carrotsearch.hppc.cursors.LongDoubleCursor;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.queue.LongMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
+
+import java.util.Iterator;
 
 import static org.neo4j.graphalgo.core.utils.RawValues.*;
 
@@ -37,7 +38,7 @@ public class MSTPrim {
 
         // initially add all relations from startNode to the priority queue
         visited.set(startNode);
-        graph.forEachRelation(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+        graph.forEachRelationship(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
             queue.add(combineIntInt(startNode, targetNodeId), weight);
         });
         while (!queue.isEmpty()) {
@@ -52,14 +53,72 @@ public class MSTPrim {
             // add to mst
             mst.add(getHead(transition), getTail(transition), cost);
             // add new candidates
-            graph.forEachRelation(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
-                if (visited.get(targetNodeId)) {
-                    return;
-                }
+            graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
                 queue.add(combineIntInt(nodeId, targetNodeId), weight);
             });
         }
 
         return mst;
+    }
+
+    public static class MinimumSpanningTree implements WeightedAllRelationshipIterator {
+
+        private final LongDoubleMap costMap;
+
+        public MinimumSpanningTree() {
+            this(8);
+        }
+
+        public MinimumSpanningTree(int expectedElements) {
+            costMap = new LongDoubleScatterMap(expectedElements);
+        }
+
+        public void add(int sourceNodeId, int targetNodeId, double cost) {
+            final long combined = RawValues.combineIntInt(sourceNodeId, targetNodeId);
+            costMap.put(combined, cost);
+        }
+
+        @Override
+        public void forEachRelationship(WeightedRelationshipConsumer consumer) {
+            for (LongDoubleCursor cursor : costMap) {
+                consumer.accept(
+                        RawValues.getHead(cursor.key),
+                        RawValues.getTail(cursor.key),
+                        -1L,
+                        costMap.get(cursor.key));
+            }
+        }
+
+        @Override
+        public Iterator<WeightedRelationshipCursor> allWeightedRelationshipIterator() {
+            return new AllIterator(costMap);
+        }
+
+        private static class AllIterator implements Iterator<WeightedRelationshipCursor> {
+
+            private final Iterator<LongDoubleCursor> iterator;
+            private final LongDoubleMap costMap;
+            private final WeightedRelationshipCursor cursor = new WeightedRelationshipCursor();
+
+            private AllIterator(LongDoubleMap costMap) {
+                this.iterator = costMap.iterator();
+                this.costMap = costMap;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public WeightedRelationshipCursor next() {
+                final LongDoubleCursor next = iterator.next();
+                cursor.sourceNodeId = RawValues.getHead(next.key);
+                cursor.targetNodeId = RawValues.getTail(next.key);
+                cursor.weight = next.value;
+                return cursor;
+            }
+        }
+
     }
 }

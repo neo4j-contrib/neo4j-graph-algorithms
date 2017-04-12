@@ -2,7 +2,10 @@ package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.LongIntMap;
+import com.carrotsearch.hppc.cursors.LongIntCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.api.NodeIterator;
 
 import java.util.function.IntConsumer;
 
@@ -10,7 +13,7 @@ import java.util.function.IntConsumer;
  * This is basically a long to int mapper. It sorts the id's in ascending order so its
  * guaranteed that there is no ID greater then nextGraphId / capacity
  */
-public final class IdMap {
+public final class IdMap implements IdMapping, NodeIterator{
 
     private final IdIterator iter;
     private int nextGraphId;
@@ -21,7 +24,6 @@ public final class IdMap {
      * initialize the map with maximum node capacity
      */
     public IdMap(final int capacity) {
-        graphIds = new long[capacity];
         nodeToGraphIds = new LongIntHashMap((int) Math.ceil(capacity / 0.99), 0.99);
         iter = new IdIterator();
     }
@@ -46,7 +48,6 @@ public final class IdMap {
         int intValue = nodeToGraphIds.getOrDefault(longValue, -1);
         if (intValue == -1) {
             intValue = nextGraphId++;
-            graphIds[intValue] = longValue;
             nodeToGraphIds.put(longValue, intValue);
         }
         return intValue;
@@ -54,7 +55,6 @@ public final class IdMap {
 
     public void add(long longValue) {
         int intValue = nextGraphId++;
-        graphIds[intValue] = longValue;
         nodeToGraphIds.put(longValue, intValue);
     }
 
@@ -64,6 +64,13 @@ public final class IdMap {
 
     public long unmap(int intValue) {
         return graphIds[intValue];
+    }
+
+    public void buildMappedIds() {
+        graphIds = new long[nodeToGraphIds.size()];
+        for (final LongIntCursor cursor : nodeToGraphIds) {
+            graphIds[cursor.value] = cursor.key;
+        }
     }
 
     public int size() {
@@ -79,6 +86,34 @@ public final class IdMap {
         for (int i = 0; i < limit; i++) {
             consumer.accept(i);
         }
+    }
+
+    @Override
+    public int toMappedNodeId(long nodeId) {
+        return mapOrGet(nodeId);
+    }
+
+    @Override
+    public long toOriginalNodeId(int nodeId) {
+        return graphIds[nodeId];
+    }
+
+    @Override
+    public int nodeCount() {
+        return graphIds.length;
+    }
+
+    @Override
+    public void forEachNode(IntConsumer consumer) {
+        final int count = nodeCount();
+        for (int i = 0; i < count; i++) {
+            consumer.accept(i);
+        }
+    }
+
+    @Override
+    public PrimitiveIntIterator nodeIterator() {
+        return new IdIterator().reset(nodeCount());
     }
 
     private static final class IdIterator implements PrimitiveIntIterator {

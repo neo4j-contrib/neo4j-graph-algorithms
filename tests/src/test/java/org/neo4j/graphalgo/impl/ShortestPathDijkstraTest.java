@@ -43,12 +43,6 @@ public final class ShortestPathDijkstraTest {
             "CREATE (d:Label1 {name:\"d\"})\n" +
             "CREATE (e:Label1 {name:\"e\"})\n" +
             "CREATE (f:Label1 {name:\"f\"})\n" +
-            "CREATE (g:Label2 {name:\"g\"})\n" +
-            "CREATE (h:Label2 {name:\"h\"})\n" +
-            "CREATE (i:Label2 {name:\"i\"})\n" +
-            "CREATE (j:Label2 {name:\"j\"})\n" +
-            "CREATE (k:Label2 {name:\"k\"})\n" +
-            "CREATE (l:Label2 {name:\"l\"})\n" +
             "CREATE\n" +
             "  (a)-[:TYPE1 {cost:4}]->(b),\n" +
             "  (a)-[:TYPE1 {cost:2}]->(c),\n" +
@@ -60,6 +54,30 @@ public final class ShortestPathDijkstraTest {
             "  (a)-[:TYPE2 {cost:1}]->(d),\n" +
             "  (b)-[:TYPE2 {cost:1}]->(f)\n";
 
+    // https://www.cise.ufl.edu/~sahni/cop3530/slides/lec326.pdf
+    // without the additional 14 edge
+    private static final String DB_CYPHER2 = "" +
+            "CREATE (n1:Label2 {name:\"1\"})\n" +
+            "CREATE (n2:Label2 {name:\"2\"})\n" +
+            "CREATE (n3:Label2 {name:\"3\"})\n" +
+            "CREATE (n4:Label2 {name:\"4\"})\n" +
+            "CREATE (n5:Label2 {name:\"5\"})\n" +
+            "CREATE (n6:Label2 {name:\"6\"})\n" +
+            "CREATE (n7:Label2 {name:\"7\"})\n" +
+            "CREATE\n" +
+            "  (n1)-[:TYPE2 {cost:6}]->(n2),\n" +
+            "  (n1)-[:TYPE2 {cost:2}]->(n3),\n" +
+            "  (n1)-[:TYPE2 {cost:16}]->(n4),\n" +
+            "  (n2)-[:TYPE2 {cost:4}]->(n5),\n" +
+            "  (n2)-[:TYPE2 {cost:5}]->(n4),\n" +
+            "  (n3)-[:TYPE2 {cost:7}]->(n2),\n" +
+            "  (n3)-[:TYPE2 {cost:3}]->(n5),\n" +
+            "  (n3)-[:TYPE2 {cost:8}]->(n6),\n" +
+            "  (n4)-[:TYPE2 {cost:7}]->(n3),\n" +
+            "  (n5)-[:TYPE2 {cost:4}]->(n4),\n" +
+            "  (n5)-[:TYPE2 {cost:10}]->(n7),\n" +
+            "  (n6)-[:TYPE2 {cost:1}]->(n7)\n";
+
     private static GraphDatabaseAPI db;
 
     @BeforeClass
@@ -70,6 +88,7 @@ public final class ShortestPathDijkstraTest {
                         .newGraphDatabase();
         try (Transaction tx = db.beginTx()) {
             db.execute(DB_CYPHER).close();
+            db.execute(DB_CYPHER2).close();
             tx.success();
         }
     }
@@ -86,10 +105,10 @@ public final class ShortestPathDijkstraTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test1() throws Exception {
         final Label label = Label.label("Label1");
 
-        final long[] expected;
+        long[] expected;
         try (Transaction tx = db.beginTx()) {
             expected = new long[]{
                     db.findNode(label, "name", "a").getId(),
@@ -104,6 +123,41 @@ public final class ShortestPathDijkstraTest {
         final Graph graph = new GraphLoader(db)
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
+                .withWeightsFromProperty("cost", Double.MAX_VALUE)
+                .load(graphImpl);
+
+        final int[] path = new ShortestPathDijkstra(graph).compute(
+                expected[0],
+                expected[expected.length - 1]
+        );
+        final long[] actual = Arrays
+                .stream(path)
+                .mapToLong(graph::toOriginalNodeId)
+                .toArray();
+
+        assertArrayEquals(
+                expected,
+                actual
+        );
+    }
+
+    @Test
+    public void test2() throws Exception {
+        final Label label = Label.label("Label2");
+        long[] expected;
+        try (Transaction tx = db.beginTx()) {
+            expected = new long[]{
+                    db.findNode(label, "name", "1").getId(),
+                    db.findNode(label, "name", "3").getId(),
+                    db.findNode(label, "name", "6").getId(),
+                    db.findNode(label, "name", "7").getId()
+            };
+            tx.success();
+        }
+
+        final Graph graph = new GraphLoader(db)
+                .withLabel(label)
+                .withRelationshipType("TYPE2")
                 .withWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 

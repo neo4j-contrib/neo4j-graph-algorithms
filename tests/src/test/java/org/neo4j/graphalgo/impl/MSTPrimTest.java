@@ -4,11 +4,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.WeightedRelationConsumer;
-import org.neo4j.graphalgo.api.WeightedRelationCursor;
+import org.neo4j.graphalgo.api.WeightedAllRelationshipIterator;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.MinimumSpanningTree;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
@@ -77,9 +77,9 @@ public class MSTPrimTest extends Neo4JTestCase {
         verifyMst(prim.compute(e));
     }
 
-    private void verifyMst(MinimumSpanningTree mst) {
+    private void verifyMst(MSTPrim.MinimumSpanningTree mst) {
         final AssertingConsumer consumer = new AssertingConsumer();
-        mst.forEach(consumer);
+        mst.forEachRelationship(consumer);
         System.out.println(mst);
         consumer.assertContains(a, b, 1);
         consumer.assertContains(a, c, 2);
@@ -87,14 +87,14 @@ public class MSTPrimTest extends Neo4JTestCase {
         consumer.assertContains(c, e, 5);
     }
 
-    private static class AssertingConsumer implements Consumer<WeightedRelationCursor> {
+    private static class AssertingConsumer implements WeightedRelationshipConsumer {
 
         private static class Pair {
 
             final int a;
+
             final int b;
             final double c;
-
             private Pair(int a, int b, double c) {
                 this.a = a;
                 this.b = b;
@@ -121,15 +121,16 @@ public class MSTPrimTest extends Neo4JTestCase {
                 result = 31 * result + (int) (temp ^ (temp >>> 32));
                 return result;
             }
+
         }
         private ArrayList<Pair> pairs = new ArrayList<>();
 
         @Override
-        public void accept(WeightedRelationCursor cursor) {
+        public void accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId, double weight) {
             pairs.add(new Pair(
-                    Math.min(cursor.sourceNodeId, cursor.targetNodeId),
-                    Math.max(cursor.sourceNodeId, cursor.targetNodeId),
-                    cursor.weight));
+                    Math.min(sourceNodeId, targetNodeId),
+                    Math.max(sourceNodeId, targetNodeId),
+                    weight));
 
         }
 
