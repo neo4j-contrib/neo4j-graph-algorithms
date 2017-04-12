@@ -45,10 +45,8 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
         newRelation(b, c);
 
         final LazyIdMapper idMapper = new LazyIdMapper();
-        final GraphSetup graphSetup = new GraphSetup();
 
         container = RelationshipContainer.importer((GraphDatabaseAPI) db)
-                .withGraphSetup(graphSetup)
                 .withIdMapping(idMapper)
                 .withDirection(Direction.OUTGOING)
                 .build();
