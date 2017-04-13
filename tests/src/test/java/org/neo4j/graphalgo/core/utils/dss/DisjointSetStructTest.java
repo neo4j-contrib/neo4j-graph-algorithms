@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils.dss;
 
+import com.carrotsearch.hppc.IntIntMap;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -62,5 +63,8 @@ public class DisjointSetStructTest {
         assertFalse(struct.connected(4, 6));
         assertFalse(struct.connected(5, 6));
         // {0,1,2,3,4,5}{6}
+
+        final IntIntMap setSize = struct.getSetSize();
+        System.out.println(setSize);
     }
 }

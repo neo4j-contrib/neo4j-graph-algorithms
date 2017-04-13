@@ -1,5 +1,8 @@
 package org.neo4j.graphalgo.core.utils.dss;
 
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntIntScatterMap;
+
 /**
  * @author mknblch
  */
@@ -105,5 +108,13 @@ public final class DisjointSetStruct {
             parent[qSet] = pSet;
             depth[pSet] += depth[qSet] + 1;
         }
+    }
+
+    public IntIntMap getSetSize() {
+        final IntIntScatterMap map = new IntIntScatterMap();
+        for (int i = parent.length - 1; i >= 0; i--) {
+            map.addTo(find(i), 1);
+        }
+        return map;
     }
 }
