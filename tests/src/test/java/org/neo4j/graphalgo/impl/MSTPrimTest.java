@@ -4,20 +4,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.WeightedAllRelationshipIterator;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
-import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 /**
  * Tests if MSTPrim returns a valid MST for each node
@@ -69,7 +64,7 @@ public class MSTPrimTest extends Neo4JTestCase {
 
     @Test
     public void testMstPrim() throws Exception {
-        final MSTPrim prim = new MSTPrim(graph);
+        final MSTPrim prim = new MSTPrim(graph, graph);
         verifyMst(prim.compute(a));
         verifyMst(prim.compute(b));
         verifyMst(prim.compute(c));
@@ -131,7 +126,6 @@ public class MSTPrimTest extends Neo4JTestCase {
                     Math.min(sourceNodeId, targetNodeId),
                     Math.max(sourceNodeId, targetNodeId),
                     weight));
-
         }
 
         public void assertSize(int expected) {

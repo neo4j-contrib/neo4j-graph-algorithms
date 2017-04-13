@@ -18,10 +18,13 @@ import static org.neo4j.graphalgo.core.utils.RawValues.*;
  */
 public class MSTPrim {
 
-    private final Graph graph;
 
-    public MSTPrim(Graph graph) {
-        this.graph = graph;
+    private final IdMapping idMapping;
+    private final WeightedRelationshipIterator iterator;
+
+    public MSTPrim(IdMapping idMapping, WeightedRelationshipIterator iterator) {
+        this.idMapping = idMapping;
+        this.iterator = iterator;
     }
 
     /**
@@ -32,13 +35,13 @@ public class MSTPrim {
      */
     public MinimumSpanningTree compute(int startNode) {
 
-        final LongMinPriorityQueue queue = new LongMinPriorityQueue(); // TODO tuple int prio queue
+        final LongMinPriorityQueue queue = new LongMinPriorityQueue();
         final MinimumSpanningTree mst = new MinimumSpanningTree();
-        final BitSet visited = new BitSet(graph.nodeCount());
+        final BitSet visited = new BitSet(idMapping.nodeCount());
 
         // initially add all relations from startNode to the priority queue
         visited.set(startNode);
-        graph.forEachRelationship(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+        iterator.forEachRelationship(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
             queue.add(combineIntInt(startNode, targetNodeId), weight);
         });
         while (!queue.isEmpty()) {
@@ -53,7 +56,7 @@ public class MSTPrim {
             // add to mst
             mst.add(getHead(transition), getTail(transition), cost);
             // add new candidates
-            graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
+            iterator.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
                 queue.add(combineIntInt(nodeId, targetNodeId), weight);
             });
         }

@@ -5,11 +5,11 @@ import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
+import org.neo4j.graphalgo.core.sources.SingleRunWeightedAllRelationIterator;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 /**         1d
  *        A---D   F
@@ -22,7 +22,7 @@ public class ThresholdUnionFindTest extends Neo4JTestCase {
 
     private static int a, b, c, d, e, f;
 
-    private static SingleRunAllRelationIterator iterator;
+    private static SingleRunWeightedAllRelationIterator iterator;
     private static LazyIdMapper idMapper;
 
     @BeforeClass
@@ -44,7 +44,12 @@ public class ThresholdUnionFindTest extends Neo4JTestCase {
         newRelation(n1, n4, 1d);
 
         idMapper = new LazyIdMapper();
-        iterator = new SingleRunAllRelationIterator((GraphDatabaseAPI) db, idMapper);
+        iterator = SingleRunWeightedAllRelationIterator.importer((GraphDatabaseAPI) db)
+                .withIdMapping(idMapper)
+                .withAnyLabel()
+                .withAnyRelationshipType()
+                .withWeightsFromProperty(WEIGHT_PROPERTY, 0.0)
+                .build();
 
         a = idMapper.toMappedNodeId(n1);
         b = idMapper.toMappedNodeId(n2);
@@ -61,9 +66,11 @@ public class ThresholdUnionFindTest extends Neo4JTestCase {
      */
     @Test
     public void test() throws Exception {
-        final DisjointSetStruct struct = new UnionFind(idMapper, iterator).compute();
-        assertAllSameSet(struct, a, b, c, d, e);
-        assertAllNotSameSet(struct, f, a, b, c, d, e);
+        final DisjointSetStruct struct = new ThresholdUnionFind(idMapper, iterator, 2).compute();
+        assertAllSameSet(struct, a, b, c); // abc belong to a set
+        assertAllSameSet(struct, d, e); // as well as d and e
+        assertNotEquals(struct.find(a), struct.find(d)); // both sets don't belong to each other
+        assertAllNotSameSet(struct, f, a, b, c, d, e); // f is noch connected to any of the sets
     }
 
     public static void assertAllSameSet(DisjointSetStruct dss, int needle, int... elements) {

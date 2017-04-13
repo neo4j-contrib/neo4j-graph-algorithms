@@ -5,7 +5,7 @@ import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
-import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -13,7 +13,8 @@ import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 public class ShortestPathDijkstra {
 
-    private final Graph graph;
+    private final IdMapping idMapping;
+    private final WeightedOutgoingRelationshipIterator relationshipIterator;
 
     private final IntDoubleMap costs;
     private final IntPriorityQueue queue;
@@ -21,9 +22,10 @@ public class ShortestPathDijkstra {
     private final IntArrayDeque finalPath;
     private final SimpleBitSet visited;
 
-    public ShortestPathDijkstra(Graph graph) {
-        this.graph = graph;
-        int nodeCount = graph.nodeCount();
+    public ShortestPathDijkstra(IdMapping idMapping, WeightedOutgoingRelationshipIterator relationshipIterator) {
+        this.idMapping = idMapping;
+        this.relationshipIterator = relationshipIterator;
+        int nodeCount = idMapping.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new SharedIntMinPriorityQueue(
                 nodeCount,
@@ -38,8 +40,8 @@ public class ShortestPathDijkstra {
         visited.clear();
         queue.clear();
 
-        int node = graph.toMappedNodeId(startNode);
-        int goal = graph.toMappedNodeId(goalNode);
+        int node = idMapping.toMappedNodeId(startNode);
+        int goal = idMapping.toMappedNodeId(goalNode);
         costs.put(node, 0);
         queue.add(node, 0);
         run(goal);
@@ -63,9 +65,8 @@ public class ShortestPathDijkstra {
 
             visited.put(node);
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
-            graph.forEachRelationship(
+            relationshipIterator.forEachOutgoing(
                     node,
-                    Direction.OUTGOING,
                     (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {

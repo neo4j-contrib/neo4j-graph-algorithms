@@ -126,7 +126,7 @@ public final class ShortestPathDijkstraTest {
                 .withWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final int[] path = new ShortestPathDijkstra(graph).compute(
+        final int[] path = new ShortestPathDijkstra(graph, graph).compute(
                 expected[0],
                 expected[expected.length - 1]
         );
@@ -161,7 +161,7 @@ public final class ShortestPathDijkstraTest {
                 .withWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final int[] path = new ShortestPathDijkstra(graph).compute(
+        final int[] path = new ShortestPathDijkstra(graph, graph).compute(
                 expected[0],
                 expected[expected.length - 1]
         );

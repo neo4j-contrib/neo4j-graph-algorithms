@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.SimpleGraphSetup;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -32,9 +31,9 @@ public class SingleRunWeightedRelationIteratorTest extends Neo4JTestCase {
     public static void setupGraph() {
         final SimpleGraphSetup setup = new SimpleGraphSetup();
         LazyIdMapper idMapper = new LazyIdMapper();
-        iterator = SingleRunWeightedAllRelationIterator.builder((GraphDatabaseAPI) setup.getDb())
+        iterator = SingleRunWeightedAllRelationIterator.importer((GraphDatabaseAPI) setup.getDb())
                 .withIdMapping(idMapper)
-                .withProperty(SimpleGraphSetup.PROPERTY, 0.0)
+                .withWeightsFromProperty(SimpleGraphSetup.PROPERTY, 0.0)
                 .build();
 
         v0 = idMapper.toMappedNodeId(setup.getN0());

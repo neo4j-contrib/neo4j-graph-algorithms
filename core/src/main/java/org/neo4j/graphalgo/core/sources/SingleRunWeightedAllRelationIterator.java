@@ -2,11 +2,11 @@ package org.neo4j.graphalgo.core.sources;
 
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.PropertyItem;
@@ -43,7 +43,7 @@ public class SingleRunWeightedAllRelationIterator implements WeightedAllRelation
                     .readOperations();
             readOperations.relationshipCursorGetAll().forAll(c -> {
                 double weight = propertyDefaultValue;
-                final Cursor<PropertyItem> property = c.property(propertyId); // TODO bug?
+                final Cursor<PropertyItem> property = c.property(propertyId);
                 if (property.next()) {
                     weight = RawValues.extractValue(property.get().value(), propertyDefaultValue);
                 }
@@ -63,63 +63,36 @@ public class SingleRunWeightedAllRelationIterator implements WeightedAllRelation
         throw new UnsupportedOperationException();
     }
 
-    public static Builder builder(GraphDatabaseAPI api) {
-        return new Builder(api);
+    public static ARIImporter importer(GraphDatabaseAPI api) {
+        return new ARIImporter(api);
     }
 
 
-
-    public static class Builder {
-
-        private final GraphDatabaseAPI api;
+    public static class ARIImporter extends Importer<SingleRunWeightedAllRelationIterator, ARIImporter> {
 
         private IdMapping idMapping;
-        private String relationship;
-        private String property;
-        private double propertyDefaultValue;
 
-        public Builder(GraphDatabaseAPI api) {
-            this.api = api;
+        public ARIImporter(GraphDatabaseAPI api) {
+            super(api);
         }
 
-        public Builder withIdMapping(IdMapping idMapping) {
+        public ARIImporter withIdMapping(IdMapping idMapping) {
             this.idMapping = Objects.requireNonNull(idMapping);
             return this;
         }
 
-        /**
-         * TODO not implemented yet
-         *
-         * @param relationship
-         * @return
-         */
-        public Builder withRelationship(String relationship) {
-            this.relationship = Objects.requireNonNull(relationship);
+        @Override
+        protected ARIImporter me() {
             return this;
         }
 
-        public Builder withProperty(String property, double propertyDefaultValue) {
-            this.property = Objects.requireNonNull(property);
-            this.propertyDefaultValue = propertyDefaultValue;
-            return this;
-        }
-
-        public Builder withPropertyDefaultValue(double propertyDefaultValue) {
-            this.propertyDefaultValue = propertyDefaultValue;
-            return this;
-        }
-
-        public SingleRunWeightedAllRelationIterator build() {
-
-            try (Transaction tx = api.beginTx();
-                 Statement statement = api.getDependencyResolver()
-                         .resolveDependency(ThreadToStatementContextBridge.class)
-                         .get()) {
-                final ReadOperations readOp = statement.readOperations();
-                final int propertyId = readOp.propertyKeyGetForName(property);
-                tx.success();
-                return new SingleRunWeightedAllRelationIterator(api, idMapping, null, propertyId, propertyDefaultValue);
-            }
+        @Override
+        protected SingleRunWeightedAllRelationIterator buildT() {
+            return new SingleRunWeightedAllRelationIterator(api,
+                    idMapping,
+                    relationId,
+                    propertyId,
+                    propertyDefaultValue);
         }
     }
 }
