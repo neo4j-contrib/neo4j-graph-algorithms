@@ -10,7 +10,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.Iterator;
 
 /**
- * Unbuffered RelationshipIterator which is directly
+ * Unbuffered RelationshipIterator
+ *
  * @author mknblch
  */
 public class SingleRunAllRelationIterator implements AllRelationshipIterator {
@@ -32,7 +33,6 @@ public class SingleRunAllRelationIterator implements AllRelationshipIterator {
             final ReadOperations readOperations = statement
                     .readOperations();
             readOperations.relationshipCursorGetAll().forAll(c -> {
-                System.out.println(c);
                 long startNode = c.startNode();
                 consumer.accept(
                         idMapping.toMappedNodeId(startNode),
