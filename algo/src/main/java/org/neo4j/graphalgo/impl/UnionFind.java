@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.dss.PathCompressingDSS;
 
 /**
  *
@@ -20,7 +19,7 @@ public class UnionFind {
 
     public DisjointSetStruct compute() {
         final Aggregator aggregator =
-                new Aggregator(new PathCompressingDSS(idMapping.nodeCount()));
+                new Aggregator(new DisjointSetStruct(idMapping.nodeCount()));
         iterator.forEachRelationship(aggregator);
         return aggregator.struct;
     }

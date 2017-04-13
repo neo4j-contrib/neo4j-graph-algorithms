@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.dss.PathCompressingDSS;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +26,7 @@ public class ThresholdUnionFind {
 
     public DisjointSetStruct compute() {
         final ThresholdAggregator aggregator =
-                new ThresholdAggregator(new PathCompressingDSS(idMapping.nodeCount()), threshold);
+                new ThresholdAggregator(new DisjointSetStruct(idMapping.nodeCount()), threshold);
         iterator.forEachRelationship(aggregator);
         return aggregator.struct;
     }

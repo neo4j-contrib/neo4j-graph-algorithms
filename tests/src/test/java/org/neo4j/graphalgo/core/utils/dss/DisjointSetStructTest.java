@@ -1,38 +1,16 @@
 package org.neo4j.graphalgo.core.utils.dss;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.dss.PathCompressingDSS;
-import org.neo4j.graphalgo.core.utils.dss.PathHalvingDSS;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.runners.Parameterized.*;
 
 /**
  * @author mknblch
  */
-
-@RunWith(Parameterized.class)
 public class DisjointSetStructTest {
 
-    private final DisjointSetStruct struct;
-
-    public DisjointSetStructTest(DisjointSetStruct struct) {
-        this.struct = struct;
-    }
-
-    @Parameters
-    public static Collection<DisjointSetStruct> data() {
-        return Arrays.asList(
-                new PathCompressingDSS(7),
-                new PathHalvingDSS(7));
-    }
+    private DisjointSetStruct struct = new DisjointSetStruct(7);
 
     @Test
     public void test() throws Exception {

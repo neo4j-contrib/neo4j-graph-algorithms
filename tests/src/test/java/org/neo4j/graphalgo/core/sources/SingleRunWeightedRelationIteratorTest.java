@@ -32,7 +32,7 @@ public class SingleRunWeightedRelationIteratorTest extends Neo4JTestCase {
     public static void setupGraph() {
         final SimpleGraphSetup setup = new SimpleGraphSetup();
         LazyIdMapper idMapper = new LazyIdMapper();
-        iterator = SingleRunWeightedAllRelationIterator.builder((GraphDatabaseAPI) db)
+        iterator = SingleRunWeightedAllRelationIterator.builder((GraphDatabaseAPI) setup.getDb())
                 .withIdMapping(idMapper)
                 .withProperty(SimpleGraphSetup.PROPERTY, 0.0)
                 .build();

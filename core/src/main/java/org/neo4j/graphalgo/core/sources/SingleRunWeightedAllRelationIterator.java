@@ -67,6 +67,8 @@ public class SingleRunWeightedAllRelationIterator implements WeightedAllRelation
         return new Builder(api);
     }
 
+
+
     public static class Builder {
 
         private final GraphDatabaseAPI api;
