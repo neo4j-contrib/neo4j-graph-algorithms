@@ -68,6 +68,7 @@ public class ShortestPathDijkstraKernel {
                     if (!visited.get(target)) {
                         queue.add(target, targetCost);
                     }
+                    return true;
                 });
         }
     }

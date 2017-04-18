@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.IntDoubleScatterMap;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.container.WeightedRelationshipContainer;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -13,8 +14,7 @@ import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 public class ShortestPathDijkstra {
 
-    private final IdMapping idMapping;
-    private final WeightedOutgoingRelationshipIterator relationshipIterator;
+    private final Graph graph;
 
     private final IntDoubleMap costs;
     private final IntPriorityQueue queue;
@@ -22,10 +22,9 @@ public class ShortestPathDijkstra {
     private final IntArrayDeque finalPath;
     private final SimpleBitSet visited;
 
-    public ShortestPathDijkstra(IdMapping idMapping, WeightedOutgoingRelationshipIterator relationshipIterator) {
-        this.idMapping = idMapping;
-        this.relationshipIterator = relationshipIterator;
-        int nodeCount = idMapping.nodeCount();
+    public ShortestPathDijkstra(Graph graph) {
+        this.graph = graph;
+        int nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new SharedIntMinPriorityQueue(
                 nodeCount,
@@ -40,8 +39,8 @@ public class ShortestPathDijkstra {
         visited.clear();
         queue.clear();
 
-        int node = idMapping.toMappedNodeId(startNode);
-        int goal = idMapping.toMappedNodeId(goalNode);
+        int node = graph.toMappedNodeId(startNode);
+        int goal = graph.toMappedNodeId(goalNode);
         costs.put(node, 0);
         queue.add(node, 0);
         run(goal);
@@ -65,13 +64,15 @@ public class ShortestPathDijkstra {
 
             visited.put(node);
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
-            relationshipIterator.forEachOutgoing(
+            graph.forEachRelationship(
                     node,
-                    (source, target, relId, weight) -> {
+                    Direction.OUTGOING,
+                    (WeightedRelationshipConsumer)(source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
                         }
+                        return true;
                     });
         }
     }

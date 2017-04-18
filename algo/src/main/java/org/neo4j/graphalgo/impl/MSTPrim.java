@@ -47,7 +47,6 @@ public class MSTPrim {
         });
         while (!queue.isEmpty()) {
             // retrieve cheapest transition
-            final double cost = queue.topCost();
             final long transition = queue.pop();
             final int nodeId = getTail(transition);
             if (visited.get(nodeId)) {

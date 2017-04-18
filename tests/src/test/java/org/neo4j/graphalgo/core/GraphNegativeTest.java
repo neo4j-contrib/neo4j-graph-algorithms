@@ -107,8 +107,10 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         graph.forEachNode(node -> graph.forEachRelationship(
                 node,
                 Direction.OUTGOING,
-                (start, end, rel, weight) ->
-                        assertEquals(13.37, weight, 0.0001)));
+                (start, end, rel, weight) -> {
+                        assertEquals(13.37, weight, 0.0001);
+                        return true;
+                }));
     }
 
     private void testRelationships(final Graph graph) {
