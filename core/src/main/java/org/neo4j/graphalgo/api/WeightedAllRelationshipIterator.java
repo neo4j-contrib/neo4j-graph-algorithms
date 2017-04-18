@@ -9,6 +9,7 @@ import java.util.Iterator;
  *
  * @author mknblch
  */
+@Deprecated
 public interface WeightedAllRelationshipIterator {
 
     /**

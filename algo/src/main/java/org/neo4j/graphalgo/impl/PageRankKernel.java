@@ -11,7 +11,6 @@ public class PageRankKernel implements IntConsumer, RelationshipConsumer {
 
     private final double[] pageRank;
 
-    private final IdMapping idMapping;
     private final NodeIterator nodeIterator;
     private final RelationshipIterator relationshipIterator;
     private final Degrees degrees;
@@ -26,7 +25,6 @@ public class PageRankKernel implements IntConsumer, RelationshipConsumer {
                           Degrees degrees,
                           double dampingFactor) {
 
-        this.idMapping = idMapping;
         this.nodeIterator = nodeIterator;
         this.relationshipIterator = relationshipIterator;
         this.degrees = degrees;
@@ -57,8 +55,9 @@ public class PageRankKernel implements IntConsumer, RelationshipConsumer {
     }
 
     @Override
-    public void accept(int sourceNodeId, int targetNodeId, long relationId) {
+    public boolean accept(int sourceNodeId, int targetNodeId, long relationId) {
         sum += evaluateSubNode(targetNodeId);
+        return true;
     }
 
     private double evaluateSubNode(int node) {

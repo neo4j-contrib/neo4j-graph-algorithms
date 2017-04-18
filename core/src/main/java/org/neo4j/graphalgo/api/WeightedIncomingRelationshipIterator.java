@@ -7,6 +7,7 @@ import java.util.Iterator;
  *
  * @author mknblch
  */
+@Deprecated
 public interface WeightedIncomingRelationshipIterator {
 
     void forEachIncoming(int nodeId, WeightedRelationshipConsumer consumer);

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.api;
 /**
  * @author mknobloch
  */
+@Deprecated
 public interface WeightMapping {
 
     /**

@@ -33,8 +33,9 @@ public class UnionFind {
         }
 
         @Override
-        public void accept(int sourceNodeId, int targetNodeId, long relationId) {
+        public boolean accept(int sourceNodeId, int targetNodeId, long relationId) {
             struct.union(sourceNodeId, targetNodeId);
+            return true;
         }
     }
 }
