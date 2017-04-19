@@ -24,11 +24,12 @@ public class BufferedAllRelationshipIteratorTest {
 
     @BeforeClass
     public static void setupGraph() {
-        iterator = new BufferedAllRelationshipIterator(3);
-        iterator.add(0, 1);
-        iterator.add(0, 2);
-        iterator.add(1, 2);
 
+        iterator = BufferedAllRelationshipIterator.builder()
+                .add(0, 1)
+                .add(0, 2)
+                .add(1, 2)
+                .build();
     }
 
     @Test

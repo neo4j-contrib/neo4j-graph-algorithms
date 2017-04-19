@@ -6,7 +6,7 @@ import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
 import java.util.Iterator;
 
 /**
- * Adapter class for RelationshipContainer -> IncomingRelationIterator
+ * Adapter class for RelationshipContainer -> BothRelationIterator
  *
  * @author mknblch
  */

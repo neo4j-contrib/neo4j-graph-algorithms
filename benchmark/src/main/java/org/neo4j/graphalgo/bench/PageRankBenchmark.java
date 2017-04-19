@@ -90,27 +90,29 @@ public class PageRankBenchmark {
 
     @Benchmark
     public Object _01_lightGraph() {
-        return new PageRankKernel(loadLight(), 0.85).compute(iterations);
+        final Graph graph = loadLight();
+        return new PageRankKernel(graph, graph, graph, graph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _02_lightGraphReuseGraph() {
-        return new PageRankKernel(lightGraph, 0.85).compute(iterations);
+        return new PageRankKernel(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _03_heavyGraph() {
-        return new PageRankKernel(loadHeavy(), 0.85).compute(iterations);
+        final Graph graph = loadHeavy();
+        return new PageRankKernel(graph, graph, graph, graph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _04_heavyGraphReuseGraph() {
-        return new PageRankKernel(heavyGraph, 0.85).compute(iterations);
+        return new PageRankKernel(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _05_neo4jView() {
-        return new PageRankKernel(neo4jView, 0.85).compute(iterations);
+        return new PageRankKernel(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations);
     }
 
     private Graph loadLight() {
