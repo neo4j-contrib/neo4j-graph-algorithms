@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.IntMinPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -68,6 +68,7 @@ public class ShortestPathDijkstraKernel {
                     if (!visited.get(target)) {
                         queue.add(target, targetCost);
                     }
+                    return true;
                 });
         }
     }

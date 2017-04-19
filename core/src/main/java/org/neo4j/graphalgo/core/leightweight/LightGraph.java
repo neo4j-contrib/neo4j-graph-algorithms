@@ -183,13 +183,13 @@ public class LightGraph implements Graph {
         consumeNodes(node, cursor(node, outOffsets), consumer);
     }
 
-    private void forEachIncoming(
+    public void forEachIncoming(
             final int node,
             final WeightedRelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, inOffsets), consumer);
     }
 
-    private void forEachOutgoing(
+    public void forEachOutgoing(
             final int node,
             final WeightedRelationshipConsumer consumer) {
         consumeNodes(node, cursor(node, outOffsets), consumer);

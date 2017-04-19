@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.utils;
+package org.neo4j.graphalgo.core.utils.queue;
 
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 

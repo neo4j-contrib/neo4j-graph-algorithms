@@ -1,10 +1,11 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.IntBinaryConsumer;
-import org.neo4j.graphalgo.core.utils.LongMinPriorityQueue;
+import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.container.SubGraph;
+import org.neo4j.graphalgo.core.utils.queue.LongMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import static org.neo4j.graphalgo.core.utils.RawValues.*;
@@ -16,10 +17,14 @@ import static org.neo4j.graphalgo.core.utils.RawValues.*;
  */
 public class MSTPrim {
 
-    private final Graph graph;
+    private final IdMapping idMapping;
+    private final BothRelationshipIterator iterator;
+    private final Weights weights;
 
-    public MSTPrim(Graph graph) {
-        this.graph = graph;
+    public MSTPrim(IdMapping idMapping, BothRelationshipIterator iterator, Weights weights) {
+        this.idMapping = idMapping;
+        this.iterator = iterator;
+        this.weights = weights;
     }
 
     /**
@@ -28,16 +33,17 @@ public class MSTPrim {
      * @param startNode the node to start the evaluation from
      * @return a container of the transitions in the minimum spanning tree
      */
-    public MST compute(int startNode) {
+    public SubGraph compute(int startNode) {
 
         final LongMinPriorityQueue queue = new LongMinPriorityQueue();
-        final MST mst = new MST(graph.nodeCount());
-        final BitSet visited = new BitSet(graph.nodeCount());
+        final SubGraph mst = new SubGraph(64);
+        final BitSet visited = new BitSet(idMapping.nodeCount());
 
         // initially add all relations from startNode to the priority queue
         visited.set(startNode);
-        graph.forEachRelationship(startNode, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
-            queue.add(combineIntInt(startNode, targetNodeId), weight);
+        iterator.forEachRelationship(startNode, (sourceNodeId, targetNodeId, relationId) -> {
+            queue.add(combineIntInt(startNode, targetNodeId), weights.weightOf(sourceNodeId, targetNodeId));
+            return true;
         });
         while (!queue.isEmpty()) {
             // retrieve cheapest transition
@@ -50,41 +56,12 @@ public class MSTPrim {
             // add to mst
             mst.add(transition);
             // add new candidates
-            graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId, weight) -> {
-                queue.add(combineIntInt(nodeId, targetNodeId), weight);
+            iterator.forEachRelationship(nodeId, (sourceNodeId, targetNodeId, relationId) -> {
+                queue.add(combineIntInt(nodeId, targetNodeId), weights.weightOf(sourceNodeId, targetNodeId));
+                return true;
             });
         }
 
         return mst;
     }
-
-
-    public static class MST {
-
-        private final long[] data;
-        private int offset = 0;
-
-        public MST(int capacity) {
-            data = new long[capacity];
-        }
-
-        /**
-         * get the element count in this mst
-         */
-        public int size() {
-            return offset;
-        }
-
-        public void forEach(IntBinaryConsumer consumer) { // TODO RelationConsumer
-            for (int i = 0; i < offset; i++) {
-                final long value = data[i];
-                consumer.accept(getHead(value), getTail(value));
-            }
-        }
-
-        void add(long p) {
-            data[offset++] = p;
-        }
-    }
-
 }

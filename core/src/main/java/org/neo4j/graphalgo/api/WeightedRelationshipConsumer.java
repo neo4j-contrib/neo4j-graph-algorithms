@@ -5,6 +5,7 @@ package org.neo4j.graphalgo.api;
  *
  * @author mknblch
  */
+@Deprecated
 public interface WeightedRelationshipConsumer {
 
     /**
@@ -15,5 +16,5 @@ public interface WeightedRelationshipConsumer {
      * @param relationId deprecated
      * @param weight the weight/cost of this edge
      */
-    void accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId, double weight);
+    boolean accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId, double weight);
 }

@@ -6,6 +6,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.RandomGraphTestCase;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -144,7 +145,7 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
         graph.forEachRelationship(
                 nodeId,
                 direction,
-                (sourceId, targetId, relationId) -> {
+                (RelationshipConsumer) (sourceId, targetId, relationId) -> {
                     assertEquals(nodeId, sourceId);
                     final Relationship relationship = relationships.remove(
                             relationId);
@@ -167,6 +168,7 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
                                 relationship.getStartNode().getId(),
                                 graph.toOriginalNodeId(targetId));
                     }
+                    return true;
                 });
 
         assertTrue(

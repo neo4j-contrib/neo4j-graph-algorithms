@@ -3,9 +3,12 @@ package org.neo4j.graphalgo.core.sources;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import org.neo4j.graphalgo.api.AllRelationshipIterator;
+import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -19,24 +22,20 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
 
     private final LongArrayList container;
 
-    public BufferedAllRelationshipIterator(int expectedElements) {
-        container = new LongArrayList(expectedElements);
+    private BufferedAllRelationshipIterator(LongArrayList container) {
+        this.container = container;
     }
 
-    /**
-     * add connection between source and target
-     */
-    public void add(int sourceNodeId, int targetNodeId) {
-        container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
-    }
-
-    @Override
     public void forEachRelationship(RelationshipConsumer consumer) {
         container.forEach((Consumer<LongCursor>) longCursor ->
                 consumer.accept(
                         RawValues.getHead(longCursor.value),
                         RawValues.getTail(longCursor.value),
                         -1L));
+    }
+
+    public static BufferedAllRelationshipIterator.Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -65,6 +64,63 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
             relationCursor.sourceNodeId = RawValues.getHead(cursor.value);
             relationCursor.targetNodeId = RawValues.getTail(cursor.value);
             return relationCursor;
+        }
+    }
+
+    public static class Builder {
+
+        private final LongArrayList container;
+
+        public Builder() {
+            container = new LongArrayList();
+        }
+
+        /**
+         * add connection between source and target
+         */
+        public Builder add(int sourceNodeId, int targetNodeId) {
+            container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
+            return this;
+        }
+
+        public BufferedAllRelationshipIterator build() {
+            return new BufferedAllRelationshipIterator(container);
+        }
+    }
+
+    public static BARIImporter importer(GraphDatabaseAPI api) {
+        return new BARIImporter(api);
+    }
+
+    public static class BARIImporter extends Importer<BufferedAllRelationshipIterator, BARIImporter> {
+
+        private IdMapping idMapping;
+
+        public BARIImporter(GraphDatabaseAPI api) {
+            super(api);
+        }
+
+        public BARIImporter withIdMapping(IdMapping idMapping) {
+            this.idMapping = idMapping;
+            return this;
+        }
+
+        @Override
+        protected BARIImporter me() {
+            return this;
+        }
+
+        @Override
+        protected BufferedAllRelationshipIterator buildT() {
+            final Builder builder = BufferedAllRelationshipIterator.builder();
+            withinTransaction(readOp -> {
+                readOp.relationshipCursorGetAll().forAll(relationshipItem -> {
+                    final long nodeId = relationshipItem.startNode();
+                    builder.add(idMapping.toMappedNodeId(nodeId),
+                            idMapping.toMappedNodeId(relationshipItem.otherNode(nodeId)));
+                });
+            });
+            return builder.build();
         }
     }
 }

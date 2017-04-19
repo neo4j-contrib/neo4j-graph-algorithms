@@ -4,22 +4,26 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.IntBinaryConsumer;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
+import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
+import org.neo4j.graphalgo.core.sources.LazyIdMapper;
+import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
+import org.neo4j.graphalgo.core.utils.container.SubGraph;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 /**
- * Tests if MSTPrim returns a correct MST
+ * Tests if MSTPrim returns a valid MST for each node
  *
  *         a                a
  *     1 /   \ 2          /  \
@@ -36,7 +40,9 @@ import static org.mockito.Mockito.verify;
 public class MSTPrimTest extends Neo4JTestCase {
 
     private static int a, b, c, d, e;
-    private static Graph graph;
+    private static LazyIdMapper idMapper;
+    private static BufferedWeightMap weightMap;
+    private static BothRelationshipAdapter bothRelationshipAdapter;
 
     @BeforeClass
     public static void setupGraph() {
@@ -53,43 +59,75 @@ public class MSTPrimTest extends Neo4JTestCase {
         newRelation(c, e, 5);
         newRelation(d, e, 6);
 
-        graph = new GraphLoader((GraphDatabaseAPI) db)
-                .withAnyLabel()
-                .withAnyRelationshipType()
-                .withWeightsFromProperty(WEIGHT_PROPERTY, Double.MAX_VALUE)
-                .load(HeavyGraphFactory.class);
+        idMapper = new LazyIdMapper();
 
-        a = graph.toMappedNodeId(a);
-        b = graph.toMappedNodeId(b);
-        c = graph.toMappedNodeId(c);
-        d = graph.toMappedNodeId(d);
-        e = graph.toMappedNodeId(e);
+        weightMap = BufferedWeightMap.importer((GraphDatabaseAPI) db)
+                .withIdMapping(idMapper)
+                .withAnyDirection(true)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATION)
+                .withWeightsFromProperty(WEIGHT_PROPERTY, 0.0)
+                .build();
+
+        RelationshipContainer relationshipContainer = RelationshipContainer.importer((GraphDatabaseAPI) db)
+                .withIdMapping(idMapper)
+                .withDirection(Direction.BOTH)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATION)
+                .withWeightsFromProperty(WEIGHT_PROPERTY, 0.0)
+                .build();
+
+        bothRelationshipAdapter = new BothRelationshipAdapter(relationshipContainer);
+
+        a = idMapper.toMappedNodeId(a);
+        b = idMapper.toMappedNodeId(b);
+        c = idMapper.toMappedNodeId(c);
+        d = idMapper.toMappedNodeId(d);
+        e = idMapper.toMappedNodeId(e);
     }
 
     @Test
-    public void testMstPrim() throws Exception {
-        final MSTPrim prim = new MSTPrim(graph);
-        verifyMst(prim.compute(a));
-        verifyMst(prim.compute(b));
-        verifyMst(prim.compute(c));
-        verifyMst(prim.compute(d));
-        verifyMst(prim.compute(e));
+    public void testMstFromA() throws Exception {
+        verifyMst(new MSTPrim(idMapper, bothRelationshipAdapter, weightMap).compute(a));
     }
 
-    private void verifyMst(MSTPrim.MST mst) {
-        final AssertingTransitionConsumer consumer = new AssertingTransitionConsumer();
-        mst.forEach(consumer);
+    @Test
+    public void testMstFromB() throws Exception {
+        verifyMst(new MSTPrim(idMapper, bothRelationshipAdapter, weightMap).compute(b));
+    }
+
+    @Test
+    public void testMstFromC() throws Exception {
+        verifyMst(new MSTPrim(idMapper, bothRelationshipAdapter, weightMap).compute(c));
+    }
+
+    @Test
+    public void testMstFromD() throws Exception {
+        verifyMst(new MSTPrim(idMapper, bothRelationshipAdapter, weightMap).compute(d));
+    }
+
+    @Test
+    public void testMstFromE() throws Exception {
+        verifyMst(new MSTPrim(idMapper, bothRelationshipAdapter, weightMap).compute(d));
+    }
+
+    private void verifyMst(SubGraph mst) {
+        final AssertingConsumer consumer = new AssertingConsumer();
+        mst.forEachRelationship(consumer);
+        System.out.println(mst);
         consumer.assertContains(a, b);
         consumer.assertContains(a, c);
         consumer.assertContains(b, d);
         consumer.assertContains(c, e);
     }
 
-    private static class AssertingTransitionConsumer implements IntBinaryConsumer {
+    private static class AssertingConsumer implements RelationshipConsumer {
 
         private static class Pair {
+
             final int a;
             final int b;
+
             private Pair(int a, int b) {
                 this.a = a;
                 this.b = b;
@@ -114,20 +152,23 @@ public class MSTPrimTest extends Neo4JTestCase {
                 return result;
             }
         }
-
         private ArrayList<Pair> pairs = new ArrayList<>();
+
+        @Override
+        public boolean accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId) {
+            pairs.add(new Pair(
+                    Math.min(sourceNodeId, targetNodeId),
+                    Math.max(sourceNodeId, targetNodeId)));
+            return true;
+        }
 
         public void assertSize(int expected) {
             assertEquals("size does not match", expected, pairs.size());
         }
 
-        @Override
-        public void accept(int p, int q) {
-            pairs.add(new Pair(Math.min(p, q), Math.max(p, q)));
-        }
-
-        public void assertContains(int p, int q) {
-            assertTrue("{" + p + "," + q + "} not found", pairs.contains(new Pair(Math.min(p, q), Math.max(p, q))));
+        public void assertContains(int a, int b) {
+            assertTrue("{" + a + "," + b + "} not found",
+                    pairs.contains(new Pair(Math.min(a, b), Math.max(a, b))));
         }
     }
 }

@@ -5,9 +5,9 @@ import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.IntPriorityQueue;
-import org.neo4j.graphalgo.core.utils.SharedIntMinPriorityQueue;
+import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
@@ -66,11 +66,12 @@ public class ShortestPathDijkstra {
             graph.forEachRelationship(
                     node,
                     Direction.OUTGOING,
-                    (source, target, relId, weight) -> {
+                    (WeightedRelationshipConsumer)(source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
                         }
+                        return true;
                     });
         }
     }

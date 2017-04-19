@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.utils;
+package org.neo4j.graphalgo.core.utils.container;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -6,7 +6,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.Neo4JTestCase;
-import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;

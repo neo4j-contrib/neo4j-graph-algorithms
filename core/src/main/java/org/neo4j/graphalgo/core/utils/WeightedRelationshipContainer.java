@@ -18,6 +18,7 @@ import java.util.Iterator;
  *
  * @author mknblch
  */
+@Deprecated
 public class WeightedRelationshipContainer {
 
     private static final Iterator<WeightedRelationshipCursor> EMPTY_IT = new Iterator<WeightedRelationshipCursor>() {

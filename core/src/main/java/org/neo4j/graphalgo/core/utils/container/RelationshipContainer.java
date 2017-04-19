@@ -1,8 +1,10 @@
-package org.neo4j.graphalgo.core.utils;
+package org.neo4j.graphalgo.core.utils.container;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.core.utils.Directions;
+import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
