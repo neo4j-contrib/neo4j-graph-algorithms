@@ -2,9 +2,13 @@ package org.neo4j.graphalgo.core.utils.dss;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
+import org.neo4j.graphalgo.api.IdMapping;
+
+import java.util.Iterator;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
- * structure for computing sets of
  * @author mknblch
  */
 public final class DisjointSetStruct {
@@ -24,13 +28,36 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * iterate each node and finds its setId
-     * @param consumer
+     * iterate each node and find its setId
+     * @param consumer the consumer
      */
     public void forEach(Consumer consumer) {
         for (int i = parent.length; i >= 0; i--) {
-            consumer.consume(i, findPC(i));
+            if (!consumer.consume(i, findPC(i))) {
+                break;
+            }
         }
+    }
+
+    /**
+     * @return return a Iterator for each nodeIt-setId combination
+     */
+    public Iterator<Cursor> iterator() {
+        return new NodeSetIterator(this);
+    }
+
+    /**
+     * @param start startNodeId
+     * @param length number of nodes to process
+     * @return return a Iterator over each nodeIt-setId combination within its bounds
+     */
+    public Iterator<Cursor> iterator(int start, int length) {
+        return new ConcurrentNodeSetIterator(this, start, length);
+    }
+
+    public Stream<Result> mapAndStream(IdMapping idMapping) {
+        return Stream.generate(new NodeSetSupplier(this, idMapping))
+                .limit(idMapping.nodeCount());
     }
 
     /**
@@ -152,5 +179,115 @@ public final class DisjointSetStruct {
          * @return true to continue the iteration, false to stop
          */
         boolean consume(int nodeId, int setId);
+    }
+
+    public static class Cursor {
+        /**
+         * the mapped node id
+         */
+        int nodeId;
+        /**
+         * the set id of the node
+         */
+        int setId;
+    }
+
+    /**
+     * Iterator only usable for single threaded evaluation.
+     * Does tree-balancing during iteration.
+     */
+    private static class NodeSetIterator implements Iterator<Cursor> {
+
+        private final Cursor cursor = new Cursor();
+        private final DisjointSetStruct struct;
+        private final int length;
+
+        private int offset = 0;
+
+        private NodeSetIterator(DisjointSetStruct struct) {
+            this.struct = struct;
+            this.length = struct.count();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < length;
+        }
+
+        @Override
+        public Cursor next() {
+            cursor.nodeId = offset;
+            cursor.setId = struct.find(offset);
+            return cursor;
+        }
+    }
+
+    /**
+     * Iterator usable in multithreaded environment
+     */
+    private static class ConcurrentNodeSetIterator implements Iterator<Cursor> {
+
+        private final Cursor cursor = new Cursor();
+        private final DisjointSetStruct struct;
+        private final int length;
+
+        private int offset = 0;
+
+        private ConcurrentNodeSetIterator(DisjointSetStruct struct, int startOffset, int length) {
+            this.struct = struct;
+            this.length = length;
+            this.offset = startOffset;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < length;
+        }
+
+        @Override
+        public Cursor next() {
+            cursor.nodeId = offset;
+            cursor.setId = struct.findNoOpt(offset);
+            return cursor;
+        }
+    }
+
+    private static class NodeSetSupplier implements Supplier<Result> {
+
+        private final DisjointSetStruct struct;
+        private final int length;
+        private final IdMapping mapping;
+        private int offset = 0;
+
+        private NodeSetSupplier(DisjointSetStruct struct, IdMapping mapping) {
+            this.struct = struct;
+            this.mapping = mapping;
+            length = struct.count();
+        }
+
+        @Override
+        public Result get() {
+            return new Result(
+                    mapping.toOriginalNodeId(offset),
+                    struct.findNoOpt(offset++));
+        }
+    }
+
+    public static class Result {
+
+        /**
+         * the mapped node id
+         */
+        public final long nodeId;
+
+        /**
+         * set id
+         */
+        public final long setId;
+
+        public Result(long nodeId, long setId) {
+            this.nodeId = nodeId;
+            this.setId = setId;
+        }
     }
 }

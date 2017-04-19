@@ -49,7 +49,7 @@ public class UnionFindTest extends Neo4JTestCase {
 
         newRelation(n1, n4);
 
-        idMapper = new LazyIdMapper();
+        idMapper = new LazyIdMapper(6);
         iterator = new SingleRunAllRelationIterator((GraphDatabaseAPI) db, idMapper);
 
         a = idMapper.toMappedNodeId(n1);

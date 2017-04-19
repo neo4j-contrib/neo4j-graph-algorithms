@@ -5,5 +5,5 @@ package org.neo4j.graphalgo.api;
  */
 public interface Weights {
 
-    double weightOf(int sourceNodeId, int targetNodeId);
+    double weightOf(int sourceNodeId, int targetNodeId); // TODO default weight?
 }

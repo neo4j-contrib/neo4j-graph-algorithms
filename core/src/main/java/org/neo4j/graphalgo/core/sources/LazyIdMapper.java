@@ -5,6 +5,8 @@ import com.carrotsearch.hppc.IntLongScatterMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.LongIntScatterMap;
 import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.utils.Importer;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 /**
  * @author mknblch
@@ -13,12 +15,14 @@ public class LazyIdMapper implements IdMapping {
 
     private final LongIntMap forward;
     private final IntLongMap backward;
+    private final int nodeCount;
 
     private int current = 0;
 
-    public LazyIdMapper() {
-        forward = new LongIntScatterMap();
-        backward = new IntLongScatterMap();
+    public LazyIdMapper(int nodeCount) {
+        forward = new LongIntScatterMap(nodeCount);
+        backward = new IntLongScatterMap(nodeCount);
+        this.nodeCount = nodeCount;
     }
 
     @Override
@@ -39,6 +43,27 @@ public class LazyIdMapper implements IdMapping {
 
     @Override
     public int nodeCount() {
-        return forward.size();
+        return nodeCount;
+    }
+
+    public static LazyIdMapperImporter importer(GraphDatabaseAPI api) {
+        return new LazyIdMapperImporter(api);
+    }
+
+    public static class LazyIdMapperImporter extends Importer<LazyIdMapper, LazyIdMapperImporter> {
+
+        public LazyIdMapperImporter(GraphDatabaseAPI api) {
+            super(api);
+        }
+
+        @Override
+        protected LazyIdMapperImporter me() {
+            return this;
+        }
+
+        @Override
+        protected LazyIdMapper buildT() {
+            return new LazyIdMapper(nodeCount);
+        }
     }
 }

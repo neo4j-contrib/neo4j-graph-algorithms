@@ -44,7 +44,7 @@ public class ThresholdUnionFindTest extends Neo4JTestCase {
 
         newRelation(n1, n4, 1d);
 
-        idMapper = new LazyIdMapper();
+        idMapper = new LazyIdMapper(6);
 
         weightMap = BufferedWeightMap.importer((GraphDatabaseAPI) db)
                 .withIdMapping(idMapper)
