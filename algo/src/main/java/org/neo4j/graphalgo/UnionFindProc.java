@@ -42,7 +42,7 @@ public class UnionFindProc {
     }
 
     @Procedure(value = "org.neo4j.graphalgo.unionFindThreshold")
-    @Description("CALL org.neo4j.graphalgo.unionFindThreshold(label:String, relationship:String, property:String) " +
+    @Description("CALL org.neo4j.graphalgo.unionFindThreshold(label:String, relationship:String, property:String, threshold:double) " +
             "YIELD nodeId, setId - yields a setId to each node id")
     public Stream<DisjointSetStruct.Result> unionFindThreshold(
             @Name("label") String label,
