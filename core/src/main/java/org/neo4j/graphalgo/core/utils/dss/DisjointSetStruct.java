@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
 
 /**
+ * structure for computing sets of
  * @author mknblch
  */
 public final class DisjointSetStruct {
@@ -23,6 +24,16 @@ public final class DisjointSetStruct {
     }
 
     /**
+     * iterate each node and finds its setId
+     * @param consumer
+     */
+    public void forEach(Consumer consumer) {
+        for (int i = parent.length; i >= 0; i--) {
+            consumer.consume(i, findPC(i));
+        }
+    }
+
+    /**
      * element count
      * @return the element count
      */
@@ -37,14 +48,15 @@ public final class DisjointSetStruct {
      * @return an id of the set it belongs to
      */
     public int find(int p) {
-        if (parent[p] == p) return p;
-        // path compression optimization
-        parent[p] = find(parent[p]); // balance tree while traversing
-        return parent[p];
+        return findPC(p);
     }
 
     /**
+     * find setId of element p.
+     *
      * not-optimized implementation (does not change the tree during execution)
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findNoOpt(int p) {
         while (p != parent[p]) {
@@ -54,7 +66,11 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * Non-recursive implementation using path-halving optimization.
+     * find setId of element p.
+     *
+     * Non-recursive implementation using path-halving optimization and tree balancing
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findPH(int p) {
         while (p != parent[p]) {
@@ -64,7 +80,11 @@ public final class DisjointSetStruct {
     }
 
     /**
+     * find setId of element p.
+     *
      * find-impl using a recursive path compression logic
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findPC(int p) {
         if (parent[p] == p) return p;
@@ -75,6 +95,7 @@ public final class DisjointSetStruct {
 
     /**
      * check if p and q belong to the same set
+     *
      * @param p a set item
      * @param q a set item
      * @return true if both items belong to the same set, false otherwise
@@ -85,7 +106,8 @@ public final class DisjointSetStruct {
 
 
     /**
-     * join set of p (Sp) with set of q (Sq)
+     * join set of p (Sp) with set of q (Sq) so that {@link DisjointSetStruct#connected(int, int)}
+     * for any pair of (Spi, Sqj) evaluates to true
      *
      * @param p an item of Sp
      * @param q an item of Sq
@@ -110,11 +132,25 @@ public final class DisjointSetStruct {
         }
     }
 
+    /**
+     * evaluate the set id for each Node in O(n + )
+     * @return
+     */
     public IntIntMap getSetSize() {
         final IntIntScatterMap map = new IntIntScatterMap();
         for (int i = parent.length - 1; i >= 0; i--) {
             map.addTo(find(i), 1);
         }
         return map;
+    }
+
+    @FunctionalInterface
+    public interface Consumer {
+        /**
+         * @param nodeId the mapped node id
+         * @param setId the set id where the node belongs to
+         * @return true to continue the iteration, false to stop
+         */
+        boolean consume(int nodeId, int setId);
     }
 }
