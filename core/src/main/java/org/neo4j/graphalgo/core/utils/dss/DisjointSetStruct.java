@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.api.IdMapping;
 
 import java.util.Iterator;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -15,13 +16,23 @@ public final class DisjointSetStruct {
 
     private final int[] parent;
     private final int[] depth;
+    private final int capacity;
 
     /**
+     * Initialize the struct with the given capacity.
+     * Note: the struct must be {@link DisjointSetStruct#reset()} prior use!
      * @param capacity the capacity (maximum node id)
      */
     public DisjointSetStruct(int capacity) {
         parent = new int[capacity];
         depth = new int[capacity];
+        this.capacity = capacity;
+    }
+
+    /**
+     * reset the container
+     */
+    public void reset() {
         for (int i = 0; i < capacity; i++) {
             parent[i] = i;
         }
@@ -49,15 +60,19 @@ public final class DisjointSetStruct {
     /**
      * @param start startNodeId
      * @param length number of nodes to process
-     * @return return a Iterator over each nodeIt-setId combination within its bounds
+     * @return return an Iterator over each nodeIt-setId combination within its bounds
      */
     public Iterator<Cursor> iterator(int start, int length) {
         return new ConcurrentNodeSetIterator(this, start, length);
     }
 
     public Stream<Result> mapAndStream(IdMapping idMapping) {
-        return Stream.generate(new NodeSetSupplier(this, idMapping))
-                .limit(idMapping.nodeCount());
+
+        return IntStream.range(IdMapping.START_NODE_ID, idMapping.nodeCount())
+                .mapToObj(mappedId ->
+                        new Result(
+                                idMapping.toOriginalNodeId(mappedId),
+                                findNoOpt(mappedId)));
     }
 
     /**
@@ -79,9 +94,8 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * find setId of element p.
+     * find setId of element p without balancing optimization.
      *
-     * not-optimized implementation (does not change the tree during execution)
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to
      */
@@ -160,8 +174,9 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * evaluate the set id for each Node in O(n + )
-     * @return
+     * evaluate the size of each set.
+     *
+     * @return a map which maps setId to setSize
      */
     public IntIntMap getSetSize() {
         final IntIntScatterMap map = new IntIntScatterMap();
@@ -171,6 +186,9 @@ public final class DisjointSetStruct {
         return map;
     }
 
+    /**
+     * Consumer interface for c
+     */
     @FunctionalInterface
     public interface Consumer {
         /**
@@ -202,7 +220,7 @@ public final class DisjointSetStruct {
         private final DisjointSetStruct struct;
         private final int length;
 
-        private int offset = 0;
+        private int offset = IdMapping.START_NODE_ID;
 
         private NodeSetIterator(DisjointSetStruct struct) {
             this.struct = struct;
@@ -235,7 +253,9 @@ public final class DisjointSetStruct {
 
         private ConcurrentNodeSetIterator(DisjointSetStruct struct, int startOffset, int length) {
             this.struct = struct;
-            this.length = length;
+            this.length = length + offset > struct.count()
+                    ? struct.count() - offset
+                    : length;
             this.offset = startOffset;
         }
 
@@ -252,27 +272,6 @@ public final class DisjointSetStruct {
         }
     }
 
-    private static class NodeSetSupplier implements Supplier<Result> {
-
-        private final DisjointSetStruct struct;
-        private final int length;
-        private final IdMapping mapping;
-        private int offset = 0;
-
-        private NodeSetSupplier(DisjointSetStruct struct, IdMapping mapping) {
-            this.struct = struct;
-            this.mapping = mapping;
-            length = struct.count();
-        }
-
-        @Override
-        public Result get() {
-            return new Result(
-                    mapping.toOriginalNodeId(offset),
-                    struct.findNoOpt(offset++));
-        }
-    }
-
     public static class Result {
 
         /**
@@ -285,7 +284,7 @@ public final class DisjointSetStruct {
          */
         public final long setId;
 
-        public Result(long nodeId, long setId) {
+        public Result(long nodeId, int setId) {
             this.nodeId = nodeId;
             this.setId = setId;
         }

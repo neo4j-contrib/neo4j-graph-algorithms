@@ -1,10 +1,11 @@
 package org.neo4j.graphalgo;
 
-import org.neo4j.graphalgo.core.sources.LazyIdMapper;
-import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
+import algo.Pools;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.impl.UnionFind;
-import org.neo4j.helpers.collection.Pair;
+import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -17,26 +18,47 @@ import java.util.stream.Stream;
 public class UnionFindProc {
 
     @Context
-    public GraphDatabaseAPI db;
+    public GraphDatabaseAPI api;
 
     @Context
     public Log log;
 
     @Procedure(value = "org.neo4j.graphalgo.unionFind")
-    @Description("CALL org.neo4j.graphalgo.unionFind() YIELD nodeId, setId - calculates page rank based on cypher input")
+    @Description("CALL org.neo4j.graphalgo.unionFind(label:String, relationship:String) " +
+            "YIELD nodeId, setId - yields a setId to each node id")
+    public Stream<DisjointSetStruct.Result> unionFind(
+            @Name("label") String label,
+            @Name("relationship") String relationship) {
 
-    public Stream<DisjointSetStruct.Result> unionFind() {
+        Graph graph = new GraphLoader(api)
+                .withOptionalLabel(label)
+                .withRelationshipType(relationship)
+                .withExecutorService(Pools.DEFAULT)
+                .load(HeavyGraphFactory.class);
 
-        final LazyIdMapper idMapping = LazyIdMapper.importer(db)
-                .withAnyLabel()
-                .build();
-
-        final SingleRunAllRelationIterator relationIterator = new SingleRunAllRelationIterator(
-                db,
-                idMapping);
-
-        return new UnionFind(idMapping, relationIterator)
+        return new GraphUnionFind(graph)
                 .compute()
-                .mapAndStream(idMapping);
+                .mapAndStream(graph);
+    }
+
+    @Procedure(value = "org.neo4j.graphalgo.unionFindThreshold")
+    @Description("CALL org.neo4j.graphalgo.unionFindThreshold(label:String, relationship:String, property:String) " +
+            "YIELD nodeId, setId - yields a setId to each node id")
+    public Stream<DisjointSetStruct.Result> unionFindThreshold(
+            @Name("label") String label,
+            @Name("relationship") String relationship,
+            @Name("property") String property,
+            @Name("threshold") double threshold) {
+
+        Graph graph = new GraphLoader(api)
+                .withOptionalLabel(label)
+                .withRelationshipType(relationship)
+                .withWeightsFromProperty(property, 0.0)
+                .withExecutorService(Pools.DEFAULT)
+                .load(HeavyGraphFactory.class);
+
+        return new GraphUnionFind(graph)
+                .compute(threshold)
+                .mapAndStream(graph);
     }
 }

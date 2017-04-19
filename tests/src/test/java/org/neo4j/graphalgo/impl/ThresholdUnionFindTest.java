@@ -1,8 +1,10 @@
 package org.neo4j.graphalgo.impl;
 
+import com.carrotsearch.hppc.predicates.IntIntPredicate;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
+import org.neo4j.graphalgo.api.IntBinaryPredicate;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
@@ -70,7 +72,12 @@ public class ThresholdUnionFindTest extends Neo4JTestCase {
      */
     @Test
     public void test() throws Exception {
-        final DisjointSetStruct struct = new ThresholdUnionFind(idMapper, iterator, weightMap, 2d).compute();
+
+        final double threshold = 2d;
+
+        IntBinaryPredicate predicate = (source, target) -> weightMap.weightOf(source, target) >= threshold;
+
+        final DisjointSetStruct struct = new UnionFind(idMapper, iterator, predicate).compute();
         assertAllSameSet(struct, a, b, c); // abc belong to a set
         assertAllSameSet(struct, d, e); // as well as d and e
         assertNotEquals(struct.find(a), struct.find(d)); // both sets don't belong to each other

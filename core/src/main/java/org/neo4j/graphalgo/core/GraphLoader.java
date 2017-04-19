@@ -37,7 +37,7 @@ public class GraphLoader {
     private String property = null;
 
     private final GraphDatabaseAPI api;
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
     private double propertyDefaultValue = 0.0;
 
     /**
@@ -59,6 +59,25 @@ public class GraphLoader {
     }
 
     /**
+     * set an executor service
+     * @param executorService the executor service
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withExecutorService(ExecutorService executorService) {
+        this.executorService = Objects.requireNonNull(executorService);
+        return this;
+    }
+
+    /**
+     * disable use of executor service
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withoutExecutorService() {
+        this.executorService = null;
+        return this;
+    }
+
+    /**
      * Instructs the loader to load only nodes with the given label name.
      * If the label is not found, every node will be loaded.
      *
@@ -67,6 +86,11 @@ public class GraphLoader {
      */
     public GraphLoader withLabel(String label) {
         this.label = Objects.requireNonNull(label);
+        return this;
+    }
+
+    public GraphLoader withOptionalLabel(String label) {
+        this.label = label;
         return this;
     }
 
@@ -104,6 +128,11 @@ public class GraphLoader {
         return this;
     }
 
+    public GraphLoader withOptionalRelationshipType(String relation) {
+        this.relation = relation;
+        return this;
+    }
+
     /**
      * Instructs the loader to load only relationships with the given {@link RelationshipType}.
      * If the type is not found, every relationship will be loaded.
@@ -136,6 +165,12 @@ public class GraphLoader {
      */
     public GraphLoader withWeightsFromProperty(String property, double propertyDefaultValue) {
         this.property = Objects.requireNonNull(property);
+        this.propertyDefaultValue = propertyDefaultValue;
+        return this;
+    }
+
+    public GraphLoader withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.property = property;
         this.propertyDefaultValue = propertyDefaultValue;
         return this;
     }

@@ -8,6 +8,8 @@ package org.neo4j.graphalgo.api;
  */
 public interface IdMapping {
 
+    int START_NODE_ID = 0;
+
     /**
      * Map neo4j nodeId to inner nodeId
      * TODO rename?
