@@ -89,6 +89,13 @@ public class GraphLoader {
         return this;
     }
 
+    /**
+     * Instructs the loader to load only nodes with the given label name.
+     * If the label is not found, every node will be loaded. TODO review that
+     *
+     * @param label May be null
+     * @return itself to enable fluent interface
+     */
     public GraphLoader withOptionalLabel(String label) {
         this.label = label;
         return this;
@@ -118,7 +125,7 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load only relationships with the given type name.
-     * If the type is not found, every relationship will be loaded.
+     * If the type is not found, every relationship will be loaded. TODO review that
      *
      * @param relation May not be null; to remove a type filter, use {@link #withAnyRelationshipType()} instead.
      * @return itself to enable fluent interface
@@ -128,6 +135,13 @@ public class GraphLoader {
         return this;
     }
 
+    /**
+     * Instructs the loader to load only relationships with the given type name.
+     * If the argument is null, every relationship will be considered.
+     *
+     * @param relation May be null
+     * @return itself to enable fluent interface
+     */
     public GraphLoader withOptionalRelationshipType(String relation) {
         this.relation = relation;
         return this;
@@ -169,6 +183,14 @@ public class GraphLoader {
         return this;
     }
 
+    /**
+     * Instructs the loader to load weights by reading the given property.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     *
+     * @param property May be null
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
     public GraphLoader withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
         this.property = property;
         this.propertyDefaultValue = propertyDefaultValue;
