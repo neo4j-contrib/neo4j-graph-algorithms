@@ -38,19 +38,23 @@ public class UnionFindProcIntegrationTest {
                 "CREATE (nH)\n" +
                 "CREATE (nI)\n" +
                 "CREATE (nJ)\n" +
-                "CREATE (nK)\n" +
                 "CREATE\n" +
+
+                // {A, B, C, D}
                 "  (nA)-[:TYPE]->(nB),\n" +
                 "  (nB)-[:TYPE]->(nC),\n" +
                 "  (nC)-[:TYPE]->(nD),\n" +
 
+                "  (nD)-[:TYPE {cost:4.2}]->(nE),\n" + // threshold UF should split here
+
+                // {E, G, G}
                 "  (nE)-[:TYPE]->(nF),\n" +
                 "  (nF)-[:TYPE]->(nG),\n" +
-                "  (nG)-[:TYPE]->(nH),\n" +
-                "  (nH)-[:TYPE]->(nI),\n" +
-                "  (nI)-[:TYPE]->(nE),\n" +
 
-                "  (nK)-[:TYPE]->(nJ);";
+                // {H, I}
+                "  (nH)-[:TYPE]->(nI)";
+
+
 
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
@@ -61,26 +65,56 @@ public class UnionFindProcIntegrationTest {
             tx.success();
         }
 
-        Procedures proceduresService = ((GraphDatabaseAPI) db).getDependencyResolver().resolveDependency(Procedures.class);
-
-        proceduresService.registerProcedure(UnionFindProc.class);
+        db.getDependencyResolver()
+                .resolveDependency(Procedures.class)
+                .registerProcedure(UnionFindProc.class);
     }
 
     @Test
     public void testSimpleUF() throws Exception {
-
         final IntIntScatterMap map = new IntIntScatterMap(11);
-
-        db.execute("CALL org.neo4j.graphalgo.unionFind(null, 'TYPE') YIELD nodeId, setId")
+        db.execute("CALL algo.unionFind('', 'TYPE', {}) YIELD nodeId, setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    map.addTo(((Long) row.get("setId")).intValue(), 1);
+                    map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
                 });
-
-        assertMapContains(map, 4, 5, 2);
+        assertMapContains(map, 1, 2, 7);
     }
 
-    // TODO weighted version
+    @Test
+    public void testSimpleUFStats() throws Exception {
+        final IntIntScatterMap map = new IntIntScatterMap(11);
+        db.execute("CALL algo.unionFindStats('', 'TYPE', {}) YIELD setId, setSize")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    map.put(row.getNumber("setId").intValue(),
+                            row.getNumber("setSize").intValue());
+                    return true;
+                });
+        assertMapContains(map, 1, 2, 7);
+    }
+
+    @Test
+    public void testThresholdUF() throws Exception {
+        final IntIntScatterMap map = new IntIntScatterMap(11);
+        db.execute("CALL algo.unionFind('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD nodeId, setId")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    map.addTo(row.getNumber("setId").intValue(), 1);
+                    return true;
+                });
+        assertMapContains(map, 4, 3, 2, 1);
+    }
+
+    @Test
+    public void testThresholdUFStats() throws Exception {
+        final IntIntScatterMap map = new IntIntScatterMap(11);
+        db.execute("CALL algo.unionFindStats('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD setId, setSize")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    map.put(row.getNumber("setId").intValue(),
+                            row.getNumber("setSize").intValue());
+                    return true;
+                });
+        assertMapContains(map, 4, 3, 2, 1);
+    }
 
     private static void assertMapContains(IntIntMap map, int... values) {
         assertEquals("set count does not match", values.length, map.size());
