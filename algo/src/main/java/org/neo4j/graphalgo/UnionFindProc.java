@@ -38,7 +38,7 @@ public class UnionFindProc {
 
         return new GraphUnionFind(graph)
                 .compute()
-                .mapAndStream(graph);
+                .resultStream(graph);
     }
 
     @Procedure(value = "org.neo4j.graphalgo.unionFindThreshold")
@@ -59,6 +59,6 @@ public class UnionFindProc {
 
         return new GraphUnionFind(graph)
                 .compute(threshold)
-                .mapAndStream(graph);
+                .resultStream(graph);
     }
 }

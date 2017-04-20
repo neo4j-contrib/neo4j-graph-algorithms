@@ -12,7 +12,6 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 /**
  * @author mknblch
- *         added 23.02.2017.
  */
 public abstract class Neo4JTestCase {
 

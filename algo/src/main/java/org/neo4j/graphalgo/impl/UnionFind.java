@@ -3,6 +3,8 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
+import java.util.Objects;
+
 /**
  * UF implementation using an {@link AllRelationshipIterator}
  *
@@ -11,38 +13,46 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 public class UnionFind {
 
     private final AllRelationshipIterator iterator;
-
-    private DisjointSetStruct dss;
-    private final IntBinaryPredicate constraint;
+    private final int nodeCount;
 
     /**
-     * initialize UF without additional constraint
+     * initialize UF
      *
      * @param idMapping the id mapping
-     * @param iterator the AllRelationshipIterator
+     * @param iterator an AllRelationshipIterator
      */
     public UnionFind(IdMapping idMapping, AllRelationshipIterator iterator) {
-        this(idMapping, iterator, null);
+        this.iterator = iterator;
+        this.nodeCount = idMapping.nodeCount();
     }
 
     /**
-     * initialize UF using an additional constraint before merging
-     * @param idMapping the id mapping
-     * @param iterator the AllRelationshipIterator
-     * @param constraint the constraint
+     * compute unions using an additional constraint
+     * @param constraint the join constraint
+     * @return a DSS
      */
-    public UnionFind(IdMapping idMapping, AllRelationshipIterator iterator, IntBinaryPredicate constraint) {
-        this.iterator = iterator;
-        this.constraint = constraint != null ? constraint : (p, q) -> true;
-        this.dss = new DisjointSetStruct(idMapping.nodeCount());
-    }
-
-    public DisjointSetStruct compute() {
+    public DisjointSetStruct compute(IntBinaryPredicate constraint) {
+        Objects.requireNonNull(constraint);
+        final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
         dss.reset();
         iterator.forEachRelationship((source, target, relationship) -> {
             if (constraint.test(source, target)) {
                 dss.union(source, target);
             }
+            return true;
+        });
+        return dss;
+    }
+
+    /**
+     * compute unions of connected nodes
+     * @return a DSS
+     */
+    public DisjointSetStruct compute() {
+        final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
+        dss.reset();
+        iterator.forEachRelationship((source, target, relationship) -> {
+            dss.union(source, target);
             return true;
         });
         return dss;

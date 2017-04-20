@@ -43,7 +43,6 @@ public class UnionFindProcIntegrationTest {
                 "  (nA)-[:TYPE]->(nB),\n" +
                 "  (nB)-[:TYPE]->(nC),\n" +
                 "  (nC)-[:TYPE]->(nD),\n" +
-                "  (nD)-[:TYPE]->(nA),\n" +
 
                 "  (nE)-[:TYPE]->(nF),\n" +
                 "  (nF)-[:TYPE]->(nG),\n" +
@@ -51,7 +50,6 @@ public class UnionFindProcIntegrationTest {
                 "  (nH)-[:TYPE]->(nI),\n" +
                 "  (nI)-[:TYPE]->(nE),\n" +
 
-                "  (nJ)-[:TYPE]->(nK),\n" +
                 "  (nK)-[:TYPE]->(nJ);";
 
         db = (GraphDatabaseAPI)
@@ -81,6 +79,8 @@ public class UnionFindProcIntegrationTest {
 
         assertMapContains(map, 4, 5, 2);
     }
+
+    // TODO weighted version
 
     private static void assertMapContains(IntIntMap map, int... values) {
         assertEquals("set count does not match", values.length, map.size());

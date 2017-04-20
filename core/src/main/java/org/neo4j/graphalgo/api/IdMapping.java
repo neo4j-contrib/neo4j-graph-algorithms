@@ -8,6 +8,10 @@ package org.neo4j.graphalgo.api;
  */
 public interface IdMapping {
 
+    /**
+     * defines the lower bound of mapped node ids
+     * TODO: function?
+     */
     int START_NODE_ID = 0;
 
     /**

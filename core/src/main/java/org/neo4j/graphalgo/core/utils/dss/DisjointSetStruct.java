@@ -66,7 +66,7 @@ public final class DisjointSetStruct {
         return new ConcurrentNodeSetIterator(this, start, length);
     }
 
-    public Stream<Result> mapAndStream(IdMapping idMapping) {
+    public Stream<Result> resultStream(IdMapping idMapping) {
 
         return IntStream.range(IdMapping.START_NODE_ID, idMapping.nodeCount())
                 .mapToObj(mappedId ->
