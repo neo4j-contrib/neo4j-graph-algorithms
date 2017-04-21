@@ -2,7 +2,12 @@ package org.neo4j.graphalgo.core.utils.dss;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Iterator;
 import java.util.function.Supplier;
@@ -43,7 +48,7 @@ public final class DisjointSetStruct {
      * @param consumer the consumer
      */
     public void forEach(Consumer consumer) {
-        for (int i = parent.length; i >= 0; i--) {
+        for (int i = parent.length - 1; i >= 0; i--) {
             if (!consumer.consume(i, findPC(i))) {
                 break;
             }
@@ -173,6 +178,12 @@ public final class DisjointSetStruct {
         }
     }
 
+    public int getSetCount() {
+        final IntSet set = new IntScatterSet(8);
+        forEach((nodeId, setId) -> set.add(setId));
+        return set.size();
+    }
+
     /**
      * evaluate the size of each set.
      *
@@ -269,6 +280,37 @@ public final class DisjointSetStruct {
             cursor.nodeId = offset;
             cursor.setId = struct.findNoOpt(offset);
             return cursor;
+        }
+    }
+
+    public static class DSSExporter extends Exporter<DisjointSetStruct> {
+
+        private final IdMapping idMapping;
+        private int propertyId;
+
+        public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
+            super(api);
+            this.idMapping = idMapping;
+            readInTransaction(read -> {
+                propertyId = read.propertyKeyGetForName(targetProperty);
+            });
+        }
+
+        @Override
+        public void write(DisjointSetStruct struct) {
+            writeInTransaction(writeOp -> {
+                struct.forEach((nodeId, setId) -> {
+                    try {
+                        writeOp.nodeSetProperty(
+                                idMapping.toOriginalNodeId(nodeId),
+                                DefinedProperty.numberProperty(propertyId, setId));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                });
+            });
         }
     }
 

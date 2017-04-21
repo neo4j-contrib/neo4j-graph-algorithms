@@ -1,10 +1,10 @@
 package org.neo4j.graphalgo;
 
 import algo.Pools;
-import com.carrotsearch.hppc.IntIntMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.dss.DssStats;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -13,7 +13,6 @@ import org.neo4j.procedure.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * @author mknblch
@@ -23,6 +22,8 @@ public class UnionFindProc {
     public static final String CONFIG_PROPERTY = "property";
     public static final String CONFIG_DEFAULT_VALUE = "defaultValue";
     public static final String CONFIG_THRESHOLD = "threshold";
+    public static final String CONFIG_CLUSTER_PROPERTY = "clusterProperty";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "cluster";
 
     @Context
     public GraphDatabaseAPI api;
@@ -30,79 +31,85 @@ public class UnionFindProc {
     @Context
     public Log log;
 
-    @Procedure(value = "algo.unionFind")
-    @Description("CALL algo.unionFind(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0}) " +
-            "YIELD nodeId, setId - yields a setId to each node id")
-    public Stream<DisjointSetStruct.Result> unionFind(
-            @Name("label") String label,
-            @Name("relationship") String relationship,
-            @Name("config") Map<String, Object> properties) {
+    @Procedure(value = "algo.unionFind", mode = Mode.WRITE)
+    @Description("CALL algo.unionFind(label:String, relationship:String, " +
+            "{property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
+            "YIELD setCount, loadDuration, evalDuration, writeDuration")
+    public Stream<DssStats> unionFind(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        Graph graph = new GraphLoader(api)
+        DssStats.Builder stats = DssStats.builder();
+        // loading
+        stats.startLoad();
+        final Graph graph = load(label, relationship, config);
+        stats.stopLoad();
+        // evaluation
+        stats.startEval();
+        final DisjointSetStruct struct = evaluate(graph, config);
+        stats.stopEval();
+        if ((Boolean) config.getOrDefault("write", Boolean.FALSE)) {
+            // write back
+            stats.startWrite();
+            write(graph, struct, config);
+            stats.stopWrite();
+        }
+
+        return Stream.of(stats
+                .withNodeCount(graph.nodeCount())
+                .withSetCount(struct.getSetCount())
+                .build());
+    }
+
+    @Procedure(value = "algo.unionFindStream")
+    @Description("CALL algo.unionFindStream(label:String, relationship:String, " +
+            "{property:'propertyName', threshold:0.42, defaultValue:1.0) " +
+            "YIELD setCount, loadDuration, evalDuration, writeDuration - yields a setId to each node id")
+    public Stream<DisjointSetStruct.Result> unionFindStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        // loading
+        final Graph graph = load(label, relationship, config);
+        // evaluation
+        final DisjointSetStruct struct = evaluate(graph, config);
+
+        return struct.resultStream(graph);
+    }
+
+    private Graph load(String label, String relationship, Map<String, Object> config) {
+        return new GraphLoader(api)
                 .withOptionalLabel(label)
-                .withRelationshipType(relationship)
+                .withOptionalRelationshipType(relationship)
                 .withOptionalWeightsFromProperty(
-                        (String) properties.get(CONFIG_PROPERTY),
-                        (double)properties.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
+                        (String) config.get(CONFIG_PROPERTY),
+                        (double)config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
+    }
 
-        if (properties.containsKey(CONFIG_PROPERTY) && properties.containsKey(CONFIG_THRESHOLD)) {
-            log.debug("Computing union find with threshold " + properties.get(CONFIG_THRESHOLD));
-            return new GraphUnionFind(graph)
-                    .compute((double)properties.getOrDefault(CONFIG_THRESHOLD, 0.0))
-                    .resultStream(graph);
+    private DisjointSetStruct evaluate(Graph graph, Map<String, Object> config) {
+        final DisjointSetStruct struct;
+        if (config.containsKey(CONFIG_PROPERTY) && config.containsKey(CONFIG_THRESHOLD)) {
+            log.debug("Computing union find with threshold " + config.get(CONFIG_THRESHOLD));
+            struct = new GraphUnionFind(graph)
+                    .compute((double) config.getOrDefault(CONFIG_THRESHOLD, 0.0));
         } else {
             log.debug("Computing union find without threshold");
-            return new GraphUnionFind(graph)
-                    .compute()
-                    .resultStream(graph);
+            struct = new GraphUnionFind(graph)
+                    .compute();
         }
+        return struct;
     }
 
-    @Procedure(value = "algo.unionFindStats")
-    @Description("CALL algo.unionFindStats(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0}) " +
-            "YIELD setId, setSize - yields the size for each setId")
-    public Stream<Result> unionFindStats(
-            @Name("label") String label,
-            @Name("relationship") String relationship,
-            @Name("config") Map<String, Object> properties) {
-
-        Graph graph = new GraphLoader(api)
-                .withOptionalLabel(label)
-                .withRelationshipType(relationship)
-                .withOptionalWeightsFromProperty(
-                        (String) properties.get(CONFIG_PROPERTY),
-                        (double)properties.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
-                .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
-
-        final IntIntMap setSize;
-        if (properties.containsKey(CONFIG_PROPERTY) && properties.containsKey(CONFIG_THRESHOLD)) {
-            log.debug("Computing threshold union find");
-            setSize = new GraphUnionFind(graph)
-                    .compute((double) properties.getOrDefault(CONFIG_THRESHOLD, 0.0))
-                    .getSetSize();
-        } else {
-            log.debug("Computing union find without threshold");
-            setSize = new GraphUnionFind(graph)
-                    .compute((double) properties.getOrDefault(CONFIG_THRESHOLD, 0.0))
-                    .getSetSize();
-        }
-
-        return StreamSupport.stream(setSize.spliterator(), false)
-                .map(cursor -> new Result(cursor.key, cursor.value));
+    private void write(Graph graph, DisjointSetStruct struct, Map<String, Object> config) {
+        log.debug("Writing results");
+        new DisjointSetStruct.DSSExporter(api,
+                graph,
+                (String) config.getOrDefault(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
+                .write(struct);
     }
 
-
-    public static class Result {
-
-        public final Long setId;
-        public final Long setSize;
-
-        public Result(long setId, long setSize) {
-            this.setId = setId;
-            this.setSize = setSize;
-        }
-    }
 }
