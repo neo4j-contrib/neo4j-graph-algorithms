@@ -73,10 +73,10 @@ public class UnionFindProc {
 
         // loading
         final Graph graph = load(label, relationship, config);
-        // evaluation
-        final DisjointSetStruct struct = evaluate(graph, config);
 
-        return struct.resultStream(graph);
+        // evaluation
+        return evaluate(graph, config)
+                .resultStream(graph);
     }
 
     private Graph load(String label, String relationship, Map<String, Object> config) {

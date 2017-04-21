@@ -80,7 +80,6 @@ public class UnionFindProcIntegrationTest {
                 });
     }
 
-
     @Test
     public void testUnionFindWriteBack() throws Exception {
         db.execute("CALL algo.unionFind('', 'TYPE', {write:true}) YIELD setCount, loadDuration, evalDuration, writeDuration")
@@ -114,14 +113,14 @@ public class UnionFindProcIntegrationTest {
     }
 
     @Test
-    public void testThresholdUnionFind() throws Exception {
+    public void testThresholdUnionFindLowThreshold() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD nodeId, setId")
+        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:3.14}) YIELD nodeId, setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
                 });
-        assertMapContains(map, 4, 3, 2, 1);
+        assertMapContains(map, 1, 2, 7);
     }
 
     private static void assertMapContains(IntIntMap map, int... values) {
