@@ -5,39 +5,51 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
 /**
+ * UF implementation using a {@link NodeIterator} and {@link WeightedRelationshipIterator}
+ *
  * @author mknblch
  */
 public class GraphUnionFind {
 
     private final Graph graph;
 
+    private final DisjointSetStruct dss;
+
     public GraphUnionFind(Graph graph) {
         this.graph = graph;
+        this.dss = new DisjointSetStruct(graph.nodeCount());
     }
 
+    /**
+     * compute unions of connected nodes
+     * @return a DSS
+     */
     public DisjointSetStruct compute() {
-        final Aggregator aggregator =
-                new Aggregator(new DisjointSetStruct(graph.nodeCount()));
-
+        dss.reset();
         graph.forEachNode(node -> {
-            graph.forEachRelationship(node, Direction.OUTGOING, aggregator);
+            graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id) -> {
+                dss.union(source, target);
+                return true;
+            });
         });
-
-        return aggregator.struct;
+        return dss;
     }
 
-    private static class Aggregator implements RelationshipConsumer {
-
-        private final DisjointSetStruct struct;
-
-        private Aggregator(DisjointSetStruct struct) {
-            this.struct = struct;
-        }
-
-        @Override
-        public boolean accept(int sourceNodeId, int targetNodeId, long relationId) {
-            struct.union(sourceNodeId, targetNodeId);
-            return true;
-        }
+    /**
+     * compute unions using an additional constraint
+     * @param threshold the minimum threshold
+     * @return a DSS
+     */
+    public DisjointSetStruct compute(final double threshold) {
+        dss.reset();
+        graph.forEachNode(node -> {
+            graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id, weight) -> {
+                if (weight >= threshold) {
+                    dss.union(source, target);
+                }
+                return true;
+            });
+        });
+        return dss;
     }
 }

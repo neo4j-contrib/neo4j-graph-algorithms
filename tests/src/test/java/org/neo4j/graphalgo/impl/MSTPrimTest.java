@@ -59,7 +59,7 @@ public class MSTPrimTest extends Neo4JTestCase {
         newRelation(c, e, 5);
         newRelation(d, e, 6);
 
-        idMapper = new LazyIdMapper();
+        idMapper = new LazyIdMapper(5);
 
         weightMap = BufferedWeightMap.importer((GraphDatabaseAPI) db)
                 .withIdMapping(idMapper)

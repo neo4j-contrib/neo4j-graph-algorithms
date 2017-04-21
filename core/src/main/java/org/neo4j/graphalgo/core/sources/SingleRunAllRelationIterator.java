@@ -10,7 +10,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.Iterator;
 
 /**
- * Unbuffered RelationshipIterator
+ * Unbuffered RelationshipIterator working directly with Neo4j
  *
  * @author mknblch
  */

@@ -2,35 +2,82 @@ package org.neo4j.graphalgo.core.utils.dss;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
+import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+
+import java.util.Iterator;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
- * structure for computing sets of
  * @author mknblch
  */
 public final class DisjointSetStruct {
 
     private final int[] parent;
     private final int[] depth;
+    private final int capacity;
 
     /**
+     * Initialize the struct with the given capacity.
+     * Note: the struct must be {@link DisjointSetStruct#reset()} prior use!
      * @param capacity the capacity (maximum node id)
      */
     public DisjointSetStruct(int capacity) {
         parent = new int[capacity];
         depth = new int[capacity];
+        this.capacity = capacity;
+    }
+
+    /**
+     * reset the container
+     */
+    public void reset() {
         for (int i = 0; i < capacity; i++) {
             parent[i] = i;
         }
     }
 
     /**
-     * iterate each node and finds its setId
-     * @param consumer
+     * iterate each node and find its setId
+     * @param consumer the consumer
      */
     public void forEach(Consumer consumer) {
-        for (int i = parent.length; i >= 0; i--) {
-            consumer.consume(i, findPC(i));
+        for (int i = parent.length - 1; i >= 0; i--) {
+            if (!consumer.consume(i, findPC(i))) {
+                break;
+            }
         }
+    }
+
+    /**
+     * @return return a Iterator for each nodeIt-setId combination
+     */
+    public Iterator<Cursor> iterator() {
+        return new NodeSetIterator(this);
+    }
+
+    /**
+     * @param start startNodeId
+     * @param length number of nodes to process
+     * @return return an Iterator over each nodeIt-setId combination within its bounds
+     */
+    public Iterator<Cursor> iterator(int start, int length) {
+        return new ConcurrentNodeSetIterator(this, start, length);
+    }
+
+    public Stream<Result> resultStream(IdMapping idMapping) {
+
+        return IntStream.range(IdMapping.START_NODE_ID, idMapping.nodeCount())
+                .mapToObj(mappedId ->
+                        new Result(
+                                idMapping.toOriginalNodeId(mappedId),
+                                findNoOpt(mappedId)));
     }
 
     /**
@@ -52,9 +99,8 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * find setId of element p.
+     * find setId of element p without balancing optimization.
      *
-     * not-optimized implementation (does not change the tree during execution)
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to
      */
@@ -132,9 +178,16 @@ public final class DisjointSetStruct {
         }
     }
 
+    public int getSetCount() {
+        final IntSet set = new IntScatterSet(8);
+        forEach((nodeId, setId) -> set.add(setId));
+        return set.size();
+    }
+
     /**
-     * evaluate the set id for each Node in O(n + )
-     * @return
+     * evaluate the size of each set.
+     *
+     * @return a map which maps setId to setSize
      */
     public IntIntMap getSetSize() {
         final IntIntScatterMap map = new IntIntScatterMap();
@@ -144,6 +197,9 @@ public final class DisjointSetStruct {
         return map;
     }
 
+    /**
+     * Consumer interface for c
+     */
     @FunctionalInterface
     public interface Consumer {
         /**
@@ -152,5 +208,127 @@ public final class DisjointSetStruct {
          * @return true to continue the iteration, false to stop
          */
         boolean consume(int nodeId, int setId);
+    }
+
+    public static class Cursor {
+        /**
+         * the mapped node id
+         */
+        int nodeId;
+        /**
+         * the set id of the node
+         */
+        int setId;
+    }
+
+    /**
+     * Iterator only usable for single threaded evaluation.
+     * Does tree-balancing during iteration.
+     */
+    private static class NodeSetIterator implements Iterator<Cursor> {
+
+        private final Cursor cursor = new Cursor();
+        private final DisjointSetStruct struct;
+        private final int length;
+
+        private int offset = IdMapping.START_NODE_ID;
+
+        private NodeSetIterator(DisjointSetStruct struct) {
+            this.struct = struct;
+            this.length = struct.count();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < length;
+        }
+
+        @Override
+        public Cursor next() {
+            cursor.nodeId = offset;
+            cursor.setId = struct.find(offset);
+            return cursor;
+        }
+    }
+
+    /**
+     * Iterator usable in multithreaded environment
+     */
+    private static class ConcurrentNodeSetIterator implements Iterator<Cursor> {
+
+        private final Cursor cursor = new Cursor();
+        private final DisjointSetStruct struct;
+        private final int length;
+
+        private int offset = 0;
+
+        private ConcurrentNodeSetIterator(DisjointSetStruct struct, int startOffset, int length) {
+            this.struct = struct;
+            this.length = length + offset > struct.count()
+                    ? struct.count() - offset
+                    : length;
+            this.offset = startOffset;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < length;
+        }
+
+        @Override
+        public Cursor next() {
+            cursor.nodeId = offset;
+            cursor.setId = struct.findNoOpt(offset);
+            return cursor;
+        }
+    }
+
+    public static class DSSExporter extends Exporter<DisjointSetStruct> {
+
+        private final IdMapping idMapping;
+        private int propertyId;
+
+        public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
+            super(api);
+            this.idMapping = idMapping;
+            readInTransaction(read -> {
+                propertyId = read.propertyKeyGetForName(targetProperty);
+            });
+        }
+
+        @Override
+        public void write(DisjointSetStruct struct) {
+            writeInTransaction(writeOp -> {
+                struct.forEach((nodeId, setId) -> {
+                    try {
+                        writeOp.nodeSetProperty(
+                                idMapping.toOriginalNodeId(nodeId),
+                                DefinedProperty.numberProperty(propertyId, setId));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                });
+            });
+        }
+    }
+
+    public static class Result {
+
+        /**
+         * the mapped node id
+         */
+        public final long nodeId;
+
+        /**
+         * set id
+         */
+        public final long setId;
+
+        public Result(long nodeId, int setId) {
+            this.nodeId = nodeId;
+            this.setId = setId;
+        }
     }
 }

@@ -73,7 +73,9 @@ public class UnionFindBenchmark {
             tx.success();
         }
 
-        idMapping = new LazyIdMapper();
+        idMapping = LazyIdMapper.importer(db)
+                .withAnyLabel()
+                .build();
 
         iterator = BufferedAllRelationshipIterator.importer(db)
                 .withIdMapping(idMapping)
@@ -118,8 +120,13 @@ public class UnionFindBenchmark {
 
     @Benchmark
     public Object _05_buildBufferedDataSource() {
+
+        final LazyIdMapper lazyIdMapper = LazyIdMapper.importer(db)
+                .withAnyLabel()
+                .build();
+
         return BufferedAllRelationshipIterator.importer(db)
-                .withIdMapping(new LazyIdMapper())
+                .withIdMapping(lazyIdMapper)
                 .withAnyLabel()
                 .withAnyRelationshipType()
                 .build();

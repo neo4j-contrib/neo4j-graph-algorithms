@@ -33,7 +33,7 @@ public class SingleRunRelationIteratorTest extends Neo4JTestCase {
     @BeforeClass
     public static void setupGraph() {
         final SimpleGraphSetup setup = new SimpleGraphSetup();
-        LazyIdMapper idMapper = new LazyIdMapper();
+        LazyIdMapper idMapper = new LazyIdMapper(3);
         iterator = new SingleRunAllRelationIterator((GraphDatabaseAPI) setup.getDb(), idMapper);
         v0 = idMapper.toMappedNodeId(setup.getN0());
         v1 = idMapper.toMappedNodeId(setup.getN1());

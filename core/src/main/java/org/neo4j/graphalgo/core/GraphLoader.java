@@ -37,7 +37,7 @@ public class GraphLoader {
     private String property = null;
 
     private final GraphDatabaseAPI api;
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
     private double propertyDefaultValue = 0.0;
 
     /**
@@ -59,6 +59,25 @@ public class GraphLoader {
     }
 
     /**
+     * set an executor service
+     * @param executorService the executor service
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withExecutorService(ExecutorService executorService) {
+        this.executorService = Objects.requireNonNull(executorService);
+        return this;
+    }
+
+    /**
+     * disable use of executor service
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withoutExecutorService() {
+        this.executorService = null;
+        return this;
+    }
+
+    /**
      * Instructs the loader to load only nodes with the given label name.
      * If the label is not found, every node will be loaded.
      *
@@ -67,6 +86,18 @@ public class GraphLoader {
      */
     public GraphLoader withLabel(String label) {
         this.label = Objects.requireNonNull(label);
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load only nodes with the given label name.
+     * If the label is not found, every node will be loaded. TODO review that
+     *
+     * @param label May be null
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withOptionalLabel(String label) {
+        this.label = label;
         return this;
     }
 
@@ -94,13 +125,25 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load only relationships with the given type name.
-     * If the type is not found, every relationship will be loaded.
+     * If the type is not found, every relationship will be loaded. TODO review that
      *
      * @param relation May not be null; to remove a type filter, use {@link #withAnyRelationshipType()} instead.
      * @return itself to enable fluent interface
      */
     public GraphLoader withRelationshipType(String relation) {
         this.relation = Objects.requireNonNull(relation);
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load only relationships with the given type name.
+     * If the argument is null, every relationship will be considered.
+     *
+     * @param relation May be null
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withOptionalRelationshipType(String relation) {
+        this.relation = relation;
         return this;
     }
 
@@ -136,6 +179,20 @@ public class GraphLoader {
      */
     public GraphLoader withWeightsFromProperty(String property, double propertyDefaultValue) {
         this.property = Objects.requireNonNull(property);
+        this.propertyDefaultValue = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load weights by reading the given property.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     *
+     * @param property May be null
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.property = property;
         this.propertyDefaultValue = propertyDefaultValue;
         return this;
     }

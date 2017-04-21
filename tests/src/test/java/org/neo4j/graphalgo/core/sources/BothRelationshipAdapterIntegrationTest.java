@@ -39,7 +39,7 @@ public class BothRelationshipAdapterIntegrationTest extends Neo4JTestCase {
         newRelation(a, c, 2);
         newRelation(b, c, 3);
 
-        idMapper = new LazyIdMapper();
+        idMapper = new LazyIdMapper(3);
         RelationshipContainer relationshipContainer = RelationshipContainer.importer((GraphDatabaseAPI) db)
                 .withIdMapping(idMapper)
                 .withDirection(Direction.BOTH)

@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.utils.dss;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -14,6 +15,11 @@ import static org.junit.Assert.assertTrue;
 public class DisjointSetStructTest {
 
     private DisjointSetStruct struct = new DisjointSetStruct(7);
+
+    @Before
+    public void setup() {
+        struct.reset();
+    }
 
     @Test
     public void test() throws Exception {
