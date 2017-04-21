@@ -12,12 +12,13 @@ import java.util.Arrays;
  * remove certain relationships to form independent clusters that can each be
  * traversed.
  * <p>
- * The tree does not maintain an integrity invariant while adding or
+ * The tree does not guarantee an integrity invariant while adding or
  * removing relationships. To verify a valid tree structure, call
  * {@link #verifyTreeIntegrity()}.
  * <p>
- * Memory space is O(n) where n is the capacity – the number of nodes – and
- * independent from the number of relationships added.<br>
+ * Memory space is O(n) where n is the capacity – the expected number of nodes –
+ * and independent from the number of relationships added.<br>
+ * To be more precise, two int arrays with {@code n} elements are allocated upfront.
  * Additions are O(1).<br>
  * Removals are O(1) is their best case and O(n) in their worst case
  * where n is the number of siblings on the level where the node is removed.
@@ -73,15 +74,15 @@ public final class UndirectedTree {
      * Adds a new undirected relationship to the tree.
      * Adding a self relationship – where {@code node1 == node2} – is a noop.
      *
-     * @throws IllegalArgumentException if a node is negative or out of bounds.
+     * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree
      */
     public void addRelationship(int node1, int node2) {
-        Boolean nodeOrder = verify(node1, node2);
-        if (nodeOrder == Boolean.TRUE) {
+        if (node1 < node2) {
             addChild(node1, node2);
-        } else if (nodeOrder == Boolean.FALSE) {
+        } else if (node1 > node2) {
             addChild(node2, node1);
         }
+        // do nothing on node1 == node2
     }
 
     /**
@@ -89,15 +90,15 @@ public final class UndirectedTree {
      * Removing a self relationship – where {@code node1 == node2} – is a noop.
      * Removing a relationship that does not exist is a noop and does not fail.
      *
-     * @throws IllegalArgumentException if a node is negative or out of bounds.
+     * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree
      */
     public void removeRelationship(int node1, int node2) {
-        Boolean nodeOrder = verify(node1, node2);
-        if (nodeOrder == Boolean.TRUE) {
+        if (node1 < node2) {
             removeChild(node1, node2);
-        } else if (nodeOrder == Boolean.FALSE) {
+        } else if (node1 > node2) {
             removeChild(node2, node1);
         }
+        // do nothing on node1 == node2
     }
 
     /**
@@ -127,9 +128,10 @@ public final class UndirectedTree {
      * BFS iteration consumes additional memory during iteration.
      * The {@code relationId} parameter of the {@link RelationshipConsumer}
      * is always {@code -1} as relation IDs are not supported by this tree.
+     *
+     * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree
      */
     public void forEachBFS(int root, RelationshipConsumer consumer) {
-        verify(root);
         iterateBFS(root, consumer);
     }
 
@@ -141,9 +143,10 @@ public final class UndirectedTree {
      * might throw a {@link StackOverflowError}.
      * The {@code relationId} parameter of the {@link RelationshipConsumer}
      * is always {@code -1} as relation IDs are not supported by this tree.
+     *
+     * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree
      */
     public void forEachDFS(int root, RelationshipConsumer consumer) {
-        verify(root);
         iterateDFS(root, consumer);
     }
 
@@ -245,25 +248,5 @@ public final class UndirectedTree {
             }
             while ((sibling = siblings[sibling]) != INVALID_NODE);
         }
-    }
-
-    private void verify(int node) {
-        if (node >= capacity || node < 0) {
-            throw new IllegalArgumentException(
-                    "Cannot operate on node ("
-                            + node +
-                            ") with capacity "
-                            + capacity);
-        }
-    }
-
-    private Boolean verify(int node1, int node2) {
-        if (node1 == node2) {
-            // self relation, nothing to do
-            return null;
-        }
-        verify(node1);
-        verify(node2);
-        return node1 < node2 ? Boolean.TRUE : Boolean.FALSE;
     }
 }
