@@ -36,9 +36,10 @@
         </dependency>
 
         <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>procedure-compiler</artifactId>
+            <groupId>net.biville.florent</groupId>
+            <artifactId>neo4j-sproc-compiler</artifactId>
             <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -69,6 +70,7 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-slf4j</artifactId>
             <version>3.1.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -86,6 +88,28 @@
                     </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <minimizeJar>true</minimizeJar>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <!-- Neo4j Procedures require Java 8 -->
+                    <compilerVersion>${javac.target}</compilerVersion>
+                    <source>${javac.target}</source>
+                    <target>${javac.target}</target>
+                    <compilerArgs>
+                        <arg>-AIgnoreContextWarnings</arg>
+                        <arg>-AGeneratedDocumentationPath=target/generated-documentation</arg>
+                        <arg>-ADocumentation.FieldDelimiter=¦</arg>
+                        <arg>-ADocumentation.ExportedHeaders=type¦qualified name¦description</arg>
+                        <arg>-ADocumentation.QuotedFields=false</arg>
+                        <arg>-ADocumentation.DelimitedFirstField=true</arg>
+                        <arg>-ADocumentation.ExportGrouping=PACKAGE</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
         </plugins>
     </build>

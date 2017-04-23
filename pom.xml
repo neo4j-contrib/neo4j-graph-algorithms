@@ -56,10 +56,10 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.neo4j</groupId>
-                <artifactId>procedure-compiler</artifactId>
-                <version>${neo4j.version}</version>
-                <scope>compile</scope>
+                <groupId>net.biville.florent</groupId>
+                <artifactId>neo4j-sproc-compiler</artifactId>
+                <version>1.2-SNAPSHOT</version>
+                <scope>provided</scope>
                 <optional>true</optional>
             </dependency>
 
@@ -107,4 +107,18 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+           <id>sonatype-snapshot-repo</id>
+           <name>Sonatype SNAPSHOT repository</name>
+           <layout>default</layout>
+           <releases>
+              <enabled>false</enabled>
+           </releases>
+           <snapshots>
+              <enabled>true</enabled>
+           </snapshots>
+           <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
 </project>
