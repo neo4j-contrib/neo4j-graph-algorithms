@@ -127,7 +127,7 @@ public final class PageRankTest {
                 .withRelationshipType("TYPE1")
                 .load(graphImpl);
 
-        final double[] ranks = new PageRankKernel(graph, graph, graph, graph, 0.85).compute(20);
+        final double[] ranks = new PageRankAlgo(graph, graph, graph, graph, 0.85).compute(20);
         System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
