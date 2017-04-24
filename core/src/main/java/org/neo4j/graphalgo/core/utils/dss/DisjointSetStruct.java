@@ -291,9 +291,7 @@ public final class DisjointSetStruct {
         public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
             super(api);
             this.idMapping = idMapping;
-            readInTransaction(read -> {
-                propertyId = read.propertyKeyGetForName(targetProperty);
-            });
+            propertyId = getOrCreatePropertyId(targetProperty);
         }
 
         @Override
