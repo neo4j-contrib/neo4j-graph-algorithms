@@ -4,7 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
-import org.neo4j.graphalgo.impl.PageRankKernel;
+import org.neo4j.graphalgo.impl.PageRankAlgo;
 import org.neo4j.graphalgo.serialize.FileSerialization;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -192,9 +192,9 @@ public final class LargeishPageRanker {
                 "Running PageRank on %d nodes with %d iterations...",
                 graph.nodeCount(),
                 iterations);
-        PageRankKernel pageRankKernel = new PageRankKernel(graph, graph, graph, graph, 0.85);
+        PageRankAlgo pageRankAlgo = new PageRankAlgo(graph, graph, graph, graph, 0.85);
         long t2 = System.nanoTime();
-        double[] ranks = pageRankKernel.compute(iterations);
+        double[] ranks = pageRankAlgo.compute(iterations);
         long t3 = System.nanoTime();
         System.out.printf(
                 " done in %.2f seconds (that's %.2f seconds per iteration)%n",

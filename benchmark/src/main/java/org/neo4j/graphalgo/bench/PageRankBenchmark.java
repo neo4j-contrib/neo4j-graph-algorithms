@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
-import org.neo4j.graphalgo.impl.PageRankKernel;
+import org.neo4j.graphalgo.impl.PageRankAlgo;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -91,28 +91,28 @@ public class PageRankBenchmark {
     @Benchmark
     public Object _01_lightGraph() {
         final Graph graph = loadLight();
-        return new PageRankKernel(graph, graph, graph, graph, 0.85).compute(iterations);
+        return new PageRankAlgo(graph, graph, graph, graph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _02_lightGraphReuseGraph() {
-        return new PageRankKernel(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations);
+        return new PageRankAlgo(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _03_heavyGraph() {
         final Graph graph = loadHeavy();
-        return new PageRankKernel(graph, graph, graph, graph, 0.85).compute(iterations);
+        return new PageRankAlgo(graph, graph, graph, graph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _04_heavyGraphReuseGraph() {
-        return new PageRankKernel(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations);
+        return new PageRankAlgo(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations);
     }
 
     @Benchmark
     public Object _05_neo4jView() {
-        return new PageRankKernel(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations);
+        return new PageRankAlgo(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations);
     }
 
     private Graph loadLight() {

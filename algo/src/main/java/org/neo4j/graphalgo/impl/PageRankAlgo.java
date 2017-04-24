@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.function.IntConsumer;
 
 
-public class PageRankKernel implements IntConsumer, RelationshipConsumer {
+public class PageRankAlgo implements IntConsumer, RelationshipConsumer {
 
     private final double[] pageRank;
 
@@ -19,11 +19,11 @@ public class PageRankKernel implements IntConsumer, RelationshipConsumer {
 
     private double sum;
 
-    public PageRankKernel(IdMapping idMapping,
-                          NodeIterator nodeIterator,
-                          RelationshipIterator relationshipIterator,
-                          Degrees degrees,
-                          double dampingFactor) {
+    public PageRankAlgo(IdMapping idMapping,
+                        NodeIterator nodeIterator,
+                        RelationshipIterator relationshipIterator,
+                        Degrees degrees,
+                        double dampingFactor) {
 
         this.nodeIterator = nodeIterator;
         this.relationshipIterator = relationshipIterator;
