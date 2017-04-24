@@ -126,18 +126,16 @@ public final class ShortestPathDijkstraTest {
                 .withWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final int[] path = new ShortestPathDijkstra(graph).compute(
+        final long[] path = new ShortestPathDijkstra(graph).compute(
                 expected[0],
-                expected[expected.length - 1]
-        );
-        final long[] actual = Arrays
-                .stream(path)
-                .mapToLong(graph::toOriginalNodeId)
+                expected[expected.length - 1])
+                .resultStream()
+                .mapToLong(result -> result.nodeId)
                 .toArray();
 
         assertArrayEquals(
                 expected,
-                actual
+                path
         );
     }
 
@@ -161,18 +159,16 @@ public final class ShortestPathDijkstraTest {
                 .withWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final int[] path = new ShortestPathDijkstra(graph).compute(
+        final long[] path = new ShortestPathDijkstra(graph).compute(
                 expected[0],
-                expected[expected.length - 1]
-        );
-        final long[] actual = Arrays
-                .stream(path)
-                .mapToLong(graph::toOriginalNodeId)
+                expected[expected.length - 1])
+                .resultStream()
+                .mapToLong(result -> result.nodeId)
                 .toArray();
 
         assertArrayEquals(
                 expected,
-                actual
+                path
         );
     }
 }

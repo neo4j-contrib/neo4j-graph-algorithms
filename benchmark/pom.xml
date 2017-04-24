@@ -45,6 +45,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>procedure-compiler</artifactId>
+            <version>${neo4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>

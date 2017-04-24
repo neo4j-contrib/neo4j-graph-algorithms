@@ -319,16 +319,16 @@ public final class DisjointSetStruct {
         /**
          * the mapped node id
          */
-        public final long nodeId;
+        public final Long nodeId;
 
         /**
          * set id
          */
-        public final long setId;
+        public final Long setId;
 
         public Result(long nodeId, int setId) {
             this.nodeId = nodeId;
-            this.setId = setId;
+            this.setId = (long) setId;
         }
     }
 }
