@@ -139,6 +139,26 @@ public class PageRankProcIntegrationTest {
     }
 
     @Test
+    public void testPageRankStatsAndParameters() throws Exception {
+        runQuery(
+                "CALL algo.pageRankStats('Label1', 'TYPE1',{iterations:5,dampingFactor:0.42})",
+                row -> {
+                    assertEquals(5, row.getNumber("iterations").intValue());
+                    assertEquals(
+                            0.42,
+                            row.getNumber("dampingFactor").doubleValue(),
+                            1e-3);
+                });
+
+    }
+    @Test
+    public void testPageRankStatsDisabledWrite() throws Exception {
+        runQuery(
+                "CALL algo.pageRankStats('Label1', 'TYPE1')",
+                row -> assertFalse(row.getBoolean("write")));
+    }
+
+    @Test
     public void testPageRankWriteBack() throws Exception {
         runQuery(
                 "CALL algo.pageRank('Label1', 'TYPE1') YIELD writeMillis, write, property",
@@ -155,6 +175,33 @@ public class PageRankProcIntegrationTest {
                 double score = ((Number) db
                         .getNodeById(entry.getKey())
                         .getProperty("score")).doubleValue();
+                assertEquals(
+                        "score for " + entry.getKey(),
+                        entry.getValue(),
+                        score,
+                        1e-4);
+            }
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testPageRankWriteBackUnderDifferentProperty() throws Exception {
+        runQuery(
+                "CALL algo.pageRank('Label1', 'TYPE1', {scoreProperty:'foobar'}) YIELD writeMillis, write, property",
+                row -> {
+                    assertTrue(row.getBoolean("write"));
+                    assertEquals("foobar", row.getString("property"));
+                    assertTrue(
+                            "write time not set",
+                            row.getNumber("writeMillis").intValue() >= 0);
+                });
+
+        try (Transaction tx = db.beginTx()) {
+            for (Map.Entry<Long, Double> entry : expected.entrySet()) {
+                double score = ((Number) db
+                        .getNodeById(entry.getKey())
+                        .getProperty("foobar")).doubleValue();
                 assertEquals(
                         "score for " + entry.getKey(),
                         entry.getValue(),

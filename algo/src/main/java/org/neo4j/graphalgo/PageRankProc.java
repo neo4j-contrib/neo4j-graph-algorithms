@@ -5,8 +5,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.impl.PageRankExporter;
 import org.neo4j.graphalgo.impl.PageRankAlgo;
+import org.neo4j.graphalgo.impl.PageRankExporter;
 import org.neo4j.graphalgo.impl.PageRankScore;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -16,6 +16,7 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -86,11 +87,18 @@ public final class PageRankProc {
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        config.put(CONFIG_WRITE, Boolean.FALSE);
+        if ((boolean) config.getOrDefault(CONFIG_WRITE, DEFAULT_WRITE)) {
+            Map<String, Object> newConfig = new HashMap<>(config);
+            newConfig.put(CONFIG_WRITE, Boolean.FALSE);
+            config = newConfig;
+        }
         return pageRank(label, relationship, config);
     }
 
-    private Graph load(String label, String relationship, PageRankScore.Stats.Builder statsBuilder) {
+    private Graph load(
+            String label,
+            String relationship,
+            PageRankScore.Stats.Builder statsBuilder) {
         long start = System.nanoTime();
         Graph graph = new GraphLoader(api)
                 .withOptionalLabel(label)
@@ -108,13 +116,13 @@ public final class PageRankProc {
             Graph graph,
             Map<String, Object> config,
             PageRankScore.Stats.Builder statsBuilder) {
-        double dampingFactor = (double) config.getOrDefault(
+        double dampingFactor = ((Number) config.getOrDefault(
                 CONFIG_DAMPING,
-                DEFAULT_DAMPING);
+                DEFAULT_DAMPING)).doubleValue();
 
-        int iterations = (int) config.getOrDefault(
+        int iterations = ((Number) config.getOrDefault(
                 CONFIG_ITERATIONS,
-                DEFAULT_ITERATIONS);
+                DEFAULT_ITERATIONS)).intValue();
 
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
