@@ -4,7 +4,8 @@ import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.dss.DssStats;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -35,28 +36,31 @@ public class UnionFindProc {
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
             "{property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
             "YIELD setCount, loadDuration, evalDuration, writeDuration")
-    public Stream<DssStats> unionFind(
+    public Stream<UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        DssStats.Builder stats = DssStats.builder();
+        UnionFindResult.Builder resultBuilder = UnionFindResult.builder();
+
         // loading
-        stats.startLoad();
+        ProgressTimer load = ProgressTimer.start(resultBuilder::withLoadDuration);
         final Graph graph = load(label, relationship, config);
-        stats.stopLoad();
+        load.stop();
+
         // evaluation
-        stats.startEval();
+        ProgressTimer eval = ProgressTimer.start(resultBuilder::withEvalDuration);
         final DisjointSetStruct struct = evaluate(graph, config);
-        stats.stopEval();
+        eval.stop();
+
         if ((Boolean) config.getOrDefault("write", Boolean.FALSE)) {
             // write back
-            stats.startWrite();
+            ProgressTimer writeTimer = ProgressTimer.start(resultBuilder::withWriteDuration);
             write(graph, struct, config);
-            stats.stopWrite();
+            writeTimer.stop();
         }
 
-        return Stream.of(stats
+        return Stream.of(resultBuilder
                 .withNodeCount(graph.nodeCount())
                 .withSetCount(struct.getSetCount())
                 .build());

@@ -4,7 +4,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
