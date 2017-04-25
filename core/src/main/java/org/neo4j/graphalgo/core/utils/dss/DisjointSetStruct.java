@@ -292,13 +292,7 @@ public final class DisjointSetStruct {
         public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
             super(api);
             this.idMapping = idMapping;
-            writeInTransaction(write -> {
-                try {
-                    propertyId = write.propertyKeyGetOrCreateForName(targetProperty);
-                } catch (IllegalTokenNameException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            propertyId = getOrCreatePropertyId(targetProperty);
         }
 
         @Override
