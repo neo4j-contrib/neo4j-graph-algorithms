@@ -15,7 +15,7 @@ Currently aiming at Neo4j 3.1
 
 ----
 mvn clean install
-cp target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+cp algo/target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart
 ----
 
