@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -291,8 +292,12 @@ public final class DisjointSetStruct {
         public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
             super(api);
             this.idMapping = idMapping;
-            readInTransaction(read -> {
-                propertyId = read.propertyKeyGetForName(targetProperty);
+            writeInTransaction(write -> {
+                try {
+                    propertyId = write.propertyKeyGetOrCreateForName(targetProperty);
+                } catch (IllegalTokenNameException e) {
+                    throw new RuntimeException(e);
+                }
             });
         }
 
@@ -305,8 +310,7 @@ public final class DisjointSetStruct {
                                 idMapping.toOriginalNodeId(nodeId),
                                 DefinedProperty.numberProperty(propertyId, setId));
                     } catch (Exception e) {
-                        e.printStackTrace();
-                        return false;
+                        throw new RuntimeException(e);
                     }
                     return true;
                 });
