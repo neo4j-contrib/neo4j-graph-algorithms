@@ -8,6 +8,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * @author mknblch
@@ -22,7 +25,7 @@ public class DisjointSetStructTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testSetUnion() throws Exception {
 
         // {0}{1}{2}{3}{4}{5}{6}
         assertFalse(struct.connected(0, 1));
@@ -82,5 +85,31 @@ public class DisjointSetStructTest {
         for (IntIntCursor cursor : setSize) {
             assertTrue(cursor.value == 6 || cursor.value == 1);
         }
+    }
+
+    @Test
+    public void testDefault() throws Exception {
+        DisjointSetStruct.Consumer consumer = mock(DisjointSetStruct.Consumer.class);
+        when(consumer.consume(anyInt(), anyInt())).thenReturn(true);
+        struct.forEach(consumer);
+        verify(consumer, times(7)).consume(anyInt(), anyInt());
+        verify(consumer, times(1)).consume(eq(0), eq(0));
+        verify(consumer, times(1)).consume(eq(1), eq(1));
+        verify(consumer, times(1)).consume(eq(2), eq(2));
+        verify(consumer, times(1)).consume(eq(3), eq(3));
+        verify(consumer, times(1)).consume(eq(4), eq(4));
+        verify(consumer, times(1)).consume(eq(5), eq(5));
+        verify(consumer, times(1)).consume(eq(6), eq(6));
+    }
+
+    private void printDss() {
+        for (int i = 0; i < struct.count(); i++) {
+            System.out.printf(" %d ", i);
+        }
+        System.out.println();
+        for (int i = 0; i < struct.count(); i++) {
+            System.out.printf("[%d]", struct.find(i));
+        }
+        System.out.println("\n");
     }
 }
