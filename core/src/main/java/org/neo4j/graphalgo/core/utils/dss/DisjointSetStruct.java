@@ -78,7 +78,7 @@ public final class DisjointSetStruct {
                 .mapToObj(mappedId ->
                         new Result(
                                 idMapping.toOriginalNodeId(mappedId),
-                                findNoOpt(mappedId)));
+                                find(mappedId)));
     }
 
     /**
@@ -180,8 +180,11 @@ public final class DisjointSetStruct {
     }
 
     public int getSetCount() {
-        final IntSet set = new IntScatterSet(8);
-        forEach((nodeId, setId) -> set.add(setId));
+        final IntSet set = new IntScatterSet();
+        forEach((nodeId, setId) -> {
+            set.add(setId);
+            return true;
+        });
         return set.size();
     }
 
