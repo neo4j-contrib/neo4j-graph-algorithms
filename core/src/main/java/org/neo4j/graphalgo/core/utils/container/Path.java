@@ -32,7 +32,7 @@ public class Path {
         return offset;
     }
 
-    public void forEch(IntPredicate consumer) {
+    public void forEach(IntPredicate consumer) {
         for (int i = 0; i < offset; i++) {
             if (!consumer.test(nodes[i])) {
                 return;

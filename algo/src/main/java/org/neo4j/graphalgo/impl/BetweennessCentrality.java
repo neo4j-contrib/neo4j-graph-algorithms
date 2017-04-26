@@ -100,7 +100,7 @@ public class BetweennessCentrality {
             if (null == paths[node]) {
                 continue;
             }
-            paths[node].forEch(v -> {
+            paths[node].forEach(v -> {
                 delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                 if (node != startNode) {
                     centrality[node] += delta[node];
