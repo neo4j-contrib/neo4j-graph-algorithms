@@ -2,11 +2,8 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.container.SubGraph;
 import org.neo4j.graphalgo.core.utils.queue.LongMinPriorityQueue;
-import org.neo4j.graphdb.Direction;
 
 import static org.neo4j.graphalgo.core.utils.RawValues.*;
 
@@ -19,9 +16,9 @@ public class MSTPrim {
 
     private final IdMapping idMapping;
     private final BothRelationshipIterator iterator;
-    private final Weights weights;
+    private final RelationshipWeights weights;
 
-    public MSTPrim(IdMapping idMapping, BothRelationshipIterator iterator, Weights weights) {
+    public MSTPrim(IdMapping idMapping, BothRelationshipIterator iterator, RelationshipWeights weights) {
         this.idMapping = idMapping;
         this.iterator = iterator;
         this.weights = weights;

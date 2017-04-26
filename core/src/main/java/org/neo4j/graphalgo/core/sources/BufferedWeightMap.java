@@ -4,7 +4,7 @@ import com.carrotsearch.hppc.LongDoubleMap;
 import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.Weights;
+import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
@@ -16,7 +16,7 @@ import org.neo4j.storageengine.api.PropertyItem;
 /**
  * @author mknblch
  */
-public class BufferedWeightMap implements Weights {
+public class BufferedWeightMap implements RelationshipWeights {
 
     private final double propertyDefaultWeight;
     private final LongDoubleMap data;

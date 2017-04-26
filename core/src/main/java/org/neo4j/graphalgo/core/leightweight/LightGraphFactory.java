@@ -48,9 +48,9 @@ public final class LightGraphFactory extends GraphFactory {
                     relationId = new int[]{relId};
                 }
             }
-            weightId = setup.loadAnyProperty()
+            weightId = setup.loadDefaultRelationshipWeight()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
-                    : readOp.propertyKeyGetForName(setup.propertyName);
+                    : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
             relationCount = Math.toIntExact(relationId == null
                     ? readOp.countsForRelationship(labelId, ReadOperations.ANY_RELATIONSHIP_TYPE, ReadOperations.ANY_LABEL)
@@ -69,8 +69,8 @@ public final class LightGraphFactory extends GraphFactory {
                 0.99);
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new NullWeightMap(setup.propertyDefaultValue)
-                : new WeightMap(nodeCount, setup.propertyDefaultValue);
+                ? new NullWeightMap(setup.relationDefaultWeight)
+                : new WeightMap(nodeCount, setup.relationDefaultWeight);
 
         // index 0 is the default for non-connected nodes (by omission of entries)
         adjacencyIdx = 1L;

@@ -103,7 +103,7 @@ public final class PageRankProc {
         Graph graph = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
-                .withoutWeights()
+                .withoutRelationshipWeights()
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
         statsBuilder

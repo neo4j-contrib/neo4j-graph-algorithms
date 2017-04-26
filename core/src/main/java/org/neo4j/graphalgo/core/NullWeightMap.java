@@ -19,6 +19,26 @@ public class NullWeightMap implements WeightMapping {
     }
 
     @Override
+    public double get(final long id, final double defaultValue) {
+        return defaultValue;
+    }
+
+    @Override
+    public double get(final int source, final int target) {
+        return defaultValue;
+    }
+
+    @Override
+    public double get(final int id) {
+        return defaultValue;
+    }
+
+    @Override
+    public double get(final int id, final double defaultValue) {
+        return defaultValue;
+    }
+
+    @Override
     public void set(long id, Object weight) {
         throw new UnsupportedOperationException();
     }

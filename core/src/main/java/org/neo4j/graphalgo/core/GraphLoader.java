@@ -34,11 +34,15 @@ public class GraphLoader {
 
     private String label = null;
     private String relation = null;
-    private String property = null;
+    private String relWeightProp = null;
+    private String nodeWeightProp = null;
+    private String nodeProp = null;
 
     private final GraphDatabaseAPI api;
     private ExecutorService executorService;
-    private double propertyDefaultValue = 0.0;
+    private double relWeightDefault = 0.0;
+    private double nodeWeightDefault = 0.0;
+    private double nodePropDefault = 0.0;
 
     /**
      * Creates a new serial GraphLoader.
@@ -170,43 +174,125 @@ public class GraphLoader {
     }
 
     /**
-     * Instructs the loader to load weights by reading the given property.
+     * Instructs the loader to load relationship weights by reading the given property.
      * If the property is not set, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a weight property, use {@link #withoutWeights()} instead.
+     * @param property May not be null; to remove a weight property, use {@link #withoutRelationshipWeights()} instead.
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
-    public GraphLoader withWeightsFromProperty(String property, double propertyDefaultValue) {
-        this.property = Objects.requireNonNull(property);
-        this.propertyDefaultValue = propertyDefaultValue;
+    public GraphLoader withRelationshipWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.relWeightProp = Objects.requireNonNull(property);
+        this.relWeightDefault = propertyDefaultValue;
         return this;
     }
 
     /**
-     * Instructs the loader to load weights by reading the given property.
+     * Instructs the loader to load relationship weights by reading the given property.
      * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
      * @param property May be null
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
-    public GraphLoader withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
-        this.property = property;
-        this.propertyDefaultValue = propertyDefaultValue;
+    public GraphLoader withOptionalRelationshipWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.relWeightProp = property;
+        this.relWeightDefault = propertyDefaultValue;
         return this;
     }
 
     /**
-     * Instructs the loader to not load any weights. Instead each weight is set
+     * Instructs the loader to load node weights by reading the given property.
+     * If the property is not set, the propertyDefaultValue is used instead.
+     *
+     * @param property May not be null; to remove a weight property, use {@link #withoutNodeWeights()} instead.
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withNodeWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.nodeWeightProp = Objects.requireNonNull(property);
+        this.nodeWeightDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load node weights by reading the given property.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     *
+     * @param property May be null
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withOptionalNodeWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.nodeWeightProp = property;
+        this.nodeWeightDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load node values by reading the given property.
+     * If the property is not set, the propertyDefaultValue is used instead.
+     *
+     * @param property May not be null; to remove a node property, use {@link #withoutNodeProperties()} instead.
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withNodeProperty(String property, double propertyDefaultValue) {
+        this.nodeProp = Objects.requireNonNull(property);
+        this.nodePropDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load node values by reading the given property.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     *
+     * @param property May be null
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withOptionalNodeProperty(String property, double propertyDefaultValue) {
+        this.nodeProp = property;
+        this.nodePropDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any relationship weights. Instead each weight is set
      * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.
      * @return itself to enable fluent interface
      */
-    public GraphLoader withDefaultWeight(double propertyDefaultValue) {
-        this.property = null;
-        this.propertyDefaultValue = propertyDefaultValue;
+    public GraphLoader withDefaultRelationshipWeight(double propertyDefaultValue) {
+        this.relWeightProp = null;
+        this.relWeightDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any node weights. Instead each weight is set
+     * to propertyDefaultValue.
+     *
+     * @param propertyDefaultValue the default value.
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDefaultNodeWeight(double propertyDefaultValue) {
+        this.nodeWeightProp = null;
+        this.nodeWeightDefault = propertyDefaultValue;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any node properties. Instead each weight is set
+     * to propertyDefaultValue.
+     *
+     * @param propertyDefaultValue the default value.
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDefaultNodeProperties(double propertyDefaultValue) {
+        this.nodeProp = null;
+        this.nodePropDefault = propertyDefaultValue;
         return this;
     }
 
@@ -216,9 +302,31 @@ public class GraphLoader {
      *
      * @return itself to enable fluent interface
      */
-    public GraphLoader withoutWeights() {
-        this.property = null;
-        this.propertyDefaultValue = 0.0;
+    public GraphLoader withoutRelationshipWeights() {
+        this.relWeightProp = null;
+        this.relWeightDefault = 0.0;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any node weights.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withoutNodeWeights() {
+        this.nodeWeightProp = null;
+        this.nodeWeightDefault = 0.0;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to not load any node properties.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withoutNodeProperties() {
+        this.nodeProp = null;
+        this.nodePropDefault = 0.0;
         return this;
     }
 
@@ -250,8 +358,12 @@ public class GraphLoader {
                 label,
                 null,
                 relation,
-                property,
-                propertyDefaultValue,
+                relWeightProp,
+                relWeightDefault,
+                nodeWeightProp,
+                nodeWeightDefault,
+                nodeProp,
+                nodePropDefault,
                 executorService);
 
         try {

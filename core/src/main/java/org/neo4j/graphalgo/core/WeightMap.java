@@ -34,6 +34,11 @@ public final class WeightMap implements WeightMapping {
     }
 
     @Override
+    public double get(final long id, final double defaultValue) {
+        return weights.getOrDefault(id, defaultValue);
+    }
+
+    @Override
     public void set(long id, Object value) {
         final double doubleVal = extractValue(value);
         if (doubleVal == defaultValue) {

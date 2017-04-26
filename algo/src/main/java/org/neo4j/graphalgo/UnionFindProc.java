@@ -87,7 +87,7 @@ public class UnionFindProc {
         return new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
-                .withOptionalWeightsFromProperty(
+                .withOptionalRelationshipWeightsFromProperty(
                         (String) config.get(CONFIG_PROPERTY),
                         (double)config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)

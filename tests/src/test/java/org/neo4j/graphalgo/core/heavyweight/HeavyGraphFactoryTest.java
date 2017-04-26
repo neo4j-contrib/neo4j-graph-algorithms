@@ -82,7 +82,7 @@ public class HeavyGraphFactoryTest {
 
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withLabel("Node1")
-                .withoutWeights()
+                .withoutRelationshipWeights()
                 .withAnyRelationshipType()
                 .load(HeavyGraphFactory.class);
 
@@ -93,7 +93,7 @@ public class HeavyGraphFactoryTest {
     public void testAnyRelation() throws Exception {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withAnyLabel()
-                .withoutWeights()
+                .withoutRelationshipWeights()
                 .withAnyRelationshipType()
                 .load(HeavyGraphFactory.class);
 
@@ -111,7 +111,7 @@ public class HeavyGraphFactoryTest {
     public void testWithRelation() throws Exception {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withAnyLabel()
-                .withoutWeights()
+                .withoutRelationshipWeights()
                 .withRelationshipType("REL1")
                 .load(HeavyGraphFactory.class);
 
@@ -131,7 +131,7 @@ public class HeavyGraphFactoryTest {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withAnyLabel()
                 .withAnyRelationshipType()
-                .withWeightsFromProperty("prop1", 0.0)
+                .withRelationshipWeightsFromProperty("prop1", 0.0)
                 .load(HeavyGraphFactory.class);
 
         graph.forEachRelationship(graph.toMappedNodeId(id1), Direction.OUTGOING, weightedRelationConsumer);

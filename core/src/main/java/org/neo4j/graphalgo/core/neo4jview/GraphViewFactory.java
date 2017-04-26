@@ -19,7 +19,7 @@ public final class GraphViewFactory extends GraphFactory {
                 api,
                 setup.startLabel,
                 setup.relationshipType,
-                setup.propertyName,
-                setup.propertyDefaultValue);
+                setup.relationWeightPropertyName,
+                setup.relationDefaultWeight);
     }
 }

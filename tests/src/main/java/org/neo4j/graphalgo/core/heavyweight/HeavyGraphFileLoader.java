@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
@@ -99,7 +100,7 @@ public class HeavyGraphFileLoader {
             final WeightMapping weightMapping = WeightMappingSerialization.read(
                     in);
 
-            return new HeavyGraph(idMap, container, weightMapping);
+            return new HeavyGraph(idMap, container, weightMapping, new NullWeightMap(1.0), new NullWeightMap(1.0));
         }
     }
 }

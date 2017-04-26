@@ -70,7 +70,7 @@ public class SimpleGraphSetup {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withLabel(LABEL)
                 .withRelationshipType(RELATION)
-                .withWeightsFromProperty(PROPERTY, 0.0)
+                .withRelationshipWeightsFromProperty(PROPERTY, 0.0)
                 .load(factory);
         v0 = graph.toMappedNodeId(n0);
         v1 = graph.toMappedNodeId(n1);

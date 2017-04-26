@@ -123,7 +123,7 @@ public final class ShortestPathDijkstraTest {
         final Graph graph = new GraphLoader(db)
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
-                .withWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
         final long[] path = new ShortestPathDijkstra(graph).compute(
@@ -156,7 +156,7 @@ public final class ShortestPathDijkstraTest {
         final Graph graph = new GraphLoader(db)
                 .withLabel(label)
                 .withRelationshipType("TYPE2")
-                .withWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
         final long[] path = new ShortestPathDijkstra(graph).compute(

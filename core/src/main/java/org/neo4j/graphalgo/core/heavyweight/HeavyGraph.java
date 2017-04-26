@@ -20,19 +20,25 @@ import java.util.function.IntConsumer;
  *
  * @author mknblch
  */
-public class HeavyGraph implements Graph {
+public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, NodeProperties {
 
     private final IdMap nodeIdMap;
     private final AdjacencyMatrix container;
-    private final WeightMapping weights;
+    private final WeightMapping relationshipWeights;
+    private final WeightMapping nodeWeights;
+    private final WeightMapping nodeProperties;
 
     HeavyGraph(
             IdMap nodeIdMap,
             AdjacencyMatrix container,
-            final WeightMapping weights) {
+            final WeightMapping relationshipWeights,
+            final WeightMapping nodeWeights,
+            final WeightMapping nodeProperties) {
         this.nodeIdMap = nodeIdMap;
         this.container = container;
-        this.weights = weights;
+        this.relationshipWeights = relationshipWeights;
+        this.nodeWeights = nodeWeights;
+        this.nodeProperties = nodeProperties;
     }
 
     @Override
@@ -65,7 +71,7 @@ public class HeavyGraph implements Graph {
             final int nodeId,
             final Direction direction,
             final WeightedRelationshipConsumer consumer) {
-        container.forEach(nodeId, direction, weights, consumer);
+        container.forEach(nodeId, direction, relationshipWeights, consumer);
     }
 
     @Override
@@ -76,7 +82,8 @@ public class HeavyGraph implements Graph {
     @Override
     public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
             final int nodeId, final Direction direction) {
-        return container.weightedRelationIterator(nodeId, weights, direction);
+        return container.weightedRelationIterator(nodeId,
+                relationshipWeights, direction);
     }
 
     @Override
@@ -87,5 +94,20 @@ public class HeavyGraph implements Graph {
     @Override
     public long toOriginalNodeId(int mappedNodeId) {
         return nodeIdMap.unmap(mappedNodeId);
+    }
+
+    @Override
+    public double weightOf(final int sourceNodeId, final int targetNodeId) {
+        return relationshipWeights.get(sourceNodeId, targetNodeId);
+    }
+
+    @Override
+    public double weightOf(final int nodeId) {
+        return nodeWeights.get(nodeId);
+    }
+
+    @Override
+    public double valueOf(final int nodeId, final double defaultValue) {
+        return nodeProperties.get(nodeId, defaultValue);
     }
 }

@@ -85,7 +85,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     public void shouldLoadWeightedRelationshipsNodesForNonExistingStringTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType("foo")
-                .withWeightsFromProperty("weight", 42.0)
+                .withRelationshipWeightsFromProperty("weight", 42.0)
                 .load(graphImpl);
         testWeightedRelationships(graph);
     }
@@ -94,7 +94,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     public void shouldLoadWeightedRelationshipsNodesForNonExistingTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType(RelationshipType.withName("foo"))
-                .withWeightsFromProperty("weight", 42.0)
+                .withRelationshipWeightsFromProperty("weight", 42.0)
                 .load(graphImpl);
         testWeightedRelationships(graph);
     }
@@ -102,7 +102,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     @Test
     public void shouldLoadDefaultWeightForNonExistingProperty() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
-                .withWeightsFromProperty("foo", 13.37)
+                .withRelationshipWeightsFromProperty("foo", 13.37)
                 .load(graphImpl);
         graph.forEachNode(node -> graph.forEachRelationship(
                 node,

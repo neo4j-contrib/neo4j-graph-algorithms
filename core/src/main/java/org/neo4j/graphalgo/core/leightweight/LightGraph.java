@@ -214,7 +214,7 @@ public class LightGraph implements Graph {
             int offset = cursor.offset;
             final int limit = cursor.length + offset;
             while (offset < limit) {
-                consumer.accept(node, array[offset], relMap.get(offset), weightMap.get(offset++));
+                consumer.accept(node, array[offset], relMap.get(offset), weightMap.get((long) offset++));
             }
         }
     }

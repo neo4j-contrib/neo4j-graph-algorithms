@@ -47,7 +47,7 @@ public class DijkstraProc {
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel((String) config.get(CONFIG_LABEL))
                 .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
-                .withOptionalWeightsFromProperty(
+                .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)
@@ -76,7 +76,7 @@ public class DijkstraProc {
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel((String) config.get(CONFIG_LABEL))
                 .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
-                .withOptionalWeightsFromProperty(
+                .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)
