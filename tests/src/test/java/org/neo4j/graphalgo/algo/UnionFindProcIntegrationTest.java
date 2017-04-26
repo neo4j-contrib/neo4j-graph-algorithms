@@ -29,16 +29,17 @@ public class UnionFindProcIntegrationTest {
 
     @BeforeClass
     public static void setup() throws KernelException {
-        String createGraph = "CREATE (nA)\n" +
-                "CREATE (nB)\n" +
-                "CREATE (nC)\n" +
-                "CREATE (nD)\n" +
+        String createGraph =
+                "CREATE (nA:Label)\n" +
+                "CREATE (nB:Label)\n" +
+                "CREATE (nC:Label)\n" +
+                "CREATE (nD:Label)\n" +
                 "CREATE (nE)\n" +
                 "CREATE (nF)\n" +
                 "CREATE (nG)\n" +
                 "CREATE (nH)\n" +
                 "CREATE (nI)\n" +
-                "CREATE (nJ)\n" +
+                "CREATE (nJ)\n" + // {J}
                 "CREATE\n" +
 
                 // {A, B, C, D}
@@ -48,19 +49,18 @@ public class UnionFindProcIntegrationTest {
 
                 "  (nD)-[:TYPE {cost:4.2}]->(nE),\n" + // threshold UF should split here
 
-                // {E, G, G}
+                // {E, F, G}
                 "  (nE)-[:TYPE]->(nF),\n" +
                 "  (nF)-[:TYPE]->(nG),\n" +
 
                 // {H, I}
                 "  (nH)-[:TYPE]->(nI)";
 
-
-
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
+
         try (Transaction tx = db.beginTx()) {
             db.execute(createGraph).close();
             tx.success();
@@ -73,19 +73,28 @@ public class UnionFindProcIntegrationTest {
 
     @Test
     public void testUnionFind() throws Exception {
-        db.execute("CALL algo.unionFind('', 'TYPE') YIELD setCount, loadDuration, evalDuration, writeDuration")
+        db.execute("CALL algo.unionFind('', '') YIELD setCount")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    assertEquals(2L, row.getNumber("setCount"));
-                    return false;
+                    assertEquals(3L, row.getNumber("setCount"));
+                    return true;
+                });
+    }
+
+    @Test
+    public void testUnionFindWithLabel() throws Exception {
+        db.execute("CALL algo.unionFind('Label', '') YIELD setCount")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(1L, row.getNumber("setCount"));
+                    return true;
                 });
     }
 
     @Test
     public void testUnionFindWriteBack() throws Exception {
-        db.execute("CALL algo.unionFind('', 'TYPE', {write:true}) YIELD setCount, loadDuration, evalDuration, writeDuration")
+        db.execute("CALL algo.unionFind('', 'TYPE', {write:true}) YIELD setCount, writeDuration")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeDuration"));
-                    assertEquals(2L, row.getNumber("setCount"));
+                    assertEquals(3L, row.getNumber("setCount"));
                     return false;
                 });
     }
@@ -93,7 +102,7 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testUnionFindStream() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFindStream('', 'TYPE', {}) YIELD nodeId, setId")
+        db.execute("CALL algo.unionFindStream('', 'TYPE', {}) YIELD setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
@@ -104,7 +113,7 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindStream() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD nodeId, setId")
+        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
@@ -115,7 +124,7 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindLowThreshold() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:3.14}) YIELD nodeId, setId")
+        db.execute("CALL algo.unionFindStream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:3.14}) YIELD setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
