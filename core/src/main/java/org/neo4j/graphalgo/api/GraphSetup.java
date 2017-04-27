@@ -32,6 +32,10 @@ public class GraphSetup {
     // the executor service for parallel execution. null means single threaded evaluation.
     @Deprecated
     public final ExecutorService executor;
+    /** statement to load nodes, has to return "id" and optionally "weight" or "value" */
+    public final String nodeStatement;
+    /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
+    public final String relationshipStatement;
 
     /**
      * main ctor
@@ -48,6 +52,8 @@ public class GraphSetup {
      *                         null means the default value is used for each value.
      * @param nodeDefaultPropertyValue the default node value if property is not given.
      * @param executor the executor. null means single threaded evaluation
+     * @param nodeStatement statement to load nodes, has to return "id" and optionally "weight" or "value"
+     * @param relationshipStatement statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
      */
     public GraphSetup(
             String startLabel,
@@ -59,7 +65,9 @@ public class GraphSetup {
             double nodeDefaultWeight,
             String nodePropertyName,
             double nodeDefaultPropertyValue,
-            ExecutorService executor) {
+            ExecutorService executor,
+            String nodeStatement,
+            String relationshipStatement) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -71,6 +79,8 @@ public class GraphSetup {
         this.nodePropertyName = nodePropertyName;
         this.nodeDefaultPropertyValue = nodeDefaultPropertyValue;
         this.executor = executor;
+        this.nodeStatement = nodeStatement;
+        this.relationshipStatement = relationshipStatement;
     }
 
     /**
@@ -87,6 +97,8 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = null;
+        this.nodeStatement = null;
+        this.relationshipStatement = null;
     }
 
     /**
@@ -106,6 +118,8 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = executor;
+        this.nodeStatement = null;
+        this.relationshipStatement = null;
     }
 
     public boolean loadConcurrent() {

@@ -43,6 +43,10 @@ public class GraphLoader {
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
     private double nodePropDefault = 0.0;
+    /** statement to load nodes, has to return "id" and optionally "weight" or "value" */
+    private String nodeStatement;
+    /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
+    private String relationshipStatement;
 
     /**
      * Creates a new serial GraphLoader.
@@ -364,7 +368,9 @@ public class GraphLoader {
                 nodeWeightDefault,
                 nodeProp,
                 nodePropDefault,
-                executorService);
+                executorService,
+                nodeStatement,
+                relationshipStatement);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -373,5 +379,25 @@ public class GraphLoader {
                     throwable.getMessage(),
                     throwable);
         }
+    }
+
+    /**
+     * provide statement to load nodes, has to return "id" and optionally "weight" or "value"
+     * @param nodeStatement
+     * @return
+     */
+    public GraphLoader withNodeStatement(String nodeStatement) {
+        this.nodeStatement = nodeStatement;
+        return this;
+    }
+
+    /**
+     * provide statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
+     * @param relationshipStatement
+     * @return
+     */
+    public GraphLoader withRelationshipStatement(String relationshipStatement) {
+        this.relationshipStatement = relationshipStatement;
+        return this;
     }
 }
