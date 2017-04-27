@@ -14,7 +14,7 @@ public class Path {
     private int offset = 0;
 
     public Path() {
-        this(1); // TODO test other initial sizes
+        this(10);
     }
 
     public Path(int initialSize) {

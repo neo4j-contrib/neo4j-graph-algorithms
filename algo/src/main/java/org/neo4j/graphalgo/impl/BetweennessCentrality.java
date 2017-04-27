@@ -3,16 +3,25 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.Exporter;
 import org.neo4j.graphalgo.core.utils.container.Path;
+import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
+import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
+import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
+import org.neo4j.kernel.api.properties.Property;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
  * Implements Betweenness Centrality for unweighted graphs
- * as specified in <a href=http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
+ * as specified in <a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
  *
  * @author mknblch
  */
@@ -46,6 +55,10 @@ public class BetweennessCentrality {
     public BetweennessCentrality compute() {
         graph.forEachNode(this::compute);
         return this;
+    }
+
+    public double[] getCentrality() {
+        return centrality;
     }
 
     /**
@@ -121,7 +134,6 @@ public class BetweennessCentrality {
             paths[path] = new Path();
         }
         paths[path].append(nodeId);
-
     }
 
     private void clearPaths() {
@@ -134,7 +146,7 @@ public class BetweennessCentrality {
     }
 
     /**
-     * Consumer interface for each nodeId to centrality-value pair
+     * Consumer interface
      */
     public interface ResultConsumer {
         /**
@@ -142,7 +154,6 @@ public class BetweennessCentrality {
          *
          * @param originalNodeId the neo4j node id
          * @param value centrality value
-         *
          * @return a bool indicating if the loop should continue(true) or stop(false)
          */
         boolean consume(long originalNodeId, double value);
@@ -155,11 +166,43 @@ public class BetweennessCentrality {
 
         public final Long nodeId;
 
-        public final Double value;
+        public final Double centrality;
 
-        public Result(Long nodeId, Double value) {
+        public Result(Long nodeId, Double centrality) {
             this.nodeId = nodeId;
-            this.value = value;
+            this.centrality = centrality;
         }
     }
+
+    public static class BCExporter extends Exporter<BetweennessCentrality> {
+
+        private int targetPropertyId = -1;
+
+        public BCExporter(GraphDatabaseAPI api) {
+            super(api);
+        }
+
+        public BCExporter withTargetProperty(String targetProperty) {
+            this.targetPropertyId = getOrCreatePropertyId(targetProperty);
+            return this;
+        }
+
+        @Override
+        public void write(BetweennessCentrality bc) {
+            writeInTransaction(writeOp -> {
+                bc.forEach(((originalNodeId, value) -> {
+                    try {
+                        writeOp.nodeSetProperty(originalNodeId, Property.doubleProperty(targetPropertyId, value));
+                    } catch (EntityNotFoundException
+                            | ConstraintValidationKernelException
+                            | InvalidTransactionTypeKernelException
+                            | AutoIndexingKernelException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return true;
+                }));
+            });
+        }
+    }
+
 }
