@@ -17,6 +17,7 @@ public class GraphBuilderTest extends Neo4JTestCase{
 
     @Test
     public void testRingBuilder() throws Exception {
+
         Runnable mock = mock(Runnable.class);
         GraphBuilder.create((GraphDatabaseAPI) db)
                 .newRingBuilder()
@@ -27,5 +28,6 @@ public class GraphBuilderTest extends Neo4JTestCase{
                     mock.run();
                 });
         verify(mock, times(10)).run();
+
     }
 }
