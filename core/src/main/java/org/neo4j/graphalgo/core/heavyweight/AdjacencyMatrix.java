@@ -75,16 +75,16 @@ class AdjacencyMatrix {
      * initialize array for outgoing connections
      */
     public void armOut(int sourceNodeId, int degree) {
-        outgoing[sourceNodeId] = new int[degree];
-        outgoingIds[sourceNodeId] = new long[degree];
+        outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId],degree);
+        outgoingIds[sourceNodeId] = Arrays.copyOf(outgoingIds[sourceNodeId],degree);;
     }
 
     /**
-     * initialize array fro incoming connections
+     * initialize array for incoming connections
      */
     public void armIn(int targetNodeId, int degree) {
-        incoming[targetNodeId] = new int[degree];
-        incomingIds[targetNodeId] = new long[degree];
+        incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId],degree);
+        incomingIds[targetNodeId] = Arrays.copyOf(incomingIds[targetNodeId],degree);
     }
 
     /**
@@ -93,7 +93,7 @@ class AdjacencyMatrix {
     public void addOutgoing(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = outOffsets[sourceNodeId];
         final int nextDegree = degree + 1;
-
+        if (outgoing[sourceNodeId].length <= degree) armOut(sourceNodeId, degree+Math.min(Math.max(degree,10)<<2,2<<16));
         outgoing[sourceNodeId][degree] = targetNodeId;
         outgoingIds[sourceNodeId][degree] = relationId;
         outOffsets[sourceNodeId] = nextDegree;
@@ -105,6 +105,7 @@ class AdjacencyMatrix {
     public void addIncoming(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = inOffsets[targetNodeId];
         final int nextDegree = degree + 1;
+        if (incoming[sourceNodeId].length <= degree) armIn(sourceNodeId, degree+Math.min(degree<<2,2<<16));
 
         incoming[targetNodeId][degree] = sourceNodeId;
         incomingIds[targetNodeId][degree] = relationId;
