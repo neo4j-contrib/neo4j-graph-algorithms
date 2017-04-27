@@ -19,6 +19,12 @@ public class LazyIdMapper implements IdMapping {
 
     private int current = 0;
 
+    public LazyIdMapper() {
+        forward = new LongIntScatterMap();
+        backward = new IntLongScatterMap();
+        this.nodeCount = -1;
+    }
+
     public LazyIdMapper(int nodeCount) {
         forward = new LongIntScatterMap(nodeCount);
         backward = new IntLongScatterMap(nodeCount);
@@ -43,7 +49,7 @@ public class LazyIdMapper implements IdMapping {
 
     @Override
     public int nodeCount() {
-        return nodeCount;
+        return nodeCount == -1 ? forward.size() : nodeCount;
     }
 
     public static LazyIdMapperImporter importer(GraphDatabaseAPI api) {
