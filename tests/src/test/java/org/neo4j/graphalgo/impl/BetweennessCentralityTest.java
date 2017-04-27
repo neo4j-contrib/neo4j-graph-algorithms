@@ -15,6 +15,10 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import static org.mockito.Matchers.anyDouble;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.*;
+
 
 /**
  * @author mknblch
@@ -22,9 +26,11 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 public class BetweennessCentralityTest {
 
     public static final String TYPE = "TYPE";
+
     private static GraphDatabaseAPI db;
     private static Graph graph;
     private static DefaultBuilder builder;
+    private static long centerNodeId;
 
     @BeforeClass
     public static void setupGraph() {
@@ -43,11 +49,11 @@ public class BetweennessCentralityTest {
          * create two rings of nodes where each node of ring A
          * is connected to center while center is connected to
          * each node of ring B.
-         *
-         * TODO should have the highest centrality ;)
          */
         final Node center = builder.newDefaultBuilder()
                 .createNode();
+
+        centerNodeId = center.getId();
 
         builder.newRingBuilder()
                 .createRing(5)
@@ -75,13 +81,16 @@ public class BetweennessCentralityTest {
     @Test
     public void test() throws Exception {
 
-        // TODO build appropriate testcase
+        final BetweennessCentrality.ResultConsumer consumer =
+                mock(BetweennessCentrality.ResultConsumer.class);
+        when(consumer.consume(anyLong(), anyDouble()))
+                .thenReturn(true);
 
         new BetweennessCentrality(graph)
                 .compute()
-                .forEach((originalNodeId, value) -> {
-                    System.out.println("centrality:" + originalNodeId + ": " + value);
-                    return true;
-                });
+                .forEach(consumer);
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
     }
 }

@@ -23,17 +23,17 @@ public class BetweennessCentrality {
     private final double[] centrality;
     private final double[] delta;
     private final int[] sigma;
-    private final int[] d;
+    private final int[] distance;
     private final IntStack stack;
     private final IntArrayDeque queue;
-    private final Path[] paths;
+    private final Path[] paths; // TODO find a better container impl
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
         this.centrality = new double[graph.nodeCount()];
         this.stack = new IntStack();
         this.sigma = new int[graph.nodeCount()];
-        this.d = new int[graph.nodeCount()];
+        this.distance = new int[graph.nodeCount()];
         queue = new IntArrayDeque();
         paths = new Path[graph.nodeCount()];
         delta = new double[graph.nodeCount()];
@@ -76,19 +76,19 @@ public class BetweennessCentrality {
         queue.clear();
         Arrays.fill(sigma, 0);
         Arrays.fill(delta, 0);
-        Arrays.fill(d, -1);
+        Arrays.fill(distance, -1);
         sigma[startNode] = 1;
-        d[startNode] = 0;
+        distance[startNode] = 0;
         queue.addLast(startNode);
         while (!queue.isEmpty()) {
             int node = queue.removeLast();
             stack.push(node);
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
-                if (d[target] < 0) {
+                if (distance[target] < 0) {
                     queue.addLast(target);
-                    d[target] = d[node] + 1;
+                    distance[target] = distance[node] + 1;
                 }
-                if (d[target] == d[node] + 1) {
+                if (distance[target] == distance[node] + 1) {
                     sigma[target] += sigma[node];
                     append(target, node);
                 }
@@ -133,10 +133,24 @@ public class BetweennessCentrality {
         }
     }
 
+    /**
+     * Consumer interface for each nodeId to centrality-value pair
+     */
     public interface ResultConsumer {
+        /**
+         * consume nodeId and centrality value as long as the consumer returns true
+         *
+         * @param originalNodeId the neo4j node id
+         * @param value centrality value
+         *
+         * @return a bool indicating if the loop should continue(true) or stop(false)
+         */
         boolean consume(long originalNodeId, double value);
     }
 
+    /**
+     * Result class used for streaming
+     */
     public static final class Result {
 
         public final Long nodeId;
