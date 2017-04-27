@@ -19,12 +19,22 @@ public class LazyIdMapper implements IdMapping {
 
     private int current = 0;
 
+    /**
+     * initialize without predefined size so that
+     * {@link LazyIdMapper#nodeCount()} returns the
+     * current number of objects
+     */
     public LazyIdMapper() {
         forward = new LongIntScatterMap();
         backward = new IntLongScatterMap();
         this.nodeCount = -1;
     }
 
+    /**
+     * initialize the id-map with a predefined node count.
+     *
+     * @param nodeCount the number of nodes to map
+     */
     public LazyIdMapper(int nodeCount) {
         forward = new LongIntScatterMap(nodeCount);
         backward = new IntLongScatterMap(nodeCount);
