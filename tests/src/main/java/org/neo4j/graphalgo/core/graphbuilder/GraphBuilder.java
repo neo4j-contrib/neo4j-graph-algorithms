@@ -19,41 +19,51 @@ import java.util.function.Supplier;
  */
 public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
+    private final ME self;
+
     protected final HashSet<Node> nodes;
     protected final GraphDatabaseAPI api;
     protected final ThreadToStatementContextBridge bridge;
 
     protected Transaction tx = null;
 
-    protected String label;
-    protected String relationship;
+    protected Label label;
+    protected RelationshipType relationship;
 
-    protected GraphBuilder(GraphDatabaseAPI api, String label, String relationship) {
+    protected GraphBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
         this.api = api;
         this.label = label;
         this.relationship = relationship;
-        bridge = api.getDependencyResolver().resolveDependency(ThreadToStatementContextBridge.class);
+        bridge = api.getDependencyResolver()
+                .resolveDependency(ThreadToStatementContextBridge.class);
         nodes = new HashSet<>();
+        this.self = me();
     }
 
     public ME setLabel(String label) {
-        this.label = label;
-        return me();
+        if (null == label) {
+            return self;
+        }
+        this.label = Label.label(label);
+        return self;
     }
 
     public ME setRelationship(String relationship) {
-        this.relationship = relationship;
-        return me();
+        if (null == relationship) {
+            return self;
+        }
+        this.relationship = RelationshipType.withName(relationship);
+        return self;
     }
 
     public Relationship createRelationship(Node p, Node q) {
-        return p.createRelationshipTo(q, RelationshipType.withName(relationship));
+        return p.createRelationshipTo(q, relationship);
     }
 
     public Node createNode() {
         Node node = api.createNode();
         if (null != label) {
-            node.addLabel(Label.label(label));
+            node.addLabel(label);
         }
         nodes.add(node);
         return node;
@@ -61,11 +71,11 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     public ME forEachInTx(Consumer<Node> consumer) {
         withinTransaction(() -> nodes.forEach(consumer));
-        return me();
+        return self;
     }
 
     public ME writeInTransaction(Consumer<DataWriteOperations> consumer) {
-        beginnTx();
+        beginTx();
         try(
             Statement statement = bridge.get()) {
             consumer.accept(statement.dataWriteOperations());
@@ -73,18 +83,18 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
             throw new RuntimeException(e);
         }
         closeTx();
-        return me();
+        return self;
     }
 
     public ME withinTransaction(Runnable runnable) {
-        beginnTx();
+        beginTx();
         runnable.run();
         closeTx();
-        return me();
+        return self;
     }
 
     public <T> T withinTransaction(Supplier<T> supplier) {
-        beginnTx();
+        beginTx();
         T t = supplier.get();
         closeTx();
         return t;
@@ -98,7 +108,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
         return new RingBuilder(api, label, relationship);
     }
 
-    protected void beginnTx() {
+    protected void beginTx() {
         if (null != tx) {
             return;
         }
