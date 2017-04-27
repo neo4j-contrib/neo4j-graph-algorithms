@@ -7,6 +7,9 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 /**
+ * default builder which makes methods
+ * from abstract graphBuilder accessible
+ *
  * @author mknblch
  */
 public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
@@ -15,6 +18,12 @@ public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
         super(api, label, relationship);
     }
 
+    /**
+     * create a relationship within a transaction
+     * @param p the source node
+     * @param q the target node
+     * @return the relationship object
+     */
     @Override
     public Relationship createRelationship(Node p, Node q) {
         beginTx();
@@ -23,6 +32,11 @@ public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
         return relationship;
     }
 
+    /**
+     * create a node within a transaction
+     *
+     * @return the node
+     */
     @Override
     public Node createNode() {
         beginTx();
