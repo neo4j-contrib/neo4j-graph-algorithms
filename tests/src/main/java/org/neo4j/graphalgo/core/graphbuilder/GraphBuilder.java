@@ -201,7 +201,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     protected abstract ME me();
 
     /**
-     * create a new default builder+
+     * create a new default builder
      *
      * @param api the neo4j api
      * @return a new default builder

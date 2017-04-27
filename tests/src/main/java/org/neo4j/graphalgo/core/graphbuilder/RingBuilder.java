@@ -17,7 +17,6 @@ import java.util.function.Consumer;
  */
 public class RingBuilder extends GraphBuilder<RingBuilder> {
 
-
     protected RingBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
         super(api, label, relationship);
     }
