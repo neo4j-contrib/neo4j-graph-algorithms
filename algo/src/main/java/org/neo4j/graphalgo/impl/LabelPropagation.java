@@ -41,7 +41,7 @@ public final class LabelPropagation implements IntConsumer, RelationshipConsumer
         votes.clear();
         graph.forEachRelationship(node, direction, this);
 
-        double originalPartition = graph.valueOf(node, node);
+        double originalPartition = partition(node);
         double partition = originalPartition;
         double weight = Double.NEGATIVE_INFINITY;
         for (DoubleDoubleCursor vote : votes) {
@@ -61,9 +61,14 @@ public final class LabelPropagation implements IntConsumer, RelationshipConsumer
             final int sourceNodeId,
             final int targetNodeId,
             final long relationId) {
-        double partition = graph.valueOf(targetNodeId, targetNodeId);
+        double partition = partition(targetNodeId);
         double weight = graph.weightOf(sourceNodeId, targetNodeId) * graph.weightOf(targetNodeId);
         votes.addTo(partition, weight);
         return true;
+    }
+
+    private double partition(int node) {
+        double partition = labels.getOrDefault(node, Double.NEGATIVE_INFINITY);
+        return partition == Double.NEGATIVE_INFINITY ? graph.valueOf(node, node) : partition;
     }
 }
