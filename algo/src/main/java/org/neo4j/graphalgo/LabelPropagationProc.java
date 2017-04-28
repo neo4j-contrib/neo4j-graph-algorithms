@@ -115,8 +115,6 @@ public final class LabelPropagationProc {
         IntDoubleMap labels = new LabelPropagation(graph).compute(
                 direction,
                 iterations);
-
-        System.out.println("labels = " + labels);
         stats.computeMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
                 .nodes(labels.size());
         return labels;
