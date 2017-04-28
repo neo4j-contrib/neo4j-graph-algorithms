@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.api.*;
+import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -75,16 +76,32 @@ class AdjacencyMatrix {
      * initialize array for outgoing connections
      */
     public void armOut(int sourceNodeId, int degree) {
-        outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId],degree);
-        outgoingIds[sourceNodeId] = Arrays.copyOf(outgoingIds[sourceNodeId],degree);;
+        outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId], degree);
+        outgoingIds[sourceNodeId] = Arrays.copyOf(outgoingIds[sourceNodeId], degree);
     }
 
     /**
      * initialize array for incoming connections
      */
     public void armIn(int targetNodeId, int degree) {
-        incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId],degree);
-        incomingIds[targetNodeId] = Arrays.copyOf(incomingIds[targetNodeId],degree);
+        incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId], degree);
+        incomingIds[targetNodeId] = Arrays.copyOf(incomingIds[targetNodeId], degree);
+    }
+
+    /**
+     * grow array for outgoing connections
+     */
+    public void growOut(int sourceNodeId, int length) {
+        outgoing[sourceNodeId] = ArrayUtil.grow(outgoing[sourceNodeId], length);
+        outgoingIds[sourceNodeId] = ArrayUtil.grow(outgoingIds[sourceNodeId], length);
+    }
+
+    /**
+     * grow array for incoming connections
+     */
+    public void growIn(int targetNodeId, int length) {
+        incoming[targetNodeId] = ArrayUtil.grow(incoming[targetNodeId], length);
+        incomingIds[targetNodeId] = ArrayUtil.grow(incomingIds[targetNodeId], length);
     }
 
     /**
@@ -93,7 +110,7 @@ class AdjacencyMatrix {
     public void addOutgoing(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = outOffsets[sourceNodeId];
         final int nextDegree = degree + 1;
-        if (outgoing[sourceNodeId].length <= degree) armOut(sourceNodeId, degree+Math.min(Math.max(degree,10)<<2,2<<16));
+        growOut(sourceNodeId, degree + 1);
         outgoing[sourceNodeId][degree] = targetNodeId;
         outgoingIds[sourceNodeId][degree] = relationId;
         outOffsets[sourceNodeId] = nextDegree;
@@ -105,8 +122,7 @@ class AdjacencyMatrix {
     public void addIncoming(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = inOffsets[targetNodeId];
         final int nextDegree = degree + 1;
-        if (incoming[sourceNodeId].length <= degree) armIn(sourceNodeId, degree+Math.min(degree<<2,2<<16));
-
+        growIn(targetNodeId, degree + 1);
         incoming[targetNodeId][degree] = sourceNodeId;
         incomingIds[targetNodeId][degree] = relationId;
         inOffsets[targetNodeId] = nextDegree;
