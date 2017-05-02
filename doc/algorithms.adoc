@@ -1,13 +1,23 @@
-== Algorithms
+= Algorithms
 
-=== PageRank
+// todo introduction to graph algorithms, also say something about pregel & paralelization
 
+// todo sensible ordering
 
+include::pagerank.adoc[leveloffset=2]
 
-=== Development Notes
+include::betweenness-centrality.adoc[leveloffset=2]
 
-NOTE: When implementing a procedure that yields any results (is not `void`) and writes back to the database, make sure to consume the `Result` after running the algo call!
+include::closeness-centrality.adoc[leveloffset=2]
 
-Algorithms are executed within a transaction, that is opened and closed by cypher. The transaction is only marked successful if the results are consumed.
-Closing the Result directly will fail and rollback any open transactions and thus will revert all write-back operations.
-// StandardInternalExecutionResult#successful is only set to true _after_ the result has been consumed
+include::louvain.adoc[leveloffset=2]
+
+include::label-propagation.adoc[leveloffset=2]
+
+include::minimum-weight-spanning-tree.adoc[leveloffset=2]
+
+include::single-shortest-path.adoc[leveloffset=2]
+
+include::connected-components.adoc[leveloffset=2]
+
+include::strongly-connected-components.adoc[leveloffset=2]

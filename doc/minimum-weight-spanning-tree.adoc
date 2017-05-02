@@ -1,0 +1,59 @@
+= Minimum Weight Spanning Tree
+
+A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. 
+It can be used to cluster the graph (KMeans).
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/81
+
+A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. It can be used to cluster the graph (KMeans). Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node. This might not cover the whole graph. But if the nodes are connected the MST is always identical regardless at which node the execution starts.
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple benchmark 
+- [ ] implement procedure
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+
+## Requirements
+
+`BothRelationshipIterator` & `Weights`
+
+## Data structured involved
+
+- `org.neo4j.graphalgo.core.utils.container.UndirectedTree` as container for efficient splitting and iterate
+- An int-based Fibonacci Heap priority queue. 
+- Container for visited state 
+
+## ToDo
+
+### benchmark
+
+Implement benchmark on big graph
+
+### parallelization
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency

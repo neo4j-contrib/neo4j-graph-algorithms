@@ -1,0 +1,38 @@
+= Strongly Connected Components
+
+_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC.
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/97
+
+_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements _Tarjan's_ SCC algorithm.
+
+## Progress
+
+- [ ] copy implementation from graphtest-project
+- [ ] implement procedure
+- [ ] tests
+- [ ] edge case tests
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation

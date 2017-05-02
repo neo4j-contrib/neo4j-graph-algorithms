@@ -1,0 +1,36 @@
+= Clustering: Louvain
+
+_Louvain_ is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity. 
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/96
+
+_Louvain_ is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity. 
+
+- [ ] single threaded implementation
+- [ ] tests
+- [ ] edge case tests
+- [ ] implement procedure
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation

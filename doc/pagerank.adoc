@@ -1,0 +1,67 @@
+= Page Rank
+
+PageRank is Googles popular search algorithm.
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+== Example Usage
+
+[source,cypher]
+----
+CALL algo.pageRankStats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property
+CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
+----
+
+== References
+
+* https://en.wikipedia.org/wiki/PageRank
+
+== Implementation Details
+
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/78
+
+:leveloffset: +1
+
+_PageRank_ is Googles popular search algorithm. 
+
+More: [https://en.wikipedia.org/wiki/PageRank](url) 
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple benchmark 
+- [ ] implement procedure
+- [x] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+
+## Requirements
+
+- NodeIterator
+- Incoming Relationships
+- Outgoing Degrees
+
+## Data structured involved
+
+Our current approach needs one double array for storing ranks.
+
+## ToDo
+
+### parallelization
+
+One approach to parallelize _PageRank_ might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration. 
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency
+
+## Future Improvements
+
+- we might scale up the ranks to ints for faster multiplication.

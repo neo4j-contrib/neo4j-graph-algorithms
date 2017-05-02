@@ -1,0 +1,46 @@
+= Betweenness Centrality
+
+_Betweenness Centrality_ is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through or the sum of the weights of the edges is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+CALL algo.betweennessStream() YIELD nodeId, centrality
+
+CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) 
+YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/98
+
+_Betweenness Centrality_ is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through or the sum of the weights of the edges is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.
+
+## Progress
+
+- [ ] adapt apoc-procedure to algorithm-api
+- [x] implement procedure
+- [x] tests
+- [ ] edge case tests
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation
+
+## TODO
+
+- adapt apoc-procedure to algorithm-api

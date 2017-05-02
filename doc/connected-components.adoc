@@ -1,0 +1,62 @@
+= Connected Components
+
+_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. 
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/79
+
+_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows clustering the graph based on Relationships and Properties.
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple benchmark 
+- [ ] implement procedure
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+
+## Requirements
+
+`AllRelationshipIterator` & `Weights`
+
+## Data structured involved
+
+We use a disjoint-set-structure which is based on a parent-array-tree. The DSS can be used to efficiently ask if two nodes are reachable by each other. [More](https://en.wikipedia.org/wiki/Disjoint-set_data_structure)
+
+## ToDo
+
+### benchmark
+
+Implement benchmark on big graph & 
+
+- stream nodeId-setId pairs
+- calculate setSize-setCount
+
+
+### parallelization
+
+One approach to parallelize _UnionFind_ might be _relationship partitioning_ where each thread performs the execution into it's own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency 

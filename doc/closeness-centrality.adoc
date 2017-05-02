@@ -1,0 +1,44 @@
+= Closeness Centrality
+
+_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99
+
+_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.
+
+## Progress
+
+- [ ] adapt apoc-procedure to algorithm-api
+- [x] implement procedure
+- [x] tests
+- [ ] edge case tests
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation
+
+## TODO
+
+- adapt apoc-procedure to algorithm-api
+- check which variant of CC has been implemented in apoc

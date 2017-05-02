@@ -1,0 +1,61 @@
+= All Pairs- and Single Source - Shortest Path
+
+A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. 
+
+_All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm. 
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+[source,cypher]
+----
+----
+
+== Example Usage
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/80
+
+A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. _All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm. 
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple benchmark 
+- [ ] implement procedure
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+
+## Requirements
+
+`(Outgoing)RelationshipIterator` & `Weights`
+
+## Data structured involved
+
+- An int-based Fibonacci Heap which implements an efficient priority queue. 
+- Different Container for Costs / visited state / paths
+
+## ToDo
+
+### benchmark
+
+Implement benchmark on big graph
+
+### parallelization
+
+Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each thread for a different node. An easy approach for _Single Source SP_ may use two threads. One starting at the start-node, one at the end-node. The first wins. [More](https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf)
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency

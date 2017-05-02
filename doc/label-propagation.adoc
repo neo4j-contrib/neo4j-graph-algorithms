@@ -1,0 +1,44 @@
+= Clustering: Label Propagation
+
+
+
+== History, Explanation
+
+== When to use it / use-cases
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+== Example Usage
+
+[source,cypher]
+----
+CALL algo.labelPropagation('Label', 'TYPE', 'OUTGOING', {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'});
+----
+
+== References
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/95
+
+_Label Propagation_ is a clustering algorithm already implemented in current apoc-procedures. 
+
+## Progress
+
+- [x] adapt apoc-procedure to algorithm api
+- [x] single threaded implementation
+- [x] tests
+- [ ] edge case tests
+- [x] implement procedure
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation
+
+## TODO
+
+- adapt existing procedure to algorithm api

@@ -1,0 +1,64 @@
+= Algorithm Procedures API Discussion
+
+I would like to discuss design of the procedure API for algorithms. There are several concerns:
+
+== naming 
+
+simple name, consitent spelling and casing
+
+== input data 
+
+* via label/rel-type selection and optional weight/values
+* via cypher statements
+* the need for node-id's, degrees, weights, relationships etc. comes from the algorithm
+* ???
+
+== algorithm parameters
+
+* iterations
+* write-back, write-back property
+* concurrency
+* thresholds
+* ???
+
+== result parameters
+
+* output statistics: # of nodes and rels touched
+* time for loading, processing and, writing
+* property written to
+* errors
+* data summary, e.g. 
+** min,max,avg of a centrality, rank or weight measure 
+** output of all clusters, their sizes and perhaps the root node
+* sometimes streaming back node-ids and the computed value ??
+
+== Constraints:
+
+1. there is no overloading so we need differing names
+2. there are default parameters so we need to require only what's really crucial to run
+3. we should use sensible defaults
+4. result values/columns have to be pre-declared, there is no inheritance or generics
+
+== Suggestions: 
+
+=== naming: 2 variants per algorithm
+
+1. returning summary statistics after run: algo.pagerank()
+2. returning a stream of data: algo.pagerank.stream()
+default should be the one with statistics, as the scroll back from a medium size / large grap will kill the client
+
+=== parameters:
+
+1. node-selector or null - label(s) or cypher statement: ":Person|User" / "MATCH (u:User) RETURN id(u) as id, u.name as value"
+2. rel-selector or null - rel-type(s) or cypher statement ":KNOWS|FRIEND" / "MATCH (u1:User)-[r:KNOWS|FRIEND]-(u2:User) RETURN id(u1) as source, id(u2) as target, r.strength as weight"
+3. configuration map with optinal parameters but sensible defaults: {iterations: 5, write:true, nodeValue:"value",nodeWeight:"weight",relationshipWeight:"weight", threshold: 0.85}
+
+We could have the configuration map come from a function (per algorithm?) that handles validation and returns a correct map object for that algorithm? Or just pass the plain map?
+
+=== Example: 
+
+----
+call algo.pagerank(":Person",":KNOWS",{iterations:10, write:true, [property:"pagerank"], relationshipWeight:"weight"});
+
+call algo.unionfind.stream("MATCH (p:Person) RETURN id(p) as id","MATCH (p1:Person)-[:KNOWS]-(p2:Person) RETURN id(p1) as source, id(p2) as target", {??}) YIELD nodeId, clusterId
+----

@@ -1,6 +1,6 @@
 = API 2 Model
 
-=== Current Approach
+== Current Approach
 
 Our current approach relies on buffering the graph data into local structures. We've got
 different implementations, one which consumes more memory but allows fast
@@ -23,7 +23,7 @@ But since we always load the whole graph we waste some time with unnecessary imp
 ----
 
 
-=== New Approach
+== New Approach
 
 Loading the data takes a lot of time. If we just split the Graph into several interfaces and
 load only the needed ones, we end up with less import time. This approach also allows us to
@@ -74,7 +74,7 @@ We can think of an algorithm as a component which needs several data sources as 
 data source by itself. The topmost sources may work directly with the neo4j core api while the lower
 ones need precomputed data from previous steps.
 
-=== Implementation
+== Implementation
 
 We know every Algorithm needs one or more data sources to work. The algorithm itself produces a result
 which might act as an input for the next one. Each algorithm also may need some kind of A Priori knowledge
@@ -129,7 +129,7 @@ of data sources it needs. It then loads the appropriate sources and initializes 
 Later we might switch to some kind of object-graph-resolver which builds an optimal algorithm chain
 for one use case.
 
-=== Conclusion
+== Conclusion
 
 This approach offers several optimizations to the current impl.
 

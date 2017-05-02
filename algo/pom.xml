@@ -104,12 +104,23 @@
                         <arg>-AIgnoreContextWarnings</arg>
                         <arg>-AGeneratedDocumentationPath=target/generated-documentation</arg>
                         <arg>-ADocumentation.FieldDelimiter=¦</arg>
-                        <arg>-ADocumentation.ExportedHeaders=type¦qualified name¦description</arg>
+                        <arg>-ADocumentation.ExportedHeaders=qualified name¦description</arg>
                         <arg>-ADocumentation.QuotedFields=false</arg>
                         <arg>-ADocumentation.DelimitedFirstField=true</arg>
                         <arg>-ADocumentation.ExportGrouping=PACKAGE</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+           <plugin>
+               <groupId>org.asciidoctor</groupId>
+               <artifactId>asciidoctor-maven-plugin</artifactId>
+               <version>1.5.3</version>
+               <executions>
+                   <execution>
+                       <id>generate-docs</id>
+                       <phase/>
+                   </execution>
+               </executions>
             </plugin>
         </plugins>
     </build>
