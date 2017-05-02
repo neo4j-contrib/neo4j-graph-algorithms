@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.4">
+<title>Neo4j Graph Algorithms</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
+/* Remove comment around @import statement below when using as a custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}
+audio,canvas,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+[hidden],template{display:none}
+script{display:none!important}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+body{margin:0}
+a{background:transparent}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}
+input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*:before,*:after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+body{-webkit-font-smoothing:antialiased}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.spread{width:100%}
+p.lead,.paragraph.lead>p,#preamble>.sectionbody>.paragraph:first-of-type p{font-size:1.21875em;line-height:1.6}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:none}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #ddddd8;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol,ul.no-bullet,ol.no-bullet{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ul.no-bullet{list-style:none}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite:before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media only screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7;font-weight:bold}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt,table tr:nth-of-type(even){background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+body{tab-size:4}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix:before,.clearfix:after,.float-group:before,.float-group:after{content:" ";display:table}
+.clearfix:after,.float-group:after{clear:both}
+*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+pre,pre>code{line-height:1.45;color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;text-rendering:optimizeSpeed}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background-color:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menu{color:rgba(0,0,0,.8)}
+b.button:before,b.button:after{position:relative;top:-1px;font-weight:400}
+b.button:before{content:"[";padding:0 3px 0 2px}
+b.button:after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header:before,#header:after,#content:before,#content:after,#footnotes:before,#footnotes:after,#footer:before,#footer:after{content:" ";display:table}
+#header:after,#content:after,#footnotes:after,#footer:after{clear:both}
+#content{margin-top:1.25em}
+#content:before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #ddddd8}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #ddddd8;padding-bottom:8px}
+#header .details{border-bottom:1px solid #ddddd8;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span:before{content:"\00a0\2013\00a0"}
+#header .details br+span.author:before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark:before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber:after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #ddddd8;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #efefed;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media only screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #efefed;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #efefed;left:auto;right:0}}
+@media only screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background-color:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+.sect1{padding-bottom:.625em}
+@media only screen and (min-width:768px){.sect1{padding-bottom:1.25em}}
+.sect1+.sect1{border-top:1px solid #efefed}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor:before,h2>a.anchor:before,h3>a.anchor:before,#toctitle>a.anchor:before,.sidebarblock>.content>.title>a.anchor:before,h4>a.anchor:before,h5>a.anchor:before,h6>a.anchor:before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock>caption.title{white-space:nowrap;overflow:visible;max-width:0}
+.paragraph.lead>p,#preamble>.sectionbody>.paragraph:first-of-type p{color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>.paragraph:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #ddddd8;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock pre:not(.highlight),.listingblock pre[class="highlight"],.listingblock pre[class^="highlight "],.listingblock pre.CodeRay,.listingblock pre.prettyprint{background:#f7f7f8}
+.sidebarblock .literalblock pre,.sidebarblock .listingblock pre:not(.highlight),.sidebarblock .listingblock pre[class="highlight"],.sidebarblock .listingblock pre[class^="highlight "],.sidebarblock .listingblock pre.CodeRay,.sidebarblock .listingblock pre.prettyprint{background:#f2f1f1}
+.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;padding:1em;font-size:.8125em}
+.literalblock pre.nowrap,.literalblock pre[class].nowrap,.listingblock pre.nowrap,.listingblock pre[class].nowrap{overflow-x:auto;white-space:pre;word-wrap:normal}
+@media only screen and (min-width:768px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:.90625em}}
+@media only screen and (min-width:1280px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:1em}}
+.literalblock.output pre{color:#f7f7f8;background-color:rgba(0,0,0,.9)}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]:before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:#999}
+.listingblock:hover code[data-lang]:before{display:block}
+.listingblock.terminal pre .command:before{content:attr(data-prompt);padding-right:.5em;color:#999}
+.listingblock.terminal pre .command:not([data-prompt]):before{content:"$"}
+table.pyhltable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.pyhltable td{vertical-align:top;padding-top:0;padding-bottom:0;line-height:1.45}
+table.pyhltable td.code{padding-left:.75em;padding-right:0}
+pre.pygments .lineno,table.pyhltable td:not(.code){color:#999;padding-left:0;padding-right:.5em;border-right:1px solid #ddddd8}
+pre.pygments .lineno{display:inline-block;margin-right:.25em}
+table.pyhltable .linenodiv{background:none!important;padding-right:0!important}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock blockquote p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote:before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.5em;margin-right:.5ex;text-align:right}
+.quoteblock .quoteblock{margin-left:0;margin-right:0;padding:.5em 0;border-left:3px solid rgba(0,0,0,.6)}
+.quoteblock .quoteblock blockquote{padding:0 0 0 .75em}
+.quoteblock .quoteblock blockquote:before{display:none}
+.verseblock{margin:0 1em 1.25em 1em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract{margin:0 0 1.25em 0;display:block}
+.quoteblock.abstract blockquote,.quoteblock.abstract blockquote p{text-align:left;word-spacing:0}
+.quoteblock.abstract blockquote:before,.quoteblock.abstract blockquote p:first-of-type:before{display:none}
+table.tableblock{max-width:100%;border-collapse:separate}
+table.tableblock td>.paragraph:last-child p>p:last-child,table.tableblock th>p:last-child,table.tableblock td>p:last-child{margin-bottom:0}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all th.tableblock,table.grid-all td.tableblock{border-width:0 1px 1px 0}
+table.grid-all tfoot>tr>th.tableblock,table.grid-all tfoot>tr>td.tableblock{border-width:1px 1px 0 0}
+table.grid-cols th.tableblock,table.grid-cols td.tableblock{border-width:0 1px 0 0}
+table.grid-all *>tr>.tableblock:last-child,table.grid-cols *>tr>.tableblock:last-child{border-right-width:0}
+table.grid-rows th.tableblock,table.grid-rows td.tableblock{border-width:0 0 1px 0}
+table.grid-all tbody>tr:last-child>th.tableblock,table.grid-all tbody>tr:last-child>td.tableblock,table.grid-all thead:last-child>tr>th.tableblock,table.grid-rows tbody>tr:last-child>th.tableblock,table.grid-rows tbody>tr:last-child>td.tableblock,table.grid-rows thead:last-child>tr>th.tableblock{border-bottom-width:0}
+table.grid-rows tfoot>tr>th.tableblock,table.grid-rows tfoot>tr>td.tableblock{border-width:1px 0 0 0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot{border-width:1px 0}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+td>div.verse{white-space:pre}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.unstyled,ol.unnumbered,ul.checklist,ul.none{list-style-type:none}
+ul.unstyled,ol.unnumbered,ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1em;font-size:.85em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{width:1em;position:relative;top:1px}
+ul.inline{margin:0 auto .625em auto;margin-left:-1.375em;margin-right:0;padding:0;list-style:none;overflow:hidden}
+ul.inline>li{list-style:none;float:left;margin-left:1.375em;display:block}
+ul.inline>li>*{display:block}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist>table tr>td:first-of-type{padding:0 .75em;line-height:1}
+.colist>table tr>td:last-of-type{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left,.imageblock[style*="float: left"]{margin:.25em .625em 1.25em 0}
+.imageblock.right,.imageblock[style*="float: right"]{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em 0;border-width:1px 0 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;text-indent:-1.05em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background-color:#00fafa}
+.black{color:#000}
+.black-background{background-color:#000}
+.blue{color:#0000bf}
+.blue-background{background-color:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background-color:#fa00fa}
+.gray{color:#606060}
+.gray-background{background-color:#7d7d7d}
+.green{color:#006000}
+.green-background{background-color:#007d00}
+.lime{color:#00bf00}
+.lime-background{background-color:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background-color:#7d0000}
+.navy{color:#000060}
+.navy-background{background-color:#00007d}
+.olive{color:#606000}
+.olive-background{background-color:#7d7d00}
+.purple{color:#600060}
+.purple-background{background-color:#7d007d}
+.red{color:#bf0000}
+.red-background{background-color:#fa0000}
+.silver{color:#909090}
+.silver-background{background-color:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background-color:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background-color:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background-color:#fafa00}
+span.icon>.fa{cursor:default}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background-color:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]:after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background-color:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@media print{@page{margin:1.25cm .75cm}
+*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare):after,a[href^="https:"]:not(.bare):after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]:after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #ddddd8!important;padding-bottom:0!important}
+.sect1{padding-bottom:0!important}
+.sect1+.sect1{border:0!important}
+#header>h1:first-child{margin-top:1.25rem}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em 0}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span:before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]:before{display:block}
+#footer{background:none!important;padding:0 .9375em}
+#footer-text{color:rgba(0,0,0,.6)!important;font-size:.9em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+</style>
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Neo4j Graph Algorithms</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel2">
+<li><a href="#_building">Building</a></li>
+<li><a href="#_overview_of_algorithm_procedures">Overview of Algorithm Procedures</a></li>
+<li><a href="#_algorithms">Algorithms</a>
+<ul class="sectlevel2">
+<li><a href="#_page_rank">Page Rank</a></li>
+<li><a href="#_betweenness_centrality">Betweenness Centrality</a></li>
+<li><a href="#_closeness_centrality">Closeness Centrality</a></li>
+<li><a href="#_clustering_louvain">Clustering: Louvain</a></li>
+<li><a href="#_clustering_label_propagation">Clustering: Label Propagation</a></li>
+<li><a href="#_minimum_weight_spanning_tree">Minimum Weight Spanning Tree</a></li>
+<li><a href="#_all_pairs_and_single_source_shortest_path">All Pairs- and Single Source - Shortest Path</a></li>
+<li><a href="#_connected_components">Connected Components</a></li>
+<li><a href="#_strongly_connected_components">Strongly Connected Components</a></li>
+</ul>
+</li>
+<li><a href="#_implementers_section">Implementers Section</a>
+<ul class="sectlevel2">
+<li><a href="#_algorithm_procedures_api_discussion">Algorithm Procedures API Discussion</a></li>
+<li><a href="#_api_2_model">API 2 Model</a></li>
+<li><a href="#_implementers_documentation">Implementers Documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>Those algorithms will run on a clean API which is fed by loading data from Neo4j or running on Neo4j directly.</p>
+</div>
+<div class="paragraph">
+<p>The algorithms will be exposed as user defined procedures</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_building"><a class="link" href="#_building">Building</a></h3>
+<div class="paragraph">
+<p>Currently aiming at Neo4j 3.1</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>mvn clean install
+cp algo/target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+$NEO4J_HOME/bin/neo4j restart</pre>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_overview_of_algorithm_procedures"><a class="link" href="#_overview_of_algorithm_procedures">Overview of Algorithm Procedures</a></h2>
+<div class="sectionbody">
+<table id="table-all" class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">qualified name</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRank</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and potentially writes back</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRankStream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRankStats</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRankStats(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and returns statistics</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweennessStream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweennessStream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, [minCentrality, maxCentrality, meanCentrality] - yields status of evaluation</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.dijkstraStream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.dijkstraStream(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.dijkstra</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.dijkstra(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.labelPropagation</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFindStream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFindStream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_algorithms"><a class="link" href="#_algorithms">Algorithms</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_page_rank"><a class="link" href="#_page_rank">Page Rank</a></h3>
+<div class="paragraph">
+<p>PageRank is Googles popular search algorithm.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation"><a class="link" href="#_history_explanation">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases"><a class="link" href="#_when_to_use_it_use_cases">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it"><a class="link" href="#_constraints_when_not_to_use_it">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph">Algorithm explanation on simple sample graph</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_example_usage"><a class="link" href="#_example_usage">Example Usage</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRankStats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property
+CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_references"><a class="link" href="#_references">References</a></h4>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://en.wikipedia.org/wiki/PageRank" class="bare">https://en.wikipedia.org/wiki/PageRank</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_implementation_details"><a class="link" href="#_implementation_details">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>PageRank</em> is Googles popular search algorithm.</p>
+</div>
+<div class="paragraph">
+<p>More: [<a href="https://en.wikipedia.org/wiki/PageRank" class="bare">https://en.wikipedia.org/wiki/PageRank</a>](url)</p>
+</div>
+<div class="sect4">
+<h5 id="_progress"><a class="link" href="#_progress">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements"><a class="link" href="#_requirements">Requirements</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>NodeIterator</p>
+</li>
+<li>
+<p>Incoming Relationships</p>
+</li>
+<li>
+<p>Outgoing Degrees</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved"><a class="link" href="#_data_structured_involved">Data structured involved</a></h5>
+<div class="paragraph">
+<p>Our current approach needs one double array for storing ranks.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo"><a class="link" href="#_todo">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_parallelization"><a class="link" href="#_parallelization">parallelization</a></h6>
+<div class="paragraph">
+<p>One approach to parallelize <em>PageRank</em> might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation"><a class="link" href="#_evaluation">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_future_improvements"><a class="link" href="#_future_improvements">Future Improvements</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>we might scale up the ranks to ints for faster multiplication.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_betweenness_centrality"><a class="link" href="#_betweenness_centrality">Betweenness Centrality</a></h3>
+<div class="paragraph">
+<p><em>Betweenness Centrality</em> is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through or the sum of the weights of the edges is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_2"><a class="link" href="#_history_explanation_2">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_2"><a class="link" href="#_when_to_use_it_use_cases_2">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_2"><a class="link" href="#_constraints_when_not_to_use_it_2">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_2"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_2">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweennessStream() YIELD nodeId, centrality
+
+CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'})
+YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_2"><a class="link" href="#_example_usage_2">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_2"><a class="link" href="#_references_2">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_2"><a class="link" href="#_implementation_details_2">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Betweenness Centrality</em> is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through or the sum of the weights of the edges is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_2"><a class="link" href="#_progress_2">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10063; adapt apoc-procedure to algorithm-api</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10063; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+<li>
+<p>&#10063; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_2"><a class="link" href="#_todo_2">TODO</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>adapt apoc-procedure to algorithm-api</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_closeness_centrality"><a class="link" href="#_closeness_centrality">Closeness Centrality</a></h3>
+<div class="paragraph">
+<p><em>Closeness Centrality</em> of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_3"><a class="link" href="#_history_explanation_3">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_3"><a class="link" href="#_when_to_use_it_use_cases_3">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_3"><a class="link" href="#_constraints_when_not_to_use_it_3">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_3"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_3">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_3"><a class="link" href="#_example_usage_3">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_3"><a class="link" href="#_references_3">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_3"><a class="link" href="#_implementation_details_3">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Closeness Centrality</em> of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_3"><a class="link" href="#_progress_3">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10063; adapt apoc-procedure to algorithm-api</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10063; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+<li>
+<p>&#10063; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_3"><a class="link" href="#_todo_3">TODO</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>adapt apoc-procedure to algorithm-api</p>
+</li>
+<li>
+<p>check which variant of CC has been implemented in apoc</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_clustering_louvain"><a class="link" href="#_clustering_louvain">Clustering: Louvain</a></h3>
+<div class="paragraph">
+<p><em>Louvain</em> is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_4"><a class="link" href="#_history_explanation_4">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_4"><a class="link" href="#_when_to_use_it_use_cases_4">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_4"><a class="link" href="#_constraints_when_not_to_use_it_4">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_4"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_4">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_4"><a class="link" href="#_example_usage_4">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_4"><a class="link" href="#_references_4">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_4"><a class="link" href="#_implementation_details_4">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Louvain</em> is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity.</p>
+</div>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10063; single threaded implementation</p>
+</li>
+<li>
+<p>&#10063; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+<li>
+<p>&#10063; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_clustering_label_propagation"><a class="link" href="#_clustering_label_propagation">Clustering: Label Propagation</a></h3>
+<div class="sect3">
+<h4 id="_history_explanation_5"><a class="link" href="#_history_explanation_5">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_5"><a class="link" href="#_when_to_use_it_use_cases_5">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_5"><a class="link" href="#_constraints_when_not_to_use_it_5">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_5"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_5">Algorithm explanation on simple sample graph</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_example_usage_5"><a class="link" href="#_example_usage_5">Example Usage</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.labelPropagation('Label', 'TYPE', 'OUTGOING', {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'});</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_references_5"><a class="link" href="#_references_5">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_5"><a class="link" href="#_implementation_details_5">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Label Propagation</em> is a clustering algorithm already implemented in current apoc-procedures.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_4"><a class="link" href="#_progress_4">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; adapt apoc-procedure to algorithm api</p>
+</li>
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10063; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+<li>
+<p>&#10063; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_4"><a class="link" href="#_todo_4">TODO</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>adapt existing procedure to algorithm api</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_minimum_weight_spanning_tree"><a class="link" href="#_minimum_weight_spanning_tree">Minimum Weight Spanning Tree</a></h3>
+<div class="paragraph">
+<p>A <em>Minimum Weight Spanning Tree</em> is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal.
+It can be used to cluster the graph (KMeans).</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_6"><a class="link" href="#_history_explanation_6">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_6"><a class="link" href="#_when_to_use_it_use_cases_6">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_6"><a class="link" href="#_constraints_when_not_to_use_it_6">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_6"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_6">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_6"><a class="link" href="#_example_usage_6">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_6"><a class="link" href="#_references_6">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_6"><a class="link" href="#_implementation_details_6">Implementation Details</a></h4>
+<div class="paragraph">
+<p>A <em>Minimum Weight Spanning Tree</em> is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. It can be used to cluster the graph (KMeans). Our current approach uses <em>Prim&#8217;s Algorithm</em> to calculate the MST starting at a given node. This might not cover the whole graph. But if the nodes are connected the MST is always identical regardless at which node the execution starts.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_5"><a class="link" href="#_progress_5">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_2"><a class="link" href="#_requirements_2">Requirements</a></h5>
+<div class="paragraph">
+<p><code>BothRelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_2"><a class="link" href="#_data_structured_involved_2">Data structured involved</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p><code>org.neo4j.graphalgo.core.utils.container.UndirectedTree</code> as container for efficient splitting and iterate</p>
+</li>
+<li>
+<p>An int-based Fibonacci Heap priority queue.</p>
+</li>
+<li>
+<p>Container for visited state</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_5"><a class="link" href="#_todo_5">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark"><a class="link" href="#_benchmark">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_2"><a class="link" href="#_parallelization_2">parallelization</a></h6>
+
+</div>
+<div class="sect5">
+<h6 id="_evaluation_2"><a class="link" href="#_evaluation_2">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_all_pairs_and_single_source_shortest_path"><a class="link" href="#_all_pairs_and_single_source_shortest_path">All Pairs- and Single Source - Shortest Path</a></h3>
+<div class="paragraph">
+<p>A <em>Single Source Shortest Path</em> algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra.</p>
+</div>
+<div class="paragraph">
+<p><em>All Pairs Shortest Path</em> on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson&#8217;s algorithm.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_7"><a class="link" href="#_history_explanation_7">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_7"><a class="link" href="#_when_to_use_it_use_cases_7">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_7"><a class="link" href="#_constraints_when_not_to_use_it_7">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_7"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_7">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_7"><a class="link" href="#_example_usage_7">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_7"><a class="link" href="#_references_7">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_7"><a class="link" href="#_implementation_details_7">Implementation Details</a></h4>
+<div class="paragraph">
+<p>A <em>Single Source Shortest Path</em> algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. <em>All Pairs Shortest Path</em> on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson&#8217;s algorithm.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_6"><a class="link" href="#_progress_6">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_3"><a class="link" href="#_requirements_3">Requirements</a></h5>
+<div class="paragraph">
+<p><code>(Outgoing)RelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_3"><a class="link" href="#_data_structured_involved_3">Data structured involved</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>An int-based Fibonacci Heap which implements an efficient priority queue.</p>
+</li>
+<li>
+<p>Different Container for Costs / visited state / paths</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_6"><a class="link" href="#_todo_6">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark_2"><a class="link" href="#_benchmark_2">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_3"><a class="link" href="#_parallelization_3">parallelization</a></h6>
+<div class="paragraph">
+<p>Parallizing <em>All Pairs Shortest Path</em> might be easy using Dijkstra on each thread for a different node. An easy approach for <em>Single Source SP</em> may use two threads. One starting at the start-node, one at the end-node. The first wins. [More](<a href="https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf" class="bare">https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf</a>)</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation_3"><a class="link" href="#_evaluation_3">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_connected_components"><a class="link" href="#_connected_components">Connected Components</a></h3>
+<div class="paragraph">
+<p><em>Connected Components</em> or <em>UnionFind</em> basically finds sets of connected nodes where each node is reachable from any other node in the same set.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_8"><a class="link" href="#_history_explanation_8">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_8"><a class="link" href="#_when_to_use_it_use_cases_8">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_8"><a class="link" href="#_constraints_when_not_to_use_it_8">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_8"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_8">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_8"><a class="link" href="#_example_usage_8">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_8"><a class="link" href="#_references_8">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_8"><a class="link" href="#_implementation_details_8">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Connected Components</em> or <em>UnionFind</em> basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows clustering the graph based on Relationships and Properties.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_7"><a class="link" href="#_progress_7">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_4"><a class="link" href="#_requirements_4">Requirements</a></h5>
+<div class="paragraph">
+<p><code>AllRelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_4"><a class="link" href="#_data_structured_involved_4">Data structured involved</a></h5>
+<div class="paragraph">
+<p>We use a disjoint-set-structure which is based on a parent-array-tree. The DSS can be used to efficiently ask if two nodes are reachable by each other. [More](<a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure" class="bare">https://en.wikipedia.org/wiki/Disjoint-set_data_structure</a>)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_7"><a class="link" href="#_todo_7">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark_3"><a class="link" href="#_benchmark_3">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph &amp;</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>stream nodeId-setId pairs</p>
+</li>
+<li>
+<p>calculate setSize-setCount</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_4"><a class="link" href="#_parallelization_4">parallelization</a></h6>
+<div class="paragraph">
+<p>One approach to parallelize <em>UnionFind</em> might be <em>relationship partitioning</em> where each thread performs the execution into it&#8217;s own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation_4"><a class="link" href="#_evaluation_4">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_strongly_connected_components"><a class="link" href="#_strongly_connected_components">Strongly Connected Components</a></h3>
+<div class="paragraph">
+<p><em>SCC</em> is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC.</p>
+</div>
+<div class="sect3">
+<h4 id="_history_explanation_9"><a class="link" href="#_history_explanation_9">History, Explanation</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_9"><a class="link" href="#_when_to_use_it_use_cases_9">When to use it / use-cases</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it_9"><a class="link" href="#_constraints_when_not_to_use_it_9">Constraints / when not to use it</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_algorithm_explanation_on_simple_sample_graph_9"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_9">Algorithm explanation on simple sample graph</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher"></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example_usage_9"><a class="link" href="#_example_usage_9">Example Usage</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_references_9"><a class="link" href="#_references_9">References</a></h4>
+
+</div>
+<div class="sect3">
+<h4 id="_implementation_details_9"><a class="link" href="#_implementation_details_9">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>SCC</em> is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements <em>Tarjan&#8217;s</em> SCC algorithm.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_8"><a class="link" href="#_progress_8">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10063; copy implementation from graphtest-project</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10063; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+<li>
+<p>&#10063; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_implementers_section"><a class="link" href="#_implementers_section">Implementers Section</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_algorithm_procedures_api_discussion"><a class="link" href="#_algorithm_procedures_api_discussion">Algorithm Procedures API Discussion</a></h3>
+<div class="paragraph">
+<p>I would like to discuss design of the procedure API for algorithms. There are several concerns:</p>
+</div>
+<div class="sect3">
+<h4 id="_naming"><a class="link" href="#_naming">naming</a></h4>
+<div class="paragraph">
+<p>simple name, consitent spelling and casing</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_input_data"><a class="link" href="#_input_data">input data</a></h4>
+<div class="ulist">
+<ul>
+<li>
+<p>via label/rel-type selection and optional weight/values</p>
+</li>
+<li>
+<p>via cypher statements</p>
+</li>
+<li>
+<p>the need for node-id&#8217;s, degrees, weights, relationships etc. comes from the algorithm</p>
+</li>
+<li>
+<p>???</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_algorithm_parameters"><a class="link" href="#_algorithm_parameters">algorithm parameters</a></h4>
+<div class="ulist">
+<ul>
+<li>
+<p>iterations</p>
+</li>
+<li>
+<p>write-back, write-back property</p>
+</li>
+<li>
+<p>concurrency</p>
+</li>
+<li>
+<p>thresholds</p>
+</li>
+<li>
+<p>???</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_result_parameters"><a class="link" href="#_result_parameters">result parameters</a></h4>
+<div class="ulist">
+<ul>
+<li>
+<p>output statistics: # of nodes and rels touched</p>
+</li>
+<li>
+<p>time for loading, processing and, writing</p>
+</li>
+<li>
+<p>property written to</p>
+</li>
+<li>
+<p>errors</p>
+</li>
+<li>
+<p>data summary, e.g.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>min,max,avg of a centrality, rank or weight measure</p>
+</li>
+<li>
+<p>output of all clusters, their sizes and perhaps the root node</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>sometimes streaming back node-ids and the computed value ??</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_constraints"><a class="link" href="#_constraints">Constraints:</a></h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>there is no overloading so we need differing names</p>
+</li>
+<li>
+<p>there are default parameters so we need to require only what&#8217;s really crucial to run</p>
+</li>
+<li>
+<p>we should use sensible defaults</p>
+</li>
+<li>
+<p>result values/columns have to be pre-declared, there is no inheritance or generics</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_suggestions"><a class="link" href="#_suggestions">Suggestions:</a></h4>
+<div class="sect4">
+<h5 id="_naming_2_variants_per_algorithm"><a class="link" href="#_naming_2_variants_per_algorithm">naming: 2 variants per algorithm</a></h5>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>returning summary statistics after run: algo.pagerank()</p>
+</li>
+<li>
+<p>returning a stream of data: algo.pagerank.stream()
+default should be the one with statistics, as the scroll back from a medium size / large grap will kill the client</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_parameters"><a class="link" href="#_parameters">parameters:</a></h5>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>node-selector or null - label(s) or cypher statement: ":Person|User" / "MATCH (u:User) RETURN id(u) as id, u.name as value"</p>
+</li>
+<li>
+<p>rel-selector or null - rel-type(s) or cypher statement ":KNOWS|FRIEND" / "MATCH (u1:User)-[r:KNOWS|FRIEND]-(u2:User) RETURN id(u1) as source, id(u2) as target, r.strength as weight"</p>
+</li>
+<li>
+<p>configuration map with optinal parameters but sensible defaults: {iterations: 5, write:true, nodeValue:"value",nodeWeight:"weight",relationshipWeight:"weight", threshold: 0.85}</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>We could have the configuration map come from a function (per algorithm?) that handles validation and returns a correct map object for that algorithm? Or just pass the plain map?</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_example"><a class="link" href="#_example">Example:</a></h5>
+<div class="listingblock">
+<div class="content">
+<pre>call algo.pagerank(":Person",":KNOWS",{iterations:10, write:true, [property:"pagerank"], relationshipWeight:"weight"});
+
+call algo.unionfind.stream("MATCH (p:Person) RETURN id(p) as id","MATCH (p1:Person)-[:KNOWS]-(p2:Person) RETURN id(p1) as source, id(p2) as target", {??}) YIELD nodeId, clusterId</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_api_2_model"><a class="link" href="#_api_2_model">API 2 Model</a></h3>
+<div class="sect4">
+<h5 id="_current_approach"><a class="link" href="#_current_approach">Current Approach</a></h5>
+<div class="paragraph">
+<p>Our current approach relies on buffering the graph data into local structures. We&#8217;ve got
+different implementations, one which consumes more memory but allows fast
+iteration on the Graph. The other one has a more flexible memory model but performs
+not as good as the heavy one. Both versions take a good amount of time to load from
+the neo4j graph.</p>
+</div>
+<div class="paragraph">
+<p>During the development of algorithms we have seen that not every algorithm needs the whole
+bunch of data.
+But since we always load the whole graph we waste some time with unnecessary imports.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    +-----------+
+    |           | import  +-------+ computation +--------+
+    |   Neo4j{s}|--------&gt;| Graph |------------&gt;| Result |
+    +-----------+         +-------+             +--------+</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_new_approach"><a class="link" href="#_new_approach">New Approach</a></h5>
+<div class="paragraph">
+<p>Loading the data takes a lot of time. If we just split the Graph into several interfaces and
+load only the needed ones, we end up with less import time. This approach also allows us to
+define several implementations for an interface. E.g. a SingleRunNodeIterator which is designed
+to run only once (and therefore does not need to buffer all nodes). It would also ease
+the implementation of new operations like a concurrentNodeIterator (to pick batches of nodes
+for parallel evaluation) or an AllRelationsIterator (which doesn&#8217;t need a node-id to start from).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>                            +---------+
+                            |         |
+                            |  Neo4j  |
+                            |    {s}  |
+                            +----+----+
+                                 ^
+                                 |
+        +-------------+----------+------+--------+--------- ...
+        |             |          |               |
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+    | NodeIter | | Degree | | RelIter | | WeightedRelIter | ...
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+        ^             ^          ^               ^
+        |             |          |               |
+        +------+------+          |               |
+               :                 :               :
+         +-----+-----+     +-----+-----+   +-----+-----+
+         |           |     |           |   |           |
+         |  PageRank |     | UnionFind |   | MinSTree  |
+         |    {c}    |     |     {c}   |   |   {c}     |
+         +-----------+     +-----------+   +-----+-----+
+                                                 ^
+                                                 |
+                                                 :
+                                           +-----+-----+
+                                           |           |
+                                           |   kMeans  |
+                                           |    {c}    |
+                                           +-----------+</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Diagram shows the basic Idea. Each Algorithm needs a set of data sources. PageRank for example
+relies only on nodeIds and their degrees while a UnionFindStruct can be built just by iterating
+over all relations (or weighted rels. depends on use case). kMeans on the other hand needs the result
+of a preceding algorithm to work.</p>
+</div>
+<div class="paragraph">
+<p>We can think of an algorithm as a component which needs several data sources as input and also is a
+data source by itself. The topmost sources may work directly with the neo4j core api while the lower
+ones need precomputed data from previous steps.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_implementation"><a class="link" href="#_implementation">Implementation</a></h5>
+<div class="paragraph">
+<p>We know every Algorithm needs one or more data sources to work. The algorithm itself produces a result
+which might act as an input for the next one. Each algorithm also may need some kind of A Priori knowledge
+or configuration settings which could be built with a String-to-Object map.</p>
+</div>
+<div class="paragraph">
+<p>Implementing this concept might be done using standard java oop. The Constructor of the implementation
+should take all needed data sources and a shared setupObject. Additional capabilities or requirements
+could later be added with Annotations (e.g. parallel, singlethreaded, one-time-use, ..) and the actual
+return type might just be the generic type of an interface.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Example algorithm interface</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>public interface Algorithm&lt;T&gt; {
+    public T compute();
+}</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Example datasource</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>public interface NodeIterator {
+    public void forEachNode(IntConsumer ic);
+}
+
+@Characteristics({ONE_TIME_USE})
+public class SingleRunNodeIterator implements NodeIterator {
+    public SingleRunNodeIterator(GraphDatabaseAPI api) { ... }
+    public void forEachNode(IntConsumer ic) { ... }
+}</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Example algorithm</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>@Characteristics({SINGLE_THREADED, ...})
+public class PageRank implements Algorithm&lt;PageRank.Result&gt; {
+
+    public PageRank(
+        @Requirements(CONCURRENT) NodeIterator nodeIt,
+        @Requirements(ONE_TIME_USE) Degrees degrees) {
+            ...
+    }
+
+    public PageRank.Result compute();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Up to now I would suggest hardcoded chains of Algorithms and no Capabilities/Requirements.
+The programmer can decide which implementation fits best for his algorithm. Only the Importer
+(currently the GraphLoader) would check the constructor of the topmost algorithm to get a set
+of data sources it needs. It then loads the appropriate sources and initializes the algorithm.</p>
+</div>
+<div class="paragraph">
+<p>Later we might switch to some kind of object-graph-resolver which builds an optimal algorithm chain
+for one use case.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_conclusion"><a class="link" href="#_conclusion">Conclusion</a></h5>
+<div class="paragraph">
+<p>This approach offers several optimizations to the current impl.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>less refactoring when adding new operations</p>
+</li>
+<li>
+<p>lower loading time and less memory consumption for unused data</p>
+</li>
+<li>
+<p>several impls. of data sources with different characteristics (one-time-use, concurrent, &#8230;&#8203;)</p>
+</li>
+<li>
+<p>possibility to add an object-graph-resolver to build an optimal process chain</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_implementers_documentation"><a class="link" href="#_implementers_documentation">Implementers Documentation</a></h3>
+<div class="sect3">
+<h4 id="_development_notes"><a class="link" href="#_development_notes">Development Notes</a></h4>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+When implementing a procedure that yields any results (is not <code>void</code>) and writes back to the database, make sure to consume the <code>Result</code> after running the algo call!
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Algorithms are executed within a transaction, that is opened and closed by cypher. The transaction is only marked successful if the results are consumed.
+Closing the Result directly will fail and rollback any open transactions and thus will revert all write-back operations.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_the_model"><a class="link" href="#_the_model">The Model</a></h4>
+<div class="paragraph">
+<p>The basic idea behind our model is to have a fast cache for the
+topology of the graph containing only relevant nodes, relations
+and in addition the weights. It implicitly maps (long) node-id&#8217;s to
+a temporary integer-id in ascending order which ensures that no id gets bigger
+then the maximum node count. This approach allows us to use primitive
+arrays as container for example.</p>
+</div>
+<div class="sect4">
+<h5 id="_graph_interface"><a class="link" href="#_graph_interface">Graph Interface</a></h5>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+int vertexCount()
+</td>
+<td class="hdlist2">
+<p>Return the count of vertices in the graph</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+void forEachNode(IntConsumer)
+</td>
+<td class="hdlist2">
+<p>Calls consumer for each vertex id</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+PrimitiveIntIterator vertexIterator()
+</td>
+<td class="hdlist2">
+<p>Returns an vertex id Iterator</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+int degree(int, Direction)
+</td>
+<td class="hdlist2">
+<p>Return the degree for the given vertex / direction</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+void forEachEdge(int, Direction, EdgeConsumer) &amp; 
+<br>
+Iterator&lt;EdgeCursor&gt; edgeIterator(int, Direction)
+</td>
+<td class="hdlist2">
+<p>Iterates over each edge of the given vertex / direction</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+void forEachEdge(int, Direction, WeightedEdgeConsumer) &amp; 
+<br>
+Iterator&lt;WeightedEdgeCursor&gt; weightedEdgeIterator(int, Direction)
+</td>
+<td class="hdlist2">
+<p>Iterates over each edge of the given vertex / direction.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+int toNodeId(long)
+</td>
+<td class="hdlist2">
+<p>Map node id to vertex id</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+long toNodeId(int)
+</td>
+<td class="hdlist2">
+<p>Map vertex id back to it&#8217;s original node id</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The interface specifies Methods for iterating over all vertices of the
+graph as well as iterating over edges of a given vertex in the form of <strong>forEach(..)</strong>-
+and <strong>relationshipIterator()</strong>-Methods. The Graph knows the <strong>nodeCount</strong> and <strong>degree</strong> of each node and can <strong>map</strong>
+nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weighted and unweighted edges.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>                                  +--------------+
+                                  |    Graph     |
+                                  +--------------+
+                                  | - degree( )  |
+                                  | - forEach( ) |
+                                  | - relation( )|
+                                  | - idMap( )   |
+                                  +--------------+
+                                    ^    ^     ^
+                        implements  |    |     | implements
+                      +-------------+    |     +----------+
+                      |                  |                |
+                      |                  |implements      |
+                 +----+-------+    +-----+------+     +---+-------+
+                 | HeavyGraph |    | LightGraph |     | GraphView |
+                 +------------+    +------------+     +-----------+</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Currently we have 3 different implementations aiming for different goals like performance, memory
+consumption and accuracy.
+</td>
+</tr>
+</table>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">HeavyGraph</dt>
+<dd>
+<p>This implementations utilizes an int-matrix for storing connections between vertices.
+It has a high memory consumption but performs basic calculations on the graph
+around 3 times faster then the memory efficient implementation. Furthermore the
+number of edges per node is limited only to the maximum array size of the VM and
+connections can be added in arbitrary order.</p>
+</dd>
+<dt class="hdlist1">LightGraph</dt>
+<dd>
+<p>This implementation takes 3 times less heap due to a more intelligent
+memory layout. The drawback is the higher evaluation time.</p>
+</dd>
+<dt class="hdlist1">View</dt>
+<dd>
+<p>The View is just a single threaded Wrapper around the Neo4j core api. It has been
+implemented for tests and benchmarks.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_import"><a class="link" href="#_import">Import</a></h4>
+<div class="paragraph">
+<p>A fair amount of the work is to fetch the relevant targetNodes from the neo4j core db
+and import it into our model. Fortunately we can use a multithreading approach to fill
+the Graph. This is part of current development.</p>
+</div>
+<div class="paragraph">
+<p>The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
+for creating the Graph using the core db.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>             +------------------+         builds        +--------------+
+             |   GraphFactory   | - - - - - - - - - - &gt; |    Graph     |
+             +------+---+-------+                       +---+-----+----+
+                    ^   ^                                   ^     ^
+                    |   |                                   |     |
+                    |   |                                   |     |
+                    |   |                                   |     |
+                +---+   +--------+                   +------+     +--+
+                |                |                   |               |
+        +-------+------+  +------+-------+    +------+-----+  +------+-----+
+        | HeavyFactory |  | LightFactory |    | HeavyGraph |  | LightGraph |
+        +--------------+  +--------------+    +------------+  +------------+</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Loading the Graph is done by using the GraphLoader which implements a simple fluent Builder Pattern.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>final Graph graph = new GraphLoader( graphDatabaseAPI )
+        .setLabel( .. )
+        .setRelation( .. )
+        .setProperty( .. )
+        .setThreadPool( .. )
+        .load( FactoryImpl.class );</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2017-05-02 23:51:37 CEST
+</div>
+</div>
+</body>
+</html>
