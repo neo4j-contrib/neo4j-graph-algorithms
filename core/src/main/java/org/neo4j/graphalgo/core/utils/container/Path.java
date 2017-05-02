@@ -22,9 +22,7 @@ public class Path {
     }
 
     public void append(int nodeId) {
-        if (offset >= nodes.length) {
-            nodes = ArrayUtil.grow(nodes, offset);
-        }
+        nodes = ArrayUtil.grow(nodes, offset + 1);
         nodes[offset++] = nodeId;
     }
 
