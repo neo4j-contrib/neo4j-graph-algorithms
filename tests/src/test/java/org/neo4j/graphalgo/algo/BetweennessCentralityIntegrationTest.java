@@ -71,12 +71,12 @@ public class BetweennessCentralityIntegrationTest {
 
         builder.newRingBuilder()
                 .createRing(5)
-                .forEachInTx(node -> {
+                .forEachNodeInTx(node -> {
                     node.createRelationshipTo(center, type);
                 })
                 .newRingBuilder()
                 .createRing(5)
-                .forEachInTx(node -> {
+                .forEachNodeInTx(node -> {
                     center.createRelationshipTo(node, type);
                 });
 

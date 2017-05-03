@@ -22,6 +22,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     private final ME self;
 
     protected final HashSet<Node> nodes;
+    protected final HashSet<Relationship> relationships;
     protected final GraphDatabaseAPI api;
     protected final ThreadToStatementContextBridge bridge;
 
@@ -37,6 +38,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
         bridge = api.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
         nodes = new HashSet<>();
+        relationships = new HashSet<>();
         this.self = me();
     }
 
@@ -79,7 +81,9 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return the relationship object
      */
     public Relationship createRelationship(Node p, Node q) {
-        return p.createRelationshipTo(q, relationship);
+        final Relationship relationshipTo = p.createRelationshipTo(q, relationship);
+        relationships.add(relationshipTo);
+        return relationshipTo;
     }
 
     /**
@@ -101,8 +105,13 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @param consumer the node consumer
      * @return child instance to make methods of the child class accessible.
      */
-    public ME forEachInTx(Consumer<Node> consumer) {
+    public ME forEachNodeInTx(Consumer<Node> consumer) {
         withinTransaction(() -> nodes.forEach(consumer));
+        return self;
+    }
+
+    public ME forEachRelInTx(Consumer<Relationship> consumer) {
+        withinTransaction(() -> relationships.forEach(consumer));
         return self;
     }
 
@@ -153,7 +162,6 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new default builder with its own node-set but
      * inherits the current label and relationship type
-     *
      * @return a new default builder
      */
     public DefaultBuilder newDefaultBuilder() {
@@ -163,11 +171,37 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new ring builder with its own node-set but
      * inherits current label and relationship type.
-     *
      * @return a new ring builder
      */
     public RingBuilder newRingBuilder() {
         return new RingBuilder(api, label, relationship);
+    }
+
+    /**
+     * creates a grid of nodes
+     * inherits current label and relationship type.
+     * @return the GridBuilder
+     */
+    public GridBuilder newGridBuilder() {
+        return new GridBuilder(api, label, relationship);
+    }
+
+    /**
+     * create lines of nodes where each node is connected to its successor
+     * inherits current label and relationship type.
+     * @return the LineBuilder
+     */
+    public LineBuilder newLineBuilder() {
+        return new LineBuilder(api, label, relationship);
+    }
+
+    /**
+     * create a complete graph where each node is interconnected
+     * inherits current label and relationship type.
+     * @return the CompleteGraphBuilder
+     */
+    public CompleteGraphBuilder newCompleteGraphBuilder() {
+        return new CompleteGraphBuilder(api, label, relationship);
     }
 
     /**
