@@ -179,6 +179,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     /**
      * creates a grid of nodes
+     * inherits current label and relationship type.
      * @return the GridBuilder
      */
     public GridBuilder newGridBuilder() {
@@ -186,8 +187,8 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * create a lineBuilder to create lines of nodes
-     * where each node is connected to its successor
+     * create lines of nodes where each node is connected to its successor
+     * inherits current label and relationship type.
      * @return the LineBuilder
      */
     public LineBuilder newLineBuilder() {
@@ -196,6 +197,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     /**
      * create a complete graph where each node is interconnected
+     * inherits current label and relationship type.
      * @return the CompleteGraphBuilder
      */
     public CompleteGraphBuilder newCompleteGraphBuilder() {
