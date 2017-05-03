@@ -6,9 +6,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 /**
- * RingBuilder creates a ring of nodes where each node is
- * connected to its successor while the last element of the
- * chain connects back to its head.
+ * Create a line of nodes where each node is only connected to its successor
  *
  * @author mknblch
  */

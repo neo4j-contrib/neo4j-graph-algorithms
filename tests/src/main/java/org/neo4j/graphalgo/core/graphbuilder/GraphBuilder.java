@@ -162,7 +162,6 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new default builder with its own node-set but
      * inherits the current label and relationship type
-     *
      * @return a new default builder
      */
     public DefaultBuilder newDefaultBuilder() {
@@ -172,15 +171,35 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new ring builder with its own node-set but
      * inherits current label and relationship type.
-     *
      * @return a new ring builder
      */
     public RingBuilder newRingBuilder() {
         return new RingBuilder(api, label, relationship);
     }
 
+    /**
+     * creates a grid of nodes
+     * @return the GridBuilder
+     */
+    public GridBuilder newGridBuilder() {
+        return new GridBuilder(api, label, relationship);
+    }
+
+    /**
+     * create a lineBuilder to create lines of nodes
+     * where each node is connected to its successor
+     * @return the LineBuilder
+     */
     public LineBuilder newLineBuilder() {
         return new LineBuilder(api, label, relationship);
+    }
+
+    /**
+     * create a complete graph where each node is interconnected
+     * @return the CompleteGraphBuilder
+     */
+    public CompleteGraphBuilder newCompleteGraphBuilder() {
+        return new CompleteGraphBuilder(api, label, relationship);
     }
 
     /**

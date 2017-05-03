@@ -8,6 +8,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.ArrayList;
 
 /**
+ * Builds a complete graph where all nodes are interconnected
+ *
  * @author mknblch
  */
 public class CompleteGraphBuilder extends GraphBuilder<CompleteGraphBuilder> {
