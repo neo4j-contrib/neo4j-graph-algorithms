@@ -10,10 +10,7 @@ import org.neo4j.graphalgo.impl.SCCTarjanExporter;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
-import org.neo4j.procedure.Description;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -35,7 +32,7 @@ public class SCCTarjanProc {
     @Context
     public Log log;
 
-    @Procedure("algo.scctarjan")
+    @Procedure(value = "algo.scctarjan", mode = Mode.WRITE)
     @Description("CALL algo.scctarjan (label:String, relationship:String, config:Map<String, Object>) YIELDS " +
             "loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(

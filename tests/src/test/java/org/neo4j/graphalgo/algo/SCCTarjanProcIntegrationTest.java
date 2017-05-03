@@ -60,7 +60,7 @@ public class SCCTarjanProcIntegrationTest {
     @Test
     public void testScc() throws Exception {
 
-        db.execute("CALL algo.scctarjan('Node', 'TYPE', {}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+        db.execute("CALL algo.scctarjan('Node', 'TYPE', {write:true}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
                 .accept(row -> {
 
                     System.out.println(row.getNumber("loadDuration").longValue());
@@ -70,6 +70,7 @@ public class SCCTarjanProcIntegrationTest {
                     System.out.println(row.getNumber("maxSetSize").longValue());
                     System.out.println(row.getNumber("minSetSize").longValue());
 
+                    assertNotEquals(-1L, row.getNumber("writeDuration").longValue());
                     assertEquals(2, row.getNumber("setCount").longValue());
                     assertEquals(2, row.getNumber("minSetSize").longValue());
                     assertEquals(3, row.getNumber("maxSetSize").longValue());
