@@ -58,8 +58,8 @@ public final class PageRankProc {
         return Stream.of(statsBuilder.build());
     }
 
-    @Procedure(value = "algo.pageRankStream", mode = Mode.READ)
-    @Description("CALL algo.pageRankStream(label:String, relationship:String, " +
+    @Procedure(value = "algo.pageRank.stream", mode = Mode.READ)
+    @Description("CALL algo.pageRank.stream(label:String, relationship:String, " +
             "{iterations:20, dampingFactor:0.85}) " +
             "YIELD node, score - calculates page rank and streams results")
     public Stream<PageRankScore> pageRankStream(
@@ -78,8 +78,8 @@ public final class PageRankProc {
                 ));
     }
 
-    @Procedure(value = "algo.pageRankStats", mode = Mode.READ)
-    @Description("CALL algo.pageRankStats(label:String, relationship:String, " +
+    @Procedure(value = "algo.pageRank.stats", mode = Mode.READ)
+    @Description("CALL algo.pageRank.stats(label:String, relationship:String, " +
             "{iterations:20, dampingFactor:0.85}) " +
             "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property" +
             " - calculates page rank and returns statistics")

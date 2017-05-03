@@ -33,8 +33,8 @@ public class DijkstraProc {
     @Context
     public Log log;
 
-    @Procedure("algo.dijkstraStream")
-    @Description("CALL algo.dijkstraStream(startNodeId:long, endNodeId:long, propertyName:String" +
+    @Procedure("algo.dijkstra.stream")
+    @Description("CALL algo.dijkstra.stream(startNodeId:long, endNodeId:long, propertyName:String" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathDijkstra.Result> dijkstraStream(

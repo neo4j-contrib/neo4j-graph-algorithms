@@ -29,8 +29,8 @@ public class BetweennessCentralityProc {
     @Context
     public Log log;
 
-    @Procedure(value = "algo.betweennessStream")
-    @Description("CALL algo.betweennessStream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
+    @Procedure(value = "algo.betweenness.stream")
+    @Description("CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship) {

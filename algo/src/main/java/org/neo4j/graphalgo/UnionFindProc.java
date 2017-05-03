@@ -66,8 +66,8 @@ public class UnionFindProc {
                 .build());
     }
 
-    @Procedure(value = "algo.unionFindStream")
-    @Description("CALL algo.unionFindStream(label:String, relationship:String, " +
+    @Procedure(value = "algo.unionFind.stream")
+    @Description("CALL algo.unionFind.stream(label:String, relationship:String, " +
             "{property:'propertyName', threshold:0.42, defaultValue:1.0) " +
             "YIELD nodeId, setId - yields a setId to each node id")
     public Stream<DisjointSetStruct.Result> unionFindStream(
