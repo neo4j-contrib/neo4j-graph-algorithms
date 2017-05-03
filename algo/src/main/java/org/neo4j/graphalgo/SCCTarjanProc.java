@@ -37,7 +37,7 @@ public class SCCTarjanProc {
 
     @Procedure("algo.scctarjan")
     @Description("CALL algo.scctarjan (label:String, relationship:String, config:Map<String, Object>) YIELDS " +
-            "loadDuration, evalDuration, writeDuration, srtCount, maxSetSize, minSetSize")
+            "loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,

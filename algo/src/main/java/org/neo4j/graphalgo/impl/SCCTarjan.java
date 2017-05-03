@@ -31,6 +31,7 @@ public class SCCTarjan {
     }
 
     public SCCTarjan compute() {
+        aggregator.reset();
         graph.forEachNode(aggregator);
         return this;
     }
@@ -75,6 +76,8 @@ public class SCCTarjan {
             onStack.clear();
             stack.clear();
             index = 0;
+            minSetSize = Long.MAX_VALUE;
+            maxSetSize = 0;
         }
 
         private void strongConnect(int node) {
@@ -99,10 +102,10 @@ public class SCCTarjan {
             } while (w != nodeId);
             connectedComponents.add(connected);
             int size = connected.size();
-            if (size > minSetSize) {
+            if (size < minSetSize) {
                 minSetSize = size;
             }
-            if (size < maxSetSize) {
+            if (size > maxSetSize) {
                 maxSetSize = size;
             }
         }

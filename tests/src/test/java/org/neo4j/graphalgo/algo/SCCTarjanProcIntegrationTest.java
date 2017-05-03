@@ -3,6 +3,8 @@ package org.neo4j.graphalgo.algo;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.MSTPrimProc;
+import org.neo4j.graphalgo.SCCTarjanProc;
+import org.neo4j.graphalgo.impl.SCCTarjan;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -14,17 +16,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 /**
- *
- *         a                a
- *     1 /   \ 2          /  \
- *      /     \          /    \
- *     b --3-- c        b      c
- *     |       |   =>   |      |
- *     4       5        |      |
- *     |       |        |      |
- *     d --6-- e        d      e
- *
- *
  * @author mknblch
  */
 public class SCCTarjanProcIntegrationTest {
@@ -35,14 +26,55 @@ public class SCCTarjanProcIntegrationTest {
     @BeforeClass
     public static void setup() throws KernelException {
 
+        String cypher = "CREATE(a:Node) " +
+                "CREATE(b:Node) " +
+                "CREATE(c:Node) " +
+                "CREATE(d:Node) " +
+                "CREATE(e:Node) " +
+                // group 1
+                "CREATE (a)-[:TYPE]->(b) " +
+                "CREATE (a)<-[:TYPE]-(b) " +
+                "CREATE (a)-[:TYPE]->(c) " +
+                "CREATE (a)<-[:TYPE]-(c) " +
+                "CREATE (b)-[:TYPE]->(c) " +
+                "CREATE (b)<-[:TYPE]-(c) " +
+                // group 2
+                "CREATE (d)-[:TYPE]->(e) " +
+                "CREATE (d)<-[:TYPE]-(e) " ;
+
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
+        try(Transaction tx = db.beginTx()) {
+            db.execute(cypher);
+            tx.success();
+        }
+
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(MSTPrimProc.class);
+                .registerProcedure(SCCTarjanProc.class);
     }
 
+    @Test
+    public void testScc() throws Exception {
+
+        db.execute("CALL algo.scctarjan('Node', 'TYPE', {}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+                .accept(row -> {
+
+                    System.out.println(row.getNumber("loadDuration").longValue());
+                    System.out.println(row.getNumber("evalDuration").longValue());
+                    System.out.println(row.getNumber("writeDuration").longValue());
+                    System.out.println(row.getNumber("setCount").longValue());
+                    System.out.println(row.getNumber("maxSetSize").longValue());
+                    System.out.println(row.getNumber("minSetSize").longValue());
+
+                    assertEquals(2, row.getNumber("setCount").longValue());
+                    assertEquals(2, row.getNumber("minSetSize").longValue());
+                    assertEquals(3, row.getNumber("maxSetSize").longValue());
+
+                    return true;
+                });
+    }
 }
