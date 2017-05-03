@@ -76,9 +76,12 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
     @Test
     public void shouldLoadNodesInOrder() throws Exception {
         if (batchSize < NODE_COUNT) {
-            graph.forEachNode(nodeId -> assertEquals(
-                    nodeId,
-                    graph.toOriginalNodeId(nodeId)));
+            graph.forEachNode(nodeId -> {
+                assertEquals(
+                        nodeId,
+                        graph.toOriginalNodeId(nodeId));
+                return true;
+            });
         } else {
             final Set<Long> nodeIds;
             try (Transaction tx = db.beginTx()) {
@@ -95,6 +98,7 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
                 assertEquals(
                         nodeId,
                         graph.toMappedNodeId(graph.toOriginalNodeId(nodeId)));
+                return true;
             });
         }
     }
@@ -130,9 +134,10 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
         }
     }
 
-    private void testRelationships(int nodeId) {
+    private boolean testRelationships(int nodeId) {
         testRelationships(nodeId, Direction.OUTGOING);
         testRelationships(nodeId, Direction.INCOMING);
+        return true;
     }
 
     private void testRelationships(int nodeId, final Direction direction) {

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.api;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * Iterate over each graph-nodeId
@@ -13,7 +14,7 @@ public interface NodeIterator {
     /**
      * Iterate over each graph-nodeId
      */
-    void forEachNode(IntConsumer consumer);
+    void forEachNode(IntPredicate consumer);
 
     /**
      * get graph-nodeId iterator

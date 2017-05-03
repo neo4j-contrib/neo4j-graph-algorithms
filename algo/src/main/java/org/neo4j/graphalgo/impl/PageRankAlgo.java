@@ -5,9 +5,10 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 
-public class PageRankAlgo implements IntConsumer, RelationshipConsumer {
+public class PageRankAlgo implements IntPredicate, RelationshipConsumer {
 
     private final double[] pageRank;
 
@@ -48,10 +49,11 @@ public class PageRankAlgo implements IntConsumer, RelationshipConsumer {
     }
 
     @Override
-    public void accept(final int node) {
+    public boolean test(final int node) {
         sum = 0;
         relationshipIterator.forEachRelationship(node, Direction.INCOMING, this);
         pageRank[node] = alpha + dampingFactor * sum;
+        return true;
     }
 
     @Override

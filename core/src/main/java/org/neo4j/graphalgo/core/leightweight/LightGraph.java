@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  *
@@ -50,7 +51,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachNode(IntConsumer consumer) {
+    public void forEachNode(IntPredicate consumer) {
         idMapping.forEach(consumer);
     }
 
