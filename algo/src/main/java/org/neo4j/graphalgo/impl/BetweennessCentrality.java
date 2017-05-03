@@ -83,7 +83,7 @@ public class BetweennessCentrality {
                                 centrality[nodeId]));
     }
 
-    private void compute(int startNode) {
+    private boolean compute(int startNode) {
         clearPaths();
         stack.clear();
         queue.clear();
@@ -121,6 +121,7 @@ public class BetweennessCentrality {
                 return true;
             });
         }
+        return true;
     }
 
     /**

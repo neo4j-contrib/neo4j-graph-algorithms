@@ -105,18 +105,22 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public void forEachNode(IntConsumer consumer) {
+    public void forEachNode(IntPredicate consumer) {
         withinTransaction(read -> {
             if (labelId == StatementConstants.NO_SUCH_LABEL) {
                 try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
                     while (nodeItemCursor.next()) {
-                        consumer.accept(toMappedNodeId(nodeItemCursor.get().id()));
+                        if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
+                            break;
+                        }
                     }
                 }
             } else {
                 try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
                     while (nodeItemCursor.next()) {
-                        consumer.accept(toMappedNodeId(nodeItemCursor.get().id()));
+                        if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
+                            break;
+                        }
                     }
                 }
             }

@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * Heavy weighted graph built of an adjacency matrix.
@@ -47,7 +48,7 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     }
 
     @Override
-    public void forEachNode(IntConsumer consumer) {
+    public void forEachNode(IntPredicate consumer) {
         nodeIdMap.forEach(consumer);
     }
 

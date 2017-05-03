@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -9,6 +10,8 @@ import org.neo4j.graphalgo.api.*;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
@@ -36,27 +39,32 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     private RelationshipConsumer relationConsumer;
 
     @Mock
-    private IntConsumer nodeConsumer;
+    private IntPredicate nodeConsumer;
+
+    @Before
+    public void setupMocks() {
+        when(nodeConsumer.test(anyInt())).thenReturn(true);
+    }
 
     @Test
     public void testForEachNode() throws Exception {
 
         graph.forEachNode(nodeConsumer);
-        verify(nodeConsumer, times(3)).accept(anyInt());
-        verify(nodeConsumer, times(1)).accept(eq(v0));
-        verify(nodeConsumer, times(1)).accept(eq(v1));
-        verify(nodeConsumer, times(1)).accept(eq(v2));
+        verify(nodeConsumer, times(3)).test(anyInt());
+        verify(nodeConsumer, times(1)).test(eq(v0));
+        verify(nodeConsumer, times(1)).test(eq(v1));
+        verify(nodeConsumer, times(1)).test(eq(v2));
     }
 
     @Test
     public void testNodeIterator() throws Exception {
         final PrimitiveIntIterator iterator = graph.nodeIterator();
         while(iterator.hasNext()) {
-            nodeConsumer.accept(iterator.next());
+            nodeConsumer.test(iterator.next());
         }
-        verify(nodeConsumer, times(1)).accept(eq(v0));
-        verify(nodeConsumer, times(1)).accept(eq(v1));
-        verify(nodeConsumer, times(1)).accept(eq(v2));
+        verify(nodeConsumer, times(1)).test(eq(v0));
+        verify(nodeConsumer, times(1)).test(eq(v1));
+        verify(nodeConsumer, times(1)).test(eq(v2));
     }
 
     @Test

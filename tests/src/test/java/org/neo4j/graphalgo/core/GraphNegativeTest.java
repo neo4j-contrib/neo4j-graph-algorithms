@@ -104,13 +104,16 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipWeightsFromProperty("foo", 13.37)
                 .load(graphImpl);
-        graph.forEachNode(node -> graph.forEachRelationship(
-                node,
-                Direction.OUTGOING,
-                (start, end, rel, weight) -> {
+        graph.forEachNode(node -> {
+            graph.forEachRelationship(
+                    node,
+                    Direction.OUTGOING,
+                    (start, end, rel, weight) -> {
                         assertEquals(13.37, weight, 0.0001);
                         return true;
-                }));
+                    });
+            return true;
+        });
     }
 
     private void testRelationships(final Graph graph) {

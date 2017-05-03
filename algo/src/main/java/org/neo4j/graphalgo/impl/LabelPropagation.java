@@ -10,8 +10,9 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphdb.Direction;
 
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
-public final class LabelPropagation implements IntConsumer, RelationshipConsumer {
+public final class LabelPropagation implements IntPredicate, RelationshipConsumer {
 
     private final HeavyGraph graph;
     private Direction direction;
@@ -37,7 +38,7 @@ public final class LabelPropagation implements IntConsumer, RelationshipConsumer
 
 
     @Override
-    public void accept(final int node) {
+    public boolean test(final int node) {
         votes.clear();
         graph.forEachRelationship(node, direction, this);
 
@@ -54,6 +55,7 @@ public final class LabelPropagation implements IntConsumer, RelationshipConsumer
         if (partition != originalPartition) {
             labels.put(node, partition);
         }
+        return true;
     }
 
     @Override

@@ -31,6 +31,7 @@ public class GraphUnionFind {
                 dss.union(source, target);
                 return true;
             });
+            return true;
         });
         return dss;
     }
@@ -49,6 +50,7 @@ public class GraphUnionFind {
                 }
                 return true;
             });
+            return true;
         });
         return dss;
     }

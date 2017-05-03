@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * This is basically a long to int mapper. It sorts the id's in ascending order so its
@@ -81,10 +82,12 @@ public final class IdMap implements IdMapping, NodeIterator{
         return graphIds;
     }
 
-    public void forEach(IntConsumer consumer) {
+    public void forEach(IntPredicate consumer) {
         int limit = this.nextGraphId;
         for (int i = 0; i < limit; i++) {
-            consumer.accept(i);
+            if (!consumer.test(i)) {
+                return;
+            }
         }
     }
 
@@ -104,10 +107,12 @@ public final class IdMap implements IdMapping, NodeIterator{
     }
 
     @Override
-    public void forEachNode(IntConsumer consumer) {
+    public void forEachNode(IntPredicate consumer) {
         final int count = nodeCount();
         for (int i = 0; i < count; i++) {
-            consumer.accept(i);
+            if (!consumer.test(i)) {
+                return;
+            }
         }
     }
 
