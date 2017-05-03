@@ -22,6 +22,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     private final ME self;
 
     protected final HashSet<Node> nodes;
+    protected final HashSet<Relationship> relationships;
     protected final GraphDatabaseAPI api;
     protected final ThreadToStatementContextBridge bridge;
 
@@ -37,6 +38,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
         bridge = api.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
         nodes = new HashSet<>();
+        relationships = new HashSet<>();
         this.self = me();
     }
 
@@ -79,7 +81,9 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return the relationship object
      */
     public Relationship createRelationship(Node p, Node q) {
-        return p.createRelationshipTo(q, relationship);
+        final Relationship relationshipTo = p.createRelationshipTo(q, relationship);
+        relationships.add(relationshipTo);
+        return relationshipTo;
     }
 
     /**
@@ -101,8 +105,13 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @param consumer the node consumer
      * @return child instance to make methods of the child class accessible.
      */
-    public ME forEachInTx(Consumer<Node> consumer) {
+    public ME forEachNodeInTx(Consumer<Node> consumer) {
         withinTransaction(() -> nodes.forEach(consumer));
+        return self;
+    }
+
+    public ME forEachRelInTx(Consumer<Relationship> consumer) {
+        withinTransaction(() -> relationships.forEach(consumer));
         return self;
     }
 
@@ -168,6 +177,10 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      */
     public RingBuilder newRingBuilder() {
         return new RingBuilder(api, label, relationship);
+    }
+
+    public LineBuilder newLineBuilder() {
+        return new LineBuilder(api, label, relationship);
     }
 
     /**

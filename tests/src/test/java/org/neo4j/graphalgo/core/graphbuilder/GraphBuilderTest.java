@@ -23,7 +23,7 @@ public class GraphBuilderTest extends Neo4JTestCase{
                 .newRingBuilder()
                 .setRelationship(RELATION)
                 .createRing(10)
-                .forEachInTx(node -> {
+                .forEachNodeInTx(node -> {
                     assertEquals(2, node.getDegree());
                     mock.run();
                 });
