@@ -114,7 +114,7 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testBetweennessStream() throws Exception {
 
-        db.execute("CALL algo.betweennessStream() YIELD nodeId, centrality")
+        db.execute("CALL algo.betweenness.stream() YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.consume(
                             (long) row.getNumber("nodeId"),

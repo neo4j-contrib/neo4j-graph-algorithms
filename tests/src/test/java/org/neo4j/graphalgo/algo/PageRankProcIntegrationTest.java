@@ -103,7 +103,7 @@ public class PageRankProcIntegrationTest {
     public void testPageRankStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score",
                 row -> actual.put(
                         row.getNode("node").getId(),
                         (Double) row.get("score")));
@@ -114,7 +114,7 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankStatsAndDefaults() throws Exception {
         runQuery(
-                "CALL algo.pageRankStats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property",
+                "CALL algo.pageRank.stats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property",
                 row -> {
                     assertEquals(20, row.getNumber("iterations").intValue());
                     assertEquals(
@@ -141,7 +141,7 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankStatsAndParameters() throws Exception {
         runQuery(
-                "CALL algo.pageRankStats('Label1', 'TYPE1',{iterations:5,dampingFactor:0.42})",
+                "CALL algo.pageRank.stats('Label1', 'TYPE1',{iterations:5,dampingFactor:0.42})",
                 row -> {
                     assertEquals(5, row.getNumber("iterations").intValue());
                     assertEquals(
@@ -154,7 +154,7 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankStatsDisabledWrite() throws Exception {
         runQuery(
-                "CALL algo.pageRankStats('Label1', 'TYPE1')",
+                "CALL algo.pageRank.stats('Label1', 'TYPE1')",
                 row -> assertFalse(row.getBoolean("write")));
     }
 

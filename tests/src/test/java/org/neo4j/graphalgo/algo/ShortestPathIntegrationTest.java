@@ -72,7 +72,7 @@ public class ShortestPathIntegrationTest {
         PathConsumer consumer = mock(PathConsumer.class);
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.dijkstraStream(start, end, 'cost') YIELD nodeId, cost\n" +
+                        "CALL algo.dijkstra.stream(start, end, 'cost') YIELD nodeId, cost\n" +
                         "RETURN nodeId, cost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept((Long) row.getNumber("nodeId"), (Double) row.getNumber("cost"));
