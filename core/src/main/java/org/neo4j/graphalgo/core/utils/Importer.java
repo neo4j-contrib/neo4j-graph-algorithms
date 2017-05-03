@@ -13,6 +13,10 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.NodeItem;
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -84,6 +88,10 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
         return buildT();
     }
 
+    public CompletableFuture<T> buildDelayed(ExecutorService executorService) {
+        return CompletableFuture.supplyAsync(this::build, executorService);
+    }
+
     /**
      * Instructs the loader to load only nodes with the given label name.
      * If the label is not found, every node will be loaded.
@@ -115,6 +123,18 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      */
     public ME withAnyLabel() {
         this.label = null;
+        return me();
+    }
+
+    /**
+     * Instructs the loader to load only nodes with the given label name.
+     * If the label is not found, every node will be loaded. TODO review that
+     *
+     * @param label May be null
+     * @return itself to enable fluent interface
+     */
+    public ME withOptionalLabel(String label) {
+        this.label = label;
         return me();
     }
 
@@ -153,6 +173,19 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
     }
 
     /**
+     * Instructs the loader to load only relationships with the given type name.
+     * If the argument is null, every relationship will be considered.
+     *
+     * @param relation May be null
+     * @return itself to enable fluent interface
+     */
+    public ME withOptionalRelationshipType(String relation) {
+        this.relationship = relation;
+        return me();
+    }
+
+
+    /**
      * Instructs the loader to load weights by reading the given property.
      * If the property is not set, the propertyDefaultValue is used instead.
      *
@@ -162,6 +195,20 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      */
     public ME withWeightsFromProperty(String property, double propertyDefaultValue) {
         this.property = Objects.requireNonNull(property);
+        this.propertyDefaultValue = propertyDefaultValue;
+        return me();
+    }
+
+    /**
+     * Instructs the loader to load weights by reading the given property.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     *
+     * @param property May be null
+     * @param propertyDefaultValue the default value to use if property is not set
+     * @return itself to enable fluent interface
+     */
+    public ME withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
+        this.property = property;
         this.propertyDefaultValue = propertyDefaultValue;
         return me();
     }

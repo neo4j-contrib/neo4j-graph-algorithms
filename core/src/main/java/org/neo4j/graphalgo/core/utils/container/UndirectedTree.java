@@ -43,7 +43,7 @@ import java.util.Arrays;
  * Iteration is roughly in reverse insertion order, but this is an implementation
  * detail and not guaranteed.
  */
-public final class UndirectedTree {
+public class UndirectedTree {
 
     private static final int INVALID_NODE = -1;
     private static final long RELATION_ID_NOT_SUPPORTED = -1L;
