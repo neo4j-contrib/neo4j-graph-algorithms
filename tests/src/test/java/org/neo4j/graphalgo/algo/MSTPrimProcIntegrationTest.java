@@ -39,12 +39,12 @@ public class MSTPrimProcIntegrationTest {
                 "CREATE(c:Node) " +
                 "CREATE(d:Node) " +
                 "CREATE(e:Node) " +
-                "CREATE (a)-[:TYPE {cost:1.0, m:true}]->(b) " +
-                "CREATE (a)-[:TYPE {cost:2.0, m:true}]->(c) " +
-                "CREATE (b)-[:TYPE {cost:3.0, m:false}]->(c) " +
-                "CREATE (b)-[:TYPE {cost:4.0, m:true}]->(d) " +
-                "CREATE (c)-[:TYPE {cost:5.0, m:true}]->(e) " +
-                "CREATE (d)-[:TYPE {cost:6.0, m:false}]->(e)";
+                "CREATE (a)-[:TYPE {cost:1.0}]->(b) " +
+                "CREATE (a)-[:TYPE {cost:2.0}]->(c) " +
+                "CREATE (b)-[:TYPE {cost:3.0}]->(c) " +
+                "CREATE (b)-[:TYPE {cost:4.0}]->(d) " +
+                "CREATE (c)-[:TYPE {cost:5.0}]->(e) " +
+                "CREATE (d)-[:TYPE {cost:6.0}]->(e)";
 
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
