@@ -3,18 +3,11 @@ package org.neo4j.graphalgo.impl;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
-import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipIterator;
-import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
-import org.neo4j.graphalgo.core.utils.container.SubGraph;
-import org.neo4j.graphalgo.core.utils.container.UndirectedTree;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
