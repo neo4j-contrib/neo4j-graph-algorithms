@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.neo4jview;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
@@ -16,6 +17,9 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.*;
 
@@ -138,6 +142,26 @@ public class GraphView implements Graph {
     }
 
     @Override
+    public Collection<PrimitiveIntIterable> batchIterables(final int batchSize) {
+        int nodeCount = this.nodeCount;
+        int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
+        if (numberOfBatches == 1) {
+            return Collections.singleton(this::nodeIterator);
+        }
+        PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
+        Arrays.setAll(iterators, i -> () -> withinTransactionTyped(read -> {
+            PrimitiveLongIterator neoIds;
+            if (labelId == StatementConstants.NO_SUCH_LABEL) {
+                neoIds = read.nodesGetAll();
+            } else {
+                neoIds = read.nodesGetForLabel(labelId);
+            }
+            return new SizedNodeIterator(this, neoIds, i * batchSize, batchSize);
+        }));
+        return Arrays.asList(iterators);
+    }
+
+    @Override
     public int degree(int nodeId, Direction direction) {
         return withinTransactionInt(read -> {
             try {
@@ -224,6 +248,38 @@ public class GraphView implements Graph {
 
         @Override
         public int next() {
+            return graph.toMappedNodeId(iterator.next());
+        }
+    }
+
+    private static class SizedNodeIterator implements PrimitiveIntIterator {
+
+        private final Graph graph;
+
+        private final PrimitiveLongIterator iterator;
+        private int remaining;
+
+        private SizedNodeIterator(
+                Graph graph,
+                PrimitiveLongIterator iterator,
+                int start,
+                int length) {
+            while (iterator.hasNext() && start-- > 0) {
+                iterator.next();
+            }
+            this.graph = graph;
+            this.iterator = iterator;
+            this.remaining = length;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return remaining > 0 && iterator.hasNext();
+        }
+
+        @Override
+        public int next() {
+            remaining--;
             return graph.toMappedNodeId(iterator.next());
         }
     }

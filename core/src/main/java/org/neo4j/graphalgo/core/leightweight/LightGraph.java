@@ -1,11 +1,13 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import com.carrotsearch.hppc.LongLongMap;
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -48,6 +50,11 @@ public class LightGraph implements Graph {
     @Override
     public PrimitiveIntIterator nodeIterator() {
         return idMapping.iterator();
+    }
+
+    @Override
+    public Collection<PrimitiveIntIterable> batchIterables(final int batchSize) {
+        return idMapping.batchIterables(batchSize);
     }
 
     @Override
