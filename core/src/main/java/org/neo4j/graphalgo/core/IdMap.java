@@ -134,7 +134,11 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
             return Collections.singleton(this::nodeIterator);
         }
         PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
-        Arrays.setAll(iterators, i -> () -> new IdIterator().reset(i * batchSize, batchSize));
+        Arrays.setAll(iterators, i -> () -> {
+            int start = i * batchSize;
+            int length = Math.min(batchSize, nodeCount - start);
+            return new IdIterator().reset(start, length);
+        });
         return Arrays.asList(iterators);
     }
 
