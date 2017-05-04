@@ -78,23 +78,6 @@ public final class PageRankProc {
                 ));
     }
 
-    @Procedure(value = "algo.pageRank.stats", mode = Mode.READ)
-    @Description("CALL algo.pageRank.stats(label:String, relationship:String, " +
-            "{iterations:20, dampingFactor:0.85}) " +
-            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property" +
-            " - calculates page rank and returns statistics")
-    public Stream<PageRankScore.Stats> pageRankStats(
-            @Name(value = "label", defaultValue = "") String label,
-            @Name(value = "relationship", defaultValue = "") String relationship,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        if ((boolean) config.getOrDefault(CONFIG_WRITE, DEFAULT_WRITE)) {
-            Map<String, Object> newConfig = new HashMap<>(config);
-            newConfig.put(CONFIG_WRITE, Boolean.FALSE);
-            config = newConfig;
-        }
-        return pageRank(label, relationship, config);
-    }
-
     private Graph load(
             String label,
             String relationship,
