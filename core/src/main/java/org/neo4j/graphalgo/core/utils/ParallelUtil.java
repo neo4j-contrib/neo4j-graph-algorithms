@@ -1,6 +1,15 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.api.BatchNodeIterable;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.Exceptions;
+import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +20,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public final class ParallelUtil {
+
+    public static final int DEFAULT_BATCH_SIZE = 10_000;
+
+    /**
+     * Executes write operations in parallel, based on the given batch size
+     * and executor.
+     */
+    public static void writeParallel(
+            int batchSize,
+            BatchNodeIterable idMapping,
+            GraphDatabaseAPI db,
+            ParallelGraphExporter parallelExporter,
+            ExecutorService executor) {
+
+        Collection<PrimitiveIntIterable> iterators =
+                idMapping.batchIterables(batchSize);
+
+        int threads = iterators.size();
+
+        if (executor == null || threads == 1) {
+            writeSequential(db, parallelExporter, iterators.iterator().next());
+        } else {
+            List<BatchExportRunnable> tasks = new ArrayList<>(threads);
+            for (PrimitiveIntIterable iterator : iterators) {
+                tasks.add(new BatchExportRunnable(
+                        db,
+                        parallelExporter,
+                        iterator
+                ));
+            }
+            run(tasks, executor);
+        }
+
+    }
 
     /**
      * Runs a collection of {@link Runnable}s in parallel for their side-effects.
@@ -50,6 +93,53 @@ public final class ParallelUtil {
         }
         if (error != null) {
             throw Exceptions.launderedException(error);
+        }
+    }
+
+    private static void writeSequential(
+            GraphDatabaseAPI db,
+            ParallelGraphExporter parallelExporter,
+            PrimitiveIntIterable iterator) {
+        new BatchExportRunnable(
+                db,
+                parallelExporter,
+                iterator
+        ).run();
+    }
+
+
+    private static final class BatchExportRunnable implements Runnable {
+        private final GraphDatabaseAPI db;
+        private final ParallelGraphExporter parallelExporter;
+        private final PrimitiveIntIterable iterator;
+        private final ThreadToStatementContextBridge ctx;
+
+        private BatchExportRunnable(
+                final GraphDatabaseAPI db,
+                final ParallelGraphExporter parallelExporter,
+                final PrimitiveIntIterable iterator) {
+            this.db = db;
+            this.parallelExporter = parallelExporter;
+            this.iterator = iterator;
+            this.ctx = db
+                    .getDependencyResolver()
+                    .resolveDependency(ThreadToStatementContextBridge.class);
+        }
+
+        @Override
+        public void run() {
+            GraphExporter exporter = parallelExporter.newExporter();
+            try (Transaction tx = db.beginTx();
+                 Statement statement = ctx.get()) {
+                DataWriteOperations ops = statement.dataWriteOperations();
+                PrimitiveIntIterator iterator = this.iterator.iterator();
+                while (iterator.hasNext()) {
+                    exporter.write(ops, iterator.next());
+                }
+                tx.success();
+            } catch (KernelException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
