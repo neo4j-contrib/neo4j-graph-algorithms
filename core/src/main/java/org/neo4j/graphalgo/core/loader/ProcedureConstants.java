@@ -29,5 +29,9 @@ public class ProcedureConstants {
 
     public static final int ITERATIONS_DEFAULT = 1;
 
+    public static final String DIRECTION = "direction";
+
+    public static final String DIRECTION_DEFAULT = "BOTH";
+
 
 }

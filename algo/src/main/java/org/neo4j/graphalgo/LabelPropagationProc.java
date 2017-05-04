@@ -2,16 +2,14 @@ package org.neo4j.graphalgo;
 
 import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
-import org.neo4j.graphalgo.core.loader.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.loader.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.loader.GraphLoader;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.impl.LabelPropagationExporter;
 import org.neo4j.graphalgo.impl.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -39,9 +37,6 @@ public final class LabelPropagationProc {
     @Context
     public GraphDatabaseAPI dbAPI;
 
-    @Context
-    public Log log;
-
     @Procedure(name = "algo.labelPropagation", mode = Mode.WRITE)
     @Description("CALL algo.labelPropagation(" +
             "label:String, relationship:String, direction:String, " +
@@ -58,27 +53,34 @@ public final class LabelPropagationProc {
         relationshipType = emptyToNull(relationshipType);
         Direction direction = parseDirection(directionName);
 
-        ProcedureConfiguration configuration = new ProcedureConfiguration(config, log);
-
-        String partitionProperty = configuration.getStringOrNull(
+        int iterations = ((Number) config.getOrDefault(
+                CONFIG_ITERATIONS,
+                DEFAULT_ITERATIONS)).intValue();
+        String partitionProperty = emptyToNull((String) config.getOrDefault(
                 CONFIG_PARTITION_KEY,
-                DEFAULT_PARTITION_KEY);
+                DEFAULT_PARTITION_KEY));
+        String weightProperty = emptyToNull((String) config.getOrDefault(
+                CONFIG_WEIGHT_KEY,
+                DEFAULT_WEIGHT_KEY));
+        boolean write = (boolean) config.getOrDefault(
+                CONFIG_WRITE,
+                DEFAULT_WRITE);
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
-                .iterations(configuration.getIterations())
+                .iterations(iterations)
                 .partitionProperty(partitionProperty)
-                .weightProperty(configuration.getProperty());
+                .weightProperty(weightProperty);
 
         HeavyGraph graph = load(
                 label,
                 relationshipType,
                 partitionProperty,
-                configuration.getProperty(),
+                weightProperty,
                 stats);
 
-        IntDoubleMap labels = compute(direction, configuration.getIterations(), graph, stats);
+        IntDoubleMap labels = compute(direction, iterations, graph, stats);
 
-        if (configuration.isWriteFlag() && partitionProperty != null) {
+        if (write && partitionProperty != null) {
             write(partitionProperty, graph, labels, stats);
         }
 

@@ -21,6 +21,26 @@ public class ProcedureConfiguration {
         this.log = log;
     }
 
+    public ProcedureConfiguration withNodeLabelOrQuery(String nodeLabelOrQuery) {
+        config.put(ProcedureConstants.NODE_LABEL_QUERY_PARAM, nodeLabelOrQuery);
+        return this;
+    }
+
+    public ProcedureConfiguration withRelationshipTypeOrQuery(String relationshipTypeOrQuery) {
+        config.put(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, relationshipTypeOrQuery);
+        return this;
+    }
+
+    public ProcedureConfiguration withProperty(String property) {
+        config.put(ProcedureConstants.PROPERTY_PARAM, property);
+        return this;
+    }
+
+    public ProcedureConfiguration withDirection(String direction) {
+        config.put(ProcedureConstants.DIRECTION, direction);
+        return this;
+    }
+
     public boolean nodeLabelIsQuery() {
         return QUERY_PATTERN
                 .matcher(getNodeLabelOrQuery(""))
@@ -73,15 +93,8 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.ITERATIONS_PARAM, ProcedureConstants.ITERATIONS_DEFAULT);
     }
 
-    @SuppressWarnings("unchecked")
-    private <V> V get(String key, V defaultValue) {
-        Object value = config.get(key);
-        if (null == value) {
-            log.warn("Procedure configuration for key: " + key + " not found! Using defaultValue: " + defaultValue);
-            return defaultValue;
-        }
-        log.debug("Procedure configuration found for key: " + key);
-        return (V) value;
+    public String getDirectionName() {
+        return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
     }
 
     /**
@@ -123,5 +136,39 @@ public class ProcedureConfiguration {
     private String emptyToNull(String s) {
         return "".equals(s) ? null : s;
     }
+
+    @SuppressWarnings("unchecked")
+    private <V> V get(String key, V defaultValue) {
+        Object value = config.get(key);
+        if (null == value) {
+            log.warn("Procedure configuration for key: " + key + " not found! Using defaultValue: " + defaultValue);
+            return defaultValue;
+        }
+        log.debug("Procedure configuration found for key: " + key);
+        return (V) value;
+    }
+
+    public static ProcedureConfiguration create(Log log, Map<String, Object> config) {
+        return new ProcedureConfiguration(config, log);
+    }
+
+    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery) {
+        return new ProcedureConfiguration(config, log)
+                .withNodeLabelOrQuery(nodeLabelOrQuery);
+    }
+
+    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery, String relationshipOrQuery) {
+        return new ProcedureConfiguration(config, log)
+                .withNodeLabelOrQuery(nodeLabelOrQuery)
+                .withRelationshipTypeOrQuery(relationshipOrQuery);
+    }
+
+    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery, String relationshipOrQuery, String property) {
+        return new ProcedureConfiguration(config, log)
+                .withNodeLabelOrQuery(nodeLabelOrQuery)
+                .withRelationshipTypeOrQuery(relationshipOrQuery)
+                .withProperty(property);
+    }
+
 
 }

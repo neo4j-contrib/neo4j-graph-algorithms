@@ -70,7 +70,7 @@ public class GraphLoader {
     public GraphLoader withProcedureConfig(ProcedureConfiguration configuration) {
         withOptionalLabel(configuration.getNodeLabelOrQuery());
         withOptionalRelationshipType(configuration.getRelationshipOrQuery());
-        withOptionalNodeProperty(configuration.getProperty(), ProcedureConstants.DEFAULT_PROPERTY_VALUE_DEFAULT);
+        withOptionalRelationshipWeightsFromProperty(configuration.getProperty(), ProcedureConstants.DEFAULT_PROPERTY_VALUE_DEFAULT);
         return this;
     }
 

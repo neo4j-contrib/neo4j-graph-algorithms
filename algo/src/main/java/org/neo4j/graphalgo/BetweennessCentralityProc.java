@@ -1,9 +1,8 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.loader.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.loader.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.loader.GraphLoader;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
@@ -48,21 +47,22 @@ public class BetweennessCentralityProc {
     }
 
     @Procedure(value = "algo.betweenness", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness(nodeLabelOrQuery:String, relationshipOrQuery:String, {write:true, writeProperty:'centrality', stats:true}) YIELD " +
+    @Description("CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD " +
             "loadDuration, evalDuration, writeDuration, nodeCount, [minCentrality, maxCentrality, meanCentrality] - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweenness(
-            @Name(value = "nodeLabelOrQuery", defaultValue = "") String label,
-            @Name(value = "relationshipOrQuery", defaultValue = "") String relationship,
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        final ProcedureConfiguration configuration = new ProcedureConfiguration(config, log);
 
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
 
         ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
         final Graph graph = new GraphLoader(api)
-                .withProcedureConfig(configuration)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutNodeProperties()
                 .load(HeavyGraphFactory.class);
         timer.stop();
 
@@ -73,15 +73,15 @@ public class BetweennessCentralityProc {
                 .compute();
         timer.stop();
 
-        if (configuration.isWriteFlag()) {
+        if ((boolean) config.getOrDefault(CONFIG_WRITE, Boolean.FALSE)) {
             timer = ProgressTimer.start(builder::withWriteDuration);
             new BetweennessCentrality.BCExporter(api)
-                    .withTargetProperty(configuration.getWriteProperty())
+                    .withTargetProperty((String) config.getOrDefault(CONFIG_WRITE_PROPERTY, CONFIG_WRITE_PROPERTY_DEFAULT))
                     .write(bc);
             timer.stop();
         }
 
-        if (configuration.isStatsFlag()) {
+        if ((boolean) config.getOrDefault(CONFIG_STATS, Boolean.FALSE)) {
             computeStats(builder, bc);
         }
 

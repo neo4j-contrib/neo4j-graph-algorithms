@@ -18,11 +18,9 @@ import java.util.stream.Stream;
 /**
  * @author mknblch
  */
-public class SCCTarjanProc {
+public class StronglyConnectedComponentsProc {
 
     public static final String CONFIG_WRITE = "write";
-    public static final String CONFIG_PROPERTY = "property";
-    public static final String CONFIG_DEFAULT_VALUE = "defaultValue";
     public static final String CONFIG_WRITE_PROPERTY = "clusterProperty";
     public static final String CONFIG_CLUSTER = "cluster";
 
@@ -32,8 +30,8 @@ public class SCCTarjanProc {
     @Context
     public Log log;
 
-    @Procedure(value = "algo.scctarjan", mode = Mode.WRITE)
-    @Description("CALL algo.scctarjan (label:String, relationship:String, config:Map<String, Object>) YIELDS " +
+    @Procedure(value = "algo.scc", mode = Mode.WRITE)
+    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELDS " +
             "loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
             @Name(value = "label", defaultValue = "") String label,
