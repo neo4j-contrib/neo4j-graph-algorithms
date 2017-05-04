@@ -12,7 +12,6 @@ import org.neo4j.graphalgo.api.NodeIterator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -73,7 +72,7 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     }
 
     public void buildMappedIds() {
-        graphIds = new long[nodeToGraphIds.size()];
+        graphIds = new long[size()];
         for (final LongIntCursor cursor : nodeToGraphIds) {
             graphIds[cursor.value] = cursor.key;
         }
@@ -128,7 +127,7 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
 
     @Override
     public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-        int nodeCount = graphIds.length;
+        int nodeCount = nodeCount();
         int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
         if (numberOfBatches == 1) {
             return Collections.singleton(this::nodeIterator);
