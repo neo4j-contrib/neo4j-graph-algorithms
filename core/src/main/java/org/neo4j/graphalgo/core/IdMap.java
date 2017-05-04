@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.IdMapping;
@@ -126,14 +127,14 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     }
 
     @Override
-    public Collection<PrimitiveIntIterator> batchIterators(final int batchSize) {
+    public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
         int nodeCount = graphIds.length;
         int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
         if (numberOfBatches == 1) {
-            return Collections.singleton(nodeIterator());
+            return Collections.singleton(this::nodeIterator);
         }
-        PrimitiveIntIterator[] iterators = new PrimitiveIntIterator[numberOfBatches];
-        Arrays.setAll(iterators, i ->  new IdIterator().reset(i * batchSize, batchSize));
+        PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
+        Arrays.setAll(iterators, i -> () -> new IdIterator().reset(i * batchSize, batchSize));
         return Arrays.asList(iterators);
     }
 
