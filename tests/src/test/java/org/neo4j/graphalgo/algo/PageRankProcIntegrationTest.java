@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -123,19 +121,7 @@ public class PageRankProcIntegrationTest {
                             row.getNumber("writeMillis").intValue() >= 0);
                 });
 
-        try (Transaction tx = db.beginTx()) {
-            for (Map.Entry<Long, Double> entry : expected.entrySet()) {
-                double score = ((Number) db
-                        .getNodeById(entry.getKey())
-                        .getProperty("score")).doubleValue();
-                assertEquals(
-                        "score for " + entry.getKey(),
-                        entry.getValue(),
-                        score,
-                        1e-4);
-            }
-            tx.success();
-        }
+        assertResult("score");
     }
 
     @Test
@@ -150,19 +136,18 @@ public class PageRankProcIntegrationTest {
                             row.getNumber("writeMillis").intValue() >= 0);
                 });
 
-        try (Transaction tx = db.beginTx()) {
-            for (Map.Entry<Long, Double> entry : expected.entrySet()) {
-                double score = ((Number) db
-                        .getNodeById(entry.getKey())
-                        .getProperty("foobar")).doubleValue();
-                assertEquals(
-                        "score for " + entry.getKey(),
-                        entry.getValue(),
-                        score,
-                        1e-4);
-            }
-            tx.success();
-        }
+        assertResult("foobar");
+    }
+
+    @Test
+    public void testPageRankParallelWriteBack() throws Exception {
+        runQuery(
+                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3}) YIELD writeMillis, write, property",
+                row -> assertTrue(
+                        "write time not set",
+                        row.getNumber("writeMillis").intValue() >= 0));
+
+        assertResult("score");
     }
 
     private static void runQuery(
@@ -173,6 +158,22 @@ public class PageRankProcIntegrationTest {
                 check.accept(row);
                 return true;
             });
+        }
+    }
+
+    private void assertResult(final String scoreProperty) {
+        try (Transaction tx = db.beginTx()) {
+            for (Map.Entry<Long, Double> entry : expected.entrySet()) {
+                double score = ((Number) db
+                        .getNodeById(entry.getKey())
+                        .getProperty(scoreProperty)).doubleValue();
+                assertEquals(
+                        "score for " + entry.getKey(),
+                        entry.getValue(),
+                        score,
+                        1e-4);
+            }
+            tx.success();
         }
     }
 

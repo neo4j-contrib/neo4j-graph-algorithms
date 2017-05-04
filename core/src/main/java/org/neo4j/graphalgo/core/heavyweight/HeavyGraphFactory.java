@@ -9,7 +9,7 @@ import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
-import org.neo4j.helpers.Exceptions;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -19,12 +19,8 @@ import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -145,7 +141,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 }
             });
             idMap.buildMappedIds();
-            run(tasks, threadPool);
+            ParallelUtil.run(tasks, threadPool);
             for (ImportTask task : tasks) {
                 matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
             }
@@ -231,40 +227,6 @@ public class HeavyGraphFactory extends GraphFactory {
                 final long relationId = rel.id();
                 matrix.addIncoming(targetNodeId, nodeId, relationId);
             }
-        }
-    }
-
-    private static void run(
-            final Collection<? extends Runnable> tasks,
-            final ExecutorService threadPool) {
-        final List<Future<?>> futures = new ArrayList<>(tasks.size());
-        for (Runnable task : tasks) {
-            futures.add(threadPool.submit(task));
-        }
-
-        boolean done = false;
-        Throwable error = null;
-        try {
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (ExecutionException ee) {
-                    error = Exceptions.chain(error, ee.getCause());
-                } catch (CancellationException ignore) {
-                }
-            }
-            done = true;
-        } catch (InterruptedException e) {
-            error = Exceptions.chain(e, error);
-        } finally {
-            if (!done) {
-                for (final Future<?> future : futures) {
-                    future.cancel(true);
-                }
-            }
-        }
-        if (error != null) {
-            throw Exceptions.launderedException(error);
         }
     }
 
