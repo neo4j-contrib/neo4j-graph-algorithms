@@ -64,7 +64,7 @@ public class MSTPrimProcIntegrationTest {
     @Test
     public void testMst() throws Exception {
 
-        db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.mstprim(n, 'cost', {write:true, stats:true}) " +
+        db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.mst(n, 'cost', {write:true, stats:true}) " +
                 "YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, " +
                 "weightMax, relationshipCount RETURN loadDuration, evalDuration, " +
                 "writeDuration, weightSum, weightMin, weightMax, relationshipCount").accept(res -> {

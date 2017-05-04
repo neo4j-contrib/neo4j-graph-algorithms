@@ -112,53 +112,6 @@ public class PageRankProcIntegrationTest {
     }
 
     @Test
-    public void testPageRankStatsAndDefaults() throws Exception {
-        runQuery(
-                "CALL algo.pageRank.stats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property",
-                row -> {
-                    assertEquals(20, row.getNumber("iterations").intValue());
-                    assertEquals(
-                            0.85,
-                            row.getNumber("dampingFactor").doubleValue(),
-                            1e-3);
-                    assertFalse(row.getBoolean("write"));
-                    assertNull(row.getString("property"));
-
-                    assertEquals(-1, row.getNumber("writeMillis").intValue());
-                    assertTrue(
-                            "load time not set",
-                            row.getNumber("loadMillis").intValue() >= 0);
-                    assertTrue(
-                            "compute time not set",
-                            row.getNumber("computeMillis").intValue() >= 0);
-
-                    assertEquals(
-                            expected.size(),
-                            row.getNumber("nodes").intValue());
-                });
-    }
-
-    @Test
-    public void testPageRankStatsAndParameters() throws Exception {
-        runQuery(
-                "CALL algo.pageRank.stats('Label1', 'TYPE1',{iterations:5,dampingFactor:0.42})",
-                row -> {
-                    assertEquals(5, row.getNumber("iterations").intValue());
-                    assertEquals(
-                            0.42,
-                            row.getNumber("dampingFactor").doubleValue(),
-                            1e-3);
-                });
-
-    }
-    @Test
-    public void testPageRankStatsDisabledWrite() throws Exception {
-        runQuery(
-                "CALL algo.pageRank.stats('Label1', 'TYPE1')",
-                row -> assertFalse(row.getBoolean("write")));
-    }
-
-    @Test
     public void testPageRankWriteBack() throws Exception {
         runQuery(
                 "CALL algo.pageRank('Label1', 'TYPE1') YIELD writeMillis, write, property",

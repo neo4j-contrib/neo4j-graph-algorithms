@@ -33,10 +33,10 @@ public class MSTPrimProc {
     @Context
     public Log log;
 
-    @Procedure(value = "algo.mstprim", mode = Mode.WRITE)
-    @Description("CALL algo.mstprim(node:Node, property:String, {label:String, relationship:String, write:boolean, writeProperty:String stats:boolean}) " +
+    @Procedure(value = "algo.mst", mode = Mode.WRITE)
+    @Description("CALL algo.mst(node:Node, property:String, {label:String, relationship:String, write:boolean, writeProperty:String stats:boolean}) " +
             "YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax, relationshipCount")
-    public Stream<MSTPrimResult> mstPrim(
+    public Stream<MSTPrimResult> mst(
             @Name("startNode") Node startNode,
             @Name(value = "property") String propertyName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {

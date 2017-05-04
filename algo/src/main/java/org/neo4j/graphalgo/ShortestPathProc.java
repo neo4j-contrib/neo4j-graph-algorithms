@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 /**
  * @author mknblch
  */
-public class DijkstraProc {
+public class ShortestPathProc {
 
     public static final String CONFIG_LABEL = "label";
     public static final String CONFIG_RELATIONSHIP = "relationship";
@@ -33,8 +33,8 @@ public class DijkstraProc {
     @Context
     public Log log;
 
-    @Procedure("algo.dijkstra.stream")
-    @Description("CALL algo.dijkstra.stream(startNodeId:long, endNodeId:long, propertyName:String" +
+    @Procedure("algo.shortestPath.stream")
+    @Description("CALL algo.shortestPath.stream(startNodeId:long, endNodeId:long, propertyName:String" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathDijkstra.Result> dijkstraStream(
@@ -59,8 +59,8 @@ public class DijkstraProc {
     }
 
 
-    @Procedure("algo.dijkstra")
-    @Description("CALL algo.dijkstra(startNodeId:long, endNodeId:long, propertyName:String" +
+    @Procedure("algo.shortestPath")
+    @Description("CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration")
     public Stream<DijkstraResult> dijkstra(

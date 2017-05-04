@@ -11,6 +11,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 
 public class SCCTarjan {
@@ -48,7 +49,7 @@ public class SCCTarjan {
         return graph.nodeCount() == 0 ? 0 : aggregator.minSetSize;
     }
 
-    private static final class Aggregator implements IntConsumer, RelationshipConsumer {
+    private static final class Aggregator implements IntPredicate, RelationshipConsumer {
 
         private final Graph graph;
         private final int[] indices;
@@ -122,10 +123,11 @@ public class SCCTarjan {
         }
 
         @Override
-        public void accept(int node) {
+        public boolean test(int node) {
             if (indices[node] == -1) {
                 strongConnect(node);
             }
+            return true;
         }
     }
 }

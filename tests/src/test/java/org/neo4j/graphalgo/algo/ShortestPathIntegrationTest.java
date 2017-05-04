@@ -1,21 +1,14 @@
 package org.neo4j.graphalgo.algo;
 
-import com.carrotsearch.hppc.IntIntMap;
-import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.DijkstraProc;
-import org.neo4j.graphalgo.UnionFindProc;
+import org.neo4j.graphalgo.ShortestPathProc;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
-
-import java.util.function.IntConsumer;
-import java.util.function.LongConsumer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyDouble;
@@ -64,7 +57,7 @@ public class ShortestPathIntegrationTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(DijkstraProc.class);
+                .registerProcedure(ShortestPathProc.class);
     }
 
     @Test
@@ -72,7 +65,7 @@ public class ShortestPathIntegrationTest {
         PathConsumer consumer = mock(PathConsumer.class);
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.dijkstra.stream(start, end, 'cost') YIELD nodeId, cost\n" +
+                        "CALL algo.shortestPath.stream(start, end, 'cost') YIELD nodeId, cost\n" +
                         "RETURN nodeId, cost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept((Long) row.getNumber("nodeId"), (Double) row.getNumber("cost"));
@@ -90,7 +83,7 @@ public class ShortestPathIntegrationTest {
     public void testDijkstra() throws Exception {
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.dijkstra(start, end, 'cost') YIELD loadDuration, evalDuration, nodeCount, totalCost\n" +
+                        "CALL algo.shortestPath(start, end, 'cost') YIELD loadDuration, evalDuration, nodeCount, totalCost\n" +
                         "RETURN loadDuration, evalDuration, nodeCount, totalCost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(3.0, (Double) row.getNumber("totalCost"), 10E2);

@@ -2,9 +2,7 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.MSTPrimProc;
-import org.neo4j.graphalgo.SCCTarjanProc;
-import org.neo4j.graphalgo.impl.SCCTarjan;
+import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -18,7 +16,7 @@ import static org.junit.Assert.assertNotEquals;
 /**
  * @author mknblch
  */
-public class SCCTarjanProcIntegrationTest {
+public class StronglyConnectedComponentsProcIntegrationTest {
 
     private static final RelationshipType type = RelationshipType.withName("TYPE");
     private static GraphDatabaseAPI db;
@@ -54,13 +52,13 @@ public class SCCTarjanProcIntegrationTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(SCCTarjanProc.class);
+                .registerProcedure(StronglyConnectedComponentsProc.class);
     }
 
     @Test
     public void testScc() throws Exception {
 
-        db.execute("CALL algo.scctarjan('Node', 'TYPE', {write:true}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+        db.execute("CALL algo.scc('Node', 'TYPE', {write:true}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
                 .accept(row -> {
 
                     System.out.println(row.getNumber("loadDuration").longValue());
