@@ -4,9 +4,13 @@ import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
@@ -14,7 +18,7 @@ import java.util.function.IntPredicate;
  * This is basically a long to int mapper. It sorts the id's in ascending order so its
  * guaranteed that there is no ID greater then nextGraphId / capacity
  */
-public final class IdMap implements IdMapping, NodeIterator{
+public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
 
     private final IdIterator iter;
     private int nextGraphId;
@@ -121,14 +125,30 @@ public final class IdMap implements IdMapping, NodeIterator{
         return new IdIterator().reset(nodeCount());
     }
 
+    @Override
+    public Collection<PrimitiveIntIterator> batchIterators(final int batchSize) {
+        int nodeCount = graphIds.length;
+        int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
+        if (numberOfBatches == 1) {
+            return Collections.singleton(nodeIterator());
+        }
+        PrimitiveIntIterator[] iterators = new PrimitiveIntIterator[numberOfBatches];
+        Arrays.setAll(iterators, i ->  new IdIterator().reset(i * batchSize, batchSize));
+        return Arrays.asList(iterators);
+    }
+
     private static final class IdIterator implements PrimitiveIntIterator {
 
         private int current;
-        private int limit;
+        private int limit; // exclusive upper bound
 
-        private PrimitiveIntIterator reset(int limit) {
-            current = 0;
-            this.limit = limit;
+        private PrimitiveIntIterator reset(int length) {
+            return reset(0, length);
+        }
+
+        private PrimitiveIntIterator reset(int start, int length) {
+            current = start;
+            this.limit = start + length;
             return this;
         }
 

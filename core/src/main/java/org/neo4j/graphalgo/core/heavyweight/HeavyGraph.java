@@ -5,6 +5,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -21,7 +22,7 @@ import java.util.function.IntPredicate;
  *
  * @author mknblch
  */
-public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, NodeProperties {
+public class HeavyGraph implements Graph, BatchNodeIterable, RelationshipWeights, NodeWeights, NodeProperties {
 
     private final IdMap nodeIdMap;
     private final AdjacencyMatrix container;
@@ -55,6 +56,11 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     @Override
     public PrimitiveIntIterator nodeIterator() {
         return nodeIdMap.iterator();
+    }
+
+    @Override
+    public Collection<PrimitiveIntIterator> batchIterators(int batchSize) {
+        return nodeIdMap.batchIterators(batchSize);
     }
 
     @Override
