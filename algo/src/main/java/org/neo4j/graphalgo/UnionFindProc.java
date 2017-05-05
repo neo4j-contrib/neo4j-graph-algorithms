@@ -3,6 +3,8 @@ package org.neo4j.graphalgo;
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.results.UnionFindResult;
@@ -20,8 +22,6 @@ import java.util.stream.Stream;
  */
 public class UnionFindProc {
 
-    public static final String CONFIG_PROPERTY = "property";
-    public static final String CONFIG_DEFAULT_VALUE = "defaultValue";
     public static final String CONFIG_THRESHOLD = "threshold";
     public static final String CONFIG_CLUSTER_PROPERTY = "clusterProperty";
     public static final String DEFAULT_CLUSTER_PROPERTY = "cluster";
@@ -41,22 +41,24 @@ public class UnionFindProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         UnionFindResult.Builder resultBuilder = UnionFindResult.builder();
 
         // loading
         ProgressTimer load = ProgressTimer.start(resultBuilder::withLoadDuration);
-        final Graph graph = load(label, relationship, config);
+        final Graph graph = load(label, relationship, configuration);
         load.stop();
 
         // evaluation
         ProgressTimer eval = ProgressTimer.start(resultBuilder::withEvalDuration);
-        final DisjointSetStruct struct = evaluate(graph, config);
+        final DisjointSetStruct struct = evaluate(graph, configuration);
         eval.stop();
 
-        if ((Boolean) config.getOrDefault("write", Boolean.FALSE)) {
+        if (configuration.isWriteFlag()) {
             // write back
             ProgressTimer writeTimer = ProgressTimer.start(resultBuilder::withWriteDuration);
-            write(graph, struct, config);
+            write(graph, struct, configuration);
             writeTimer.stop();
         }
 
@@ -75,44 +77,46 @@ public class UnionFindProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         // loading
-        final Graph graph = load(label, relationship, config);
+        final Graph graph = load(label, relationship, configuration);
 
         // evaluation
-        return evaluate(graph, config)
+        return evaluate(graph, configuration)
                 .resultStream(graph);
     }
 
-    private Graph load(String label, String relationship, Map<String, Object> config) {
+    private Graph load(String label, String relationship, ProcedureConfiguration config) {
         return new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withOptionalRelationshipWeightsFromProperty(
-                        (String) config.get(CONFIG_PROPERTY),
-                        (double)config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
+                        config.getProperty(),
+                        config.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
     }
 
-    private DisjointSetStruct evaluate(Graph graph, Map<String, Object> config) {
+    private DisjointSetStruct evaluate(Graph graph, ProcedureConfiguration config) {
+
         final DisjointSetStruct struct;
-        if (config.containsKey(CONFIG_PROPERTY) && config.containsKey(CONFIG_THRESHOLD)) {
-            log.debug("Computing union find with threshold " + config.get(CONFIG_THRESHOLD));
-            struct = new GraphUnionFind(graph)
-                    .compute((double) config.getOrDefault(CONFIG_THRESHOLD, 0.0));
+        if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
+            final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
+            log.debug("Computing union find with threshold " + threshold);
+            struct = new GraphUnionFind(graph).compute(threshold);
         } else {
             log.debug("Computing union find without threshold");
-            struct = new GraphUnionFind(graph)
-                    .compute();
+            struct = new GraphUnionFind(graph).compute();
         }
         return struct;
     }
 
-    private void write(Graph graph, DisjointSetStruct struct, Map<String, Object> config) {
+    private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration config) {
         log.debug("Writing results");
         new DisjointSetStruct.DSSExporter(api,
                 graph,
-                (String) config.getOrDefault(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
+                (String) config.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
                 .write(struct);
     }
 

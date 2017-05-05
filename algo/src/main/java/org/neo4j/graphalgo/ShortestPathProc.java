@@ -3,6 +3,7 @@ package org.neo4j.graphalgo;
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
@@ -44,12 +45,14 @@ public class ShortestPathProc {
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         final Graph graph = new GraphLoader(api)
-                .withOptionalLabel((String) config.get(CONFIG_LABEL))
-                .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
+                .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
+                        configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
 
@@ -70,15 +73,17 @@ public class ShortestPathProc {
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         DijkstraResult.Builder builder = DijkstraResult.builder();
 
         ProgressTimer load = builder.load();
         final Graph graph = new GraphLoader(api)
-                .withOptionalLabel((String) config.get(CONFIG_LABEL))
-                .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
+                .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
+                        configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
         load.stop();

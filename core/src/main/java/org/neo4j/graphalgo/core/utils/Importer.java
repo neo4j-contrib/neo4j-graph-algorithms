@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -13,10 +11,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.NodeItem;
 
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**

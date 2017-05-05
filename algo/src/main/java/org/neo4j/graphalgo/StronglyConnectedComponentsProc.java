@@ -3,6 +3,7 @@ package org.neo4j.graphalgo;
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.SCCTarjan;
@@ -38,6 +39,8 @@ public class StronglyConnectedComponentsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         SCCResult.Builder builder = SCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
@@ -57,11 +60,11 @@ public class StronglyConnectedComponentsProc {
                     .withSetCount(tarjan.getConnectedComponents().size());
         });
 
-        if ((boolean) config.getOrDefault(CONFIG_WRITE, Boolean.FALSE)) {
+        if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new SCCTarjanExporter(api)
                         .withIdMapping(graph)
-                        .withWriteProperty((String) config.getOrDefault(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
+                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
                         .write(tarjan.getConnectedComponents());
             });
         }
