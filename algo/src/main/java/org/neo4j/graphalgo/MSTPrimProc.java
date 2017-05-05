@@ -69,41 +69,48 @@ public class MSTPrimProc {
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .buildDelayed(Pools.createDefaultPool());
+
         timer.stop();
+
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
         timer = ProgressTimer.start(builder::withEvalDuration);
-        final MSTPrim mstPrim;
+
+        RelationshipContainer container;
+        BufferedWeightMap weights;
         try {
-            mstPrim = new MSTPrim(idMapper,
-                    new BothRelationshipAdapter(relationshipContainer.get()),
-                    weightMap.get())
-                    .compute(startNodeId);
-            if (configuration.isStatsFlag()) {
-                MSTPrim.MinimumSpanningTree.Aggregator aggregator =
-                        mstPrim.getMinimumSpanningTree().aggregate();
-                builder.withWeightMax(aggregator.getMax())
-                        .withWeightMin(aggregator.getMin())
-                        .withWeightSum(aggregator.getSum())
-                        .withRelationshipCount(aggregator.getCount());
-
-            }
+            container = relationshipContainer.get();
+            weights = weightMap.get();
             timer.stop();
-
-            if (configuration.isWriteFlag()) {
-                timer = ProgressTimer.start(builder::withWriteDuration);
-                new MSTPrimExporter(api)
-                        .withIdMapping(idMapper)
-                        .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                        .write(mstPrim.getMinimumSpanningTree());
-                timer.stop();
-            }
-
-            return Stream.of(builder.build());
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
+        final MSTPrim mstPrim = new MSTPrim(
+                idMapper,
+                new BothRelationshipAdapter(container),
+                weights).compute(startNodeId);
+
+        if (configuration.isStatsFlag()) {
+            MSTPrim.MinimumSpanningTree.Aggregator aggregator =
+                    mstPrim.getMinimumSpanningTree().aggregate();
+            builder.withWeightMax(aggregator.getMax())
+                    .withWeightMin(aggregator.getMin())
+                    .withWeightSum(aggregator.getSum())
+                    .withRelationshipCount(aggregator.getCount());
+
+        }
+
+        if (configuration.isWriteFlag()) {
+            timer = ProgressTimer.start(builder::withWriteDuration);
+            new MSTPrimExporter(api)
+                    .withIdMapping(idMapper)
+                    .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
+                    .write(mstPrim.getMinimumSpanningTree());
+            timer.stop();
+        }
+
+        return Stream.of(builder.build());
     }
 }
