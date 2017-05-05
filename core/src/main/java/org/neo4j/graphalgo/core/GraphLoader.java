@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.loader;
+package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
@@ -11,7 +11,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
@@ -65,13 +64,6 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api, ExecutorService executorService) {
         this.api = Objects.requireNonNull(api);
         this.executorService = Objects.requireNonNull(executorService);
-    }
-
-    public GraphLoader withProcedureConfig(ProcedureConfiguration configuration) {
-        withOptionalLabel(configuration.getNodeLabelOrQuery());
-        withOptionalRelationshipType(configuration.getRelationshipOrQuery());
-        withOptionalRelationshipWeightsFromProperty(configuration.getProperty(), ProcedureConstants.DEFAULT_PROPERTY_VALUE_DEFAULT);
-        return this;
     }
 
     /**

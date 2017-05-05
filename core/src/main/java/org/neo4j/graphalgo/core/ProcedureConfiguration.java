@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.loader;
+package org.neo4j.graphalgo.core;
 
 import org.neo4j.logging.Log;
 
@@ -14,24 +14,36 @@ public class ProcedureConfiguration {
 
     private final Map<String, Object> config;
 
-    private final Log log;
-
-    public ProcedureConfiguration(Map<String, Object> config, Log log) {
+    public ProcedureConfiguration(Map<String, Object> config) {
         this.config = config;
-        this.log = log;
     }
 
-    public ProcedureConfiguration withNodeLabelOrQuery(String nodeLabelOrQuery) {
+    /**
+     * override the nodeOrLabelQuery param
+     * @param nodeLabelOrQuery the query or identifier
+     * @return self
+     */
+    public ProcedureConfiguration overrideNodeLabelOrQuery(String nodeLabelOrQuery) {
         config.put(ProcedureConstants.NODE_LABEL_QUERY_PARAM, nodeLabelOrQuery);
         return this;
     }
 
-    public ProcedureConfiguration withRelationshipTypeOrQuery(String relationshipTypeOrQuery) {
+    /**
+     * override relationshipOrQuery param
+     * @param relationshipTypeOrQuery the relationshipQuery or Identifier
+     * @return self
+     */
+    public ProcedureConfiguration overrideRelationshipTypeOrQuery(String relationshipTypeOrQuery) {
         config.put(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, relationshipTypeOrQuery);
         return this;
     }
 
-    public ProcedureConfiguration withProperty(String property) {
+    /**
+     * override property param
+     * @param property the property
+     * @return self
+     */
+    public ProcedureConfiguration overrideProperty(String property) {
         config.put(ProcedureConstants.PROPERTY_PARAM, property);
         return this;
     }
@@ -41,10 +53,8 @@ public class ProcedureConfiguration {
         return this;
     }
 
-    public boolean nodeLabelIsQuery() {
-        return QUERY_PATTERN
-                .matcher(getNodeLabelOrQuery(""))
-                .matches();
+    public boolean isCypherQuery() {
+        return (boolean) config.getOrDefault(ProcedureConstants.CYPHER_QUERY, Boolean.FALSE);
     }
 
     public String getNodeLabelOrQuery() {
@@ -53,12 +63,6 @@ public class ProcedureConfiguration {
 
     public String getNodeLabelOrQuery(String defaultValue) {
         return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
-    }
-
-    public boolean relationshipIsQuery() {
-        return QUERY_PATTERN
-                .matcher(getRelationshipOrQuery(""))
-                .matches();
     }
 
     public String getRelationshipOrQuery() {
@@ -107,29 +111,19 @@ public class ProcedureConfiguration {
      * @return the configuration value
      */
     public String getStringOrNull(String key, String defaultValue) {
-        Object value = config.get(key);
-        if (null == value) {
-            log.warn("Procedure configuration for key: " + key + " not found! Using defaultValue: " + defaultValue);
-            return defaultValue;
-        }
-        if (!(value instanceof String)) {
-            throw new IllegalArgumentException("The value of " + key + " must String type");
-        }
-        log.debug("Using configuration " + key + ":" + value);
-        return emptyToNull((String) value);
+        String value = (String) config.getOrDefault(key, defaultValue);
+        return (null == value || "".equals(value)) ? defaultValue : value;
     }
 
     @SuppressWarnings("unchecked")
     public <V extends Number> V getNumber(String key, V defaultValue) {
         Object value = config.get(key);
         if (null == value) {
-            log.warn("Procedure configuration for key: " + key + " not found! Using defaultValue: " + defaultValue);
             return defaultValue;
         }
         if (!(value instanceof Number)) {
             throw new IllegalArgumentException("The value of " + key + " must Number type");
         }
-        log.debug("Using configuration " + key + ":" + value);
         return (V) value;
     }
 
@@ -141,34 +135,12 @@ public class ProcedureConfiguration {
     private <V> V get(String key, V defaultValue) {
         Object value = config.get(key);
         if (null == value) {
-            log.warn("Procedure configuration for key: " + key + " not found! Using defaultValue: " + defaultValue);
             return defaultValue;
         }
-        log.debug("Procedure configuration found for key: " + key);
         return (V) value;
     }
 
-    public static ProcedureConfiguration create(Log log, Map<String, Object> config) {
-        return new ProcedureConfiguration(config, log);
+    public static ProcedureConfiguration create(Map<String, Object> config) {
+        return new ProcedureConfiguration(config);
     }
-
-    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery) {
-        return new ProcedureConfiguration(config, log)
-                .withNodeLabelOrQuery(nodeLabelOrQuery);
-    }
-
-    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery, String relationshipOrQuery) {
-        return new ProcedureConfiguration(config, log)
-                .withNodeLabelOrQuery(nodeLabelOrQuery)
-                .withRelationshipTypeOrQuery(relationshipOrQuery);
-    }
-
-    public static ProcedureConfiguration create(Log log, Map<String, Object> config, String nodeLabelOrQuery, String relationshipOrQuery, String property) {
-        return new ProcedureConfiguration(config, log)
-                .withNodeLabelOrQuery(nodeLabelOrQuery)
-                .withRelationshipTypeOrQuery(relationshipOrQuery)
-                .withProperty(property);
-    }
-
-
 }

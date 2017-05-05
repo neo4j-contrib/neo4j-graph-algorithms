@@ -1,9 +1,11 @@
-package org.neo4j.graphalgo.core.loader;
+package org.neo4j.graphalgo.core;
 
 /**
  * @author mknblch
  */
 public class ProcedureConstants {
+
+    public static final String CYPHER_QUERY = "cypher";
 
     public static final String NODE_LABEL_QUERY_PARAM = "nodeQuery";
 
