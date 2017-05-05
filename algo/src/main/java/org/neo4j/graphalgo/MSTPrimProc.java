@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import algo.Pools;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
@@ -16,6 +17,8 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 /**
@@ -43,57 +46,64 @@ public class MSTPrimProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        LazyIdMapper idMapper = new LazyIdMapper();
-
-        MSTPrimResult.Builder builder = MSTPrimResult.builder();
-
-        ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
-        BufferedWeightMap weightMap = BufferedWeightMap.importer(api)
-                .withIdMapping(idMapper)
-                .withAnyDirection(true)
+        LazyIdMapper idMapper = LazyIdMapper.importer(api)
                 .withWeightsFromProperty(propertyName, 1.0)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .build();
 
-        RelationshipContainer relationshipContainer = RelationshipContainer.importer(api)
+        MSTPrimResult.Builder builder = MSTPrimResult.builder();
+
+        ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
+        CompletableFuture<BufferedWeightMap> weightMap = BufferedWeightMap.importer(api)
+                .withIdMapping(idMapper)
+                .withAnyDirection(true)
+                .withWeightsFromProperty(propertyName, 1.0)
+                .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                .buildDelayed(Pools.createDefaultPool());
+
+        CompletableFuture<RelationshipContainer> relationshipContainer = RelationshipContainer.importer(api)
                 .withIdMapping(idMapper)
                 .withDirection(Direction.BOTH)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .build();
-
+                .buildDelayed(Pools.createDefaultPool());
         timer.stop();
-
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
         timer = ProgressTimer.start(builder::withEvalDuration);
-        final MSTPrim mstPrim = new MSTPrim(idMapper,
-                new BothRelationshipAdapter(relationshipContainer),
-                weightMap)
-                .compute(startNodeId);
+        final MSTPrim mstPrim;
+        try {
+            mstPrim = new MSTPrim(idMapper,
+                    new BothRelationshipAdapter(relationshipContainer.get()),
+                    weightMap.get())
+                    .compute(startNodeId);
+            if (configuration.isStatsFlag()) {
+                MSTPrim.MinimumSpanningTree.Aggregator aggregator =
+                        mstPrim.getMinimumSpanningTree().aggregate();
+                builder.withWeightMax(aggregator.getMax())
+                        .withWeightMin(aggregator.getMin())
+                        .withWeightSum(aggregator.getSum())
+                        .withRelationshipCount(aggregator.getCount());
 
-        if (configuration.isStatsFlag()) {
-            MSTPrim.MinimumSpanningTree.Aggregator aggregator =
-                    mstPrim.getMinimumSpanningTree().aggregate();
-            builder.withWeightMax(aggregator.getMax())
-                    .withWeightMin(aggregator.getMin())
-                    .withWeightSum(aggregator.getSum())
-                    .withRelationshipCount(aggregator.getCount());
-
-        }
-        timer.stop();
-
-        if (configuration.isWriteFlag()) {
-            timer = ProgressTimer.start(builder::withWriteDuration);
-            new MSTPrimExporter(api)
-                    .withIdMapping(idMapper)
-                    .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                    .write(mstPrim.getMinimumSpanningTree());
+            }
             timer.stop();
+
+            if (configuration.isWriteFlag()) {
+                timer = ProgressTimer.start(builder::withWriteDuration);
+                new MSTPrimExporter(api)
+                        .withIdMapping(idMapper)
+                        .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
+                        .write(mstPrim.getMinimumSpanningTree());
+                timer.stop();
+            }
+
+            return Stream.of(builder.build());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
         }
 
-        return Stream.of(builder.build());
     }
 }
