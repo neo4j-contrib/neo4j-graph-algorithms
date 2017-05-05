@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
@@ -18,8 +20,7 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -87,65 +88,36 @@ public class HeavyGraphFactory extends GraphFactory {
                 ? new NullWeightMap(setup.nodeDefaultPropertyValue)
                 : new WeightMap(nodeCount, setup.nodeDefaultPropertyValue);
 
-        int threads = (int) Math.ceil(nodeCount / (double) batchSize);
-
-        if (threadPool == null || threads == 1) {
-            withReadOps(readOp -> {
-                final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
-                        ? readOp.nodesGetAll()
-                        : readOp.nodesGetForLabel(labelId);
-                while (nodeIds.hasNext()) {
-                    final long nextId = nodeIds.next();
-                    idMap.add(nextId);
-                }
-                idMap.buildMappedIds();
-
-                try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
-                        ? readOp.nodeCursorGetAll()
-                        : readOp.nodeCursorGetForLabel(labelId)) {
-                    while (cursor.next()) {
-                        final NodeItem node = cursor.get();
-                        readNode(node,
-                                idMap,
-                                0,
-                                matrix,
-                                relWeightId,
-                                relWeigths,
-                                nodeWeightId,
-                                nodeWeights,
-                                nodePropId,
-                                nodeProps,
-                                relationId);
-                    }
-                }
-            });
-        } else {
-            final List<ImportTask> tasks = new ArrayList<>(threads);
-            withReadOps(readOp -> {
-                final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
-                        ? readOp.nodesGetAll()
-                        : readOp.nodesGetForLabel(labelId);
-                for (int i = 0; i <= threads; i++) {
-                    final ImportTask importTask = new ImportTask(
-                            batchSize,
-                            idMap,
-                            nodeIds,
-                            relWeigths,
-                            nodeWeights,
-                            nodeProps,
-                            relationId
-                    );
-                    if (importTask.nodeCount > 0) {
-                        tasks.add(importTask);
-                    }
-                }
-            });
-            idMap.buildMappedIds();
-            ParallelUtil.run(tasks, threadPool);
-            for (ImportTask task : tasks) {
-                matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
+        withReadOps(read -> {
+            final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
+                    ? read.nodesGetAll()
+                    : read.nodesGetForLabel(labelId);
+            while (nodeIds.hasNext()) {
+                final long nextId = nodeIds.next();
+                idMap.add(nextId);
             }
+            idMap.buildMappedIds();
+        });
+
+        Collection<ImportTask> tasks = ParallelUtil.readParallel(
+                batchSize,
+                idMap,
+                (offset, nodeIds) -> new ImportTask(
+                        batchSize,
+                        offset,
+                        idMap,
+                        nodeIds,
+                        relWeigths,
+                        nodeWeights,
+                        nodeProps,
+                        relationId
+                ),
+                threadPool);
+
+        for (ImportTask task : tasks) {
+            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
         }
+
         return new HeavyGraph(
                 idMap,
                 matrix,
@@ -156,8 +128,8 @@ public class HeavyGraphFactory extends GraphFactory {
 
     private static void readNode(
             NodeItem node,
+            int nodeId,
             IdMap idMap,
-            int idOffset,
             AdjacencyMatrix matrix,
             int relWeightId,
             WeightMapping relWeights,
@@ -165,10 +137,7 @@ public class HeavyGraphFactory extends GraphFactory {
             WeightMapping nodeWeights,
             int nodePropId,
             WeightMapping nodeProps,
-            int... relationType
-    ) {
-        final long originalNodeId = node.id();
-        final int nodeId = idMap.get(originalNodeId) - idOffset;
+            int... relationType) {
         final int outDegree;
         final int inDegree;
         final Cursor<RelationshipItem> outCursor;
@@ -233,8 +202,9 @@ public class HeavyGraphFactory extends GraphFactory {
     private final class ImportTask implements Runnable, Consumer<ReadOperations> {
         private final AdjacencyMatrix matrix;
         private final int nodeOffset;
-        private final int nodeCount;
+        private int nodeCount;
         private final IdMap idMap;
+        private final PrimitiveIntIterable nodes;
         private final WeightMapping relWeights;
         private final WeightMapping nodeWeights;
         private final WeightMapping nodeProps;
@@ -242,25 +212,22 @@ public class HeavyGraphFactory extends GraphFactory {
 
         ImportTask(
                 int batchSize,
+                int nodeOffset,
                 IdMap idMap,
-                PrimitiveLongIterator nodes,
+                PrimitiveIntIterable nodes,
                 WeightMapping relWeights,
                 WeightMapping nodeWeights,
                 WeightMapping nodeProps,
                 int... relationId) {
+            this.nodeOffset = nodeOffset;
             this.idMap = idMap;
-            this.nodeOffset = idMap.size();
+            this.nodes = nodes;
             this.relWeights = relWeights;
             this.nodeWeights = nodeWeights;
             this.nodeProps = nodeProps;
             this.relationId = relationId;
-            int i;
-            for (i = 0; i < batchSize && nodes.hasNext(); i++) {
-                final long nextId = nodes.next();
-                idMap.add(nextId);
-            }
             this.matrix = new AdjacencyMatrix(batchSize);
-            this.nodeCount = i;
+            this.nodeCount = 0;
         }
 
         @Override
@@ -270,16 +237,18 @@ public class HeavyGraphFactory extends GraphFactory {
 
         @Override
         public void accept(final ReadOperations readOp) {
-            final long[] nodeIds = idMap.mappedIds();
-            final int nodeOffset = this.nodeOffset;
-            final int nodeEnd = nodeCount + nodeOffset;
-            for (int i = nodeOffset; i < nodeEnd; i++) {
-                try (Cursor<NodeItem> cursor = readOp.nodeCursor(nodeIds[i])) {
+            int nodeOffset = this.nodeOffset;
+            int nodeCount = 0;
+            PrimitiveIntIterator iterator = nodes.iterator();
+            while (iterator.hasNext()) {
+                int nodeId = iterator.next();
+                try (Cursor<NodeItem> cursor = readOp.nodeCursor(idMap.toOriginalNodeId(nodeId))) {
                     if (cursor.next()) {
+                        nodeCount++;
                         HeavyGraphFactory.readNode(
                                 cursor.get(),
+                                nodeId - nodeOffset,
                                 idMap,
-                                nodeOffset,
                                 matrix,
                                 relWeightId,
                                 relWeights,
@@ -291,6 +260,7 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
             }
+            this.nodeCount = nodeCount;
         }
     }
 }

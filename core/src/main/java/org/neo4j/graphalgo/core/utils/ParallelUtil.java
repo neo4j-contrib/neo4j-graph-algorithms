@@ -13,6 +13,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +43,7 @@ public final class ParallelUtil {
         if (executor == null || threads == 1) {
             writeSequential(db, parallelExporter, iterators.iterator().next());
         } else {
-            List<BatchExportRunnable> tasks = new ArrayList<>(threads);
+            List<Runnable> tasks = new ArrayList<>(threads);
             for (PrimitiveIntIterable iterator : iterators) {
                 tasks.add(new BatchExportRunnable(
                         db,
@@ -52,7 +53,37 @@ public final class ParallelUtil {
             }
             run(tasks, executor);
         }
+    }
 
+    /**
+     * Executes read operations in parallel, based on the given batch size
+     * and executor.
+     */
+    public static <T extends Runnable> Collection<T> readParallel(
+            int batchSize,
+            BatchNodeIterable idMapping,
+            ParallelGraphImporter<T> importer,
+            ExecutorService executor) {
+
+        Collection<PrimitiveIntIterable> iterators =
+                idMapping.batchIterables(batchSize);
+
+        int threads = iterators.size();
+
+        if (executor == null || threads == 1) {
+            T task = importer.newImporter(0, iterators.iterator().next());
+            task.run();
+            return Collections.singleton(task);
+        } else {
+            List<T> tasks = new ArrayList<>(threads);
+            int nodeOffset = 0;
+            for (PrimitiveIntIterable iterator : iterators) {
+                tasks.add(importer.newImporter(nodeOffset, iterator));
+                nodeOffset += batchSize;
+            }
+            run(tasks, executor);
+            return tasks;
+        }
     }
 
     /**
