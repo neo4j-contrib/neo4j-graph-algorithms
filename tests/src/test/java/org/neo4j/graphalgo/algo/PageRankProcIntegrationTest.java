@@ -127,7 +127,7 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankWriteBackUnderDifferentProperty() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {scoreProperty:'foobar'}) YIELD writeMillis, write, property",
+                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar'}) YIELD writeMillis, write, property",
                 row -> {
                     assertTrue(row.getBoolean("write"));
                     assertEquals("foobar", row.getString("property"));
@@ -142,7 +142,7 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankParallelWriteBack() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3}) YIELD writeMillis, write, property",
+                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true}) YIELD writeMillis, write, property",
                 row -> assertTrue(
                         "write time not set",
                         row.getNumber("writeMillis").intValue() >= 0));

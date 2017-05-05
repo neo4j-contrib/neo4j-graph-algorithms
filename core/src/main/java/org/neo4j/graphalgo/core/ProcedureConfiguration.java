@@ -70,7 +70,11 @@ public class ProcedureConfiguration {
     }
 
     public String getWriteProperty() {
-        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, ProcedureConstants.WRITE_PROPERTY_DEFAULT);
+        return getWriteProperty(null);
+    }
+
+    public String getWriteProperty(String defaultValue) {
+        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, defaultValue);
     }
 
     public String getRelationshipOrQuery(String defaultValue) {
@@ -78,15 +82,27 @@ public class ProcedureConfiguration {
     }
 
     public boolean isWriteFlag() {
-        return get(ProcedureConstants.WRITE_FLAG, Boolean.FALSE);
+        return isWriteFlag(false);
     }
 
     public boolean isCypherFlag() {
-        return (boolean) config.getOrDefault(ProcedureConstants.CYPHER_QUERY, Boolean.FALSE);
+        return isCypherFlag(false);
     }
 
     public boolean isStatsFlag() {
-        return get(ProcedureConstants.STATS_FLAG, Boolean.FALSE);
+        return isStatsFlag(false);
+    }
+
+    public boolean isWriteFlag(boolean defaultValue) {
+        return get(ProcedureConstants.WRITE_FLAG, defaultValue);
+    }
+
+    public boolean isCypherFlag(boolean defaultValue) {
+        return (boolean) config.getOrDefault(ProcedureConstants.CYPHER_QUERY, defaultValue);
+    }
+
+    public boolean isStatsFlag(boolean defaultValue) {
+        return get(ProcedureConstants.STATS_FLAG, defaultValue);
     }
 
     public String getProperty() {
@@ -97,8 +113,8 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.DEFAULT_PROPERTY_VALUE_PARAM, defaultValue);
     }
 
-    public int getIterations() {
-        return getNumber(ProcedureConstants.ITERATIONS_PARAM, ProcedureConstants.ITERATIONS_DEFAULT);
+    public int getIterations(int defaultValue) {
+        return getNumber(ProcedureConstants.ITERATIONS_PARAM, defaultValue).intValue();
     }
 
     public String getDirectionName() {
@@ -119,8 +135,12 @@ public class ProcedureConfiguration {
         return (null == value || "".equals(value)) ? defaultValue : value;
     }
 
+    public Object get(String key) {
+        return config.get(key);
+    }
+
     @SuppressWarnings("unchecked")
-    public <V extends Number> V getNumber(String key, V defaultValue) {
+    public Number getNumber(String key, Number defaultValue) {
         Object value = config.get(key);
         if (null == value) {
             return defaultValue;
@@ -128,11 +148,15 @@ public class ProcedureConfiguration {
         if (!(value instanceof Number)) {
             throw new IllegalArgumentException("The value of " + key + " must Number type");
         }
-        return (V) value;
+        return (Number) value;
     }
 
-    private String emptyToNull(String s) {
-        return "".equals(s) ? null : s;
+    public int getInt(String key, int defaultValue) {
+        Number value = (Number) config.get(key);
+        if (null == value) {
+            return defaultValue;
+        }
+        return value.intValue();
     }
 
     @SuppressWarnings("unchecked")
