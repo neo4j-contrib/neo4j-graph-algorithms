@@ -127,7 +127,7 @@ public class ProcedureConfiguration {
     }
 
     @SuppressWarnings("unchecked")
-    private <V> V get(String key, V defaultValue) {
+    public <V> V get(String key, V defaultValue) {
         Object value = config.get(key);
         if (null == value) {
             return defaultValue;
