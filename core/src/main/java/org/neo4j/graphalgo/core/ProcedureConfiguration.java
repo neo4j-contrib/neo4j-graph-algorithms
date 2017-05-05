@@ -18,6 +18,15 @@ public class ProcedureConfiguration {
         this.config = config;
     }
 
+    public boolean containsKeys(String... keys) {
+        for (String key : keys) {
+            if (!config.containsKey(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * override the nodeOrLabelQuery param
      * @param nodeLabelOrQuery the query or identifier
