@@ -1,10 +1,12 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -55,6 +57,11 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     @Override
     public PrimitiveIntIterator nodeIterator() {
         return nodeIdMap.iterator();
+    }
+
+    @Override
+    public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
+        return nodeIdMap.batchIterables(batchSize);
     }
 
     @Override
