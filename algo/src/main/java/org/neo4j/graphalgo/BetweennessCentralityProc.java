@@ -2,6 +2,7 @@ package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
@@ -54,6 +55,7 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
@@ -73,15 +75,15 @@ public class BetweennessCentralityProc {
                 .compute();
         timer.stop();
 
-        if ((boolean) config.getOrDefault(CONFIG_WRITE, Boolean.FALSE)) {
+        if (configuration.isWriteFlag()) {
             timer = ProgressTimer.start(builder::withWriteDuration);
             new BetweennessCentrality.BCExporter(api)
-                    .withTargetProperty((String) config.getOrDefault(CONFIG_WRITE_PROPERTY, CONFIG_WRITE_PROPERTY_DEFAULT))
+                    .withTargetProperty(configuration.getWriteProperty())
                     .write(bc);
             timer.stop();
         }
 
-        if ((boolean) config.getOrDefault(CONFIG_STATS, Boolean.FALSE)) {
+        if (configuration.isStatsFlag()) {
             computeStats(builder, bc);
         }
 

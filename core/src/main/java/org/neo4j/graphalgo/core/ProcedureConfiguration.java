@@ -48,15 +48,6 @@ public class ProcedureConfiguration {
         return this;
     }
 
-    public ProcedureConfiguration withDirection(String direction) {
-        config.put(ProcedureConstants.DIRECTION, direction);
-        return this;
-    }
-
-    public boolean isCypherQuery() {
-        return (boolean) config.getOrDefault(ProcedureConstants.CYPHER_QUERY, Boolean.FALSE);
-    }
-
     public String getNodeLabelOrQuery() {
         return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
     }
@@ -69,6 +60,10 @@ public class ProcedureConfiguration {
         return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
     }
 
+    public String getWriteProperty() {
+        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, ProcedureConstants.WRITE_PROPERTY_DEFAULT);
+    }
+
     public String getRelationshipOrQuery(String defaultValue) {
         return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
     }
@@ -77,8 +72,8 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.WRITE_FLAG, Boolean.FALSE);
     }
 
-    public String getWriteProperty() {
-        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, ProcedureConstants.WRITE_PROPERTY_DEFAULT);
+    public boolean isCypherFlag() {
+        return (boolean) config.getOrDefault(ProcedureConstants.CYPHER_QUERY, Boolean.FALSE);
     }
 
     public boolean isStatsFlag() {
