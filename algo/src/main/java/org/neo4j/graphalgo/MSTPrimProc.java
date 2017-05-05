@@ -69,9 +69,7 @@ public class MSTPrimProc {
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .buildDelayed(Pools.createDefaultPool());
-
         timer.stop();
-
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
@@ -99,7 +97,6 @@ public class MSTPrimProc {
                     .withWeightMin(aggregator.getMin())
                     .withWeightSum(aggregator.getSum())
                     .withRelationshipCount(aggregator.getCount());
-
         }
 
         if (configuration.isWriteFlag()) {
