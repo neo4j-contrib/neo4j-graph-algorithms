@@ -33,11 +33,8 @@ public class MSTPrimResult {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractResultBuilder<MSTPrimResult> {
 
-        protected long loadDuration = -1;
-        protected long evalDuration = -1;
-        protected long writeDuration = -1;
         protected double weightSum = 0.0;
         protected double weightMin = 0.0;
         protected double weightMax = 0.0;
@@ -60,21 +57,6 @@ public class MSTPrimResult {
 
         public Builder withRelationshipCount(long count) {
             this.relationshipCount = count;
-            return this;
-        }
-
-        public Builder withLoadDuration(long loadDuration) {
-            this.loadDuration = loadDuration;
-            return this;
-        }
-
-        public Builder withEvalDuration(long evalDuration) {
-            this.evalDuration = evalDuration;
-            return this;
-        }
-
-        public Builder withWriteDuration(long writeDuration) {
-            this.writeDuration = writeDuration;
             return this;
         }
 

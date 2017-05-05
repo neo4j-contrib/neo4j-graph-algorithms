@@ -54,7 +54,6 @@ public class MSTPrimProc {
 
         MSTPrimResult.Builder builder = MSTPrimResult.builder();
 
-        ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
         CompletableFuture<BufferedWeightMap> weightMap = BufferedWeightMap.importer(api)
                 .withIdMapping(idMapper)
                 .withAnyDirection(true)
@@ -69,15 +68,13 @@ public class MSTPrimProc {
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .buildDelayed(Pools.createDefaultPool());
-        timer.stop();
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
-
-        timer = ProgressTimer.start(builder::withEvalDuration);
 
         RelationshipContainer container;
         BufferedWeightMap weights;
         try {
+            ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
             container = relationshipContainer.get();
             weights = weightMap.get();
             timer.stop();
@@ -88,7 +85,9 @@ public class MSTPrimProc {
         final MSTPrim mstPrim = new MSTPrim(
                 idMapper,
                 new BothRelationshipAdapter(container),
-                weights).compute(startNodeId);
+                weights);
+
+        builder.timeEval(() -> mstPrim.compute(startNodeId));
 
         if (configuration.isStatsFlag()) {
             MSTPrim.MinimumSpanningTree.Aggregator aggregator =
@@ -100,12 +99,12 @@ public class MSTPrimProc {
         }
 
         if (configuration.isWriteFlag()) {
-            timer = ProgressTimer.start(builder::withWriteDuration);
-            new MSTPrimExporter(api)
-                    .withIdMapping(idMapper)
-                    .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                    .write(mstPrim.getMinimumSpanningTree());
-            timer.stop();
+            builder.timeWrite(() -> {
+                new MSTPrimExporter(api)
+                        .withIdMapping(idMapper)
+                        .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
+                        .write(mstPrim.getMinimumSpanningTree());
+            });
         }
 
         return Stream.of(builder.build());
