@@ -2,9 +2,8 @@ package org.neo4j.graphalgo;
 
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.loader.GraphLoader;
+import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.loader.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
@@ -45,11 +44,12 @@ public class ShortestPathProc {
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(log, config)
-                .withProperty(propertyName);
-
         final Graph graph = new GraphLoader(api)
-                .withProcedureConfig(configuration)
+                .withOptionalLabel((String) config.get(CONFIG_LABEL))
+                .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
+                .withOptionalRelationshipWeightsFromProperty(
+                        propertyName,
+                        (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
 
@@ -57,6 +57,7 @@ public class ShortestPathProc {
                 .compute(startNode.getId(), endNode.getId())
                 .resultStream();
     }
+
 
     @Procedure("algo.shortestPath")
     @Description("CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String" +
@@ -69,14 +70,15 @@ public class ShortestPathProc {
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(log, config)
-                .withProperty(propertyName);
-
         DijkstraResult.Builder builder = DijkstraResult.builder();
 
         ProgressTimer load = builder.load();
         final Graph graph = new GraphLoader(api)
-                .withProcedureConfig(configuration)
+                .withOptionalLabel((String) config.get(CONFIG_LABEL))
+                .withOptionalRelationshipType((String) config.get(CONFIG_RELATIONSHIP))
+                .withOptionalRelationshipWeightsFromProperty(
+                        propertyName,
+                        (double) config.getOrDefault(CONFIG_DEFAULT_VALUE, 1.0))
                 .withExecutorService(Pools.DEFAULT)
                 .load(HeavyGraphFactory.class);
         load.stop();

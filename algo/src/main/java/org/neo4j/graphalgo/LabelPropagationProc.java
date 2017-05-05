@@ -2,9 +2,9 @@ package org.neo4j.graphalgo;
 
 import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
+import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.loader.GraphLoader;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.impl.LabelPropagationExporter;
 import org.neo4j.graphalgo.impl.LabelPropagationStats;
