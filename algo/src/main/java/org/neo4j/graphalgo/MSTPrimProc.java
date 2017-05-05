@@ -73,12 +73,11 @@ public class MSTPrimProc {
 
         RelationshipContainer container;
         BufferedWeightMap weights;
-        try {
-            ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
+        try(ProgressTimer timer = builder.timeLoad()) {
             container = relationshipContainer.get();
             weights = weightMap.get();
             timer.stop();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
