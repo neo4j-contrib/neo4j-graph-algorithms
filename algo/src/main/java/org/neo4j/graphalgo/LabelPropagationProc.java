@@ -3,6 +3,7 @@ package org.neo4j.graphalgo;
 import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.impl.LabelPropagation;
@@ -49,22 +50,17 @@ public final class LabelPropagationProc {
             @Name(value = "direction", defaultValue = "OUTGOING") String directionName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         label = emptyToNull(label);
         relationshipType = emptyToNull(relationshipType);
         Direction direction = parseDirection(directionName);
 
-        int iterations = ((Number) config.getOrDefault(
-                CONFIG_ITERATIONS,
-                DEFAULT_ITERATIONS)).intValue();
-        String partitionProperty = emptyToNull((String) config.getOrDefault(
-                CONFIG_PARTITION_KEY,
-                DEFAULT_PARTITION_KEY));
-        String weightProperty = emptyToNull((String) config.getOrDefault(
-                CONFIG_WEIGHT_KEY,
-                DEFAULT_WEIGHT_KEY));
-        boolean write = (boolean) config.getOrDefault(
-                CONFIG_WRITE,
-                DEFAULT_WRITE);
+        final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
+        final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
+        final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
+        final boolean write = configuration.isWriteFlag(true);
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
                 .iterations(iterations)
