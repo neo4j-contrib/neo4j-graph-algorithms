@@ -60,14 +60,14 @@ public class MSTPrimProc {
                 .withWeightsFromProperty(propertyName, 1.0)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .buildDelayed(Pools.createDefaultPool());
+                .buildDelayed(Pools.DEFAULT);
 
         CompletableFuture<RelationshipContainer> relationshipContainer = RelationshipContainer.importer(api)
                 .withIdMapping(idMapper)
                 .withDirection(Direction.BOTH)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .buildDelayed(Pools.createDefaultPool());
+                .buildDelayed(Pools.DEFAULT);
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
@@ -77,7 +77,7 @@ public class MSTPrimProc {
             container = relationshipContainer.get();
             weights = weightMap.get();
             timer.stop();
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
@@ -86,16 +86,18 @@ public class MSTPrimProc {
                 new BothRelationshipAdapter(container),
                 weights);
 
-        builder.timeEval(() -> mstPrim.compute(startNodeId));
+        builder.timeEval(() -> {
+            mstPrim.compute(startNodeId);
+            if (configuration.isStatsFlag()) {
+                MSTPrim.MinimumSpanningTree.Aggregator aggregator =
+                        mstPrim.getMinimumSpanningTree().aggregate();
+                builder.withWeightMax(aggregator.getMax())
+                        .withWeightMin(aggregator.getMin())
+                        .withWeightSum(aggregator.getSum())
+                        .withRelationshipCount(aggregator.getCount());
+            }
+        });
 
-        if (configuration.isStatsFlag()) {
-            MSTPrim.MinimumSpanningTree.Aggregator aggregator =
-                    mstPrim.getMinimumSpanningTree().aggregate();
-            builder.withWeightMax(aggregator.getMax())
-                    .withWeightMin(aggregator.getMin())
-                    .withWeightSum(aggregator.getSum())
-                    .withRelationshipCount(aggregator.getCount());
-        }
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
