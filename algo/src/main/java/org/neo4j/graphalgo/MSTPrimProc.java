@@ -98,7 +98,6 @@ public class MSTPrimProc {
             }
         });
 
-
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new MSTPrimExporter(api)
