@@ -39,21 +39,21 @@ public abstract class AbstractResultBuilder<R> {
     }
 
     public void timeLoad(Runnable runnable) {
-        ProgressTimer timer = ProgressTimer.start(this::withLoadDuration);
-        runnable.run();
-        timer.stop();
+        try(ProgressTimer timer = timeLoad()) {
+            runnable.run();
+        }
     }
 
     public void timeEval(Runnable runnable) {
-        ProgressTimer timer = ProgressTimer.start(this::withEvalDuration);
-        runnable.run();
-        timer.stop();
+        try(ProgressTimer timer = timeEval()) {
+            runnable.run();
+        }
     }
 
     public void timeWrite(Runnable runnable) {
-        ProgressTimer timer = ProgressTimer.start(this::withWriteDuration);
-        runnable.run();
-        timer.stop();
+        try(ProgressTimer timer = timeWrite()) {
+            runnable.run();
+        }
     }
 
     public abstract R build() ;

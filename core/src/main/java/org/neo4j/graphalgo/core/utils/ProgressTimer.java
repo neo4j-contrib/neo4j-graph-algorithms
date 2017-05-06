@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 /**
  * @author mknobloch
  */
-public class ProgressTimer {
+public class ProgressTimer implements AutoCloseable {
 
     private final Consumer<Long> onStop;
     private final long startTime;
@@ -36,4 +36,8 @@ public class ProgressTimer {
         return new ProgressTimer(null);
     }
 
+    @Override
+    public void close() {
+        stop();
+    }
 }
