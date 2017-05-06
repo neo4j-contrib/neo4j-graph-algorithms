@@ -76,7 +76,6 @@ public class MSTPrimProc {
         try(ProgressTimer timer = builder.timeLoad()) {
             container = relationshipContainer.get();
             weights = weightMap.get();
-            timer.stop();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
