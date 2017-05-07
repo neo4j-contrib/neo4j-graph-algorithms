@@ -23,11 +23,8 @@ public class UnionFindResult {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractResultBuilder<UnionFindResult> {
 
-        private long loadDuration = -1;
-        private long evalDuration = -1;
-        private long writeDuration = -1;
         private long nodeCount = 0;
         private long setCount = 0;
 
@@ -38,21 +35,6 @@ public class UnionFindResult {
 
         public Builder withNodeCount(long nodeCount) {
             this.nodeCount = nodeCount;
-            return this;
-        }
-
-        public Builder withLoadDuration(long loadDuration) {
-            this.loadDuration = loadDuration;
-            return this;
-        }
-
-        public Builder withEvalDuration(long evalDuration) {
-            this.evalDuration = evalDuration;
-            return this;
-        }
-
-        public Builder withWriteDuration(long writeDuration) {
-            this.writeDuration = writeDuration;
             return this;
         }
 

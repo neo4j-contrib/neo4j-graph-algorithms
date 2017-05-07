@@ -19,11 +19,6 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentralityProc {
 
-    public static final String CONFIG_WRITE = "write";
-    public static final String CONFIG_STATS = "stats";
-    public static final String CONFIG_WRITE_PROPERTY = "writeProperty";
-    public static final String CONFIG_WRITE_PROPERTY_DEFAULT = "centrality";
-
     @Context
     public GraphDatabaseAPI api;
 
@@ -60,31 +55,29 @@ public class BetweennessCentralityProc {
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
 
-        ProgressTimer timer = ProgressTimer.start(builder::withLoadDuration);
-        final Graph graph = new GraphLoader(api)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
-                .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
-        timer.stop();
-
-        builder.withNodeCount(graph.nodeCount());
-
-        timer = ProgressTimer.start(builder::withEvalDuration);
-        final BetweennessCentrality bc = new BetweennessCentrality(graph)
-                .compute();
-        timer.stop();
-
-        if (configuration.isWriteFlag()) {
-            timer = ProgressTimer.start(builder::withWriteDuration);
-            new BetweennessCentrality.BCExporter(api)
-                    .withTargetProperty(configuration.getWriteProperty())
-                    .write(bc);
-            timer.stop();
+        Graph graph;
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutNodeProperties()
+                    .load(HeavyGraphFactory.class);
         }
 
-        if (configuration.isStatsFlag()) {
-            computeStats(builder, bc);
+        builder.withNodeCount(graph.nodeCount());
+        final BetweennessCentrality bc = new BetweennessCentrality(graph);
+        builder.timeEval(() -> {
+            bc.compute();
+            if (configuration.isStatsFlag()) {
+                computeStats(builder, bc);
+            }
+        });
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() ->
+                    new BetweennessCentrality.BCExporter(api)
+                            .withTargetProperty(configuration.getWriteProperty())
+                            .write(bc));
         }
 
         return Stream.of(builder.build());

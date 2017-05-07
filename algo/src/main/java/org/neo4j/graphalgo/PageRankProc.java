@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.PageRankAlgo;
 import org.neo4j.graphalgo.impl.PageRankExporter;
 import org.neo4j.graphalgo.impl.PageRankScore;
@@ -18,21 +19,16 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public final class PageRankProc {
 
     public static final String CONFIG_DAMPING = "dampingFactor";
-    public static final String CONFIG_ITERATIONS = "iterations";
-    public static final String CONFIG_WRITE = "write";
-    public static final String CONFIG_SCORE_PROPERTY = "scoreProperty";
     public static final String BATCH_SIZE_PROPERTY = "batchSize";
 
     public static final Double DEFAULT_DAMPING = 0.85;
     public static final Integer DEFAULT_ITERATIONS = 20;
-    public static final Boolean DEFAULT_WRITE = Boolean.TRUE;
     public static final String DEFAULT_SCORE_PROPERTY = "score";
 
     @Context
@@ -87,17 +83,19 @@ public final class PageRankProc {
             String label,
             String relationship,
             PageRankScore.Stats.Builder statsBuilder) {
-        long start = System.nanoTime();
-        Graph graph = new GraphLoader(api)
+
+        GraphLoader graphLoader = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
-                .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
-        statsBuilder
-                .withLoadMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
-                .withNodes(graph.nodeCount());
-        return graph;
+                .withExecutorService(Pools.DEFAULT);
+
+        try (ProgressTimer timer = statsBuilder.timeLoad()) {
+            Graph graph = graphLoader
+                    .load(HeavyGraphFactory.class);
+            statsBuilder.withNodes(graph.nodeCount());
+            return graph;
+        }
     }
 
     private double[] evaluate(
@@ -107,22 +105,21 @@ public final class PageRankProc {
 
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
-
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
+        PageRankAlgo pageRankAlgo = new PageRankAlgo(
+                graph,
+                graph,
+                graph,
+                graph,
+                dampingFactor);
 
-        long start = System.nanoTime();
-        double[] result = new PageRankAlgo(
-                graph,
-                graph,
-                graph,
-                graph,
-                dampingFactor
-        ).compute(iterations);
+        statsBuilder.timeEval(() -> pageRankAlgo.compute(iterations));
+
         statsBuilder
-                .withComputeMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
                 .withIterations(iterations)
                 .withDampingFactor(dampingFactor);
-        return result;
+
+        return pageRankAlgo.getPageRank();
     }
 
     private void write(
@@ -134,16 +131,16 @@ public final class PageRankProc {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
             int batchSize = configuration.getInt(BATCH_SIZE_PROPERTY, ParallelUtil.DEFAULT_BATCH_SIZE);
-            long start = System.nanoTime();
-            new PageRankExporter(
-                    batchSize,
-                    api,
-                    graph,
-                    graph,
-                    propertyName,
-                    Pools.DEFAULT).write(scores);
+            statsBuilder.timeWrite(() -> {
+                new PageRankExporter(
+                        batchSize,
+                        api,
+                        graph,
+                        graph,
+                        propertyName,
+                        Pools.DEFAULT).write(scores);
+            });
             statsBuilder
-                    .withWriteMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
                     .withWrite(true)
                     .withProperty(propertyName);
         } else {

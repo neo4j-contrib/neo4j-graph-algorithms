@@ -24,10 +24,6 @@ import java.util.stream.Stream;
  */
 public class ShortestPathProc {
 
-    public static final String CONFIG_LABEL = "label";
-    public static final String CONFIG_RELATIONSHIP = "relationship";
-    public static final String CONFIG_DEFAULT_VALUE = "defaultValue";
-
     @Context
     public GraphDatabaseAPI api;
 

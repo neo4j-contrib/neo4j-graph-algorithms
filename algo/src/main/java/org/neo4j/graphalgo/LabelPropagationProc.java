@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.impl.LabelPropagationExporter;
 import org.neo4j.graphalgo.impl.LabelPropagationStats;
@@ -18,18 +19,14 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static algo.util.Util.parseDirection;
 
 public final class LabelPropagationProc {
 
-    public static final String CONFIG_ITERATIONS = "iterations";
-    public static final String CONFIG_WRITE = "write";
     public static final String CONFIG_WEIGHT_KEY = "weightProperty";
     public static final String CONFIG_PARTITION_KEY = "partitionProperty";
-
     public static final Integer DEFAULT_ITERATIONS = 1;
     public static final Boolean DEFAULT_WRITE = Boolean.TRUE;
     public static final String DEFAULT_WEIGHT_KEY = "weight";
@@ -50,17 +47,14 @@ public final class LabelPropagationProc {
             @Name(value = "direction", defaultValue = "OUTGOING") String directionName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+                .overrideNodeLabelOrQuery(label)
+                .overrideRelationshipTypeOrQuery(relationshipType);
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-
-        label = emptyToNull(label);
-        relationshipType = emptyToNull(relationshipType);
-        Direction direction = parseDirection(directionName);
-
+        final Direction direction = parseDirection(directionName);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
-        final boolean write = configuration.isWriteFlag(true);
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
                 .iterations(iterations)
@@ -68,15 +62,17 @@ public final class LabelPropagationProc {
                 .weightProperty(weightProperty);
 
         HeavyGraph graph = load(
-                label,
-                relationshipType,
+                configuration.getNodeLabelOrQuery(),
+                configuration.getRelationshipOrQuery(),
                 partitionProperty,
                 weightProperty,
                 stats);
 
         IntDoubleMap labels = compute(direction, iterations, graph, stats);
 
-        if (write && partitionProperty != null) {
+        stats.nodes(labels.size());
+
+        if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
             write(partitionProperty, graph, labels, stats);
         }
 
@@ -89,17 +85,17 @@ public final class LabelPropagationProc {
             String partitionKey,
             String weightKey,
             LabelPropagationStats.Builder stats) {
-        long start = System.nanoTime();
-        HeavyGraph graph = (HeavyGraph) new GraphLoader(dbAPI)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationshipType)
-                .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
-                .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
-                .withOptionalNodeProperty(partitionKey, 0.0d)
-                .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
-        stats.loadMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-        return graph;
+
+        try (ProgressTimer timer = stats.timeLoad()) {
+            return (HeavyGraph) new GraphLoader(dbAPI)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationshipType)
+                    .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
+                    .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
+                    .withOptionalNodeProperty(partitionKey, 0.0d)
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(HeavyGraphFactory.class);
+        }
     }
 
     private IntDoubleMap compute(
@@ -107,13 +103,12 @@ public final class LabelPropagationProc {
             int iterations,
             HeavyGraph graph,
             LabelPropagationStats.Builder stats) {
-        long start = System.nanoTime();
-        IntDoubleMap labels = new LabelPropagation(graph).compute(
-                direction,
-                iterations);
-        stats.computeMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
-                .nodes(labels.size());
-        return labels;
+
+        try (ProgressTimer timer = stats.timeEval()) {
+            return new LabelPropagation(graph).compute(
+                    direction,
+                    iterations).getLabels();
+        }
     }
 
     private void write(
@@ -121,13 +116,10 @@ public final class LabelPropagationProc {
             HeavyGraph graph,
             IntDoubleMap labels,
             LabelPropagationStats.Builder stats) {
-        long start = System.nanoTime();
-        new LabelPropagationExporter(dbAPI, graph, partitionKey).write(labels);
-        stats.writeMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start))
-                .write(true);
-    }
-
-    private String emptyToNull(String s) {
-        return "".equals(s) ? null : s;
+        stats.write(true);
+        try (ProgressTimer timer = stats.timeWrite()) {
+            new LabelPropagationExporter(dbAPI, graph, partitionKey)
+                    .write(labels);
+        }
     }
 }

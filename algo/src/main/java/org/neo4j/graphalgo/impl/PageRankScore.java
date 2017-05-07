@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.graphdb.Node;
 
 public class PageRankScore {
@@ -39,12 +40,9 @@ public class PageRankScore {
             this.property = property;
         }
 
-        public static final class Builder {
+        public static final class Builder extends AbstractResultBuilder<Stats> {
             private long nodes;
             private long iterations;
-            private long loadMillis = -1;
-            private long computeMillis = -1;
-            private long writeMillis = -1;
             private double dampingFactor;
             private boolean write;
             private String property;
@@ -56,21 +54,6 @@ public class PageRankScore {
 
             public Builder withIterations(long iterations) {
                 this.iterations = iterations;
-                return this;
-            }
-
-            public Builder withLoadMillis(long loadMillis) {
-                this.loadMillis = loadMillis;
-                return this;
-            }
-
-            public Builder withComputeMillis(long computeMillis) {
-                this.computeMillis = computeMillis;
-                return this;
-            }
-
-            public Builder withWriteMillis(long writeMillis) {
-                this.writeMillis = writeMillis;
                 return this;
             }
 
@@ -93,9 +76,9 @@ public class PageRankScore {
                 return new PageRankScore.Stats(
                         nodes,
                         iterations,
-                        loadMillis,
-                        computeMillis,
-                        writeMillis,
+                        loadDuration,
+                        evalDuration,
+                        writeDuration,
                         dampingFactor,
                         write,
                         property);

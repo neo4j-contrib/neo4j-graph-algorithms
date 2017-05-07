@@ -21,7 +21,6 @@ import java.util.stream.Stream;
  */
 public class StronglyConnectedComponentsProc {
 
-    public static final String CONFIG_WRITE = "write";
     public static final String CONFIG_WRITE_PROPERTY = "clusterProperty";
     public static final String CONFIG_CLUSTER = "cluster";
 
