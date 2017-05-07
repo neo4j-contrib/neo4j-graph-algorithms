@@ -19,11 +19,6 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentralityProc {
 
-    public static final String CONFIG_WRITE = "write";
-    public static final String CONFIG_STATS = "stats";
-    public static final String CONFIG_WRITE_PROPERTY = "writeProperty";
-    public static final String CONFIG_WRITE_PROPERTY_DEFAULT = "centrality";
-
     @Context
     public GraphDatabaseAPI api;
 
