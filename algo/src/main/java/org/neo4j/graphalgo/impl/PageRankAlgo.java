@@ -40,11 +40,15 @@ public class PageRankAlgo implements IntPredicate, RelationshipConsumer {
     /**
      * compute pageRank for n iterations
      */
-    public double[] compute(int iterations) {
+    public PageRankAlgo compute(int iterations) {
         Arrays.fill(pageRank, 1.0);
         for (int i = 0; i < iterations; i++) {
             nodeIterator.forEachNode(this);
         }
+        return this;
+    }
+
+    public double[] getPageRank() {
         return pageRank;
     }
 
