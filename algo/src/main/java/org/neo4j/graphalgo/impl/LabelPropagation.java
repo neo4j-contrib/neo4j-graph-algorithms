@@ -9,7 +9,6 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphdb.Direction;
 
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 public final class LabelPropagation implements IntPredicate, RelationshipConsumer {
@@ -24,7 +23,7 @@ public final class LabelPropagation implements IntPredicate, RelationshipConsume
         this.graph = graph;
     }
 
-    public IntDoubleMap compute(Direction direction, long times) {
+    public LabelPropagation compute(Direction direction, long times) {
         this.direction = direction;
         votes = new DoubleDoubleHashMap();
         labels = new IntDoubleHashMap(graph.nodeCount());
@@ -33,9 +32,12 @@ public final class LabelPropagation implements IntPredicate, RelationshipConsume
             graph.forEachNode(this);
         }
 
-        return labels;
+        return this;
     }
 
+    public IntDoubleMap getLabels() {
+        return labels;
+    }
 
     @Override
     public boolean test(final int node) {

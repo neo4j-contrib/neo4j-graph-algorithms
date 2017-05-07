@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core;
 
 import org.neo4j.logging.Log;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -10,12 +11,10 @@ import java.util.regex.Pattern;
  */
 public class ProcedureConfiguration {
 
-    private Pattern QUERY_PATTERN = Pattern.compile("MATCH.+RETURN.+", Pattern.CASE_INSENSITIVE);
-
     private final Map<String, Object> config;
 
     public ProcedureConfiguration(Map<String, Object> config) {
-        this.config = config;
+        this.config = new HashMap<>(config);
     }
 
     public boolean containsKeys(String... keys) {
