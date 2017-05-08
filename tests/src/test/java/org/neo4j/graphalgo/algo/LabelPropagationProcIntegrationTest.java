@@ -1,8 +1,7 @@
 package org.neo4j.graphalgo.algo;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.LabelPropagationProc;
 import org.neo4j.graphdb.Result;
@@ -20,8 +19,6 @@ import static org.junit.Assert.assertTrue;
 
 public class LabelPropagationProcIntegrationTest {
 
-    private static GraphDatabaseAPI db;
-
     private static final String DB_CYPHER = "" +
             "CREATE (a:A {id: 0, partition: 42}) " +
             "CREATE (b:B {id: 1, partition: 42}) " +
@@ -38,8 +35,11 @@ public class LabelPropagationProcIntegrationTest {
             "CREATE (b)-[:X]->(:B {id: 10, weight: 1.0, partition: 1}) " +
             "CREATE (b)-[:X]->(:B {id: 11, weight: 8.0, partition: 2})";
 
-    @BeforeClass
-    public static void setup() throws KernelException {
+    private GraphDatabaseAPI db;
+    private final boolean parallel;
+
+    @Before
+    public void setup() throws KernelException {
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
@@ -54,14 +54,9 @@ public class LabelPropagationProcIntegrationTest {
                 .registerProcedure(LabelPropagationProc.class);
     }
 
-    @AfterClass
-    public static void shutdown() {
+    @After
+    public void shutdown() {
         db.shutdown();
-    }
-
-    @Before
-    public void resetNode() {
-        db.execute("MATCH (n) WHERE n.id in [0,1] SET n.partition = 42;").close();
     }
 
     @Test
@@ -162,18 +157,20 @@ public class LabelPropagationProcIntegrationTest {
         }
     }
 
-    private static void runQuery(String query) {
+    private void runQuery(String query) {
         runQuery(query, row -> {});
     }
 
-    private static void runQuery(
+    private void runQuery(
             String query,
             Consumer<Result.ResultRow> check) {
-        try (Result result = db.execute(query)) {
+        try (Transaction tx = db.beginTx();
+             Result result = db.execute(query)) {
             result.accept(row -> {
                 check.accept(row);
                 return true;
             });
+            tx.success();
         }
     }
 }
