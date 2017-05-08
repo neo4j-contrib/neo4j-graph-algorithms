@@ -8,6 +8,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,14 +131,11 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
 
     @Override
     public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-        if (batchSize <= 0) {
-            throw new IllegalArgumentException("Invalid batch size: " + batchSize);
-        }
         int nodeCount = nodeCount();
-        if (batchSize >= nodeCount) {
+        int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
+        if (numberOfBatches == 1) {
             return Collections.singleton(this::nodeIterator);
         }
-        int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
         PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
         Arrays.setAll(iterators, i -> {
             int start = i * batchSize;

@@ -24,6 +24,16 @@ public final class ParallelUtil {
 
     public static final int DEFAULT_BATCH_SIZE = 10_000;
 
+    public static int threadSize(int batchSize, int elementCount) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Invalid batch size: " + batchSize);
+        }
+        if (batchSize >= elementCount) {
+            return 1;
+        }
+        return (int) Math.ceil(elementCount / (double) batchSize);
+    }
+
     /**
      * Executes write operations in parallel, based on the given batch size
      * and executor.
