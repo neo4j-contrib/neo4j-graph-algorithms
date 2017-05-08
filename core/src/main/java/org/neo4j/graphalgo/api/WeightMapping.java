@@ -27,7 +27,7 @@ public interface WeightMapping {
     }
 
     default double get(int id, double defaultValue) {
-        return get(RawValues.combineIntInt(id, -1));
+        return get(RawValues.combineIntInt(id, -1), defaultValue);
     }
 
     /**
