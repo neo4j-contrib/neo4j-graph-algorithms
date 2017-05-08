@@ -18,10 +18,11 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static algo.util.Util.parseDirection;
+import static java.lang.String.format;
 
 public final class LabelPropagationProc {
 
@@ -121,5 +122,37 @@ public final class LabelPropagationProc {
             new LabelPropagationExporter(dbAPI, graph, partitionKey)
                     .write(labels);
         }
+    }
+
+    private static final Direction[] ALLOWED_DIRECTION = Arrays
+            .stream(Direction.values())
+            .filter(d -> d != Direction.BOTH)
+            .toArray(Direction[]::new);
+
+    private static Direction parseDirection(String directionString) {
+        if (null == directionString) {
+            return Direction.OUTGOING;
+        }
+        Direction direction;
+        try {
+            direction = Direction.valueOf(directionString.toUpperCase());
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    format(
+                            "Cannot convert value '%s' to Direction. Legal values are '%s'.",
+                            directionString,
+                            Arrays.toString(ALLOWED_DIRECTION)
+                    )
+            );
+        }
+        if (direction == Direction.BOTH) {
+            throw new IllegalArgumentException(
+                    format(
+                            "Direction BOTH is not allowed. Legal values are '%s'.",
+                            Arrays.toString(ALLOWED_DIRECTION)
+                    )
+            );
+        }
+        return direction;
     }
 }

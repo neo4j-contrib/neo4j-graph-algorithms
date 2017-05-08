@@ -149,13 +149,17 @@ public class LabelPropagationProcIntegrationTest {
     }
 
     @Test
-    public void shouldPropagateBoth() throws Exception {
+    public void shouldNotPropagateBoth() throws Exception {
         String query = "CALL algo.labelPropagation('A', 'X', 'BOTH')";
-        String check = "MATCH (n:A) RETURN n.partition as partition";
-
-        runQuery(query);
-        runQuery(check, row ->
-                assertEquals(2, row.getNumber("partition").intValue()));
+        try {
+            runQuery(query);
+            fail();
+        } catch (QueryExecutionException e) {
+            Throwable cause = Exceptions.peel(e, ((Predicate<Throwable>) IllegalArgumentException.class::isInstance).negate());
+            assertEquals(
+                    "Direction BOTH is not allowed. Legal values are '[OUTGOING, INCOMING]'.",
+                    cause.getMessage());
+        }
     }
 
     private static void runQuery(String query) {
