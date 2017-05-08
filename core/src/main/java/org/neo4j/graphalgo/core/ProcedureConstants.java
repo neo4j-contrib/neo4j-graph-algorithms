@@ -31,6 +31,8 @@ public class ProcedureConstants {
 
     public static final int ITERATIONS_DEFAULT = 1;
 
+    public static final String BATCH_SIZE_PARAM = "batchSize";
+
     public static final String DIRECTION = "direction";
 
     public static final String DIRECTION_DEFAULT = "BOTH";
