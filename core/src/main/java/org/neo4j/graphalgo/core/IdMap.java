@@ -139,12 +139,29 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         }
         int numberOfBatches = (int) Math.ceil(nodeCount / (double) batchSize);
         PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
-        Arrays.setAll(iterators, i -> () -> {
+        Arrays.setAll(iterators, i -> {
             int start = i * batchSize;
             int length = Math.min(batchSize, nodeCount - start);
-            return new IdIterator().reset(start, length);
+            return new IdIterable(start, length);
         });
         return Arrays.asList(iterators);
+    }
+
+    private static final class IdIterable implements PrimitiveIntIterable {
+        private final IdIterator iterator;
+        private final int start;
+        private final int length;
+
+        private IdIterable(int start, int length) {
+            this.start = start;
+            this.length = length;
+            iterator = new IdIterator();
+        }
+
+        @Override
+        public PrimitiveIntIterator iterator() {
+            return iterator.reset(start, length);
+        }
     }
 
     private static final class IdIterator implements PrimitiveIntIterator {
