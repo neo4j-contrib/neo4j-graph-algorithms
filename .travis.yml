@@ -27,3 +27,8 @@ deploy:
   target_branch: benchmark-results
   on:
     branch: 3.1
+
+# block benchmark results from building in travis
+branches:
+  except:
+  - benchmark-results
