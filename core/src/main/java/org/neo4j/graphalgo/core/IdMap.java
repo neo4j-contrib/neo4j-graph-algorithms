@@ -85,6 +85,9 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     public long[] mappedIds() {
         return graphIds;
     }
+    public LongIntMap nodeToGraphIds() {
+        return nodeToGraphIds;
+    }
 
     public void forEach(IntPredicate consumer) {
         int limit = this.nextGraphId;

@@ -37,23 +37,28 @@ public class GraphSetup {
     /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
     public final String relationshipStatement;
 
+    public final int batchSize;
+    public final boolean accumulateWeights;
+
     /**
      * main ctor
      * @param startLabel the start label. null means any label.
      * @param endLabel not implemented yet
      * @param relationshipType the relation type identifier. null for any relationship
      * @param relationWeightPropertyName property name which holds the weights / costs of a relation.
-     *                                   null means the default value is used for each weight.
+*                                   null means the default value is used for each weight.
      * @param relationDefaultWeight the default relationship weight if property is not given.
      * @param nodeWeightPropertyName property name which holds the weights / costs of a node.
-     *                               null means the default value is used for each weight.
+*                               null means the default value is used for each weight.
      * @param nodeDefaultWeight the default node weight if property is not given.
      * @param nodePropertyName property name which holds additional values of a node.
-     *                         null means the default value is used for each value.
+*                         null means the default value is used for each value.
      * @param nodeDefaultPropertyValue the default node value if property is not given.
      * @param executor the executor. null means single threaded evaluation
      * @param nodeStatement statement to load nodes, has to return "id" and optionally "weight" or "value"
      * @param relationshipStatement statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
+     * @param batchSize batch size for parallel loading
+     * @param accumulateWeights true if relationship-weights should be summed within the loader
      */
     public GraphSetup(
             String startLabel,
@@ -67,7 +72,8 @@ public class GraphSetup {
             double nodeDefaultPropertyValue,
             ExecutorService executor,
             String nodeStatement,
-            String relationshipStatement) {
+            String relationshipStatement,
+            int batchSize, boolean accumulateWeights) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -81,6 +87,8 @@ public class GraphSetup {
         this.executor = executor;
         this.nodeStatement = nodeStatement;
         this.relationshipStatement = relationshipStatement;
+        this.batchSize = batchSize;
+        this.accumulateWeights = accumulateWeights;
     }
 
     /**
@@ -99,6 +107,8 @@ public class GraphSetup {
         this.executor = null;
         this.nodeStatement = null;
         this.relationshipStatement = null;
+        this.batchSize = -1;
+        this.accumulateWeights = false;
     }
 
     /**
@@ -120,10 +130,18 @@ public class GraphSetup {
         this.executor = executor;
         this.nodeStatement = null;
         this.relationshipStatement = null;
+        this.batchSize = -1;
+        this.accumulateWeights = false;
     }
 
     public boolean loadConcurrent() {
         return executor != null;
+    }
+    public int concurrency() {
+        if (!loadConcurrent()) return 1;
+// todo make configurable
+        return Runtime.getRuntime().availableProcessors();
+//        return ForkJoinPool.getCommonPoolParallelism();
     }
 
     public boolean loadDefaultRelationshipWeight() {
