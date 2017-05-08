@@ -38,4 +38,6 @@ public interface WeightMapping {
     default void set(int id, Object weight) {
         set(RawValues.combineIntInt(id, -1), weight);
     }
+
+    int size();
 }

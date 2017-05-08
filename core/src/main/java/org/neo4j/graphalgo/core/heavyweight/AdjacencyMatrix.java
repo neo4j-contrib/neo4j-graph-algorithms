@@ -1,11 +1,13 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.IntPredicate;
 
 /**
  * Relation Container built of multiple arrays. The node capacity must be constant and the node IDs have to be
@@ -110,10 +112,26 @@ class AdjacencyMatrix {
     public void addOutgoing(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = outOffsets[sourceNodeId];
         final int nextDegree = degree + 1;
-        growOut(sourceNodeId, degree + 1);
+        if (outgoing[sourceNodeId].length < nextDegree) {
+            growOut(sourceNodeId, nextDegree);
+        }
         outgoing[sourceNodeId][degree] = targetNodeId;
         outgoingIds[sourceNodeId][degree] = relationId;
         outOffsets[sourceNodeId] = nextDegree;
+    }
+
+    /**
+     * checks for outgoing target node, currently O(n)
+     */
+    public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
+        final int degree = outOffsets[sourceNodeId];
+        int[] rels = outgoing[sourceNodeId];
+        for (int offset = degree-1; offset >= 0; offset--) {
+            if (rels[offset]==targetNodeId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -122,10 +140,26 @@ class AdjacencyMatrix {
     public void addIncoming(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = inOffsets[targetNodeId];
         final int nextDegree = degree + 1;
-        growIn(targetNodeId, degree + 1);
+        if (incoming[targetNodeId].length < nextDegree) {
+            growIn(targetNodeId, nextDegree);
+        }
         incoming[targetNodeId][degree] = sourceNodeId;
         incomingIds[targetNodeId][degree] = relationId;
         inOffsets[targetNodeId] = nextDegree;
+    }
+
+    /**
+     * checks for incoming target node, currently O(n)
+     */
+    public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
+        final int degree = inOffsets[sourceNodeId];
+        int[] rels = incoming[sourceNodeId];
+        for (int offset = degree-1; offset >= 0; offset--) {
+            if (rels[offset]==targetNodeId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -258,6 +292,14 @@ class AdjacencyMatrix {
         }
     }
 
+    public NodeIterator nodesWithRelationships(Direction direction) {
+        if (direction == Direction.OUTGOING) {
+            return new DegreeCheckingNodeIterator(outOffsets);
+        } else {
+            return new DegreeCheckingNodeIterator(inOffsets);
+        }
+    }
+
     private static class RelationIterator implements Iterator<RelationshipCursor> {
 
         private final RelationshipCursor cursor;
@@ -320,4 +362,51 @@ class AdjacencyMatrix {
         }
     }
 
+    private static class DegreeCheckingNodeIterator implements NodeIterator {
+        private final int[] array;
+
+        DegreeCheckingNodeIterator(int[] array) {
+            this.array = array;
+        }
+
+        @Override
+        public void forEachNode(IntPredicate consumer) {
+            for (int node = 0; node < array.length; node++) {
+                if (array[node] > 0 && !consumer.test(node)) {
+                    break;
+                }
+            }
+        }
+
+        @Override
+        public PrimitiveIntIterator nodeIterator() {
+            return new PrimitiveIntIterator() {
+                int index = findNext();
+
+                @Override
+                public boolean hasNext() {
+                    return index < array.length;
+                }
+
+                @Override
+                public int next() {
+                    try {
+                        return index;
+                    } finally {
+                        index = findNext();
+                    }
+                }
+
+                private int findNext() {
+                    int length = array.length;
+                    for (int n = index + 1; n < length; n++) {
+                        if (array[n] > 0) {
+                            return n;
+                        }
+                    }
+                    return length;
+                }
+            };
+        }
+    }
 }
