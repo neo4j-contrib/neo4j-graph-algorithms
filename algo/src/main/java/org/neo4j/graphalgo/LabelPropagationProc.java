@@ -20,6 +20,7 @@ import org.neo4j.procedure.Procedure;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -54,6 +55,7 @@ public final class LabelPropagationProc {
 
         final Direction direction = parseDirection(directionName);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
+        final int batchSize = configuration.getBatchSize();
         final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
@@ -69,7 +71,7 @@ public final class LabelPropagationProc {
                 weightProperty,
                 stats);
 
-        IntDoubleMap labels = compute(direction, iterations, graph, stats);
+        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, stats);
 
         stats.nodes(labels.size());
 
@@ -102,13 +104,16 @@ public final class LabelPropagationProc {
     private IntDoubleMap compute(
             Direction direction,
             int iterations,
+            int batchSize,
             HeavyGraph graph,
             LabelPropagationStats.Builder stats) {
-
         try (ProgressTimer timer = stats.timeEval()) {
-            return new LabelPropagation(graph).compute(
+            ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
+            return new LabelPropagation(graph, pool).compute(
                     direction,
-                    iterations).getLabels();
+                    iterations,
+                    Math.max(1, batchSize)
+            );
         }
     }
 

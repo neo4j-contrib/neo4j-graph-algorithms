@@ -3,20 +3,29 @@ package org.neo4j.graphalgo.algo;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.LabelPropagationProc;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+@RunWith(Parameterized.class)
 public class LabelPropagationProcIntegrationTest {
 
     private static final String DB_CYPHER = "" +
@@ -35,8 +44,20 @@ public class LabelPropagationProcIntegrationTest {
             "CREATE (b)-[:X]->(:B {id: 10, weight: 1.0, partition: 1}) " +
             "CREATE (b)-[:X]->(:B {id: 11, weight: 8.0, partition: 2})";
 
+    @Parameterized.Parameters(name = "parallel={0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{false},
+                new Object[]{true}
+        );
+    }
+
     private GraphDatabaseAPI db;
     private final boolean parallel;
+
+    public LabelPropagationProcIntegrationTest(boolean parallel) {
+        this.parallel = parallel;
+    }
 
     @Before
     public void setup() throws KernelException {
@@ -85,7 +106,9 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldRunLabelPropagation() throws Exception {
-        String query = "CALL algo.labelPropagation(null, 'X')";
+        String query = parallel
+                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {batchSize:1})"
+                : "CALL algo.labelPropagation(null, 'X')";
         String check = "MATCH (n) WHERE n.id IN [0,1] RETURN n.partition AS partition";
 
         runQuery(query, row -> {
@@ -108,7 +131,9 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldFallbackToNodeIdsForNonExistingPartitionKey() throws Exception {
-        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar'})";
+        String query = parallel
+                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar', batchSize:1})"
+                : "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar'})";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.foobar as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.foobar as partition";
 
@@ -122,7 +147,9 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldFilterByLabel() throws Exception {
-        String query = "CALL algo.labelPropagation('A', 'X')";
+        String query = parallel
+                ? "CALL algo.labelPropagation('A', 'X', 'OUTGOING', {batchSize:1})"
+                : "CALL algo.labelPropagation('A', 'X')";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.partition as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.partition as partition";
 
@@ -135,7 +162,9 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldPropagateIncoming() throws Exception {
-        String query = "CALL algo.labelPropagation('A', 'X', 'INCOMING')";
+        String query = parallel
+                ? "CALL algo.labelPropagation('A', 'X', 'INCOMING', {batchSize:1})"
+                : "CALL algo.labelPropagation('A', 'X', 'INCOMING')";
         String check = "MATCH (n:A) WHERE n.id <> 0 RETURN n.partition as partition";
 
         runQuery(query);
