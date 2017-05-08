@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 public class HeavyCypherGraphParallelFactoryTest {
 
-    private static final int COUNT = 100000;
+    private static final int COUNT = 10000;
     private static GraphDatabaseService db;
 
     @BeforeClass
