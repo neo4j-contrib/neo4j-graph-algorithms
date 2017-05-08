@@ -69,7 +69,7 @@ public final class WeightMap implements WeightMapping {
     }
 
     private void put(long key, double value) {
-        weights.addTo(key, value);
+        weights.put(key, value);
     }
 
     /**
@@ -84,5 +84,10 @@ public final class WeightMap implements WeightMapping {
      */
     LongDoubleMap weights() {
         return weights;
+    }
+
+    @Override
+    public int size() {
+        return weights.size();
     }
 }
