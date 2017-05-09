@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core;
 
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.logging.Log;
 
 import java.util.HashMap;
@@ -114,6 +115,10 @@ public class ProcedureConfiguration {
 
     public int getIterations(int defaultValue) {
         return getNumber(ProcedureConstants.ITERATIONS_PARAM, defaultValue).intValue();
+    }
+
+    public int getBatchSize() {
+        return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, ParallelUtil.DEFAULT_BATCH_SIZE).intValue();
     }
 
     public String getDirectionName() {

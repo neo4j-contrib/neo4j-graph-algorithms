@@ -47,6 +47,8 @@ public class GraphLoader {
     private String nodeStatement;
     /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
     private String relationshipStatement;
+    private int batchSize;
+    private boolean accumulateWeights;
 
     /**
      * Creates a new serial GraphLoader.
@@ -370,7 +372,9 @@ public class GraphLoader {
                 nodePropDefault,
                 executorService,
                 nodeStatement,
-                relationshipStatement);
+                relationshipStatement,
+                batchSize,
+                accumulateWeights);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -384,7 +388,7 @@ public class GraphLoader {
     /**
      * provide statement to load nodes, has to return "id" and optionally "weight" or "value"
      * @param nodeStatement
-     * @return
+     * @return itself to enable fluent interface
      */
     public GraphLoader withNodeStatement(String nodeStatement) {
         this.nodeStatement = nodeStatement;
@@ -394,10 +398,28 @@ public class GraphLoader {
     /**
      * provide statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
      * @param relationshipStatement
-     * @return
+     * @return itself to enable fluent interface
      */
     public GraphLoader withRelationshipStatement(String relationshipStatement) {
         this.relationshipStatement = relationshipStatement;
+        return this;
+    }
+
+    /**
+     * provide batch size for parallel loading
+     * @param batchSize
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+    /**
+     * @param accumulateWeights true if relationship-weights should be accumulated in the loader
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withAccumulateWeights(boolean accumulateWeights) {
+        this.accumulateWeights = accumulateWeights;
         return this;
     }
 }
