@@ -53,6 +53,7 @@ public final class LabelPropagationProc {
 
         final Direction direction = parseDirection(directionName);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
+        final int batchSize = configuration.getBatchSize();
         final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
@@ -73,7 +74,7 @@ public final class LabelPropagationProc {
         stats.nodes(labels.size());
 
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
-            write(partitionProperty, graph, labels, stats);
+            write(batchSize, partitionProperty, graph, labels, stats);
         }
 
         return Stream.of(stats.build());
@@ -112,13 +113,20 @@ public final class LabelPropagationProc {
     }
 
     private void write(
+            int batchSize,
             String partitionKey,
             HeavyGraph graph,
             IntDoubleMap labels,
             LabelPropagationStats.Builder stats) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
-            new LabelPropagationExporter(dbAPI, graph, partitionKey)
+            new LabelPropagationExporter(
+                    batchSize,
+                    dbAPI,
+                    graph,
+                    graph,
+                    partitionKey,
+                    Pools.DEFAULT)
                     .write(labels);
         }
     }
