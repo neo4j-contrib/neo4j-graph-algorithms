@@ -42,6 +42,36 @@ public final class IdMapTest extends RandomizedTest {
         assertIterables(idMap, ids, iterables);
     }
 
+    @Test
+    public void shouldFailForZeroBatchSize() throws Exception {
+        IdMap idMap = new IdMap(20);
+        addRandomIds(idMap);
+        idMap.buildMappedIds();
+
+        try {
+            idMap.batchIterables(0);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Invalid batch size: 0", e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldFailForNegativeBatchSize() throws Exception {
+        IdMap idMap = new IdMap(20);
+        addRandomIds(idMap);
+        idMap.buildMappedIds();
+
+        int batchSize = between(Integer.MIN_VALUE, -1);
+
+        try {
+            idMap.batchIterables(batchSize);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Invalid batch size: " + batchSize, e.getMessage());
+        }
+    }
+
     private void assertIterables(
             final IdMap idMap,
             final long[] ids,

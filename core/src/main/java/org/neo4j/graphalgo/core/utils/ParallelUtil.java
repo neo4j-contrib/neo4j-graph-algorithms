@@ -24,6 +24,16 @@ public final class ParallelUtil {
 
     public static final int DEFAULT_BATCH_SIZE = 10_000;
 
+    public static int threadSize(int batchSize, int elementCount) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Invalid batch size: " + batchSize);
+        }
+        if (batchSize >= elementCount) {
+            return 1;
+        }
+        return (int) Math.ceil(elementCount / (double) batchSize);
+    }
+
     /**
      * Executes write operations in parallel, based on the given batch size
      * and executor.
@@ -96,6 +106,10 @@ public final class ParallelUtil {
     public static void run(
             Collection<? extends Runnable> tasks,
             ExecutorService executor) {
+        if (tasks.size() == 1) {
+            tasks.iterator().next().run();
+            return;
+        }
         final List<Future<?>> futures = new ArrayList<>(tasks.size());
         for (Runnable task : tasks) {
             futures.add(executor.submit(task));

@@ -2,18 +2,18 @@ package org.neo4j.graphalgo.core.utils;
 
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 
 /**
  * @author mknobloch
  */
 public class ProgressTimer implements AutoCloseable {
 
-    private final Consumer<Long> onStop;
+    private final LongConsumer onStop;
     private final long startTime;
     private long duration = 0;
 
-    private ProgressTimer(Consumer<Long> onStop) {
+    private ProgressTimer(LongConsumer onStop) {
         this.onStop = onStop == null ? l -> {} : onStop;
         startTime = System.nanoTime();
     }
@@ -28,7 +28,7 @@ public class ProgressTimer implements AutoCloseable {
         return duration;
     }
 
-    public static ProgressTimer start(Consumer<Long> onStop) {
+    public static ProgressTimer start(LongConsumer onStop) {
         return new ProgressTimer(onStop);
     }
 

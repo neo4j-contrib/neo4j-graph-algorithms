@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 public final class PageRankProc {
 
     public static final String CONFIG_DAMPING = "dampingFactor";
-    public static final String BATCH_SIZE_PROPERTY = "batchSize";
 
     public static final Double DEFAULT_DAMPING = 0.85;
     public static final Integer DEFAULT_ITERATIONS = 20;
@@ -130,7 +129,7 @@ public final class PageRankProc {
         if (configuration.isWriteFlag(true)) {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
-            int batchSize = configuration.getInt(BATCH_SIZE_PROPERTY, ParallelUtil.DEFAULT_BATCH_SIZE);
+            int batchSize = configuration.getBatchSize();
             statsBuilder.timeWrite(() -> {
                 new PageRankExporter(
                         batchSize,
