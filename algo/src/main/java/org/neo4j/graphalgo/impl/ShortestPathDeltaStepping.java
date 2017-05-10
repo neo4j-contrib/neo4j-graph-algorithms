@@ -20,16 +20,14 @@ public class ShortestPathDeltaStepping {
     private final IntDoubleMap tent;
     private final Buckets buckets;
 
-    private final int nodeCount;
     private final double delta;
     private final Graph graph;
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
-        this.nodeCount = graph.nodeCount();
         this.delta = delta;
         tent = new IntDoubleScatterMap();
-        buckets = new Buckets(nodeCount);
+        buckets = new Buckets();
     }
 
     public ShortestPathDeltaStepping compute(long startNode) {
@@ -41,43 +39,42 @@ public class ShortestPathDeltaStepping {
         relax(graph.toMappedNodeId(startNode), 0d);
 
         final IntArrayDeque S = new IntArrayDeque();
-        final Stack<Pair<Integer, Double>> req = new Stack<>();
 
         int i = 0;
         while (!buckets.isEmpty()) {
-            System.out.println("i = " + i);
             S.clear();
             IntArrayDeque bi = buckets.get(i);
 
+            System.out.println("===== phase " + i + " =====");
             while (!bi.isEmpty()) {
 
                 int nodeId = bi.removeLast();
+
+                System.out.println("nodeId = " + nodeId);
+
+                final int b = i;
+                S.addLast(nodeId);
                 graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost <= delta) {
-                        req.push(Pair.of(targetNodeId, cost + tent.get(sourceNodeId)));
+                        System.out.println(sourceNodeId + " -- " + cost + " -> " + targetNodeId + " : light");
+                        relax(targetNodeId, cost + tent.get(sourceNodeId));
                     }
                     return true;
                 });
-                S.addLast(nodeId);
-                req.forEach(pair -> {
-                    relax(pair.first(), pair.other());
-                });
-                req.clear();
             }
+
+            System.out.println("===== end phase " + i + " =====");
 
             S.forEach((IntProcedure) node -> {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost > delta) {
-                        req.push(Pair.of(targetNodeId, cost + tent.get(sourceNodeId)));
+                        System.out.println(sourceNodeId + " -- " + cost + " -> " + targetNodeId + " : heavy");
+                        relax(targetNodeId, cost + tent.get(sourceNodeId));
                     }
                     return true;
                 });
             });
 
-            req.forEach(pair -> {
-                relax(pair.first(), pair.other());
-            });
-            req.clear();
 
             i = buckets.nextNonEmptyBucket();
         }
@@ -97,12 +94,20 @@ public class ShortestPathDeltaStepping {
     }
 
     private void relax(int nodeId, double cost) {
-        if (cost >= tent.getOrDefault(nodeId, Double.MAX_VALUE)) {
+        if (cost >= tent.get(nodeId)) {
             return;
         }
+        int cd = (int) ((double)tent.get(nodeId) / delta);
+        System.out.print("removing " + nodeId + " from bucket " + cd + " : ");
+        if (buckets.remove(cd, nodeId)) {
+            System.out.println("successful");
+        } else {
+            System.out.println("failed");
+        }
         int xd = (int) (cost / delta);
-        buckets.set(nodeId, xd);
+        System.out.println("pushing " + nodeId + " into bucket " + xd);
+        buckets.set(xd, nodeId);
+        System.out.println("set cost for " + nodeId + " to " + cost);
         tent.put(nodeId, cost);
     }
-
 }

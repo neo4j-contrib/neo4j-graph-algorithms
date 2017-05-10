@@ -78,7 +78,7 @@ public final class ShortestPathDeltaSteppingTest {
         graph = new GraphLoader(api)
                 .withLabel("Node")
                 .withRelationshipType("TYPE")
-                .withRelationshipWeightsFromProperty("cost", 10)
+                .withRelationshipWeightsFromProperty("cost", 9999)
                 .load(HeavyGraphFactory.class);
     }
 
@@ -90,7 +90,7 @@ public final class ShortestPathDeltaSteppingTest {
     @Test
     public void test() throws Exception {
 
-        ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 5);
+        ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
 
         Node startNode = getStartNode();
 
@@ -99,6 +99,7 @@ public final class ShortestPathDeltaSteppingTest {
         LongDoubleMap map = sssp.compute(startNode.getId())
                 .getShortestPaths();
 
+        System.out.println("====================");
         for (LongDoubleCursor c : map) {
             System.out.println(c.key + " -> " + c.index);
         }
