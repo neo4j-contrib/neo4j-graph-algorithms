@@ -1,54 +1,105 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
-import org.neo4j.graphalgo.api.AllRelationshipIterator;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.RelationshipWeights;
-import org.neo4j.graphalgo.core.utils.RawValues;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
+import com.carrotsearch.hppc.cursors.LongDoubleCursor;
+import com.carrotsearch.hppc.procedures.IntProcedure;
+import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.container.Buckets;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.helpers.collection.Pair;
+
+import java.util.Stack;
+import java.util.function.Consumer;
 
 public class ShortestPathDeltaStepping {
 
+    private static final double MAX_VALUE = 9999d;
 
-    private final LongDoubleMap heavy;
-    private final LongDoubleMap light;
     private final IntDoubleMap tent;
+    private final Buckets buckets;
 
     private final int nodeCount;
-    private final RelationshipWeights weights;
-    private final IdMapping idMapping;
-    private final AllRelationshipIterator allIterator;
+    private final double delta;
+    private final Graph graph;
 
-    public ShortestPathDeltaStepping(IdMapping idMapping, AllRelationshipIterator allIterator, RelationshipWeights weights) {
-        this.idMapping = idMapping;
-        this.allIterator = allIterator;
-        this.nodeCount = idMapping.nodeCount();
-        this.weights = weights;
-        heavy = new LongDoubleScatterMap();
-        light = new LongDoubleScatterMap();
+    public ShortestPathDeltaStepping(Graph graph, double delta) {
+        this.graph = graph;
+        this.nodeCount = graph.nodeCount();
+        this.delta = delta;
         tent = new IntDoubleScatterMap();
+        buckets = new Buckets(nodeCount);
     }
 
-    public ShortestPathDeltaStepping compute(long startNode, double delta) {
+    public ShortestPathDeltaStepping compute(long startNode) {
 
-        split(delta);
+        for (int i = 0; i < graph.nodeCount(); i++) {
+            tent.put(i, MAX_VALUE);
+        }
+
+        relax(graph.toMappedNodeId(startNode), 0d);
+
+        final IntArrayDeque S = new IntArrayDeque();
+        final Stack<Pair<Integer, Double>> req = new Stack<>();
+
+        int i = 0;
+        while (!buckets.isEmpty()) {
+            System.out.println("i = " + i);
+            S.clear();
+            IntArrayDeque bi = buckets.get(i);
+            for (int j = 0; j < bi.size(); j++) {
+                int nodeId = bi.removeLast();
+                graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
+                    if (cost <= delta) {
+                        req.push(Pair.of(targetNodeId, cost + tent.get(sourceNodeId)));
+                    }
+                    return true;
+                });
+                S.addLast(nodeId);
+                req.forEach(pair -> {
+                    relax(pair.first(), pair.other());
+                });
+                req.clear();
+            }
+            S.forEach((IntProcedure) node -> {
+                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
+                    if (cost > delta) {
+                        req.push(Pair.of(targetNodeId, cost + tent.get(sourceNodeId)));
+                    }
+                    return true;
+                });
+            });
+
+            req.forEach(pair -> {
+                relax(pair.first(), pair.other());
+            });
+            req.clear();
+
+            i++;
+        }
 
 
         return this;
     }
 
-    private void split(double delta) {
-        allIterator.forEachRelationship((sourceNodeId, targetNodeId, relationId) -> {
-            double weight = weights.weightOf(sourceNodeId, targetNodeId);
-            if (weight > delta) {
-                heavy.put(RawValues.combineIntInt(sourceNodeId, targetNodeId), weight);
-            } else {
-                light.put(RawValues.combineIntInt(sourceNodeId, targetNodeId), weight);
-            }
-            tent.put(sourceNodeId, Double.MAX_VALUE);
-            return true;
-        });
+    public LongDoubleMap getShortestPaths() {
+
+        LongDoubleHashMap map = new LongDoubleHashMap();
+        for (IntDoubleCursor cursor : tent) {
+            map.put(graph.toOriginalNodeId(cursor.key), cursor.value);
+        }
+
+        return map;
     }
 
+    private void relax(int nodeId, double cost) {
+        if (cost >= tent.getOrDefault(nodeId, Double.MAX_VALUE)) {
+            return;
+        }
+        int xd = (int) (cost / delta);
+        buckets.push(nodeId, xd);
+        tent.put(nodeId, cost);
+    }
 
 }
