@@ -48,7 +48,9 @@ public class ShortestPathDeltaStepping {
             System.out.println("i = " + i);
             S.clear();
             IntArrayDeque bi = buckets.get(i);
-            for (int j = 0; j < bi.size(); j++) {
+
+            while (!bi.isEmpty()) {
+
                 int nodeId = bi.removeLast();
                 graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost <= delta) {
@@ -62,6 +64,7 @@ public class ShortestPathDeltaStepping {
                 });
                 req.clear();
             }
+
             S.forEach((IntProcedure) node -> {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost > delta) {
@@ -76,7 +79,7 @@ public class ShortestPathDeltaStepping {
             });
             req.clear();
 
-            i++;
+            i = buckets.nextNonEmptyBucket();
         }
 
 
@@ -98,7 +101,7 @@ public class ShortestPathDeltaStepping {
             return;
         }
         int xd = (int) (cost / delta);
-        buckets.push(nodeId, xd);
+        buckets.set(nodeId, xd);
         tent.put(nodeId, cost);
     }
 

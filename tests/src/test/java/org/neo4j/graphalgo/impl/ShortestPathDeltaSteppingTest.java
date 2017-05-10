@@ -94,6 +94,7 @@ public final class ShortestPathDeltaSteppingTest {
 
         Node startNode = getStartNode();
 
+        System.out.println("startNode = " + startNode.getId());
 
         LongDoubleMap map = sssp.compute(startNode.getId())
                 .getShortestPaths();

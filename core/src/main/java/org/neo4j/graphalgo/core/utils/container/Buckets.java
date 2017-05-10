@@ -25,7 +25,7 @@ public class Buckets {
                 .allMatch(b -> -1 == b);
     }
 
-    public void push(int bucket, int element) {
+    public void set(int bucket, int element) {
         System.out.println("push: " + element + " = " + bucket);
         buckets[element] = bucket;
     }
@@ -41,4 +41,13 @@ public class Buckets {
         return list;
     }
 
+    public int nextNonEmptyBucket() {
+        int min = Integer.MAX_VALUE;
+        for (int i = 0; i < buckets.length; i++) {
+            if (buckets[i] != -1 && buckets[i] < min) {
+                min = buckets[i];
+            }
+        }
+        return min;
+    }
 }
