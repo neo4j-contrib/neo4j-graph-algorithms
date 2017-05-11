@@ -43,6 +43,10 @@ public class ShortestPathDeltaStepping {
 
             int phase = buckets.nextNonEmptyBucket();
 
+            if (phase > 10000) {
+                return this;
+            }
+
             System.out.println("===== phase " + phase + " =====");
             buckets.forEachInBucket(phase, node -> {
                 System.out.println("node = " + node);
@@ -59,7 +63,6 @@ public class ShortestPathDeltaStepping {
             System.out.println("===== end phase " + phase + " =====");
 
             S.forEach((IntProcedure) node -> {
-                S.removeLast(node);
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost > delta) {
                         System.out.println(sourceNodeId + " -- " + cost + " -> " + targetNodeId + " : heavy");

@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.utils.container;
 
+import com.carrotsearch.hppc.IntArrayDeque;
+
 import java.util.Arrays;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
@@ -32,7 +34,8 @@ public class ArrayBuckets implements Buckets {
     @Override
     public int nextNonEmptyBucket() {
         int min = Integer.MAX_VALUE;
-        for (int bucket : buckets) {
+        for (int i = 0; i < buckets.length; i++) {
+            int bucket = buckets[i];
             if (bucket == -1) {
                 continue;
             }
@@ -43,17 +46,31 @@ public class ArrayBuckets implements Buckets {
         return min;
     }
 
+//    @Override
+//    public void forEachInBucket(int bucket, IntPredicate consumer) {
+//        for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
+//            int tb = buckets[nodeId];
+//            buckets[nodeId] = -1; // clear bucket
+//            if (tb == bucket) {
+//                if (!consumer.test(nodeId)) {
+//                    return;
+//                }
+//            }
+//        }
+//    }
+
+
     @Override
     public void forEachInBucket(int bucket, IntPredicate consumer) {
+        IntArrayDeque deque = new IntArrayDeque();
         for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
             int tb = buckets[nodeId];
-            buckets[nodeId] = -1; // clear bucket
             if (tb == bucket) {
-                if (!consumer.test(nodeId)) {
-                    return;
-                }
+                buckets[nodeId] = -1; // clear bucket
+                deque.addLast(nodeId);
             }
         }
+        deque.forEach((com.carrotsearch.hppc.predicates.IntPredicate) consumer::test);
     }
 
 
