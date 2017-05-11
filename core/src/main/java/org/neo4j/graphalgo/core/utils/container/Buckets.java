@@ -7,17 +7,31 @@ import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
+ * container for assigning nodeIds to arbitrary buckets
  * @author mknblch
  */
 public class Buckets {
 
     private final int[] buckets;
+    private final IntArrayDeque deque;
 
     public Buckets(int capacity) {
         buckets = new int[capacity];
+        deque = new IntArrayDeque(capacity);
+        reset();
+    }
+
+    /**
+     * reset all buckets
+     */
+    public void reset() {
         Arrays.fill(buckets, -1);
     }
 
+    /**
+     * check if any bucket has nodes left
+     * @return if the no nodes left, false otherwise
+     */
     public boolean isEmpty() {
         for (int i = 0; i < buckets.length; i++) {
             if (buckets[i] != -1) {
@@ -27,10 +41,19 @@ public class Buckets {
         return true;
     }
 
+    /**
+     * assign bucket to nodeId
+     * @param nodeId the node id
+     * @param bucket the bucket index
+     */
     public void set(int nodeId, int bucket) {
         buckets[nodeId] = bucket;
     }
 
+    /**
+     * find smallest non empty bucket index
+     * @return the index
+     */
     public int nextNonEmptyBucket() {
         int min = Integer.MAX_VALUE;
         for (int i = 0; i < buckets.length; i++) {
@@ -42,41 +65,27 @@ public class Buckets {
                 min = bucket;
             }
         }
-        return min == Integer.MAX_VALUE ? -1 : min;
+        return min;
     }
 
+    /**
+     * iterate over each node in bucket and call consumer. since
+     * the consumer assumes its bucket to be empty but also may
+     * reassign a node to the current bucket it keeps a copy of
+     * those nodes and clears the bucket before executing the
+     * consumer.
+     * @param bucket the bucket index
+     * @param consumer the nodeConsumer
+     */
     public void forEachInBucket(int bucket, IntPredicate consumer) {
+        deque.clear();
         for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
             int tb = buckets[nodeId];
-            buckets[nodeId] = -1; // clear bucket
             if (tb == bucket) {
-                if (!consumer.test(nodeId)) {
-                    return;
-                }
+                buckets[nodeId] = -1; // clear bucket
+                deque.addLast(nodeId);
             }
         }
+        deque.forEach((com.carrotsearch.hppc.predicates.IntPredicate) consumer::test);
     }
-
-
-//    public void forEachInBucket(int bucket, IntPredicate consumer) {
-//        IntArrayDeque deque = new IntArrayDeque();
-//        for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
-//            int tb = buckets[nodeId];
-//            if (tb == bucket) {
-//                buckets[nodeId] = -1; // clear bucket
-//                deque.addLast(nodeId);
-//            }
-//        }
-//        deque.forEach((com.carrotsearch.hppc.predicates.IntPredicate) consumer::test);
-//    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        for (int bucket : buckets) {
-            builder.append(String.format("[%2d]", bucket));
-        }
-        return builder.toString();
-    }
-
 }

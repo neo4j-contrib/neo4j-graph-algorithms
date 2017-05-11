@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.core.utils.container.Buckets;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class ShortestPathDeltaStepping {
 
@@ -16,100 +15,81 @@ public class ShortestPathDeltaStepping {
 
     private final double delta;
     private final Graph graph;
+    private final IntSet heavySet;
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
         this.delta = delta;
         distance = new double[graph.nodeCount()];
         buckets = new Buckets(graph.nodeCount());
+        heavySet = new IntScatterSet();
     }
 
     public ShortestPathDeltaStepping compute(long startNode) {
 
-        Arrays.fill(distance, -1d);
+        // reset
+        Arrays.fill(distance, Double.MAX_VALUE);
+        buckets.reset();
 
+        // basically assign start node to bucket 0
         relax(graph.toMappedNodeId(startNode), 0d);
 
-        final IntSet S = new IntScatterSet();
-
-        int i = 0;
-
+        // as long as the bucket contains any value
         while (!buckets.isEmpty()) {
+            heavySet.clear();
 
-            System.out.println("iteration " + i++);
-            int phase = buckets.nextNonEmptyBucket();
+            // get next bucket index
+            final int phase = buckets.nextNonEmptyBucket();
 
-            S.clear();
-
-            System.out.println("\n===== phase " + phase + " =====");
-
-            System.out.println("buckets = " + buckets);
+            /*
+             * evaluate for each node in bucket[phase]
+             * (also clears the bucket BEFORE execution)
+             */
             buckets.forEachInBucket(phase, node -> {
-                System.out.println("node = " + node);
-                S.add(node);
+                // buffer the node id for heavy phase
+                heavySet.add(node);
+                // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
-                    if (cost <= delta) {
-                        relax(targetNodeId, cost + tent(sourceNodeId));
-                        System.out.println(sourceNodeId + " -- " + cost + " -> " + targetNodeId + " : light");
+                    if (cost <= delta) { // determine if light edge
+                        relax(targetNodeId, cost + distance[sourceNodeId]);
                     }
                     return true;
                 });
                 return true;
             });
-            System.out.println("===== end phase " + phase + " =====");
-            printTent();
-            System.out.println("S = " + S);
-            S.forEach((IntProcedure) node -> {
-                System.out.println("buckets = " + buckets);
 
+            // for each buffered node relax their heavy edges
+            heavySet.forEach((IntProcedure) node -> {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
-                    if (cost > delta) {
-                        System.out.println(sourceNodeId + " -- " + cost + " -> " + targetNodeId + " : heavy");
-
-                        relax(targetNodeId, cost + tent(sourceNodeId));
+                    if (cost > delta) { // eval only heavy edges since light ones have been relaxed in prev. step
+                        relax(targetNodeId, cost + distance[sourceNodeId]);
                     }
                     return true;
                 });
             });
-
-
         }
-
 
         return this;
     }
 
-    private double tent(int node) {
-        return distance[node] < 0 ? Double.MAX_VALUE : distance[node];
-    }
-
-    private void printTent() {
-        System.out.println("distance = " + Arrays.stream(distance).mapToObj(d -> String.format("[%2.0f]", d)).collect(Collectors.joining(", ")));
-    }
-
     public double[] getShortestPaths() {
-
-        LongDoubleHashMap map = new LongDoubleHashMap();
-
-        for (int i = 0; i < distance.length; i++) {
-//            map.put(graph.toOriginalNodeId(cursor.key), cursor.value);
-            map.put(i, distance[i]);
-
-        }
-
         return distance;
     }
 
+    /**
+     * relax() sets the summed cost in {@link ShortestPathDeltaStepping#distance}
+     * if they are smaller then the current cost - like dijkstra. If so it also
+     * calculates the next bucket index for the node and assigns it.
+     *
+     * @param nodeId node id
+     * @param cost the summed cost
+     */
     private void relax(int nodeId, double cost) {
-        if (cost >= tent(nodeId)) {
+        if (cost >= distance[nodeId]) {
             return;
         }
-
-        int xd = (int) (cost / delta);
-        System.out.println("set " + nodeId + " to bucket " + xd + " with cost " + cost);
-        buckets.set(nodeId, xd);
+        int bucketIndex = (int) (cost / delta); // calculate bucket index
+        buckets.set(nodeId, bucketIndex);
         distance[nodeId] = cost;
-        printTent();
-
     }
 }

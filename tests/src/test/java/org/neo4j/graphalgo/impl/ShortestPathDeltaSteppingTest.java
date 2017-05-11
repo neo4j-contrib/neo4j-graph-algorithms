@@ -20,6 +20,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 
@@ -30,8 +31,7 @@ import static org.junit.Assert.assertNotNull;
  *    3\    3     3     3   /
  *      (D)---(E)---(F)----°
  *
- * S->X: {G,H,I:8}, {D,E,F:12}, {A,B,C:20}
- *
+ * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
 public final class ShortestPathDeltaSteppingTest {
 
@@ -39,54 +39,20 @@ public final class ShortestPathDeltaSteppingTest {
 
     private static Graph graph;
 
-    private static Node head;
-
-//    @BeforeClass
-//    public static void setup() {
-//
-//
-//        api = (GraphDatabaseAPI)
-//                new TestGraphDatabaseFactory()
-//                        .newImpermanentDatabaseBuilder()
-//                        .newGraphDatabase();
-//
-//        DefaultBuilder builder = GridBuilder.create(api)
-//                .setRelationship("TYPE")
-//                .setLabel("Node");
-//
-//        head = builder.createNode();
-//
-//        builder.newLineBuilder()
-//                .withHead(head)
-//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 2.0))
-//                .newLineBuilder()
-//                .withHead(head)
-//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 3.0))
-//                .newLineBuilder()
-//                .withHead(head)
-//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 5.0));
-//
-//        graph = new GraphLoader(api)
-//                .withLabel("Node")
-//                .withRelationshipType("TYPE")
-//                .withRelationshipWeightsFromProperty("cost", 9999)
-//                .load(LightGraphFactory.class);
-//    }
-
     @BeforeClass
     public static void setup() {
         final String cypher =
-                "CREATE (s:Node {start:true})\n" +
-                        "CREATE (a:Node)\n" +
-                        "CREATE (b:Node)\n" +
-                        "CREATE (c:Node)\n" +
-                        "CREATE (d:Node)\n" +
-                        "CREATE (e:Node)\n" +
-                        "CREATE (f:Node)\n" +
-                        "CREATE (g:Node)\n" +
-                        "CREATE (h:Node)\n" +
-                        "CREATE (i:Node)\n" +
-                        "CREATE (x:Node)\n" +
+                "CREATE (s:Node {name:'s'})\n" +
+                        "CREATE (a:Node {name:'a'})\n" +
+                        "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" +
+                        "CREATE (d:Node {name:'d'})\n" +
+                        "CREATE (e:Node {name:'e'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
+                        "CREATE (g:Node {name:'g'})\n" +
+                        "CREATE (h:Node {name:'h'})\n" +
+                        "CREATE (i:Node {name:'i'})\n" +
+                        "CREATE (x:Node {name:'x'})\n" +
                         "CREATE" +
                         " (s)-[:TYPE {cost:5}]->(a),\n" +
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
@@ -127,29 +93,22 @@ public final class ShortestPathDeltaSteppingTest {
     @Test
     public void test() throws Exception {
 
-        ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
+        final Node head = getNode("s");
+        final Node tail = getNode("x");
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
 
-        head = getStartNode();
-        System.out.println("startNode = " + head.getId());
-
-        double[] map = sssp.compute(head.getId())
+        final double[] sp = sssp.compute(head.getId())
                 .getShortestPaths();
 
-        System.out.println("====================");
-        for (int i = 0; i < graph.nodeCount(); i++) {
-            System.out.printf("%2d -> %2d : %.1f%n", head.getId(), graph.toOriginalNodeId(i), map[i]);
-        }
+        assertEquals(8, sp[graph.toMappedNodeId(tail.getId())],0.1);
     }
 
-    public Node getStartNode() throws Exception {
-        try (Transaction tx = api.beginTx()) {
-            final Node[] node = new Node[1];
-            api.execute("MATCH (s:Node {start:true}) RETURN s").accept((Result.ResultVisitor<Exception>) row -> {
-                node[0] = row.getNode("s");
-                return false;
-            });
-            assertNotNull(node[0]);
-            return node[0];
-        }
+    public Node getNode(String name) {
+        final Node[] node = new Node[1];
+        api.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
+            node[0] = row.getNode("n");
+            return false;
+        });
+        return node[0];
     }
 }
