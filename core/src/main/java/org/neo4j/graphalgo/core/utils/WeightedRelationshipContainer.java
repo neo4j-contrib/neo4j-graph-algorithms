@@ -139,7 +139,7 @@ public class WeightedRelationshipContainer {
         }
 
         /**
-         * add the builder to aim for nodeId and initialize its underlying connection array
+         * set the builder to aim for nodeId and initialize its underlying connection array
          *
          * @param nodeId the current (mapped) nodeId
          * @param degree the degree for the node
@@ -183,7 +183,7 @@ public class WeightedRelationshipContainer {
         }
 
         /**
-         * add the idmapping function to use
+         * set the idmapping function to use
          */
         public WRCImporter withIdMapping(IdMapping idMapping) {
             this.idMapping = idMapping;
@@ -191,7 +191,7 @@ public class WeightedRelationshipContainer {
         }
 
         /**
-         * add the direction to use
+         * set the direction to use
          */
         public WRCImporter withDirection(org.neo4j.graphdb.Direction direction) {
             this.direction = Directions.mediate(direction);

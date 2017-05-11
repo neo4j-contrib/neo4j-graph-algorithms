@@ -9,12 +9,12 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 public interface WeightMapping {
 
     /**
-     * returns the weight for ID if add or the load-time specified default weight otherwise
+     * returns the weight for ID if set or the load-time specified default weight otherwise
      */
     double get(long id);
 
     /**
-     * returns the weight for ID if add or the given default weight otherwise
+     * returns the weight for ID if set or the given default weight otherwise
      */
     double get(long id, double defaultValue);
 
@@ -31,7 +31,7 @@ public interface WeightMapping {
     }
 
     /**
-     * add the weight for ID
+     * set the weight for ID
      */
     void set(long id, Object weight); // TODO rm?
 

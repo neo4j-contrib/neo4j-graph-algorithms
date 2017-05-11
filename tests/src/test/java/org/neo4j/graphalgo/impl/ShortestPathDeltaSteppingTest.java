@@ -9,7 +9,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
+import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -35,6 +38,40 @@ public final class ShortestPathDeltaSteppingTest {
     private static GraphDatabaseAPI api;
 
     private static Graph graph;
+
+    private static Node head;
+
+//    @BeforeClass
+//    public static void setup() {
+//
+//
+//        api = (GraphDatabaseAPI)
+//                new TestGraphDatabaseFactory()
+//                        .newImpermanentDatabaseBuilder()
+//                        .newGraphDatabase();
+//
+//        DefaultBuilder builder = GridBuilder.create(api)
+//                .setRelationship("TYPE")
+//                .setLabel("Node");
+//
+//        head = builder.createNode();
+//
+//        builder.newLineBuilder()
+//                .withHead(head)
+//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 2.0))
+//                .newLineBuilder()
+//                .withHead(head)
+//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 3.0))
+//                .newLineBuilder()
+//                .withHead(head)
+//                .createLine(4).forEachRelInTx(r -> r.setProperty("cost", 5.0));
+//
+//        graph = new GraphLoader(api)
+//                .withLabel("Node")
+//                .withRelationshipType("TYPE")
+//                .withRelationshipWeightsFromProperty("cost", 9999)
+//                .load(LightGraphFactory.class);
+//    }
 
     @BeforeClass
     public static void setup() {
@@ -92,16 +129,15 @@ public final class ShortestPathDeltaSteppingTest {
 
         ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
 
-        Node startNode = getStartNode();
+        head = getStartNode();
+        System.out.println("startNode = " + head.getId());
 
-        System.out.println("startNode = " + startNode.getId());
-
-        LongDoubleMap map = sssp.compute(startNode.getId())
+        double[] map = sssp.compute(head.getId())
                 .getShortestPaths();
 
         System.out.println("====================");
-        for (LongDoubleCursor c : map) {
-            System.out.println(c.key + " -> " + c.index);
+        for (int i = 0; i < graph.nodeCount(); i++) {
+            System.out.printf("%2d -> %2d : %.1f%n", head.getId(), graph.toOriginalNodeId(i), map[i]);
         }
     }
 

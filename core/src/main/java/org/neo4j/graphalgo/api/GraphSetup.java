@@ -18,15 +18,15 @@ public class GraphSetup {
     public final String relationshipType;
     // property of relationship weights. null means NO property (the default value will be used instead).
     public final String relationWeightPropertyName;
-    // default property is used for weighted relationships if property is not add.
+    // default property is used for weighted relationships if property is not set.
     public final double relationDefaultWeight;
     // property of node weights. null means NO property (the default value will be used instead).
     public final String nodeWeightPropertyName;
-    // default property is used for weighted nodes if property is not add.
+    // default property is used for weighted nodes if property is not set.
     public final double nodeDefaultWeight;
     // additional node property. null means NO property (the default value will be used instead).
     public final String nodePropertyName;
-    // default property is used for node properties if property is not add.
+    // default property is used for node properties if property is not set.
     public final double nodeDefaultPropertyValue;
 
     // the executor service for parallel execution. null means single threaded evaluation.

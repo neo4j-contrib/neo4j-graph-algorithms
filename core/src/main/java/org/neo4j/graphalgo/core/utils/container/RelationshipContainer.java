@@ -118,7 +118,7 @@ public class RelationshipContainer {
         }
 
         /**
-         * add the builder to aim for nodeId and initialize its underlying connection array
+         * set the builder to aim for nodeId and initialize its underlying connection array
          *
          * @param nodeId the current (mapped) nodeId
          * @param degree the degree for the node
@@ -159,7 +159,7 @@ public class RelationshipContainer {
         }
 
         /**
-         * add the idmapping function to use
+         * set the idmapping function to use
          */
         public RCImporter withIdMapping(IdMapping idMapping) {
             this.idMapping = idMapping;
@@ -167,7 +167,7 @@ public class RelationshipContainer {
         }
 
         /**
-         * add the direction to use
+         * set the direction to use
          */
         public RCImporter withDirection(org.neo4j.graphdb.Direction direction) {
             this.direction = Directions.mediate(direction);

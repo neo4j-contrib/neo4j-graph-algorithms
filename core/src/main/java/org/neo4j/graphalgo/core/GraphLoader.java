@@ -69,7 +69,7 @@ public class GraphLoader {
     }
 
     /**
-     * add an executor service
+     * set an executor service
      * @param executorService the executor service
      * @return itself to enable fluent interface
      */
@@ -181,10 +181,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load relationship weights by reading the given property.
-     * If the property is not add, the propertyDefaultValue is used instead.
+     * If the property is not set, the propertyDefaultValue is used instead.
      *
      * @param property May not be null; to remove a weight property, use {@link #withoutRelationshipWeights()} instead.
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withRelationshipWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -195,10 +195,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load relationship weights by reading the given property.
-     * If the property is not add at the relationship, the propertyDefaultValue is used instead.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
      * @param property May be null
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withOptionalRelationshipWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -209,10 +209,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load node weights by reading the given property.
-     * If the property is not add, the propertyDefaultValue is used instead.
+     * If the property is not set, the propertyDefaultValue is used instead.
      *
      * @param property May not be null; to remove a weight property, use {@link #withoutNodeWeights()} instead.
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withNodeWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -223,10 +223,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load node weights by reading the given property.
-     * If the property is not add at the relationship, the propertyDefaultValue is used instead.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
      * @param property May be null
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withOptionalNodeWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -237,10 +237,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load node values by reading the given property.
-     * If the property is not add, the propertyDefaultValue is used instead.
+     * If the property is not set, the propertyDefaultValue is used instead.
      *
      * @param property May not be null; to remove a node property, use {@link #withoutNodeProperties()} instead.
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withNodeProperty(String property, double propertyDefaultValue) {
@@ -251,10 +251,10 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load node values by reading the given property.
-     * If the property is not add at the relationship, the propertyDefaultValue is used instead.
+     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
      * @param property May be null
-     * @param propertyDefaultValue the default value to use if property is not add
+     * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
     public GraphLoader withOptionalNodeProperty(String property, double propertyDefaultValue) {
@@ -264,7 +264,7 @@ public class GraphLoader {
     }
 
     /**
-     * Instructs the loader to not load any relationship weights. Instead each weight is add
+     * Instructs the loader to not load any relationship weights. Instead each weight is set
      * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.
@@ -277,7 +277,7 @@ public class GraphLoader {
     }
 
     /**
-     * Instructs the loader to not load any node weights. Instead each weight is add
+     * Instructs the loader to not load any node weights. Instead each weight is set
      * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.
@@ -290,7 +290,7 @@ public class GraphLoader {
     }
 
     /**
-     * Instructs the loader to not load any node properties. Instead each weight is add
+     * Instructs the loader to not load any node properties. Instead each weight is set
      * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.

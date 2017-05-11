@@ -98,13 +98,13 @@ public class LabelPropagationProcIntegrationTest {
             assertTrue(row.getBoolean("write"));
 
             assertTrue(
-                    "load time not add",
+                    "load time not set",
                     row.getNumber("loadMillis").intValue() >= 0);
             assertTrue(
-                    "compute time not add",
+                    "compute time not set",
                     row.getNumber("computeMillis").intValue() >= 0);
             assertTrue(
-                    "write time not add",
+                    "write time not set",
                     row.getNumber("writeMillis").intValue() >= 0);
         });
         runQuery(check, row ->

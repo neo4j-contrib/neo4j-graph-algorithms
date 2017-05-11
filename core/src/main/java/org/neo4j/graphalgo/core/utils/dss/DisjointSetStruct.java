@@ -92,8 +92,8 @@ public final class DisjointSetStruct {
 
     /**
      * find setId of element p.
-     * @param p the element in the add we are looking for
-     * @return an id of the add it belongs to
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int find(int p) {
         return findPC(p);
@@ -102,8 +102,8 @@ public final class DisjointSetStruct {
     /**
      * find setId of element p without balancing optimization.
      *
-     * @param p the element in the add we are looking for
-     * @return an id of the add it belongs to
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findNoOpt(int p) {
         while (p != parent[p]) {
@@ -116,8 +116,8 @@ public final class DisjointSetStruct {
      * find setId of element p.
      *
      * Non-recursive implementation using path-halving optimization and tree balancing
-     * @param p the element in the add we are looking for
-     * @return an id of the add it belongs to
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findPH(int p) {
         while (p != parent[p]) {
@@ -130,8 +130,8 @@ public final class DisjointSetStruct {
      * find setId of element p.
      *
      * find-impl using a recursive path compression logic
-     * @param p the element in the add we are looking for
-     * @return an id of the add it belongs to
+     * @param p the element in the set we are looking for
+     * @return an id of the set it belongs to
      */
     public int findPC(int p) {
         if (parent[p] == p) return p;
@@ -141,11 +141,11 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * check if p and q belong to the same add
+     * check if p and q belong to the same set
      *
-     * @param p a add item
-     * @param q a add item
-     * @return true if both items belong to the same add, false otherwise
+     * @param p a set item
+     * @param q a set item
+     * @return true if both items belong to the same set, false otherwise
      */
     public boolean connected(int p, int q) {
         return find(p) == find(q);
@@ -153,7 +153,7 @@ public final class DisjointSetStruct {
 
 
     /**
-     * join add of p (Sp) with add of q (Sq) so that {@link DisjointSetStruct#connected(int, int)}
+     * join set of p (Sp) with set of q (Sq) so that {@link DisjointSetStruct#connected(int, int)}
      * for any pair of (Spi, Sqj) evaluates to true
      *
      * @param p an item of Sp
@@ -189,7 +189,7 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * evaluate the size of each add.
+     * evaluate the size of each set.
      *
      * @return a map which maps setId to setSize
      */
@@ -208,7 +208,7 @@ public final class DisjointSetStruct {
     public interface Consumer {
         /**
          * @param nodeId the mapped node id
-         * @param setId the add id where the node belongs to
+         * @param setId the set id where the node belongs to
          * @return true to continue the iteration, false to stop
          */
         boolean consume(int nodeId, int setId);
@@ -220,7 +220,7 @@ public final class DisjointSetStruct {
          */
         int nodeId;
         /**
-         * the add id of the node
+         * the set id of the node
          */
         int setId;
     }
@@ -323,7 +323,7 @@ public final class DisjointSetStruct {
         public final Long nodeId;
 
         /**
-         * add id
+         * set id
          */
         public final Long setId;
 

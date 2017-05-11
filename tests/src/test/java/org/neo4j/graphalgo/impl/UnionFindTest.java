@@ -80,7 +80,7 @@ public class UnionFindTest extends Neo4JTestCase {
                 new UnionFind(idMapper, iterator)
                         .compute(predicate);
 
-        assertSameSet(struct, a, b, c); // abc belong to a add
+        assertSameSet(struct, a, b, c); // abc belong to a set
         assertSameSet(struct, d, e); // as well as d and e
         assertNotEquals(struct.find(a), struct.find(d)); // sets don't belong to each other due to weak connection
         assertNotSameSet(struct, f, a, b, c, d, e); // f is not part of the sets
@@ -101,7 +101,7 @@ public class UnionFindTest extends Neo4JTestCase {
     public static void assertSameSet(DisjointSetStruct dss, int needle, int... elements) {
         final int setId = dss.find(needle);
         for (int i = 0; i < elements.length; i++) {
-            assertEquals("element " + elements[i] + " does not belong to add " + setId,
+            assertEquals("element " + elements[i] + " does not belong to set " + setId,
                     setId,
                     dss.find(elements[i]));
         }
@@ -110,7 +110,7 @@ public class UnionFindTest extends Neo4JTestCase {
     public static void assertNotSameSet(DisjointSetStruct dss, int needle, int... elements) {
         final int setId = dss.find(needle);
         for (int i = 0; i < elements.length; i++) {
-            assertNotEquals("element " + elements[i] + " belongs to add " + setId + " but should not",
+            assertNotEquals("element " + elements[i] + " belongs to set " + setId + " but should not",
                     setId,
                     dss.find(elements[i]));
         }

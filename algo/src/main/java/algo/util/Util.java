@@ -219,7 +219,7 @@ public class Util {
         try {
             return URLEncoder.encode(value,"UTF-8");
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Unsupported character add utf-8");
+            throw new RuntimeException("Unsupported character set utf-8");
         }
     }
 

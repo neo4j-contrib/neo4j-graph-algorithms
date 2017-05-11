@@ -133,9 +133,9 @@ public class UnionFindProcIntegrationTest {
     }
 
     private static void assertMapContains(IntIntMap map, int... values) {
-        assertEquals("add count does not match", values.length, map.size());
+        assertEquals("set count does not match", values.length, map.size());
         for (int count : values) {
-            assertTrue("add size " + count + " does not match", mapContainsValue(map, count));
+            assertTrue("set size " + count + " does not match", mapContainsValue(map, count));
         }
     }
 

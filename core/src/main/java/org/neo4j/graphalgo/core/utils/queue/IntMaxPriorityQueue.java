@@ -52,7 +52,7 @@ public final class IntMaxPriorityQueue extends IntPriorityQueue {
         // costs.release() reallocated new arrays, but we want to completely
         //   throw away all data.
         // costs.clear() does Arrays.fill(keys, 0), so it's linear to the
-        //  current key length, therefore we first add keys to an empty array
+        //  current key length, therefore we first set keys to an empty array
         //  and null it afterwards
         costs.keys = EMPTY_INT;
         costs.clear();

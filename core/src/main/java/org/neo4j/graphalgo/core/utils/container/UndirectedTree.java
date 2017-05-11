@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 /**
  * Data structure to store an undirected graph as a tree.
- * The indented usage is to add all nodes in their tree shape and then
+ * The indented usage is to set all nodes in their tree shape and then
  * remove certain relationships to form independent clusters that can each be
  * traversed.
  * <p>

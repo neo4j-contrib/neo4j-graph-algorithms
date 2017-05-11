@@ -107,7 +107,7 @@ class AdjacencyMatrix {
     }
 
     /**
-     * add outgoing relation
+     * set outgoing relation
      */
     public void addOutgoing(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = outOffsets[sourceNodeId];
@@ -135,7 +135,7 @@ class AdjacencyMatrix {
     }
 
     /**
-     * add incoming relation
+     * set incoming relation
      */
     public void addIncoming(int sourceNodeId, int targetNodeId, long relationId) {
         final int degree = inOffsets[targetNodeId];
