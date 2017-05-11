@@ -21,9 +21,12 @@ public class ArrayBuckets implements Buckets {
 
     @Override
     public boolean isEmpty() {
-        return IntStream.range(0, buckets.length)
-                .parallel()
-                .allMatch(b -> b == -1);
+        for (int i = 0; i < buckets.length; i++) {
+            if (buckets[i] != -1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class ArrayBuckets implements Buckets {
                 min = bucket;
             }
         }
-        return min;
+        return min == Integer.MAX_VALUE ? -1 : min;
     }
 
 //    @Override

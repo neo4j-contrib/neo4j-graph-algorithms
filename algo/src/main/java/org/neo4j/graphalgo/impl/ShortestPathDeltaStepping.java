@@ -43,6 +43,10 @@ public class ShortestPathDeltaStepping {
 
             int phase = buckets.nextNonEmptyBucket();
 
+            if (phase == -1) {
+                return this;
+            }
+
             if (phase > 10000) {
                 return this;
             }
