@@ -183,10 +183,10 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
 
     /**
      * Instructs the loader to load weights by reading the given property.
-     * If the property is not set, the propertyDefaultValue is used instead.
+     * If the property is not add, the propertyDefaultValue is used instead.
      *
      * @param property May not be null; to remove a weight property, use {@link #withoutWeights()} instead.
-     * @param propertyDefaultValue the default value to use if property is not set
+     * @param propertyDefaultValue the default value to use if property is not add
      * @return itself to enable fluent interface
      */
     public ME withWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -197,10 +197,10 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
 
     /**
      * Instructs the loader to load weights by reading the given property.
-     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     * If the property is not add at the relationship, the propertyDefaultValue is used instead.
      *
      * @param property May be null
-     * @param propertyDefaultValue the default value to use if property is not set
+     * @param propertyDefaultValue the default value to use if property is not add
      * @return itself to enable fluent interface
      */
     public ME withOptionalWeightsFromProperty(String property, double propertyDefaultValue) {
@@ -210,7 +210,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
     }
 
     /**
-     * Instructs the loader to not load any weights. Instead each weight is set
+     * Instructs the loader to not load any weights. Instead each weight is add
      * to propertyDefaultValue.
      *
      * @param propertyDefaultValue the default value.

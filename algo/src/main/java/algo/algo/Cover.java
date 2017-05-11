@@ -20,7 +20,7 @@ public class Cover {
     public GraphDatabaseAPI db;
 
     @Procedure
-    @Description("algo.algo.cover(nodes) yield rel - returns all relationships between this set of nodes")
+    @Description("algo.algo.cover(nodes) yield rel - returns all relationships between this add of nodes")
     public Stream<RelationshipResult> cover(@Name("nodes") Object nodes) {
         Set<Node> nodeSet = Util.nodeStream(db, nodes).collect(Collectors.toSet());
         return nodeSet.parallelStream()

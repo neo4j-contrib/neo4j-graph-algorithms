@@ -33,7 +33,7 @@ public class MSTPrimExporter extends Exporter<MSTPrim.MinimumSpanningTree> {
     public void write(MSTPrim.MinimumSpanningTree data) {
 
         if (relationshipId == -1) {
-            throw new IllegalArgumentException("relationshipId is not set");
+            throw new IllegalArgumentException("relationshipId is not add");
         }
 
         writeInTransaction(write -> {
