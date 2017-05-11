@@ -43,7 +43,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * set the label for all subsequent {@link GraphBuilder#createNode()} operations
+     * add the label for all subsequent {@link GraphBuilder#createNode()} operations
      * in the current and in derived builders.
      *
      * @param label the label
@@ -58,7 +58,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * set the relationship type for all subsequent {@link GraphBuilder#createRelationship(Node, Node)}
+     * add the relationship type for all subsequent {@link GraphBuilder#createRelationship(Node, Node)}
      * operations in the current and in derived builders.
      *
      * @param relationship the name of the relationship type
@@ -87,7 +87,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * create a new node and set a label if previously defined
+     * create a new node and add a label if previously defined
      *
      * @return the created node
      */
@@ -160,7 +160,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * create a new default builder with its own node-set but
+     * create a new default builder with its own node-add but
      * inherits the current label and relationship type
      * @return a new default builder
      */
@@ -169,7 +169,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
-     * create a new ring builder with its own node-set but
+     * create a new ring builder with its own node-add but
      * inherits current label and relationship type.
      * @return a new ring builder
      */

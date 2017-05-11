@@ -1,19 +1,16 @@
 package org.neo4j.graphalgo.core.utils.container;
 
 import com.carrotsearch.hppc.IntArrayDeque;
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
-import com.carrotsearch.hppc.predicates.IntPredicate;
 
-import java.util.function.Consumer;
+import java.util.function.IntPredicate;
 
 /**
  * @author mknblch
  */
-public class Buckets {
+public class HPPCBuckets implements Buckets {
 
     public interface BucketConsumer {
 
@@ -21,10 +18,11 @@ public class Buckets {
     }
     private final IntObjectMap<IntArrayDeque> buckets;
 
-    public Buckets() {
+    public HPPCBuckets() {
         buckets = new IntObjectHashMap<>();
     }
 
+    @Override
     public boolean isEmpty() {
         for (IntObjectCursor<IntArrayDeque> bucket : buckets) {
             if (!bucket.value.isEmpty()) {
@@ -34,31 +32,17 @@ public class Buckets {
         return true;
     }
 
-    public void set(int bucket, int nodeId) {
+    @Override
+    public void add(int nodeId, int bucket) {
         if (!buckets.containsKey(bucket)) {
             IntArrayDeque list = new IntArrayDeque(1);
             list.addLast(nodeId);
             buckets.put(bucket, list);
-        } else {
-            get(bucket).addLast(nodeId);
         }
     }
 
-    public IntArrayDeque get(int bucket) {
-        return buckets.get(bucket);
-    }
 
-    public boolean remove(int bucket, int nodeId) {
-        IntArrayDeque deque = buckets.get(bucket);
-        if (null == deque) {
-            return false;
-        }
-        if (-1 == deque.removeLast(nodeId)) {
-            return false;
-        }
-        return true;
-    }
-
+    @Override
     public int nextNonEmptyBucket() {
         int min = Integer.MAX_VALUE;
         for (IntObjectCursor<IntArrayDeque> bucket : buckets) {
@@ -72,6 +56,11 @@ public class Buckets {
         }
 
         return min;
+    }
+
+    @Override
+    public void forEachInBucket(int bucket, IntPredicate consumer) {
+
     }
 
 
