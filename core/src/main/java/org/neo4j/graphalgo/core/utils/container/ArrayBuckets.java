@@ -73,5 +73,13 @@ public class ArrayBuckets implements Buckets {
         deque.forEach((com.carrotsearch.hppc.predicates.IntPredicate) consumer::test);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (int bucket : buckets) {
+            builder.append(String.format("[%d]", bucket));
+        }
+        return builder.toString();
+    }
 
 }
