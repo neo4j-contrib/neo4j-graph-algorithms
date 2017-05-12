@@ -43,7 +43,7 @@ public final class ShortestPathDeltaSteppingTest {
 
     private static Graph graph;
 
-    private static Node head, tail;
+    private static long head, tail;
 
     @BeforeClass
     public static void setup() {
@@ -94,8 +94,8 @@ public final class ShortestPathDeltaSteppingTest {
             tx.success();
         }
 
-        head = getNode("s");
-        tail = getNode("x");
+        head = getNode("s").getId();
+        tail = getNode("x").getId();
 
         graph = new GraphLoader(api)
                 .withLabel("Node")
@@ -112,18 +112,22 @@ public final class ShortestPathDeltaSteppingTest {
     @Test
     public void testSequential() throws Exception {
         final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
-        final double[] sp = sssp.compute(head.getId())
+
+        final double[] sp = sssp.compute(head)
                 .getShortestPaths();
-        assertEquals(8, sp[graph.toMappedNodeId(tail.getId())],0.1);
+
+        assertEquals(8, sp[graph.toMappedNodeId(tail)],0.1);
     }
 
     @Test
     public void testParallel() throws Exception {
         final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3)
                 .withExecutorService(Executors.newFixedThreadPool(3));
-        final double[] sp = sssp.compute(head.getId())
+
+        final double[] sp = sssp.compute(head)
                 .getShortestPaths();
-        assertEquals(8, sp[graph.toMappedNodeId(tail.getId())],0.1);
+
+        assertEquals(8, sp[graph.toMappedNodeId(tail)],0.1);
     }
 
     public static Node getNode(String name) {
