@@ -98,7 +98,8 @@ public final class ParallelUtil {
 
     /**
      * Runs a collection of {@link Runnable}s in parallel for their side-effects.
-     * The level of parallelism is defined by the given executor.
+     * The level of parallelism is defined by the given executor. If executor is
+     * null the collection is evaluated sequential.
      * <p>
      * This is similar to {@link ExecutorService#invokeAll(Collection)},
      * except that all Exceptions thrown by any task are chained together.
@@ -106,6 +107,10 @@ public final class ParallelUtil {
     public static void run(
             Collection<? extends Runnable> tasks,
             ExecutorService executor) {
+        if (null == executor) {
+            tasks.forEach(Runnable::run);
+            return;
+        }
         if (tasks.size() == 1) {
             tasks.iterator().next().run();
             return;

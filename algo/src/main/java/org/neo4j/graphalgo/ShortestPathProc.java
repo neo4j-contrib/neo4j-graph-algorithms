@@ -7,7 +7,7 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
-import org.neo4j.graphalgo.results.DijkstraResult;
+import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -59,10 +59,10 @@ public class ShortestPathProc {
 
 
     @Procedure("algo.shortestPath")
-    @Description("CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String" +
+    @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, propertyName:String" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration")
-    public Stream<DijkstraResult> dijkstra(
+    public Stream<ShortestPathResult> dijkstra(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
             @Name("propertyName") String propertyName,
@@ -70,24 +70,25 @@ public class ShortestPathProc {
                     Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        ShortestPathResult.Builder builder = ShortestPathResult.builder();
 
-        DijkstraResult.Builder builder = DijkstraResult.builder();
+        final Graph graph;
+        try (ProgressTimer timer = builder.load()) {
+            graph = new GraphLoader(api)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .withOptionalRelationshipWeightsFromProperty(
+                            propertyName,
+                            configuration.getPropertyDefaultValue(1.0))
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(HeavyGraphFactory.class);
+        };
 
-        ProgressTimer load = builder.load();
-        final Graph graph = new GraphLoader(api)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .withOptionalRelationshipWeightsFromProperty(
-                        propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
-                .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
-        load.stop();
-
-        ProgressTimer eval = builder.eval();
-        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
-                .compute(startNode.getId(), endNode.getId());
-        eval.stop();
+        final ShortestPathDijkstra dijkstra;
+        try (ProgressTimer timer = builder.eval()) {
+            dijkstra = new ShortestPathDijkstra(graph)
+                    .compute(startNode.getId(), endNode.getId());
+        }
 
         builder.withNodeCount(dijkstra.getPathLength())
                 .withTotalCosts(dijkstra.getTotalCost());

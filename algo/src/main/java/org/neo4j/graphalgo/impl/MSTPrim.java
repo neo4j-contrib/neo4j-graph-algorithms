@@ -35,7 +35,7 @@ public class MSTPrim {
         final LongMinPriorityQueue queue = new LongMinPriorityQueue();
         final BitSet visited = new BitSet(idMapping.nodeCount());
         minimumSpanningTree = new MinimumSpanningTree(idMapping.nodeCount(), startNode, weights);
-        // initially add all relations from startNode to the priority queue
+        // initially set all relations from startNode to the priority queue
         visited.set(startNode);
         iterator.forEachRelationship(startNode, (sourceNodeId, targetNodeId, relationId) -> {
             queue.add(combineIntInt(startNode, targetNodeId), weights.weightOf(sourceNodeId, targetNodeId));
