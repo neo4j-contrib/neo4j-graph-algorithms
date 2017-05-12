@@ -96,7 +96,24 @@ public final class ParallelUtil {
     public static void run(
             Collection<? extends Runnable> tasks,
             ExecutorService executor) {
-        final List<Future<?>> futures = new ArrayList<>(tasks.size());
+        run(tasks, executor, new ArrayList<>(tasks.size()));
+    }
+
+    public static void run(
+            Collection<? extends Runnable> tasks,
+            ExecutorService executor,
+            Collection<Future<?>> futures) {
+
+        if (tasks.size() == 1) {
+            tasks.iterator().next().run();
+            return;
+        }
+
+        if (null == executor) {
+            tasks.forEach(Runnable::run);
+            return;
+        }
+
         for (Runnable task : tasks) {
             futures.add(executor.submit(task));
         }

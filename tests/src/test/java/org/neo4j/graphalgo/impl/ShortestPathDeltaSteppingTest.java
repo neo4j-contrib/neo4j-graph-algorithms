@@ -30,9 +30,9 @@ import static org.junit.Assert.assertNotNull;
 
 /**         5     5      5
  *      (A)---(B)---(C)----.
- *    5/ 2    2     2     2 \
- *  (S)---(G)---(H)---(I)---(X)
- *    3\    3     3     3   /
+ *    5/ 2\2  2 \2  2 \2  2 \
+ *  (S)---(G)---(H)---(I)---(X)--//->(S)
+ *    3\  /3 3  /3 3  /3 3  /
  *      (D)---(E)---(F)----°
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
@@ -42,6 +42,8 @@ public final class ShortestPathDeltaSteppingTest {
     private static GraphDatabaseAPI api;
 
     private static Graph graph;
+
+    private static Node head, tail;
 
     @BeforeClass
     public static void setup() {
@@ -63,15 +65,25 @@ public final class ShortestPathDeltaSteppingTest {
                         " (b)-[:TYPE {cost:5}]->(c),\n" +
                         " (c)-[:TYPE {cost:5}]->(x),\n" +
 
+                        " (a)-[:TYPE {cost:2}]->(g),\n" +
+                        " (b)-[:TYPE {cost:2}]->(h),\n" +
+                        " (c)-[:TYPE {cost:2}]->(i),\n" +
+
                         " (s)-[:TYPE {cost:3}]->(d),\n" +
                         " (d)-[:TYPE {cost:3}]->(e),\n" +
                         " (e)-[:TYPE {cost:3}]->(f),\n" +
                         " (f)-[:TYPE {cost:3}]->(x),\n" +
 
+                        " (d)-[:TYPE {cost:3}]->(g),\n" +
+                        " (e)-[:TYPE {cost:3}]->(h),\n" +
+                        " (f)-[:TYPE {cost:3}]->(i),\n" +
+
                         " (s)-[:TYPE {cost:2}]->(g),\n" +
                         " (g)-[:TYPE {cost:2}]->(h),\n" +
                         " (h)-[:TYPE {cost:2}]->(i),\n" +
-                        " (i)-[:TYPE {cost:2}]->(x)";
+                        " (i)-[:TYPE {cost:2}]->(x),\n" +
+
+                        " (x)-[:TYPE {cost:2}]->(s)"; // create cycle
 
         api = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
@@ -81,6 +93,9 @@ public final class ShortestPathDeltaSteppingTest {
             api.execute(cypher);
             tx.success();
         }
+
+        head = getNode("s");
+        tail = getNode("x");
 
         graph = new GraphLoader(api)
                 .withLabel("Node")
@@ -95,20 +110,23 @@ public final class ShortestPathDeltaSteppingTest {
     }
 
     @Test
-    public void test() throws Exception {
-
-        final Node head = getNode("s");
-        final Node tail = getNode("x");
-        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3)
-                .withExecutorService(Executors.newFixedThreadPool(4));
-
+    public void testSequential() throws Exception {
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
         final double[] sp = sssp.compute(head.getId())
                 .getShortestPaths();
-
         assertEquals(8, sp[graph.toMappedNodeId(tail.getId())],0.1);
     }
 
-    public Node getNode(String name) {
+    @Test
+    public void testParallel() throws Exception {
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3)
+                .withExecutorService(Executors.newFixedThreadPool(3));
+        final double[] sp = sssp.compute(head.getId())
+                .getShortestPaths();
+        assertEquals(8, sp[graph.toMappedNodeId(tail.getId())],0.1);
+    }
+
+    public static Node getNode(String name) {
         final Node[] node = new Node[1];
         api.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
             node[0] = row.getNode("n");

@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -22,6 +23,7 @@ public class ShortestPathDeltaStepping {
     private final Graph graph;
 
     private final Collection<Runnable> light, heavy;
+    private final Collection<Future<?>> futures;
 
     private ExecutorService executorService;
 
@@ -30,8 +32,9 @@ public class ShortestPathDeltaStepping {
         this.delta = delta;
         distance = new double[graph.nodeCount()];
         buckets = new Buckets(graph.nodeCount());
-        heavy = new Stack<>();
-        light = new Stack<>();
+        heavy = new ArrayDeque<>(1024);
+        light = new ArrayDeque<>(1024);
+        futures = new ArrayDeque<>(128);
     }
 
     public ShortestPathDeltaStepping withExecutorService(ExecutorService executorService) {
@@ -70,8 +73,8 @@ public class ShortestPathDeltaStepping {
                 });
                 return true;
             });
-            ParallelUtil.run(light, executorService);
-            ParallelUtil.run(heavy, executorService);
+            ParallelUtil.run(light, executorService, futures);
+            ParallelUtil.run(heavy, executorService, futures);
         }
 
         return this;
