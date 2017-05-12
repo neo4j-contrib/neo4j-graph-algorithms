@@ -13,11 +13,9 @@ import java.util.stream.IntStream;
 public class Buckets {
 
     private final int[] buckets;
-    private final IntArrayDeque deque;
 
     public Buckets(int capacity) {
         buckets = new int[capacity];
-        deque = new IntArrayDeque(capacity);
         reset();
     }
 
@@ -50,6 +48,10 @@ public class Buckets {
         buckets[nodeId] = bucket;
     }
 
+    public void unset(int nodeId) {
+        buckets[nodeId] = -1;
+    }
+
     /**
      * find smallest non empty bucket index
      * @return the index
@@ -69,23 +71,20 @@ public class Buckets {
     }
 
     /**
-     * iterate over each node in bucket and call consumer. since
-     * the consumer assumes its bucket to be empty but also may
-     * reassign a node to the current bucket it keeps a copy of
-     * those nodes and clears the bucket before executing the
-     * consumer.
+     * iterate over each node in bucket and call consumer.
+     * also clears the bucket before executing the consumer.
      * @param bucket the bucket index
      * @param consumer the nodeConsumer
      */
     public void forEachInBucket(int bucket, IntPredicate consumer) {
-        deque.clear();
         for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
             int tb = buckets[nodeId];
             if (tb == bucket) {
                 buckets[nodeId] = -1; // clear bucket
-                deque.addLast(nodeId);
+                if (!consumer.test(nodeId)) {
+                    return;
+                }
             }
         }
-        deque.forEach((com.carrotsearch.hppc.predicates.IntPredicate) consumer::test);
     }
 }
