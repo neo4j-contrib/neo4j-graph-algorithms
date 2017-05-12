@@ -61,17 +61,20 @@ public final class ShortestPathDeltaSteppingProcTest {
                         "CREATE (i:Node {name:'i'})\n" +
                         "CREATE (x:Node {name:'x'})\n" +
                         "CREATE" +
-                        " (s)-[:TYPE {cost:5}]->(a),\n" +
+
+                        " (x)-[:TYPE {cost:5}]->(s),\n" + // creates cycle
+
+                        " (s)-[:TYPE {cost:5}]->(a),\n" + // line 1
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
                         " (b)-[:TYPE {cost:5}]->(c),\n" +
                         " (c)-[:TYPE {cost:5}]->(x),\n" +
 
-                        " (s)-[:TYPE {cost:3}]->(d),\n" +
+                        " (s)-[:TYPE {cost:3}]->(d),\n" + // line 2
                         " (d)-[:TYPE {cost:3}]->(e),\n" +
                         " (e)-[:TYPE {cost:3}]->(f),\n" +
                         " (f)-[:TYPE {cost:3}]->(x),\n" +
 
-                        " (s)-[:TYPE {cost:2}]->(g),\n" +
+                        " (s)-[:TYPE {cost:2}]->(g),\n" + // line 3
                         " (g)-[:TYPE {cost:2}]->(h),\n" +
                         " (h)-[:TYPE {cost:2}]->(i),\n" +
                         " (i)-[:TYPE {cost:2}]->(x)";
@@ -114,7 +117,7 @@ public final class ShortestPathDeltaSteppingProcTest {
             long nodeId = row.getNumber("nodeId").longValue();
             double distance = row.getNumber("distance").doubleValue();
             consumer.accept(distance);
-            System.out.printf("%d:%f, ",
+            System.out.printf("%d:%.1f, ",
                     nodeId,
                     distance);
             return true;
