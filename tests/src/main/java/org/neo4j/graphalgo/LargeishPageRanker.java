@@ -194,7 +194,7 @@ public final class LargeishPageRanker {
                 iterations);
         PageRankAlgo pageRankAlgo = new PageRankAlgo(graph, graph, graph, graph, 0.85);
         long t2 = System.nanoTime();
-        double[] ranks = pageRankAlgo.compute(iterations);
+        double[] ranks = pageRankAlgo.compute(iterations).getPageRank();
         long t3 = System.nanoTime();
         System.out.printf(
                 " done in %.2f seconds (that's %.2f seconds per iteration)%n",

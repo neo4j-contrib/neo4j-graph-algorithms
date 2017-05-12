@@ -41,28 +41,31 @@ public class UnionFindProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+                .overrideNodeLabelOrQuery(label)
+                .overrideRelationshipTypeOrQuery(relationship);
 
-        UnionFindResult.Builder resultBuilder = UnionFindResult.builder();
+        UnionFindResult.Builder builder = UnionFindResult.builder();
 
         // loading
-        ProgressTimer load = ProgressTimer.start(resultBuilder::withLoadDuration);
-        final Graph graph = load(label, relationship, configuration);
-        load.stop();
+        final Graph graph;
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = load(configuration);
+        };
 
         // evaluation
-        ProgressTimer eval = ProgressTimer.start(resultBuilder::withEvalDuration);
-        final DisjointSetStruct struct = evaluate(graph, configuration);
-        eval.stop();
+        final DisjointSetStruct struct;
+        try (ProgressTimer timer = builder.timeEval()) {
+            struct = evaluate(graph, configuration);
+        };
 
         if (configuration.isWriteFlag()) {
             // write back
-            ProgressTimer writeTimer = ProgressTimer.start(resultBuilder::withWriteDuration);
-            write(graph, struct, configuration);
-            writeTimer.stop();
+            builder.timeWrite(() ->
+                    write(graph, struct, configuration));
         }
 
-        return Stream.of(resultBuilder
+        return Stream.of(builder
                 .withNodeCount(graph.nodeCount())
                 .withSetCount(struct.getSetCount())
                 .build());
@@ -77,20 +80,22 @@ public class UnionFindProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+                .overrideNodeLabelOrQuery(label)
+                .overrideRelationshipTypeOrQuery(relationship);
 
         // loading
-        final Graph graph = load(label, relationship, configuration);
+        final Graph graph = load(configuration);
 
         // evaluation
         return evaluate(graph, configuration)
                 .resultStream(graph);
     }
 
-    private Graph load(String label, String relationship, ProcedureConfiguration config) {
+    private Graph load(ProcedureConfiguration config) {
         return new GraphLoader(api)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .withOptionalLabel(config.getNodeLabelOrQuery())
+                .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
@@ -116,7 +121,7 @@ public class UnionFindProc {
         log.debug("Writing results");
         new DisjointSetStruct.DSSExporter(api,
                 graph,
-                (String) config.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
+                config.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
                 .write(struct);
     }
 

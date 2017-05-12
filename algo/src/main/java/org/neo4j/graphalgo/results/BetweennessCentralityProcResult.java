@@ -33,12 +33,9 @@ public class BetweennessCentralityProcResult {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractResultBuilder<BetweennessCentralityProcResult> {
 
         private long nodeCount = 0;
-        private long loadDuration = -1;
-        private long evalDuration = -1;
-        private long writeDuration = -1;
         private double centralityMin = -1;
         private double centralityMax = -1;
         private double centralitySum = -1;
@@ -60,21 +57,6 @@ public class BetweennessCentralityProcResult {
 
         public Builder withCentralitySum(double centralitySum) {
             this.centralitySum = centralitySum;
-            return this;
-        }
-
-        public Builder withLoadDuration(long loadDuration) {
-            this.loadDuration = loadDuration;
-            return this;
-        }
-
-        public Builder withEvalDuration(long evalDuration) {
-            this.evalDuration = evalDuration;
-            return this;
-        }
-
-        public Builder withWriteDuration(long writeDuration) {
-            this.writeDuration = writeDuration;
             return this;
         }
 

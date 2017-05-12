@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
+import org.neo4j.graphalgo.results.AbstractResultBuilder;
+
 public class LabelPropagationStats {
 
     public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
@@ -25,12 +27,10 @@ public class LabelPropagationStats {
         this.partitionProperty = partitionProperty;
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractResultBuilder<LabelPropagationStats> {
+
         private long nodes = 0;
         private long iterations = 0;
-        private long loadMillis = -1;
-        private long computeMillis = -1;
-        private long writeMillis = -1;
         private boolean write;
         private String weightProperty;
         private String partitionProperty;
@@ -42,21 +42,6 @@ public class LabelPropagationStats {
 
         public Builder iterations(final long iterations) {
             this.iterations = iterations;
-            return this;
-        }
-
-        public Builder loadMillis(final long loadMillis) {
-            this.loadMillis = loadMillis;
-            return this;
-        }
-
-        public Builder computeMillis(final long computeMillis) {
-            this.computeMillis = computeMillis;
-            return this;
-        }
-
-        public Builder writeMillis(final long writeMillis) {
-            this.writeMillis = writeMillis;
             return this;
         }
 
@@ -79,9 +64,9 @@ public class LabelPropagationStats {
             return new LabelPropagationStats(
                     nodes,
                     iterations,
-                    loadMillis,
-                    computeMillis,
-                    writeMillis,
+                    loadDuration,
+                    evalDuration,
+                    writeDuration,
                     write,
                     weightProperty,
                     partitionProperty);

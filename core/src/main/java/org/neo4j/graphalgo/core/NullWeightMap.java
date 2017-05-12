@@ -42,4 +42,9 @@ public class NullWeightMap implements WeightMapping {
     public void set(long id, Object weight) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int size() {
+        return 0;
+    }
 }
