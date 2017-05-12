@@ -7,6 +7,8 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Parallel Delta-Stepping Non-negative Single Source Shortest Path
@@ -30,7 +32,6 @@ public class ShortestPathDeltaStepping {
         buckets = new Buckets(graph.nodeCount());
         heavy = new Stack<>();
         light = new Stack<>();
-
     }
 
     public ShortestPathDeltaStepping withExecutorService(ExecutorService executorService) {
@@ -80,6 +81,12 @@ public class ShortestPathDeltaStepping {
         return distance;
     }
 
+    public Stream<DeltaSteppingResult> resultStream() {
+        return IntStream.range(0, distance.length)
+                .mapToObj(node ->
+                        new DeltaSteppingResult(graph.toOriginalNodeId(node), distance[node]));
+    }
+
     /**
      * relax() sets the summed cost in {@link ShortestPathDeltaStepping#distance}
      * if they are smaller then the current cost - like dijkstra. If so it also
@@ -95,5 +102,16 @@ public class ShortestPathDeltaStepping {
         int bucketIndex = (int) (cost / delta); // calculate bucket index
         buckets.set(nodeId, bucketIndex);
         distance[nodeId] = cost;
+    }
+
+    public static class DeltaSteppingResult {
+
+        public final Long nodeId;
+        public final Double distance;
+
+        public DeltaSteppingResult(Long nodeId, Double distance) {
+            this.nodeId = nodeId;
+            this.distance = distance;
+        }
     }
 }

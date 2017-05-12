@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 /**
  * @author mknblch
  */
-public class DijkstraResult {
+public class ShortestPathResult {
 
     public final Long loadDuration;
     public final Long evalDuration;
@@ -13,7 +13,7 @@ public class DijkstraResult {
     public final Long nodeCount;
     public final Double totalCost;
 
-    public DijkstraResult(Long loadDuration, Long evalDuration, Long writeDuration, Long nodeCount, Double totalCost) {
+    public ShortestPathResult(Long loadDuration, Long evalDuration, Long writeDuration, Long nodeCount, Double totalCost) {
         this.loadDuration = loadDuration;
         this.evalDuration = evalDuration;
         this.writeDuration = writeDuration;
@@ -55,8 +55,8 @@ public class DijkstraResult {
             return this;
         }
 
-        public DijkstraResult build() {
-            return new DijkstraResult(loadDuration, evalDuration, writeDuration, nodeCount, totalCosts);
+        public ShortestPathResult build() {
+            return new ShortestPathResult(loadDuration, evalDuration, writeDuration, nodeCount, totalCosts);
         }
     }
 }
