@@ -1,13 +1,16 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.Buckets;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
+/**
+ * Parallel Delta-Stepping Non-negative Single Source Shortest Path
+ */
 public class ShortestPathDeltaStepping {
 
     private final double[] distance;
@@ -15,14 +18,24 @@ public class ShortestPathDeltaStepping {
 
     private final double delta;
     private final Graph graph;
-    private final IntSet heavySet;
+
+    private final Collection<Runnable> light, heavy;
+
+    private ExecutorService executorService;
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
         this.delta = delta;
         distance = new double[graph.nodeCount()];
         buckets = new Buckets(graph.nodeCount());
-        heavySet = new IntScatterSet();
+        heavy = new Stack<>();
+        light = new Stack<>();
+
+    }
+
+    public ShortestPathDeltaStepping withExecutorService(ExecutorService executorService) {
+        this.executorService = executorService;
+        return this;
     }
 
     public ShortestPathDeltaStepping compute(long startNode) {
@@ -36,37 +49,28 @@ public class ShortestPathDeltaStepping {
 
         // as long as the bucket contains any value
         while (!buckets.isEmpty()) {
-            heavySet.clear();
+            // reset temporary arrays
+            light.clear();
+            heavy.clear();
 
             // get next bucket index
             final int phase = buckets.nextNonEmptyBucket();
 
-            /*
-             * evaluate for each node in bucket[phase]
-             * (also clears the bucket BEFORE execution)
-             */
+            // for each node in bucket
             buckets.forEachInBucket(phase, node -> {
-                // buffer the node id for heavy phase
-                heavySet.add(node);
                 // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
-                    if (cost <= delta) { // determine if light edge
-                        relax(targetNodeId, cost + distance[sourceNodeId]);
+                    if (cost <= delta) { // determine if light or heavy edge
+                        light.add(() -> relax(targetNodeId, cost + distance[sourceNodeId]));
+                    } else {
+                        heavy.add(() -> relax(targetNodeId, cost + distance[sourceNodeId]));
                     }
                     return true;
                 });
                 return true;
             });
-
-            // for each buffered node relax their heavy edges
-            heavySet.forEach((IntProcedure) node -> {
-                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
-                    if (cost > delta) { // eval only heavy edges since light ones have been relaxed in prev. step
-                        relax(targetNodeId, cost + distance[sourceNodeId]);
-                    }
-                    return true;
-                });
-            });
+            ParallelUtil.run(light, executorService);
+            ParallelUtil.run(heavy, executorService);
         }
 
         return this;

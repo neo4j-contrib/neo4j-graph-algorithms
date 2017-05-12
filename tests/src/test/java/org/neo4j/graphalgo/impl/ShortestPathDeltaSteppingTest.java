@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.LongDoubleMap;
 import com.carrotsearch.hppc.cursors.IntDoubleCursor;
@@ -18,6 +19,9 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -81,7 +85,7 @@ public final class ShortestPathDeltaSteppingTest {
         graph = new GraphLoader(api)
                 .withLabel("Node")
                 .withRelationshipType("TYPE")
-                .withRelationshipWeightsFromProperty("cost", 9999)
+                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(HeavyGraphFactory.class);
     }
 
@@ -95,7 +99,8 @@ public final class ShortestPathDeltaSteppingTest {
 
         final Node head = getNode("s");
         final Node tail = getNode("x");
-        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3)
+                .withExecutorService(Executors.newFixedThreadPool(4));
 
         final double[] sp = sssp.compute(head.getId())
                 .getShortestPaths();
