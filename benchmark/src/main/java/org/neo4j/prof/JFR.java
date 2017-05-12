@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Runs Java Flight Recorder during JMH benchmarking.
  * <p>
- * To use: set {@code -prof org.neo4j.prof.JFR} to your JHM call.
+ * To use: add {@code -prof org.neo4j.prof.JFR} to your JHM call.
  * <p>
  * The profiler unlock commercial JVM features.
  * It delays the recording for the amount of time that the warmup phase likely takes.

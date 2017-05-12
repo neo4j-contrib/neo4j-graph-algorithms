@@ -36,7 +36,7 @@ public final class LongMinPriorityQueue implements PrimitiveLongIterable {
             // We allocate 1 extra to avoid if statement in top()
             heapSize = 2;
         } else {
-            // NOTE: we set +1 because all access to heap is
+            // NOTE: we add +1 because all access to heap is
             // 1-based not 0-based.  heap[0] is unused.
             heapSize = initialCapacity + 1;
         }

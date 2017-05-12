@@ -76,7 +76,7 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
         }
 
         /**
-         * set connection between source and target
+         * add connection between source and target
          */
         public Builder add(int sourceNodeId, int targetNodeId) {
             container.add(RawValues.combineIntInt(sourceNodeId, targetNodeId));
