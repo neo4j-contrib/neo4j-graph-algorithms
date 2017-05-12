@@ -49,9 +49,9 @@ public class MSTPrim {
                 continue;
             }
             visited.set(nodeId);
-            // set to mst
+            // add to mst
             minimumSpanningTree.addRelationship(getHead(transition), nodeId);
-            // set new candidates
+            // add new candidates
             iterator.forEachRelationship(nodeId, (sourceNodeId, targetNodeId, relationId) -> {
                 queue.add(combineIntInt(nodeId, targetNodeId), weights.weightOf(sourceNodeId, targetNodeId));
                 return true;
