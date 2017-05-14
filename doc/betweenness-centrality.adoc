@@ -1,6 +1,6 @@
 = Betweenness Centrality
 
-_Betweenness Centrality_ is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges, that the path passes through or the sum of the weights of the edges is minimized. The betweenness centrality for each vertex is the number of these shortest paths, that pass through the vertex.
+_Betweenness Centrality_ is a measure of centrality in a graph. In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. It is based on observation that every pair of vertices exchange information and information flows along the geodesic (shortest) path between two vertices. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges , that the path passes through (unweighted graph) or the sum of the weights of the edges is minimized (weighted graph). The Betweenness Centrality for each node is the number of these shortest paths, that pass through the node.
 
 == History, Explanation
 
@@ -8,17 +8,14 @@ _Betweenness Centrality_ finds wide application in network theory. It represents
 
 Although earlier authors have intuitively described centrality as based on betweenness, Freeman (1977) gave the first formal definition of betweenness centrality. The idea was earlier proposed by mathematician J. Anthonisse, but his work was never published.
 
-_Betweenness centrality_, as defined above, is a measure of information control assuming two important hypothesis: 
- 
- - every pair of vertices exchange information with equal probability
- 
- - information flows along the geodesic (shortest) path between two vertices
+It differs from the other centrality measures. A vertex can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups) and hence it might not have particularly high values for degree, eigenvector, and closeness centrality. Vertices in roles like this are sometimes referred to as brokers.
 
-However, information not always takes the shortest route. In social network, for instance, a news about a friend of us might not come directly from the friend, but from another mutual friend.
+// copied from http://www.fmsasg.com/SocialNetworkAnalysis/
+
+image::{img}/betweenness-centrality.gif[width=800]
+
 
 == When to use it / use-cases
-
-It differs from the other centrality measures. A vertex can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a vertex A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups) and hence it might not have particularly high values for degree, eigenvector, and closeness centrality. Vertices in roles like this are sometimes referred to as brokers.
 
 == Constraints / when not to use it
 
@@ -42,15 +39,14 @@ https://en.wikipedia.org/wiki/Centrality
 
 https://en.wikipedia.org/wiki/Betweenness_centrality
 
+http://www.fmsasg.com/SocialNetworkAnalysis/
 
 == Implementation Details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/98
 
-Calculating _Betweenness_ Centrality for all nodes in a graph involves computing the (unweighted) shortest paths between all pairs of nodes in the graph. A breath-first visit from a source node can be used to compute all shortest paths from the source.
-
-The value of _Betweenness_ Centrality for each vertex is the number of these shortest paths that pass through the vertex.
+In graph theory, betweenness centrality is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through (for unweighted graphs) or the sum of the weights of the edges (for weighted graphs) is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.
 
 ## Progress
 
