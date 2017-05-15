@@ -12,8 +12,22 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
  */
 public class LineBuilder extends GraphBuilder<LineBuilder> {
 
+    private Node head, tail;
+
     protected LineBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
         super(api, label, relationship);
+    }
+
+    public LineBuilder withHead(Node head) {
+        this.head = head;
+        nodes.add(head);
+        return this;
+    }
+
+    public LineBuilder withTail(Node tail) {
+        this.tail = tail;
+        nodes.add(tail);
+        return this;
     }
 
     /**
@@ -27,13 +41,15 @@ public class LineBuilder extends GraphBuilder<LineBuilder> {
             throw new IllegalArgumentException("size must be >= 2");
         }
         withinTransaction(() -> {
-            final Node head = createNode();
+            head = head == null ? createNode() : head;
+            tail = tail == null ? createNode() : tail;
             Node temp = head;
-            for (int i = 1; i < size; i++) {
+            for (int i = 2; i < size; i++) {
                 Node node = createNode();
                 createRelationship(temp, node);
                 temp = node;
             }
+            createRelationship(temp, tail);
         });
         return this;
     }
