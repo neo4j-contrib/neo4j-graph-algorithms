@@ -28,31 +28,31 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
     }
 
     public GridBuilder createGrid(int width, int height) {
-        List<Node> temp = null;
-        for (int i = 0; i < height; i++) {
-            List<Node> line = createLine(width);
-            if (null != temp) {
-                for (int j = 0; j < width; j++) {
-                    createRelationship(temp.get(j), line.get(j));
+        withinTransaction(() -> {
+            List<Node> temp = null;
+            for (int i = 0; i < height; i++) {
+                List<Node> line = createLine(width);
+                if (null != temp) {
+                    for (int j = 0; j < width; j++) {
+                        createRelationship(temp.get(j), line.get(j));
+                    }
                 }
+                temp = line;
             }
-            temp = line;
-        }
+        });
         return this;
     }
 
     private List<Node> createLine(int length) {
         ArrayList<Node> nodes = new ArrayList<>();
-        writeInTransaction(write -> {
-            Node temp = createNode();
+        Node temp = createNode();
+        nodes.add(temp);
+        for (int i = 1; i < length; i++) {
+            Node node = createNode();
             nodes.add(temp);
-            for (int i = 1; i < length; i++) {
-                Node node = createNode();
-                nodes.add(temp);
-                createRelationship(temp, node);
-                temp = node;
-            }
-        });
+            createRelationship(temp, node);
+            temp = node;
+        }
         lines.add(nodes);
         return nodes;
     }
