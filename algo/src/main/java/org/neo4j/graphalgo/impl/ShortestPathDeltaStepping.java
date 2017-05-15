@@ -116,5 +116,13 @@ public class ShortestPathDeltaStepping {
             this.nodeId = nodeId;
             this.distance = distance;
         }
+
+        @Override
+        public String toString() {
+            return "DeltaSteppingResult{" +
+                    "nodeId=" + nodeId +
+                    ", distance=" + distance +
+                    '}';
+        }
     }
 }
