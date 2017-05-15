@@ -69,8 +69,7 @@ public class ParallelDeltaSteppingTest {
 
     @Test
     public void testParallelBehaviour() throws Exception {
-        int threads = 3;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
 
         }

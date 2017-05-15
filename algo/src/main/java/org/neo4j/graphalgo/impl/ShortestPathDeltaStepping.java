@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
  */
 public class ShortestPathDeltaStepping {
 
-    private final double[] distance;
+    private final AtomicIntegerArray distance;
     private final Buckets buckets;
 
     private final double delta;
@@ -27,10 +28,12 @@ public class ShortestPathDeltaStepping {
 
     private ExecutorService executorService;
 
+    private final double multiplier = 100_000d;
+
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
         this.delta = delta;
-        distance = new double[graph.nodeCount()];
+        distance = new AtomicIntegerArray(graph.nodeCount());
         buckets = new Buckets(graph.nodeCount());
         heavy = new ArrayDeque<>(1024);
         light = new ArrayDeque<>(1024);
@@ -45,7 +48,9 @@ public class ShortestPathDeltaStepping {
     public ShortestPathDeltaStepping compute(long startNode) {
 
         // reset
-        Arrays.fill(distance, Double.MAX_VALUE);
+        for (int i = 0; i < graph.nodeCount(); i++) {
+            distance.set(i, Integer.MAX_VALUE);
+        }
         buckets.reset();
 
         // basically assign start node to bucket 0
@@ -65,29 +70,56 @@ public class ShortestPathDeltaStepping {
                 // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     if (cost <= delta) { // determine if light or heavy edge
-                        light.add(() -> relax(targetNodeId, cost + distance[sourceNodeId]));
+                        light.add(() -> relax(targetNodeId, cost + get(sourceNodeId)));
                     } else {
-                        heavy.add(() -> relax(targetNodeId, cost + distance[sourceNodeId]));
+                        heavy.add(() -> relax(targetNodeId, cost + get(sourceNodeId)));
                     }
                     return true;
                 });
                 return true;
             });
+            futures.clear();
             ParallelUtil.run(light, executorService, futures);
+            futures.clear();
             ParallelUtil.run(heavy, executorService, futures);
         }
 
         return this;
     }
 
+    public double get(int nodeId) {
+        return distance.get(nodeId) / multiplier;
+    }
+
+    public void set(int nodeId, double cost) {
+        distance.set(nodeId, (int) (cost * multiplier));
+    }
+
+    private void cas(int nodeId, double cost) {
+        boolean s = false;
+        int c = (int) (cost * multiplier);
+        while (!s) {
+            int oldC = distance.get(nodeId);
+            if (c < oldC) {
+                s = distance.compareAndSet(nodeId, oldC, c);
+            } else {
+                break;
+            }
+        }
+    }
+
     public double[] getShortestPaths() {
-        return distance;
+        double[] d = new double[graph.nodeCount()];
+        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+            d[i] = get(i);
+        }
+        return d;
     }
 
     public Stream<DeltaSteppingResult> resultStream() {
-        return IntStream.range(0, distance.length)
+        return IntStream.range(0, graph.nodeCount())
                 .mapToObj(node ->
-                        new DeltaSteppingResult(graph.toOriginalNodeId(node), distance[node]));
+                        new DeltaSteppingResult(graph.toOriginalNodeId(node), get(node)));
     }
 
     /**
@@ -99,12 +131,12 @@ public class ShortestPathDeltaStepping {
      * @param cost the summed cost
      */
     private void relax(int nodeId, double cost) {
-        if (cost >= distance[nodeId]) {
+        if (cost >= get(nodeId)) {
             return;
         }
         int bucketIndex = (int) (cost / delta); // calculate bucket index
         buckets.set(nodeId, bucketIndex);
-        distance[nodeId] = cost;
+        cas(nodeId, cost);
     }
 
     public static class DeltaSteppingResult {

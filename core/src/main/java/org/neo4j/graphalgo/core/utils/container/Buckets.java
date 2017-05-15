@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.utils.container;
 import com.carrotsearch.hppc.IntArrayDeque;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
@@ -12,10 +13,12 @@ import java.util.stream.IntStream;
  */
 public class Buckets {
 
-    private final int[] buckets;
+    private final AtomicIntegerArray buckets;
+    private final int capacity;
 
     public Buckets(int capacity) {
-        buckets = new int[capacity];
+        buckets = new AtomicIntegerArray(capacity);
+        this.capacity = capacity;
         reset();
     }
 
@@ -23,7 +26,9 @@ public class Buckets {
      * reset all buckets
      */
     public void reset() {
-        Arrays.fill(buckets, -1);
+        for (int i = 0; i < capacity; i++) {
+            buckets.set(i, -1);
+        }
     }
 
     /**
@@ -31,8 +36,8 @@ public class Buckets {
      * @return if the no nodes left, false otherwise
      */
     public boolean isEmpty() {
-        for (int i = 0; i < buckets.length; i++) {
-            if (buckets[i] != -1) {
+        for (int i = 0; i < capacity; i++) {
+            if (buckets.get(i) != -1) {
                 return false;
             }
         }
@@ -45,11 +50,7 @@ public class Buckets {
      * @param bucket the bucket index
      */
     public void set(int nodeId, int bucket) {
-        buckets[nodeId] = bucket;
-    }
-
-    public void unset(int nodeId) {
-        buckets[nodeId] = -1;
+        buckets.set(nodeId, bucket);
     }
 
     /**
@@ -58,8 +59,8 @@ public class Buckets {
      */
     public int nextNonEmptyBucket() {
         int min = Integer.MAX_VALUE;
-        for (int i = 0; i < buckets.length; i++) {
-            int bucket = buckets[i];
+        for (int i = 0; i < capacity; i++) {
+            int bucket = buckets.get(i);
             if (bucket == -1) {
                 continue;
             }
@@ -77,10 +78,10 @@ public class Buckets {
      * @param consumer the nodeConsumer
      */
     public void forEachInBucket(int bucket, IntPredicate consumer) {
-        for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
-            int tb = buckets[nodeId];
+        for (int nodeId = 0; nodeId < capacity; nodeId++) {
+            int tb = buckets.get(nodeId);
             if (tb == bucket) {
-                buckets[nodeId] = -1; // clear bucket
+                buckets.set(nodeId, -1); // clear bucket
                 if (!consumer.test(nodeId)) {
                     return;
                 }
