@@ -57,7 +57,7 @@ public class ParallelDeltaSteppingTest {
     }
 
     public static double[] compute(int threads) throws Exception {
-        double[] shortestPaths = new ShortestPathDeltaStepping(graph, 1.5)
+        double[] shortestPaths = new ShortestPathDeltaStepping(graph, 2.5)
                 .withExecutorService(Executors.newFixedThreadPool(threads))
                 .compute(rootNodeId)
                 .getShortestPaths();
