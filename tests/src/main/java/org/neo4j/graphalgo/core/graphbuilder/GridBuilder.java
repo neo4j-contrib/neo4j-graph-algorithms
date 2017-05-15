@@ -28,7 +28,6 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
     }
 
     public GridBuilder createGrid(int width, int height) {
-
         withinTransaction(() -> {
             List<Node> temp = null;
             for (int i = 0; i < height; i++) {
@@ -41,7 +40,6 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
                 temp = line;
             }
         });
-
         return this;
     }
 
