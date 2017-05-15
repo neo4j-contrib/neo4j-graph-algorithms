@@ -21,6 +21,8 @@ import java.util.List;
  */
 public class GridBuilder extends GraphBuilder<GridBuilder> {
 
+    private List<List<Node>> lines = new ArrayList<>();
+
     protected GridBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
         super(api, label, relationship);
     }
@@ -51,7 +53,12 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
                 temp = node;
             }
         });
+        lines.add(nodes);
         return nodes;
+    }
+
+    public List<List<Node>> getLineNodes() {
+        return lines;
     }
 
     @Override
