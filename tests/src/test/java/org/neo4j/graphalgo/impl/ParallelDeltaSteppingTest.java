@@ -40,7 +40,7 @@ public class ParallelDeltaSteppingTest {
                 .setLabel(LABEL)
                 .setRelationship(RELATIONSHIP)
                 .newGridBuilder()
-                .createGrid(100, 100)
+                .createGrid(10, 10)
                 .forEachRelInTx(rel -> {
                     rel.setProperty(PROPERTY, Math.random() * 5); // [0 - 5]
                 });
@@ -48,8 +48,8 @@ public class ParallelDeltaSteppingTest {
         rootNodeId = gridBuilder.getLineNodes().get(0).get(0).getId();
 
         graph = new GraphLoader(db)
-                .withLabel("Node")
-                .withRelationshipType("REL")
+                .withLabel(LABEL)
+                .withRelationshipType(RELATIONSHIP)
                 .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                 .load(HeavyGraphFactory.class);
 
@@ -69,7 +69,7 @@ public class ParallelDeltaSteppingTest {
 
     @Test
     public void testParallelBehaviour() throws Exception {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
         }
     }
