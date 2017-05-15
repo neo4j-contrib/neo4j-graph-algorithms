@@ -87,39 +87,26 @@ public class ShortestPathDeltaStepping {
         return this;
     }
 
-    public double get(int nodeId) {
+    private double get(int nodeId) {
         return distance.get(nodeId) / multiplier;
     }
 
-    public void set(int nodeId, double cost) {
-        distance.set(nodeId, (int) (cost * multiplier));
-    }
-
+    /**
+     * compare and set
+     * @param nodeId
+     * @param cost
+     */
     private void cas(int nodeId, double cost) {
-        boolean s = false;
+        boolean stored = false;
         int c = (int) (cost * multiplier);
-        while (!s) {
+        while (!stored) {
             int oldC = distance.get(nodeId);
             if (c < oldC) {
-                s = distance.compareAndSet(nodeId, oldC, c);
+                stored = distance.compareAndSet(nodeId, oldC, c);
             } else {
                 break;
             }
         }
-    }
-
-    public double[] getShortestPaths() {
-        double[] d = new double[graph.nodeCount()];
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
-            d[i] = get(i);
-        }
-        return d;
-    }
-
-    public Stream<DeltaSteppingResult> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
-                .mapToObj(node ->
-                        new DeltaSteppingResult(graph.toOriginalNodeId(node), get(node)));
     }
 
     /**
@@ -137,6 +124,20 @@ public class ShortestPathDeltaStepping {
         int bucketIndex = (int) (cost / delta); // calculate bucket index
         buckets.set(nodeId, bucketIndex);
         cas(nodeId, cost);
+    }
+
+    public double[] getShortestPaths() {
+        double[] d = new double[graph.nodeCount()];
+        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+            d[i] = get(i);
+        }
+        return d;
+    }
+
+    public Stream<DeltaSteppingResult> resultStream() {
+        return IntStream.range(0, graph.nodeCount())
+                .mapToObj(node ->
+                        new DeltaSteppingResult(graph.toOriginalNodeId(node), get(node)));
     }
 
     public static class DeltaSteppingResult {
