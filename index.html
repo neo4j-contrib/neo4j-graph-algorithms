@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.4">
+<meta name="generator" content="Asciidoctor 1.5.3">
 <title>Neo4j Graph Algorithms</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -480,8 +480,8 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <div class="sectionbody">
 <table id="table-all" class="tableblock frame-all grid-all spread">
 <colgroup>
-<col style="width: 16.6666%;">
-<col style="width: 83.3334%;">
+<col style="width: 16%;">
+<col style="width: 83%;">
 </colgroup>
 <thead>
 <tr>
@@ -495,40 +495,48 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and potentially writes back</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRankStream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRank.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRankStats</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRankStats(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and returns statistics</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweennessStream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweennessStream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, [minCentrality, maxCentrality, meanCentrality] - yields status of evaluation</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.dijkstraStream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.dijkstraStream(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.dijkstra</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.dijkstra(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.mst</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.mst(node:Node, property:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax, relationshipCount</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.labelPropagation</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel</code></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.deltaStepping.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFindStream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFindStream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.stream(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELDS loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -551,21 +559,231 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 
 </div>
 <div class="sect3">
-<h4 id="_constraints_when_not_to_use_it"><a class="link" href="#_constraints_when_not_to_use_it">Constraints / when not to use it</a></h4>
-
-</div>
-<div class="sect3">
 <h4 id="_algorithm_explanation_on_simple_sample_graph"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph">Algorithm explanation on simple sample graph</a></h4>
 
 </div>
 <div class="sect3">
 <h4 id="_example_usage"><a class="link" href="#_example_usage">Example Usage</a></h4>
 <div class="listingblock">
+<div class="title">minimal</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRankStats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
 CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score</code></pre>
 </div>
 </div>
+</div>
+<div class="sect3">
+<h4 id="_syntax"><a class="link" href="#_syntax">Syntax</a></h4>
+<div class="listingblock">
+<div class="title">running algorithm and writing back results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and potentially writes back</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. parameters</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">default</th>
+<th class="tableblock halign-left valign-top">optional</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship-type to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">iterations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">how many iterations of page-rank to run</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dampingFactor</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.85</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank caculation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">write</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">if result should be written back as node property</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">scoreProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">'score'</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. results</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">iterations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">number of iterations run</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dampingFactor</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor used</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">nodes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">number of nodes considered</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">loadMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for loading data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">computeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for running the algorithm</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">writeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for writing result data back</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">write</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">if result was written back as node property</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="title">running algorithm and streaming results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 3. parameters</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">default</th>
+<th class="tableblock halign-left valign-top">optional</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship-type to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">iterations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">20</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">how many iterations of page-rank to run</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dampingFactor</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.85</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank caculation</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 4. results</caption>
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node id</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">score</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">page-rank weight between xxx and yyyy</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it"><a class="link" href="#_constraints_when_not_to_use_it">Constraints / when not to use it</a></h4>
+
 </div>
 <div class="sect3">
 <h4 id="_references"><a class="link" href="#_references">References</a></h4>
@@ -1573,8 +1791,8 @@ call algo.unionfind.stream("MATCH (p:Person) RETURN id(p) as id","MATCH (p1:Pers
 </div>
 <div class="sect2">
 <h3 id="_api_2_model"><a class="link" href="#_api_2_model">API 2 Model</a></h3>
-<div class="sect4">
-<h5 id="_current_approach"><a class="link" href="#_current_approach">Current Approach</a></h5>
+<div class="sect3">
+<h4 id="_current_approach"><a class="link" href="#_current_approach">Current Approach</a></h4>
 <div class="paragraph">
 <p>Our current approach relies on buffering the graph data into local structures. We&#8217;ve got
 different implementations, one which consumes more memory but allows fast
@@ -1587,17 +1805,14 @@ the neo4j graph.</p>
 bunch of data.
 But since we always load the whole graph we waste some time with unnecessary imports.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>    +-----------+
-    |           | import  +-------+ computation +--------+
-    |   Neo4j{s}|--------&gt;| Graph |------------&gt;| Result |
-    +-----------+         +-------+             +--------+</pre>
+<img src="images/diag-06b4482309464b6425d4f9802c0a7e09.png" alt="diag 06b4482309464b6425d4f9802c0a7e09" width="620" height="126">
 </div>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_new_approach"><a class="link" href="#_new_approach">New Approach</a></h5>
+<div class="sect3">
+<h4 id="_new_approach"><a class="link" href="#_new_approach">New Approach</a></h4>
 <div class="paragraph">
 <p>Loading the data takes a lot of time. If we just split the Graph into several interfaces and
 load only the needed ones, we end up with less import time. This approach also allows us to
@@ -1606,37 +1821,9 @@ to run only once (and therefore does not need to buffer all nodes). It would als
 the implementation of new operations like a concurrentNodeIterator (to pick batches of nodes
 for parallel evaluation) or an AllRelationsIterator (which doesn&#8217;t need a node-id to start from).</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>                            +---------+
-                            |         |
-                            |  Neo4j  |
-                            |    {s}  |
-                            +----+----+
-                                 ^
-                                 |
-        +-------------+----------+------+--------+--------- ...
-        |             |          |               |
-    +---+------+ +----+---+ +----+----+ +--------+--------+
-    | NodeIter | | Degree | | RelIter | | WeightedRelIter | ...
-    +---+------+ +----+---+ +----+----+ +--------+--------+
-        ^             ^          ^               ^
-        |             |          |               |
-        +------+------+          |               |
-               :                 :               :
-         +-----+-----+     +-----+-----+   +-----+-----+
-         |           |     |           |   |           |
-         |  PageRank |     | UnionFind |   | MinSTree  |
-         |    {c}    |     |     {c}   |   |   {c}     |
-         +-----------+     +-----------+   +-----+-----+
-                                                 ^
-                                                 |
-                                                 :
-                                           +-----+-----+
-                                           |           |
-                                           |   kMeans  |
-                                           |    {c}    |
-                                           +-----------+</pre>
+<img src="images/diag-96930bc884a3d1c56ad52ebb66f4c2de.png" alt="diag 96930bc884a3d1c56ad52ebb66f4c2de" width="670" height="462">
 </div>
 </div>
 <div class="paragraph">
@@ -1651,8 +1838,8 @@ data source by itself. The topmost sources may work directly with the neo4j core
 ones need precomputed data from previous steps.</p>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_implementation"><a class="link" href="#_implementation">Implementation</a></h5>
+<div class="sect3">
+<h4 id="_implementation"><a class="link" href="#_implementation">Implementation</a></h4>
 <div class="paragraph">
 <p>We know every Algorithm needs one or more data sources to work. The algorithm itself produces a result
 which might act as an input for the next one. Each algorithm also may need some kind of A Priori knowledge
@@ -1725,8 +1912,8 @@ of data sources it needs. It then loads the appropriate sources and initializes 
 for one use case.</p>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_conclusion"><a class="link" href="#_conclusion">Conclusion</a></h5>
+<div class="sect3">
+<h4 id="_conclusion"><a class="link" href="#_conclusion">Conclusion</a></h4>
 <div class="paragraph">
 <p>This approach offers several optimizations to the current impl.</p>
 </div>
@@ -1859,24 +2046,9 @@ graph as well as iterating over edges of a given vertex in the form of <strong>f
 and <strong>relationshipIterator()</strong>-Methods. The Graph knows the <strong>nodeCount</strong> and <strong>degree</strong> of each node and can <strong>map</strong>
 nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weighted and unweighted edges.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>                                  +--------------+
-                                  |    Graph     |
-                                  +--------------+
-                                  | - degree( )  |
-                                  | - forEach( ) |
-                                  | - relation( )|
-                                  | - idMap( )   |
-                                  +--------------+
-                                    ^    ^     ^
-                        implements  |    |     | implements
-                      +-------------+    |     +----------+
-                      |                  |                |
-                      |                  |implements      |
-                 +----+-------+    +-----+------+     +---+-------+
-                 | HeavyGraph |    | LightGraph |     | GraphView |
-                 +------------+    +------------+     +-----------+</pre>
+<img src="images/diag-c7aa032e8c661d5a6bd35bc00da9209f.png" alt="diag c7aa032e8c661d5a6bd35bc00da9209f" width="710" height="294">
 </div>
 </div>
 <div class="admonitionblock note">
@@ -1927,20 +2099,9 @@ the Graph. This is part of current development.</p>
 <p>The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
 for creating the Graph using the core db.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>             +------------------+         builds        +--------------+
-             |   GraphFactory   | - - - - - - - - - - &gt; |    Graph     |
-             +------+---+-------+                       +---+-----+----+
-                    ^   ^                                   ^     ^
-                    |   |                                   |     |
-                    |   |                                   |     |
-                    |   |                                   |     |
-                +---+   +--------+                   +------+     +--+
-                |                |                   |               |
-        +-------+------+  +------+-------+    +------+-----+  +------+-----+
-        | HeavyFactory |  | LightFactory |    | HeavyGraph |  | LightGraph |
-        +--------------+  +--------------+    +------------+  +------------+</pre>
+<img src="images/diag-9851458f6bf1935b4418f88d5cce6713.png" alt="diag 9851458f6bf1935b4418f88d5cce6713" width="800" height="238">
 </div>
 </div>
 <div class="paragraph">
@@ -1963,7 +2124,7 @@ for creating the Graph using the core db.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-02 23:51:37 CEST
+Last updated 2017-05-16 14:30:41 MESZ
 </div>
 </div>
 </body>
