@@ -19,35 +19,45 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public final class LdbcDownloader {
 
     private static Path DEFAULT_TEMP_DIR;
-    private static final String GRAPH_FILE_NAME = "ldbc_sf001_p006_neo4j31.tgz";
-    private static final String GRAPH_LOCATION = "http://example-data.neo4j.org.s3.amazonaws.com/files/ldbc_sf001_p006_neo4j31.tgz";
-    private static final URL GRAPH_URL;
+    private static final Map<String, S3Location> FILES;
+
     static {
-        try {
-            GRAPH_URL = new URL(GRAPH_LOCATION);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        FILES = new HashMap<>();
+        FILES.put("L01", new S3Location("http://example-data.neo4j.org.s3.amazonaws.com/files/ldbc_sf001_p006_neo4j31.tgz"));
     }
 
     static synchronized GraphDatabaseAPI openDb() throws IOException {
+        return openDb(FILES.get("L01"));
+    }
+
+    static synchronized GraphDatabaseAPI openDb(String graphId) throws IOException {
+        S3Location location = FILES.get(graphId);
+        if (location == null) {
+            throw new IllegalArgumentException("Unknown graph: " + graphId);
+        }
+        return openDb(location);
+    }
+
+    private static GraphDatabaseAPI openDb(S3Location location) throws IOException {
         Path graphDir = tempDirFor("org.neo4j", "ldbc");
         Path graphDbDir = graphDir.resolve("graph.db");
         if (Files.isDirectory(graphDbDir)) {
             return openDb(graphDbDir);
         }
-        Path zippedDb = graphDir.resolve(GRAPH_FILE_NAME);
+        Path zippedDb = graphDir.resolve(location.fileName);
         if (Files.isReadable(zippedDb)) {
             unzipFile(zippedDb);
-            return openDb();
+            return openDb(location);
         }
-        downloadFile(zippedDb);
-        return openDb();
+        downloadFile(zippedDb, location.url);
+        return openDb(location);
     }
 
     private static GraphDatabaseAPI openDb(Path dbLocation) {
@@ -57,10 +67,9 @@ public final class LdbcDownloader {
         return (GraphDatabaseAPI) db;
     }
 
-    public static void main(final String... args) throws Exception {
-        GraphDatabaseAPI db = openDb();
-        System.out.println("db = " + db);
-        db.shutdown();
+    public static void main(String... args) throws Exception {
+        System.out.println("FILES.get(\"L01\").url = " + FILES.get("L01").url);
+        System.out.println("FILES.get(\"L01\").finalName = " + FILES.get("L01").fileName);
     }
 
     private static void unzipFile(Path zippedDb)
@@ -70,10 +79,10 @@ public final class LdbcDownloader {
         Files.deleteIfExists(tarFile);
     }
 
-    private static void downloadFile(final Path target)
+    private static void downloadFile(Path target, URL url)
     throws IOException {
         HttpURLConnection connection =
-                (HttpURLConnection) GRAPH_URL.openConnection();
+                (HttpURLConnection) url.openConnection();
 
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -86,7 +95,7 @@ public final class LdbcDownloader {
         }
     }
 
-    private static Path tempDirFor(final String... subDirs) throws IOException {
+    private static Path tempDirFor(String... subDirs) throws IOException {
         Path tmpDir = getDefaultTempDir().toAbsolutePath();
         for (String subDir : subDirs) {
             tmpDir = tmpDir.resolve(subDir);
@@ -98,7 +107,7 @@ public final class LdbcDownloader {
         return tmpDir;
     }
 
-    private static void createDir(final Path tmpDir) throws IOException {
+    private static void createDir(Path tmpDir) throws IOException {
         try {
             Files.createDirectory(tmpDir);
         } catch (FileAlreadyExistsException faee) {
@@ -129,7 +138,7 @@ public final class LdbcDownloader {
         return DEFAULT_TEMP_DIR;
     }
 
-    private static void unTar(final Path inputFile, final Path targetDir)
+    private static void unTar(Path inputFile, Path targetDir)
     throws IOException {
         try (InputStream in = Files.newInputStream(inputFile);
         TarArchiveInputStream tar = (TarArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.TAR, in)) {
@@ -151,7 +160,7 @@ public final class LdbcDownloader {
         }
     }
 
-    private static Path unGzip(final Path inputFile) throws IOException {
+    private static Path unGzip(Path inputFile) throws IOException {
         String fileName = inputFile.getFileName().toString();
         assert fileName.endsWith(".tgz");
         Path targetFile = inputFile
@@ -165,5 +174,19 @@ public final class LdbcDownloader {
         }
 
         return targetFile;
+    }
+
+    private static class S3Location {
+        private URL url;
+        private String fileName;
+
+        S3Location(String location) {
+            try {
+                url = new URL(location);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            this.fileName = Paths.get(url.getFile()).getFileName().toString();
+        }
     }
 }
