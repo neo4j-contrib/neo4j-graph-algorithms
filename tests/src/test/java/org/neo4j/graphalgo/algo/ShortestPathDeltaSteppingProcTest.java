@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.function.DoubleConsumer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyInt;
@@ -106,7 +107,7 @@ public final class ShortestPathDeltaSteppingProcTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testResultStream() throws Exception {
 
         final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
@@ -127,4 +128,33 @@ public final class ShortestPathDeltaSteppingProcTest {
         verify(consumer, times(1)).accept(eq(8d, 0.1d));
     }
 
+    @Test
+    public void testWriteBack() throws Exception {
+
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp'}) " +
+                "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
+
+        api.execute(matchCypher).accept(row -> {
+            System.out.println("loadDuration = " + row.getNumber("loadDuration").longValue());
+            System.out.println("evalDuration = " + row.getNumber("evalDuration").longValue());
+            long writeDuration = row.getNumber("writeDuration").longValue();
+            System.out.println("writeDuration = " + writeDuration);
+            System.out.println("nodeCount = " + row.getNumber("nodeCount").longValue());
+            assertNotEquals(-1L, writeDuration);
+            return false;
+        });
+
+        final DoubleConsumer consumer = mock(DoubleConsumer.class);
+
+        final String testCypher = "MATCH(n:Node) WHERE exists(n.sp) WITH n RETURN id(n) as id, n.sp as sp";
+
+        api.execute(testCypher).accept(row -> {
+            double sp = row.getNumber("sp").doubleValue();
+            consumer.accept(sp);
+            return true;
+        });
+
+        verify(consumer, times(11)).accept(anyDouble());
+        verify(consumer, times(1)).accept(eq(8d, 0.1d));
+    }
 }

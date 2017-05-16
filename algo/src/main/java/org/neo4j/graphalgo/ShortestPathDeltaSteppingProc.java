@@ -1,20 +1,25 @@
 package org.neo4j.graphalgo;
 
 import algo.Pools;
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
+import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
-import org.neo4j.procedure.Description;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.*;
 
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -34,6 +39,8 @@ import java.util.stream.Stream;
  */
 public class ShortestPathDeltaSteppingProc {
 
+    public static final String WRITE_PROPERTY = "writeProperty";
+    public static final String DEFAULT_TARGET_PROPERTY = "sssp";
     @Context
     public GraphDatabaseAPI api;
 
@@ -66,5 +73,100 @@ public class ShortestPathDeltaSteppingProc {
                 .withExecutorService(Pools.DEFAULT)
                 .compute(startNode.getId())
                 .resultStream();
+    }
+
+    @Procedure(value = "algo.deltaStepping", mode = Mode.WRITE)
+    @Description("CALL algo.deltaStepping(startNode:Node, propertyName:String, delta:Double" +
+            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) " +
+            "YIELD loadDuration, evalDuration, writeDuration, nodeCount")
+    public Stream<DeltaSteppingProcResult> deltaStepping(
+            @Name("startNode") Node startNode,
+            @Name("propertyName") String propertyName,
+            @Name("delta") Double delta,
+            @Name(value = "config", defaultValue = "{}")
+                    Map<String, Object> config) {
+
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final DeltaSteppingProcResult.Builder builder = DeltaSteppingProcResult.builder();
+
+        final Graph graph;
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = new GraphLoader(api)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .withRelationshipWeightsFromProperty(
+                            propertyName,
+                            configuration.getPropertyDefaultValue(Double.MAX_VALUE))
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(HeavyGraphFactory.class);
+        }
+
+        final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
+                .withExecutorService(Pools.DEFAULT);
+
+        builder.timeEval(() -> algorithm.compute(startNode.getId()));
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new DeltaSteppingShortestPathExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new NodeBatch(graph.nodeCount()),
+                        configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
+                        Pools.DEFAULT).write(algorithm.getShortestPaths());
+            });
+        }
+
+        return Stream.of(builder
+                .withNodeCount(graph.nodeCount())
+                .build());
+    }
+
+    private final static class NodeBatch implements BatchNodeIterable {
+
+        public final int nodeCount;
+
+        private NodeBatch(int nodeCount) {
+            this.nodeCount = nodeCount;
+        }
+
+        @Override
+        public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
+            int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
+            ArrayList<PrimitiveIntIterable> result = new ArrayList<>();
+            for (int i = 0; i < numberOfBatches; i += batchSize) {
+                int end = i + batchSize > nodeCount ? nodeCount : i + batchSize;
+                result.add(new BatchedNodeIterator(i, end));
+            }
+            return result;
+        }
+
+    }
+
+    private static class BatchedNodeIterator implements PrimitiveIntIterator, PrimitiveIntIterable {
+
+        private final int end;
+        private int current;
+
+        private BatchedNodeIterator(int start, int end) {
+            this.end = end;
+            this.current = start;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return current < end;
+        }
+
+        @Override
+        public int next() {
+            return current++;
+        }
+
+        @Override
+        public PrimitiveIntIterator iterator() {
+            return this;
+        }
     }
 }
