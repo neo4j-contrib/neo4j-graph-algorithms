@@ -51,7 +51,7 @@ public class ShortestPathDeltaSteppingProc {
                 .load(HeavyGraphFactory.class);
 
         return new ShortestPathDeltaStepping(graph, delta)
-                .withExecutorService(Pools.DEFAULT) // TODO test concurrent behaviour
+                .withExecutorService(Pools.DEFAULT)
                 .compute(startNode.getId())
                 .resultStream();
     }
