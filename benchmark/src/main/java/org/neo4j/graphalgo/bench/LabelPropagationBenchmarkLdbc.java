@@ -3,14 +3,12 @@ package org.neo4j.graphalgo.bench;
 import algo.Pools;
 import algo.algo.LabelPropagation;
 import org.neo4j.graphalgo.LabelPropagationProc;
-import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -31,6 +29,7 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * @author mknobloch
@@ -58,8 +57,7 @@ public class LabelPropagationBenchmarkLdbc {
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb();
 
-        Procedures procedures = db.getDependencyResolver()
-                .resolveDependency(Procedures.class);
+        Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
         procedures.registerProcedure(LabelPropagationProc.class);
         procedures.registerProcedure(LabelPropagation.class);
 
@@ -92,37 +90,54 @@ public class LabelPropagationBenchmarkLdbc {
 
     @Benchmark
     public Object _01_algo() {
-        return runQuery(
+        return runPrintQuery(
                 db,
-                "CALL algo.labelPropagation(null, null, 'OUTGOING',{iterations:" + iterations + ",batchSize:" + batchSize + "})"
+                "CALL algo.labelPropagation(null, null, 'OUTGOING',{iterations:" + iterations + ",batchSize:" + batchSize + "}) "
+                        + "YIELD loadMillis, computeMillis, writeMillis"
         );
     }
 
     @Benchmark
     public Object _02_apoc() {
-        return runQuery(
+        return runVoidQuery(
                 db,
-                "CALL algo.algo.community(" + iterations + ",[],'partition',null,'OUTGOING','weight'," + batchSize + ")"
+                "CALL algo.algo.community(" + iterations + ",[],'partition',null,'OUTGOING','weight'," + batchSize + ") "
+                + "YIELD "
         );
     }
 
     @Benchmark
     public Object _03_direct() {
-        return new org.neo4j.graphalgo.impl.LabelPropagation(
-                graph,
-                Pools.DEFAULT
-        ).compute(
-                Direction.OUTGOING,
-                iterations,
-                batchSize
-        );
+        return new org.neo4j.graphalgo.impl.LabelPropagation(graph, Pools.DEFAULT)
+                .compute(Direction.OUTGOING, iterations, batchSize);
+    }
+
+    private static Object runPrintQuery(GraphDatabaseAPI db, String query) {
+        return runQuery(db, query, result -> {
+            long load = result.getNumber("loadMillis").longValue();
+            long compute = result.getNumber("computeMillis").longValue();
+            long write = result.getNumber("writeMillis").longValue();
+            System.out.printf(
+                    "load: %d ms%ncompute: %d ms%nwrite: %d ms%n",
+                    load,
+                    compute,
+                    write);
+        });
+    }
+
+    private static Object runVoidQuery(GraphDatabaseAPI db, String query) {
+        return runQuery(db, query, r -> {});
     }
 
     private static Object runQuery(
             GraphDatabaseAPI db,
-            String query) {
+            String query,
+            Consumer<Result.ResultRow> action) {
         try (Result result = db.execute(query)) {
-            Iterators.count(result);
+            result.accept(r -> {
+                action.accept(r);
+                return true;
+            });
         }
         return db;
     }
