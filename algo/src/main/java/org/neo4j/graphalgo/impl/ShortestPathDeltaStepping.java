@@ -13,7 +13,21 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Parallel Delta-Stepping Non-negative Single Source Shortest Path
+ * Delta-Stepping is a parallel non-negative single source shortest paths (NSSSP) algorithm
+ * to calculate the length of the shortest paths from a starting node to all other
+ * nodes in the graph. It can be tweaked using the delta-parameter which controls
+ * the grade of concurrency.<br>
+ *
+ * More information in:<br>
+ *
+ * <a href="https://arxiv.org/pdf/1604.02113v1.pdf">https://arxiv.org/pdf/1604.02113v1.pdf</a><br>
+ * <a href="https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf">https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf</a><br>
+ * <a href="http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf">http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf</a><br>
+ * <a href="http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf">http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf</a>
+ *
+ * TODO: we would benefit from changing weights from doubles to integer values as proposed in issue #103
+ *
+ * @author mknblch
  */
 public class ShortestPathDeltaStepping {
 
@@ -28,7 +42,7 @@ public class ShortestPathDeltaStepping {
 
     private ExecutorService executorService;
 
-    private final double multiplier = 100_000d;
+    private double multiplier = 100_000d; // double type is intended
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
@@ -40,11 +54,35 @@ public class ShortestPathDeltaStepping {
         futures = new ArrayDeque<>(128);
     }
 
+    /**
+     * Set Executor-service to enable concurrent evaluation.
+     *
+     * @param executorService the executor service or null do disable concurrent eval.
+     * @return itself for method chaining
+     */
     public ShortestPathDeltaStepping withExecutorService(ExecutorService executorService) {
         this.executorService = executorService;
         return this;
     }
 
+    /**
+     * set the multiplier used to scale up double weights to integers
+     * @param multiplier the multiplier
+     * @return itself for method chaining
+     */
+    public ShortestPathDeltaStepping withMultiplier(int multiplier) {
+        if (multiplier < 1) {
+            throw new IllegalArgumentException("multiplier must be >= 1");
+        }
+        this.multiplier = multiplier;
+        return this;
+    }
+
+    /**
+     * compute the shortest path
+     * @param startNode UNmapped (original) neo4j nodeId as starting point
+     * @return itself for method chaining
+     */
     public ShortestPathDeltaStepping compute(long startNode) {
 
         // reset
@@ -87,12 +125,23 @@ public class ShortestPathDeltaStepping {
         return this;
     }
 
+    /**
+     * get downscaled sum of distance
+     *
+     * @param nodeId the mapped node-id
+     * @return the overall distance from source to nodeId
+     */
     private double get(int nodeId) {
         return distance.get(nodeId) / multiplier;
     }
 
     /**
-     * compare and set
+     * compare and set. tries to store the new calculated costs
+     * as long as no other thread has already written a value
+     * smaller then cost. if another thread writes a value bigger
+     * then cost the loop tries again otherwise the function
+     * terminates.
+     *
      * @param nodeId
      * @param cost
      */
@@ -126,6 +175,10 @@ public class ShortestPathDeltaStepping {
         cas(nodeId, cost);
     }
 
+    /**
+     * scale down integer representation to double[]
+     * @return mapped-id to costSum array
+     */
     public double[] getShortestPaths() {
         double[] d = new double[graph.nodeCount()];
         for (int i = graph.nodeCount() - 1; i >= 0; i--) {
@@ -134,12 +187,19 @@ public class ShortestPathDeltaStepping {
         return d;
     }
 
+    /**
+     * stream the results
+     * @return Stream of results containing neo4j-NodeId and Sum of Costs of the shortest path
+     */
     public Stream<DeltaSteppingResult> resultStream() {
         return IntStream.range(0, graph.nodeCount())
                 .mapToObj(node ->
                         new DeltaSteppingResult(graph.toOriginalNodeId(node), get(node)));
     }
 
+    /**
+     * Basic result DTO
+     */
     public static class DeltaSteppingResult {
 
         public final Long nodeId;
