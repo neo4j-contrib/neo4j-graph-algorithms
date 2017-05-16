@@ -18,6 +18,18 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
+ * Delta-Stepping is a non-negative single source shortest paths (NSSSP) algorithm
+ * to calculate the length of the shortest paths from a starting node to all other
+ * nodes in the graph. It can be tweaked using the delta-parameter which controls
+ * the grade of concurrency.<br>
+ *
+ * More information in:<br>
+ *
+ * <a href="https://arxiv.org/pdf/1604.02113v1.pdf">https://arxiv.org/pdf/1604.02113v1.pdf</a><br>
+ * <a href="https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf">https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf</a><br>
+ * <a href="http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf">http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf</a><br>
+ * <a href="http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf">http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf</a>
+ *
  * @author mknblch
  */
 public class ShortestPathDeltaSteppingProc {
@@ -32,7 +44,7 @@ public class ShortestPathDeltaSteppingProc {
     @Description("CALL algo.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)")
-    public Stream<ShortestPathDeltaStepping.DeltaSteppingResult> deltaStepping(
+    public Stream<ShortestPathDeltaStepping.DeltaSteppingResult> deltaSteppingStream(
             @Name("startNode") Node startNode,
             @Name("propertyName") String propertyName,
             @Name("delta") Double delta,

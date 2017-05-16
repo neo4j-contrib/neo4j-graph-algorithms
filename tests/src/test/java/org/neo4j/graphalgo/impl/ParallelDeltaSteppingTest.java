@@ -14,6 +14,11 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.concurrent.Executors;
 
 /**
+ * The test creates a grid of nodes and computes a reference array
+ * of shortest paths using one thread. It then compares the reference
+ * against the result of several parallel computations to provoke
+ * concurrency errors if any.
+ *
  * @author mknblch
  */
 public class ParallelDeltaSteppingTest {
@@ -42,10 +47,13 @@ public class ParallelDeltaSteppingTest {
                 .newGridBuilder()
                 .createGrid(10, 10)
                 .forEachRelInTx(rel -> {
-                    rel.setProperty(PROPERTY, Math.random() * 5); // [0 - 5]
+                    rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                 });
 
-        rootNodeId = gridBuilder.getLineNodes().get(0).get(0).getId();
+        rootNodeId = gridBuilder.getLineNodes()
+                .get(0)
+                .get(0)
+                .getId();
 
         graph = new GraphLoader(db)
                 .withLabel(LABEL)
@@ -56,21 +64,17 @@ public class ParallelDeltaSteppingTest {
         reference = compute(1);
     }
 
-    public static double[] compute(int threads) throws Exception {
-        double[] shortestPaths = new ShortestPathDeltaStepping(graph, 2.5)
+    @Test
+    public void testParallelBehaviour() throws Exception {
+        for (int i = 0; i < 42; i++) {
+            Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
+        }
+    }
+
+    private static double[] compute(int threads) throws Exception {
+        return new ShortestPathDeltaStepping(graph, 2.5)
                 .withExecutorService(Executors.newFixedThreadPool(threads))
                 .compute(rootNodeId)
                 .getShortestPaths();
-        // copy bc distance array gets overwritten in every computation
-        double[] paths = new double[shortestPaths.length];
-        System.arraycopy(shortestPaths, 0, paths, 0, shortestPaths.length);
-        return paths;
-    }
-
-    @Test
-    public void testParallelBehaviour() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
-        }
     }
 }

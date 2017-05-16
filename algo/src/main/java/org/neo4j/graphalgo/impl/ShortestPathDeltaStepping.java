@@ -13,7 +13,21 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Parallel Delta-Stepping Non-negative Single Source Shortest Path
+ * Delta-Stepping is a parallel non-negative single source shortest paths (NSSSP) algorithm
+ * to calculate the length of the shortest paths from a starting node to all other
+ * nodes in the graph. It can be tweaked using the delta-parameter which controls
+ * the grade of concurrency.<br>
+ *
+ * More information in:<br>
+ *
+ * <a href="https://arxiv.org/pdf/1604.02113v1.pdf">https://arxiv.org/pdf/1604.02113v1.pdf</a><br>
+ * <a href="https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf">https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf</a><br>
+ * <a href="http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf">http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf</a><br>
+ * <a href="http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf">http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf</a>
+ *
+ * TODO: we would benefit from changing weights from doubles to integer values as proposed in issue #
+ *
+ * @author mknblch
  */
 public class ShortestPathDeltaStepping {
 
