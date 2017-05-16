@@ -6,17 +6,72 @@ PageRank is Googles popular search algorithm.
 
 == When to use it / use-cases
 
-== Constraints / when not to use it
-
 == Algorithm explanation on simple sample graph
 
 == Example Usage
 
+.minimal
 [source,cypher]
 ----
-CALL algo.pageRankStats('Label1', 'TYPE1') YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property
+CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
 CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
 ----
+
+== Syntax
+
+.running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and potentially writes back
+----
+
+.parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| iterations | int | 5 | yes | how many iterations of page-rank to run
+| dampingFactor | float | 0.85 | yes | damping factor of the page-rank caculation
+| write | boolean | true | yes | if result should be written back as node property
+| scoreProperty | string | 'score' | yes | property name written back to
+|===
+
+.results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| iterations | int | number of iterations run
+| dampingFactor | float | damping factor used
+include::syntax.adoc[tags=stats-results]
+|===
+
+
+.running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results
+----
+
+.parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| iterations | int | 20 | yes | how many iterations of page-rank to run
+| dampingFactor | float | 0.85 | yes | damping factor of the page-rank caculation
+|===
+
+.results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| score | float | page-rank weight between xxx and yyyy
+|===
+
+== Constraints / when not to use it
 
 == References
 
@@ -28,15 +83,15 @@ CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
 
 :leveloffset: +1
 
-_PageRank_ is Googles popular search algorithm. 
+_PageRank_ is Googles popular search algorithm.
 
-More: [https://en.wikipedia.org/wiki/PageRank](url) 
+More: [https://en.wikipedia.org/wiki/PageRank](url)
 
 ## Progress
 
 - [x] single threaded implementation
 - [x] tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [ ] implement procedure
 - [x] benchmark on bigger graphs
 - [ ] parallelization
@@ -56,7 +111,7 @@ Our current approach needs one double array for storing ranks.
 
 ### parallelization
 
-One approach to parallelize _PageRank_ might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration. 
+One approach to parallelize _PageRank_ might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration.
 
 ### evaluation
 
