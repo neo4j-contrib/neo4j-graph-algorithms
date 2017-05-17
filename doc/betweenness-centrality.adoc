@@ -10,6 +10,8 @@ Although earlier authors have intuitively described centrality as based on betwe
 
 It differs from the other centrality measures. A vertex can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups) and hence it might not have particularly high values for degree, eigenvector, and closeness centrality. Vertices in roles like this are sometimes referred to as brokers.
 
+// copied from http://www.fmsasg.com/SocialNetworkAnalysis/
+
 
 
 == When to use it / use-cases
@@ -29,11 +31,12 @@ CREATE (nAlice:User {id:'Alice'})
 ,(nCharles:User {id:'Charles'})
 ,(nDoug:User {id:'Doug'})
 ,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
 CREATE (nAlice)-[:MANAGE]->(nBridget)
 ,(nAlice)-[:MANAGE]->(nCharles)
 ,(nAlice)-[:MANAGE]->(nDoug)
 ,(nMark)-[:MANAGE]->(nAlice)
-
+,(nCharles)-[:MANAGE]->(nMichael)
 
 ----
 image::{img}/betweenness_centrality.png[width=500]
@@ -55,14 +58,15 @@ YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, eval
 [opts="header",cols="1,1"]
 |===
 | name | centrality weight 
-| Alice | 3 
+| Alice | 4
+| Charles | 2
 | Bridget | 0
-| Charles | 0
+| Michael | 0
 | Doug | 0
 | Mark | 0 
 |===
 
-We can see that Alice is the main and only broker in this network.
+We can see that Alice is the main broker in this network and Charles is a minor broker.
 
 == Example Usage
 
