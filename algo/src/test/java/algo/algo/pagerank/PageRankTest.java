@@ -20,7 +20,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import static org.junit.Assert.assertEquals;
 
-public class PageRankAlgoTest
+public class PageRankTest
 {
     private GraphDatabaseService db;
 

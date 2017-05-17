@@ -1,6 +1,5 @@
 package algo.algo;
 
-import algo.algo.pagerank.PageRankAlgoTest;
 import algo.util.TestUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -124,7 +123,7 @@ public class PageRankTest
         assertTrue( result.hasNext() );
         Map<String,Object> row = result.next();
         assertFalse( result.hasNext() );
-        assertEquals(PageRankAlgoTest.EXPECTED, (double) row.get("score"), 0.1D);
+        assertEquals(algo.algo.pagerank.PageRankTest.EXPECTED, (double) row.get("score"), 0.1D);
     }
     @Test
     public void shouldGetPageRankStats() throws IOException
@@ -149,7 +148,7 @@ public class PageRankTest
         System.out.println(result.resultAsString());
         ResourceIterator<Double> it = db.execute("MATCH (n) RETURN n.name as name, n.pagerank as score ORDER BY score DESC LIMIT 1").columnAs("score");
         assertTrue( it.hasNext() );
-        assertEquals(PageRankAlgoTest.EXPECTED, it.next(), 0.1D);
+        assertEquals(algo.algo.pagerank.PageRankTest.EXPECTED, it.next(), 0.1D);
         assertFalse( it.hasNext() );
         it.close();
     }
@@ -162,7 +161,7 @@ public class PageRankTest
         System.out.println(result.resultAsString());
         ResourceIterator<Double> it = db.execute("MATCH (n) WHERE exists(n.pagerank) RETURN n.name as name, n.pagerank as score ORDER BY score DESC LIMIT 1").columnAs("score");
         assertTrue( it.hasNext() );
-        assertEquals( PageRankAlgoTest.EXPECTED, it.next(), 0.1D );
+        assertEquals( algo.algo.pagerank.PageRankTest.EXPECTED, it.next(), 0.1D );
         assertFalse( it.hasNext() );
         it.close();
     }
@@ -175,7 +174,7 @@ public class PageRankTest
         System.out.println(result.resultAsString());
         ResourceIterator<Double> it = db.execute("MATCH (n) WHERE exists(n.pagerank) RETURN n.name as name, n.pagerank as score ORDER BY score DESC LIMIT 1").columnAs("score");
         assertTrue( it.hasNext() );
-        assertEquals( PageRankAlgoTest.EXPECTED, it.next(), 0.1D );
+        assertEquals( algo.algo.pagerank.PageRankTest.EXPECTED, it.next(), 0.1D );
         assertFalse( it.hasNext() );
         it.close();
     }
@@ -189,7 +188,7 @@ public class PageRankTest
         result.close();
         ResourceIterator<Double> it = db.execute("MATCH (n) WHERE exists(n.pagerank) RETURN n.name as name, n.pagerank as score ORDER BY score DESC LIMIT 1").columnAs("score");
         assertTrue( it.hasNext() );
-        assertEquals( PageRankAlgoTest.EXPECTED, it.next(), 0.1D );
+        assertEquals( algo.algo.pagerank.PageRankTest.EXPECTED, it.next(), 0.1D );
         assertFalse( it.hasNext() );
         it.close();
     }
@@ -218,7 +217,7 @@ public class PageRankTest
         assertTrue( result.hasNext() );
         Map<String,Object> row = result.next();
         assertFalse( result.hasNext() );
-        assertEquals( PageRankAlgoTest.EXPECTED, (double) row.get( "score" ), 0.1D );
+        assertEquals( algo.algo.pagerank.PageRankTest.EXPECTED, (double) row.get( "score" ), 0.1D );
     }
 
     @Test
