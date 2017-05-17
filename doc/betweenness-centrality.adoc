@@ -36,7 +36,7 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 
 
 ----
-image::{img}/betweenness-centrality.png[width=500]
+image::{img}/betweenness_centrality.png[width=500]
 
 .Running algorithm and streaming results
 [source,cypher]
