@@ -10,9 +10,6 @@ Although earlier authors have intuitively described centrality as based on betwe
 
 It differs from the other centrality measures. A vertex can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups) and hence it might not have particularly high values for degree, eigenvector, and closeness centrality. Vertices in roles like this are sometimes referred to as brokers.
 
-// copied from http://www.fmsasg.com/SocialNetworkAnalysis/
-
-image::{img}/betweenness-centrality.gif[width=800]
 
 
 == When to use it / use-cases
@@ -21,15 +18,110 @@ image::{img}/betweenness-centrality.gif[width=800]
 
 == Algorithm explanation on simple sample graph
 
+
+People with high betweenness tend to be the innovators and brokers in any network. They combine different perspectives, transfer ideas between groups (or decide to withold them), and get power from their ability to make introductions and pull strings.
+
+.Create sample graph
 [source,cypher]
 ----
-CALL algo.betweennessStream() YIELD nodeId, centrality
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+CREATE (nAlice)-[:MANAGE]->(nBridget)
+,(nAlice)-[:MANAGE]->(nCharles)
+,(nAlice)-[:MANAGE]->(nDoug)
+,(nMark)-[:MANAGE]->(nAlice)
 
+
+----
+image::{img}/betweenness-centrality.png[width=500]
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.betweenness.stream() YIELD nodeId, centrality
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
 CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) 
 YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration
 ----
 
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | centrality weight 
+| Alice | 3 
+| Bridget | 0
+| Charles | 0
+| Doug | 0
+| Mark | 0 
+|===
+
+We can see that Alice is the main and only broker in this network.
+
 == Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration - calculates betweenness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| stats | boolean | true | yes | if stats about centrality should be returned
+| writeProperty | string | 'centrality' | yes | property name written back to
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeCount | int | number of nodes considered
+| minCentrality | int | minimum centrality value
+| maxCentrality | int | maximum centrality value
+| sumCentrality | int | sum of all centrality values
+| loadDuration | int | milliseconds for loading data
+| evalDuration | int | milliseconds for running the algorithm
+| writeDuration | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | betweenness centrality weight 
+|===
 
 == References
 
@@ -40,6 +132,8 @@ https://en.wikipedia.org/wiki/Centrality
 https://en.wikipedia.org/wiki/Betweenness_centrality
 
 http://www.fmsasg.com/SocialNetworkAnalysis/
+
+https://econsultancy.com/blog/63682-twitter-network-analysis-identifying-influencers-and-innovators/
 
 == Implementation Details
 
