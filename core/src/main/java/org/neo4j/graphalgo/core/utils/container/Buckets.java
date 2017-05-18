@@ -46,10 +46,6 @@ public class Buckets {
         buckets[nodeId] = bucket;
     }
 
-    public void unset(int nodeId) {
-        buckets[nodeId] = -1;
-    }
-
     /**
      * find smallest non empty bucket index
      * @return the index
