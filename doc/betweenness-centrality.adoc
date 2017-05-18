@@ -9,11 +9,8 @@ _Betweenness Centrality_ finds wide application in network theory. It represents
 Although earlier authors have intuitively described centrality as based on betweenness, Freeman (1977) gave the first formal definition of betweenness centrality. The idea was earlier proposed by mathematician J. Anthonisse, but his work was never published.
 
 
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 
 
-=======
->>>>>>> Syntax+Example
 
 
 == When to use it / use-cases
@@ -39,7 +36,6 @@ It differs from the other centrality measures. A node can have quite low degree,
 People with high betweenness tend to be the innovators and brokers in any network. They combine different perspectives, transfer ideas between groups (or decide to withold them), and get power from their ability to make introductions and pull strings.
 
 .Create sample graph
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 [source,cypher]
 ----
 CREATE (nAlice:User {id:'Alice'})
@@ -62,30 +58,6 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 CALL algo.betweenness.stream() YIELD nodeId, centrality
 ----
 
-=======
-[source,cypher]
-----
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-CREATE (nAlice)-[:MANAGE]->(nBridget)
-,(nAlice)-[:MANAGE]->(nCharles)
-,(nAlice)-[:MANAGE]->(nDoug)
-,(nMark)-[:MANAGE]->(nAlice)
-
-
-----
-image::{img}/betweenness_centrality.png[width=500]
-
-.Running algorithm and streaming results
-[source,cypher]
-----
-CALL algo.betweenness.stream() YIELD nodeId, centrality
-----
-
->>>>>>> Syntax+Example
 .Running algorithm and writing back results
 [source,cypher]
 ----
@@ -97,25 +69,15 @@ YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, eval
 [opts="header",cols="1,1"]
 |===
 | name | centrality weight 
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 | Alice | 4
 | Charles | 2
 | Bridget | 0
 | Michael | 0
-=======
-| Alice | 3 
-| Bridget | 0
-| Charles | 0
->>>>>>> Syntax+Example
 | Doug | 0
 | Mark | 0 
 |===
 
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 We can see that Alice is the main broker in this network and Charles is a minor broker.
-=======
-We can see that Alice is the main and only broker in this network.
->>>>>>> Syntax+Example
 
 == Example Usage
 
@@ -124,13 +86,9 @@ We can see that Alice is the main and only broker in this network.
 .Running algorithm and writing back results
 [source,cypher]
 ----
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) 
 YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration 
 - calculates betweenness centrality and potentially writes back
-=======
-CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration - calculates betweenness centrality and potentially writes back
->>>>>>> Syntax+Example
 ----
 
 .Parameters
@@ -194,11 +152,8 @@ http://www.fmsasg.com/SocialNetworkAnalysis/
 
 https://econsultancy.com/blog/63682-twitter-network-analysis-identifying-influencers-and-innovators/
 
-<<<<<<< 38e3aee16d61fde0d883721d61d5754821e443cc
 http://iima.org/wp/wp-content/uploads/2017/04/Curriculum-Structure-and-Assessment-Placement_Lightfoot.pdf
 
-=======
->>>>>>> Syntax+Example
 == Implementation Details
 
 :leveloffset: +1
