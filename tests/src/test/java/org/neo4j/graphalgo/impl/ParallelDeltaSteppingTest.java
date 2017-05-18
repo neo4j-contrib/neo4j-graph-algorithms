@@ -74,7 +74,10 @@ public class ParallelDeltaSteppingTest {
         final int n = 20;
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println(n + "x eval took " + t + "ms"))) {
             for (int i = 0; i < n; i++) {
-                Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
+                Assert.assertArrayEquals("error in iteration " + i,
+                        reference,
+                        compute(3),
+                        0.001);
             }
         }
     }

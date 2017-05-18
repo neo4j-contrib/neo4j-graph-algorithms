@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -27,30 +28,28 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class ShortestPathBenchmark {
 
+    public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
     private static GraphDatabaseAPI db;
     private static List<Node> lines = new ArrayList<>();
     private static long headId;
 
-    @Param({"10", "20", "50", "100", "500"})
+    @Param({"10", "50", "100", "500"})
     static int size;
+
+    @Param({"1", "2", "4", "8"})
+    static int concurrency;
 
     @Setup
     public static void setup() throws KernelException {
-
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
-
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(ShortestPathDeltaSteppingProc.class);
-
         createGrid(size);
-
         headId = lines.get(0).getId();
-
-
     }
 
     private static void createGrid(int size) {
@@ -60,7 +59,10 @@ public class ShortestPathBenchmark {
                 List<Node> line = createLine(size);
                 if (null != temp) {
                     for (int j = 0; j < size; j++) {
-                        temp.get(j).createRelationshipTo(line.get(j), RelationshipType.withName("TYPE"));
+                        Relationship relationship = temp.get(j).createRelationshipTo(
+                                line.get(j),
+                                RELATIONSHIP_TYPE);
+                        relationship.setProperty("cost", Math.random() * 5);
                     }
                 }
                 temp = line;
@@ -77,7 +79,10 @@ public class ShortestPathBenchmark {
         for (int i = 1; i < length; i++) {
             Node node = db.createNode();
             nodes.add(temp);
-            temp.createRelationshipTo(node, RelationshipType.withName("TYPE"));
+            Relationship relationship = temp.createRelationshipTo(
+                    node,
+                    RELATIONSHIP_TYPE);
+            relationship.setProperty("cost", Math.random() * 5);
             temp = node;
         }
         return nodes;
@@ -85,8 +90,11 @@ public class ShortestPathBenchmark {
 
     @Benchmark
     public Object _01_benchmark() {
-        return db.execute("MATCH (n {id:'" + headId + "'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 1.5)" +
-                " YIELD nodeId, distance RETURN nodeId, distance").stream();
+        return db.execute("MATCH (n {id:'" + headId + "'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 2.5" +
+                ", {concurrency:" + concurrency + "})" +
+                " YIELD nodeId, distance RETURN nodeId, distance")
+                .stream()
+                .count();
     }
 
 }
