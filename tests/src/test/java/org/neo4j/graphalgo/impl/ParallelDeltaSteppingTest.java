@@ -76,7 +76,7 @@ public class ParallelDeltaSteppingTest {
             for (int i = 0; i < n; i++) {
                 Assert.assertArrayEquals("error in iteration " + i,
                         reference,
-                        compute(3),
+                        compute((n % 7) + 2),
                         0.001);
             }
         }
