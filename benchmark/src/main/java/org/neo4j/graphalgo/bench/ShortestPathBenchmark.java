@@ -2,6 +2,8 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -9,6 +11,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,7 +28,11 @@ import java.util.concurrent.TimeUnit;
 public class ShortestPathBenchmark {
 
     private static GraphDatabaseAPI db;
-    private static Graph graph;
+    private static List<Node> lines = new ArrayList<>();
+    private static long headId;
+
+    @Param({"10", "20", "50", "100", "500"})
+    static int size;
 
     @Setup
     public static void setup() throws KernelException {
@@ -38,46 +46,46 @@ public class ShortestPathBenchmark {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(ShortestPathDeltaSteppingProc.class);
 
-        String createGraph = "CREATE (nA {name:'start'})\n" +
-                "CREATE (nB)\n" +
-                "CREATE (nC)\n" +
-                "CREATE (nD)\n" +
-                "CREATE (nE)\n" +
-                "CREATE (nF)\n" +
-                "CREATE (nG)\n" +
-                "CREATE (nH)\n" +
-                "CREATE (nI)\n" +
-                "CREATE (nJ)\n" +
-                "CREATE (nK)\n" +
-                "CREATE\n" +
-                "  (nB)-[:TYPE {cost:1.0}]->(nC),\n" +
-                "  (nC)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nD)-[:TYPE {cost:3.0}]->(nA),\n" +
-                "  (nD)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nE)-[:TYPE {cost:1.0}]->(nB),\n" +
-                "  (nE)-[:TYPE {cost:2.0}]->(nD),\n" +
-                "  (nE)-[:TYPE {cost:3.0}]->(nF),\n" +
-                "  (nF)-[:TYPE {cost:4.0}]->(nB),\n" +
-                "  (nF)-[:TYPE {cost:3.0}]->(nE),\n" +
-                "  (nG)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nG)-[:TYPE {cost:1.0}]->(nE),\n" +
-                "  (nH)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nH)-[:TYPE {cost:1.0}]->(nE),\n" +
-                "  (nI)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nI)-[:TYPE {cost:1.0}]->(nE),\n" +
-                "  (nJ)-[:TYPE {cost:1.0}]->(nE),\n" +
-                "  (nK)-[:TYPE {cost:3.0}]->(nE);";
+        createGrid(size);
 
+        headId = lines.get(0).getId();
+
+
+    }
+
+    private static void createGrid(int size) {
         try (Transaction tx = db.beginTx()) {
-            db.execute(createGraph).close();
+            List<Node> temp = null;
+            for (int i = 0; i < size; i++) {
+                List<Node> line = createLine(size);
+                if (null != temp) {
+                    for (int j = 0; j < size; j++) {
+                        temp.get(j).createRelationshipTo(line.get(j), RelationshipType.withName("TYPE"));
+                    }
+                }
+                temp = line;
+            }
             tx.success();
         }
+    }
 
+    private static List<Node> createLine(int length) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        Node temp = db.createNode();
+        nodes.add(temp);
+        lines.add(temp);
+        for (int i = 1; i < length; i++) {
+            Node node = db.createNode();
+            nodes.add(temp);
+            temp.createRelationshipTo(node, RelationshipType.withName("TYPE"));
+            temp = node;
+        }
+        return nodes;
     }
 
     @Benchmark
     public Object _01_benchmark() {
-        return db.execute("MATCH (n {name:'start'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 1.5)" +
+        return db.execute("MATCH (n {id:'" + headId + "'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 1.5)" +
                 " YIELD nodeId, distance RETURN nodeId, distance").stream();
     }
 
