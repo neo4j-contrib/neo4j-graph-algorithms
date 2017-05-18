@@ -86,7 +86,9 @@ We can see that Alice is the main broker in this network and Charles is a minor 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration - calculates betweenness centrality and potentially writes back
+CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) 
+YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration 
+- calculates betweenness centrality and potentially writes back
 ----
 
 .Parameters
