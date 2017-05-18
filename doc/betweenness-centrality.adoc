@@ -1,6 +1,6 @@
 = Betweenness Centrality
 
-_Betweenness Centrality_ is a measure of centrality in a graph. In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. It is based on observation that every pair of vertices exchange information and information flows along the geodesic (shortest) path between two vertices. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges , that the path passes through (unweighted graph) or the sum of the weights of the edges is minimized (weighted graph). The Betweenness Centrality for each node is the number of these shortest paths, that pass through the node.
+_Betweenness Centrality_ is a measure of centrality in a graph. In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. It is based on observation, that every pair of vertices exchange information and information flows along the geodesic (shortest) path between two vertices. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges , that the path passes through ( unweighted network ) or the sum of the weights of the edges is minimized ( weighted network). The betweenness centrality for each node is the number of these shortest paths, that pass through the node.
 
 == History, Explanation
 
@@ -8,15 +8,27 @@ _Betweenness Centrality_ finds wide application in network theory. It represents
 
 Although earlier authors have intuitively described centrality as based on betweenness, Freeman (1977) gave the first formal definition of betweenness centrality. The idea was earlier proposed by mathematician J. Anthonisse, but his work was never published.
 
-It differs from the other centrality measures. A vertex can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups) and hence it might not have particularly high values for degree, eigenvector, and closeness centrality. Vertices in roles like this are sometimes referred to as brokers.
 
-// copied from http://www.fmsasg.com/SocialNetworkAnalysis/
+
 
 
 
 == When to use it / use-cases
 
+image::img/betweenness_centrality.png[]
+
+
+_Betweenness centrality_ is useful in finding vertices that serve as a bridge from one part of a graph to
+another. Consequently, betweenness is a rudimentary measure of the control, that a specific node exerts
+over the flow throughout the full graph. For example, Alice in above example is the
+main connection in the graph. Were Alice to be removed, all connections in the graph would be cut off. This makes Alice “important”, because it ensures that no nodes are isolated. When using
+betweenness centrality as an analysis measure, it indicates a potential gate keeping or controlling node. 
+
+It differs from the other centrality measures. A node can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups).
+
 == Constraints / when not to use it
+
+
 
 == Algorithm explanation on simple sample graph
 
@@ -39,7 +51,6 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 ,(nCharles)-[:MANAGE]->(nMichael)
 
 ----
-image::{img}/betweenness_centrality.png[width=500]
 
 .Running algorithm and streaming results
 [source,cypher]
@@ -138,6 +149,8 @@ https://en.wikipedia.org/wiki/Betweenness_centrality
 http://www.fmsasg.com/SocialNetworkAnalysis/
 
 https://econsultancy.com/blog/63682-twitter-network-analysis-identifying-influencers-and-innovators/
+
+http://iima.org/wp/wp-content/uploads/2017/04/Curriculum-Structure-and-Assessment-Placement_Lightfoot.pdf
 
 == Implementation Details
 
