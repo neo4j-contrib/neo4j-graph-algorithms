@@ -17,7 +17,7 @@ before_deploy:
   - rm -rf benchmark/results/.git
   - rm benchmark/results/deployed*
   - mvn -DskipTests -PBenchmark -pl benchmark package
-  - java -jar benchmark/target/benchmark.jar -jvmArgs "-server -d64 -Xmx1g -Xms1g" -prof gc -rf csv -rff benchmark/results/b${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}.csv
+  - java -jar benchmark/target/benchmark.jar -jvmArgs "-server -d64 -Xmx1g -Xms1g" -prof gc -rf csv -rff benchmark/results/b${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}-$(date '+%Y-%m-%dT%H-%M-%S').csv -e 'Ldbc'
 
 deploy:
   provider: pages

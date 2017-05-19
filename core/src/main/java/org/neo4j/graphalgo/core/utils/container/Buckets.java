@@ -1,10 +1,8 @@
 package org.neo4j.graphalgo.core.utils.container;
 
-import com.carrotsearch.hppc.IntArrayDeque;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
-import java.util.stream.IntStream;
 
 /**
  * container for assigning nodeIds to arbitrary buckets
@@ -46,10 +44,6 @@ public class Buckets {
      */
     public void set(int nodeId, int bucket) {
         buckets[nodeId] = bucket;
-    }
-
-    public void unset(int nodeId) {
-        buckets[nodeId] = -1;
     }
 
     /**

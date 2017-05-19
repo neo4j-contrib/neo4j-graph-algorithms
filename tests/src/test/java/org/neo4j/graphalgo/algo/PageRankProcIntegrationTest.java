@@ -84,11 +84,11 @@ public class PageRankProcIntegrationTest {
         try (Transaction tx = db.beginTx()) {
             final Label label = Label.label("Label1");
             expected.put(db.findNode(label, "name", "a").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "b").getId(), 0.1968);
-            expected.put(db.findNode(label, "name", "c").getId(), 0.1822);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.0219);
+            expected.put(db.findNode(label, "name", "b").getId(), 0.1900);
+            expected.put(db.findNode(label, "name", "c").getId(), 0.1798);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.0218);
             expected.put(db.findNode(label, "name", "e").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.0219);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.0218);
             expected.put(db.findNode(label, "name", "g").getId(), 0.0150);
             expected.put(db.findNode(label, "name", "h").getId(), 0.0150);
             expected.put(db.findNode(label, "name", "i").getId(), 0.0150);
