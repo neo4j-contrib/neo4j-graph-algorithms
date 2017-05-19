@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
@@ -41,33 +42,43 @@ public class ParallelDeltaSteppingTest {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        gridBuilder = GraphBuilder.create(db)
-                .setLabel(LABEL)
-                .setRelationship(RELATIONSHIP)
-                .newGridBuilder()
-                .createGrid(10, 10)
-                .forEachRelInTx(rel -> {
-                    rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
-                });
+        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
+            gridBuilder = GraphBuilder.create(db)
+                    .setLabel(LABEL)
+                    .setRelationship(RELATIONSHIP)
+                    .newGridBuilder()
+                    .createGrid(100, 100)
+                    .forEachRelInTx(rel -> {
+                        rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
+                    });
 
-        rootNodeId = gridBuilder.getLineNodes()
-                .get(0)
-                .get(0)
-                .getId();
+            rootNodeId = gridBuilder.getLineNodes()
+                    .get(0)
+                    .get(0)
+                    .getId();
+        };
 
-        graph = new GraphLoader(db)
-                .withLabel(LABEL)
-                .withRelationshipType(RELATIONSHIP)
-                .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
-                .load(HeavyGraphFactory.class);
+        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
+            graph = new GraphLoader(db)
+                    .withLabel(LABEL)
+                    .withRelationshipType(RELATIONSHIP)
+                    .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
+                    .load(HeavyGraphFactory.class);
+        };
 
         reference = compute(1);
     }
 
     @Test
     public void testParallelBehaviour() throws Exception {
-        for (int i = 0; i < 42; i++) {
-            Assert.assertArrayEquals("error in iteration " + i, reference, compute(3), 0.001);
+        final int n = 20;
+        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println(n + "x eval took " + t + "ms"))) {
+            for (int i = 0; i < n; i++) {
+                Assert.assertArrayEquals("error in iteration " + i,
+                        reference,
+                        compute((n % 7) + 2),
+                        0.001);
+            }
         }
     }
 

@@ -20,6 +20,8 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 /**
@@ -70,7 +72,9 @@ public class ShortestPathDeltaSteppingProc {
                 .load(HeavyGraphFactory.class);
 
         return new ShortestPathDeltaStepping(graph, delta)
-                .withExecutorService(Pools.DEFAULT)
+                .withExecutorService(Executors.newFixedThreadPool(
+                        configuration.getInt("concurrency", 4)
+                ))
                 .compute(startNode.getId())
                 .resultStream();
     }
