@@ -54,36 +54,31 @@ public class MSTPrimProc {
 
         MSTPrimResult.Builder builder = MSTPrimResult.builder();
 
-        CompletableFuture<BufferedWeightMap> weightMap = BufferedWeightMap.importer(api)
-                .withIdMapping(idMapper)
-                .withAnyDirection(true)
-                .withWeightsFromProperty(propertyName, 1.0)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .buildDelayed(Pools.DEFAULT);
-
-        CompletableFuture<RelationshipContainer> relationshipContainer = RelationshipContainer.importer(api)
-                .withIdMapping(idMapper)
-                .withDirection(Direction.BOTH)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .buildDelayed(Pools.DEFAULT);
+        final BufferedWeightMap weightMap;
+        final RelationshipContainer relationshipContainer;
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
-        RelationshipContainer container;
-        BufferedWeightMap weights;
         try(ProgressTimer timer = builder.timeLoad()) {
-            container = relationshipContainer.get();
-            weights = weightMap.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            weightMap = BufferedWeightMap.importer(api)
+                    .withIdMapping(idMapper)
+                    .withAnyDirection(true)
+                    .withWeightsFromProperty(propertyName, 1.0)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .build();
+            relationshipContainer = RelationshipContainer.importer(api)
+                    .withIdMapping(idMapper)
+                    .withDirection(Direction.BOTH)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .build();
         }
 
         final MSTPrim mstPrim = new MSTPrim(
                 idMapper,
-                new BothRelationshipAdapter(container),
-                weights);
+                new BothRelationshipAdapter(relationshipContainer),
+                weightMap);
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);
