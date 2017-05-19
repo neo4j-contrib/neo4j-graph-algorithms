@@ -47,7 +47,7 @@ public class ParallelDeltaSteppingTest {
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newGridBuilder()
-                    .createGrid(500, 500)
+                    .createGrid(100, 100)
                     .forEachRelInTx(rel -> {
                         rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                     });
