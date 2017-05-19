@@ -32,7 +32,7 @@ public class ShortestPathProc {
 
     @Procedure("algo.shortestPath.stream")
     @Description("CALL algo.shortestPath.stream(startNodeId:long, endNodeId:long, propertyName:String" +
-            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathDijkstra.Result> dijkstraStream(
             @Name("startNode") Node startNode,
@@ -60,7 +60,7 @@ public class ShortestPathProc {
 
     @Procedure("algo.shortestPath")
     @Description("CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String" +
-            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration")
     public Stream<DijkstraResult> dijkstra(
             @Name("startNode") Node startNode,
