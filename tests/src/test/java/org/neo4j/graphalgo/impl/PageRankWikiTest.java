@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public final class PageRankTest {
+public final class PageRankWikiTest {
 
     private Class<? extends GraphFactory> graphImpl;
 
@@ -39,44 +39,46 @@ public final class PageRankTest {
     }
 
     private static final String DB_CYPHER = "" +
-            "CREATE (a:Label1 {name:\"a\"})\n" +
-            "CREATE (b:Label1 {name:\"b\"})\n" +
-            "CREATE (c:Label1 {name:\"c\"})\n" +
-            "CREATE (d:Label1 {name:\"d\"})\n" +
-            "CREATE (e:Label1 {name:\"e\"})\n" +
-            "CREATE (f:Label1 {name:\"f\"})\n" +
-            "CREATE (g:Label1 {name:\"g\"})\n" +
-            "CREATE (h:Label1 {name:\"h\"})\n" +
-            "CREATE (i:Label1 {name:\"i\"})\n" +
-            "CREATE (j:Label1 {name:\"j\"})\n" +
-            "CREATE (k:Label2 {name:\"k\"})\n" +
-            "CREATE (l:Label2 {name:\"l\"})\n" +
-            "CREATE (m:Label2 {name:\"m\"})\n" +
-            "CREATE (n:Label2 {name:\"n\"})\n" +
-            "CREATE (o:Label2 {name:\"o\"})\n" +
-            "CREATE (p:Label2 {name:\"p\"})\n" +
-            "CREATE (q:Label2 {name:\"q\"})\n" +
-            "CREATE (r:Label2 {name:\"r\"})\n" +
-            "CREATE (s:Label2 {name:\"s\"})\n" +
-            "CREATE (t:Label2 {name:\"t\"})\n" +
+            "CREATE (a:Node {name:\"a\"})\n" +
+            "CREATE (b:Node {name:\"b\"})\n" +
+            "CREATE (c:Node {name:\"c\"})\n" +
+            "CREATE (d:Node {name:\"d\"})\n" +
+            "CREATE (e:Node {name:\"e\"})\n" +
+            "CREATE (f:Node {name:\"f\"})\n" +
+            "CREATE (g:Node {name:\"g\"})\n" +
+            "CREATE (h:Node {name:\"h\"})\n" +
+            "CREATE (i:Node {name:\"i\"})\n" +
+            "CREATE (j:Node {name:\"j\"})\n" +
+            "CREATE (k:Node {name:\"k\"})\n" +
             "CREATE\n" +
-            "  (b)-[:TYPE1]->(c),\n" +
-            "  (c)-[:TYPE1]->(b),\n" +
-            "  (d)-[:TYPE1]->(a),\n" +
-            "  (d)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(d),\n" +
-            "  (e)-[:TYPE1]->(f),\n" +
-            "  (f)-[:TYPE1]->(b),\n" +
-            "  (f)-[:TYPE1]->(e),\n" +
-            "  (g)-[:TYPE2]->(b),\n" +
-            "  (g)-[:TYPE2]->(e),\n" +
-            "  (h)-[:TYPE2]->(b),\n" +
-            "  (h)-[:TYPE2]->(e),\n" +
-            "  (i)-[:TYPE2]->(b),\n" +
-            "  (i)-[:TYPE2]->(e),\n" +
-            "  (j)-[:TYPE2]->(e),\n" +
-            "  (k)-[:TYPE2]->(e)\n";
+            // a (dangling node)
+            // b
+            "  (b)-[:TYPE]->(c),\n" +
+            // c
+            "  (c)-[:TYPE]->(b),\n" +
+            // d
+            "  (d)-[:TYPE]->(a),\n" +
+            "  (d)-[:TYPE]->(b),\n" +
+            // e
+            "  (e)-[:TYPE]->(b),\n" +
+            "  (e)-[:TYPE]->(d),\n" +
+            "  (e)-[:TYPE]->(f),\n" +
+            // f
+            "  (f)-[:TYPE]->(b),\n" +
+            "  (f)-[:TYPE]->(e),\n" +
+            // g
+            "  (g)-[:TYPE]->(b),\n" +
+            "  (g)-[:TYPE]->(e),\n" +
+            // h
+            "  (h)-[:TYPE]->(b),\n" +
+            "  (h)-[:TYPE]->(e),\n" +
+            // i
+            "  (i)-[:TYPE]->(b),\n" +
+            "  (i)-[:TYPE]->(e),\n" +
+            // j
+            "  (j)-[:TYPE]->(e),\n" +
+            // k
+            "  (k)-[:TYPE]->(e)\n";
 
     private static GraphDatabaseAPI db;
 
@@ -97,7 +99,7 @@ public final class PageRankTest {
         db.shutdown();
     }
 
-    public PageRankTest(
+    public PageRankWikiTest(
             Class<? extends GraphFactory> graphImpl,
             String nameIgnoredOnlyForTestName) {
         this.graphImpl = graphImpl;
@@ -105,30 +107,30 @@ public final class PageRankTest {
 
     @Test
     public void test() throws Exception {
-        final Label label = Label.label("Label1");
+        final Label label = Label.label("Node");
         final Map<Long, Double> expected = new HashMap<>();
 
         try (Transaction tx = db.beginTx()) {
-            expected.put(db.findNode(label, "name", "a").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "b").getId(), 0.1917);
-            expected.put(db.findNode(label, "name", "c").getId(), 0.1781);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.0218);
-            expected.put(db.findNode(label, "name", "e").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.0218);
-            expected.put(db.findNode(label, "name", "g").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "h").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "i").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "j").getId(), 0.0150);
+            expected.put(db.findNode(label, "name", "a").getId(), 0.0276);
+            expected.put(db.findNode(label, "name", "b").getId(), 0.3242);
+            expected.put(db.findNode(label, "name", "c").getId(), 0.2892);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.0330);
+            expected.put(db.findNode(label, "name", "e").getId(), 0.0682);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.0330);
+            expected.put(db.findNode(label, "name", "g").getId(), 0.014);
+            expected.put(db.findNode(label, "name", "h").getId(), 0.014);
+            expected.put(db.findNode(label, "name", "i").getId(), 0.014);
+            expected.put(db.findNode(label, "name", "j").getId(), 0.014);
+            expected.put(db.findNode(label, "name", "k").getId(), 0.014);
             tx.close();
         }
 
         final Graph graph = new GraphLoader(db)
-                .withLabel(label)
-                .withRelationshipType("TYPE1")
+                .withLabel("Node")
+                .withRelationshipType("TYPE")
                 .load(graphImpl);
 
         final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();
-
         System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
@@ -136,7 +138,7 @@ public final class PageRankTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    1e-3
+                    0.001
             );
         });
     }

@@ -5,9 +5,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.PageRankAlgo;
+import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.impl.PageRankExporter;
 import org.neo4j.graphalgo.impl.PageRankScore;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -105,7 +104,7 @@ public final class PageRankProc {
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
-        PageRankAlgo pageRankAlgo = new PageRankAlgo(
+        PageRank pageRankAlgo = new PageRank(
                 graph,
                 graph,
                 graph,
