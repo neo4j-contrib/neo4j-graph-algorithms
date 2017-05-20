@@ -20,8 +20,7 @@ public class ShortestPathDijkstra {
     private final IntArrayDeque finalPath;
     private final SimpleBitSet visited;
 
-    private double totalCost = 0.0;
-
+    private double totalCost;
     private int goal;
 
     public ShortestPathDijkstra(Graph graph) {
@@ -47,6 +46,7 @@ public class ShortestPathDijkstra {
         run(goal);
         int last = goal;
         finalPath.clear();
+        totalCost = 0.0;
         while (last != -1) {
             finalPath.addFirst(last);
             last = path.getOrDefault(last, -1);

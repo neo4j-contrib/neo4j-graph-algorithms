@@ -12,14 +12,18 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(Parameterized.class)
 public final class ShortestPathDijkstraTest {
@@ -170,5 +174,32 @@ public final class ShortestPathDijkstraTest {
                 expected,
                 path
         );
+    }
+
+    @Test
+    public void testResultStream() throws Exception {
+
+        final Label label = Label.label("Label1");
+
+        final Node head, tail;
+        try (Transaction tx = db.beginTx()) {
+            head = db.findNode(label, "name", "a");
+            tail = db.findNode(label, "name", "f");
+            tx.success();
+        }
+        assertNotNull(head);
+        assertNotNull(tail);
+
+        final Graph graph = new GraphLoader(db)
+                .withLabel(label)
+                .withRelationshipType("TYPE1")
+                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
+                .load(graphImpl);
+
+        Stream<ShortestPathDijkstra.Result> resultStream = new ShortestPathDijkstra(graph)
+                .compute(head.getId(), tail.getId())
+                .resultStream();
+
+        assertEquals(5, resultStream.count());
     }
 }
