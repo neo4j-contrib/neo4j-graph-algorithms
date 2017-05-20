@@ -35,7 +35,7 @@ import static java.lang.String.format;
 public final class LabelPropagationProc {
 
     public static final String CONFIG_WEIGHT_KEY = "weightProperty";
-    public static final String CONFIG_PARTITION_KEY = "partitionProperty";
+    public static final String CONFIG_PARTITION_KEY = "writeProperty";
     public static final Integer DEFAULT_ITERATIONS = 1;
     public static final Boolean DEFAULT_WRITE = Boolean.TRUE;
     public static final String DEFAULT_WEIGHT_KEY = "weight";
@@ -47,8 +47,8 @@ public final class LabelPropagationProc {
     @Procedure(name = "algo.labelPropagation", mode = Mode.WRITE)
     @Description("CALL algo.labelPropagation(" +
             "label:String, relationship:String, direction:String, " +
-            "{iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) " +
-            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - " +
+            "{iterations:1, weightProperty:'weight', writeProperty:'partition', write:true}) " +
+            "YIELD nodes, iterations, loadDuration, evalDuration, writeDuration, write, weightProperty, writeProperty - " +
             "simple label propagation kernel")
     public Stream<LabelPropagationStats> labelPropagation(
             @Name(value = "label", defaultValue = "") String label,
@@ -63,18 +63,18 @@ public final class LabelPropagationProc {
         final Direction direction = parseDirection(directionName);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
+        final String writeProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
                 .iterations(iterations)
-                .partitionProperty(partitionProperty)
+                .writeProperty(writeProperty)
                 .weightProperty(weightProperty);
 
         HeavyGraph graph = load(
                 configuration.getNodeLabelOrQuery(),
                 configuration.getRelationshipOrQuery(),
-                partitionProperty,
+                writeProperty,
                 weightProperty,
                 stats);
 
@@ -82,8 +82,8 @@ public final class LabelPropagationProc {
 
         stats.nodes(labels.size());
 
-        if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
-            write(batchSize, partitionProperty, graph, labels, stats);
+        if (configuration.isWriteFlag(DEFAULT_WRITE) && writeProperty != null) {
+            write(batchSize, writeProperty, graph, labels, stats);
         }
 
         return Stream.of(stats.build());

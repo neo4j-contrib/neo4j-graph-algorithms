@@ -87,20 +87,20 @@ public class LabelPropagationProcIntegrationTest {
         runQuery(query, row -> {
             assertEquals(1, row.getNumber("iterations").intValue());
             assertEquals("weight", row.getString("weightProperty"));
-            assertEquals("partition", row.getString("partitionProperty"));
+            assertEquals("partition", row.getString("writeProperty"));
             assertTrue(row.getBoolean("write"));
         });
     }
 
     @Test
     public void shouldTakeParametersFromConfig() throws Exception {
-        String query = "CALL algo.labelPropagation(null, null, null, {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'})";
+        String query = "CALL algo.labelPropagation(null, null, null, {iterations:5,write:false,weightProperty:'score',writeProperty:'key'})";
 
         runQuery(query, row -> {
             assertEquals(5, row.getNumber("iterations").intValue());
             assertFalse(row.getBoolean("write"));
             assertEquals("score", row.getString("weightProperty"));
-            assertEquals("key", row.getString("partitionProperty"));
+            assertEquals("key", row.getString("writeProperty"));
         });
     }
 
@@ -117,13 +117,13 @@ public class LabelPropagationProcIntegrationTest {
 
             assertTrue(
                     "load time not set",
-                    row.getNumber("loadMillis").intValue() >= 0);
+                    row.getNumber("loadDuration").intValue() >= 0);
             assertTrue(
                     "compute time not set",
-                    row.getNumber("computeMillis").intValue() >= 0);
+                    row.getNumber("evalDuration").intValue() >= 0);
             assertTrue(
                     "write time not set",
-                    row.getNumber("writeMillis").intValue() >= 0);
+                    row.getNumber("writeDuration").intValue() >= 0);
         });
         runQuery(check, row ->
                 assertEquals(2, row.getNumber("partition").intValue()));
@@ -132,13 +132,13 @@ public class LabelPropagationProcIntegrationTest {
     @Test
     public void shouldFallbackToNodeIdsForNonExistingPartitionKey() throws Exception {
         String query = parallel
-                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar', batchSize:1})"
-                : "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar'})";
+                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {writeProperty: 'foobar', batchSize:1})"
+                : "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {writeProperty: 'foobar'})";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.foobar as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.foobar as partition";
 
         runQuery(query, row ->
-            assertEquals("foobar", row.getString("partitionProperty")));
+            assertEquals("foobar", row.getString("writeProperty")));
         runQuery(checkA, row ->
                 assertEquals(6, row.getNumber("partition").intValue()));
         runQuery(checkB, row ->

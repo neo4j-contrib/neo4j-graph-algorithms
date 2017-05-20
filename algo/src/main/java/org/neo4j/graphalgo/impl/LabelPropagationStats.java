@@ -4,27 +4,27 @@ import org.neo4j.graphalgo.results.AbstractResultBuilder;
 
 public class LabelPropagationStats {
 
-    public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
+    public final long nodes, iterations, loadDuration, evalDuration, writeDuration;
     public final boolean write;
-    public final String weightProperty, partitionProperty;
+    public final String weightProperty, writeProperty;
 
     public LabelPropagationStats(
             final long nodes,
             final long iterations,
-            final long loadMillis,
-            final long computeMillis,
-            final long writeMillis,
+            final long loadDuration,
+            final long evalDuration,
+            final long writeDuration,
             final boolean write,
             final String weightProperty,
-            final String partitionProperty) {
+            final String writeProperty) {
         this.nodes = nodes;
         this.iterations = iterations;
-        this.loadMillis = loadMillis;
-        this.computeMillis = computeMillis;
-        this.writeMillis = writeMillis;
+        this.loadDuration = loadDuration;
+        this.evalDuration = evalDuration;
+        this.writeDuration = writeDuration;
         this.write = write;
         this.weightProperty = weightProperty;
-        this.partitionProperty = partitionProperty;
+        this.writeProperty = writeProperty;
     }
 
     public static class Builder extends AbstractResultBuilder<LabelPropagationStats> {
@@ -33,7 +33,7 @@ public class LabelPropagationStats {
         private long iterations = 0;
         private boolean write;
         private String weightProperty;
-        private String partitionProperty;
+        private String writeProperty;
 
         public Builder nodes(final long nodes) {
             this.nodes = nodes;
@@ -55,8 +55,8 @@ public class LabelPropagationStats {
             return this;
         }
 
-        public Builder partitionProperty(final String partitionProperty) {
-            this.partitionProperty = partitionProperty;
+        public Builder writeProperty(final String writeProperty) {
+            this.writeProperty = writeProperty;
             return this;
         }
 
@@ -69,7 +69,7 @@ public class LabelPropagationStats {
                     writeDuration,
                     write,
                     weightProperty,
-                    partitionProperty);
+                    writeProperty);
         }
     }
 }
