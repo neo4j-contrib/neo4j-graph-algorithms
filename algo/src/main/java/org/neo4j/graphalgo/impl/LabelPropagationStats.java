@@ -6,7 +6,7 @@ public class LabelPropagationStats {
 
     public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
     public final boolean write;
-    public final String weightProperty, writeProperty;
+    public final String weightProperty, partitionProperty;
 
     public LabelPropagationStats(
             final long nodes,
@@ -16,7 +16,7 @@ public class LabelPropagationStats {
             final long writeMillis,
             final boolean write,
             final String weightProperty,
-            final String writeProperty) {
+            final String partitionProperty) {
         this.nodes = nodes;
         this.iterations = iterations;
         this.loadMillis = loadMillis;
@@ -24,7 +24,7 @@ public class LabelPropagationStats {
         this.writeMillis = writeMillis;
         this.write = write;
         this.weightProperty = weightProperty;
-        this.writeProperty = writeProperty;
+        this.partitionProperty = partitionProperty;
     }
 
     public static class Builder extends AbstractResultBuilder<LabelPropagationStats> {
@@ -33,7 +33,7 @@ public class LabelPropagationStats {
         private long iterations = 0;
         private boolean write;
         private String weightProperty;
-        private String writeProperty;
+        private String partitionProperty;
 
         public Builder nodes(final long nodes) {
             this.nodes = nodes;
@@ -55,8 +55,8 @@ public class LabelPropagationStats {
             return this;
         }
 
-        public Builder writeProperty(final String writeProperty) {
-            this.writeProperty = writeProperty;
+        public Builder partitionProperty(final String partitionProperty) {
+            this.partitionProperty = partitionProperty;
             return this;
         }
 
@@ -69,7 +69,7 @@ public class LabelPropagationStats {
                     writeDuration,
                     write,
                     weightProperty,
-                    writeProperty);
+                    partitionProperty);
         }
     }
 }
