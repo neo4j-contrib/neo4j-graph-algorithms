@@ -38,7 +38,7 @@ public final class PageRankProc {
     @Procedure(value = "algo.pageRank", mode = Mode.WRITE)
     @Description("CALL algo.pageRank(label:String, relationship:String, " +
             "{iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score',writeProperty:'score'}) " +
-            "YIELD nodes, iterations, loadDuration, evalDuration, writeDuration, dampingFactor, write, property" +
+            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
             " - calculates page rank and potentially writes back")
     public Stream<PageRankScore.Stats> pageRank(
             @Name(value = "label", defaultValue = "") String label,

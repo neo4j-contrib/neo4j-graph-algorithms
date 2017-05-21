@@ -112,13 +112,13 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankWriteBack() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1') YIELD writeDuration, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1') YIELD writeMillis, write, writeProperty",
                 row -> {
                     assertTrue(row.getBoolean("write"));
                     assertEquals("score", row.getString("writeProperty"));
                     assertTrue(
                             "write time not set",
-                            row.getNumber("writeDuration").intValue() >= 0);
+                            row.getNumber("writeMillis").intValue() >= 0);
                 });
 
         assertResult("score");
@@ -127,13 +127,13 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankWriteBackUnderDifferentProperty() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar'}) YIELD writeDuration, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar'}) YIELD writeMillis, write, writeProperty",
                 row -> {
                     assertTrue(row.getBoolean("write"));
                     assertEquals("foobar", row.getString("writeProperty"));
                     assertTrue(
                             "write time not set",
-                            row.getNumber("writeDuration").intValue() >= 0);
+                            row.getNumber("writeMillis").intValue() >= 0);
                 });
 
         assertResult("foobar");
@@ -142,10 +142,10 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankParallelWriteBack() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true}) YIELD writeDuration, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true}) YIELD writeMillis, write, writeProperty",
                 row -> assertTrue(
                         "write time not set",
-                        row.getNumber("writeDuration").intValue() >= 0));
+                        row.getNumber("writeMillis").intValue() >= 0));
 
         assertResult("score");
     }

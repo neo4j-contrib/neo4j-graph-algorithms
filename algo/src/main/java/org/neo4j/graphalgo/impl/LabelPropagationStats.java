@@ -4,24 +4,24 @@ import org.neo4j.graphalgo.results.AbstractResultBuilder;
 
 public class LabelPropagationStats {
 
-    public final long nodes, iterations, loadDuration, evalDuration, writeDuration;
+    public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
     public final boolean write;
     public final String weightProperty, writeProperty;
 
     public LabelPropagationStats(
             final long nodes,
             final long iterations,
-            final long loadDuration,
-            final long evalDuration,
-            final long writeDuration,
+            final long loadMillis,
+            final long computeMillis,
+            final long writeMillis,
             final boolean write,
             final String weightProperty,
             final String writeProperty) {
         this.nodes = nodes;
         this.iterations = iterations;
-        this.loadDuration = loadDuration;
-        this.evalDuration = evalDuration;
-        this.writeDuration = writeDuration;
+        this.loadMillis = loadMillis;
+        this.computeMillis = computeMillis;
+        this.writeMillis = writeMillis;
         this.write = write;
         this.weightProperty = weightProperty;
         this.writeProperty = writeProperty;

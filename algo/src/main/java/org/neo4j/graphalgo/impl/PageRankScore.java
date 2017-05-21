@@ -16,7 +16,7 @@ public class PageRankScore {
     // TODO: return number of relationships as well
     //  the Graph API doesn't expose this value yet
     public static final class Stats {
-        public final long nodes, iterations, loadDuration, evalDuration, writeDuration;
+        public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
         public final double dampingFactor;
         public final boolean write;
         public final String writeProperty;
@@ -24,17 +24,17 @@ public class PageRankScore {
         Stats(
                 long nodes,
                 long iterations,
-                long loadDuration,
-                long evalDuration,
-                long writeDuration,
+                long loadMillis,
+                long computeMillis,
+                long writeMillis,
                 double dampingFactor,
                 boolean write,
                 String writeProperty) {
             this.nodes = nodes;
             this.iterations = iterations;
-            this.loadDuration = loadDuration;
-            this.evalDuration = evalDuration;
-            this.writeDuration = writeDuration;
+            this.loadMillis = loadMillis;
+            this.computeMillis = computeMillis;
+            this.writeMillis = writeMillis;
             this.dampingFactor = dampingFactor;
             this.write = write;
             this.writeProperty = writeProperty;

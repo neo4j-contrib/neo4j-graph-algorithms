@@ -48,7 +48,7 @@ public final class LabelPropagationProc {
     @Description("CALL algo.labelPropagation(" +
             "label:String, relationship:String, direction:String, " +
             "{iterations:1, weightProperty:'weight', writeProperty:'partition', write:true}) " +
-            "YIELD nodes, iterations, loadDuration, evalDuration, writeDuration, write, weightProperty, writeProperty - " +
+            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, writeProperty - " +
             "simple label propagation kernel")
     public Stream<LabelPropagationStats> labelPropagation(
             @Name(value = "label", defaultValue = "") String label,

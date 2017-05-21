@@ -117,13 +117,13 @@ public class LabelPropagationProcIntegrationTest {
 
             assertTrue(
                     "load time not set",
-                    row.getNumber("loadDuration").intValue() >= 0);
+                    row.getNumber("loadMillis").intValue() >= 0);
             assertTrue(
                     "compute time not set",
-                    row.getNumber("evalDuration").intValue() >= 0);
+                    row.getNumber("computeMillis").intValue() >= 0);
             assertTrue(
                     "write time not set",
-                    row.getNumber("writeDuration").intValue() >= 0);
+                    row.getNumber("writeMillis").intValue() >= 0);
         });
         runQuery(check, row ->
                 assertEquals(2, row.getNumber("partition").intValue()));
