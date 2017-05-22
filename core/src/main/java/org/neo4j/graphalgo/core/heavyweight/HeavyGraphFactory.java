@@ -74,7 +74,6 @@ public class HeavyGraphFactory extends GraphFactory {
 
     /* test-private */ Graph build(int batchSize) {
         final IdMap idMap = new IdMap(nodeCount);
-        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
         final WeightMapping relWeigths = relWeightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
@@ -114,16 +113,26 @@ public class HeavyGraphFactory extends GraphFactory {
                 ),
                 threadPool);
 
-        for (ImportTask task : tasks) {
-            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
-        }
-
         return new HeavyGraph(
                 idMap,
-                matrix,
+                buildAdjacencyMatrix(tasks),
                 relWeigths,
                 nodeWeights,
                 nodeProps);
+    }
+
+    private AdjacencyMatrix buildAdjacencyMatrix(Collection<ImportTask> tasks) {
+        if (tasks.size() == 1) {
+            ImportTask task = tasks.iterator().next();
+            if (task.matrix.capacity() == task.nodeCount) {
+                return task.matrix;
+            }
+        }
+        AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
+        for (ImportTask task : tasks) {
+            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
+        }
+        return matrix;
     }
 
     private static void readNode(
@@ -219,6 +228,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 WeightMapping nodeWeights,
                 WeightMapping nodeProps,
                 int... relationId) {
+            int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
             this.nodeOffset = nodeOffset;
             this.idMap = idMap;
             this.nodes = nodes;
@@ -226,7 +236,7 @@ public class HeavyGraphFactory extends GraphFactory {
             this.nodeWeights = nodeWeights;
             this.nodeProps = nodeProps;
             this.relationId = relationId;
-            this.matrix = new AdjacencyMatrix(batchSize);
+            this.matrix = new AdjacencyMatrix(nodeSize);
             this.nodeCount = 0;
         }
 
