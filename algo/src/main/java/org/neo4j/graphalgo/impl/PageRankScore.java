@@ -19,7 +19,7 @@ public class PageRankScore {
         public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
         public final double dampingFactor;
         public final boolean write;
-        public final String property;
+        public final String writeProperty;
 
         Stats(
                 long nodes,
@@ -29,7 +29,7 @@ public class PageRankScore {
                 long writeMillis,
                 double dampingFactor,
                 boolean write,
-                String property) {
+                String writeProperty) {
             this.nodes = nodes;
             this.iterations = iterations;
             this.loadMillis = loadMillis;
@@ -37,7 +37,7 @@ public class PageRankScore {
             this.writeMillis = writeMillis;
             this.dampingFactor = dampingFactor;
             this.write = write;
-            this.property = property;
+            this.writeProperty = writeProperty;
         }
 
         public static final class Builder extends AbstractResultBuilder<Stats> {
@@ -45,7 +45,7 @@ public class PageRankScore {
             private long iterations;
             private double dampingFactor;
             private boolean write;
-            private String property;
+            private String writeProperty;
 
             public Builder withNodes(long nodes) {
                 this.nodes = nodes;
@@ -67,8 +67,8 @@ public class PageRankScore {
                 return this;
             }
 
-            public Builder withProperty(String property) {
-                this.property = property;
+            public Builder withProperty(String writeProperty) {
+                this.writeProperty = writeProperty;
                 return this;
             }
 
@@ -81,7 +81,7 @@ public class PageRankScore {
                         writeDuration,
                         dampingFactor,
                         write,
-                        property);
+                        writeProperty);
             }
         }
     }
