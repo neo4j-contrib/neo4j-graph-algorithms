@@ -245,6 +245,10 @@ class AdjacencyMatrix {
         }
     }
 
+    public int capacity() {
+        return outOffsets.length;
+    }
+
     public void addMatrix(AdjacencyMatrix other, int offset, int length) {
         System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
         System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
