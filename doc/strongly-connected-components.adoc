@@ -22,7 +22,8 @@ CALL algo.scc('','', {write:true})
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.scc(label:String, relationship:String, {write:true,clusterProperty:'cluster'}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
+CALL algo.scc(label:String, relationship:String, {write:true,clusterProperty:'cluster'}) 
+YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
 
 - finds strongly connected clusters and potentially writes back to the node as a property cluster. 
 ----

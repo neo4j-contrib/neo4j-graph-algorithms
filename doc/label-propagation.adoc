@@ -16,7 +16,8 @@ reach a consensus on their community membership. O
 
 [source,cypher]
 ----
-CALL algo.labelPropagation('', '','OUTGOING', {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty 
+CALL algo.labelPropagation('', '','OUTGOING', {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty 
 ----
 
 == Example Usage
@@ -26,7 +27,10 @@ CALL algo.labelPropagation('', '','OUTGOING', {iterations:1, weightProperty:'wei
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel
+CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
+weightProperty:'weight', partitionProperty:'partition', write:true}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty,
+partitionProperty - simple label propagation kernel
 ----
 
 .Parameters

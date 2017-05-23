@@ -22,7 +22,10 @@ CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
 .running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, write: true, scoreProperty:'score',writeProperty:"pagerank"}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty - calculates page rank and potentially writes back
+CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, 
+write: true, scoreProperty:'score',writeProperty:"pagerank"}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
+- calculates page rank and potentially writes back
 ----
 
 .parameters
