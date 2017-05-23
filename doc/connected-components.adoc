@@ -12,9 +12,75 @@ _Connected Components_ or _UnionFind_ basically finds sets of connected nodes wh
 
 [source,cypher]
 ----
+CALL algo.unionFind.stream('', '', {property:'cost', defaultValue:10.0, threshold:5.0}) YIELD nodeId,setId
+----
+
+[source,cypher]
+----
+CALL algo.unionFind('', '', {property:'cost', defaultValue:10.0, threshold:5.0, write:true, clusterProperty:"cluster"}) YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration
 ----
 
 == Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.unionFind(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration
+- finds connected clusters and potentially writes back to the node as a property cluster. 
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| property | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| threshold | float | null | yes | relationship-type to load from the graph, if null load all relationships
+| defaultValue | float | null | yes | relationship-type to load from the graph, if null load all relationships
+| write | boolean | true | yes | if result should be written back as node property
+| clusterProperty | string | 'cluster' | yes | property name written back to
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeCount | int | number of nodes considered
+| setCount | int | number of clusters found
+| loadDuration | int | milliseconds for loading data
+| evalDuration | int | milliseconds for running the algorithm
+| writeDuration | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | long | node id
+| setId | int | betweenness centrality weight 
+|===
 
 == References
 

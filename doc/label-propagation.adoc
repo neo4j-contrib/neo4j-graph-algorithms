@@ -1,6 +1,10 @@
 = Clustering: Label Propagation
 
-
+We propose an algorithm for finding overlapping community structure in very large
+networks. The algorithm is based on the label propagation technique of Raghavan, Albert, and
+Kumara. The vertices
+have labels that propagate between neighbouring vertices so that members of a community
+reach a consensus on their community membership. O
 
 == History, Explanation
 
@@ -10,13 +14,48 @@
 
 == Algorithm explanation on simple sample graph
 
-== Example Usage
-
 [source,cypher]
 ----
-CALL algo.labelPropagation('Label', 'TYPE', 'OUTGOING', {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'});
+CALL algo.labelPropagation('', '','OUTGOING', {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty 
 ----
 
+== Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
+| iterations | int | 1 | yes | number of iterations
+| weightProperty | string | 'weight' | yes | property name that contains weight
+| partitionProperty | string | 'partition' | yes | property name written back to
+| write | boolean | true | yes | if result should be written back as node property
+
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| iterations | int | number of iterations
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+| weightProperty | string | property name that contains weight
+| partitionProperty | string | property name written back to
+| write | boolean | true | yes | if result was written back as node property
+|===
 == References
 
 == Implementation Details

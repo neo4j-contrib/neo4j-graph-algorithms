@@ -13,6 +13,10 @@ It can be used to cluster the graph (KMeans).
 
 [source,cypher]
 ----
+MATCH(n:Node{start:true}) 
+WITH n 
+CALL algo.mst(n, 'cost', {write:true, stats:true})
+YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin,weightMax, relationshipCount 
 ----
 
 == Example Usage
