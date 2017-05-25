@@ -1,8 +1,10 @@
 = Strongly Connected Components
 
-_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC.
+_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. The strongly connected components  of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.There are several algorithms to compute the SCC.
 
 == History, Explanation
+
+Decomposing a directed graph into its strongly connected components is a classic application of depth-first search. The problem of finding connected components is at the heart of many graph application. Generally speaking, the connected components of the graph correspond to different classes of objects. The first linear-time algorithm for strongly connected components is due to Tarjan (1972).
 
 == When to use it / use-cases
 
@@ -12,7 +14,8 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 
 [source,cypher]
 ----
-CALL algo.scc('','', {write:true})
+CALL algo.scc('','', {write:true,clusterProperty:'cluster'})
+YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
 ----
 
 == Example Usage
