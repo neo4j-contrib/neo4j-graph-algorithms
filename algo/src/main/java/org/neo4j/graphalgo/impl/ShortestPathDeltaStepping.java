@@ -37,14 +37,14 @@ public class ShortestPathDeltaStepping {
 
     private final AtomicIntegerArray distance;
     private final Buckets buckets;
-    private final int concurrency = 4;
+    private int concurrency = 4;
 
     private final double delta;
     private int iDelta;
 
     private final Graph graph;
 
-    private final LongArrayList light, heavy;
+    private final LongArrayList heavy;
     private final Stack<Future<?>> futures = new Stack<>();
 
     private ExecutorService executorService;
@@ -60,7 +60,6 @@ public class ShortestPathDeltaStepping {
         distance = new AtomicIntegerArray(graph.nodeCount());
         buckets = new Buckets(graph.nodeCount());
         heavy = new LongArrayList(1024);
-        light = new LongArrayList(1024);
     }
 
     /**
@@ -71,6 +70,14 @@ public class ShortestPathDeltaStepping {
      */
     public ShortestPathDeltaStepping withExecutorService(ExecutorService executorService) {
         this.executorService = executorService;
+        return this;
+    }
+
+    /**
+     * set the number of threads used per evaluation
+     */
+    public ShortestPathDeltaStepping withConcurrency(int concurrency) {
+        this.concurrency = concurrency;
         return this;
     }
 

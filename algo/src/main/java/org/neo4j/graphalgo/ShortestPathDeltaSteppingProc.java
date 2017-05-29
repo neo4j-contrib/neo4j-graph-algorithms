@@ -73,6 +73,7 @@ public class ShortestPathDeltaSteppingProc {
 
         return new ShortestPathDeltaStepping(graph, delta)
                 .withExecutorService(Pools.DEFAULT)
+                .withConcurrency(configuration.getInt("concurrency", 4))
                 .compute(startNode.getId())
                 .resultStream();
     }
