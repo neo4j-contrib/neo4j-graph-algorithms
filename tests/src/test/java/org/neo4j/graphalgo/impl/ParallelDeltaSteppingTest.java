@@ -49,7 +49,8 @@ public class ParallelDeltaSteppingTest {
                     .newGridBuilder()
                     .createGrid(100, 100)
                     .forEachRelInTx(rel -> {
-                        rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
+//                        rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
+                        rel.setProperty(PROPERTY, rel.getStartNode().getId() % 5); // (0-5)
                     });
 
             rootNodeId = gridBuilder.getLineNodes()
@@ -71,7 +72,7 @@ public class ParallelDeltaSteppingTest {
 
     @Test
     public void testParallelBehaviour() throws Exception {
-        final int n = 20;
+        final int n = 200;
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println(n + "x eval took " + t + "ms"))) {
             for (int i = 0; i < n; i++) {
                 Assert.assertArrayEquals("error in iteration " + i,

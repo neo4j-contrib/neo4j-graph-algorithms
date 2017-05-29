@@ -96,7 +96,7 @@ public class ShortestPathsComparisionBenchmark {
     }
 
     @Benchmark
-    public Object _01_benchmark_deltaStepping() {
+    public Object _01_benchmark_deltaStepping_1thread() {
         return db.execute("MATCH (n {id:$head}) WITH n CALL algo.deltaStepping.stream(n, 'cost', $delta" +
                 ", {concurrency:1})" +
                 " YIELD nodeId, distance RETURN nodeId, distance", params)
@@ -105,7 +105,26 @@ public class ShortestPathsComparisionBenchmark {
     }
 
     @Benchmark
-    public Object _02_benchmark_singleDijkstra() {
+    public Object _02_benchmark_deltaStepping_2threads() {
+        return db.execute("MATCH (n {id:$head}) WITH n CALL algo.deltaStepping.stream(n, 'cost', $delta" +
+                ", {concurrency:2})" +
+                " YIELD nodeId, distance RETURN nodeId, distance", params)
+                .stream()
+                .count();
+    }
+
+
+    @Benchmark
+    public Object _03_benchmark_deltaStepping_4threads() {
+        return db.execute("MATCH (n {id:$head}) WITH n CALL algo.deltaStepping.stream(n, 'cost', $delta" +
+                ", {concurrency:4})" +
+                " YIELD nodeId, distance RETURN nodeId, distance", params)
+                .stream()
+                .count();
+    }
+
+    @Benchmark
+    public Object _04_benchmark_singleDijkstra() {
         return db.execute("MATCH (n {id:$head}) WITH n CALL algo.shortestPaths.stream(n, 'cost')" +
                 " YIELD nodeId, distance RETURN nodeId, distance", params)
                 .stream()

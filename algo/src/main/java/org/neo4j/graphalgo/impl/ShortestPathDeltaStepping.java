@@ -1,13 +1,17 @@
 package org.neo4j.graphalgo.impl;
 
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.container.Buckets;
 import org.neo4j.graphdb.Direction;
 
-import java.util.*;
+import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -33,16 +37,19 @@ public class ShortestPathDeltaStepping {
 
     private final AtomicIntegerArray distance;
     private final Buckets buckets;
+    private final int concurrency = 4;
 
     private final double delta;
     private int iDelta;
 
     private final Graph graph;
 
-    private final Collection<Runnable> light, heavy;
-    private final Collection<Future<?>> futures;
+    private final LongArrayList light, heavy;
+    private final Stack<Future<?>> futures = new Stack<>();
 
     private ExecutorService executorService;
+
+    private AtomicInteger pCount = new AtomicInteger(0);
 
     private double multiplier = 100_000d; // double type is intended
 
@@ -52,9 +59,8 @@ public class ShortestPathDeltaStepping {
         this.iDelta = (int) (multiplier * delta);
         distance = new AtomicIntegerArray(graph.nodeCount());
         buckets = new Buckets(graph.nodeCount());
-        heavy = new ArrayDeque<>(1024);
-        light = new ArrayDeque<>(1024);
-        futures = new ArrayDeque<>(128);
+        heavy = new LongArrayList(1024);
+        light = new LongArrayList(1024);
     }
 
     /**
@@ -89,6 +95,8 @@ public class ShortestPathDeltaStepping {
      */
     public ShortestPathDeltaStepping compute(long startNode) {
 
+        futures.clear();
+
         // reset
         for (int i = 0; i < graph.nodeCount(); i++) {
             distance.set(i, Integer.MAX_VALUE);
@@ -101,7 +109,6 @@ public class ShortestPathDeltaStepping {
         // as long as the bucket contains any value
         while (!buckets.isEmpty()) {
             // reset temporary arrays
-            light.clear();
             heavy.clear();
 
             // get next bucket index
@@ -109,25 +116,60 @@ public class ShortestPathDeltaStepping {
 
             // for each node in bucket
             buckets.forEachInBucket(phase, node -> {
+//                light.clear();
                 // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     final int iCost = (int) (cost * multiplier + distance.get(sourceNodeId));
-                    if (cost <= delta) { // determine if light or heavy edge
-                        light.add(() -> relax(targetNodeId, iCost));
-                    } else {
-                        heavy.add(() -> relax(targetNodeId, iCost));
-                    }
+                    heavy.add(RawValues.combineIntInt(targetNodeId, iCost)); // currently no distinction between l/h is made
+
+//                    if (cost <= delta) { // determine if light or heavy edge
+//                        light.add(RawValues.combineIntInt(targetNodeId, iCost));
+//                    } else {
+//                        heavy.add(RawValues.combineIntInt(targetNodeId, iCost));
+//                    }
+
                     return true;
                 });
+//                compute(light);
                 return true;
             });
-            futures.clear();
-            ParallelUtil.run(light, executorService, futures);
-            futures.clear();
-            ParallelUtil.run(heavy, executorService, futures);
+            compute(heavy);
         }
 
         return this;
+    }
+
+    private void compute(LongArrayList list) {
+
+        if (null == executorService) {
+            for (LongCursor cursor : list) {
+                relax(RawValues.getHead(cursor.value), RawValues.getTail(cursor.value));
+            }
+            return;
+        }
+
+        futures.clear();
+        final int length = (int) Math.ceil(list.size() / (double)concurrency);
+        for (int i = 0; i < list.size(); i += length) {
+            final int offset = i;
+            final int end = i + length;
+            futures.add(executorService.submit(() -> {
+                for (int j = offset; j < end && j < list.size(); j++) {
+                    final long value = list.get(j);
+                    relax(RawValues.getHead(value), RawValues.getTail(value));
+                }
+            }));
+        }
+
+        while (!futures.isEmpty()) { // TODO
+            try {
+                futures.pop().get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
