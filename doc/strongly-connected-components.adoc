@@ -12,12 +12,56 @@ Decomposing a directed graph into its strongly connected components is a classic
 
 == Algorithm explanation on simple sample graph
 
+A directed graph is strongly connected if there is a path between all pairs of vertices. This algorithms treats the graph as directed, so the direction of the relationship is important and strongly connected compoment exists only if there are relationships between nodes in both direction. 
+
+.Create sample graph
 [source,cypher]
 ----
-CALL algo.scc('','', {write:true,clusterProperty:'cluster'})
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FOLLOW]->(nBridget)
+,(nAlice)-[:FOLLOW]->(nCharles)
+,(nMark)-[:FOLLOW]->(nDoug)
+,(nMark)-[:FOLLOW]->(nMichael)
+,(nBridget)-[:FOLLOW]->(nMichael)
+,(nDoug)-[:FOLLOW]->(nMark)
+,(nMichael)-[:FOLLOW]->(nAlice)
+,(nAlice)-[:FOLLOW]->(nMichael)
+,(nBridget)-[:FOLLOW]->(nAlice)
+,(nMichael)-[:FOLLOW]->(nBridget)
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.scc('User','FOLLOW', {write:true,clusterProperty:'cluster'})
 YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
 ----
 
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | cluster
+| Alice | 1
+| Bridget | 1
+| Michael | 1
+| Charles | 0
+| Doug | 2
+| Mark | 2 
+|===
+
+We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second compomenet has Doug and Mark. 
+
+.Find the largest cluster
+[source,cypher]
+----
+MATCH (u:User)
+RETURN distinct(u.cluster) as cluster,count(*) as size_of_cluster ORDER by size_of_cluster DESC LIMIT 1
+----
 == Example Usage
 
 == Syntax

@@ -4,7 +4,7 @@ _Connected Components_ or _UnionFind_ basically finds sets of connected nodes wh
 
 == History, Explanation
 
-The _Connected Components_ of a graph represent, in grossest terms, the pieces of the graph. Two vertices are in the same component of graph if and only if there is some path between them.
+The _Connected Components_ of a graph represent, in general terms, the pieces of the graph. Two vertices are in the same component of graph if and only if there is some path between them.
 
 Finding connected components is at the heart of many graph applications. For example, consider the problem of identifying clusters in a set of items. We can represent each item by a node and add an edge between each pair of items that are deemed similar. The connected components of this graph correspond to different classes of items.
 
@@ -16,16 +16,57 @@ Testing whether a graph is connected is an essential preprocessing step for ever
 
 == Algorithm explanation on simple sample graph
 
+Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph
+between those vertices. A connected component of an undirected graph is a maximal connected
+subgraph of the graph. That means that the direction of the relationships  in our graph have no influence as we treat our graph as undirected. 
+
+.Create sample graph
 [source,cypher]
 ----
-CALL algo.unionFind.stream('', '', {property:'cost', defaultValue:10.0, threshold:5.0}) 
-YIELD nodeId,setId
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FRIEND]->(nBridget)
+,(nAlice)-[:FRIEND]->(nCharles)
+,(nMark)-[:FRIEND]->(nDoug)
+,(nMark)-[:FRIEND]->(nMichael)
+
 ----
 
+Results show us, that we have two distinct group of users that have no link between them. First group has members Alice,Charles,Bridget and the second group are Michael,Doug,Mark.
+
+.Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.unionFind('', '', {property:'cost', defaultValue:10.0, threshold:5.0, write:true, clusterProperty:"cluster"}) 
+CALL algo.unionFind.stream('User', 'FRIEND', {}) 
+YIELD nodeId,setId
+----
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.unionFind('User', 'FRIEND', {write:true, clusterProperty:"cluster"}) 
 YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration
+----
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | setId
+| Alice | 0
+| Charles | 0
+| Bridget | 0
+| Michael | 4
+| Doug | 4
+| Mark | 4 
+|===
+
+.Find the sizes of clusters
+[source,cypher]
+----
+MATCH (u:User)
+RETURN distinct(u.cluster) as cluster,count(*) as size_of_cluster ORDER by size_of_cluster DESC 
 ----
 
 == Example Usage
@@ -87,11 +128,15 @@ YIELD nodeId, setId - yields a setId to each node id
 [opts="headers"]
 |===
 | name | type | description
-| nodeId | long | node id
+| nodeId | int | node id
 | setId | int | cluster id
 |===
 
 == References
+
+http://math.hws.edu/eck/cs327_s04/chapter9.pdf
+
+https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
 
 == Implementation Details
 

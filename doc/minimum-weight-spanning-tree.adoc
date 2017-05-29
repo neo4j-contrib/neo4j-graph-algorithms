@@ -24,8 +24,7 @@ There are quite a few use cases for minimum spanning trees. One example would be
 [source,cypher]
 ----
 MATCH(n:Node{start:true}) 
-WITH n 
-CALL algo.mst(n, 'cost', {write:true, stats:true,writeProperty:"mst"})
+CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
 YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin,weightMax, relationshipCount 
 ----
 
