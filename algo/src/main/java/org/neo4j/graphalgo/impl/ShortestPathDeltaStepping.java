@@ -37,20 +37,14 @@ public class ShortestPathDeltaStepping {
 
     private final AtomicIntegerArray distance;
     private final Buckets buckets;
-    private int concurrency = 4;
-
     private final double delta;
-    private int iDelta;
-
     private final Graph graph;
-
     private final LongArrayList heavy;
     private final Stack<Future<?>> futures = new Stack<>();
 
+    private int concurrency = 4;
+    private int iDelta;
     private ExecutorService executorService;
-
-    private AtomicInteger pCount = new AtomicInteger(0);
-
     private double multiplier = 100_000d; // double type is intended
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
