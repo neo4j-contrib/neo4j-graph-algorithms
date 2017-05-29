@@ -25,7 +25,7 @@ There are quite a few use cases for minimum spanning trees. One example would be
 ----
 MATCH(n:Node{start:true}) 
 CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
-YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin,weightMax, relationshipCount 
+YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, relationshipCount 
 ----
 
 == Example Usage
@@ -35,9 +35,9 @@ YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin,weightMax,
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.mst(node:Node, property:String, {nodeLabelOrQuery:String,
+CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String,
  relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) 
-YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax, relationshipCount
+YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount
  
 ----
 
@@ -46,7 +46,7 @@ YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax
 |===
 | name | type | default | optional | description
 | node  | Node | null | no | node to load from the graph
-| property | string | 'cost' | yes | property name that contains cost
+| weightProperty | string | 'cost' | yes | property name that contains weight
 | nodeLabelOrQuery | string | null | yes |  label to load from the graph, if null load all nodes
 | relationshipTypeOrQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
@@ -62,9 +62,9 @@ YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax
 | weightMax | int | maximum value of weight
 | weightMin | int | minimum value of weight
 | relationshipCount | int | number of relationships created
-| loadDuration | int | milliseconds for loading data
-| evalDuration | int | milliseconds for running the algorithm
-| writeDuration | int | milliseconds for writing result data back
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
 |===
 == References
 

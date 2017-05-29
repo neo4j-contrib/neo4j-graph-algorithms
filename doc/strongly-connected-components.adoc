@@ -39,7 +39,7 @@ CREATE (nAlice)-[:FOLLOW]->(nBridget)
 [source,cypher]
 ----
 CALL algo.scc('User','FOLLOW', {write:true,clusterProperty:'cluster'})
-YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
+YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 ----
 
 .Results
@@ -70,7 +70,7 @@ RETURN distinct(u.cluster) as cluster,count(*) as size_of_cluster ORDER by size_
 [source,cypher]
 ----
 CALL algo.scc(label:String, relationship:String, {write:true,clusterProperty:'cluster'}) 
-YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize
+YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 
 - finds strongly connected clusters and potentially writes back to the node as a property cluster. 
 ----
@@ -93,9 +93,9 @@ YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSiz
 | setCount | int | number of clusters found
 | maxSetSize | int | number of members in biggest cluster
 | minSetSize | int | number of members in smallest cluster
-| loadDuration | int | milliseconds for loading data
-| evalDuration | int | milliseconds for running the algorithm
-| writeDuration | int | milliseconds for writing result data back
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
 |===
 
 == References

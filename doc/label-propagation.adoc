@@ -15,10 +15,11 @@ Community structure is considered one of the most interesting features in comple
 
 == Algorithm explanation on simple sample graph
 
+.Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.labelPropagation('', '','OUTGOING', {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) 
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty 
+CALL algo.labelPropagation('Label', '','OUTGOING', {iterations:1,partitionProperty:'partition', write:true}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty 
 ----
 
 == Example Usage
