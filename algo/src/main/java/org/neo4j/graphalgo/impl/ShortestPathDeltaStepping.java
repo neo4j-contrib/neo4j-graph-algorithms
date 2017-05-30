@@ -39,13 +39,13 @@ public class ShortestPathDeltaStepping {
     private final Buckets buckets;
     private final double delta;
     private final Graph graph;
-    private final LongArrayList heavy, light;
+    private final LongArrayList relax;
     private final Stack<Future<?>> futures = new Stack<>();
 
-    private int concurrency = 4;
-    private int iDelta;
     private ExecutorService executorService;
-    private double multiplier = 100_000d; // double type is intended
+    private int iDelta;
+    private int concurrency = 4;
+    private double multiplier = 100_000d;
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
         this.graph = graph;
@@ -53,8 +53,7 @@ public class ShortestPathDeltaStepping {
         this.iDelta = (int) (multiplier * delta);
         distance = new AtomicIntegerArray(graph.nodeCount());
         buckets = new Buckets(graph.nodeCount());
-        heavy = new LongArrayList(1024);
-        light = new LongArrayList(1024);
+        relax = new LongArrayList(1024);
     }
 
     /**
@@ -97,8 +96,6 @@ public class ShortestPathDeltaStepping {
      */
     public ShortestPathDeltaStepping compute(long startNode) {
 
-        futures.clear();
-
         // reset
         for (int i = 0; i < graph.nodeCount(); i++) {
             distance.set(i, Integer.MAX_VALUE);
@@ -110,29 +107,17 @@ public class ShortestPathDeltaStepping {
 
         // as long as the bucket contains any value
         while (!buckets.isEmpty()) {
-            // reset temporary arrays
-            heavy.clear();
-
             // get next bucket index
             final int phase = buckets.nextNonEmptyBucket();
-
             // for each node in bucket
             buckets.forEachInBucket(phase, node -> {
-                //light.clear();
                 // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
-                    final int iCost = (int) (cost * multiplier + distance.get(sourceNodeId));
-                    if (cost <= delta) { // determine if light or heavy edge
-                        light.add(RawValues.combineIntInt(targetNodeId, iCost));
-                    } else {
-                        heavy.add(RawValues.combineIntInt(targetNodeId, iCost));
-                    }
+                    relax.add(RawValues.combineIntInt(targetNodeId, (int) (cost * multiplier + distance.get(sourceNodeId))));
                     return true;
                 });
-                relax(light);
-                return true;
             });
-            relax(heavy);
+            relax(relax);
         }
 
         return this;
@@ -159,6 +144,7 @@ public class ShortestPathDeltaStepping {
                 }
             }));
         }
+        list.clear();
 
         boolean done = false;
         Throwable error = null;
