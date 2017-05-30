@@ -6,13 +6,13 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.container.Buckets;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.helpers.Exceptions;
 
 import java.util.Stack;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -39,7 +39,7 @@ public class ShortestPathDeltaStepping {
     private final Buckets buckets;
     private final double delta;
     private final Graph graph;
-    private final LongArrayList heavy;
+    private final LongArrayList heavy, light;
     private final Stack<Future<?>> futures = new Stack<>();
 
     private int concurrency = 4;
@@ -54,6 +54,7 @@ public class ShortestPathDeltaStepping {
         distance = new AtomicIntegerArray(graph.nodeCount());
         buckets = new Buckets(graph.nodeCount());
         heavy = new LongArrayList(1024);
+        light = new LongArrayList(1024);
     }
 
     /**
@@ -117,30 +118,27 @@ public class ShortestPathDeltaStepping {
 
             // for each node in bucket
             buckets.forEachInBucket(phase, node -> {
-//                light.clear();
+                //light.clear();
                 // relax each outgoing light edge
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     final int iCost = (int) (cost * multiplier + distance.get(sourceNodeId));
-                    heavy.add(RawValues.combineIntInt(targetNodeId, iCost)); // currently no distinction between l/h is made
-
-//                    if (cost <= delta) { // determine if light or heavy edge
-//                        light.add(RawValues.combineIntInt(targetNodeId, iCost));
-//                    } else {
-//                        heavy.add(RawValues.combineIntInt(targetNodeId, iCost));
-//                    }
-
+                    if (cost <= delta) { // determine if light or heavy edge
+                        light.add(RawValues.combineIntInt(targetNodeId, iCost));
+                    } else {
+                        heavy.add(RawValues.combineIntInt(targetNodeId, iCost));
+                    }
                     return true;
                 });
-//                compute(light);
+                relax(light);
                 return true;
             });
-            compute(heavy);
+            relax(heavy);
         }
 
         return this;
     }
 
-    private void compute(LongArrayList list) {
+    private void relax(LongArrayList list) {
 
         if (null == executorService) {
             for (LongCursor cursor : list) {
@@ -149,12 +147,11 @@ public class ShortestPathDeltaStepping {
             return;
         }
 
-        futures.clear();
         final int length = (int) Math.ceil(list.size() / (double)concurrency);
         for (int i = 0; i < list.size(); i += length) {
             final int offset = i;
             final int end = i + length;
-            futures.add(executorService.submit(() -> {
+            futures.push(executorService.submit(() -> {
                 for (int j = offset; j < end && j < list.size(); j++) {
                     final long value = list.get(j);
                     relax(RawValues.getHead(value), RawValues.getTail(value));
@@ -162,14 +159,29 @@ public class ShortestPathDeltaStepping {
             }));
         }
 
-        while (!futures.isEmpty()) { // TODO
-            try {
-                futures.pop().get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+        boolean done = false;
+        Throwable error = null;
+        try {
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (ExecutionException ee) {
+                    error = Exceptions.chain(error, ee.getCause());
+                } catch (CancellationException ignore) {
+                }
             }
+            done = true;
+        } catch (InterruptedException e) {
+            error = Exceptions.chain(e, error);
+        } finally {
+            if (!done) {
+                for (final Future<?> future : futures) {
+                    future.cancel(true);
+                }
+            }
+        }
+        if (error != null) {
+            throw Exceptions.launderedException(error);
         }
     }
 

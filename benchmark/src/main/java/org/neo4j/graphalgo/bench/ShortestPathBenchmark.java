@@ -34,9 +34,9 @@ public class ShortestPathBenchmark {
     private static GraphDatabaseAPI db;
     private static List<Node> lines = new ArrayList<>();
 
-//    @Param({"1.0", "5.0", "10.0"})
+//    @Param({"1.0", "2.0", "2.5", "3.0", "5.0", "10.0", "20.0", "50.0", "100.0"})
 //    static double delta;
-    static double delta = 2.5;
+    static double delta = 5;
 
     @Param({"1", "2", "4", "8"})
     static int concurrency;
