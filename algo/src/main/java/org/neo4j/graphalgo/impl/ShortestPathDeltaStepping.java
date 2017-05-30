@@ -147,6 +147,7 @@ public class ShortestPathDeltaStepping {
             return;
         }
 
+        futures.clear();
         final int length = (int) Math.ceil(list.size() / (double)concurrency);
         for (int i = 0; i < list.size(); i += length) {
             final int offset = i;
