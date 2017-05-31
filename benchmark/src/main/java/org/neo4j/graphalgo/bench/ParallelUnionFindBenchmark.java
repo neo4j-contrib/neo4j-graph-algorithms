@@ -39,6 +39,9 @@ public class ParallelUnionFindBenchmark {
 
     private static Graph graph;
 
+
+    private static int mul = 100000;
+
     @Setup
     public static void setup() {
 
@@ -47,7 +50,6 @@ public class ParallelUnionFindBenchmark {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        int mul = 10000;
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
             createTestGraph(10 * mul, 11 * mul, 12 * mul, 13 * mul, 14 * mul, 15 * mul, 16 * mul, 17 * mul);
         }
@@ -55,6 +57,7 @@ public class ParallelUnionFindBenchmark {
         db.execute("MATCH (n) RETURN n");
 
         graph = new GraphLoader(db)
+                .withExecutorService(Pools.DEFAULT)
                 .withAnyLabel()
                 .withRelationshipType(RELATIONSHIP_TYPE)
                 .load(HeavyGraphFactory.class);
@@ -88,7 +91,7 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object _01_parallelUnionFind() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+        return new ParallelUnionFind(graph, Pools.DEFAULT, mul)
                 .compute()
                 .getStruct();
     }
