@@ -62,7 +62,7 @@ public class ParallelUnionFind {
         ParallelUtil.run(ufProcesses, executor);
         final Stack<DisjointSetStruct> temp = new Stack<>();
         ufProcesses.forEach(uf -> temp.add(uf.struct));
-        struct = ForkJoinPool.commonPool().invoke(new Merge(temp));
+        struct = ForkJoinPool.commonPool().invoke(new Merge(temp)); // TODO
     }
 
     public DisjointSetStruct getStruct() {
@@ -77,26 +77,19 @@ public class ParallelUnionFind {
 
         public UFProcess(int offset, int length) {
             this.offset = offset;
-            this.end = offset + length;
+            this.end = Math.min(offset + length, nodeCount);
             struct = new DisjointSetStruct(graph.nodeCount()).reset();
         }
 
         @Override
         public void run() {
-            for (int node = offset; node < end && node < nodeCount; node++) {
-                try {
-
-                    graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                        if (!struct.connected(sourceNodeId, targetNodeId)) {
-                            struct.union(sourceNodeId, targetNodeId);
-                        }
-                        return true;
-                    });
-                } catch (Exception e) {
-                    System.out.println("exception for nodeid:" + node);
-                    e.printStackTrace();
-                    return;
-                }
+            for (int node = offset; node < end; node++) {
+                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                    if (!struct.connected(sourceNodeId, targetNodeId)) {
+                        struct.union(sourceNodeId, targetNodeId);
+                    }
+                    return true;
+                });
             }
         }
     }
@@ -114,7 +107,10 @@ public class ParallelUnionFind {
         public void run() {
             for (int node = offset; node < end && node < nodeCount; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {
-                    if (weight > threshold) {
+                    if (weight < threshold) {
+                        return true;
+                    }
+                    if (!struct.connected(sourceNodeId, targetNodeId)) {
                         struct.union(sourceNodeId, targetNodeId);
                     }
                     return true;
