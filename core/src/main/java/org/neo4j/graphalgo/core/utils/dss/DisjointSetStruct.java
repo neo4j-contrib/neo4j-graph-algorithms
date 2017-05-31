@@ -35,13 +35,27 @@ public final class DisjointSetStruct {
         this.capacity = capacity;
     }
 
+    public DisjointSetStruct merge(DisjointSetStruct other) {
+        if (other.capacity != this.capacity) {
+            throw new IllegalArgumentException("Capacity differs");
+        }
+
+        other.forEach(((nodeId, setId) -> {
+            union(setId, nodeId);
+            return true;
+        }));
+
+        return this;
+    }
+
     /**
      * reset the container
      */
-    public void reset() {
+    public DisjointSetStruct reset() {
         for (int i = 0; i < capacity; i++) {
             parent[i] = i;
         }
+        return this;
     }
 
     /**
@@ -199,6 +213,19 @@ public final class DisjointSetStruct {
             map.addTo(find(i), 1);
         }
         return map;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < count(); i++) {
+            builder.append(String.format(" %d ", i));
+        }
+        builder.append("\n");
+        for (int i = 0; i < count(); i++) {
+            builder.append(String.format("[%d]", find(i)));
+        }
+        return builder.toString();
     }
 
     /**
