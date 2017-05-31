@@ -119,7 +119,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
                                                 if (accumulateWeights) {
                                                     // suboptimial, O(n) per node
                                                     if (!matrix.hasOutgoing(source, target)) {
-                                                        matrix.addOutgoing(source, target, relationship);
+                                                        matrix.addOutgoing(source, target);
                                                     }
                                                     if (resultWeights != null) {
                                                         relWeights.set(relationship,
@@ -127,7 +127,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
                                                                         relWeights.get(relationship, 0d));
                                                     }
                                                 } else {
-                                                    matrix.addOutgoing(source, target, relationship);
+                                                    matrix.addOutgoing(source, target);
                                                     if (resultWeights != null) {
                                                         relWeights.set(relationship, resultWeights.get(relationship));
                                                     }
@@ -254,12 +254,11 @@ public class HeavyCypherGraphFactory extends GraphFactory {
                 if (target == -1) {
                     return true;
                 }
-                long relId = RawValues.combineIntInt(source, target);
                 if (hasRelationshipWeights) {
+                    long relId = RawValues.combineIntInt(source, target);
                     relWeigths.set(relId, row.get("weight"));
                 }
-                // todo do we need relId for the matrix
-                matrix.addOutgoing(source, target, relId);
+                matrix.addOutgoing(source, target);
                 return true;
             }
         }

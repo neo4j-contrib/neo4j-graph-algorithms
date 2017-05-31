@@ -4,7 +4,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
@@ -65,35 +64,11 @@ public class HeavyGraphFileLoader {
                 }
             }
 
-            final int outgoingIdLength = in.readVInt();
-            final long[][] outgoingIds = new long[outgoingIdLength][];
-            for (int i = 0; i < outgoingIdLength; i++) {
-                final int outlen = in.readVInt();
-                final long[] out = new long[outlen];
-                outgoingIds[i] = out;
-                for (int j = 0; j < outlen; j++) {
-                    out[j] = in.readVLong();
-                }
-            }
-
-            final int incomingIdLength = in.readVInt();
-            final long[][] incomingIds = new long[incomingIdLength][];
-            for (int i = 0; i < incomingIdLength; i++) {
-                final int inclen = in.readVInt();
-                final long[] inc = new long[inclen];
-                incomingIds[i] = inc;
-                for (int j = 0; j < inclen; j++) {
-                    inc[j] = in.readVLong();
-                }
-            }
-
             final AdjacencyMatrix container = new AdjacencyMatrix(
                     outOffsets,
                     inOffsets,
                     outgoing,
-                    incoming,
-                    outgoingIds,
-                    incomingIds
+                    incoming
             );
 
             final IdMap idMap = IdMapSerialization.read(in);

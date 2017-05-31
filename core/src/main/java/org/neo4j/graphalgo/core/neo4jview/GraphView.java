@@ -5,6 +5,8 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -61,7 +63,8 @@ public class GraphView implements Graph {
                 nodeItemCursor.forAll(nodeItem -> {
                     try (Cursor<RelationshipItem> relationships = nodeItem.relationships(mediate(direction), relationTypeId)) {
                         relationships.forAll(item -> {
-                            consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), item.id());
+                            long relId = RawValues.combineIntInt((int) item.startNode(), (int) item.endNode());
+                            consumer.accept(nodeId, toMappedNodeId(item.otherNode(originalNodeId)), relId);
                         });
                     }
                 });
@@ -80,10 +83,11 @@ public class GraphView implements Graph {
                     final Cursor<RelationshipItem> relationshipItemCursor = read.relationshipCursor(relationId);
                     relationshipItemCursor.next();
                     final RelationshipItem item = relationshipItemCursor.get();
+                    long relId = RawValues.combineIntInt((int) item.startNode(), (int) item.endNode());
                     consumer.accept(
                             nodeId,
                             toMappedNodeId(item.otherNode(originalNodeId)),
-                            relationId,
+                            relId,
                             ((Number) read.relationshipGetProperty(relationId, propertyKey)).doubleValue()
                     );
                 }

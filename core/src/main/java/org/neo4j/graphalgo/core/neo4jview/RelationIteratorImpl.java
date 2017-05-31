@@ -3,6 +3,8 @@ package org.neo4j.graphalgo.core.neo4jview;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -25,6 +27,7 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor>, Closeable {
     private final ReadOperations read;
     private final RelationshipCursor cursor;
     private final long originalNodeId;
+    private final IdCombiner relId;
 
     RelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction, int relationTypeId) throws EntityNotFoundException {
         this.graph = graph;
@@ -41,6 +44,7 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor>, Closeable {
         }
         cursor = new RelationshipCursor();
         cursor.sourceNodeId = sourceNodeId;
+        relId = RawValues.combiner(direction);
     }
 
     @Override
@@ -58,8 +62,8 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor>, Closeable {
         final Cursor<RelationshipItem> relCursor = read.relationshipCursor(relationId);
         relCursor.next();
         final RelationshipItem item = relCursor.get();
-        cursor.relationshipId = relationId;
         cursor.targetNodeId = graph.toMappedNodeId(item.otherNode(originalNodeId));
+        cursor.relationshipId = relId.apply(cursor);
         return cursor;
     }
 
