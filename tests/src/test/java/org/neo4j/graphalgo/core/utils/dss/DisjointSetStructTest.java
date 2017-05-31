@@ -103,27 +103,14 @@ public class DisjointSetStructTest {
     }
 
     @Test
-    public void testMergeDSSOverlapping() throws Exception {
-
+    public void testMergeDSS() throws Exception {
         final DisjointSetStruct a = create(10, set(0, 1, 2, 3), set(4, 5, 6), set(7, 8), set(9));
         final DisjointSetStruct b = create(10, set(0, 5), set(7, 9));
-
         assertEquals(4, a.getSetCount());
         a.merge(b);
         assertEquals(2, a.getSetCount());
+        System.out.println(a);
     }
-
-    private static void printDss(DisjointSetStruct struct) {
-        for (int i = 0; i < struct.count(); i++) {
-            System.out.printf(" %d ", i);
-        }
-        System.out.println();
-        for (int i = 0; i < struct.count(); i++) {
-            System.out.printf("[%d]", struct.find(i));
-        }
-        System.out.println("\n");
-    }
-
 
     public static int[] set(int... elements) {
         return elements;
@@ -136,9 +123,14 @@ public class DisjointSetStructTest {
                 throw new IllegalArgumentException("Sets must contain at least one element");
             }
             for (int i = 1; i < set.length; i++) {
-                dss.union(set[0], set[i]);
+                dss.union(set[i], set[0]);
             }
         }
         return dss;
+    }
+
+    @Test
+    public void test() throws Exception {
+        System.out.println(new DisjointSetStruct(5).reset());
     }
 }
