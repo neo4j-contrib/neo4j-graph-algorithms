@@ -11,7 +11,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 /**
- * UF implementation using an {@link AllRelationshipIterator}
+ * parallel UF implementation
  *
  * @author mknblch
  */
