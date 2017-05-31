@@ -34,8 +34,8 @@ public class ParallelUnionFindBenchmark {
 
     private static Graph graph;
 
-    @Param({"100", "1000", "10000", "100000"})
-    private static int sizeMultiplier;
+    @Param({/*"100", "1000", "10000", */"1000000"})
+    private static int setSize;
 
     @Setup
     public static void setup() {
@@ -47,8 +47,8 @@ public class ParallelUnionFindBenchmark {
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
             createTestGraph(
-                    sizeMultiplier, sizeMultiplier, sizeMultiplier, sizeMultiplier,
-                    sizeMultiplier, sizeMultiplier, sizeMultiplier, sizeMultiplier);
+                    setSize, setSize, setSize, setSize,
+                    setSize, setSize, setSize, setSize);
         }
 
         db.execute("MATCH (n) RETURN n");
