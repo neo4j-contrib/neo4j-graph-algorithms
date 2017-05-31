@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.helpers.Exceptions;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -83,10 +84,19 @@ public class ParallelUnionFind {
         @Override
         public void run() {
             for (int node = offset; node < end && node < nodeCount; node++) {
-                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                    struct.union(sourceNodeId, targetNodeId);
-                    return true;
-                });
+                try {
+
+                    graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                        if (!struct.connected(sourceNodeId, targetNodeId)) {
+                            struct.union(sourceNodeId, targetNodeId);
+                        }
+                        return true;
+                    });
+                } catch (Exception e) {
+                    System.out.println("exception for nodeid:" + node);
+                    e.printStackTrace();
+                    return;
+                }
             }
         }
     }
