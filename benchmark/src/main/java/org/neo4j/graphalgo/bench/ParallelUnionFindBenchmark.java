@@ -34,7 +34,7 @@ public class ParallelUnionFindBenchmark {
 
     private static Graph graph;
 
-    @Param({/*"100", "1000", "10000", */"1000000"})
+    @Param({/*"100", "1000", "10000", */"100000"})
     private static int setSize;
 
     @Setup
@@ -84,7 +84,7 @@ public class ParallelUnionFindBenchmark {
             temp = t;
         }
     }
-
+/*
     @Benchmark
     public Object _01_parallelUnionFind_10000() {
         return new ParallelUnionFind(graph, Pools.DEFAULT, 10_000)
@@ -95,6 +95,13 @@ public class ParallelUnionFindBenchmark {
     @Benchmark
     public Object _02_parallelUnionFind_100000() {
         return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+                .compute()
+                .getStruct();
+    }*/
+
+    @Benchmark
+    public Object _03_parallelUnionFind_200000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 200_000)
                 .compute()
                 .getStruct();
     }

@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -20,6 +21,8 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author mknblch
@@ -48,11 +51,11 @@ public class ParallelUnionFindTest {
         db.execute("MATCH (n) RETURN n");
 
         graph = new GraphLoader(db)
+                .withExecutorService(Pools.DEFAULT)
                 .withAnyLabel()
                 .withRelationshipType(RELATIONSHIP_TYPE)
-                .load(LightGraphFactory.class);
+                .load(HeavyGraphFactory.class);
 
-        System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
     }
 
@@ -87,17 +90,16 @@ public class ParallelUnionFindTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testBigSet() throws Exception {
 
-        System.out.println(graph.nodeCount());
+        System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
         final DisjointSetStruct struct = new ParallelUnionFind(graph, Pools.DEFAULT, 10000)
                 .compute()
                 .getStruct();
 
-
-        System.out.println(struct.getSetCount());
-
+        System.out.println("struct.getSetCount() = " + struct.getSetCount());
+        assertEquals(8, struct.getSetCount());
     }
 
 }

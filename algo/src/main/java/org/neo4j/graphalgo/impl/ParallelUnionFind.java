@@ -1,12 +1,9 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.helpers.Exceptions;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -26,6 +23,8 @@ public class ParallelUnionFind {
     private final int batchSize;
     private DisjointSetStruct struct;
 
+    private final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
+
     /**
      * initialize UF
      * @param graph
@@ -39,34 +38,30 @@ public class ParallelUnionFind {
     }
 
     public ParallelUnionFind compute() {
-
-        final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new UFProcess(i, batchSize));
         }
-        merge(ufProcesses);
+        merge();
         return this;
     }
 
     public ParallelUnionFind compute(double threshold) {
-
-        final ArrayList<TUFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
         }
-        merge(ufProcesses);
+        merge();
         return this;
-    }
-
-    public void merge(ArrayList<? extends UFProcess> ufProcesses) {
-        ParallelUtil.run(ufProcesses, executor);
-        final Stack<DisjointSetStruct> temp = new Stack<>();
-        ufProcesses.forEach(uf -> temp.add(uf.struct));
-        struct = ForkJoinPool.commonPool().invoke(new Merge(temp)); // TODO
     }
 
     public DisjointSetStruct getStruct() {
         return struct;
+    }
+
+    private void merge() {
+        ParallelUtil.run(ufProcesses, executor);
+        final Merge merge = new Merge();
+        ufProcesses.forEach(uf -> merge.structs.push(uf.struct));
+        struct = ForkJoinPool.commonPool().invoke(merge); // TODO
     }
 
     private class UFProcess implements Runnable {
@@ -121,11 +116,7 @@ public class ParallelUnionFind {
 
     private class Merge extends RecursiveTask<DisjointSetStruct> {
 
-        private final Stack<DisjointSetStruct> structs;
-
-        private Merge(Stack<DisjointSetStruct> structs) {
-            this.structs = structs;
-        }
+        private final Stack<DisjointSetStruct> structs = new Stack<>();
 
         @Override
         protected DisjointSetStruct compute() {
@@ -134,23 +125,19 @@ public class ParallelUnionFind {
                 return structs.pop();
             }
             if (size == 2) {
-                return merge(structs.pop(), structs.pop());
+                return structs.pop().merge(structs.pop());
             }
-            final Stack<DisjointSetStruct> list = new Stack<>();
-            list.push(structs.pop());
-            list.push(structs.pop());
-            final Merge mergeA = new Merge(structs);
-            final Merge mergeB = new Merge(list);
-            mergeA.fork();
-            final DisjointSetStruct computed = mergeB.compute();
-            return merge(mergeA.join(), computed);
+            final Merge other = new Merge();
+            other.add(structs.pop())
+                    .add(structs.pop())
+                    .fork();
+
+            return compute().merge(other.join());
         }
 
-        private DisjointSetStruct merge(DisjointSetStruct a, DisjointSetStruct b) {
-            return a.merge(b);
+        public Merge add(DisjointSetStruct struct) {
+            structs.push(struct);
+            return this;
         }
     }
-
-
-
 }
