@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = "-Xmx8G")
+@Fork(value = 1, jvmArgs = "-Xmx4G")
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
@@ -34,8 +34,7 @@ public class ParallelUnionFindBenchmark {
 
     private static Graph graph;
 
-    @Param({/*"100", "1000", "10000", */"100000"})
-    private static int setSize;
+    private static int setSize = 150000;
 
     @Setup
     public static void setup() {
@@ -84,7 +83,7 @@ public class ParallelUnionFindBenchmark {
             temp = t;
         }
     }
-/*
+
     @Benchmark
     public Object _01_parallelUnionFind_10000() {
         return new ParallelUnionFind(graph, Pools.DEFAULT, 10_000)
@@ -97,11 +96,11 @@ public class ParallelUnionFindBenchmark {
         return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
                 .compute()
                 .getStruct();
-    }*/
+    }
 
     @Benchmark
-    public Object _03_parallelUnionFind_200000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 200_000)
+    public Object _03_parallelUnionFind_400000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
