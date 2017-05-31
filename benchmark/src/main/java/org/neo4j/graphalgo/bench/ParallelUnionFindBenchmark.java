@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFind;
 import org.neo4j.graphalgo.impl.UnionFind;
@@ -25,8 +26,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Threads(1)
 @Fork(1)
-@Warmup(iterations = 10)
-@Measurement(iterations = 10)
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -34,27 +35,40 @@ public class ParallelUnionFindBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
-    private GraphDatabaseAPI db;
+    private static GraphDatabaseAPI db;
 
-    private Graph graph;
+    private static Graph graph;
 
     @Setup
-    public void setup() {
+    public static void setup() {
 
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
-        // creates disconnected graph with 4 connected subgraphs
-        createTestGraph(10, 11, 12, 13, 14, 15, 16, 17);
+
+        int mul = 10000;
+        try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
+            createTestGraph(10 * mul, 11 * mul, 12 * mul, 13 * mul, 14 * mul, 15 * mul, 16 * mul, 17 * mul);
+        }
+
+        db.execute("MATCH (n) RETURN n");
 
         graph = new GraphLoader(db)
                 .withAnyLabel()
                 .withRelationshipType(RELATIONSHIP_TYPE)
                 .load(HeavyGraphFactory.class);
+
     }
 
-    private void createTestGraph(int... setSizes) {
+    @TearDown
+    public void shutdown() {
+        db.shutdown();
+        Pools.DEFAULT.shutdownNow();
+    }
+
+
+    private static void createTestGraph(int... setSizes) {
         try (Transaction tx = db.beginTx()) {
             for (int setSize : setSizes) {
                 createLine(setSize);
@@ -63,7 +77,7 @@ public class ParallelUnionFindBenchmark {
         }
     }
 
-    private void createLine(int setSize) {
+    private static void createLine(int setSize) {
         Node temp = db.createNode();
         for (int i = 1; i < setSize; i++) {
             Node t = db.createNode();
@@ -74,7 +88,7 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object _01_parallelUnionFind() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 20)
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
                 .compute()
                 .getStruct();
     }
