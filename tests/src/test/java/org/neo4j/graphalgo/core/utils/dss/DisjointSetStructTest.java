@@ -103,17 +103,14 @@ public class DisjointSetStructTest {
     }
 
     @Test
-    public void testMergeDSSNonOverlapping() throws Exception {
+    public void testMergeDSSOverlapping() throws Exception {
 
-        final DisjointSetStruct a = create(10, set(0, 1, 2, 3), set(4, 5, 6));
-        final DisjointSetStruct b = create(10, set(0, 5, 8));
+        final DisjointSetStruct a = create(10, set(0, 1, 2, 3), set(4, 5, 6), set(7, 8), set(9));
+        final DisjointSetStruct b = create(10, set(0, 5), set(7, 9));
 
-        printDss(a);
-        printDss(b);
-
+        assertEquals(4, a.getSetCount());
         a.merge(b);
-
-        printDss(a);
+        assertEquals(2, a.getSetCount());
     }
 
     private static void printDss(DisjointSetStruct struct) {
@@ -135,8 +132,8 @@ public class DisjointSetStructTest {
     private static DisjointSetStruct create(int size, int[]... sets) {
         final DisjointSetStruct dss = new DisjointSetStruct(size).reset();
         for (int[] set : sets) {
-            if (set.length < 2) {
-                throw new IllegalArgumentException("Sets must contain at least 2 elements");
+            if (set.length < 1) {
+                throw new IllegalArgumentException("Sets must contain at least one element");
             }
             for (int i = 1; i < set.length; i++) {
                 dss.union(set[0], set[i]);
