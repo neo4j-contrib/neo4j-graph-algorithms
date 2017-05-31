@@ -4,14 +4,9 @@ import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
-import org.neo4j.graphalgo.core.sources.LazyIdMapper;
-import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFind;
-import org.neo4j.graphalgo.impl.UnionFind;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -25,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(1)
+@Fork(value = 1, jvmArgs = "-Xmx8G")
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
@@ -39,8 +34,8 @@ public class ParallelUnionFindBenchmark {
 
     private static Graph graph;
 
-
-    private static int mul = 100000;
+    @Param({"100", "1000", "10000", "100000"})
+    private static int sizeMultiplier;
 
     @Setup
     public static void setup() {
@@ -51,7 +46,9 @@ public class ParallelUnionFindBenchmark {
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(10 * mul, 11 * mul, 12 * mul, 13 * mul, 14 * mul, 15 * mul, 16 * mul, 17 * mul);
+            createTestGraph(
+                    sizeMultiplier, sizeMultiplier, sizeMultiplier, sizeMultiplier,
+                    sizeMultiplier, sizeMultiplier, sizeMultiplier, sizeMultiplier);
         }
 
         db.execute("MATCH (n) RETURN n");
@@ -61,7 +58,6 @@ public class ParallelUnionFindBenchmark {
                 .withAnyLabel()
                 .withRelationshipType(RELATIONSHIP_TYPE)
                 .load(HeavyGraphFactory.class);
-
     }
 
     @TearDown
@@ -90,14 +86,21 @@ public class ParallelUnionFindBenchmark {
     }
 
     @Benchmark
-    public Object _01_parallelUnionFind() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, mul)
+    public Object _01_parallelUnionFind_10000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 10_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
-    public Object _02_sequentialUnionFind() {
+    public Object _02_parallelUnionFind_100000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object _03_sequentialUnionFind() {
         return new GraphUnionFind(graph)
                 .compute();
 
