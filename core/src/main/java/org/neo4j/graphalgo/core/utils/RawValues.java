@@ -1,11 +1,20 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphdb.Direction;
+
+import java.util.function.ToLongFunction;
+
 /**
  * TODO: find suitable name or move
  *
  * @author mknblch
  */
 public class RawValues {
+
+    public static final IdCombiner OUTGOING = RawValues::combineIntInt;
+
+    public static final IdCombiner INCOMING = (s, e) -> RawValues.combineIntInt(e, s);
 
     /**
      * shifts head into the most significant 4 bytes of the long
@@ -16,6 +25,10 @@ public class RawValues {
      */
     public static long combineIntInt(int head, int tail) {
         return ((long) head << 32) | tail & 0xFFFFFFFFL ;
+    }
+
+    public static IdCombiner combiner(Direction direction) {
+        return direction == Direction.OUTGOING ? OUTGOING : INCOMING;
     }
 
     /**

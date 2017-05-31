@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Relationship;
@@ -162,7 +163,8 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
                 Iterator<T> relIter = test.first();
                 while (relIter.hasNext()) {
                     T cursor = relIter.next();
-                    if (cursor.relationshipId == rel.getId()) {
+                    long relId = RawValues.combineIntInt((int) rel.getStartNode().getId(), (int) rel.getEndNode().getId());
+                    if (cursor.relationshipId == relId) {
                         hasRelation = true;
                         assertEquals(
                                 rs,
