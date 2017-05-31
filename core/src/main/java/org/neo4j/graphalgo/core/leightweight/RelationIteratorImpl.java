@@ -1,9 +1,9 @@
 package org.neo4j.graphalgo.core.leightweight;
 
-
-
-import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;
 
@@ -15,8 +15,7 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor> {
     private final RelationshipCursor cursor = new RelationshipCursor();
     private final IntArray.Cursor adjCursor;
 
-    private final LongLongMap relationIdMapping;
-    private long relationId;
+    private final IdCombiner relId;
 
     private int[] array;
     private int pos;
@@ -26,22 +25,21 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor> {
             int sourceNodeId,
             long offset,
             long length,
-            LongLongMap relationIdMapping,
-            IntArray adjacency) {
-        this(sourceNodeId, offset, length, relationIdMapping, adjacency, adjacency.newCursor());
+            IntArray adjacency,
+            Direction direction) {
+        this(sourceNodeId, offset, length, adjacency, adjacency.newCursor(), direction);
     }
 
     RelationIteratorImpl(
             int sourceNodeId,
             long offset,
             long length,
-            LongLongMap relationIdMapping,
             IntArray adjacency,
-            IntArray.Cursor adjCursor) {
-        relationId = offset;
-        this.relationIdMapping = relationIdMapping;
+            IntArray.Cursor adjCursor,
+            Direction direction) {
         cursor.sourceNodeId = sourceNodeId;
         this.adjCursor = adjacency.cursor(offset, length, adjCursor);
+        relId = RawValues.combiner(direction);
         nextPage();
     }
 
@@ -52,8 +50,8 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor> {
 
     @Override
     public RelationshipCursor next() {
-        cursor.relationshipId = relationIdMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
+        cursor.relationshipId = relId.apply(cursor);
         return cursor;
     }
 

@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.core.leightweight;
 
-import com.carrotsearch.hppc.LongLongHashMap;
-import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
@@ -26,7 +24,6 @@ public final class LightGraphFactory extends GraphFactory {
     private long[] outOffsets;
     private IntArray adjacency;
     private WeightMapping weights;
-    private LongLongMap relationIdMapping;
     private long adjacencyIdx;
     protected int nodeCount;
     private int relationCount;
@@ -64,9 +61,6 @@ public final class LightGraphFactory extends GraphFactory {
         mapping = new IdMap(nodeCount);
         inOffsets = new long[nodeCount];
         outOffsets = new long[nodeCount];
-        relationIdMapping = new LongLongHashMap(
-                (int) Math.ceil(relationCount / 0.99),
-                0.99);
         adjacency = IntArray.newArray(relationCount + nodeCount * 2L);
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
@@ -98,7 +92,6 @@ public final class LightGraphFactory extends GraphFactory {
         return new LightGraph(
                 mapping,
                 weights,
-                relationIdMapping,
                 adjacency,
                 inOffsets,
                 outOffsets
@@ -144,8 +137,6 @@ public final class LightGraphFactory extends GraphFactory {
                 }
 
                 relDegree++;
-                relationIdMapping.put(idx, rel.id());
-
                 try (Cursor<PropertyItem> weights = rel.property(weightId)) {
                     if (weights.next()) {
                         this.weights.set(idx, weights.get().value());
