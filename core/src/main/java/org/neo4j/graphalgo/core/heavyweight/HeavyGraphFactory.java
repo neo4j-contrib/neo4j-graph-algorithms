@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -182,7 +183,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 if (targetNodeId == -1) {
                     continue;
                 }
-                final long relationId = rel.id();
+                final long relationId = RawValues.combineIntInt(nodeId, targetNodeId);
 
                 try (Cursor<PropertyItem> weights = rel.property(relWeightId)) {
                     if (weights.next()) {
@@ -190,7 +191,7 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
 
-                matrix.addOutgoing(nodeId, targetNodeId, relationId);
+                matrix.addOutgoing(nodeId, targetNodeId);
             }
         }
         matrix.armIn(nodeId, inDegree);
@@ -202,8 +203,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 if (targetNodeId == -1) {
                     continue;
                 }
-                final long relationId = rel.id();
-                matrix.addIncoming(targetNodeId, nodeId, relationId);
+                matrix.addIncoming(targetNodeId, nodeId);
             }
         }
     }
