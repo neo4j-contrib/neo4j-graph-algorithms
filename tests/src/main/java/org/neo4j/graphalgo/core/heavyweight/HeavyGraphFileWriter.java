@@ -22,7 +22,6 @@ import java.util.Arrays;
 public final class HeavyGraphFileWriter {
 
     private static final long BYTES_INT = Integer.BYTES;
-    private static final long BYTES_LONG = Long.BYTES;
 
     private static final MethodHandle CONTAINER = PrivateLookup.field(HeavyGraph.class, AdjacencyMatrix.class, "container");
     private static final MethodHandle ID_MAP = PrivateLookup.field(HeavyGraph.class, IdMap.class, "nodeIdMap");
@@ -41,8 +40,6 @@ public final class HeavyGraphFileWriter {
                     container.inOffsets,
                     container.outgoing,
                     container.incoming,
-                    container.outgoingIds,
-                    container.incomingIds,
                     nodeIdMap,
                     weights
             );
@@ -57,8 +54,6 @@ public final class HeavyGraphFileWriter {
             int[] inOffsets,
             int[][] outgoing,
             int[][] incoming,
-            long[][] outgoingIds,
-            long[][] incomingIds,
             IdMap idMap,
             WeightMap weights) throws IOException {
 
@@ -66,8 +61,6 @@ public final class HeavyGraphFileWriter {
                 + BYTES_INT + inOffsets.length * BYTES_INT
                 + BYTES_INT + Arrays.stream(outgoing).mapToLong(a -> BYTES_INT + a.length * BYTES_INT).sum()
                 + BYTES_INT + Arrays.stream(incoming).mapToLong(a -> BYTES_INT + a.length * BYTES_INT).sum()
-                + BYTES_INT + Arrays.stream(outgoingIds).mapToLong(a -> BYTES_INT + a.length * BYTES_LONG).sum()
-                + BYTES_INT + Arrays.stream(incomingIds).mapToLong(a -> BYTES_INT + a.length * BYTES_LONG).sum()
                 + IdMapSerialization.bytes(idMap)
                 + WeightMappingSerialization.bytes(weights);
 
@@ -101,22 +94,6 @@ public final class HeavyGraphFileWriter {
                 out.writeVInt(ints.length);
                 for (int i : ints) {
                     out.writeVInt(i);
-                }
-            }
-
-            out.writeVInt(outgoingIds.length);
-            for (long[] longs : outgoingIds) {
-                out.writeVInt(longs.length);
-                for (long i : longs) {
-                    out.writeVLong(i);
-                }
-            }
-
-            out.writeVInt(incomingIds.length);
-            for (long[] longs : incomingIds) {
-                out.writeVInt(longs.length);
-                for (long i : longs) {
-                    out.writeVLong(i);
                 }
             }
 
