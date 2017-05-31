@@ -43,7 +43,7 @@ partitionProperty - simple label propagation kernel
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
 | iterations | int | 1 | yes | number of iterations
-| weightProperty | string | 'weight' | yes | property name that contains weight
+| weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
 | partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside
 | write | boolean | true | yes | if result should be written back as node property
 

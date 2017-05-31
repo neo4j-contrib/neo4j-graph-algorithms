@@ -38,7 +38,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank caculation
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'pagerank' | yes | property name written back to
-| weightProperty | string | 'score' | yes | property name that contains weight
+| weightProperty | string | 'score' | yes | property name that contains weight.Must be numeric.
 |===
 
 .results

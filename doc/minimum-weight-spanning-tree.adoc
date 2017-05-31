@@ -46,7 +46,7 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 |===
 | name | type | default | optional | description
 | node  | Node | null | no | node to load from the graph
-| weightProperty | string | 'cost' | yes | property name that contains weight
+| weightProperty | string | 'cost' | yes | property name that contains weight. Must be numeric.
 | nodeLabelOrQuery | string | null | yes |  label to load from the graph, if null load all nodes
 | relationshipTypeOrQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
