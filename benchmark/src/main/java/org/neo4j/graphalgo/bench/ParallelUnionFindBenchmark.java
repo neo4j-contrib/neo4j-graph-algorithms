@@ -85,15 +85,15 @@ public class ParallelUnionFindBenchmark {
     }
 
     @Benchmark
-    public Object _01_parallelUnionFind_10000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 10_000)
+    public Object _01_parallelUnionFind_50000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 50_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
-    public Object _02_parallelUnionFind_100000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+    public Object _02_parallelUnionFind_200000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 200_000)
                 .compute()
                 .getStruct();
     }
