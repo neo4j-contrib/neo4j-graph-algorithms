@@ -6,12 +6,11 @@ import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.utils.Exporter;
-import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -36,14 +35,17 @@ public final class DisjointSetStruct {
     }
 
     public DisjointSetStruct merge(DisjointSetStruct other) {
+
         if (other.capacity != this.capacity) {
-            throw new IllegalArgumentException("Capacity differs");
+            throw new IllegalArgumentException("Different Capacity");
         }
 
-        other.forEach(((nodeId, setId) -> {
-            union(setId, nodeId);
-            return true;
-        }));
+        for (int i = other.parent.length - 1; i >= 0; i--) {
+            if (other.parent[i] == -1) {
+                continue;
+            }
+            union(i, other.find(i));
+        }
 
         return this;
     }
@@ -52,9 +54,7 @@ public final class DisjointSetStruct {
      * reset the container
      */
     public DisjointSetStruct reset() {
-        for (int i = 0; i < capacity; i++) {
-            parent[i] = i;
-        }
+        Arrays.fill(parent, -1);
         return this;
     }
 
@@ -64,7 +64,7 @@ public final class DisjointSetStruct {
      */
     public void forEach(Consumer consumer) {
         for (int i = parent.length - 1; i >= 0; i--) {
-            if (!consumer.consume(i, findPC(i))) {
+            if (!consumer.consume(i, find(i))) {
                 break;
             }
         }
@@ -120,7 +120,7 @@ public final class DisjointSetStruct {
      * @return an id of the set it belongs to
      */
     public int findNoOpt(int p) {
-        while (p != parent[p]) {
+        while (-1 != parent[p]) {
             p = parent[parent[p]];
         }
         return p;
@@ -134,7 +134,7 @@ public final class DisjointSetStruct {
      * @return an id of the set it belongs to
      */
     public int findPH(int p) {
-        while (p != parent[p]) {
+        while (-1 != parent[p]) {
             p = parent[p] = parent[parent[p]];
         }
         return p;
@@ -148,7 +148,7 @@ public final class DisjointSetStruct {
      * @return an id of the set it belongs to
      */
     public int findPC(int p) {
-        if (parent[p] == p) return p;
+        if (parent[p] == -1) return p;
         // path compression optimization
         parent[p] = find(parent[p]); // balance tree while traversing
         return parent[p];
@@ -218,6 +218,7 @@ public final class DisjointSetStruct {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();
+        builder.append("\n");
         for (int i = 0; i < count(); i++) {
             builder.append(String.format(" %d ", i));
         }
