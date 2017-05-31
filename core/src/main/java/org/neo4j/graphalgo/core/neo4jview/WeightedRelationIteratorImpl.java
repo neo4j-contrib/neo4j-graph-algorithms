@@ -3,6 +3,8 @@ package org.neo4j.graphalgo.core.neo4jview;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -27,6 +29,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
     private final long originalNodeId;
     private final RelationshipIterator relationships;
     private final ReadOperations read;
+    private final IdCombiner relId;
     private double defaultWeight;
 
     WeightedRelationIteratorImpl(Graph graph, GraphDatabaseAPI api, int sourceNodeId, Direction direction, int relationId, int propertyId, double propertyDefaultWeight) throws EntityNotFoundException {
@@ -46,6 +49,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
         }
         this.cursor = new WeightedRelationshipCursor();
         cursor.sourceNodeId = sourceNodeId;
+        relId = RawValues.combiner(direction);
     }
 
     @Override
@@ -64,8 +68,8 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
         final Cursor<RelationshipItem> relCursor = read.relationshipCursor(relationId);
         relCursor.next();
         final RelationshipItem item = relCursor.get();
-        cursor.relationshipId = relationId;
         cursor.targetNodeId = graph.toMappedNodeId(item.otherNode(originalNodeId));
+        cursor.relationshipId = relId.apply(cursor);
         final Cursor<PropertyItem> propertyCursor = item.property(propertyKey);
         if (propertyCursor.next()) {
             cursor.weight = ((Number) propertyCursor.get().value()).doubleValue();
