@@ -61,8 +61,8 @@ CALL algo.betweenness.stream() YIELD nodeId, centrality
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) 
-YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration
+CALL algo.betweenness('','', {write:true, writeProperty:'centrality'}) 
+YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis
 ----
 
 .Results
@@ -87,7 +87,7 @@ We can see that Alice is the main broker in this network and Charles is a minor 
 [source,cypher]
 ----
 CALL algo.betweenness(label:String, relationship:String, {write:true, stats:true, writeProperty:'centrality'}) 
-YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration 
+YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis 
 - calculates betweenness centrality and potentially writes back
 ----
 
@@ -106,13 +106,13 @@ YIELD nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, eval
 [opts="header",cols="1,1,6"]
 |===
 | name | type | description
-| nodeCount | int | number of nodes considered
+| nodes | int | number of nodes considered
 | minCentrality | int | minimum centrality value
 | maxCentrality | int | maximum centrality value
 | sumCentrality | int | sum of all centrality values
-| loadDuration | int | milliseconds for loading data
-| evalDuration | int | milliseconds for running the algorithm
-| writeDuration | int | milliseconds for writing result data back
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
 
 
 |===

@@ -1,8 +1,14 @@
 = Connected Components
 
-_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. 
+_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. In graph theory, a connected component of an undirected graph is a subgraph in which any two vertices are connected to each other by paths, and which is connected to no additional vertices in the graph.
 
 == History, Explanation
+
+The _Connected Components_ of a graph represent, in general terms, the pieces of the graph. Two vertices are in the same component of graph if and only if there is some path between them.
+
+Finding connected components is at the heart of many graph applications. For example, consider the problem of identifying clusters in a set of items. We can represent each item by a node and add an edge between each pair of items that are deemed similar. The connected components of this graph correspond to different classes of items.
+
+Testing whether a graph is connected is an essential preprocessing step for every graph algorithm. Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be. Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
 
 == When to use it / use-cases
 
@@ -10,13 +16,165 @@ _Connected Components_ or _UnionFind_ basically finds sets of connected nodes wh
 
 == Algorithm explanation on simple sample graph
 
+Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph
+between those vertices. A connected component of an undirected graph is a maximal connected
+subgraph of the graph. That means that the direction of the relationships  in our graph have no influence as we treat our graph as undirected. We have two implementations of connected components algorithm. First implementations treats the graph as unweighted and the second version is weighted, where you can define the threshold of the weight above which relationships are created. 
+
+image::img/connected_components.png[]
+
+.Create sample graph
 [source,cypher]
 ----
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
+,(nAlice)-[:FRIEND{weight:4}]->(nCharles)
+,(nMark)-[:FRIEND{weight:1}]->(nDoug)
+,(nMark)-[:FRIEND{weight:2}]->(nMichael)
+
 ----
+
+=== Unweighted version:
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.unionFind.stream('User', 'FRIEND', {}) 
+YIELD nodeId,setId
+----
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.unionFind('User', 'FRIEND', {write:true, clusterProperty:"cluster"}) 
+YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
+----
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | setId
+| Alice | 0
+| Charles | 0
+| Bridget | 0
+| Michael | 4
+| Doug | 4
+| Mark | 4 
+|===
+
+Results show us, that we have two distinct group of users that have no link between them. First group has members Alice,Charles,Bridget and the second group are Michael,Doug,Mark.
+
+
+
+.We can also easily check the number and size of clusters using cypher.
+[source,cypher]
+----
+MATCH (u:User)
+RETURN distinct(u.cluster) as cluster,count(*) as size_of_cluster ORDER by size_of_cluster DESC 
+----
+=== Weighted version:
+
+If you define the property that holds the weight(weightProperty) and the threshold,it means the nodes are only connected if the threshold on the weight of the relationship is high enough otherwise the relationship is thrown away.
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
+YIELD nodeId,setId
+----
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.unionFind('User', 'FRIEND', {write:true, clusterProperty:"cluster",weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
+YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | setId
+| Alice | 0
+| Charles | 0
+| Bridget | 1
+| Michael | 4
+| Doug | 4
+| Mark | 4 
+|===
+
+We can observe, that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship was thrown away and regarded as not existing. 
 
 == Example Usage
 
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.unionFind(label:String, relationship:String, {threshold:0.42,
+defaultValue:1.0, write: true, clusterProperty:'cluster',weightProperty:'weight'}) 
+YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
+- finds connected clusters and potentially writes back to the node as a property cluster. 
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| write | boolean | true | yes | if result should be written back as node property
+| clusterProperty | string | 'cluster' | yes | property name written back the id of the cluster particular node belongs to
+| threshold | float | null | yes | value of the weight above which the relationship is not thrown away
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| setCount | int | number of clusters found
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0) 
+YIELD nodeId, setId - yields a setId to each node id
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| setId | int | cluster id
+|===
+
 == References
+
+http://math.hws.edu/eck/cs327_s04/chapter9.pdf
+
+https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
 
 == Implementation Details
 

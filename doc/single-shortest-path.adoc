@@ -14,6 +14,34 @@ _All Pairs Shortest Path_ on the other hand calculates a shortest path forest co
 
 [source,cypher]
 ----
+MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
+CALL algo.shortestPath.stream(start, end, 'cost') 
+YIELD nodeId, cost
+                       
+----
+
+
+[source,cypher]
+----
+MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
+CALL algo.shortestPath(start, end, 'cost') 
+YIELD loadDuration, evalDuration, nodeCount, totalCost
+
+----
+
+[source,cypher]
+----
+MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0)
+YIELD nodeId, distance RETURN nodeId, distance
+
+----
+
+[source,cypher]
+----
+
+MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp'})
+YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration
+
 ----
 
 == Example Usage

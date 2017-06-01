@@ -1,6 +1,6 @@
 = Page Rank
 
-PageRank is Googles popular search algorithm.
+PageRank is Googles popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites
 
 == History, Explanation
 
@@ -22,7 +22,10 @@ CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
 .running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, property - calculates page rank and potentially writes back
+CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, 
+write: true, weightProperty:'score',writeProperty:"pagerank"}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
+- calculates page rank and potentially writes back
 ----
 
 .parameters
@@ -31,26 +34,33 @@ CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFact
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
-| iterations | int | 5 | yes | how many iterations of page-rank to run
+| iterations | int | 20 | yes | how many iterations of page-rank to run
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank caculation
 | write | boolean | true | yes | if result should be written back as node property
-| scoreProperty | string | 'score' | yes | property name written back to
+| writeProperty | string | 'pagerank' | yes | property name written back to
+| weightProperty | string | 'score' | yes | property name that contains weight.Must be numeric.
 |===
 
 .results
 [opts="header",cols="1,1,6"]
 |===
 | name | type | description
+| nodes | int | number of nodes considered
 | iterations | int | number of iterations run
 | dampingFactor | float | damping factor used
-include::syntax.adoc[tags=stats-results]
+| writeProperty | string | property name written back to
+| write | boolean | if result was written back as node property
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
 |===
 
 
 .running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results
+CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results
 ----
 
 .parameters
@@ -68,7 +78,7 @@ CALL algo.pageRankStream(label:String, relationship:String, {iterations:20, damp
 |===
 | name | type | description
 | node | long | node id
-| score | float | page-rank weight between xxx and yyyy
+| score | float | page-rank weight 
 |===
 
 == Constraints / when not to use it
