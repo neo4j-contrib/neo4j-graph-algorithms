@@ -110,11 +110,11 @@ public final class PageRankTest {
 
         try (Transaction tx = db.beginTx()) {
             expected.put(db.findNode(label, "name", "a").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "b").getId(), 0.1968);
-            expected.put(db.findNode(label, "name", "c").getId(), 0.1822);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.0219);
+            expected.put(db.findNode(label, "name", "b").getId(), 0.1917);
+            expected.put(db.findNode(label, "name", "c").getId(), 0.1781);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.0218);
             expected.put(db.findNode(label, "name", "e").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.0219);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.0218);
             expected.put(db.findNode(label, "name", "g").getId(), 0.0150);
             expected.put(db.findNode(label, "name", "h").getId(), 0.0150);
             expected.put(db.findNode(label, "name", "i").getId(), 0.0150);
@@ -127,7 +127,8 @@ public final class PageRankTest {
                 .withRelationshipType("TYPE1")
                 .load(graphImpl);
 
-        final double[] ranks = new PageRankAlgo(graph, graph, graph, graph, 0.85).compute(20).getPageRank();
+        final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();
+
         System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
@@ -135,7 +136,7 @@ public final class PageRankTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    1e-4
+                    1e-3
             );
         });
     }

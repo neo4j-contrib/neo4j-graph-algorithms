@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -74,7 +75,6 @@ public class HeavyGraphFactory extends GraphFactory {
 
     /* test-private */ Graph build(int batchSize) {
         final IdMap idMap = new IdMap(nodeCount);
-        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
 
         final WeightMapping relWeigths = relWeightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
@@ -114,16 +114,26 @@ public class HeavyGraphFactory extends GraphFactory {
                 ),
                 threadPool);
 
-        for (ImportTask task : tasks) {
-            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
-        }
-
         return new HeavyGraph(
                 idMap,
-                matrix,
+                buildAdjacencyMatrix(tasks),
                 relWeigths,
                 nodeWeights,
                 nodeProps);
+    }
+
+    private AdjacencyMatrix buildAdjacencyMatrix(Collection<ImportTask> tasks) {
+        if (tasks.size() == 1) {
+            ImportTask task = tasks.iterator().next();
+            if (task.matrix.capacity() == task.nodeCount) {
+                return task.matrix;
+            }
+        }
+        AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
+        for (ImportTask task : tasks) {
+            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
+        }
+        return matrix;
     }
 
     private static void readNode(
@@ -173,7 +183,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 if (targetNodeId == -1) {
                     continue;
                 }
-                final long relationId = rel.id();
+                final long relationId = RawValues.combineIntInt(nodeId, targetNodeId);
 
                 try (Cursor<PropertyItem> weights = rel.property(relWeightId)) {
                     if (weights.next()) {
@@ -181,7 +191,7 @@ public class HeavyGraphFactory extends GraphFactory {
                     }
                 }
 
-                matrix.addOutgoing(nodeId, targetNodeId, relationId);
+                matrix.addOutgoing(nodeId, targetNodeId);
             }
         }
         matrix.armIn(nodeId, inDegree);
@@ -193,8 +203,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 if (targetNodeId == -1) {
                     continue;
                 }
-                final long relationId = rel.id();
-                matrix.addIncoming(targetNodeId, nodeId, relationId);
+                matrix.addIncoming(targetNodeId, nodeId);
             }
         }
     }
@@ -219,6 +228,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 WeightMapping nodeWeights,
                 WeightMapping nodeProps,
                 int... relationId) {
+            int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
             this.nodeOffset = nodeOffset;
             this.idMap = idMap;
             this.nodes = nodes;
@@ -226,7 +236,7 @@ public class HeavyGraphFactory extends GraphFactory {
             this.nodeWeights = nodeWeights;
             this.nodeProps = nodeProps;
             this.relationId = relationId;
-            this.matrix = new AdjacencyMatrix(batchSize);
+            this.matrix = new AdjacencyMatrix(nodeSize);
             this.nodeCount = 0;
         }
 

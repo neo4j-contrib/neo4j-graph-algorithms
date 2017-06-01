@@ -1,8 +1,10 @@
 = Strongly Connected Components
 
-_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC.
+_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. The strongly connected components  of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.There are several algorithms to compute the SCC.
 
 == History, Explanation
+
+Decomposing a directed graph into its strongly connected components is a classic application of depth-first search. The problem of finding connected components is at the heart of many graph application. Generally speaking, the connected components of the graph correspond to different classes of objects. The first linear-time algorithm for strongly connected components is due to Tarjan (1972).
 
 == When to use it / use-cases
 
@@ -10,11 +12,93 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 
 == Algorithm explanation on simple sample graph
 
+image::img/strongly_connected_components.png[]
+
+A directed graph is strongly connected if there is a path between all pairs of vertices. This algorithms treats the graph as directed, so the direction of the relationship is important and strongly connected compoment exists only if there are relationships between nodes in both direction. 
+
+.Create sample graph
 [source,cypher]
 ----
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FOLLOW]->(nBridget)
+,(nAlice)-[:FOLLOW]->(nCharles)
+,(nMark)-[:FOLLOW]->(nDoug)
+,(nMark)-[:FOLLOW]->(nMichael)
+,(nBridget)-[:FOLLOW]->(nMichael)
+,(nDoug)-[:FOLLOW]->(nMark)
+,(nMichael)-[:FOLLOW]->(nAlice)
+,(nAlice)-[:FOLLOW]->(nMichael)
+,(nBridget)-[:FOLLOW]->(nAlice)
+,(nMichael)-[:FOLLOW]->(nBridget)
 ----
 
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.scc('User','FOLLOW', {write:true,clusterProperty:'cluster'})
+YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | cluster
+| Alice | 1
+| Bridget | 1
+| Michael | 1
+| Charles | 0
+| Doug | 2
+| Mark | 2 
+|===
+
+We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second compomenet has Doug and Mark. 
+
+.Find the largest cluster
+[source,cypher]
+----
+MATCH (u:User)
+RETURN distinct(u.cluster) as cluster,count(*) as size_of_cluster ORDER by size_of_cluster DESC LIMIT 1
+----
 == Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.scc(label:String, relationship:String, {write:true,clusterProperty:'cluster'}) 
+YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
+
+- finds strongly connected clusters and potentially writes back to the node as a property cluster. 
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| clusterProperty | string | 'cluster' | yes | property name written back to
+
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| setCount | int | number of clusters found
+| maxSetSize | int | number of members in biggest cluster
+| minSetSize | int | number of members in smallest cluster
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
 
 == References
 

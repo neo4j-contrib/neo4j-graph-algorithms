@@ -1,9 +1,11 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 
-import com.carrotsearch.hppc.LongLongMap;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;
 
@@ -15,8 +17,8 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
     private final WeightedRelationshipCursor cursor = new WeightedRelationshipCursor();
     private final IntArray.Cursor adjCursor;
     private final WeightMapping weightMapping;
+    private final IdCombiner relId;
 
-    private final LongLongMap relationIdMapping;
     private long relationId;
 
     private int[] array;
@@ -28,15 +30,15 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
             long offset,
             long length,
             WeightMapping weightMapping,
-            LongLongMap relationIdMapping,
-            IntArray adjacency) {
+            IntArray adjacency,
+            Direction direction) {
         this(sourceNodeId,
                 offset,
                 length,
                 weightMapping,
-                relationIdMapping,
                 adjacency,
-                adjacency.newCursor());
+                adjacency.newCursor(),
+                direction);
     }
 
     WeightedRelationIteratorImpl(
@@ -44,14 +46,14 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
             long offset,
             long length,
             WeightMapping weightMapping,
-            LongLongMap relationIdMapping,
             IntArray adjacency,
-            IntArray.Cursor adjCursor) {
+            IntArray.Cursor adjCursor,
+            Direction direction) {
         this.weightMapping = weightMapping;
         relationId = offset;
-        this.relationIdMapping = relationIdMapping;
         cursor.sourceNodeId = sourceNodeId;
         this.adjCursor = adjacency.cursor(offset, length, adjCursor);
+        relId = RawValues.combiner(direction);
         nextPage();
     }
 
@@ -62,9 +64,9 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
 
     @Override
     public WeightedRelationshipCursor next() {
-        cursor.weight = weightMapping.get(relationId);
-        cursor.relationshipId = relationIdMapping.get(relationId++);
+        cursor.weight = weightMapping.get(relationId++);
         cursor.targetNodeId = array[pos++];
+        cursor.relationshipId = relId.apply(cursor);
         return cursor;
     }
 

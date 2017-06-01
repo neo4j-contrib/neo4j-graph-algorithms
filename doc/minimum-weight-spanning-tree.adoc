@@ -1,11 +1,21 @@
 = Minimum Weight Spanning Tree
 
-A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. 
+A _Minimum Weight Spanning Tree_ (MST) is a subset of the edges of a connected, edge-weighted undirected graph that connects all the vertices together, without any cycles and with the minimum possible total edge weight. That is, it is a spanning tree whose sum of edge weights is as small as possible 
 It can be used to cluster the graph (KMeans).
 
 == History, Explanation
 
+In graph theory, a tree is a way of connecting all the vertices together, so that there is exactly one path from any one vertex, to any other vertex of the tree. If the graph represents a number of cities connected by roads, one could select a number of roads, so that each city can be reached from every other, but that there is no more than one way to travel from one city to another.
+
+Most of the time, graphs are weighted; each connection between two cities has a weight: It might cost something to travel on a given road, or one connection may be longer than the other, this means it takes more time to travel on that connection. 
+
+A minimum spanning tree is a tree. It is different from other trees in that it minimizes the total of the weights attached to the edges. Depending on what the graph looks like, there may be more than one minimum spanning tree. In a graph where all the edges have the same weight, every tree is a minimum spanning tree. If all the edges have different weights, there is exactly one minimal spanning tree.
+
+Czech scientist Otakar Borůvka developed the first known algorithm for finding a minimum spanning tree in 1926. He wanted to solve the problem of finding an efficient coverage of Moravia with electricity. Today, this algorithm is known as Borůvka's algorithm. 
+
 == When to use it / use-cases
+
+There are quite a few use cases for minimum spanning trees. One example would be a telecommunications company which is trying to lay out cables in new neighborhood. If it is constrained to bury the cable only along certain paths (e.g. along roads), then there would be a graph representing which points are connected by those paths. Some of those paths might be more expensive, because they are longer, or require the cable to be buried deeper; these paths would be represented by edges with larger weights. Currency is an acceptable unit for edge weight – there is no requirement for edge lengths to obey normal rules of geometry such as the triangle inequality. A spanning tree for that graph would be a subset of those paths that has no cycles but still connects to every house; there might be several spanning trees possible. A minimum spanning tree would be one with the lowest total cost, thus would represent the least expensive path for laying the cable.
 
 == Constraints / when not to use it
 
@@ -13,11 +23,52 @@ It can be used to cluster the graph (KMeans).
 
 [source,cypher]
 ----
+MATCH(n:Node{start:true}) 
+CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
+YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, relationshipCount 
 ----
 
 == Example Usage
 
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String,
+ relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) 
+YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount
+ 
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| node  | Node | null | no | node to load from the graph
+| weightProperty | string | 'cost' | yes | property name that contains weight. Must be numeric.
+| nodeLabelOrQuery | string | null | yes |  label to load from the graph, if null load all nodes
+| relationshipTypeOrQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'mst' | yes | relationship-type written back as result
+
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| weightSum | int | sum of all weights
+| weightMax | int | maximum value of weight
+| weightMin | int | minimum value of weight
+| relationshipCount | int | number of relationships created
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
 == References
+
+https://en.wikipedia.org/wiki/Minimum_spanning_tree
 
 == Implementation Details
 

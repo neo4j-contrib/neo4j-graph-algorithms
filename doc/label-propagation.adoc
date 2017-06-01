@@ -1,22 +1,67 @@
 = Clustering: Label Propagation
 
-
+_Label Propagation_ algorithm (LPA) is an extremely fast community detection method and is widely used in large scale networks. Community detection and analysis is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
 
 == History, Explanation
 
+Community structure is considered one of the most interesting features in complex networks. Many real-world complex systems exhibit community structure, where individuals with similar properties form a community. The identification of communities in a network is important for understanding the structure of said network, in a specific perspective. Thus, community detection in complex networks gained immense interest over the last decade. A lot of community detection methods were proposed, and one of them is the label propagation algorithm (LPA). The simplicity and time efficiency of the LPA make it a popular community detection method. 
+
+
 == When to use it / use-cases
+
+
 
 == Constraints / when not to use it
 
 == Algorithm explanation on simple sample graph
 
-== Example Usage
-
+.Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.labelPropagation('Label', 'TYPE', 'OUTGOING', {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'});
+CALL algo.labelPropagation('Label', '','OUTGOING', {iterations:1,partitionProperty:'partition', write:true}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty 
 ----
 
+== Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
+weightProperty:'weight', partitionProperty:'partition', write:true}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty,
+partitionProperty - simple label propagation kernel
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
+| iterations | int | 1 | yes | number of iterations
+| weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
+| partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside
+| write | boolean | true | yes | if result should be written back as node property
+
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| iterations | int | number of iterations
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+| weightProperty | string | property name that contains weight
+| partitionProperty | string | property name written back to
+| write | boolean | true | yes | if result was written back as node property
+|===
 == References
 
 == Implementation Details

@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.RawValues;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -71,14 +72,14 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     public void testV0OutgoingForEach() throws Exception {
         graph.forEachRelationship(v0, OUTGOING, relationConsumer);
         verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v0), eq(v2), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), eq(RawValues.combineIntInt(v0, v1)));
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v2), eq(RawValues.combineIntInt(v0, v2)));
     }
 
     @Test
     public void testV1OutgoingForEach() throws Exception {
         graph.forEachRelationship(v1, OUTGOING, relationConsumer);
-        verify(relationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v2), eq(RawValues.combineIntInt(v1, v2)));
     }
 
     @Test
@@ -96,29 +97,29 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     @Test
     public void testV1IncomingForEach() throws Exception {
         graph.forEachRelationship(v1, INCOMING, relationConsumer);
-        verify(relationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v0), eq(RawValues.combineIntInt(v0, v1)));
     }
 
     @Test
     public void testV2IncomingForEach() throws Exception {
         graph.forEachRelationship(v2, INCOMING, relationConsumer);
         verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v0), eq(RawValues.combineIntInt(v0, v2)));
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v1), eq(RawValues.combineIntInt(v1, v2)));
     }
 
     @Test
     public void testV0OutgoingIterator() throws Exception {
         graph.relationshipIterator(v0, OUTGOING).forEachRemaining(consume(relationConsumer));
         verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), eq(RawValues.combineIntInt(v0, v1)));
+        verify(relationConsumer, times(1)).accept(eq(v0), eq(v1), eq(RawValues.combineIntInt(v0, v1)));
     }
 
     @Test
     public void testV1OutgoingIterator() throws Exception {
         graph.relationshipIterator(v1, OUTGOING).forEachRemaining(consume(relationConsumer));
-        verify(relationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v2), eq(RawValues.combineIntInt(v1, v2)));
     }
 
     @Test
@@ -136,29 +137,29 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     @Test
     public void testV1IncomingIterator() throws Exception {
         graph.relationshipIterator(v1, INCOMING).forEachRemaining(consume(relationConsumer));
-        verify(relationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v1), eq(v0), eq(RawValues.combineIntInt(v0, v1)));
     }
 
     @Test
     public void testV2IncomingIterator() throws Exception {
         graph.relationshipIterator(v2, INCOMING).forEachRemaining(consume(relationConsumer));
         verify(relationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong());
-        verify(relationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong());
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v0), eq(RawValues.combineIntInt(v0, v2)));
+        verify(relationConsumer, times(1)).accept(eq(v2), eq(v1), eq(RawValues.combineIntInt(v1, v2)));
     }
 
     @Test
     public void testV0OutgoingWeightedIterator() throws Exception {
         graph.weightedRelationshipIterator(v0, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
         verify(weightedRelationConsumer, times(2)).accept(anyInt(), anyInt(), anyLong(), anyDouble());
-        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v1), anyLong(), eq(1.0));
-        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v2), anyLong(), eq(2.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v1), eq(RawValues.combineIntInt(v0, v1)), eq(1.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v0), eq(v2), eq(RawValues.combineIntInt(v0, v2)), eq(2.0));
     }
 
     @Test
     public void testV1OutgoingWeightedIterator() throws Exception {
         graph.weightedRelationshipIterator(v1, OUTGOING).forEachRemaining(consume(weightedRelationConsumer));
-        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v2), anyLong(), eq(3.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v2), eq(RawValues.combineIntInt(v1, v2)), eq(3.0));
     }
 
     @Test
@@ -176,14 +177,14 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     @Test
     public void testV1IncomingWeightedIterator() throws Exception {
         graph.weightedRelationshipIterator(v1, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
-        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v0), anyLong(), eq(1.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v1), eq(v0), eq(RawValues.combineIntInt(v0, v1)), eq(1.0));
     }
 
     @Test
     public void testV2IncomingWeightedIterator() throws Exception {
         graph.weightedRelationshipIterator(v2, INCOMING).forEachRemaining(consume(weightedRelationConsumer));
-        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v0), anyLong(), eq(2.0));
-        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v1), anyLong(), eq(3.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v0), eq(RawValues.combineIntInt(v0, v2)), eq(2.0));
+        verify(weightedRelationConsumer, times(1)).accept(eq(v2), eq(v1), eq(RawValues.combineIntInt(v1, v2)), eq(3.0));
     }
 
     @Test

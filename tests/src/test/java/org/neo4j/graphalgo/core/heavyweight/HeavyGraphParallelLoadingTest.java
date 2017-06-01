@@ -6,8 +6,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.RandomGraphTestCase;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -145,12 +145,12 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
         final Map<Long, Relationship> relationships = Iterables
                 .stream(node.getRelationships(direction))
                 .collect(Collectors.toMap(
-                        Relationship::getId,
+                        rel -> RawValues.combineIntInt((int) rel.getStartNode().getId(), (int) rel.getEndNode().getId()),
                         Function.identity()));
         graph.forEachRelationship(
                 nodeId,
                 direction,
-                (RelationshipConsumer) (sourceId, targetId, relationId) -> {
+                (sourceId, targetId, relationId) -> {
                     assertEquals(nodeId, sourceId);
                     final Relationship relationship = relationships.remove(
                             relationId);

@@ -81,9 +81,15 @@ public final class ParallelUtil {
         int threads = iterators.size();
 
         if (executor == null || threads == 1) {
-            T task = importer.newImporter(0, iterators.iterator().next());
-            task.run();
-            return Collections.singleton(task);
+            int nodeOffset = 0;
+            Collection<T> tasks = new ArrayList<>(threads);
+            for (PrimitiveIntIterable iterator : iterators) {
+                final T task = importer.newImporter(nodeOffset, iterator);
+                tasks.add(task);
+                task.run();
+                nodeOffset += batchSize;
+            }
+            return tasks;
         } else {
             List<T> tasks = new ArrayList<>(threads);
             int nodeOffset = 0;
@@ -106,11 +112,24 @@ public final class ParallelUtil {
     public static void run(
             Collection<? extends Runnable> tasks,
             ExecutorService executor) {
+        run(tasks, executor, new ArrayList<>(tasks.size()));
+    }
+
+    public static void run(
+            Collection<? extends Runnable> tasks,
+            ExecutorService executor,
+            Collection<Future<?>> futures) {
+
         if (tasks.size() == 1) {
             tasks.iterator().next().run();
             return;
         }
-        final List<Future<?>> futures = new ArrayList<>(tasks.size());
+
+        if (null == executor) {
+            tasks.forEach(Runnable::run);
+            return;
+        }
+
         for (Runnable task : tasks) {
             futures.add(executor.submit(task));
         }
