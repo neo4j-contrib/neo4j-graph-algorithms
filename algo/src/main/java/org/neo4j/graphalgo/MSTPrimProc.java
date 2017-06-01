@@ -38,7 +38,7 @@ public class MSTPrimProc {
     @Procedure(value = "algo.mst", mode = Mode.WRITE)
     @Description("CALL algo.mst(node:Node, property:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, " +
             "write:boolean, writeProperty:String stats:boolean}) " +
-            "YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax, relationshipCount")
+            "YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount")
     public Stream<MSTPrimResult> mst(
             @Name("startNode") Node startNode,
             @Name(value = "property") String propertyName,

@@ -91,9 +91,10 @@ public class UnionFindProcIntegrationTest {
 
     @Test
     public void testUnionFindWriteBack() throws Exception {
-        db.execute("CALL algo.unionFind('', 'TYPE', {write:true}) YIELD setCount, writeDuration")
+        db.execute("CALL algo.unionFind('', 'TYPE', {write:true}) YIELD setCount, writeMillis, nodes")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    assertNotEquals(-1L, row.getNumber("writeDuration"));
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
                     assertEquals(3L, row.getNumber("setCount"));
                     return false;
                 });

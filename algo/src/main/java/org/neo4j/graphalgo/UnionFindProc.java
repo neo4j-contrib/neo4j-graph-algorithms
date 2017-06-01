@@ -34,8 +34,8 @@ public class UnionFindProc {
 
     @Procedure(value = "algo.unionFind", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
-            "{property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
-            "YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration")
+            "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
+            "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
     public Stream<UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,

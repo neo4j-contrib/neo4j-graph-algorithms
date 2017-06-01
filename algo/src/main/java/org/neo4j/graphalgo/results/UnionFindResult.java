@@ -5,17 +5,17 @@ package org.neo4j.graphalgo.results;
  */
 public class UnionFindResult {
 
-    public final Long loadDuration;
-    public final Long evalDuration;
-    public final Long writeDuration;
-    public final Long nodeCount;
+    public final Long loadMillis;
+    public final Long computeMillis;
+    public final Long writeMillis;
+    public final Long nodes;
     public final Long setCount;
 
-    private UnionFindResult(Long loadDuration, Long evalDuration, Long writeDuration, Long nodeCount, Long setCount) {
-        this.loadDuration = loadDuration;
-        this.evalDuration = evalDuration;
-        this.writeDuration = writeDuration;
-        this.nodeCount = nodeCount;
+    private UnionFindResult(Long loadMillis, Long computeMillis, Long writeMillis, Long nodes, Long setCount) {
+        this.loadMillis = loadMillis;
+        this.computeMillis = computeMillis;
+        this.writeMillis = writeMillis;
+        this.nodes = nodes;
         this.setCount = setCount;
     }
 
@@ -25,7 +25,7 @@ public class UnionFindResult {
 
     public static class Builder extends AbstractResultBuilder<UnionFindResult> {
 
-        private long nodeCount = 0;
+        private long nodes = 0;
         private long setCount = 0;
 
         public Builder withSetCount(long setCount) {
@@ -33,13 +33,13 @@ public class UnionFindResult {
             return this;
         }
 
-        public Builder withNodeCount(long nodeCount) {
-            this.nodeCount = nodeCount;
+        public Builder withNodeCount(long nodes) {
+            this.nodes = nodes;
             return this;
         }
 
         public UnionFindResult build() {
-            return new UnionFindResult(loadDuration, evalDuration, writeDuration, nodeCount, setCount);
+            return new UnionFindResult(loadDuration, evalDuration, writeDuration, nodes, setCount);
         }
     }
 }
