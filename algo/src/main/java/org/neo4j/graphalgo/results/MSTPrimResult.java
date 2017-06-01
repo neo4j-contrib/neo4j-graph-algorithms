@@ -5,24 +5,24 @@ package org.neo4j.graphalgo.results;
  */
 public class MSTPrimResult {
 
-    public final Long loadDuration;
-    public final Long evalDuration;
-    public final Long writeDuration;
+    public final Long loadMillis;
+    public final Long computeMillis;
+    public final Long writeMillis;
     public final Double weightSum;
     public final Double weightMin;
     public final Double weightMax;
     public final Long relationshipCount;
 
-    public MSTPrimResult(Long loadDuration,
-                         Long evalDuration,
-                         Long writeDuration,
+    public MSTPrimResult(Long loadMillis,
+                         Long computeMillis,
+                         Long writeMillis,
                          Double weightSum,
                          Double weightMin,
                          Double weightMax,
                          Long relationshipCount) {
-        this.loadDuration = loadDuration;
-        this.evalDuration = evalDuration;
-        this.writeDuration = writeDuration;
+        this.loadMillis = loadMillis;
+        this.computeMillis = computeMillis;
+        this.writeMillis = writeMillis;
         this.weightSum = weightSum;
         this.weightMin = weightMin;
         this.weightMax = weightMax;

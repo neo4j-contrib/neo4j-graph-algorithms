@@ -44,7 +44,7 @@ public class BetweennessCentralityProc {
 
     @Procedure(value = "algo.betweenness", mode = Mode.WRITE)
     @Description("CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD " +
-            "loadDuration, evalDuration, writeDuration, nodeCount, [minCentrality, maxCentrality, meanCentrality] - yields status of evaluation")
+            "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, meanCentrality] - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweenness(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,

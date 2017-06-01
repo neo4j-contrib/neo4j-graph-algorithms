@@ -5,25 +5,25 @@ package org.neo4j.graphalgo.results;
  */
 public class BetweennessCentralityProcResult {
 
-    public final Long loadDuration;
-    public final Long evalDuration;
-    public final Long writeDuration;
-    public final Long nodeCount;
+    public final Long loadMillis;
+    public final Long computeMillis;
+    public final Long writeMillis;
+    public final Long nodes;
     public final Double minCentrality;
     public final Double maxCentrality;
     public final Double sumCentrality;
 
-    private BetweennessCentralityProcResult(Long loadDuration,
-                                            Long evalDuration,
-                                            Long writeDuration,
-                                            Long nodeCount,
+    private BetweennessCentralityProcResult(Long loadMillis,
+                                            Long computeMillis,
+                                            Long writeMillis,
+                                            Long nodes,
                                             Double centralityMin,
                                             Double centralityMax,
                                             Double centralitySum) {
-        this.loadDuration = loadDuration;
-        this.evalDuration = evalDuration;
-        this.writeDuration = writeDuration;
-        this.nodeCount = nodeCount;
+        this.loadMillis = loadMillis;
+        this.computeMillis = computeMillis;
+        this.writeMillis = writeMillis;
+        this.nodes = nodes;
         this.minCentrality = centralityMin;
         this.maxCentrality = centralityMax;
         this.sumCentrality = centralitySum;
@@ -35,13 +35,13 @@ public class BetweennessCentralityProcResult {
 
     public static class Builder extends AbstractResultBuilder<BetweennessCentralityProcResult> {
 
-        private long nodeCount = 0;
+        private long nodes = 0;
         private double centralityMin = -1;
         private double centralityMax = -1;
         private double centralitySum = -1;
 
-        public Builder withNodeCount(long nodeCount) {
-            this.nodeCount = nodeCount;
+        public Builder withNodeCount(long nodes) {
+            this.nodes = nodes;
             return this;
         }
 
@@ -64,7 +64,7 @@ public class BetweennessCentralityProcResult {
             return new BetweennessCentralityProcResult(loadDuration,
                     evalDuration,
                     writeDuration,
-                    nodeCount,
+                    nodes,
                     centralityMin,
                     centralityMax,
                     centralitySum);

@@ -129,20 +129,23 @@ public class BetweennessCentralityIntegrationTest {
     public void testBetweennessWrite() throws Exception {
 
         db.execute("CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
-                "nodeCount, minCentrality, maxCentrality, sumCentrality, loadDuration, evalDuration, writeDuration")
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    System.out.println("nodes: " + row.get("nodeCount"));
+                    System.out.println("nodes: " + row.get("nodes"));
                     System.out.println("min: " + row.get("minCentrality"));
                     System.out.println("max: " + row.get("maxCentrality"));
                     System.out.println("sum: " + row.get("sumCentrality"));
-                    System.out.println("load: " + row.get("loadDuration"));
-                    System.out.println("eval: " + row.get("evalDuration"));
-                    System.out.println("write: " + row.get("writeDuration"));
+                    System.out.println("load: " + row.get("loadMillis"));
+                    System.out.println("eval: " + row.get("computeMillis"));
+                    System.out.println("write: " + row.get("writeMillis"));
 
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
                     assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
                     assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
-                    assertNotEquals(-1L, row.getNumber("writeDuration"));
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
+
 
                     return true;
                 });

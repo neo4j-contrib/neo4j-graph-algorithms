@@ -31,8 +31,8 @@ public class StronglyConnectedComponentsProc {
     public Log log;
 
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
-    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELDS " +
-            "loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,

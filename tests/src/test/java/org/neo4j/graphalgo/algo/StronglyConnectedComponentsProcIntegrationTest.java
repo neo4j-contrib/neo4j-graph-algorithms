@@ -58,17 +58,18 @@ public class StronglyConnectedComponentsProcIntegrationTest {
     @Test
     public void testScc() throws Exception {
 
-        db.execute("CALL algo.scc('Node', 'TYPE', {write:true}) YIELD loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+        db.execute("CALL algo.scc('Node', 'TYPE', {write:true}) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
                 .accept(row -> {
 
-                    System.out.println(row.getNumber("loadDuration").longValue());
-                    System.out.println(row.getNumber("evalDuration").longValue());
-                    System.out.println(row.getNumber("writeDuration").longValue());
+                    System.out.println(row.getNumber("loadMillis").longValue());
+                    System.out.println(row.getNumber("computeMillis").longValue());
+                    System.out.println(row.getNumber("writeMillis").longValue());
                     System.out.println(row.getNumber("setCount").longValue());
                     System.out.println(row.getNumber("maxSetSize").longValue());
                     System.out.println(row.getNumber("minSetSize").longValue());
 
-                    assertNotEquals(-1L, row.getNumber("writeDuration").longValue());
+                    assertNotEquals(-1L, row.getNumber("computeMillis").longValue());
+                    assertNotEquals(-1L, row.getNumber("writeMillis").longValue());
                     assertEquals(2, row.getNumber("setCount").longValue());
                     assertEquals(2, row.getNumber("minSetSize").longValue());
                     assertEquals(3, row.getNumber("maxSetSize").longValue());

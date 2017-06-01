@@ -65,19 +65,19 @@ public class MSTPrimProcIntegrationTest {
     public void testMst() throws Exception {
 
         db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.mst(n, 'cost', {write:true, stats:true}) " +
-                "YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, " +
-                "weightMax, relationshipCount RETURN loadDuration, evalDuration, " +
-                "writeDuration, weightSum, weightMin, weightMax, relationshipCount").accept(res -> {
+                "YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, " +
+                "weightMax, relationshipCount RETURN loadMillis, computeMillis, " +
+                "writeMillis, weightSum, weightMin, weightMax, relationshipCount").accept(res -> {
 
-            System.out.println(res.get("loadDuration"));
-            System.out.println(res.get("evalDuration"));
-            System.out.println(res.get("writeDuration"));
+            System.out.println(res.get("loadMillis"));
+            System.out.println(res.get("computeMillis"));
+            System.out.println(res.get("writeMillis"));
             System.out.println(res.get("weightSum"));
             System.out.println(res.get("weightMin"));
             System.out.println(res.get("weightMax"));
             System.out.println(res.get("relationshipCount"));
 
-            assertNotEquals(-1L, res.getNumber("writeDuration").longValue());
+            assertNotEquals(-1L, res.getNumber("writeMillis").longValue());
             assertEquals(12.0, res.getNumber("weightSum").doubleValue(), 0.01);
             assertEquals(1.0, res.getNumber("weightMin").doubleValue(), 0.01);
             assertEquals(5.0, res.getNumber("weightMax").doubleValue(), 0.01);
