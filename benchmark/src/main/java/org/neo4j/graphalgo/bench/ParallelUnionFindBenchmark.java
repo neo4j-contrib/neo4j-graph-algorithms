@@ -15,6 +15,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.config.Setting;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.io.fs.FileUtils;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.SchemaWriteOperations;
 import org.neo4j.kernel.api.Statement;
@@ -35,10 +36,10 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(value = 1/*, jvmArgs = "-Xmx4G"*/)
+@Fork(value = 1, jvmArgs = "-Xmx4G")
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
-@State(Scope.Benchmark)
+@State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class ParallelUnionFindBenchmark {
@@ -54,19 +55,21 @@ public class ParallelUnionFindBenchmark {
     @Setup
     public static void setup() throws Exception {
 
-        final File storeDir = new File("/tmp/graph.db");
-        storeDir.deleteOnExit();
+        final File storeDir = new File("/tmp/graph.db" + (int)(Math.random() * 10000));
+//        if (storeDir.exists()) {
+//            FileUtils.deleteFile(storeDir);
+//        }
 
         db = (GraphDatabaseAPI) new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder(storeDir)
-//                .setConfig(GraphDatabaseSettings.pagecache_memory, "8G")
+                .setConfig(GraphDatabaseSettings.pagecache_memory, "8G")
                 .newGraphDatabase();
 
         bridge = db.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(10, 100_000);
+            createTestGraph(20, 100_000);
         }
 
         db.execute("MATCH (n) RETURN n");
@@ -125,7 +128,7 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object _02_parallelUnionFind_400000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 400_000)
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
                 .compute()
                 .getStruct();
     }
