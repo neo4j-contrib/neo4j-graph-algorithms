@@ -31,7 +31,7 @@ public class ParallelUnionFind {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
-        this.batchSize = nodeCount / 4; //batchSize;
+        this.batchSize = batchSize;
 
     }
 
