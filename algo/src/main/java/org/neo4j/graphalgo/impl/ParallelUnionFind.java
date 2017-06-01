@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
@@ -23,10 +22,8 @@ public class ParallelUnionFind {
     private final int batchSize;
     private DisjointSetStruct struct;
 
-    private final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
-
     /**
-     * initialize UF
+     * initialize parallel UF
      * @param graph
      * @param executor
      */
@@ -34,22 +31,18 @@ public class ParallelUnionFind {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
-        this.batchSize = batchSize;
+        this.batchSize = nodeCount / 4; //batchSize;
+
     }
 
     public ParallelUnionFind compute() {
-        for (int i = 0; i < nodeCount; i += batchSize) {
-            ufProcesses.add(new UFProcess(i, batchSize));
-        }
-        merge();
+        struct = ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
         return this;
     }
 
+
     public ParallelUnionFind compute(double threshold) {
-        for (int i = 0; i < nodeCount; i += batchSize) {
-            ufProcesses.add(new TUFProcess(i, batchSize, threshold));
-        }
-        merge();
+        struct = ForkJoinPool.commonPool().invoke(new ThresholdUFTask(0, threshold));
         return this;
     }
 
@@ -57,27 +50,28 @@ public class ParallelUnionFind {
         return struct;
     }
 
-    private void merge() {
-        ParallelUtil.run(ufProcesses, executor);
-        final Merge merge = new Merge();
-        ufProcesses.forEach(uf -> merge.structs.push(uf.struct));
-        struct = ForkJoinPool.commonPool().invoke(merge); // TODO
-    }
-
-    private class UFProcess implements Runnable {
+    private class UnionFindTask extends RecursiveTask<DisjointSetStruct> {
 
         protected final int offset;
         protected final int end;
-        protected final DisjointSetStruct struct;
 
-        public UFProcess(int offset, int length) {
+        public UnionFindTask(int offset) {
             this.offset = offset;
-            this.end = Math.min(offset + length, nodeCount);
-            struct = new DisjointSetStruct(graph.nodeCount()).reset();
+            this.end = Math.min(offset + batchSize, nodeCount);
         }
 
         @Override
-        public void run() {
+        protected DisjointSetStruct compute() {
+            if (nodeCount - end >= batchSize) {
+                final UnionFindTask process = new UnionFindTask(end);
+                process.fork();
+                return run().merge(process.join());
+            }
+            return run();
+        }
+
+        private DisjointSetStruct run() {
+            final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     if (!struct.connected(sourceNodeId, targetNodeId)) {
@@ -86,21 +80,22 @@ public class ParallelUnionFind {
                     return true;
                 });
             }
+            return struct;
         }
     }
 
-    private class TUFProcess extends UFProcess {
+    private class ThresholdUFTask extends UnionFindTask {
 
         private final double threshold;
 
-        public TUFProcess(int offset, int length, double threshold) {
-            super(offset, length);
+        public ThresholdUFTask(int offset, double threshold) {
+            super(offset);
             this.threshold = threshold;
         }
 
-        @Override
-        public void run() {
-            for (int node = offset; node < end && node < nodeCount; node++) {
+        private DisjointSetStruct run() {
+            final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
+            for (int node = offset; node < end; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {
                     if (weight < threshold) {
                         return true;
@@ -111,33 +106,7 @@ public class ParallelUnionFind {
                     return true;
                 });
             }
-        }
-    }
-
-    private class Merge extends RecursiveTask<DisjointSetStruct> {
-
-        private final Stack<DisjointSetStruct> structs = new Stack<>();
-
-        @Override
-        protected DisjointSetStruct compute() {
-            final int size = structs.size();
-            if (size == 1) {
-                return structs.pop();
-            }
-            if (size == 2) {
-                return structs.pop().merge(structs.pop());
-            }
-            final Merge other = new Merge();
-            other.add(structs.pop())
-                    .add(structs.pop())
-                    .fork();
-
-            return compute().merge(other.join());
-        }
-
-        public Merge add(DisjointSetStruct struct) {
-            structs.push(struct);
-            return this;
+            return struct;
         }
     }
 }

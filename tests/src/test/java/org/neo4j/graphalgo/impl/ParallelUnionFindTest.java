@@ -34,7 +34,7 @@ public class ParallelUnionFindTest {
     private static GraphDatabaseAPI db;
     private static Graph graph;
 
-    private static int mul = 1000;
+    private static int mul = 10;
 
     @BeforeClass
     public static void setup() {
@@ -45,7 +45,7 @@ public class ParallelUnionFindTest {
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(10 * mul, 11 * mul, 12 * mul, 13 * mul, 14 * mul, 15 * mul, 16 * mul, 17 * mul);
+            createTestGraph(mul, mul, mul, mul, mul, mul, mul, mul);
         }
 
         db.execute("MATCH (n) RETURN n");
@@ -85,19 +85,15 @@ public class ParallelUnionFindTest {
     }
 
     @Test
-    public void testSimple() throws Exception {
-        graph.forEachRelationship(10000, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> true);
-    }
-
-    @Test
     public void testBigSet() throws Exception {
 
         System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
-        final DisjointSetStruct struct = new ParallelUnionFind(graph, Pools.DEFAULT, 10000)
+        final DisjointSetStruct struct = new ParallelUnionFind(graph, Pools.DEFAULT, 8)
                 .compute()
                 .getStruct();
 
+        System.out.println(struct);
         System.out.println("struct.getSetCount() = " + struct.getSetCount());
         assertEquals(8, struct.getSetCount());
     }
