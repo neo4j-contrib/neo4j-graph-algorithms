@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = "-Xms3G")
+@Fork(value = 1, jvmArgs = "-Xms4G")
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
 @State(Scope.Thread)
@@ -53,20 +53,28 @@ public class ParallelUnionFindBenchmark {
 
     private static ThreadToStatementContextBridge bridge;
 
-    public static final String GRAPH_DIRECTORY = "D:/Temp/graph.db";
+    public static final String GRAPH_DIRECTORY = "/tmp/graph.db";
 
-    private static File storeDir = new File(GRAPH_DIRECTORY + (int)(Math.random() * 1000));
+    private static File storeDir = new File(GRAPH_DIRECTORY);
+
+    @Param({"5", "10", "20", "50"})
+    public static int numSets = 1;
 
     @Setup
     public static void setup() throws Exception {
 
+        FileUtils.deleteRecursively(storeDir);
         if (storeDir.exists()) {
-            FileUtils.deleteRecursively(storeDir);
+            throw new IllegalStateException("could not delete " + storeDir);
+        }
+
+        if (null != db) {
+            db.shutdown();
         }
 
         db = (GraphDatabaseAPI) new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder(storeDir)
-                .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
+                .setConfig(GraphDatabaseSettings.pagecache_memory, "4G")
                 .newGraphDatabase();
 
         bridge = db.getDependencyResolver()
@@ -136,14 +144,35 @@ public class ParallelUnionFindBenchmark {
     }
 
     @Benchmark
-    public Object _02_parallelUnionFind_400000() {
+    public Object parallelUnionFind_100000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object parallelUnionFind_200000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 200_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object parallelUnionFind_400000() {
         return new ParallelUnionFind(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
-    public Object _03_sequentialUnionFind() {
+    public Object parallelUnionFind_800000() {
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 800_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object sequentialUnionFind() {
         return new GraphUnionFind(graph)
                 .compute();
 
