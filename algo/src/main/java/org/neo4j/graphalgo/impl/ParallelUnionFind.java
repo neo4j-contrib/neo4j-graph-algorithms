@@ -70,7 +70,7 @@ public class ParallelUnionFind {
             return run();
         }
 
-        private DisjointSetStruct run() {
+        protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
@@ -93,7 +93,7 @@ public class ParallelUnionFind {
             this.threshold = threshold;
         }
 
-        private DisjointSetStruct run() {
+        protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {

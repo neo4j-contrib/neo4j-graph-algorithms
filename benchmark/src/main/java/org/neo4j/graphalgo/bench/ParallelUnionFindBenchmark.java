@@ -29,6 +29,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = "-Xmx4G")
+@Fork(value = 1, jvmArgs = "-Xms3G")
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
 @State(Scope.Thread)
@@ -52,17 +53,20 @@ public class ParallelUnionFindBenchmark {
 
     private static ThreadToStatementContextBridge bridge;
 
+    public static final String GRAPH_DIRECTORY = "D:/Temp/graph.db";
+
+    private static File storeDir = new File(GRAPH_DIRECTORY + (int)(Math.random() * 1000));
+
     @Setup
     public static void setup() throws Exception {
 
-        final File storeDir = new File("/tmp/graph.db" + (int)(Math.random() * 10000));
-//        if (storeDir.exists()) {
-//            FileUtils.deleteFile(storeDir);
-//        }
+        if (storeDir.exists()) {
+            FileUtils.deleteRecursively(storeDir);
+        }
 
         db = (GraphDatabaseAPI) new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder(storeDir)
-                .setConfig(GraphDatabaseSettings.pagecache_memory, "8G")
+                .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
                 .newGraphDatabase();
 
         bridge = db.getDependencyResolver()
@@ -82,9 +86,14 @@ public class ParallelUnionFindBenchmark {
     }
 
     @TearDown
-    public void shutdown() {
+    public void shutdown() throws IOException {
         db.shutdown();
         Pools.DEFAULT.shutdownNow();
+
+        FileUtils.deleteRecursively(storeDir);
+        if (storeDir.exists()) {
+            throw new IllegalStateException("Could not delete graph");
+        }
     }
 
 
@@ -97,7 +106,7 @@ public class ParallelUnionFindBenchmark {
             tx.success();
         }
 
-        final ArrayList<Runnable> runnables = new ArrayList<Runnable>();
+        final ArrayList<Runnable> runnables = new ArrayList<>();
         for (int i = 0; i < sets; i++) {
             runnables.add(createLine(setSize, rIdx));
         }
@@ -128,7 +137,7 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object _02_parallelUnionFind_400000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+        return new ParallelUnionFind(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
