@@ -7,6 +7,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
+import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -137,29 +138,23 @@ public class ParallelUnionFindBenchmark {
         };
     }
 
+
     @Benchmark
-    public Object parallelUnionFind_100000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 100_000)
+    public Object parallelUnionFindForkJoinMerge_400000() {
+        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
-    public Object parallelUnionFind_200000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 200_000)
-                .compute()
-                .getStruct();
-    }
-
-    @Benchmark
-    public Object parallelUnionFind_400000() {
+    public Object parallelUnionFindForkJoin_400000() {
         return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
-    public Object parallelUnionFind_800000() {
+    public Object parallelUnionFindForkJoin_800000() {
         return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000)
                 .compute()
                 .getStruct();
