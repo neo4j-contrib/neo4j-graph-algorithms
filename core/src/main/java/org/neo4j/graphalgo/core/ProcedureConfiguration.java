@@ -125,6 +125,10 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, ParallelUtil.DEFAULT_BATCH_SIZE).intValue();
     }
 
+    public int getBatchSize(int defaultValue) {
+        return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
+    }
+
     public String getDirectionName() {
         return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
     }
