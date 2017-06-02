@@ -2,6 +2,7 @@ package org.neo4j.graphalgo;
 
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -48,7 +49,7 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, statsBuilder);
+        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
         double[] scores = evaluate(graph, configuration, statsBuilder);
         write(graph, scores, configuration, statsBuilder);
 
@@ -67,7 +68,7 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, statsBuilder);
+        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
         double[] scores = evaluate(graph, configuration, statsBuilder);
 
         return IntStream.range(0, scores.length)
@@ -80,6 +81,7 @@ public final class PageRankProc {
     private Graph load(
             String label,
             String relationship,
+            Class<? extends GraphFactory> graphFactory,
             PageRankScore.Stats.Builder statsBuilder) {
 
         GraphLoader graphLoader = new GraphLoader(api)
@@ -89,8 +91,7 @@ public final class PageRankProc {
                 .withExecutorService(Pools.DEFAULT);
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
-            Graph graph = graphLoader
-                    .load(HeavyGraphFactory.class);
+            Graph graph = graphLoader.load(graphFactory);
             statsBuilder.withNodes(graph.nodeCount());
             return graph;
         }
