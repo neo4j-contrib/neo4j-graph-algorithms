@@ -2,6 +2,8 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.ShortestPathProc;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -9,6 +11,9 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyDouble;
@@ -21,6 +26,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author mknblch
  */
+@RunWith(Parameterized.class)
 public class ShortestPathIntegrationTest {
 
     private static GraphDatabaseAPI db;
@@ -60,12 +66,23 @@ public class ShortestPathIntegrationTest {
                 .registerProcedure(ShortestPathProc.class);
     }
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{"Heavy"},
+                new Object[]{"Light"}
+        );
+    }
+
+    @Parameterized.Parameter
+    public String graphImpl;
+
     @Test
     public void testDijkstraStream() throws Exception {
         PathConsumer consumer = mock(PathConsumer.class);
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.shortestPath.stream(start, end, 'cost') YIELD nodeId, cost\n" +
+                        "CALL algo.shortestPath.stream(start, end, 'cost',{graph:'"+graphImpl+"'}) YIELD nodeId, cost\n" +
                         "RETURN nodeId, cost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept((Long) row.getNumber("nodeId"), (Double) row.getNumber("cost"));
@@ -83,7 +100,7 @@ public class ShortestPathIntegrationTest {
     public void testDijkstra() throws Exception {
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.shortestPath(start, end, 'cost') YIELD loadDuration, evalDuration, nodeCount, totalCost\n" +
+                        "CALL algo.shortestPath(start, end, 'cost',{graph:'"+graphImpl+"'}) YIELD loadDuration, evalDuration, nodeCount, totalCost\n" +
                         "RETURN loadDuration, evalDuration, nodeCount, totalCost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(3.0, (Double) row.getNumber("totalCost"), 10E2);

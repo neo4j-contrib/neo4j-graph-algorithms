@@ -5,7 +5,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
@@ -100,7 +99,7 @@ public class UnionFindProc {
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(config.getGraphImpl());
     }
 
     private DisjointSetStruct evaluate(Graph graph, ProcedureConfiguration config) {
