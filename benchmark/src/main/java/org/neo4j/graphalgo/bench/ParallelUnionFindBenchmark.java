@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphalgo.impl.ParallelUnionFind;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.io.fs.FileUtils;
