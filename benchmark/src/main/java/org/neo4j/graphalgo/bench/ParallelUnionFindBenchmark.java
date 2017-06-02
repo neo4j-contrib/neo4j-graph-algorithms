@@ -6,12 +6,9 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.GraphUnionFind;
-import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
-import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
+import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphalgo.impl.ParallelUnionFind;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.io.fs.FileUtils;
@@ -53,8 +50,8 @@ public class ParallelUnionFindBenchmark {
 
     private static File storeDir = new File(GRAPH_DIRECTORY);
 
-    @Param({"5", "10", "20", "50"})
-    public static int numSets = 1;
+//    @Param({"5", "10", "20", "50"})
+    public static int numSets = 20;
 
     @Setup
     public static void setup() throws Exception {
@@ -77,7 +74,7 @@ public class ParallelUnionFindBenchmark {
                 .resolveDependency(ThreadToStatementContextBridge.class);
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(20, 100_000);
+            createTestGraph(numSets, 100_000);
         }
 
         db.execute("MATCH (n) RETURN n");
@@ -139,10 +136,37 @@ public class ParallelUnionFindBenchmark {
         };
     }
 
+    @Benchmark
+    public Object parallelUnionFindQueue_200000() {
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 200_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object parallelUnionFindQueue_400000() {
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 400_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object parallelUnionFindQueue_800000() {
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 800_000)
+                .compute()
+                .getStruct();
+    }
 
     @Benchmark
     public Object parallelUnionFindForkJoinMerge_400000() {
         return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 400_000)
+                .compute()
+                .getStruct();
+    }
+
+    @Benchmark
+    public Object parallelUnionFindForkJoinMerge_800000() {
+        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 800_000)
                 .compute()
                 .getStruct();
     }
