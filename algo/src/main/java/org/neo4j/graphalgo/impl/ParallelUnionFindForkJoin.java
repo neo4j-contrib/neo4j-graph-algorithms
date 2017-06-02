@@ -4,7 +4,6 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
@@ -14,7 +13,7 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class ParallelUnionFind {
+public class ParallelUnionFindForkJoin {
 
     private final Graph graph;
     private final ExecutorService executor;
@@ -27,7 +26,7 @@ public class ParallelUnionFind {
      * @param graph
      * @param executor
      */
-    public ParallelUnionFind(Graph graph, ExecutorService executor, int batchSize) {
+    public ParallelUnionFindForkJoin(Graph graph, ExecutorService executor, int batchSize) {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
@@ -35,13 +34,13 @@ public class ParallelUnionFind {
 
     }
 
-    public ParallelUnionFind compute() {
+    public ParallelUnionFindForkJoin compute() {
         struct = ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
         return this;
     }
 
 
-    public ParallelUnionFind compute(double threshold) {
+    public ParallelUnionFindForkJoin compute(double threshold) {
         struct = ForkJoinPool.commonPool().invoke(new ThresholdUFTask(0, threshold));
         return this;
     }

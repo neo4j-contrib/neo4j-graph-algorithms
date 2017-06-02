@@ -7,25 +7,19 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
-import org.neo4j.graphalgo.impl.ParallelUnionFind;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
+import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.config.Setting;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.io.fs.FileUtils;
 import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.SchemaWriteOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
-import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
 import java.io.File;
@@ -145,28 +139,28 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object parallelUnionFind_100000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 100_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 100_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFind_200000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 200_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 200_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFind_400000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 400_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 400_000)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFind_800000() {
-        return new ParallelUnionFind(graph, Pools.DEFAULT, 800_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000)
                 .compute()
                 .getStruct();
     }

@@ -6,28 +6,21 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author mknblch
  */
-public class ParallelUnionFindTest {
+public class ParallelUnionFindForkJoinTest {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
@@ -89,7 +82,7 @@ public class ParallelUnionFindTest {
 
         System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
-        final DisjointSetStruct struct = new ParallelUnionFind(graph, Pools.DEFAULT, 8)
+        final DisjointSetStruct struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 8)
                 .compute()
                 .getStruct();
 

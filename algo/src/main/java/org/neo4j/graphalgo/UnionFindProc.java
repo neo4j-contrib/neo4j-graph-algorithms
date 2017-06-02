@@ -7,7 +7,7 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.ParallelUnionFind;
+import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
@@ -112,12 +112,12 @@ public class UnionFindProc {
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
-                struct = new ParallelUnionFind(graph, Pools.DEFAULT, config.getBatchSize())
+                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize())
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
-                struct = new ParallelUnionFind(graph, Pools.DEFAULT, config.getBatchSize())
+                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize())
                         .compute()
                         .getStruct();
             }
