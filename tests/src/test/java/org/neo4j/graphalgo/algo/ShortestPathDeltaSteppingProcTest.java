@@ -1,32 +1,24 @@
 package org.neo4j.graphalgo.algo;
 
-import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
-import org.neo4j.graphalgo.LabelPropagationProc;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.concurrent.Executors;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.DoubleConsumer;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.Matchers.anyDouble;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,11 +33,10 @@ import static org.mockito.Mockito.verify;
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
+@RunWith(Parameterized.class)
 public final class ShortestPathDeltaSteppingProcTest {
 
     private static GraphDatabaseAPI api;
-
-    private static Graph graph;
 
     @BeforeClass
     public static void setup() throws KernelException {
@@ -93,12 +84,6 @@ public final class ShortestPathDeltaSteppingProcTest {
             api.execute(cypher);
             tx.success();
         }
-
-        graph = new GraphLoader(api)
-                .withLabel("Node")
-                .withRelationshipType("TYPE")
-                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
-                .load(HeavyGraphFactory.class);
     }
 
     @AfterClass
@@ -106,12 +91,23 @@ public final class ShortestPathDeltaSteppingProcTest {
         api.shutdown();
     }
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{"Heavy"},
+                new Object[]{"Light"}
+        );
+    }
+
+    @Parameterized.Parameter
+    public String graphImpl;
+
     @Test
     public void testResultStream() throws Exception {
 
         final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0) " +
+        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0,{graph:'"+graphImpl+"'}) " +
                 "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
@@ -131,7 +127,7 @@ public final class ShortestPathDeltaSteppingProcTest {
     @Test
     public void testWriteBack() throws Exception {
 
-        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp'}) " +
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp', graph:'"+graphImpl+"'}) " +
                 "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
 
         api.execute(matchCypher).accept(row -> {

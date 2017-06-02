@@ -1,11 +1,15 @@
 package org.neo4j.graphalgo.core;
 
+import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.logging.Log;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * @author mknblch
@@ -123,6 +127,24 @@ public class ProcedureConfiguration {
 
     public String getDirectionName() {
         return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
+    }
+
+    public Class<? extends GraphFactory> getGraphImpl() {
+        final String graphImpl = getStringOrNull(
+                ProcedureConstants.GRAPH_IMPL_PARAM,
+                ProcedureConstants.DEFAULT_GRAPH_IMPL);
+        switch (graphImpl.toLowerCase(Locale.ROOT)) {
+            case "heavy":
+                return HeavyGraphFactory.class;
+            case "cypher":
+                return HeavyCypherGraphFactory.class;
+            case "light":
+                return LightGraphFactory.class;
+            case "kernel":
+                return GraphViewFactory.class;
+            default:
+                throw new IllegalArgumentException("Unknown impl: " + graphImpl);
+        }
     }
 
     /**

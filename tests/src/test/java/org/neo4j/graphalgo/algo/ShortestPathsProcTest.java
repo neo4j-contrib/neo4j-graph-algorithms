@@ -3,16 +3,17 @@ package org.neo4j.graphalgo.algo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.ShortestPathsProc;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.DoubleConsumer;
 
 import static org.junit.Assert.assertNotEquals;
@@ -30,11 +31,10 @@ import static org.mockito.Mockito.*;
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
+@RunWith(Parameterized.class)
 public final class ShortestPathsProcTest {
 
     private static GraphDatabaseAPI api;
-
-    private static Graph graph;
 
     @BeforeClass
     public static void setup() throws KernelException {
@@ -82,12 +82,6 @@ public final class ShortestPathsProcTest {
             api.execute(cypher);
             tx.success();
         }
-
-        graph = new GraphLoader(api)
-                .withLabel("Node")
-                .withRelationshipType("TYPE")
-                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
-                .load(HeavyGraphFactory.class);
     }
 
     @AfterClass
@@ -95,12 +89,23 @@ public final class ShortestPathsProcTest {
         api.shutdown();
     }
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{"Heavy"},
+                new Object[]{"Light"}
+        );
+    }
+
+    @Parameterized.Parameter
+    public String graphImpl;
+
     @Test
     public void testResultStream() throws Exception {
 
         final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths.stream(n, 'cost') " +
+        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'"+graphImpl+"'}) " +
                 "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
@@ -120,7 +125,7 @@ public final class ShortestPathsProcTest {
     @Test
     public void testWriteBack() throws Exception {
 
-        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths(n, 'cost', {write:true, writeProperty:'sp'}) " +
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths(n, 'cost', {write:true, writeProperty:'sp',graph:'"+graphImpl+"'}) " +
                 "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
 
         api.execute(matchCypher).accept(row -> {

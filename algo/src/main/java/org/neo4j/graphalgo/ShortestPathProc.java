@@ -4,7 +4,6 @@ import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
@@ -50,7 +49,7 @@ public class ShortestPathProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
 
         return new ShortestPathDijkstra(graph)
                 .compute(startNode.getId(), endNode.getId())
@@ -81,7 +80,7 @@ public class ShortestPathProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
         load.stop();
 
         ProgressTimer eval = builder.eval();

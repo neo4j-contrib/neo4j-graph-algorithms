@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core;
 
+import java.util.Locale;
+
 /**
  * @author mknblch
  */
@@ -37,5 +39,7 @@ public class ProcedureConstants {
 
     public static final String DIRECTION_DEFAULT = "BOTH";
 
+    public static final String GRAPH_IMPL_PARAM = "graph";
 
+    public static final String DEFAULT_GRAPH_IMPL = "heavy";
 }

@@ -3,7 +3,6 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
@@ -29,13 +28,15 @@ public class BetweennessCentralityProc {
     @Description("CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessStream(
             @Name(value = "label", defaultValue = "") String label,
-            @Name(value = "relationship", defaultValue = "") String relationship) {
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
 
         return new BetweennessCentrality(graph)
                 .compute()
@@ -61,7 +62,7 @@ public class BetweennessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
-                    .load(HeavyGraphFactory.class);
+                    .load(configuration.getGraphImpl());
         }
 
         builder.withNodeCount(graph.nodeCount());

@@ -2,6 +2,8 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -10,12 +12,16 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author mknblch
  */
+@RunWith(Parameterized.class)
 public class StronglyConnectedComponentsProcIntegrationTest {
 
     private static final RelationshipType type = RelationshipType.withName("TYPE");
@@ -55,10 +61,22 @@ public class StronglyConnectedComponentsProcIntegrationTest {
                 .registerProcedure(StronglyConnectedComponentsProc.class);
     }
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{"Heavy"},
+                new Object[]{"Light"},
+                new Object[]{"Kernel"}
+        );
+    }
+
+    @Parameterized.Parameter
+    public String graphImpl;
+
     @Test
     public void testScc() throws Exception {
 
-        db.execute("CALL algo.scc('Node', 'TYPE', {write:true}) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
+        db.execute("CALL algo.scc('Node', 'TYPE', {write:true, graph:'"+graphImpl+"'}) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
                 .accept(row -> {
 
                     System.out.println(row.getNumber("loadMillis").longValue());
