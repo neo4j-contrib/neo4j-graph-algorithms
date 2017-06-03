@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import algo.Pools;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -89,6 +90,7 @@ public final class ShortestPathDeltaSteppingProcTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
+        Pools.DEFAULT.shutdownNow();
     }
 
     @Parameterized.Parameters(name = "{0}")
