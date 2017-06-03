@@ -7,14 +7,10 @@ import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
-import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.impl.ShortestPathsExporter;
-import org.neo4j.graphalgo.results.DijkstraResult;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -59,7 +55,7 @@ public class ShortestPathsProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
 
         return new ShortestPaths(graph)
                 .compute(startNode.getId())
@@ -88,7 +84,7 @@ public class ShortestPathsProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
         load.stop();
 
         ProgressTimer eval = builder.timeEval();
