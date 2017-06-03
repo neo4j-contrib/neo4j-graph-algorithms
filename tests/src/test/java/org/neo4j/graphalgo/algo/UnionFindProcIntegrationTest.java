@@ -128,7 +128,7 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindStream() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFind.stream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:5.0, graph:'"+graphImpl+"'}) YIELD setId")
+        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:5.0, graph:'"+graphImpl+"'}) YIELD setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;
@@ -139,7 +139,7 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindLowThreshold() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFind.stream('', 'TYPE', {property:'cost', defaultValue:10.0, threshold:3.14, graph:'"+graphImpl+"'}) YIELD setId")
+        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:3.14, graph:'"+graphImpl+"'}) YIELD setId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     map.addTo(row.getNumber("setId").intValue(), 1);
                     return true;

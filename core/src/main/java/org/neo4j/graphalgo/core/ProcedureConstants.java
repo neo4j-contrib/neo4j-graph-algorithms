@@ -13,7 +13,7 @@ public class ProcedureConstants {
 
     public static final String RELATIONSHIP_QUERY_PARAM = "relationshipQuery";
 
-    public static final String PROPERTY_PARAM = "property";
+    public static final String PROPERTY_PARAM = "weightProperty";
 
     public static final String PROPERTY_PARAM_DEFAULT = "weight";
 

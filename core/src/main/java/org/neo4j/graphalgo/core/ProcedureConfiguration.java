@@ -56,8 +56,8 @@ public class ProcedureConfiguration {
      * @param property the property
      * @return self
      */
-    public ProcedureConfiguration overrideProperty(String property) {
-        config.put(ProcedureConstants.PROPERTY_PARAM, property);
+    public ProcedureConfiguration overrideProperty(String weightProperty) {
+        config.put(ProcedureConstants.PROPERTY_PARAM, weightProperty);
         return this;
     }
 
