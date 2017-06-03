@@ -26,18 +26,24 @@ public class SingleRunRelationIteratorTest extends Neo4JTestCase {
     private static int v0, v1, v2;
 
     private static SingleRunAllRelationIterator iterator;
+    static final SimpleGraphSetup setup = new SimpleGraphSetup();
 
     @Mock
     private RelationshipConsumer relationConsumer;
 
     @BeforeClass
     public static void setupGraph() {
-        final SimpleGraphSetup setup = new SimpleGraphSetup();
         LazyIdMapper idMapper = new LazyIdMapper(3);
         iterator = new SingleRunAllRelationIterator((GraphDatabaseAPI) setup.getDb(), idMapper);
         v0 = idMapper.toMappedNodeId(setup.getN0());
         v1 = idMapper.toMappedNodeId(setup.getN1());
         v2 = idMapper.toMappedNodeId(setup.getN2());
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        setup.getDb().shutdown();
+        if (db!=null) db.shutdown();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
@@ -27,6 +28,11 @@ public class UnionFindTest extends Neo4JTestCase {
     private static SingleRunAllRelationIterator iterator;
     private static LazyIdMapper idMapper;
     private static BufferedWeightMap weightMap;
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+    }
 
     @BeforeClass
     public static void setupGraph() {

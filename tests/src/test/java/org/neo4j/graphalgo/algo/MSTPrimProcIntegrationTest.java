@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.MSTPrimProc;
@@ -30,6 +31,10 @@ public class MSTPrimProcIntegrationTest {
 
     private static final RelationshipType type = RelationshipType.withName("TYPE");
     private static GraphDatabaseAPI db;
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+    }
 
     @BeforeClass
     public static void setup() throws KernelException {

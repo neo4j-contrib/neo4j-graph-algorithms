@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +70,11 @@ public class PageRankProcIntegrationTest {
             "  (i)-[:TYPE2{foo:3.2}]->(e),\n" +
             "  (j)-[:TYPE2{foo:9.5}]->(e),\n" +
             "  (k)-[:TYPE2{foo:4.2}]->(e)\n";
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+    }
 
     @BeforeClass
     public static void setup() throws KernelException {
