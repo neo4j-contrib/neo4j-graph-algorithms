@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import algo.Pools;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
+@Ignore
 public class ParallelUnionFindTest {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
