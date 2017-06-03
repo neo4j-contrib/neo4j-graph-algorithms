@@ -90,12 +90,10 @@ public class ParallelUnionFindTest {
         System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
 
-        for (int i = 0; i < 1000; i++) {
-            final DisjointSetStruct struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, mul)
-                    .compute()
-                    .getStruct();
-            assertEquals(8, struct.getSetCount());
-        }
+        final DisjointSetStruct struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, mul)
+                .compute()
+                .getStruct();
+        assertEquals(8, struct.getSetCount());
 
 //        System.out.println(struct);
 //        System.out.println("struct.getSetCount() = " + struct.getSetCount());
