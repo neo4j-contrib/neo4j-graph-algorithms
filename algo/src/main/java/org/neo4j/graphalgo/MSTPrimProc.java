@@ -36,18 +36,18 @@ public class MSTPrimProc {
     public Log log;
 
     @Procedure(value = "algo.mst", mode = Mode.WRITE)
-    @Description("CALL algo.mst(node:Node, property:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, " +
+    @Description("CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, " +
             "write:boolean, writeProperty:String stats:boolean}) " +
             "YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount")
     public Stream<MSTPrimResult> mst(
             @Name("startNode") Node startNode,
-            @Name(value = "property") String propertyName,
+            @Name(value = "weightProperty") String weightProperty,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         LazyIdMapper idMapper = LazyIdMapper.importer(api)
-                .withWeightsFromProperty(propertyName, 1.0)
+                .withWeightsFromProperty(weightProperty, 1.0)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .build();
@@ -63,7 +63,7 @@ public class MSTPrimProc {
             weightMap = BufferedWeightMap.importer(api)
                     .withIdMapping(idMapper)
                     .withAnyDirection(true)
-                    .withWeightsFromProperty(propertyName, 1.0)
+                    .withWeightsFromProperty(weightProperty, 1.0)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .build();

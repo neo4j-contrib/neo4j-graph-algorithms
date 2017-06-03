@@ -28,7 +28,7 @@ public final class PageRankProc {
 
     public static final Double DEFAULT_DAMPING = 0.85;
     public static final Integer DEFAULT_ITERATIONS = 20;
-    public static final String DEFAULT_SCORE_PROPERTY = "score";
+    public static final String DEFAULT_SCORE_PROPERTY = "pagerank";
 
     @Context
     public GraphDatabaseAPI api;
@@ -38,7 +38,7 @@ public final class PageRankProc {
 
     @Procedure(value = "algo.pageRank", mode = Mode.WRITE)
     @Description("CALL algo.pageRank(label:String, relationship:String, " +
-            "{iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score',writeProperty:'score'}) " +
+            "{iterations:5, dampingFactor:0.85, write: true, weightProperty:'score',writeProperty:'pagerank'}) " +
             "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
             " - calculates page rank and potentially writes back")
     public Stream<PageRankScore.Stats> pageRank(

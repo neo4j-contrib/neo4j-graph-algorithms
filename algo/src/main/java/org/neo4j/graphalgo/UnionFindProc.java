@@ -33,7 +33,7 @@ public class UnionFindProc {
 
     @Procedure(value = "algo.unionFind", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
-            "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
+            "{weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
             "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
     public Stream<UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
@@ -72,7 +72,7 @@ public class UnionFindProc {
 
     @Procedure(value = "algo.unionFind.stream")
     @Description("CALL algo.unionFind.stream(label:String, relationship:String, " +
-            "{property:'propertyName', threshold:0.42, defaultValue:1.0) " +
+            "{weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) " +
             "YIELD nodeId, setId - yields a setId to each node id")
     public Stream<DisjointSetStruct.Result> unionFindStream(
             @Name(value = "label", defaultValue = "") String label,
