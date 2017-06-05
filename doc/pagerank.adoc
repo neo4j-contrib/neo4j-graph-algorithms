@@ -133,7 +133,8 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 .running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results
+CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85})
+YIELD node, score - calculates page rank and streams results
 ----
 
 .parameters
