@@ -1,6 +1,6 @@
 = Page Rank
 
-PageRank is Googles popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites
+PageRank is Google's popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites
 
 == History, Explanation
 
@@ -80,7 +80,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | Site D | 0.042 
 |===
 
-As we expected, we see that Home has the highest pagerank, because it has incoming links from all other pages. We also observe, that not only the number of incoming links is important, but also the importance of the page that is linking to the page. Hence the difference in pagerank value for Product,Links,About versus sites A,B,C,D.
+As we expected, we see that Home has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that has links pointing to a specific page. 
 
 == Example Usage
 
