@@ -5,7 +5,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
@@ -34,8 +33,8 @@ public class UnionFindProc {
 
     @Procedure(value = "algo.unionFind", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
-            "{property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
-            "YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration")
+            "{weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
+            "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
     public Stream<UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -73,7 +72,7 @@ public class UnionFindProc {
 
     @Procedure(value = "algo.unionFind.stream")
     @Description("CALL algo.unionFind.stream(label:String, relationship:String, " +
-            "{property:'propertyName', threshold:0.42, defaultValue:1.0) " +
+            "{weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) " +
             "YIELD nodeId, setId - yields a setId to each node id")
     public Stream<DisjointSetStruct.Result> unionFindStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -100,7 +99,7 @@ public class UnionFindProc {
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(config.getGraphImpl());
     }
 
     private DisjointSetStruct evaluate(Graph graph, ProcedureConfiguration config) {

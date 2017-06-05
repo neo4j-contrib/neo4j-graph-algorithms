@@ -2,6 +2,8 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Result;
@@ -11,6 +13,8 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@RunWith(Parameterized.class)
 public class PageRankProcIntegrationTest {
 
     private static GraphDatabaseAPI db;
@@ -47,23 +52,23 @@ public class PageRankProcIntegrationTest {
             "CREATE (s:Label2 {name:\"s\"})\n" +
             "CREATE (t:Label2 {name:\"t\"})\n" +
             "CREATE\n" +
-            "  (b)-[:TYPE1]->(c),\n" +
-            "  (c)-[:TYPE1]->(b),\n" +
-            "  (d)-[:TYPE1]->(a),\n" +
-            "  (d)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(d),\n" +
-            "  (e)-[:TYPE1]->(f),\n" +
-            "  (f)-[:TYPE1]->(b),\n" +
-            "  (f)-[:TYPE1]->(e),\n" +
-            "  (g)-[:TYPE2]->(b),\n" +
-            "  (g)-[:TYPE2]->(e),\n" +
-            "  (h)-[:TYPE2]->(b),\n" +
-            "  (h)-[:TYPE2]->(e),\n" +
-            "  (i)-[:TYPE2]->(b),\n" +
-            "  (i)-[:TYPE2]->(e),\n" +
-            "  (j)-[:TYPE2]->(e),\n" +
-            "  (k)-[:TYPE2]->(e)\n";
+            "  (b)-[:TYPE1{foo:1.0}]->(c),\n" +
+            "  (c)-[:TYPE1{foo:1.2}]->(b),\n" +
+            "  (d)-[:TYPE1{foo:1.3}]->(a),\n" +
+            "  (d)-[:TYPE1{foo:1.7}]->(b),\n" +
+            "  (e)-[:TYPE1{foo:1.1}]->(b),\n" +
+            "  (e)-[:TYPE1{foo:2.2}]->(d),\n" +
+            "  (e)-[:TYPE1{foo:1.5}]->(f),\n" +
+            "  (f)-[:TYPE1{foo:3.5}]->(b),\n" +
+            "  (f)-[:TYPE1{foo:2.9}]->(e),\n" +
+            "  (g)-[:TYPE2{foo:3.2}]->(b),\n" +
+            "  (g)-[:TYPE2{foo:5.3}]->(e),\n" +
+            "  (h)-[:TYPE2{foo:9.5}]->(b),\n" +
+            "  (h)-[:TYPE2{foo:0.3}]->(e),\n" +
+            "  (i)-[:TYPE2{foo:5.4}]->(b),\n" +
+            "  (i)-[:TYPE2{foo:3.2}]->(e),\n" +
+            "  (j)-[:TYPE2{foo:9.5}]->(e),\n" +
+            "  (k)-[:TYPE2{foo:4.2}]->(e)\n";
 
     @BeforeClass
     public static void setup() throws KernelException {
@@ -97,11 +102,23 @@ public class PageRankProcIntegrationTest {
         }
     }
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{"Heavy"},
+                new Object[]{"Light"},
+                new Object[]{"Kernel"}
+        );
+    }
+
+    @Parameterized.Parameter
+    public String graphImpl;
+
     @Test
     public void testPageRankStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"'}) YIELD node, score",
                 row -> actual.put(
                         row.getNode("node").getId(),
                         (Double) row.get("score")));
@@ -112,22 +129,37 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankWriteBack() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1') YIELD writeMillis, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1', {graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",
                 row -> {
                     assertTrue(row.getBoolean("write"));
-                    assertEquals("score", row.getString("writeProperty"));
+                    assertEquals("pagerank", row.getString("writeProperty"));
                     assertTrue(
                             "write time not set",
                             row.getNumber("writeMillis").intValue() >= 0);
                 });
 
-        assertResult("score");
+        assertResult("pagerank");
     }
 
     @Test
     public void testPageRankWriteBackUnderDifferentProperty() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar'}) YIELD writeMillis, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar', graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",
+                row -> {
+                    assertTrue(row.getBoolean("write"));
+                    assertEquals("foobar", row.getString("writeProperty"));
+                    assertTrue(
+                            "write time not set",
+                            row.getNumber("writeMillis").intValue() >= 0);
+                });
+
+        assertResult("foobar");
+    }
+
+    @Test
+    public void testPageRankWeightPropertyUnderDifferentName() throws Exception {
+        runQuery(
+                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar',weightProperty:'foo', graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",
                 row -> {
                     assertTrue(row.getBoolean("write"));
                     assertEquals("foobar", row.getString("writeProperty"));
@@ -142,12 +174,12 @@ public class PageRankProcIntegrationTest {
     @Test
     public void testPageRankParallelWriteBack() throws Exception {
         runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true}) YIELD writeMillis, write, writeProperty",
+                "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true, graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",
                 row -> assertTrue(
                         "write time not set",
                         row.getNumber("writeMillis").intValue() >= 0));
 
-        assertResult("score");
+        assertResult("pagerank");
     }
 
     private static void runQuery(

@@ -2,6 +2,7 @@ package org.neo4j.graphalgo;
 
 import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -27,7 +28,7 @@ public final class PageRankProc {
 
     public static final Double DEFAULT_DAMPING = 0.85;
     public static final Integer DEFAULT_ITERATIONS = 20;
-    public static final String DEFAULT_SCORE_PROPERTY = "score";
+    public static final String DEFAULT_SCORE_PROPERTY = "pagerank";
 
     @Context
     public GraphDatabaseAPI api;
@@ -37,7 +38,7 @@ public final class PageRankProc {
 
     @Procedure(value = "algo.pageRank", mode = Mode.WRITE)
     @Description("CALL algo.pageRank(label:String, relationship:String, " +
-            "{iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score',writeProperty:'score'}) " +
+            "{iterations:5, dampingFactor:0.85, write: true, weightProperty:'score',writeProperty:'pagerank'}) " +
             "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
             " - calculates page rank and potentially writes back")
     public Stream<PageRankScore.Stats> pageRank(
@@ -48,7 +49,7 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, statsBuilder);
+        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
         double[] scores = evaluate(graph, configuration, statsBuilder);
         write(graph, scores, configuration, statsBuilder);
 
@@ -67,7 +68,7 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, statsBuilder);
+        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
         double[] scores = evaluate(graph, configuration, statsBuilder);
 
         return IntStream.range(0, scores.length)
@@ -80,6 +81,7 @@ public final class PageRankProc {
     private Graph load(
             String label,
             String relationship,
+            Class<? extends GraphFactory> graphFactory,
             PageRankScore.Stats.Builder statsBuilder) {
 
         GraphLoader graphLoader = new GraphLoader(api)
@@ -89,8 +91,7 @@ public final class PageRankProc {
                 .withExecutorService(Pools.DEFAULT);
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
-            Graph graph = graphLoader
-                    .load(HeavyGraphFactory.class);
+            Graph graph = graphLoader.load(graphFactory);
             statsBuilder.withNodes(graph.nodeCount());
             return graph;
         }

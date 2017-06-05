@@ -4,7 +4,6 @@ import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.SCCTarjan;
 import org.neo4j.graphalgo.impl.SCCTarjanExporter;
@@ -31,8 +30,8 @@ public class StronglyConnectedComponentsProc {
     public Log log;
 
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
-    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELDS " +
-            "loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize")
+    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -48,7 +47,7 @@ public class StronglyConnectedComponentsProc {
                     .withOptionalRelationshipType(relationship)
                     .withoutRelationshipWeights()
                     .withExecutorService(Pools.DEFAULT)
-                    .load(HeavyGraphFactory.class);
+                    .load(configuration.getGraphImpl());
         loadTimer.stop();
 
         SCCTarjan tarjan = new SCCTarjan(graph);

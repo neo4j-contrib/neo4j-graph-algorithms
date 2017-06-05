@@ -7,8 +7,6 @@ import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
@@ -20,7 +18,6 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
@@ -69,7 +66,7 @@ public class ShortestPathDeltaSteppingProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(Double.MAX_VALUE))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(configuration.getGraphImpl());
 
         return new ShortestPathDeltaStepping(graph, delta)
                 .withExecutorService(Executors.newFixedThreadPool(
@@ -102,7 +99,7 @@ public class ShortestPathDeltaSteppingProc {
                             propertyName,
                             configuration.getPropertyDefaultValue(Double.MAX_VALUE))
                     .withExecutorService(Pools.DEFAULT)
-                    .load(HeavyGraphFactory.class);
+                    .load(configuration.getGraphImpl());
         }
 
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
