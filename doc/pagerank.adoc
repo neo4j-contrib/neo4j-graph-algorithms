@@ -80,7 +80,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | Site D | 0.042 
 |===
 
-As we expected, we see that Home has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that has links pointing to a specific page. 
+As we expected, we see that Home page has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that links to us. 
 
 == Example Usage
 
