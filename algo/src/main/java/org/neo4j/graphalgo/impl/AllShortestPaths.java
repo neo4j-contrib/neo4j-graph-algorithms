@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -20,7 +19,7 @@ public class AllShortestPaths {
     private final ExecutorService executorService;
     private final BlockingQueue<Result> resultQueue;
 
-    private boolean running;
+    private volatile boolean running;
 
     public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -31,7 +30,7 @@ public class AllShortestPaths {
         }
         this.concurrency = concurrency;
         this.counter = new AtomicInteger();
-        this.resultQueue = new LinkedBlockingDeque<>(); // TODO limit size?
+        this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
 
 
@@ -70,7 +69,7 @@ public class AllShortestPaths {
         @Override
         public void run() {
             int startNode;
-            while ((startNode = counter.getAndIncrement()) < nodeCount) {
+            while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
                 for (int i = 0; i < nodeCount; i++) {
                     final Result result = new Result(
@@ -109,10 +108,6 @@ public class AllShortestPaths {
                             return true;
                         });
             }
-
-            graph.forEachNode(node -> {
-                return true;
-            });
         }
     }
 
