@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -26,15 +27,19 @@ import static org.mockito.Mockito.verify;
 
 /**
  *     1
- *  (0)-(1)
+ *  (0)->(1)
  * 1 | 1 | 1
- *  (2)-(3)
+ *   v   v
+ *  (2)->(3)
  * 1 | 1 | 1
- *  (4)-(5)
+ *   v   v
+ *  (4)->(5)
  * 1 | 1 | 1
- *  (6)-(7)
- * 1 | 1 | 1
- *  (8)-(9)
+ *   v   v
+ *  (6)->(7)
+ * 1 | 1  | 1
+ *   v    v
+ *  (8)->(9)
  *
  * @author mknblch
  */
@@ -86,7 +91,14 @@ public class AllShortestPathsTest {
         new AllShortestPaths(graph, Pools.DEFAULT, 4)
                 .resultStream()
                 .peek(System.out::println)
-                .forEach(r -> mock.test(r.sourceNodeId, r.targetNodeId, r.distance));
+                .forEach(r -> {
+                    if (r.sourceNodeId > r.targetNodeId) {
+                        assertEquals(Double.POSITIVE_INFINITY, r.distance, 0.1);
+                    } else if (r.sourceNodeId == r.targetNodeId) {
+                        assertEquals(0.0, r.distance, 0.1);
+                    }
+                    mock.test(r.sourceNodeId, r.targetNodeId, r.distance);
+                });
 
         final int nodes = (width * height);
 

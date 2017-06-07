@@ -1,20 +1,15 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Spliterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class AllShortestPaths {
 
@@ -23,7 +18,7 @@ public class AllShortestPaths {
     private final int concurrency;
     private final AtomicInteger counter;
     private final ExecutorService executorService;
-    private final BlockingQueue<Result> queue;
+    private final BlockingQueue<Result> resultQueue;
 
     private boolean running;
 
@@ -36,7 +31,7 @@ public class AllShortestPaths {
         }
         this.concurrency = concurrency;
         this.counter = new AtomicInteger();
-        this.queue = new LinkedBlockingDeque<>(); // TODO limit size?
+        this.resultQueue = new LinkedBlockingDeque<>(); // TODO limit size?
     }
 
 
@@ -55,7 +50,7 @@ public class AllShortestPaths {
                 .onClose(() -> running = false)
                 .mapToObj(i -> {
                     try {
-                        return queue.take();
+                        return resultQueue.take();
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -64,34 +59,21 @@ public class AllShortestPaths {
 
     private class ShortestPathTask implements Runnable {
 
+        private final IntMinPriorityQueue queue;
         private final double[] distance;
+        private final SimpleBitSet visited;
 
         private ShortestPathTask() {
             distance = new double[nodeCount];
+            queue = new IntMinPriorityQueue();
+            visited = new SimpleBitSet(nodeCount);
         }
 
         @Override
         public void run() {
             int startNode;
             while ((startNode = counter.getAndIncrement()) < nodeCount) {
-                Arrays.fill(distance, Double.POSITIVE_INFINITY);
-                distance[startNode] = 0d;
-                graph.forEachNode(node -> {
-                    final double sourceDistance = distance[node];
-                    // scan relationships
-                    graph.forEachRelationship(
-                            node,
-                            Direction.OUTGOING,
-                            (source, target, relId, weight) -> {
-                                // relax
-                                final double targetDistance = weight + sourceDistance;
-                                if (targetDistance < distance[target]) {
-                                    distance[target] = targetDistance;
-                                }
-                                return true;
-                            });
-                    return true;
-                });
+                compute(startNode);
                 for (int i = 0; i < nodeCount; i++) {
                     final Result result = new Result(
                             graph.toOriginalNodeId(startNode),
@@ -99,12 +81,43 @@ public class AllShortestPaths {
                             distance[i]);
 
                     try {
-                        queue.put(result);
+                        resultQueue.put(result);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
+        }
+
+        public void compute(int startNode) {
+            Arrays.fill(distance, Double.POSITIVE_INFINITY);
+            distance[startNode] = 0d;
+            queue.add(startNode, 0d);
+
+            while (!queue.isEmpty()) {
+                final int node = queue.pop();
+                visited.put(node);
+                final double sourceDistance = distance[node];
+                // scan relationships
+                graph.forEachRelationship(
+                        node,
+                        Direction.OUTGOING,
+                        (source, target, relId, weight) -> {
+                            // relax
+                            final double targetDistance = weight + sourceDistance;
+                            if (targetDistance < distance[target]) {
+                                distance[target] = targetDistance;
+                            }
+                            if (!visited.contains(target)) {
+                                queue.add(target, targetDistance);
+                            }
+                            return true;
+                        });
+            }
+
+            graph.forEachNode(node -> {
+                return true;
+            });
         }
     }
 
