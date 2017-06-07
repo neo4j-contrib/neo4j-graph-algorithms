@@ -14,13 +14,11 @@ public class ShortestPaths {
     private final Graph graph;
     private final IntDoubleMap costs;
     private final IntMinPriorityQueue queue;
-    private final SimpleBitSet visited;
 
     public ShortestPaths(Graph graph) {
         this.graph = graph;
         int nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
-        visited = new SimpleBitSet(nodeCount);
         queue = new IntMinPriorityQueue();
     }
 
@@ -52,7 +50,6 @@ public class ShortestPaths {
     private void run() {
         while (!queue.isEmpty()) {
             final int node = queue.pop();
-            visited.put(node);
             double sourceCosts = this.costs.getOrDefault(node, Double.POSITIVE_INFINITY);
             // scan ALL relationships
             graph.forEachRelationship(
@@ -63,8 +60,6 @@ public class ShortestPaths {
                         final double targetCosts = this.costs.getOrDefault(target, Double.POSITIVE_INFINITY);
                         if (weight + sourceCosts < targetCosts) {
                             costs.put(target, weight + sourceCosts);
-                        }
-                        if (!visited.contains(target)) {
                             queue.add(target, targetCosts);
                         }
                         return true;
