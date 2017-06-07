@@ -163,21 +163,6 @@ public class PageRankProcIntegrationTest {
     }
 
     @Test
-    public void testPageRankWeightPropertyUnderDifferentName() throws Exception {
-        runQuery(
-                "CALL algo.pageRank('Label1', 'TYPE1', {writeProperty:'foobar',weightProperty:'foo', graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",
-                row -> {
-                    assertTrue(row.getBoolean("write"));
-                    assertEquals("foobar", row.getString("writeProperty"));
-                    assertTrue(
-                            "write time not set",
-                            row.getNumber("writeMillis").intValue() >= 0);
-                });
-
-        assertResult("foobar");
-    }
-
-    @Test
     public void testPageRankParallelWriteBack() throws Exception {
         runQuery(
                 "CALL algo.pageRank('Label1', 'TYPE1', {batchSize:3, write:true, graph:'"+graphImpl+"'}) YIELD writeMillis, write, writeProperty",

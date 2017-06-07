@@ -1,12 +1,86 @@
 = Page Rank
 
-PageRank is Googles popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites
+PageRank is Google's popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites
 
 == History, Explanation
 
+In order to measure the relative importance of web pages, Sergey Brin and Larry Page proposed PageRank, a method for
+computing a ranking for every web page based on the graph of the web. PageRank has applications
+in search, browsing, and traffic estimation.
+
+PageRank is defined in the original Google paper as follows:
+
+We assume page A has pages T1...Tn which point to it (i.e., are citations). The parameter d is a damping factor which can be set between 0 and 1. We usually set d to 0.85. Also C(A) is defined as the number of links going out of page A. The PageRank of a page A is given as follows:
+
+PR(A) = (1-d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn))
+
+Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.
+
+PageRank or PR(A) can be calculated using a simple iterative algorithm, and corresponds to the principal eigenvector of the normalized link matrix of the web.
+
 == When to use it / use-cases
 
+
+
 == Algorithm explanation on simple sample graph
+
+image::img/pagerank.png[]
+
+.Create sample graph
+[source,cypher]
+----
+CREATE (home:Page{name:'Home'})
+,(about:Page{name:'About'})
+,(product:Page{name:'Product'})
+,(links:Page{name:'Links'})
+,(a:Page{name:'Site A'})
+,(b:Page{name:'Site B'})
+,(c:Page{name:'Site C'})
+,(d:Page{name:'Site D'})
+CREATE (home)-[:LINKS]->(about)
+,(about)-[:LINKS]->(home)
+,(product)-[:LINKS]->(home)
+,(home)-[:LINKS]->(product)
+,(links)-[:LINKS]->(home)
+,(home)-[:LINKS]->(links)
+,(links)-[:LINKS]->(a)-[:LINKS]->(home)
+,(links)-[:LINKS]->(b)-[:LINKS]->(home)
+,(links)-[:LINKS]->(c)-[:LINKS]->(home)
+,(links)-[:LINKS]->(d)-[:LINKS]->(home)
+
+----
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+
+CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) YIELD node, score
+
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85, 
+write: true,writeProperty:"pagerank"}) 
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | pageRank 
+| Home | 0.419
+| Product | 0.137
+| Links | 0.137
+| About | 0.137
+| Site A | 0.042
+| Site B | 0.042 
+| Site C | 0.042 
+| Site D | 0.042 
+|===
+
+As we expected, we see that Home page has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that links to us. 
 
 == Example Usage
 
@@ -14,7 +88,7 @@ PageRank is Googles popular search algorithm. PageRank works by counting the num
 [source,cypher]
 ----
 CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
-CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
+CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score
 ----
 
 == Syntax
@@ -23,7 +97,7 @@ CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score
 [source,cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, 
-write: true, weightProperty:'score',writeProperty:"pagerank"}) 
+write: true,writeProperty:"pagerank"}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
 - calculates page rank and potentially writes back
 ----
@@ -38,7 +112,6 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank caculation
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'pagerank' | yes | property name written back to
-| weightProperty | string | 'score' | yes | property name that contains weight.Must be numeric.
 |===
 
 .results
@@ -60,7 +133,8 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 .running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results
+CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85})
+YIELD node, score - calculates page rank and streams results
 ----
 
 .parameters
@@ -86,6 +160,12 @@ CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dam
 == References
 
 * https://en.wikipedia.org/wiki/PageRank
+
+* http://infolab.stanford.edu/~ullman/mmds/book.pdf
+
+* http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf
+
+* http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 == Implementation Details
 
