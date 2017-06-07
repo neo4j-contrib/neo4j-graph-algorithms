@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
+import algo.Pools;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -67,6 +69,11 @@ public class ParallelDeltaSteppingTest {
         };
 
         reference = compute(1);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        db.shutdown();
     }
 
     @Test
