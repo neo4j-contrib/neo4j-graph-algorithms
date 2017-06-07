@@ -39,18 +39,14 @@ public class AllShortestPaths {
         queue = new LinkedBlockingDeque<>();
     }
 
-    private AllShortestPaths compute() {
+
+    public Stream<Result> resultStream() {
+
         counter.set(0);
         futures.clear();
         for (int i = 0; i < concurrency; i++) {
             futures.add(executorService.submit(new ShortestPathTask()));
         }
-        return this;
-    }
-
-    public Stream<Result> resultStream() {
-
-        compute();
 
         long end = (long) nodeCount * nodeCount;
 
@@ -64,8 +60,6 @@ public class AllShortestPaths {
                 });
     }
 
-    private final AtomicInteger ai = new AtomicInteger();
-
     private class ShortestPathTask implements Runnable {
 
         private final double[] distance;
@@ -78,7 +72,6 @@ public class AllShortestPaths {
         public void run() {
             int startNode;
             while ((startNode = counter.getAndIncrement()) < nodeCount) {
-//                print("starting at node " + startNode);
                 Arrays.fill(distance, Double.POSITIVE_INFINITY);
                 distance[startNode] = 0d;
                 graph.forEachNode(node -> {
@@ -131,9 +124,5 @@ public class AllShortestPaths {
                     ", distance=" + distance +
                     '}';
         }
-    }
-
-    public static void print(String txt) {
-        System.out.printf("[%s] %s%n", Thread.currentThread().getName(), txt);
     }
 }

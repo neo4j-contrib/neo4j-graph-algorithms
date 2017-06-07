@@ -9,12 +9,33 @@ import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.AllShortestPaths.Result;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyDouble;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
+ *     1
+ *  (0)-(1)
+ * 1 | 1 | 1
+ *  (2)-(3)
+ * 1 | 1 | 1
+ *  (4)-(5)
+ * 1 | 1 | 1
+ *  (6)-(7)
+ * 1 | 1 | 1
+ *  (8)-(9)
+ *
  * @author mknblch
  */
 public class AllShortestPathsTest {
@@ -58,15 +79,26 @@ public class AllShortestPathsTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testResults() throws Exception {
 
-        final long count = new AllShortestPaths(graph, Pools.DEFAULT, 2)
+        final ResultConsumer mock = mock(ResultConsumer.class);
+
+        new AllShortestPaths(graph, Pools.DEFAULT, 4)
                 .resultStream()
-//                .peek(System.out::println)
-                .count();
+                .peek(System.out::println)
+                .forEach(r -> mock.test(r.sourceNodeId, r.targetNodeId, r.distance));
 
         final int nodes = (width * height);
 
-        assertEquals(nodes * nodes, count);
+        verify(mock, times(nodes * nodes)).test(anyLong(), anyLong(), anyDouble());
+
+        verify(mock, times(1)).test(0, 9, 5.0);
+        verify(mock, times(1)).test(0, 0, 0.0);
+
+    }
+
+    interface ResultConsumer {
+
+        void test(long source, long target, double distance);
     }
 }
