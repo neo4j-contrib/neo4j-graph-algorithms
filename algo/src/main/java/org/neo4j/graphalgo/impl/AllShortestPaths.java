@@ -23,34 +23,36 @@ public class AllShortestPaths {
     private final int concurrency;
     private final AtomicInteger counter;
     private final ExecutorService executorService;
-    private final ArrayList<Future<?>> futures;
     private final BlockingQueue<Result> queue;
+
+    private boolean running;
 
     public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = graph.nodeCount();
-        this.futures = new ArrayList<>();
         this.executorService = executorService;
         if (concurrency < 1) {
             throw new IllegalArgumentException("concurrency must be >0");
         }
         this.concurrency = concurrency;
         this.counter = new AtomicInteger();
-        queue = new LinkedBlockingDeque<>();
+        this.queue = new LinkedBlockingDeque<>(); // TODO limit size?
     }
 
 
     public Stream<Result> resultStream() {
 
         counter.set(0);
-        futures.clear();
+        running = true;
+
         for (int i = 0; i < concurrency; i++) {
-            futures.add(executorService.submit(new ShortestPathTask()));
+            executorService.submit(new ShortestPathTask());
         }
 
         long end = (long) nodeCount * nodeCount;
 
         return LongStream.range(0, end)
+                .onClose(() -> running = false)
                 .mapToObj(i -> {
                     try {
                         return queue.take();
@@ -91,12 +93,16 @@ public class AllShortestPaths {
                     return true;
                 });
                 for (int i = 0; i < nodeCount; i++) {
-                    final Result e = new Result(
+                    final Result result = new Result(
                             graph.toOriginalNodeId(startNode),
                             graph.toOriginalNodeId(i),
-                            distance[i]
-                    );
-                    queue.offer(e);
+                            distance[i]);
+
+                    try {
+                        queue.put(result);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
