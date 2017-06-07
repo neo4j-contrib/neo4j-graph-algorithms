@@ -5,7 +5,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Matchers;
 import org.neo4j.graphalgo.ShortestPathsProc;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -15,11 +18,12 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.DoubleConsumer;
+import java.util.regex.Matcher;
 
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.AdditionalMatchers.eq;
-import static org.mockito.Matchers.anyDouble;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyDouble;
 
 
 /**         5     5      5
@@ -35,6 +39,8 @@ import static org.mockito.Mockito.*;
 public final class ShortestPathsProcTest {
 
     private static GraphDatabaseAPI api;
+    private static long startNode;
+    private static long endNode;
 
     @BeforeClass
     public static void setup() throws KernelException {
@@ -80,6 +86,8 @@ public final class ShortestPathsProcTest {
 
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
+            startNode = api.findNode(Label.label("Node"), "name", "s").getId();
+            endNode = api.findNode(Label.label("Node"), "name", "x").getId();
             tx.success();
         }
     }
@@ -119,7 +127,7 @@ public final class ShortestPathsProcTest {
         });
 
         verify(consumer, times(11)).accept(anyDouble());
-        verify(consumer, times(1)).accept(eq(8d, 0.1d));
+        verify(consumer, times(1)).accept(eq(8d));
     }
 
     @Test
@@ -149,6 +157,34 @@ public final class ShortestPathsProcTest {
         });
 
         verify(consumer, times(11)).accept(anyDouble());
-        verify(consumer, times(1)).accept(eq(8d, 0.1d));
+        verify(consumer, times(1)).accept(eq(8d));
+    }
+
+
+    @Test
+    public void testData() throws Exception {
+
+        final Consumer mock = mock(Consumer.class);
+
+        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'"+graphImpl+"'}) " +
+                "YIELD nodeId, distance RETURN nodeId, distance";
+
+        api.execute(cypher).accept(row -> {
+            long nodeId = row.getNumber("nodeId").longValue();
+            double distance = row.getNumber("distance").doubleValue();
+            System.out.printf("%d:%.1f, ",
+                    nodeId,
+                    distance);
+            mock.test(nodeId, distance);
+            return true;
+        });
+
+        verify(mock, times(11)).test(anyLong(), anyDouble());
+        verify(mock, times(1)).test(Matchers.eq(endNode), Matchers.eq(0.0));
+        verify(mock, times(1)).test(Matchers.eq(startNode), Matchers.eq(5.0));
+    }
+
+    interface Consumer {
+        void test(long source, double distance);
     }
 }
