@@ -1,56 +1,88 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class AllShortestPaths {
 
     private final Graph graph;
     private final int nodeCount;
     private final int concurrency;
-    private final AtomicInteger queue;
+    private final AtomicInteger counter;
     private final ExecutorService executorService;
-
-    private double[][] paths;
+    private final ArrayList<Future<?>> futures;
+    private final BlockingQueue<Result> queue;
 
     public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = graph.nodeCount();
+        this.futures = new ArrayList<>();
         this.executorService = executorService;
         if (concurrency < 1) {
             throw new IllegalArgumentException("concurrency must be >0");
         }
         this.concurrency = concurrency;
-        this.queue = new AtomicInteger(nodeCount);
+        this.counter = new AtomicInteger();
+        queue = new LinkedBlockingDeque<>();
     }
 
-    public AllShortestPaths compute() {
-        paths = new double[nodeCount][];
-        final ArrayList<Runnable> runnables = new ArrayList<>();
+    private AllShortestPaths compute() {
+        counter.set(0);
+        futures.clear();
         for (int i = 0; i < concurrency; i++) {
-            runnables.add(new ShortestPathTask());
+            futures.add(executorService.submit(new ShortestPathTask()));
         }
-        ParallelUtil.run(runnables, executorService);
         return this;
     }
 
+    public Stream<Result> resultStream() {
+
+        compute();
+
+        long end = (long) nodeCount * nodeCount;
+
+        return LongStream.range(0, end)
+                .mapToObj(i -> {
+                    try {
+                        return queue.take();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    private final AtomicInteger ai = new AtomicInteger();
+
     private class ShortestPathTask implements Runnable {
+
+        private final double[] distance;
+
+        private ShortestPathTask() {
+            distance = new double[nodeCount];
+        }
 
         @Override
         public void run() {
             int startNode;
-            while ((startNode = queue.decrementAndGet()) >= 0) {
-                paths[startNode] = new double[nodeCount];
-                Arrays.fill(paths[startNode], Double.POSITIVE_INFINITY);
-                paths[startNode][startNode] = 0d;
+            while ((startNode = counter.getAndIncrement()) < nodeCount) {
+//                print("starting at node " + startNode);
+                Arrays.fill(distance, Double.POSITIVE_INFINITY);
+                distance[startNode] = 0d;
                 graph.forEachNode(node -> {
-                    final double sourceDistance = paths[startNode][node];
+                    final double sourceDistance = distance[node];
                     // scan relationships
                     graph.forEachRelationship(
                             node,
@@ -58,15 +90,50 @@ public class AllShortestPaths {
                             (source, target, relId, weight) -> {
                                 // relax
                                 final double targetDistance = weight + sourceDistance;
-                                if (targetDistance < paths[startNode][target]) {
-                                    paths[startNode][target] = targetDistance;
+                                if (targetDistance < distance[target]) {
+                                    distance[target] = targetDistance;
                                 }
                                 return true;
                             });
                     return true;
                 });
+                for (int i = 0; i < nodeCount; i++) {
+                    final Result e = new Result(
+                            graph.toOriginalNodeId(startNode),
+                            graph.toOriginalNodeId(i),
+                            distance[i]
+                    );
+                    queue.offer(e);
+                }
             }
         }
     }
 
+    public static class Result {
+
+        public final long sourceNodeId;
+
+        public final long targetNodeId;
+
+        public final double distance;
+
+        public Result(long sourceNodeId, long targetNodeId, double distance) {
+            this.sourceNodeId = sourceNodeId;
+            this.targetNodeId = targetNodeId;
+            this.distance = distance;
+        }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "sourceNodeId=" + sourceNodeId +
+                    ", targetNodeId=" + targetNodeId +
+                    ", distance=" + distance +
+                    '}';
+        }
+    }
+
+    public static void print(String txt) {
+        System.out.printf("[%s] %s%n", Thread.currentThread().getName(), txt);
+    }
 }
