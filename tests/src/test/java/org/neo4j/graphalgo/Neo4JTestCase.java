@@ -30,6 +30,10 @@ public abstract class Neo4JTestCase {
 
     @AfterClass
     public static void teardown() {
+        if (db != null) {
+            db.shutdown();
+            db = null;
+        }
         // calling shutdown takes some 10 seconds or so :(
 //         db.shutdown();
     }
@@ -39,6 +43,7 @@ public abstract class Neo4JTestCase {
             final Node node = db.createNode(Label.label(LABEL));
             transaction.success();
             final int id = Math.toIntExact(node.getId());
+            transaction.success();
             return id;
         }
     }

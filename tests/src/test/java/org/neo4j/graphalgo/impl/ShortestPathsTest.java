@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.junit.AfterClass;
@@ -99,6 +100,7 @@ public final class ShortestPathsTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
+//        Pools.DEFAULT.shutdownNow();
     }
 
     @Test

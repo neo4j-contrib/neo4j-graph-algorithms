@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +28,11 @@ public class AdjacencyMatrixTest {
     private static AdjacencyMatrix matrix;
 
     private static RelationshipConsumer relationConsumer = mock(RelationshipConsumer.class);
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        matrix = null;
+    }
 
     @BeforeClass
     public static void setup() {

@@ -97,8 +97,9 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        db.shutdown();
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+        graph = null;
     }
 
     @Test
