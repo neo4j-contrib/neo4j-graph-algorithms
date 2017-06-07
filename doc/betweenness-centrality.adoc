@@ -15,7 +15,7 @@ Although earlier authors have intuitively described centrality as based on betwe
 
 == When to use it / use-cases
 
-image::img/betweenness_centrality.png[]
+image::{img}/betweenness_centrality.png[]
 
 
 _Betweenness centrality_ is useful in finding vertices that serve as a bridge from one part of a graph to

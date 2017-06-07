@@ -24,7 +24,7 @@ PageRank or PR(A) can be calculated using a simple iterative algorithm, and corr
 
 == Algorithm explanation on simple sample graph
 
-image::img/pagerank.png[]
+image::{img}/pagerank.png[]
 
 .Create sample graph
 [source,cypher]
