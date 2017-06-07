@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.5">
+<meta name="generator" content="Asciidoctor 1.5.3">
 <title>Neo4j Graph Algorithms</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -17,6 +17,7 @@ audio:not([controls]){display:none;height:0}
 [hidden],template{display:none}
 script{display:none!important}
 html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+body{margin:0}
 a{background:transparent}
 a:focus{outline:thin dotted}
 a:active,a:hover{outline:0}
@@ -51,7 +52,7 @@ textarea{overflow:auto;vertical-align:top}
 table{border-collapse:collapse;border-spacing:0}
 *,*:before,*:after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
 html,body{font-size:100%}
-body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto}
 a:hover{cursor:pointer}
 img,object,embed{max-width:100%;height:auto}
 object,embed{height:100%}
@@ -63,6 +64,7 @@ img{-ms-interpolation-mode:bicubic}
 .text-center{text-align:center!important}
 .text-justify{text-align:justify!important}
 .hide{display:none}
+body{-webkit-font-smoothing:antialiased}
 img,object,svg{display:inline-block;vertical-align:middle}
 textarea{height:auto;min-height:50px}
 select{width:100%}
@@ -117,16 +119,13 @@ table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:
 table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
 table tr.even,table tr.alt,table tr:nth-of-type(even){background:#f8f8f7}
 table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+body{tab-size:4}
 h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
 h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
 .clearfix:before,.clearfix:after,.float-group:before,.float-group:after{content:" ";display:table}
 .clearfix:after,.float-group:after{clear:both}
-*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
-*:not(pre)>code.nobreak{word-wrap:normal}
-*:not(pre)>code.nowrap{white-space:nowrap}
+*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
 pre,pre>code{line-height:1.45;color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;text-rendering:optimizeSpeed}
-em em{font-style:normal}
-strong strong{font-weight:400}
 .keyseq{color:rgba(51,51,51,.8)}
 kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background-color:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
 .keyseq kbd:first-child{margin-left:0}
@@ -481,8 +480,8 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <div class="sectionbody">
 <table id="table-all" class="tableblock frame-all grid-all spread">
 <colgroup>
-<col style="width: 16.6666%;">
-<col style="width: 83.3334%;">
+<col style="width: 16%;">
+<col style="width: 83%;">
 </colgroup>
 <thead>
 <tr>
@@ -492,12 +491,24 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.allShortestPaths.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.allShortestPaths.stream(propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.mst</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.mst(node:Node, property:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) YIELD loadDuration, evalDuration, writeDuration, weightSum, weightMin, weightMax, relationshipCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.labelPropagation</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp3</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp3.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPaths.stream</code></p></td>
@@ -508,12 +519,28 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPaths(startNodeId:long, propertyName:String{write:true, targetProperty:'path', nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, targetProperty - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp2</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp2.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRank</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, scoreProperty:'score',writeProperty:'score'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty - calculates page rank and potentially writes back</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank(label:String, relationship:String, {iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'}) YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty - calculates page rank and potentially writes back</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.pageRank.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp1.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness.stream</code></p></td>
@@ -521,7 +548,7 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, [minCentrality, maxCentrality, meanCentrality] - yields status of evaluation</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, meanCentrality] - yields status of evaluation</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.deltaStepping.stream</code></p></td>
@@ -533,11 +560,11 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodeCount, setCount, loadDuration, evalDuration, writeDuration</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.stream</code></p></td>
@@ -549,7 +576,7 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELDS loadDuration, evalDuration, writeDuration, setCount, maxSetSize, minSetSize</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -561,11 +588,30 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <div class="sect2">
 <h3 id="_page_rank"><a class="link" href="#_page_rank">Page Rank</a></h3>
 <div class="paragraph">
-<p>PageRank is Googles popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites</p>
+<p>PageRank is Google&#8217;s popular search algorithm. PageRank works by counting the number and quality of links to a page to determine a rough estimate of how important the website is. The underlying assumption is that more important websites are likely to receive more links from other websites</p>
 </div>
 <div class="sect3">
 <h4 id="_history_explanation"><a class="link" href="#_history_explanation">History, Explanation</a></h4>
-
+<div class="paragraph">
+<p>In order to measure the relative importance of web pages, Sergey Brin and Larry Page proposed PageRank, a method for
+computing a ranking for every web page based on the graph of the web. PageRank has applications
+in search, browsing, and traffic estimation.</p>
+</div>
+<div class="paragraph">
+<p>PageRank is defined in the original Google paper as follows:</p>
+</div>
+<div class="paragraph">
+<p>We assume page A has pages T1&#8230;&#8203;Tn which point to it (i.e., are citations). The parameter d is a damping factor which can be set between 0 and 1. We usually set d to 0.85. Also C(A) is defined as the number of links going out of page A. The PageRank of a page A is given as follows:</p>
+</div>
+<div class="paragraph">
+<p>PR(A) = (1-d) + d (PR(T1)/C(T1) + &#8230;&#8203; + PR(Tn)/C(Tn))</p>
+</div>
+<div class="paragraph">
+<p>Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.</p>
+</div>
+<div class="paragraph">
+<p>PageRank or PR(A) can be calculated using a simple iterative algorithm, and corresponds to the principal eigenvector of the normalized link matrix of the web.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases"><a class="link" href="#_when_to_use_it_use_cases">When to use it / use-cases</a></h4>
@@ -573,7 +619,98 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </div>
 <div class="sect3">
 <h4 id="_algorithm_explanation_on_simple_sample_graph"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph">Algorithm explanation on simple sample graph</a></h4>
-
+<div class="imageblock">
+<div class="content">
+<img src="images/img/pagerank.png" alt="pagerank">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Create sample graph</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CREATE (home:Page{name:'Home'})
+,(about:Page{name:'About'})
+,(product:Page{name:'Product'})
+,(links:Page{name:'Links'})
+,(a:Page{name:'Site A'})
+,(b:Page{name:'Site B'})
+,(c:Page{name:'Site C'})
+,(d:Page{name:'Site D'})
+CREATE (home)-[:LINKS]-&gt;(about)
+,(about)-[:LINKS]-&gt;(home)
+,(product)-[:LINKS]-&gt;(home)
+,(home)-[:LINKS]-&gt;(product)
+,(links)-[:LINKS]-&gt;(home)
+,(home)-[:LINKS]-&gt;(links)
+,(links)-[:LINKS]-&gt;(a)-[:LINKS]-&gt;(home)
+,(links)-[:LINKS]-&gt;(b)-[:LINKS]-&gt;(home)
+,(links)-[:LINKS]-&gt;(c)-[:LINKS]-&gt;(home)
+,(links)-[:LINKS]-&gt;(d)-[:LINKS]-&gt;(home)</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Running algorithm and streaming results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) YIELD node, score</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Running algorithm and writing back results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85,
+write: true,writeProperty:"pagerank"})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Results</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">pageRank</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Home</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.419</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Product</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Links</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">About</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site B</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site D</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>As we expected, we see that Home page has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that links to us.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_example_usage"><a class="link" href="#_example_usage">Example Usage</a></h4>
@@ -581,7 +718,7 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <div class="title">minimal</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
-CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score</code></pre>
+CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score</code></pre>
 </div>
 </div>
 </div>
@@ -591,18 +728,18 @@ CALL algo.pageRankStream('Label1', 'TYPE1') YIELD node, score</code></pre>
 <div class="title">running algorithm and writing back results</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85,
-write: true, weightProperty:'score',writeProperty:"pagerank"})
+write: true,writeProperty:"pagerank"})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 - calculates page rank and potentially writes back</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. parameters</caption>
+<caption class="title">Table 2. parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -657,20 +794,13 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
 </tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">weightProperty</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">'score'</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">property name that contains weight.Must be numeric.</p></td>
-</tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 2. results</caption>
+<caption class="title">Table 3. results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -726,16 +856,17 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <div class="listingblock">
 <div class="title">running algorithm and streaming results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85}) YIELD node, score - calculates page rank and streams results</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85})
+YIELD node, score - calculates page rank and streams results</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 3. parameters</caption>
+<caption class="title">Table 4. parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -779,11 +910,11 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 4. results</caption>
+<caption class="title">Table 5. results</caption>
 <colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
 </colgroup>
 <tbody>
 <tr>
@@ -814,6 +945,15 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <ul>
 <li>
 <p><a href="https://en.wikipedia.org/wiki/PageRank" class="bare">https://en.wikipedia.org/wiki/PageRank</a></p>
+</li>
+<li>
+<p><a href="http://infolab.stanford.edu/~ullman/mmds/book.pdf" class="bare">http://infolab.stanford.edu/~ullman/mmds/book.pdf</a></p>
+</li>
+<li>
+<p><a href="http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf" class="bare">http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf</a></p>
+</li>
+<li>
+<p><a href="http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm" class="bare">http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm</a></p>
 </li>
 </ul>
 </div>
@@ -925,7 +1065,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <h4 id="_when_to_use_it_use_cases_2"><a class="link" href="#_when_to_use_it_use_cases_2">When to use it / use-cases</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="img/betweenness_centrality.png" alt="betweenness centrality">
+<img src="images/img/betweenness_centrality.png" alt="betweenness centrality">
 </div>
 </div>
 <div class="paragraph">
@@ -978,7 +1118,7 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 5. Results</caption>
+<caption class="title">Table 6. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -1035,12 +1175,12 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 6. Parameters</caption>
+<caption class="title">Table 7. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -1091,10 +1231,10 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 7. Results</caption>
+<caption class="title">Table 8. Results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -1149,12 +1289,12 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 8. Parameters</caption>
+<caption class="title">Table 9. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -1184,11 +1324,11 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 9. Results</caption>
+<caption class="title">Table 10. Results</caption>
 <colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
 </colgroup>
 <tbody>
 <tr>
@@ -1484,12 +1624,12 @@ partitionProperty - simple label propagation kernel</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 10. Parameters</caption>
+<caption class="title">Table 11. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -1554,10 +1694,10 @@ partitionProperty - simple label propagation kernel</code></pre>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 11. Results</caption>
+<caption class="title">Table 12. Results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -1725,12 +1865,12 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 12. Parameters</caption>
+<caption class="title">Table 13. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -1788,10 +1928,10 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 13. Results</caption>
+<caption class="title">Table 14. Results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -2096,7 +2236,7 @@ subgraph of the graph. That means that the direction of the relationships  in ou
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="img/connected_components.png" alt="connected components">
+<img src="images/img/connected_components.png" alt="connected components">
 </div>
 </div>
 <div class="listingblock">
@@ -2131,7 +2271,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 14. Results</caption>
+<caption class="title">Table 15. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2200,7 +2340,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 15. Results</caption>
+<caption class="title">Table 16. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2259,12 +2399,12 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 16. Parameters</caption>
+<caption class="title">Table 17. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -2329,10 +2469,10 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 17. Results</caption>
+<caption class="title">Table 18. Results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -2378,12 +2518,12 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 18. Parameters</caption>
+<caption class="title">Table 19. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -2413,11 +2553,11 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 19. Results</caption>
+<caption class="title">Table 20. Results</caption>
 <colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
 </colgroup>
 <tbody>
 <tr>
@@ -2552,7 +2692,7 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 <h4 id="_algorithm_explanation_on_simple_sample_graph_9"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_9">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="img/strongly_connected_components.png" alt="strongly connected components">
+<img src="images/img/strongly_connected_components.png" alt="strongly connected components">
 </div>
 </div>
 <div class="paragraph">
@@ -2587,7 +2727,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 20. Results</caption>
+<caption class="title">Table 21. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2652,12 +2792,12 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 21. Parameters</caption>
+<caption class="title">Table 22. Parameters</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 50%;">
 </colgroup>
 <thead>
@@ -2701,10 +2841,10 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 22. Results</caption>
+<caption class="title">Table 23. Results</caption>
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
 <col style="width: 75%;">
 </colgroup>
 <thead>
@@ -2967,12 +3107,9 @@ the neo4j graph.</p>
 bunch of data.
 But since we always load the whole graph we waste some time with unnecessary imports.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>    +-----------+
-    |           | import  +-------+ computation +--------+
-    |   Neo4j{s}|--------&gt;| Graph |------------&gt;| Result |
-    +-----------+         +-------+             +--------+</pre>
+<img src="images/diag-06b4482309464b6425d4f9802c0a7e09.png" alt="diag 06b4482309464b6425d4f9802c0a7e09" width="620" height="126">
 </div>
 </div>
 </div>
@@ -2986,37 +3123,9 @@ to run only once (and therefore does not need to buffer all nodes). It would als
 the implementation of new operations like a concurrentNodeIterator (to pick batches of nodes
 for parallel evaluation) or an AllRelationsIterator (which doesn&#8217;t need a node-id to start from).</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>                            +---------+
-                            |         |
-                            |  Neo4j  |
-                            |    {s}  |
-                            +----+----+
-                                 ^
-                                 |
-        +-------------+----------+------+--------+--------- ...
-        |             |          |               |
-    +---+------+ +----+---+ +----+----+ +--------+--------+
-    | NodeIter | | Degree | | RelIter | | WeightedRelIter | ...
-    +---+------+ +----+---+ +----+----+ +--------+--------+
-        ^             ^          ^               ^
-        |             |          |               |
-        +------+------+          |               |
-               :                 :               :
-         +-----+-----+     +-----+-----+   +-----+-----+
-         |           |     |           |   |           |
-         |  PageRank |     | UnionFind |   | MinSTree  |
-         |    {c}    |     |     {c}   |   |   {c}     |
-         +-----------+     +-----------+   +-----+-----+
-                                                 ^
-                                                 |
-                                                 :
-                                           +-----+-----+
-                                           |           |
-                                           |   kMeans  |
-                                           |    {c}    |
-                                           +-----------+</pre>
+<img src="images/diag-96930bc884a3d1c56ad52ebb66f4c2de.png" alt="diag 96930bc884a3d1c56ad52ebb66f4c2de" width="670" height="462">
 </div>
 </div>
 <div class="paragraph">
@@ -3239,24 +3348,9 @@ graph as well as iterating over edges of a given vertex in the form of <strong>f
 and <strong>relationshipIterator()</strong>-Methods. The Graph knows the <strong>nodeCount</strong> and <strong>degree</strong> of each node and can <strong>map</strong>
 nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weighted and unweighted edges.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>                                  +--------------+
-                                  |    Graph     |
-                                  +--------------+
-                                  | - degree( )  |
-                                  | - forEach( ) |
-                                  | - relation( )|
-                                  | - idMap( )   |
-                                  +--------------+
-                                    ^    ^     ^
-                        implements  |    |     | implements
-                      +-------------+    |     +----------+
-                      |                  |                |
-                      |                  |implements      |
-                 +----+-------+    +-----+------+     +---+-------+
-                 | HeavyGraph |    | LightGraph |     | GraphView |
-                 +------------+    +------------+     +-----------+</pre>
+<img src="images/diag-c7aa032e8c661d5a6bd35bc00da9209f.png" alt="diag c7aa032e8c661d5a6bd35bc00da9209f" width="710" height="294">
 </div>
 </div>
 <div class="admonitionblock note">
@@ -3307,20 +3401,9 @@ the Graph. This is part of current development.</p>
 <p>The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
 for creating the Graph using the core db.</p>
 </div>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre>             +------------------+         builds        +--------------+
-             |   GraphFactory   | - - - - - - - - - - &gt; |    Graph     |
-             +------+---+-------+                       +---+-----+----+
-                    ^   ^                                   ^     ^
-                    |   |                                   |     |
-                    |   |                                   |     |
-                    |   |                                   |     |
-                +---+   +--------+                   +------+     +--+
-                |                |                   |               |
-        +-------+------+  +------+-------+    +------+-----+  +------+-----+
-        | HeavyFactory |  | LightFactory |    | HeavyGraph |  | LightGraph |
-        +--------------+  +--------------+    +------------+  +------------+</pre>
+<img src="images/diag-9851458f6bf1935b4418f88d5cce6713.png" alt="diag 9851458f6bf1935b4418f88d5cce6713" width="800" height="238">
 </div>
 </div>
 <div class="paragraph">
@@ -3343,7 +3426,7 @@ for creating the Graph using the core db.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-01 15:15:13 CEST
+Last updated 2017-06-04 18:39:03 MESZ
 </div>
 </div>
 </body>
