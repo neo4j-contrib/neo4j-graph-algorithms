@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.utils.container;
 
 
 import java.util.Arrays;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -70,14 +71,12 @@ public class Buckets {
      * @param bucket the bucket index
      * @param consumer the nodeConsumer
      */
-    public void forEachInBucket(int bucket, IntPredicate consumer) {
+    public void forEachInBucket(int bucket, IntConsumer consumer) {
         for (int nodeId = 0; nodeId < buckets.length; nodeId++) {
             int tb = buckets[nodeId];
             if (tb == bucket) {
                 buckets[nodeId] = -1; // clear bucket
-                if (!consumer.test(nodeId)) {
-                    return;
-                }
+                consumer.accept(nodeId);
             }
         }
     }

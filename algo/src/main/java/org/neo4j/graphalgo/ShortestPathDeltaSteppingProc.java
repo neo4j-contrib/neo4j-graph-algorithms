@@ -69,9 +69,8 @@ public class ShortestPathDeltaSteppingProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDeltaStepping(graph, delta)
-                .withExecutorService(Executors.newFixedThreadPool(
-                        configuration.getInt("concurrency", 4)
-                ))
+                .withExecutorService(Pools.DEFAULT)
+                .withConcurrency(configuration.getInt("concurrency", 4))
                 .compute(startNode.getId())
                 .resultStream();
     }

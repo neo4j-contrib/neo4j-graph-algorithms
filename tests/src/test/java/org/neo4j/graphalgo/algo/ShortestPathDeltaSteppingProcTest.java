@@ -17,6 +17,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.DoubleConsumer;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.AdditionalMatchers.eq;
@@ -156,5 +157,13 @@ public final class ShortestPathDeltaSteppingProcTest {
 
         verify(consumer, times(11)).accept(anyDouble());
         verify(consumer, times(1)).accept(eq(8d, 0.1d));
+    }
+
+    @Test
+    public void testCalcWithoutCypherStream() throws Exception {
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:false}) " +
+                "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
+
+        api.execute(matchCypher).accept(r -> true);
     }
 }
