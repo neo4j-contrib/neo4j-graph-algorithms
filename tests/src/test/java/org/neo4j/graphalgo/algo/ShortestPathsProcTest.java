@@ -151,4 +151,21 @@ public final class ShortestPathsProcTest {
         verify(consumer, times(11)).accept(anyDouble());
         verify(consumer, times(1)).accept(eq(8d, 0.1d));
     }
+
+
+    @Test
+    public void testData() throws Exception {
+
+        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'"+graphImpl+"'}) " +
+                "YIELD nodeId, distance RETURN nodeId, distance";
+
+        api.execute(cypher).accept(row -> {
+            long nodeId = row.getNumber("nodeId").longValue();
+            double distance = row.getNumber("distance").doubleValue();
+            System.out.printf("%d:%.1f, ",
+                    nodeId,
+                    distance);
+            return true;
+        });
+    }
 }

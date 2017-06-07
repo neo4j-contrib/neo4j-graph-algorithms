@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
@@ -12,11 +13,15 @@ public class ShortestPaths {
 
     private final Graph graph;
     private final IntDoubleMap costs;
+    private final IntMinPriorityQueue queue;
+    private final SimpleBitSet visited;
 
     public ShortestPaths(Graph graph) {
         this.graph = graph;
         int nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
+        visited = new SimpleBitSet(nodeCount);
+        queue = new IntMinPriorityQueue();
     }
 
     public ShortestPaths compute(long startNode) {
@@ -24,7 +29,9 @@ public class ShortestPaths {
             costs.put(node, Double.POSITIVE_INFINITY);
             return true;
         });
-        costs.put(graph.toMappedNodeId(startNode), 0d);
+        final int nodeId = graph.toMappedNodeId(startNode);
+        costs.put(nodeId, 0d);
+        queue.add(nodeId, 0d);
         run();
         return this;
     }
@@ -43,7 +50,9 @@ public class ShortestPaths {
     }
 
     private void run() {
-        graph.forEachNode(node -> {
+        while (!queue.isEmpty()) {
+            final int node = queue.pop();
+            visited.put(node);
             double sourceCosts = this.costs.getOrDefault(node, Double.POSITIVE_INFINITY);
             // scan ALL relationships
             graph.forEachRelationship(
@@ -55,10 +64,13 @@ public class ShortestPaths {
                         if (weight + sourceCosts < targetCosts) {
                             costs.put(target, weight + sourceCosts);
                         }
+                        if (!visited.contains(target)) {
+                            queue.add(target, targetCosts);
+                        }
                         return true;
                     });
-            return true;
-        });
+
+        }
     }
 
     public static class Result {
