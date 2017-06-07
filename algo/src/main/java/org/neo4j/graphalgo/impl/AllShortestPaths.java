@@ -107,10 +107,10 @@ public class AllShortestPaths {
                             final double targetDistance = weight + sourceDistance;
                             if (targetDistance < distance[target]) {
                                 distance[target] = targetDistance;
-                            }
-                            if (!visited.contains(target)) {
                                 queue.add(target, targetDistance);
                             }
+//                            if (!visited.contains(target)) {
+//                            }
                             return true;
                         });
             }

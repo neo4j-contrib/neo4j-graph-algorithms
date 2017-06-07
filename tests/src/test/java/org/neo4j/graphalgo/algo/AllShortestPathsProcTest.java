@@ -127,12 +127,12 @@ public final class AllShortestPathsProcTest {
             if (source == target) {
                 assertEquals(0.0, distance, 0.1);
             }
-            System.out.println(source + " " + target + " " + distance);
+            assertNotEquals(Double.POSITIVE_INFINITY, distance);
             consumer.test(source, target, distance);
             return true;
         });
 
-        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(6.0));
+        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(8.0));
 
     }
 
