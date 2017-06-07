@@ -61,12 +61,10 @@ public class AllShortestPaths {
 
         private final IntMinPriorityQueue queue;
         private final double[] distance;
-        private final SimpleBitSet visited;
 
         private ShortestPathTask() {
             distance = new double[nodeCount];
             queue = new IntMinPriorityQueue();
-            visited = new SimpleBitSet(nodeCount);
         }
 
         @Override
@@ -96,7 +94,6 @@ public class AllShortestPaths {
 
             while (!queue.isEmpty()) {
                 final int node = queue.pop();
-                visited.put(node);
                 final double sourceDistance = distance[node];
                 // scan relationships
                 graph.forEachRelationship(
@@ -109,8 +106,6 @@ public class AllShortestPaths {
                                 distance[target] = targetDistance;
                                 queue.add(target, targetDistance);
                             }
-//                            if (!visited.contains(target)) {
-//                            }
                             return true;
                         });
             }
