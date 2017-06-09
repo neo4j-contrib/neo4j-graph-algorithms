@@ -33,9 +33,7 @@ public class PageRank {
         nodeCount = idMapping.nodeCount();
         pageRank = new double[nodeCount];
         tempRank = new double[nodeCount];
-        this.alpha = nodeCount == 0
-                ? 1.0 - dampingFactor
-                : (1.0 - dampingFactor) / nodeCount;
+        this.alpha = 1.0 - dampingFactor;
     }
 
     /**
