@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,6 +60,10 @@ public class StronglyConnectedComponentsProcIntegrationTest {
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(StronglyConnectedComponentsProc.class);
+    }
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
     }
 
     @Parameterized.Parameters(name = "{0}")

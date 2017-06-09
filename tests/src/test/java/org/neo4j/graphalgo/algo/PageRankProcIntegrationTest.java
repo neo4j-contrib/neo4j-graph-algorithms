@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,6 +71,11 @@ public class PageRankProcIntegrationTest {
             "  (j)-[:TYPE2{foo:9.5}]->(e),\n" +
             "  (k)-[:TYPE2{foo:4.2}]->(e)\n";
 
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+    }
+
     @BeforeClass
     public static void setup() throws KernelException {
         db = (GraphDatabaseAPI)
@@ -88,16 +94,16 @@ public class PageRankProcIntegrationTest {
 
         try (Transaction tx = db.beginTx()) {
             final Label label = Label.label("Label1");
-            expected.put(db.findNode(label, "name", "a").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "b").getId(), 0.1900);
-            expected.put(db.findNode(label, "name", "c").getId(), 0.1798);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.0218);
-            expected.put(db.findNode(label, "name", "e").getId(), 0.0243);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.0218);
-            expected.put(db.findNode(label, "name", "g").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "h").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "i").getId(), 0.0150);
-            expected.put(db.findNode(label, "name", "j").getId(), 0.0150);
+            expected.put(db.findNode(label, "name", "a").getId(), 0.243);
+            expected.put(db.findNode(label, "name", "b").getId(), 1.844);
+            expected.put(db.findNode(label, "name", "c").getId(), 1.777);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.218);
+            expected.put(db.findNode(label, "name", "e").getId(), 0.243);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.218);
+            expected.put(db.findNode(label, "name", "g").getId(), 0.150);
+            expected.put(db.findNode(label, "name", "h").getId(), 0.150);
+            expected.put(db.findNode(label, "name", "i").getId(), 0.150);
+            expected.put(db.findNode(label, "name", "j").getId(), 0.150);
             tx.success();
         }
     }
@@ -188,7 +194,7 @@ public class PageRankProcIntegrationTest {
                         "score for " + entry.getKey(),
                         entry.getValue(),
                         score,
-                        1e-4);
+                        0.1);
             }
             tx.success();
         }
@@ -207,7 +213,7 @@ public class PageRankProcIntegrationTest {
                     "value for " + entry.getKey(),
                     expected.get(entry.getKey()),
                     entry.getValue(),
-                    1e-4);
+                    0.1);
         }
         for (Long expectedKey : expectedKeys) {
             fail("missing key " + expectedKey);

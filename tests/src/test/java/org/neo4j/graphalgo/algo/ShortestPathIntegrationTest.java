@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +31,11 @@ import static org.mockito.Mockito.verify;
 public class ShortestPathIntegrationTest {
 
     private static GraphDatabaseAPI db;
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+    }
 
     @BeforeClass
     public static void setup() throws KernelException {

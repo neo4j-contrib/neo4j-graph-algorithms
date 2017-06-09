@@ -28,7 +28,7 @@ public class CoverTest {
 
     @AfterClass
     public static void tearDown() {
-        db.shutdown();
+        if (db!=null) db.shutdown();
     }
 
     @Test

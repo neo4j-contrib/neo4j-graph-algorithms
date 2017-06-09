@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,6 +66,11 @@ public class HeavyGraphFactoryTest {
             id3 = node3.getId();
         }
 
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
     }
 
     @Test

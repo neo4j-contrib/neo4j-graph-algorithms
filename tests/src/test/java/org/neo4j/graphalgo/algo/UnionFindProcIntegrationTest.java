@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.algo;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,6 +73,11 @@ public class UnionFindProcIntegrationTest {
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(UnionFindProc.class);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
     }
 
     @Parameterized.Parameters(name = "{0}")

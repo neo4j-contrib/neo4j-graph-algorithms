@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils.container;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,6 +54,11 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
         a = idMapper.toMappedNodeId(a);
         b = idMapper.toMappedNodeId(b);
         c = idMapper.toMappedNodeId(c);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
     }
 
     @Test

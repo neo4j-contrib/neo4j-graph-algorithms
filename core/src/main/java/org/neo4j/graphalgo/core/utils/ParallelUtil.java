@@ -130,6 +130,8 @@ public final class ParallelUtil {
             return;
         }
 
+        if (executor.isShutdown() || executor.isTerminated()) throw new IllegalStateException("Executor is shut down");
+
         for (Runnable task : tasks) {
             futures.add(executor.submit(task));
         }
@@ -177,6 +179,7 @@ public final class ParallelUtil {
         private final ParallelGraphExporter parallelExporter;
         private final PrimitiveIntIterable iterator;
         private final ThreadToStatementContextBridge ctx;
+        public volatile boolean RAN = false;
 
         private BatchExportRunnable(
                 final GraphDatabaseAPI db,
@@ -202,7 +205,10 @@ public final class ParallelUtil {
                 }
                 tx.success();
             } catch (KernelException e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
+            } finally {
+                RAN = true;
             }
         }
     }

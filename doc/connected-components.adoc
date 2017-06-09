@@ -20,7 +20,7 @@ Recall that an undirected graph is connected if for every pair of vertices, ther
 between those vertices. A connected component of an undirected graph is a maximal connected
 subgraph of the graph. That means that the direction of the relationships  in our graph have no influence as we treat our graph as undirected. We have two implementations of connected components algorithm. First implementations treats the graph as unweighted and the second version is weighted, where you can define the threshold of the weight above which relationships are created. 
 
-image::img/connected_components.png[]
+image::{img}/connected_components.png[]
 
 .Create sample graph
 [source,cypher]
