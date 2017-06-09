@@ -70,14 +70,14 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 [opts="header",cols="1,1"]
 |===
 | name | pageRank 
-| Home | 0.419
-| Product | 0.137
-| Links | 0.137
-| About | 0.137
-| Site A | 0.042
-| Site B | 0.042 
-| Site C | 0.042 
-| Site D | 0.042 
+| Home | 3.232
+| Product | 1.059
+| Links | 1.059
+| About | 1.059
+| Site A | 0.328
+| Site B | 0.328 
+| Site C | 0.328 
+| Site D | 0.328 
 |===
 
 As we expected, we see that Home page has the highest pageRank, because it has incoming links from all other pages. We can also observe, that not only the number of incoming links is important, but also the importance of the page, that links to us. 
