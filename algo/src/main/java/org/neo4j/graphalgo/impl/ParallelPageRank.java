@@ -86,15 +86,25 @@ public class ParallelPageRank implements AutoCloseable {
             partitions = createSinglePartition(idMapping, degrees);
         }
 
-        // TODO: if <= 1 partition or no exec, run in sync, don't use disruptor
-        handler = createPartitionSyncHandler(partitions);
-        disruptor = startDisruptor(executor, handler);
-        computeSteps = createComputeSteps(
+        if (partitions.size() == 1) {
+            handler = null;
+            disruptor = null;
+            computeSteps = createSingleComputeStep(
+                    partitions.get(0),
+                    dampingFactor,
+                    relationshipIterator,
+                    degrees
+            );
+        } else {
+            handler = createPartitionSyncHandler(partitions);
+            disruptor = startDisruptor(executor, handler);
+            computeSteps = createComputeSteps(
                 relationshipIterator,
                 degrees,
                 dampingFactor,
                 partitions,
                 disruptor.getRingBuffer());
+        }
     }
 
     /**
@@ -102,6 +112,9 @@ public class ParallelPageRank implements AutoCloseable {
      */
     public ParallelPageRank compute(int iterations) {
         assert iterations >= 1;
+        if (handler == null) {
+            return computeSequential(iterations);
+        }
         double[][] pageRanks = handler.pageRanks;
         int partitionSize = pageRanks.length;
 
@@ -122,23 +135,47 @@ public class ParallelPageRank implements AutoCloseable {
         return this;
     }
 
-    public double[] getPageRank() {
-        double[] ranks = new double[handler.nodeCount];
-        for (ComputeStep computeStep : computeSteps) {
-            double[] scores = computeStep.pageRank;
-            System.arraycopy(
-                    scores,
-                    0,
-                    ranks,
-                    computeStep.startNode,
-                    computeStep.nodeCount);
+    private ParallelPageRank computeSequential(int iterations) {
+        assert computeSteps.size() == 1;
+
+        final ComputeStep step = computeSteps.get(0);
+        final SequentialPublisher publisher = (SequentialPublisher) step.publisher;
+        step.run();
+
+        for (int i = 1; i < iterations; i++) {
+            step.prepareNextIteration(publisher.scores);
+            step.run();
         }
-        return ranks;
+
+        step.synchronizeScores(publisher.scores);
+
+        return this;
+    }
+
+    public double[] getPageRank() {
+        if (handler != null) {
+            double[] ranks = new double[handler.nodeCount];
+            for (ComputeStep computeStep : computeSteps) {
+                double[] scores = computeStep.pageRank;
+                System.arraycopy(
+                        scores,
+                        0,
+                        ranks,
+                        computeStep.startNode,
+                        computeStep.nodeCount);
+            }
+            return ranks;
+        } else {
+            assert computeSteps.size() == 1;
+            return computeSteps.get(0).pageRank;
+        }
     }
 
     @Override
     public void close() {
-        disruptor.shutdown();
+        if (disruptor != null) {
+            disruptor.shutdown();
+        }
     }
 
     private List<Partition> partitionGraph(
@@ -173,6 +210,23 @@ public class ParallelPageRank implements AutoCloseable {
                         degrees,
                         0,
                         -1
+                )
+        );
+    }
+
+    private List<ComputeStep> createSingleComputeStep(
+            Partition partition,
+            final double dampingFactor,
+            final RelationshipIterator relationshipIterator,
+            final Degrees degrees) {
+        return Collections.singletonList(
+                new ComputeStep(
+                        new SequentialPublisher(partition.nodeCount),
+                        dampingFactor,
+                        relationshipIterator,
+                        degrees,
+                        partition.pageRank,
+                        partition.startNode
                 )
         );
     }
@@ -234,7 +288,7 @@ public class ParallelPageRank implements AutoCloseable {
         List<ComputeStep> computeSteps = new ArrayList<>();
         for (Partition partition : partitions) {
             computeSteps.add(new ComputeStep(
-                    ringBuffer,
+                    new ParallelPublisher(ringBuffer),
                     dampingFactor,
                     relationshipIterator,
                     degrees,
@@ -292,9 +346,13 @@ public class ParallelPageRank implements AutoCloseable {
         }
     }
 
+    private interface PageRankScorePublisher {
+        void publish(int nodeId, double score);
+    }
+
     private static final class ComputeStep implements Runnable, RelationshipConsumer {
 
-        private final RingBuffer<PageRankScorePair> ringBuffer;
+        private final PageRankScorePublisher publisher;
         private final RelationshipIterator relationshipIterator;
         private final Degrees degrees;
 
@@ -309,14 +367,13 @@ public class ParallelPageRank implements AutoCloseable {
         private double srcRank;
 
         ComputeStep(
-                RingBuffer<PageRankScorePair> ringBuffer,
+                PageRankScorePublisher publisher,
                 double dampingFactor,
                 RelationshipIterator relationshipIterator,
                 Degrees degrees,
                 double[] pageRank,
                 int startNode) {
-
-            this.ringBuffer = ringBuffer;
+            this.publisher = publisher;
             this.relationshipIterator = relationshipIterator;
             this.degrees = degrees;
             this.dampingFactor = dampingFactor;
@@ -350,14 +407,7 @@ public class ParallelPageRank implements AutoCloseable {
                 int sourceNodeId,
                 int targetNodeId,
                 long relationId) {
-            long sequence = ringBuffer.next();
-            try {
-                PageRankScorePair pair = ringBuffer.get(sequence);
-                pair.nodeId = targetNodeId;
-                pair.score = srcRank;
-            } finally {
-                ringBuffer.publish(sequence);
-            }
+            publisher.publish(targetNodeId, srcRank);
             return true;
         }
 
@@ -371,6 +421,40 @@ public class ParallelPageRank implements AutoCloseable {
                 pageRank[i] = alpha + dampingFactor * prevRank[i];
                 prevRank[i] = 0.0;
             }
+        }
+    }
+
+    private static final class ParallelPublisher implements PageRankScorePublisher {
+
+        private final RingBuffer<PageRankScorePair> ringBuffer;
+
+        private ParallelPublisher(RingBuffer<PageRankScorePair> ringBuffer) {
+            this.ringBuffer = ringBuffer;
+        }
+
+        @Override
+        public void publish(int nodeId, double score) {
+            long sequence = ringBuffer.next();
+            try {
+                PageRankScorePair pair = ringBuffer.get(sequence);
+                pair.nodeId = nodeId;
+                pair.score = score;
+            } finally {
+                ringBuffer.publish(sequence);
+            }
+        }
+    }
+
+    private static final class SequentialPublisher implements PageRankScorePublisher {
+        private final double[] scores;
+
+        private SequentialPublisher(int nodeCount) {
+            this.scores = new double[nodeCount];
+        }
+
+        @Override
+        public void publish(final int nodeId, final double score) {
+            scores[nodeId] += score;
         }
     }
 
