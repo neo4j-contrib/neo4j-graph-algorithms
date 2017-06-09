@@ -2,9 +2,6 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -19,6 +16,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
@@ -36,10 +34,11 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class PageRankBenchmark {
 
-    private Graph lightGraph, heavyGraph, neo4jView;
-
     @Param({"5", "20", "100"})
     int iterations;
+
+    @Param({"LIGHT", "HEAVY", "VIEW"})
+    GraphImpl impl;
 
     private GraphDatabaseAPI db;
 
@@ -82,44 +81,28 @@ public class PageRankBenchmark {
             db.execute(createGraph).close();
             tx.success();
         }
+    }
 
-        neo4jView = new GraphView(db, null, null, null, 1.0d);
-        lightGraph = loadLight();
-        heavyGraph = loadHeavy();
+    @TearDown
+    public void tearDown() {
+        db.shutdown();
     }
 
     @Benchmark
-    public Object _01_lightGraph() {
-        final Graph graph = loadLight();
-        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations);
-    }
-
-    @Benchmark
-    public Object _02_lightGraphReuseGraph() {
-        return new PageRank(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations);
-    }
-
-    @Benchmark
-    public Object _03_heavyGraph() {
-        final Graph graph = loadHeavy();
-        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations);
-    }
-
-    @Benchmark
-    public Object _04_heavyGraphReuseGraph() {
-        return new PageRank(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations);
-    }
-
-    @Benchmark
-    public Object _05_neo4jView() {
-        return new PageRank(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations);
-    }
-
-    private Graph loadLight() {
-        return new GraphLoader(db).load(LightGraphFactory.class);
-    }
-
-    private Graph loadHeavy() {
-        return new GraphLoader(db).load(HeavyGraphFactory.class);
+    public double[] run() throws Exception {
+        final Graph graph = new GraphLoader(db).load(impl.impl);
+        try {
+            PageRank pageRank = new PageRank(
+                    graph,
+                    graph,
+                    graph,
+                    graph,
+                    0.85);
+            return pageRank.compute(iterations).getPageRank();
+        } finally {
+            if (graph instanceof AutoCloseable) {
+                ((AutoCloseable) graph).close();
+            }
+        }
     }
 }
