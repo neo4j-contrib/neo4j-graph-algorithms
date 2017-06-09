@@ -5,11 +5,10 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.impl.PageRankExporter;
 import org.neo4j.graphalgo.impl.PageRankScore;
+import org.neo4j.graphalgo.impl.ParallelPageRank;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -104,21 +103,26 @@ public final class PageRankProc {
 
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
+        final int batchSize = configuration.getBatchSize();
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
-        PageRank pageRankAlgo = new PageRank(
-                graph,
-                graph,
-                graph,
-                graph,
-                dampingFactor);
 
-        statsBuilder.timeEval(() -> pageRankAlgo.compute(iterations));
+        try (ParallelPageRank algo = new ParallelPageRank(
+                Pools.DEFAULT,
+                batchSize,
+                graph,
+                graph,
+                graph,
+                graph,
+                dampingFactor)) {
 
-        statsBuilder
-                .withIterations(iterations)
-                .withDampingFactor(dampingFactor);
+            statsBuilder.timeEval(() -> algo.compute(iterations));
 
-        return pageRankAlgo.getPageRank();
+            statsBuilder
+                    .withIterations(iterations)
+                    .withDampingFactor(dampingFactor);
+
+            return algo.getPageRank();
+        }
     }
 
     private void write(
