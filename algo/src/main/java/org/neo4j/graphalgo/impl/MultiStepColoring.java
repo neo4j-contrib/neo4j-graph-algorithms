@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.IntStack;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
@@ -18,14 +19,14 @@ public class MultiStepColoring {
     private final Graph graph;
     private final AtomicIntegerArray color;
     private final SimpleBitSet visited;
-    private final LinkedBlockingQueue<Integer> queue;
+    private final IntStack queue;
 
     private final int concurrency = 8;
 
     public MultiStepColoring(Graph graph, int nodeCount) {
         this.graph = graph;
         color = new AtomicIntegerArray(nodeCount);
-        queue = new LinkedBlockingQueue<>();
+        queue = new IntStack();
         for (int i = 0; i < nodeCount; i++) {
             color.set(i, i);
         }
@@ -38,12 +39,6 @@ public class MultiStepColoring {
         nodeSet.forEach((IntProcedure) queue::add);
 
         while (!queue.isEmpty()) {
-            final Integer node = queue.poll();
-            if (null == node) {
-                continue;
-            }
-
-
 
         }
 
