@@ -5,7 +5,9 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.PageRank;
+import org.neo4j.graphalgo.impl.ParallelPageRank;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -19,6 +21,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
@@ -88,31 +91,78 @@ public class PageRankBenchmark {
         heavyGraph = loadHeavy();
     }
 
+    @TearDown
+    public void tearDown() {
+        Pools.DEFAULT.shutdown();
+    }
+
     @Benchmark
     public Object _01_lightGraph() {
         final Graph graph = loadLight();
-        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations);
+        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations).getPageRank();
     }
 
     @Benchmark
     public Object _02_lightGraphReuseGraph() {
-        return new PageRank(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations);
+        return new PageRank(lightGraph, lightGraph, lightGraph, lightGraph, 0.85).compute(iterations).getPageRank();
     }
 
     @Benchmark
-    public Object _03_heavyGraph() {
+    public Object _03_lightGraphParallel() {
+        try (ParallelPageRank pageRank = new ParallelPageRank(
+                Pools.DEFAULT,
+                5,
+                lightGraph,
+                lightGraph,
+                lightGraph,
+                lightGraph,
+                0.85)) {
+            return pageRank.compute(iterations).getPageRank();
+        }
+    }
+
+    @Benchmark
+    public Object _04_heavyGraph() {
         final Graph graph = loadHeavy();
-        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations);
+        return new PageRank(graph, graph, graph, graph, 0.85).compute(iterations).getPageRank();
     }
 
     @Benchmark
-    public Object _04_heavyGraphReuseGraph() {
-        return new PageRank(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations);
+    public Object _05_heavyGraphReuseGraph() {
+        return new PageRank(heavyGraph, heavyGraph, heavyGraph, heavyGraph, 0.85).compute(iterations).getPageRank();
     }
 
     @Benchmark
-    public Object _05_neo4jView() {
-        return new PageRank(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations);
+    public Object _06_heavyGraphParallel() {
+        try (ParallelPageRank pageRank = new ParallelPageRank(
+                Pools.DEFAULT,
+                5,
+                heavyGraph,
+                heavyGraph,
+                heavyGraph,
+                heavyGraph,
+                0.85)) {
+            return pageRank.compute(iterations).getPageRank();
+        }
+    }
+
+    @Benchmark
+    public Object _07_neo4jView() {
+        return new PageRank(neo4jView, neo4jView, neo4jView, neo4jView,0.85).compute(iterations).getPageRank();
+    }
+
+    @Benchmark
+    public Object _08_neo4jViewParallel() {
+        try (ParallelPageRank pageRank = new ParallelPageRank(
+                Pools.DEFAULT,
+                5,
+                neo4jView,
+                neo4jView,
+                neo4jView,
+                neo4jView,
+                0.85)) {
+            return pageRank.compute(iterations).getPageRank();
+        }
     }
 
     private Graph loadLight() {

@@ -13,7 +13,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +33,10 @@ public final class ParallelUtil {
         return (int) Math.ceil(elementCount / (double) batchSize);
     }
 
+    public static boolean canRunInParallel(ExecutorService executor) {
+        return executor != null && !(executor.isShutdown() || executor.isTerminated());
+    }
+
     /**
      * Executes write operations in parallel, based on the given batch size
      * and executor.
@@ -50,8 +53,10 @@ public final class ParallelUtil {
 
         int threads = iterators.size();
 
-        if (executor == null || threads == 1) {
-            writeSequential(db, parallelExporter, iterators.iterator().next());
+        if (!canRunInParallel(executor) || threads == 1) {
+            for (PrimitiveIntIterable iterator : iterators) {
+                writeSequential(db, parallelExporter, iterator);
+            }
         } else {
             List<Runnable> tasks = new ArrayList<>(threads);
             for (PrimitiveIntIterable iterator : iterators) {
@@ -80,7 +85,7 @@ public final class ParallelUtil {
 
         int threads = iterators.size();
 
-        if (executor == null || threads == 1) {
+        if (!canRunInParallel(executor) || threads == 1) {
             int nodeOffset = 0;
             Collection<T> tasks = new ArrayList<>(threads);
             for (PrimitiveIntIterable iterator : iterators) {
