@@ -54,7 +54,7 @@ public class AllShortestPathsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new AllShortestPaths(graph, Pools.DEFAULT, configuration.get("concurrency", 1))
+        return new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .resultStream();
     }
 }

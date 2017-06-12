@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
-@RunWith(Parameterized.class)
+//@RunWith(Parameterized.class)
 public final class AllShortestPathsProcTest {
 
     private static GraphDatabaseAPI api;
@@ -101,16 +101,15 @@ public final class AllShortestPathsProcTest {
         api.shutdown();
     }
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{"Heavy"},
-                new Object[]{"Light"}
-        );
-    }
+//    @Parameterized.Parameters(name = "{0}")
+//    public static Collection<Object[]> data() {
+//        return Arrays.asList(
+//                new Object[]{"Heavy"}, new Object[]{"Light"}
+//        );
+//    }
 
-    @Parameterized.Parameter
-    public String graphImpl;
+//    @Parameterized.Parameter
+    public String graphImpl = "Heavy";
 
     @Test
     public void testResultStream() throws Exception {

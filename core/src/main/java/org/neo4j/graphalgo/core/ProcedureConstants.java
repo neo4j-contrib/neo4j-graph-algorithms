@@ -42,4 +42,8 @@ public class ProcedureConstants {
     public static final String GRAPH_IMPL_PARAM = "graph";
 
     public static final String DEFAULT_GRAPH_IMPL = "heavy";
+
+    public static final String CONCURRENCY = "concurrency";
+
+    public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors() / 2;
 }
