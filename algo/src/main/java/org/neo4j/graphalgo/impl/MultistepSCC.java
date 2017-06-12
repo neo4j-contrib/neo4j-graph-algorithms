@@ -8,8 +8,10 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 import java.util.Iterator;
+import java.util.function.IntConsumer;
 
 /**
  * @author mknblch
@@ -110,35 +112,41 @@ public class MultistepSCC {
     }
 
     /**
-     * find all reachable nodes
-     * @param set the nodeSet
-     * @param pivotNodeId
-     * @param direction
-     * @return
+     * bfs for finding all reachable nodes of set starting from pivotNode
+     *  @param set the nodeSet
+     * @param startNodeId the start node id
+     * @param direction the direction to traverse
      */
-    public IntSet reach(IntSet set, int pivotNodeId, Direction direction) {
-        final IntScatterSet ret = new IntScatterSet();
+    private void bfs(IntSet set, int startNodeId, Direction direction, IntConsumer consumer) {
+        final SimpleBitSet visited = new SimpleBitSet(set.size());
         final IntStack queue = new IntStack();
-        queue.push(pivotNodeId);
-        ret.add(pivotNodeId);
+        queue.push(startNodeId);
+        visited.put(startNodeId);
         while (!queue.isEmpty()) {
             final int node = queue.pop();
             if (!set.contains(node)) {
                 continue;
             }
+            consumer.accept(node);
             graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                if (!ret.add(targetNodeId)) {
-                    queue.push(targetNodeId);
+                // don't visit id's not contained in set
+                if (!set.contains(targetNodeId)) {
+                    return true;
                 }
+                // don't visit id's twice
+                if (visited.contains(targetNodeId)) {
+                    return true;
+                }
+                queue.push(targetNodeId);
                 return true;
             });
         }
+    }
+
+    private IntSet sweep(IntSet set, Direction direction) {
+        final IntScatterSet ret = new IntScatterSet();
+        bfs(set, pivot(set), direction, ret::add);
         return ret;
     }
 
-    private
-
-    private static class Flag {
-        public boolean value;
-    }
 }
