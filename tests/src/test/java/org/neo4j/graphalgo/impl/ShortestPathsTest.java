@@ -103,6 +103,15 @@ public final class ShortestPathsTest {
 //        Pools.DEFAULT.shutdownNow();
     }
 
+    public static Node getNode(String name) {
+        final Node[] node = new Node[1];
+        api.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
+            node[0] = row.getNode("n");
+            return false;
+        });
+        return node[0];
+    }
+
     @Test
     public void testPaths() throws Exception {
 
@@ -113,14 +122,5 @@ public final class ShortestPathsTest {
 
         assertEquals(8, sp.get(graph.toMappedNodeId(tail)),0.1);
         assertEquals(Double.POSITIVE_INFINITY, sp.get(graph.toMappedNodeId(outstanding)),0.1);
-    }
-
-    public static Node getNode(String name) {
-        final Node[] node = new Node[1];
-        api.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
-            node[0] = row.getNode("n");
-            return false;
-        });
-        return node[0];
     }
 }

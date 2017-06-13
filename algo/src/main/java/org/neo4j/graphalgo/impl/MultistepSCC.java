@@ -42,6 +42,10 @@ public class MultistepSCC {
         }
     }
 
+    public void compute() {
+
+    }
+
     /**
      * Prune the graph by removing nodes with IN- or OUT-Degree of 0
      * and all self-referencing nodes without relationships to others.
@@ -52,19 +56,19 @@ public class MultistepSCC {
     private void prune(boolean complete) {
 
         boolean changes; // tells whether the last iteration changed the graph
-        final Flag filter = new Flag(); // tells whether the node should be filtered out
+        final boolean[] filter = {false};
         do {
             changes = false;
             for(Iterator<IntCursor> it = nodeSet.iterator(); it.hasNext(); ) {
                 final int node = it.next().value;
-                filter.value = false;
+                filter[0] = false;
                 // rm nodes without incoming arcs and update target degrees
                 if (inDegree[node] == 0) {
                     graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                         outDegree[targetNodeId]--;
                         return true;
                     });
-                    filter.value = true;
+                    filter[0] = true;
                 }
                 // rm nodes without outgoing arcs and update target degrees
                 if (inDegree[node] == 0) {
@@ -72,23 +76,23 @@ public class MultistepSCC {
                         inDegree[targetNodeId]--;
                         return true;
                     });
-                    filter.value = true;
+                    filter[0] = true;
                 }
                 // rm self loops
                 if (inDegree[node] == 1 && outDegree[node] == 1) {
                     graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                         if (sourceNodeId == targetNodeId) {
-                            filter.value = true;
+                            filter[0] = true;
                             return false;
                         }
                         return false;
                     });
                 }
                 // remove
-                if (filter.value) {
+                if (filter[0]) {
                     it.remove();
                 }
-                changes |= filter.value;
+                changes |= filter[0];
             }
 
         } while (changes && complete);
