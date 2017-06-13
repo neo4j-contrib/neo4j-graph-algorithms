@@ -59,8 +59,11 @@ public class MultiStepColoring {
             final int size = nodeSet.size();
             final int batchSize = Math.floorDiv(size, concurrency);
 
+
             print("size = " + size);
             print("batchSize = " + batchSize);
+            print("tempSet = " + nodeSet);
+            futures.clear();
 
             if (batchSize == 0) {
                 futures.add(executorService.submit(() -> color(nodeSet)));
@@ -73,7 +76,8 @@ public class MultiStepColoring {
                 }
             }
             // barrier sync
-            union(nodeSet);
+            nodeSet.clear();
+            union(nodeSet, futures);
         }
         return colors;
     }
@@ -101,16 +105,10 @@ public class MultiStepColoring {
             print("inspecting node = " + node + " with nodeColor = " + nodeColor);
             changed[0] = false;
             // for each <v, u> in E(V) (direction not specified)
-            graph.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                final int targetColor = colors.get(targetNodeId);
-                if (nodeColor <= targetColor) {
-                    return true;
-                }
+            graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                 if (!cas(targetNodeId, nodeColor)) {
-
                     return true;
                 }
-                colors.set(targetNodeId, nodeColor);
                 changed[0] |= true;
                 if (!visited.get(targetNodeId)) {
                     visited.set(targetNodeId);
@@ -142,14 +140,14 @@ public class MultiStepColoring {
         return stored;
     }
 
-    private void union(IntSet parentSet) {
+    private IntSet union(IntSet set, List<Future<IntContainer>> futures) {
         boolean done = false;
         Throwable error = null;
         try {
             for (Future<IntContainer> future : futures) {
                 try {
-                    final IntLookupContainer c = (IntLookupContainer) future.get();
-                    parentSet.retainAll(c);
+                    future.get().forEach((IntProcedure) set::add);
+
                 } catch (ExecutionException ee) {
                     error = Exceptions.chain(error, ee.getCause());
                 } catch (CancellationException ignore) {
@@ -168,6 +166,7 @@ public class MultiStepColoring {
         if (error != null) {
             throw Exceptions.launderedException(error);
         }
+        return set;
     }
 
     private static void print(Object txt) {
