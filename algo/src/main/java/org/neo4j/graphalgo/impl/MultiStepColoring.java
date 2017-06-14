@@ -63,10 +63,7 @@ public abstract class MultiStepColoring {
         // barrier sync (union all future results)
 //        union(nodeSet, futures);
 
-        final IntSet newSet = color2(nodeSet);
-        System.out.println("newSet = " + newSet);
-        nodeSet.clear();
-        nodeSet.forEach((IntProcedure) nodeSet::add);
+        color(nodeSet);
 
         forEachColor(color -> {
             // SCC(cv) <- PRED(G(cv), c)
@@ -127,14 +124,17 @@ public abstract class MultiStepColoring {
         while (!nodes.isEmpty()) {
 
             nodes.forEach((IntProcedure) node -> {
+
+                System.out.println("node = " + node);
                 final int nodeColor = colors.get(node);
                 changed[0] = false;
                 // for each <v, u> in E(V) (direction not specified)
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     // a higher color has been set by another thread, continue with next vertex
-                    if (!cas(targetNodeId, nodeColor)) {
+                    if (colors.get(targetNodeId) >= nodeColor) {
                         return true;
                     }
+                    colors.set(targetNodeId, nodeColor);
                     // color has been assigned
                     changed[0] |= true;
                     // visit & add to level queue
@@ -147,21 +147,26 @@ public abstract class MultiStepColoring {
                 // if any u changed color process again
                 if (changed[0] && !visited.get(node)) {
                     levelQueue.add(node);
-                    visited.unset(node);
+                    visited.set(node);
                 }
             });
+
+            levelQueue.forEach((IntProcedure) visited::unset);
+            nodes.clear();
+            levelQueue.forEach((IntProcedure) nodes::add);
         }
 
 
-        levelQueue.forEach((IntProcedure) visited::unset);
         System.out.println("levelQueue = " + levelQueue);
         printColor();
 
+        System.out.println("nodes = " + nodes);
         return levelQueue;
     }
 
-    private IntSet color2(IntSet nodes) {
+    private void color2(IntSet nodes) {
 
+        final IntScatterSet levelQueue = new IntScatterSet();
         final boolean[] changed = {false};
         do {
             changed[0] = false;
@@ -182,8 +187,6 @@ public abstract class MultiStepColoring {
 
 
         printColor();
-
-        return nodes;
     }
 
     private boolean cas(int nodeId, int color) {
