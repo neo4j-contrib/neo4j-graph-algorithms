@@ -1,17 +1,13 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.IntStack;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 import java.util.Iterator;
-import java.util.function.IntConsumer;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author mknblch
@@ -21,15 +17,27 @@ public class MultistepSCC {
     private final Graph graph;
     private final int cutOff;
     private IntHashSet nodeSet;
-
+    private final Traverse traverse;
     private final int[] inDegree;
     private final int[] outDegree;
+    private final MultiStepColoring coloring;
+    private final SCCTarjan tarjan;
 
-    public MultistepSCC(Graph graph, int cutOff) {
+    public MultistepSCC(Graph graph, ExecutorService executorService, int concurrency, int cutOff) {
         this.graph = graph;
         this.cutOff = cutOff;
         this.inDegree = new int[graph.nodeCount()];
         this.outDegree = new int[graph.nodeCount()];
+        traverse = new Traverse(graph);
+        coloring = new MultiStepColoring(graph, executorService, concurrency) {
+            @Override
+            public void processSCC(int rootNodeId, IntSet scc) {
+                MultistepSCC.this.processSCC(rootNodeId, scc);
+            }
+        };
+        tarjan = new SCCTarjan(graph);
+
+        init();
     }
 
     private void init() {
@@ -43,18 +51,50 @@ public class MultistepSCC {
     }
 
     public void compute() {
+        // V <- simpleTrim (V)
+        trim(false);
+        System.out.println("nodeSet = " + nodeSet);
+        final int rootPivot = pivot(nodeSet);
+        System.out.println("rootPivot = " + rootPivot);
+        // D <- BFS( G(V,E(V)), v)
+        final IntScatterSet descendant = new IntScatterSet();
+        traverse.bfs(rootPivot, Direction.OUTGOING, nodeSet::contains, descendant::add);
+        System.out.println("descendant = " + descendant);
+        // ST <- BFS( G(V, E'(V)), v)
+        final IntSet rootSCC = new IntScatterSet();
+        traverse.bfs(rootPivot, Direction.INCOMING, descendant::contains, rootSCC::add);
+        // SCC <- V & ST
+        rootSCC.retainAll(descendant);
+        System.out.println("rootSCC = " + rootSCC);
+        processSCC(rootPivot, rootSCC);
+        // V <- V \ SCC
+        nodeSet.removeAll((IntLookupContainer) rootSCC);
+
+        System.out.println("resulting nodeSet = " + nodeSet);
+
+        while (!nodeSet.isEmpty()) {
+            System.out.println("computing nodeSet = " + nodeSet);
+            coloring.compute(nodeSet);
+            System.out.println("resulting nodeSet = " + nodeSet);
+
+        }
+
 
     }
 
+    private void processSCC(int root, IntSet elements) {
+        System.out.println(root + " -> " + elements);
+    }
+
     /**
-     * Prune the graph by removing nodes with IN- or OUT-Degree of 0
+     * trim the graph by removing nodes with IN- or OUT-Degree of 0
      * and all self-referencing nodes without relationships to others.
      *
      * @param complete prune the graph until no more changes can be made
      *                 does only one iteration otherwise
      */
-    private void prune(boolean complete) {
-
+    private void trim(boolean complete) {
+        final IntScatterSet remove = new IntScatterSet();
         boolean changes; // tells whether the last iteration changed the graph
         final boolean[] filter = {false};
         do {
@@ -90,16 +130,18 @@ public class MultistepSCC {
                 }
                 // remove
                 if (filter[0]) {
-                    it.remove();
+                    remove.add(node);
                 }
                 changes |= filter[0];
             }
+            nodeSet.removeAll(remove);
 
         } while (changes && complete);
     }
 
     /**
      * find node with highest product of in- and out-degree
+     * v E V for which Din(V) * Dout(V) is max
      * @param set the nodeSet
      * @return the nodeId
      */
@@ -115,42 +157,5 @@ public class MultistepSCC {
         return pivot[0];
     }
 
-    /**
-     * bfs for finding all reachable nodes of set starting from pivotNode
-     *  @param set the nodeSet
-     * @param startNodeId the start node id
-     * @param direction the direction to traverse
-     */
-    private void bfs(IntSet set, int startNodeId, Direction direction, IntConsumer consumer) {
-        final SimpleBitSet visited = new SimpleBitSet(set.size());
-        final IntStack queue = new IntStack();
-        queue.push(startNodeId);
-        visited.put(startNodeId);
-        while (!queue.isEmpty()) {
-            final int node = queue.pop();
-            if (!set.contains(node)) {
-                continue;
-            }
-            consumer.accept(node);
-            graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                // don't visit id's not contained in set
-                if (!set.contains(targetNodeId)) {
-                    return true;
-                }
-                // don't visit id's twice
-                if (visited.contains(targetNodeId)) {
-                    return true;
-                }
-                queue.push(targetNodeId);
-                return true;
-            });
-        }
-    }
-
-    private IntSet sweep(IntSet set, Direction direction) {
-        final IntScatterSet ret = new IntScatterSet();
-        bfs(set, pivot(set), direction, ret::add);
-        return ret;
-    }
 
 }

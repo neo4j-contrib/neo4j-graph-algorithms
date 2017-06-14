@@ -1,12 +1,14 @@
 package org.neo4j.graphalgo.impl;
 
+import algo.Pools;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -89,16 +91,31 @@ public class MultistepSCCTest {
         return node[0];
     }
 
+    private IntSet allNodes() {
+        final IntScatterSet nodes = new IntScatterSet();
+        for (int i = 0; i < graph.nodeCount(); i++) {
+            nodes.add(i);
+        }
+        return nodes;
+    }
+
+    @Test
+    public void test() throws Exception {
+
+        new MultistepSCC(graph, Pools.DEFAULT, 4, 1)
+                .compute();
+
+    }
 
     @Test
     public void testColoring() throws Exception {
 
-        final AtomicIntegerArray compute = new MultiStepColoring(graph, algo.Pools.DEFAULT)
-                .compute();
+        new MultiStepColoring(graph, Pools.DEFAULT, 4) {
 
-        for (int i = 0; i < compute.length(); i++) {
-            System.out.printf("compute.get(%d) = %s%n", i, compute.get(i));
-        }
-
+            @Override
+            public void processSCC(int rootNodeId, IntSet scc) {
+                System.out.println("scc (" + rootNodeId+ ") = " + scc);
+            }
+        }.compute(allNodes());
     }
 }

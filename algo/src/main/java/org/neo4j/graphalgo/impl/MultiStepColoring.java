@@ -13,73 +13,97 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.function.IntConsumer;
 
 /**
  * @author mknblch
  */
-public class MultiStepColoring {
+public abstract class MultiStepColoring {
 
     private final Graph graph;
     private final ExecutorService executorService;
     private final AtomicIntegerArray colors;
     private final AtomicBitSet visited;
     private final List<Future<IntContainer>> futures = new ArrayList<>();
+    private final Traverse traverse;
 
-    private final int concurrency = 3;
+    private final int concurrency;
 
     private final int nodeCount;
 
-    public MultiStepColoring(Graph graph, ExecutorService executorService) {
+    public MultiStepColoring(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = graph.nodeCount();
         this.executorService = executorService;
+        this.concurrency = concurrency;
         colors = new AtomicIntegerArray(nodeCount);
         visited = new AtomicBitSet(nodeCount);
-        resetColor();
+        traverse = new Traverse(graph);
     }
 
-    private IntSet allNodes() {
-        final IntHashSet intCursors = new IntHashSet(nodeCount);
-        for (int i = nodeCount - 1; i >= 0; i--) {
-            intCursors.add(i);
-        }
-        return intCursors;
-    }
+    public abstract void processSCC(int rootNodeId, IntSet scc);
 
-    public AtomicIntegerArray compute() {
-        return compute(allNodes());
-    }
-
-    public AtomicIntegerArray compute(IntSet nodeSet) {
+    public void compute(IntSet nodeSet) {
 
         resetColor();
 
-        while (!nodeSet.isEmpty()) {
+//        final int size = nodeSet.size();
+//        final int batchSize = Math.floorDiv(size, concurrency);
+//        futures.clear();
+//        futures.add(executorService.submit(() -> color(nodeSet)));
+//        if (batchSize == 0) {
+//        } else {
+//            final Iterator<IntCursor> it = nodeSet.iterator();
+//            for (int i = 0; i < size; i += batchSize) {
+//                final IntScatterSet partition = partition(it, batchSize);
+//                futures.add(executorService.submit(() -> color(partition)));
+//            }
+//        }
+//        nodeSet.clear();
+        // barrier sync (union all future results)
+//        union(nodeSet, futures);
 
-            final int size = nodeSet.size();
-            final int batchSize = Math.floorDiv(size, concurrency);
+        final IntSet newSet = color2(nodeSet);
+        System.out.println("newSet = " + newSet);
+        nodeSet.clear();
+        nodeSet.forEach((IntProcedure) nodeSet::add);
 
+        forEachColor(color -> {
+            // SCC(cv) <- PRED(G(cv), c)
+            final IntSet scc = pred(nodeSet, color);
+            processSCC(color, scc);
+            // G <- G \ SCCc
+            nodeSet.retainAll((IntLookupContainer) scc);
+        });
+    }
 
-            print("size = " + size);
-            print("batchSize = " + batchSize);
-            print("tempSet = " + nodeSet);
-            futures.clear();
-
-            if (batchSize == 0) {
-                futures.add(executorService.submit(() -> color(nodeSet)));
-            } else {
-                final Iterator<IntCursor> it = nodeSet.iterator();
-                for (int i = 0; i < size; i += batchSize) {
-                    final IntScatterSet partition = partition(it, batchSize);
-                    print("partition = " + partition);
-                    futures.add(executorService.submit(() -> color(partition)));
-                }
+    /**
+     * traverse backwards and collect all connected nodes with the same color
+     * @param nodes
+     * @param cv denotes the startNodeId and the color
+     * @return set with all nodes reachable backwards with the same color as the startNode (is an SCC)
+     */
+    private IntSet pred(final IntSet nodes, final int cv) {
+        final IntScatterSet set = new IntScatterSet();
+        traverse.bfs(cv, Direction.INCOMING, nodes::contains, node -> {
+            if (colors.get(node) == cv) {
+                set.add(node);
             }
-            // barrier sync
-            nodeSet.clear();
-            union(nodeSet, futures);
+        });
+        return set;
+    }
+
+    /**
+     * for each distinct color
+     *
+     * @param consumer color consumer
+     */
+    private void forEachColor(IntConsumer consumer) {
+        final IntScatterSet tColor = new IntScatterSet();
+        for (int i = 0; i < nodeCount; i++) {
+            tColor.add(colors.get(i));
         }
-        return colors;
+        tColor.forEach((IntProcedure) consumer::accept);
     }
 
     private void resetColor() {
@@ -100,31 +124,66 @@ public class MultiStepColoring {
 
         final IntSet levelQueue = new IntScatterSet();
         final boolean[] changed = {false};
-        nodes.forEach((IntProcedure) node -> {
-            final int nodeColor = colors.get(node);
-            print("inspecting node = " + node + " with nodeColor = " + nodeColor);
-            changed[0] = false;
-            // for each <v, u> in E(V) (direction not specified)
-            graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                if (!cas(targetNodeId, nodeColor)) {
+        while (!nodes.isEmpty()) {
+
+            nodes.forEach((IntProcedure) node -> {
+                final int nodeColor = colors.get(node);
+                changed[0] = false;
+                // for each <v, u> in E(V) (direction not specified)
+                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                    // a higher color has been set by another thread, continue with next vertex
+                    if (!cas(targetNodeId, nodeColor)) {
+                        return true;
+                    }
+                    // color has been assigned
+                    changed[0] |= true;
+                    // visit & add to level queue
+                    if (!visited.get(targetNodeId)) {
+                        visited.set(targetNodeId);
+                        levelQueue.add(targetNodeId);
+                    }
                     return true;
+                });
+                // if any u changed color process again
+                if (changed[0] && !visited.get(node)) {
+                    levelQueue.add(node);
+                    visited.unset(node);
                 }
-                changed[0] |= true;
-                if (!visited.get(targetNodeId)) {
-                    visited.set(targetNodeId);
-                    levelQueue.add(targetNodeId);
-                }
-                return true;
             });
-            // if any u changed color
-            if (changed[0] && !visited.get(node)) {
-                levelQueue.add(node);
-            }
-        });
+        }
+
 
         levelQueue.forEach((IntProcedure) visited::unset);
+        System.out.println("levelQueue = " + levelQueue);
+        printColor();
 
         return levelQueue;
+    }
+
+    private IntSet color2(IntSet nodes) {
+
+        final boolean[] changed = {false};
+        do {
+            changed[0] = false;
+            nodes.forEach((IntProcedure) node -> {
+                final int nodeColor = colors.get(node);
+                // for each <v, u> in E(V) (direction not specified)
+                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                    if (cas(targetNodeId, nodeColor)) {
+                        changed[0] = true;
+                    }
+                    // visit & add to level queue
+                    return true;
+                });
+            });
+
+            System.out.println("changed[0] = " + changed[0]);
+        } while (changed[0]);
+
+
+        printColor();
+
+        return nodes;
     }
 
     private boolean cas(int nodeId, int color) {
@@ -140,13 +199,13 @@ public class MultiStepColoring {
         return stored;
     }
 
-    private IntSet union(IntSet set, List<Future<IntContainer>> futures) {
+    private IntSet union(IntSet ret, List<Future<IntContainer>> futures) {
         boolean done = false;
         Throwable error = null;
         try {
             for (Future<IntContainer> future : futures) {
                 try {
-                    future.get().forEach((IntProcedure) set::add);
+                    future.get().forEach((IntProcedure) ret::add);
 
                 } catch (ExecutionException ee) {
                     error = Exceptions.chain(error, ee.getCause());
@@ -166,9 +225,15 @@ public class MultiStepColoring {
         if (error != null) {
             throw Exceptions.launderedException(error);
         }
-        return set;
+        return ret;
     }
 
+    private void printColor() {
+        System.out.println("colors:");
+        for (int i = 0; i < colors.length(); i++) {
+            System.out.printf("%d -> %d%n", i, colors.get(i));
+        }
+    }
     private static void print(Object txt) {
         System.out.printf("[%s] %s%n", Thread.currentThread().getName(), txt);
     }
