@@ -56,6 +56,8 @@ public class MultistepSCCTest {
                         " (e)-[:TYPE {cost:2}]->(f),\n" +
                         " (f)-[:TYPE {cost:2}]->(d),\n" +
 
+                        " (a)-[:TYPE {cost:2}]->(d),\n" +
+
                         " (g)-[:TYPE {cost:3}]->(h),\n" +
                         " (h)-[:TYPE {cost:3}]->(i),\n" +
                         " (i)-[:TYPE {cost:3}]->(g)";

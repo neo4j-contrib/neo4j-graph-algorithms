@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
@@ -24,6 +23,7 @@ public class Traverse {
      * bfs for finding all reachable nodes of set starting from pivotNode
      */
     public void bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer consumer) {
+        System.out.println("BFS on startNodeId = " + startNodeId);
         if (!predicate.test(startNodeId)) {
             return;
         }
@@ -34,6 +34,7 @@ public class Traverse {
         while (!queue.isEmpty()) {
             final int node = queue.pop();
             consumer.accept(node);
+            System.out.println(node);
             graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 // should we visit this node?
                 if (!predicate.test(targetNodeId)) {
