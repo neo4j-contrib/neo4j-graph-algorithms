@@ -32,14 +32,14 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.SECONDS)
 public class PageRankBenchmarkLdbc {
 
+    @Param({"LIGHT", "HEAVY", "VIEW"})
+    GraphImpl graph;
+
     @Param({"5", "20"})
     int iterations;
 
-    @Param({"10000", "100000000"})
-    int batchSize;
-
-    @Param({"LIGHT", "HEAVY", "VIEW"})
-    GraphImpl impl;
+   @Param({"10000", "1000000000"})
+   int parallelBatchSize;
 
     private GraphDatabaseAPI db;
 
@@ -52,16 +52,15 @@ public class PageRankBenchmarkLdbc {
     public void shutdown() {
         db.shutdown();
         Pools.DEFAULT.shutdownNow();
-        algo.Pools.DEFAULT.shutdownNow();
     }
 
     @Benchmark
     public double[] run() throws Exception {
-        final Graph graph = new GraphLoader(db).load(impl.impl);
+        final Graph graph = new GraphLoader(db).load(this.graph.impl);
         try {
             PageRank pageRank = new PageRank(
                     Pools.DEFAULT,
-                    batchSize,
+                    parallelBatchSize,
                     graph,
                     graph,
                     graph,
