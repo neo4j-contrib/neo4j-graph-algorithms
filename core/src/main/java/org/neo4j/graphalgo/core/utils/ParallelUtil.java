@@ -117,7 +117,7 @@ public final class ParallelUtil {
     public static void run(
             Collection<? extends Runnable> tasks,
             ExecutorService executor) {
-        run(tasks, executor, new ArrayList<>(tasks.size()));
+        run(tasks, executor, null);
     }
 
     public static void run(
@@ -136,6 +136,10 @@ public final class ParallelUtil {
         }
 
         if (executor.isShutdown() || executor.isTerminated()) throw new IllegalStateException("Executor is shut down");
+
+        if (futures == null) {
+            futures = new ArrayList<>(tasks.size());
+        }
 
         for (Runnable task : tasks) {
             futures.add(executor.submit(task));
