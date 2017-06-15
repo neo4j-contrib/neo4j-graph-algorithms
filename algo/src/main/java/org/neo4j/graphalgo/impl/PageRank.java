@@ -9,9 +9,11 @@ import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -44,8 +46,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
  */
 public class PageRank {
 
-    private final ExecutorService executor;
-    private final List<ComputeStep> computeSteps;
+    private final ComputeSteps computeSteps;
     private final boolean isParallel;
 
     /**
@@ -84,34 +85,30 @@ public class PageRank {
 
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
-            this.executor = executor;
             partitions = partitionGraph(
                     batchSize,
                     idMapping,
                     nodeIterator,
                     degrees);
         } else {
-            this.executor = null;
+            executor = null;
             partitions = createSinglePartition(idMapping, degrees);
         }
 
+        final PageRankScorePublisher publisher;
         if (partitions.size() == 1) {
             isParallel = false;
-            computeSteps = createSingleComputeStep(
-                    partitions.get(0),
-                    dampingFactor,
-                    relationshipIterator,
-                    degrees
-            );
+            publisher = new SequentialPublisher(idMapping.nodeCount(), dampingFactor);
         } else {
             isParallel = true;
-            computeSteps = createComputeSteps(
-                    idMapping.nodeCount(),
-                    relationshipIterator,
-                    degrees,
-                    dampingFactor,
-                    partitions);
+            publisher = new ParallelPublisher(idMapping.nodeCount(), dampingFactor);
         }
+        computeSteps = createComputeSteps(
+                publisher,
+                relationshipIterator,
+                degrees,
+                partitions,
+                executor);
     }
 
     /**
@@ -119,20 +116,7 @@ public class PageRank {
      */
     public PageRank compute(int iterations) {
         assert iterations >= 1;
-
-        ParallelUtil.run(computeSteps, executor);
-
-        for (int i = 1; i < iterations; i++) {
-            for (ComputeStep computeStep : computeSteps) {
-                computeStep.prepareNextIteration();
-            }
-            ParallelUtil.run(computeSteps, executor);
-        }
-
-        for (ComputeStep computeStep : computeSteps) {
-            computeStep.synchronizeScores();
-        }
-
+        computeSteps.run(iterations);
         return this;
     }
 
@@ -158,7 +142,7 @@ public class PageRank {
             return ranks;
         } else {
             assert computeSteps.size() == 1;
-            return computeSteps.get(0).pageRank;
+            return computeSteps.getFirst().pageRank;
         }
     }
 
@@ -198,15 +182,13 @@ public class PageRank {
         );
     }
 
-    private List<ComputeStep> createComputeSteps(
-            int nodeCount,
+    private ComputeSteps createComputeSteps(
+            PageRankScorePublisher publisher,
             RelationshipIterator relationshipIterator,
             Degrees degrees,
-            double dampingFactor,
-            List<Partition> partitions) {
+            List<Partition> partitions,
+            ExecutorService pool) {
         List<ComputeStep> computeSteps = new ArrayList<>(partitions.size());
-        ParallelPublisher publisher = new ParallelPublisher(nodeCount, dampingFactor);
-
         for (Partition partition : partitions) {
             computeSteps.add(new ComputeStep(
                     publisher,
@@ -216,23 +198,7 @@ public class PageRank {
                     partition.startNode
             ));
         }
-        return computeSteps;
-    }
-
-    private List<ComputeStep> createSingleComputeStep(
-            Partition partition,
-            final double dampingFactor,
-            final RelationshipIterator relationshipIterator,
-            final Degrees degrees) {
-        return Collections.singletonList(
-                new ComputeStep(
-                        new SequentialPublisher(partition.nodeCount, dampingFactor),
-                        relationshipIterator,
-                        degrees,
-                        partition.pageRank,
-                        partition.startNode
-                )
-        );
+        return new ComputeSteps(computeSteps, publisher, pool);
     }
 
     private static final class Partition {
@@ -269,28 +235,73 @@ public class PageRank {
         }
     }
 
+    private static final class ComputeSteps extends AbstractCollection<ComputeStep> {
+        private final List<ComputeStep> steps;
+        private final PageRankScorePublisher publisher;
+        private final ExecutorService pool;
+
+        private ComputeSteps(
+                List<ComputeStep> steps,
+                PageRankScorePublisher publisher,
+                ExecutorService pool) {
+            assert steps.size() > 0;
+            this.steps = steps;
+            this.publisher = publisher;
+            this.pool = pool;
+        }
+
+        @Override
+        public int size() {
+            return steps.size();
+        }
+
+        @Override
+        public Iterator<ComputeStep> iterator() {
+            return steps.iterator();
+        }
+
+        ComputeStep getFirst() {
+            return steps.get(0);
+        }
+
+        void run(int iterations) {
+            assert iterations >= 1;
+            ParallelUtil.run(steps, pool);
+            publisher.finishedFirstIteration();
+            for (int i = 1; i < iterations; i++) {
+                ParallelUtil.run(steps, pool);
+            }
+            for (ComputeStep step : steps) {
+                publisher.synchronizeScores(step.pageRank, step.startNode);
+            }
+        }
+    }
+
     private static abstract class PageRankScorePublisher {
 
         private final double alpha;
         private final double dampingFactor;
-        private boolean shouldSynch = false;
+        private volatile boolean hasScores = false;
 
         PageRankScorePublisher(double dampingFactor) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
         }
 
-        final void prepareNextIteration() {
-            shouldSynch = true;
+        final void finishedFirstIteration() {
+            hasScores = true;
         }
 
         final void synchronizeScores(
                 double[] pageRank,
-                int startNode,
-                int nodeCount) {
-            if (shouldSynch) {
-                synchronizeScores(alpha, dampingFactor, pageRank, startNode, nodeCount);
-                shouldSynch = false;
+                int startNode) {
+            if (hasScores) {
+                synchronizeScores(
+                        alpha,
+                        dampingFactor,
+                        pageRank,
+                        startNode,
+                        pageRank.length);
             }
         }
 
@@ -335,7 +346,7 @@ public class PageRank {
 
         @Override
         public void run() {
-            synchronizeScores();
+            publisher.synchronizeScores(pageRank, startNode);
             int endNode = nodeCount + startNode;
             for (int nodeId = startNode; nodeId < endNode; ++nodeId) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
@@ -354,19 +365,6 @@ public class PageRank {
                 long relationId) {
             publisher.publish(targetNodeId, srcRank);
             return true;
-        }
-
-
-        void prepareNextIteration() {
-            publisher.prepareNextIteration();
-        }
-
-        void synchronizeScores() {
-            publisher.synchronizeScores(
-                    pageRank,
-                    startNode,
-                    nodeCount
-            );
         }
     }
 
@@ -400,16 +398,16 @@ public class PageRank {
     }
 
     private static final class SequentialPublisher extends PageRankScorePublisher {
-        private final double[] scores;
+        private final int[] scores;
 
         private SequentialPublisher(int nodeCount, double dampingFactor) {
             super(dampingFactor);
-            this.scores = new double[nodeCount];
+            this.scores = new int[nodeCount];
         }
 
         @Override
         void publish(final int nodeId, final double score) {
-            scores[nodeId] += score;
+            scores[nodeId] += (int) (100_000 * score);
         }
 
         @Override
@@ -419,11 +417,11 @@ public class PageRank {
                 final double[] pageRank,
                 final int startNode,
                 final int nodeCount) {
-            double[] scores = this.scores;
+            int[] scores = this.scores;
             int len = scores.length;
             for (int i = 0; i < len; i++) {
-                pageRank[i] = alpha + dampingFactor * scores[i];
-                scores[i] = 0.0;
+                pageRank[i] = alpha + dampingFactor * (scores[i] / 100_000.0);
+                scores[i] = 0;
             }
         }
     }
