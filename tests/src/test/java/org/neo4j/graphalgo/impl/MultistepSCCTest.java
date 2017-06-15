@@ -32,8 +32,6 @@ public class MultistepSCCTest {
 
     private static Graph graph;
 
-    private static long head, tail;
-
     @BeforeClass
     public static void setup() {
         final String cypher =
@@ -112,12 +110,10 @@ public class MultistepSCCTest {
     @Test
     public void testColoring() throws Exception {
 
-        new MultiStepColoring(graph, Pools.DEFAULT, 4) {
+        for (int i = 0; i < 1; i++) {
 
-            @Override
-            public void processSCC(int rootNodeId, IntSet scc) {
-                System.out.println("scc (" + rootNodeId+ ") = " + scc);
-            }
-        }.compute(allNodes());
+            new MultiStepColoring(graph, Pools.DEFAULT, 4) {
+            }.compute(allNodes());
+        }
     }
 }

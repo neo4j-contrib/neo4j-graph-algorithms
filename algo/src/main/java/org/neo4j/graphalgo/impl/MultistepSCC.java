@@ -25,15 +25,14 @@ import java.util.function.IntConsumer;
 public class MultistepSCC {
 
 
+    private final Graph graph;
     private final ExecutorService executorService;
     private final AtomicIntegerArray colors;
-//    private final AtomicBitSet visited;
-    private final List<Future<IntContainer>> futures = new ArrayList<>();
-    private final int concurrency;
-    private final int nodeCount;
-    private final Graph graph;
-    private final int cutOff;
     private final Traverse traverse;
+    private final MultiStepColoring coloring;
+    private final int concurrency;
+    private final int cutOff;
+    private final int nodeCount;
     private final int[] inDegree;
     private final int[] outDegree;
     private IntSet nodeSet;
@@ -46,10 +45,11 @@ public class MultistepSCC {
         this.nodeCount = graph.nodeCount();
         this.inDegree = new int[nodeCount];
         this.outDegree = new int[nodeCount];
+        coloring = new MultiStepColoring(graph, executorService, concurrency);
         colors = new AtomicIntegerArray(nodeCount);
-//        visited = new AtomicBitSet(nodeCount);
         traverse = new Traverse(graph);
         init();
+
     }
 
     private void init() {
@@ -83,41 +83,25 @@ public class MultistepSCC {
         // V <- V \ SCC
         nodeSet.removeAll((IntLookupContainer) rootSCC);
 
-        coloring2(nodeSet);
+        // coloring2(nodeSet); // TODO
 
     }
 
 
     public IntSet coloring(IntSet nodeSet) {
 
-//        final int size = nodeSet.size();
-//        final int batchSize = Math.floorDiv(size, concurrency);
-//        futures.clear();
-//        futures.add(executorService.submit(() -> color(nodeSet)));
-//        if (batchSize == 0) {
-//        } else {
-//            final Iterator<IntCursor> it = nodeSet.iterator();
-//            for (int i = 0; i < size; i += batchSize) {
-//                final IntScatterSet partition = partition(it, batchSize);
-//                futures.add(executorService.submit(() -> color(partition)));
-//            }
-//        }
-//        nodeSet.clear();
-        // barrier sync (union all future results)
-//        union(nodeSet, futures);
-
 
         color(nodeSet);
 
         printColor();
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         forEachColor(color -> {
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             // SCC(cv) <- PRED(G(cv), c)
             System.out.println("nodeSet = " + nodeSet);
             final IntSet scc = pred(nodeSet, color);
