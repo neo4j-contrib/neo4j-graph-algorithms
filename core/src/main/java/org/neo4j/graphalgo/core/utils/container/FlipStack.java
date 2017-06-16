@@ -17,11 +17,15 @@ public class FlipStack {
     private int flip = 0;
 
     public FlipStack(int nodeCount) {
-
         stacks = new IntStack[]{
                 new IntStack(nodeCount),
                 new IntStack(nodeCount)
         };
+    }
+
+    public FlipStack(IntContainer nodes) {
+        this(nodes.size());
+        addAll(nodes);
     }
 
     public void reset() {
@@ -50,19 +54,15 @@ public class FlipStack {
         return popStack().isEmpty();
     }
 
-    public void clear() {
-        popStack().clear();
-    }
-
     public void forEach(IntConsumer consumer) {
         popStack().forEach((IntProcedure) consumer::accept);
     }
 
-    private IntStack pushStack() {
+    public IntStack pushStack() {
         return stacks[flip % 2];
     }
 
-    private IntStack popStack() {
+    public IntStack popStack() {
         return stacks[(flip + 1) % 2];
     }
 

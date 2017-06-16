@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
 import org.neo4j.graphalgo.core.utils.container.FlipStack;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.helpers.Exceptions;
+import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +28,9 @@ import java.util.function.IntPredicate;
  */
 public class MultiStepColoring {
 
+    // TODO
+    public static final int MIN_BATCH_SIZE = 1;
+
     private final Graph graph;
     private final ExecutorService executorService;
     private final AtomicIntegerArray colors;
@@ -45,16 +49,13 @@ public class MultiStepColoring {
     }
 
     /**
-     * compute the
-     * @param nodes
+     * compute the colors of nodes
+     * @param nodes set of nodes
      * @return self for method chaining
      * */
     public MultiStepColoring compute(IntSet nodes) {
-
-        resetColors(); // TODO ctor?
+        resetColors(nodes);
         msColorParallel(nodes);
-        printColor();
-
         return this;
     }
 
@@ -63,26 +64,16 @@ public class MultiStepColoring {
     }
 
     /**
-     * retrieve colorset
-     * @return a set of distinct color id's
-     */
-    public IntScatterSet uniqueColors() {
-        final IntScatterSet tColor = new IntScatterSet();
-        for (int i = 0; i < nodeCount; i++) {
-            tColor.add(colors.get(i));
-        }
-        return tColor;
-    }
-
-    /**
      * for each distinct color
+     *
      * @param consumer color consumer
      */
     public void forEachColor(IntPredicate consumer) {
-        final IntScatterSet tColor = new IntScatterSet();
+        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
         for (int i = 0; i < nodeCount; i++) {
             final int color = colors.get(i);
-            if (tColor.add(color)) {
+            if (!bitSet.contains(color)) {
+                bitSet.put(color);
                 if (!consumer.test(color)) {
                     return;
                 }
@@ -96,43 +87,45 @@ public class MultiStepColoring {
      */
     private void msColorParallel(IntSet nodeSet) {
 
+        final FlipStack flipStack = new FlipStack(nodeSet);
 
-        final IntStack levelQueue = new IntStack();
-        levelQueue.addAll(nodeSet); // TODO
+        flipStack.flip();
 
-        while (!levelQueue.isEmpty()) {
-            System.out.println("nodeSet = " + nodeSet);
+        while (!flipStack.isEmpty()) {
+            // reset result futures
             futures.clear();
-            if (concurrency <= 1) {
-                futures.add(executorService.submit(() -> msColor(levelQueue)));
+            // calculate batch size
+            final int size = flipStack.popStack().size();
+            final int batchSize = Math.floorDiv(size, concurrency);
+            // no need for parallel exec.
+            if (concurrency <= 1 || batchSize < MIN_BATCH_SIZE) {
+                futures.add(executorService.submit(() -> msColorTask(flipStack.popStack())));
             } else {
-                final int size = levelQueue.size();
-                final int batchSize = Math.floorDiv(size, concurrency);
-                System.out.println("batchSize = " + batchSize);
-                final Iterator<IntCursor> it = levelQueue.iterator();
+                // split the actual nodeSet into batches
+                final Iterator<IntCursor> it = flipStack.popStack().iterator();
                 for (int i = 0; i < size; i += batchSize) {
+                    // creating partition must happen sequential
                     final IntScatterSet partition = partition(it, batchSize);
-                    futures.add(executorService.submit(() -> msColor(partition)));
+                    // enqueue partition
+                    futures.add(executorService.submit(() -> msColorTask(partition)));
                 }
             }
 
-            final IntSet set = new IntScatterSet();
-            // barrier sync (union all future results)
-            union(set, futures);
-            levelQueue.clear();
-            levelQueue.addAll(set);
+            // sync all results into the current pushStack
+            flipStack.pushStack().clear();
+            union(flipStack.pushStack(), futures);
+            // flip the stack so pushStack becomes popStack and vice versa
+            flipStack.flip();
         }
     }
 
     /**
-     * multistep coloring algorithm
+     * multistep coloring algorithm task
      *
      * @param nodes nodes to process
      * @return container with nodes which must be processed in the next step
      */
-    private IntContainer msColor(IntContainer nodes) {
-
-        System.out.println("nodes = " + nodes);
+    private IntContainer msColorTask(IntContainer nodes) {
 
         final IntStack levelQueue = new IntStack(nodes.size());
 
@@ -159,11 +152,11 @@ public class MultiStepColoring {
     }
 
     /**
-     * impl. based on a flippable stack
+     * sequential impl. based on a flippable stack
      *
      * @param nodes
      */
-    private void color(IntSet nodes) {
+    private void msColorSequential(IntSet nodes) {
 
         final FlipStack queue = new FlipStack(nodes.size());
         queue.addAll(nodes);
@@ -188,7 +181,7 @@ public class MultiStepColoring {
                     visited.set(node);
                 }
             });
-            queue.clear();
+            queue.popStack().clear();
             queue.flip();
         }
 
@@ -215,14 +208,11 @@ public class MultiStepColoring {
                 });
             });
 
-            System.out.println("changed[0] = " + changed[0]);
         } while (changed[0]);
     }
 
-    private void resetColors() {
-        for (int i = 0; i < nodeCount; i++) {
-            colors.set(i, i);
-        }
+    private void resetColors(IntContainer nodes) {
+        nodes.forEach((IntProcedure) node -> colors.set(node, node));
     }
 
     /**
@@ -267,7 +257,7 @@ public class MultiStepColoring {
      * @param futures
      * @return
      */
-    private IntSet union(IntSet ret, Collection<Future<IntContainer>> futures) {
+    private void union(IntStack ret, Collection<Future<IntContainer>> futures) {
         boolean done = false;
         Throwable error = null;
         try {
@@ -292,7 +282,6 @@ public class MultiStepColoring {
         if (error != null) {
             throw Exceptions.launderedException(error);
         }
-        return ret;
     }
 
     // TODO remove

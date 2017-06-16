@@ -15,8 +15,13 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.*;
 
 /**
  * @author mknblch
@@ -77,18 +82,20 @@ public class MultiStepColoringTest {
 
     @Test
     public void test() throws Exception {
-        final IntScatterSet colors =
-                new MultiStepColoring(graph, Pools.DEFAULT, 1)
-                        .compute(allNodes())
-                        .uniqueColors();
 
-        assertEquals(4, colors.size());
+        final IntPredicate mock = mock(IntPredicate.class);
+        when(mock.test(anyInt())).thenReturn(true);
 
-        // highest IDs of each cluster must be the color
-        assertTrue(colors.contains(2));
-        assertTrue(colors.contains(5));
-        assertTrue(colors.contains(8));
-        assertTrue(colors.contains(9));
+        new MultiStepColoring(graph, Pools.DEFAULT, 1)
+                .compute(allNodes())
+                .forEachColor(mock);
+
+
+        verify(mock, times(4)).test(anyInt());
+        verify(mock, times(1)).test(eq(2));
+        verify(mock, times(1)).test(eq(5));
+        verify(mock, times(1)).test(eq(8));
+        verify(mock, times(1)).test(eq(9));
     }
 
     public IntSet allNodes() {

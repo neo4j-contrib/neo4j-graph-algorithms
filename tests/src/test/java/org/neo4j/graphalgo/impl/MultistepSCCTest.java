@@ -3,6 +3,9 @@ package org.neo4j.graphalgo.impl;
 import algo.Pools;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.ObjectArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.procedures.ObjectProcedure;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,7 +18,11 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-/**
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+/**        _______
+ *        /       \
  *      (0)--(1) (3)--(4)
  *        \  /     \ /
  *        (2)  (6) (5)
@@ -81,13 +88,13 @@ public class MultistepSCCTest {
 //        Pools.DEFAULT.shutdownNow();
     }
 
-    public static Node getNode(String name) {
+    public static int getMappedNodeId(String name) {
         final Node[] node = new Node[1];
         api.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
             node[0] = row.getNode("n");
             return false;
         });
-        return node[0];
+        return graph.toMappedNodeId(node[0].getId());
     }
 
     private IntSet allNodes() {
@@ -99,10 +106,52 @@ public class MultistepSCCTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testSequential() throws Exception {
 
-        new MultistepSCC(graph, Pools.DEFAULT, 1, 1)
-                .compute();
+        final ObjectArrayList<IntSet> connectedComponents =
+                new MultistepSCC(graph, Pools.DEFAULT, 1, 0)
+                        .compute()
+                        .getConnectedComponents();
 
+        assertCC(connectedComponents);
+    }
+
+    @Test
+    public void testParallel() throws Exception {
+
+        final ObjectArrayList<IntSet> connectedComponents =
+                new MultistepSCC(graph, Pools.DEFAULT, 4, 0)
+                        .compute()
+                        .getConnectedComponents();
+
+        assertCC(connectedComponents);
+    }
+
+    private void assertCC(ObjectArrayList<IntSet> connectedComponents) {
+        assertBelongSameSet(connectedComponents,
+                getMappedNodeId("a"),
+                getMappedNodeId("b"),
+                getMappedNodeId("c"));
+        assertBelongSameSet(connectedComponents,
+                getMappedNodeId("d"),
+                getMappedNodeId("e"),
+                getMappedNodeId("f"));
+        assertBelongSameSet(connectedComponents,
+                getMappedNodeId("g"),
+                getMappedNodeId("h"),
+                getMappedNodeId("i"));
+    }
+
+    private static void assertBelongSameSet(ObjectArrayList<IntSet> result, int... expected) {
+        final int needle = expected[0];
+        boolean[] found = {false};
+        result.forEach((ObjectProcedure<? super IntSet>) set -> {
+            if (set.contains(needle)) {
+                assertEquals("Set size differs", expected.length, set.size());
+                for (int i : expected) {
+                    assertTrue("Set " + set + " did not contain " + i, set.contains(i));
+                }
+            }
+        });
     }
 }

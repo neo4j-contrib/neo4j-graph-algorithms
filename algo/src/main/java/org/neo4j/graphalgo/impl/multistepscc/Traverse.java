@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.impl.multistepscc;
 
+import com.carrotsearch.hppc.IntArrayDeque;
+import com.carrotsearch.hppc.IntDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
@@ -14,9 +16,13 @@ import java.util.function.IntPredicate;
 public class Traverse {
 
     private final Graph graph;
+    private final SimpleBitSet visited;
+    private final IntDeque queue;
 
     public Traverse(Graph graph) {
         this.graph = graph;
+        visited = new SimpleBitSet(graph.nodeCount());
+        queue = new IntArrayDeque();
     }
 
     /**
@@ -26,13 +32,11 @@ public class Traverse {
         if (!predicate.test(startNodeId)) {
             return;
         }
-        System.out.println("BFS on startNodeId = " + startNodeId);
-        final SimpleBitSet visited = new SimpleBitSet(graph.nodeCount());
-        final IntStack queue = new IntStack();
-        queue.push(startNodeId);
+        reset();
+        queue.addLast(startNodeId);
         visited.put(startNodeId);
         while (!queue.isEmpty()) {
-            final int node = queue.pop();
+            final int node = queue.removeLast();
             consumer.accept(node);
             visited.put(node);
             graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
@@ -44,9 +48,43 @@ public class Traverse {
                 if (visited.contains(targetNodeId)) {
                     return true;
                 }
-                queue.push(targetNodeId);
+                queue.addLast(targetNodeId);
                 return true;
             });
         }
+    }
+
+    /**
+     * dfs for finding all reachable nodes of set starting from pivotNode
+     */
+    public void dfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer consumer) {
+        if (!predicate.test(startNodeId)) {
+            return;
+        }
+        reset();
+        queue.addLast(startNodeId);
+        visited.put(startNodeId);
+        while (!queue.isEmpty()) {
+            final int node = queue.removeFirst();
+            consumer.accept(node);
+            visited.put(node);
+            graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                // should we visit this node?
+                if (!predicate.test(targetNodeId)) {
+                    return true;
+                }
+                // don't visit id's twice
+                if (visited.contains(targetNodeId)) {
+                    return true;
+                }
+                queue.addLast(targetNodeId);
+                return true;
+            });
+        }
+    }
+
+    private void reset() {
+        queue.clear();
+        visited.clear();
     }
 }
