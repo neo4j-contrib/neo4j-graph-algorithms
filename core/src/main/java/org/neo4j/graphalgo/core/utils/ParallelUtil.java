@@ -135,7 +135,9 @@ public final class ParallelUtil {
             return;
         }
 
-        if (executor.isShutdown() || executor.isTerminated()) throw new IllegalStateException("Executor is shut down");
+        if (executor.isShutdown() || executor.isTerminated()) {
+            throw new IllegalStateException("Executor is shut down");
+        }
 
         if (futures == null) {
             futures = new ArrayList<>(tasks.size());
@@ -145,6 +147,43 @@ public final class ParallelUtil {
             futures.add(executor.submit(task));
         }
 
+        await(futures);
+    }
+
+    public static void run(
+            Collection<? extends Runnable> tasks,
+            Runnable selfTask,
+            ExecutorService executor,
+            Collection<Future<?>> futures) {
+
+        if (tasks.size() == 0) {
+            selfTask.run();
+            return;
+        }
+
+        if (null == executor) {
+            tasks.forEach(Runnable::run);
+            selfTask.run();
+            return;
+        }
+
+        if (executor.isShutdown() || executor.isTerminated()) {
+            throw new IllegalStateException("Executor is shut down");
+        }
+
+        if (futures == null) {
+            futures = new ArrayList<>(tasks.size());
+        }
+
+        for (Runnable task : tasks) {
+            futures.add(executor.submit(task));
+        }
+
+        selfTask.run();
+        await(futures);
+    }
+
+    public static void await(Iterable<? extends Future<?>> futures) {
         boolean done = false;
         Throwable error = null;
         try {

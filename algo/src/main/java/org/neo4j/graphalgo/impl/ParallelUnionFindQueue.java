@@ -1,13 +1,12 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.helpers.Exceptions;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * parallel UF implementation
@@ -65,30 +64,7 @@ public class ParallelUnionFindQueue {
     }
 
     private void await() {
-        boolean done = false;
-        Throwable error = null;
-        try {
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (ExecutionException ee) {
-                    error = Exceptions.chain(error, ee.getCause());
-                } catch (CancellationException ignore) {
-                }
-            }
-            done = true;
-        } catch (InterruptedException e) {
-            error = Exceptions.chain(e, error);
-        } finally {
-            if (!done) {
-                for (final Future<?> future : futures) {
-                    future.cancel(true);
-                }
-            }
-        }
-        if (error != null) {
-            throw Exceptions.launderedException(error);
-        }
+        ParallelUtil.await(futures);
     }
 
     public ParallelUnionFindQueue compute(double threshold) {
