@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.impl.multistepscc.MultiStepColoring;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -79,7 +80,7 @@ public class MultiStepColoringTest {
         final IntScatterSet colors =
                 new MultiStepColoring(graph, Pools.DEFAULT, 1)
                         .compute(allNodes())
-                        .colors();
+                        .uniqueColors();
 
         assertEquals(4, colors.size());
 

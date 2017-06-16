@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.multistepscc;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.function.IntPredicate;
 
 /**
  * Multistep SCC coloring algorithm
@@ -57,11 +58,15 @@ public class MultiStepColoring {
         return this;
     }
 
+    public AtomicIntegerArray getColors() {
+        return colors;
+    }
+
     /**
      * retrieve colorset
      * @return a set of distinct color id's
      */
-    public IntScatterSet colors() {
+    public IntScatterSet uniqueColors() {
         final IntScatterSet tColor = new IntScatterSet();
         for (int i = 0; i < nodeCount; i++) {
             tColor.add(colors.get(i));
@@ -70,32 +75,52 @@ public class MultiStepColoring {
     }
 
     /**
+     * for each distinct color
+     * @param consumer color consumer
+     */
+    public void forEachColor(IntPredicate consumer) {
+        final IntScatterSet tColor = new IntScatterSet();
+        for (int i = 0; i < nodeCount; i++) {
+            final int color = colors.get(i);
+            if (tColor.add(color)) {
+                if (!consumer.test(color)) {
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
      * parallel multistep coloring algorithm
      * @param nodeSet
      */
     private void msColorParallel(IntSet nodeSet) {
 
-        while (!nodeSet.isEmpty()) {
-            System.out.println("nodeSet = " + nodeSet);
 
+        final IntStack levelQueue = new IntStack();
+        levelQueue.addAll(nodeSet); // TODO
+
+        while (!levelQueue.isEmpty()) {
+            System.out.println("nodeSet = " + nodeSet);
             futures.clear();
             if (concurrency <= 1) {
-                final IntStack intCursors = new IntStack();
-                intCursors.addAll(nodeSet); // TODO
-                futures.add(executorService.submit(() -> msColor(intCursors)));
+                futures.add(executorService.submit(() -> msColor(levelQueue)));
             } else {
-                final int size = nodeSet.size();
+                final int size = levelQueue.size();
                 final int batchSize = Math.floorDiv(size, concurrency);
                 System.out.println("batchSize = " + batchSize);
-                final Iterator<IntCursor> it = nodeSet.iterator();
+                final Iterator<IntCursor> it = levelQueue.iterator();
                 for (int i = 0; i < size; i += batchSize) {
                     final IntScatterSet partition = partition(it, batchSize);
                     futures.add(executorService.submit(() -> msColor(partition)));
                 }
             }
-            nodeSet.clear();
+
+            final IntSet set = new IntScatterSet();
             // barrier sync (union all future results)
-            union(nodeSet, futures);
+            union(set, futures);
+            levelQueue.clear();
+            levelQueue.addAll(set);
         }
     }
 
@@ -271,8 +296,8 @@ public class MultiStepColoring {
     }
 
     // TODO remove
-    private void printColor() {
-        System.out.println("colors:");
+    public void printColor() {
+        System.out.println("uniqueColors:");
         for (int i = 0; i < colors.length(); i++) {
             System.out.printf("%d -> %d%n", i, colors.get(i));
         }

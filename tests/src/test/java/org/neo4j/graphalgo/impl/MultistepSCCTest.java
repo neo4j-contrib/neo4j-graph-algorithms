@@ -9,12 +9,11 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
-
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  *      (0)--(1) (3)--(4)
@@ -102,18 +101,8 @@ public class MultistepSCCTest {
     @Test
     public void test() throws Exception {
 
-        new MultistepSCC(graph, Pools.DEFAULT, 4, 1)
+        new MultistepSCC(graph, Pools.DEFAULT, 1, 1)
                 .compute();
 
-    }
-
-    @Test
-    public void testColoring() throws Exception {
-
-        for (int i = 0; i < 1; i++) {
-
-            new MultiStepColoring(graph, Pools.DEFAULT, 4) {
-            }.compute(allNodes());
-        }
     }
 }

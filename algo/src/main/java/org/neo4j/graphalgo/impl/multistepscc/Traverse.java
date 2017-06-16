@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.multistepscc;
 
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
@@ -23,10 +23,10 @@ public class Traverse {
      * bfs for finding all reachable nodes of set starting from pivotNode
      */
     public void bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer consumer) {
-        System.out.println("BFS on startNodeId = " + startNodeId);
         if (!predicate.test(startNodeId)) {
             return;
         }
+        System.out.println("BFS on startNodeId = " + startNodeId);
         final SimpleBitSet visited = new SimpleBitSet(graph.nodeCount());
         final IntStack queue = new IntStack();
         queue.push(startNodeId);
@@ -34,7 +34,7 @@ public class Traverse {
         while (!queue.isEmpty()) {
             final int node = queue.pop();
             consumer.accept(node);
-            System.out.println(node);
+            visited.put(node);
             graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 // should we visit this node?
                 if (!predicate.test(targetNodeId)) {
