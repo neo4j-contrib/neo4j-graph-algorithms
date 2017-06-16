@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl.multistepscc;
 
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntDeque;
-import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.impl.util.collection.SimpleBitSet;

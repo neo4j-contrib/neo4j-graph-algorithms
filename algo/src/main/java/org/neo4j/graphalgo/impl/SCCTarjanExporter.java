@@ -14,6 +14,8 @@ import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.Consumer;
 
 /**
@@ -23,7 +25,7 @@ public class SCCTarjanExporter extends Exporter<ObjectArrayList<IntSet>> {
 
     private IdMapping idMapping;
     private int writePropertyId;
-    private int set = 0;
+    private AtomicInteger set = new AtomicInteger(0);
 
     public SCCTarjanExporter(GraphDatabaseAPI api) {
         super(api);
@@ -50,9 +52,10 @@ public class SCCTarjanExporter extends Exporter<ObjectArrayList<IntSet>> {
         writeInTransaction(write -> {
             for (ObjectCursor<IntSet> oCursor : data) {
                 oCursor.value.forEach((Consumer<IntCursor>) iCursor -> {
+                    final int setId = set.incrementAndGet();
                     try {
                         write.nodeSetProperty(idMapping.toOriginalNodeId(iCursor.value),
-                                DefinedProperty.intProperty(writePropertyId, set));
+                                DefinedProperty.intProperty(writePropertyId, setId));
                     } catch (EntityNotFoundException
                             | ConstraintValidationKernelException
                             | InvalidTransactionTypeKernelException
@@ -60,7 +63,6 @@ public class SCCTarjanExporter extends Exporter<ObjectArrayList<IntSet>> {
                         throw new RuntimeException(e);
                     }
                 });
-                set++;
             }
         });
     }

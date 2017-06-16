@@ -5,8 +5,10 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.MultistepSCC;
 import org.neo4j.graphalgo.impl.SCCTarjan;
 import org.neo4j.graphalgo.impl.SCCTarjanExporter;
+import org.neo4j.graphalgo.results.MultiStepSCCResult;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -64,6 +66,45 @@ public class StronglyConnectedComponentsProc {
                         .withIdMapping(graph)
                         .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
                         .write(tarjan.getConnectedComponents());
+            });
+        }
+
+        return Stream.of(builder.build());
+    }
+
+    @Procedure(value = "algo.scc.multistep", mode = Mode.WRITE)
+    @Description("CALL algo.scc.multistep(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis")
+    public Stream<MultiStepSCCResult> multistep(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        MultiStepSCCResult.Builder builder = MultiStepSCCResult.builder();
+
+        ProgressTimer loadTimer = builder.timeLoad();
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+        loadTimer.stop();
+
+        final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
+                configuration.get("concurrency", 1),
+                configuration.get("cutoff", 100_000));
+
+        builder.timeEval(multistep::compute);
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new SCCTarjanExporter(api)
+                        .withIdMapping(graph)
+                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
+                        .write(multistep.getConnectedComponents());
             });
         }
 
