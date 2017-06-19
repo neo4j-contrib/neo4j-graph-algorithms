@@ -32,6 +32,13 @@ Just copy the `graph-algorithms-algo-*.jar` from the https://github.com/neo4j-co
 
 Then running `call dbms.procedures();` should also list the algorithm procedures.
 
+----
+call dbms.procedures() yield name, description 
+where name starts with "algo." and not name starts with "algo.algo."
+return name, description
+order by name
+----
+
 Details on how to call them can be found in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
 
 == Building
