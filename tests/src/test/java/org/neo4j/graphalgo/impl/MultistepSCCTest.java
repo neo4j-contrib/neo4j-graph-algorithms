@@ -1,9 +1,12 @@
 package org.neo4j.graphalgo.impl;
 
 import algo.Pools;
+import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.ObjectArrayList;
+import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.carrotsearch.hppc.procedures.ObjectProcedure;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,10 +14,13 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -106,7 +112,7 @@ public class MultistepSCCTest {
     @Test
     public void testSequential() throws Exception {
 
-        final ObjectArrayList<IntSet> connectedComponents =
+        final IntObjectMap<IntSet> connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 1, 0)
                         .compute()
                         .getConnectedComponents();
@@ -117,7 +123,7 @@ public class MultistepSCCTest {
     @Test
     public void testParallel() throws Exception {
 
-        final ObjectArrayList<IntSet> connectedComponents =
+        final IntObjectMap<IntSet> connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 4, 0)
                         .compute()
                         .getConnectedComponents();
@@ -128,7 +134,7 @@ public class MultistepSCCTest {
     @Test
     public void testHighCut() throws Exception {
 
-        final ObjectArrayList<IntSet> connectedComponents =
+        final IntObjectMap<IntSet> connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 4, 100_000)
                         .compute()
                         .getConnectedComponents();
@@ -136,7 +142,7 @@ public class MultistepSCCTest {
         assertCC(connectedComponents);
     }
 
-    private void assertCC(ObjectArrayList<IntSet> connectedComponents) {
+    private void assertCC(IntObjectMap<IntSet> connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),
                 getMappedNodeId("b"),
@@ -151,14 +157,13 @@ public class MultistepSCCTest {
                 getMappedNodeId("i"));
     }
 
-    private static void assertBelongSameSet(ObjectArrayList<IntSet> result, int... expected) {
+    private static void assertBelongSameSet(IntObjectMap<IntSet> result, int... expected) {
         final int needle = expected[0];
-        boolean[] found = {false};
-        result.forEach((ObjectProcedure<? super IntSet>) set -> {
-            if (set.contains(needle)) {
-                assertEquals("Set size differs", expected.length, set.size());
+        result.forEach((Consumer<? super IntObjectCursor<IntSet>>) cursor -> {
+            if (cursor.value.contains(needle)) {
+                assertEquals("Set size differs", expected.length, cursor.value.size());
                 for (int i : expected) {
-                    assertTrue("Set " + set + " did not contain " + i, set.contains(i));
+                    assertTrue("Set " + cursor.value + " did not contain " + i, cursor.value.contains(i));
                 }
             }
         });

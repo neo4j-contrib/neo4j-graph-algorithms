@@ -1,12 +1,13 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.multistepscc;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.impl.multistepscc.*;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author mknblch
@@ -15,29 +16,33 @@ public class MultistepSCC {
 
     private final Traverse traverse;
     private final MultiStepColoring coloring;
+    private final Graph graph;
     private final int concurrency;
     private final int cutOff;
-    private final int nodeCount;
     private final MultiStepTrim trimming;
     private final MultiStepFWBW fwbw;
 
-    private final ObjectArrayList<IntSet> connectedComponents;
-    private final MultiStepTarjan tarjan;
+    private final IntObjectMap<IntSet> connectedComponents;
+
+    private final AbstractMultiStepTarjan tarjan;
 
     public MultistepSCC(Graph graph, ExecutorService executorService, int concurrency, int cutOff) {
-
+        this.graph = graph;
         this.concurrency = concurrency;
         this.cutOff = cutOff;
-        this.nodeCount = graph.nodeCount();
-
-        connectedComponents = new ObjectArrayList<IntSet>();
-
         traverse = new Traverse(graph);
         trimming = new MultiStepTrim(graph);
         coloring = new MultiStepColoring(graph, executorService, concurrency);
         fwbw = new MultiStepFWBW(graph);
-        tarjan = new MultiStepTarjan(graph, connectedComponents);
+        tarjan = new AbstractMultiStepTarjan(graph) {
 
+            @Override
+            public void processSCC(int root, IntHashSet connected) {
+                MultistepSCC.this.processSCC(root, connected);
+            }
+        };
+
+        connectedComponents = new IntObjectScatterMap<>();
     }
 
     public MultistepSCC compute() {
@@ -66,7 +71,13 @@ public class MultistepSCC {
         return this;
     }
 
-    public ObjectArrayList<IntSet> getConnectedComponents() {
+    public Stream<SCCStreamResult> resultStream() {
+        return StreamSupport.stream(connectedComponents.spliterator(), false)
+                .flatMap(mapCursor -> StreamSupport.stream(mapCursor.value.spliterator(), false)
+                        .map(setCursor -> new SCCStreamResult(graph.toOriginalNodeId(setCursor.value), mapCursor.key)));
+    }
+
+    public IntObjectMap<IntSet> getConnectedComponents() {
         return connectedComponents;
     }
 
@@ -74,7 +85,7 @@ public class MultistepSCC {
         if (elements.isEmpty()) {
             return;
         }
-        connectedComponents.add(elements);
+        connectedComponents.put(root, elements);
     }
 
     /**
@@ -92,5 +103,24 @@ public class MultistepSCC {
             }
         });
         return set;
+    }
+
+
+    public static class SCCStreamResult {
+
+        /**
+         * the node id
+         */
+        public final long nodeId;
+
+        /**
+         * the set id of the stronly connected component
+         */
+        public final long clusterId;
+
+        public SCCStreamResult(long nodeId, int clusterId) {
+            this.nodeId = nodeId;
+            this.clusterId = clusterId;
+        }
     }
 }

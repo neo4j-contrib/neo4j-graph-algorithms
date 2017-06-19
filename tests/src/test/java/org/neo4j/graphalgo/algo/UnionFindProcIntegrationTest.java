@@ -123,9 +123,9 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testUnionFindStream() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFind.stream('', 'TYPE', {graph:'"+graphImpl+"'}) YIELD setId")
+        db.execute("CALL algo.unionFind.stream('', 'TYPE', {graph:'"+graphImpl+"'}) YIELD clusterId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    map.addTo(row.getNumber("setId").intValue(), 1);
+                    map.addTo(row.getNumber("clusterId").intValue(), 1);
                     return true;
                 });
         assertMapContains(map, 1, 2, 7);
@@ -134,9 +134,9 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindStream() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:5.0, graph:'"+graphImpl+"'}) YIELD setId")
+        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:5.0, graph:'"+graphImpl+"'}) YIELD clusterId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    map.addTo(row.getNumber("setId").intValue(), 1);
+                    map.addTo(row.getNumber("clusterId").intValue(), 1);
                     return true;
                 });
         assertMapContains(map, 4, 3, 2, 1);
@@ -145,9 +145,9 @@ public class UnionFindProcIntegrationTest {
     @Test
     public void testThresholdUnionFindLowThreshold() throws Exception {
         final IntIntScatterMap map = new IntIntScatterMap(11);
-        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:3.14, graph:'"+graphImpl+"'}) YIELD setId")
+        db.execute("CALL algo.unionFind.stream('', 'TYPE', {weightProperty:'cost', defaultValue:10.0, threshold:3.14, graph:'"+graphImpl+"'}) YIELD clusterId")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    map.addTo(row.getNumber("setId").intValue(), 1);
+                    map.addTo(row.getNumber("clusterId").intValue(), 1);
                     return true;
                 });
         assertMapContains(map, 1, 2, 7);

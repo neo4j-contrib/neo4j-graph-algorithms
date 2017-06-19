@@ -9,11 +9,9 @@ import org.neo4j.graphdb.Direction;
 /**
  * @author mknblch
  */
-public class MultiStepTarjan implements RelationshipConsumer {
+public abstract class AbstractMultiStepTarjan {
 
     private final Graph graph;
-
-    private final ObjectArrayList<IntSet> connectedComponents;
 
     private BitSet onStack;
     private IntIntMap indices;
@@ -22,23 +20,21 @@ public class MultiStepTarjan implements RelationshipConsumer {
 
     private int index;
 
-    public MultiStepTarjan(Graph graph, ObjectArrayList<IntSet> connectedComponents) {
+    public AbstractMultiStepTarjan(Graph graph) {
         this.graph = graph;
-        this.connectedComponents = connectedComponents;
     }
 
-    public ObjectArrayList<IntSet> compute(IntSet nodes) {
+    public AbstractMultiStepTarjan compute(IntSet nodes) {
 
         indices = new IntIntScatterMap(nodes.size());
         lowLink = new IntIntScatterMap(nodes.size());
         stack = new IntStack(nodes.size());
         onStack = new BitSet();
         nodes.forEach((IntProcedure) this::strongConnect);
-        return connectedComponents;
+        return this;
     }
 
     private void reset() {
-        connectedComponents.clear();
         indices.clear();
         lowLink.clear();
         onStack.clear();
@@ -55,7 +51,7 @@ public class MultiStepTarjan implements RelationshipConsumer {
         index++;
         stack.push(node);
         onStack.set(node);
-        graph.forEachRelationship(node, Direction.OUTGOING, this);
+        graph.forEachRelationship(node, Direction.OUTGOING, this::accept);
         if (indices.get(node) == lowLink.get(node)) {
             relax(node);
         }
@@ -69,11 +65,10 @@ public class MultiStepTarjan implements RelationshipConsumer {
             onStack.clear(w);
             connected.add(w);
         } while (w != nodeId);
-        connectedComponents.add(connected);
+        processSCC(nodeId, connected);
     }
 
-    @Override
-    public boolean accept(int source, int target, long edgeId) {
+    private boolean accept(int source, int target, long edgeId) {
         if (!indices.containsKey(target)) {
             strongConnect(target);
             lowLink.put(source, Math.min(lowLink.get(source), lowLink.get(target)));
@@ -82,4 +77,6 @@ public class MultiStepTarjan implements RelationshipConsumer {
         }
         return true;
     }
+
+    public abstract void processSCC(int root, IntHashSet connected);
 }

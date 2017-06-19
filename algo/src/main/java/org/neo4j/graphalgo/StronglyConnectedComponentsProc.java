@@ -5,7 +5,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.MultistepSCC;
+import org.neo4j.graphalgo.impl.MultiStepSCCExporter;
+import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.impl.SCCTarjan;
 import org.neo4j.graphalgo.impl.SCCTarjanExporter;
 import org.neo4j.graphalgo.results.MultiStepSCCResult;
@@ -16,6 +17,7 @@ import org.neo4j.procedure.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author mknblch
@@ -73,7 +75,7 @@ public class StronglyConnectedComponentsProc {
     }
 
     @Procedure(value = "algo.scc.multistep", mode = Mode.WRITE)
-    @Description("CALL algo.scc.multistep(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    @Description("CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
             "loadMillis, computeMillis, writeMillis")
     public Stream<MultiStepSCCResult> multistep(
             @Name(value = "label", defaultValue = "") String label,
@@ -94,14 +96,14 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
-                configuration.get("concurrency", 1),
-                configuration.get("cutoff", 100_000));
+                configuration.getNumber("concurrency", 1).intValue(),
+                configuration.getNumber("cutoff", 100_000).intValue());
 
         builder.timeEval(multistep::compute);
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new SCCTarjanExporter(api)
+                new MultiStepSCCExporter(api)
                         .withIdMapping(graph)
                         .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
                         .write(multistep.getConnectedComponents());
@@ -110,4 +112,32 @@ public class StronglyConnectedComponentsProc {
 
         return Stream.of(builder.build());
     }
+
+    @Procedure(value = "algo.scc.multistep.stream")
+    @Description("CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
+            "nodeId, clusterId")
+    public Stream<MultistepSCC.SCCStreamResult> multistepStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+
+        final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
+                configuration.getNumber("concurrency", 1).intValue(),
+                configuration.getNumber("cutoff", 100_000).intValue());
+
+        multistep.compute();
+
+        return multistep.resultStream();
+    }
+
 }
