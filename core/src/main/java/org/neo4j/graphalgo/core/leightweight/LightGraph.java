@@ -23,7 +23,6 @@ public class LightGraph implements Graph {
     private final IntArray adjacency;
     private final long[] inOffsets;
     private final long[] outOffsets;
-    private final IntArray.Cursor spare;
 
     LightGraph(
             final IdMap idMapping,
@@ -36,7 +35,6 @@ public class LightGraph implements Graph {
         this.adjacency = adjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
-        this.spare = adjacency.newCursor();
     }
 
     @Override
@@ -203,7 +201,7 @@ public class LightGraph implements Graph {
     private IntArray.Cursor cursor(int node, long[] offsets) {
         final long offset = offsets[node];
         final int length = adjacency.get(offset);
-        return adjacency.cursor(offset + 1, length, spare);
+        return adjacency.cursor(offset + 1, length);
     }
 
     private void consumeNodes(

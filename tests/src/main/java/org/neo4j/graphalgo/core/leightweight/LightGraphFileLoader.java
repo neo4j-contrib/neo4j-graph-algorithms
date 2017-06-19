@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.core.leightweight;
 
-import com.carrotsearch.hppc.LongLongHashMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.serialize.ByteBufferDataInput;

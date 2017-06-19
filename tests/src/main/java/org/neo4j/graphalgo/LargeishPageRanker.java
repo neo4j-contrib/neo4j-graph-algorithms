@@ -4,6 +4,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.serialize.FileSerialization;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -88,6 +90,13 @@ public final class LargeishPageRanker {
 
         final GcRunner gcRunner = gcLogs ? GcLogger.install() : (ignore) -> System.gc();
 
+        ExecutorService pool = multiParallel ? Pools.DEFAULT : null;
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (pool != null) {
+                pool.shutdownNow();
+            }
+        }));
+
         final Graph graph;
         if (prepare != null) {
 
@@ -105,11 +114,6 @@ public final class LargeishPageRanker {
 
             runGc("before building graph", gcRunner);
 
-            ExecutorService pool = multiParallel
-                    ? Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
-//                    ? Executors.newFixedThreadPool(1)
-                    : null;
-
             GraphDatabaseService db = new GraphDatabaseFactory()
                     .newEmbeddedDatabaseBuilder(graphDb.toFile())
                     .setConfig(GraphDatabaseSettings.read_only, "true")
@@ -117,12 +121,7 @@ public final class LargeishPageRanker {
                             GraphDatabaseSettings.pagecache_memory,
                             String.valueOf(size.get()))
                     .newGraphDatabase();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (pool != null) {
-                    pool.shutdownNow();
-                }
-                db.shutdown();
-            }));
+            Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
 
             final long nodeCount;
             final long edgeCount;
@@ -157,9 +156,6 @@ public final class LargeishPageRanker {
                         TimeUnit.NANOSECONDS.toMillis(t1 - t0) / 1000.0);
             } finally {
                 try {
-                    if (pool != null) {
-                        pool.shutdownNow();
-                    }
                     db.shutdown();
                 } catch (LifecycleException readOperationsOnReadonlyIndexDuringShutdown) {
                     // ignore
@@ -192,7 +188,10 @@ public final class LargeishPageRanker {
                 "Running PageRank on %d nodes with %d iterations...",
                 graph.nodeCount(),
                 iterations);
-        PageRank pageRankAlgo = new PageRank(graph, graph, graph, graph, 0.85);
+        PageRank pageRankAlgo = new PageRank(
+                pool,
+                ParallelUtil.DEFAULT_BATCH_SIZE,
+                graph, graph, graph, graph, 0.85);
         long t2 = System.nanoTime();
         double[] ranks = pageRankAlgo.compute(iterations).getPageRank();
         long t3 = System.nanoTime();

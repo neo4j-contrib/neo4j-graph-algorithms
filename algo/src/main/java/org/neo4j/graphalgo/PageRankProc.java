@@ -1,11 +1,10 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.impl.PageRankExporter;
@@ -104,21 +103,25 @@ public final class PageRankProc {
 
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
+        final int batchSize = configuration.getBatchSize();
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
-        PageRank pageRankAlgo = new PageRank(
+
+        PageRank algo = new PageRank(
+                Pools.DEFAULT,
+                batchSize,
                 graph,
                 graph,
                 graph,
                 graph,
                 dampingFactor);
 
-        statsBuilder.timeEval(() -> pageRankAlgo.compute(iterations));
+        statsBuilder.timeEval(() -> algo.compute(iterations));
 
         statsBuilder
                 .withIterations(iterations)
                 .withDampingFactor(dampingFactor);
 
-        return pageRankAlgo.getPageRank();
+        return algo.getPageRank();
     }
 
     private void write(
@@ -130,15 +133,14 @@ public final class PageRankProc {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
             int batchSize = configuration.getBatchSize();
-            statsBuilder.timeWrite(() -> {
-                new PageRankExporter(
-                        batchSize,
-                        api,
-                        graph,
-                        graph,
-                        propertyName,
-                        Pools.DEFAULT).write(scores);
-            });
+            statsBuilder.timeWrite(() -> new PageRankExporter(
+                    batchSize,
+                    api,
+                    graph,
+                    graph,
+                    propertyName,
+                    Pools.DEFAULT)
+                    .write(scores));
             statsBuilder
                     .withWrite(true)
                     .withProperty(propertyName);

@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.leightweight;
 
-import com.carrotsearch.hppc.LongLongMap;
-import com.carrotsearch.hppc.cursors.LongLongCursor;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
