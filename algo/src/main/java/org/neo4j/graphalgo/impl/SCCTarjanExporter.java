@@ -51,11 +51,12 @@ public class SCCTarjanExporter extends Exporter<ObjectArrayList<IntSet>> {
     public void write(ObjectArrayList<IntSet> data) {
         writeInTransaction(write -> {
             for (ObjectCursor<IntSet> oCursor : data) {
+                final DefinedProperty property =
+                        DefinedProperty.intProperty(writePropertyId, set.incrementAndGet());
                 oCursor.value.forEach((Consumer<IntCursor>) iCursor -> {
-                    final int setId = set.incrementAndGet();
                     try {
                         write.nodeSetProperty(idMapping.toOriginalNodeId(iCursor.value),
-                                DefinedProperty.intProperty(writePropertyId, setId));
+                                property);
                     } catch (EntityNotFoundException
                             | ConstraintValidationKernelException
                             | InvalidTransactionTypeKernelException

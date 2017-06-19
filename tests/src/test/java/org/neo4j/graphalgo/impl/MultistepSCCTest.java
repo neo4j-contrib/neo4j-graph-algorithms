@@ -125,6 +125,17 @@ public class MultistepSCCTest {
         assertCC(connectedComponents);
     }
 
+    @Test
+    public void testHighCut() throws Exception {
+
+        final ObjectArrayList<IntSet> connectedComponents =
+                new MultistepSCC(graph, Pools.DEFAULT, 4, 100_000)
+                        .compute()
+                        .getConnectedComponents();
+
+        assertCC(connectedComponents);
+    }
+
     private void assertCC(ObjectArrayList<IntSet> connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),
