@@ -2,14 +2,39 @@
 
 image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.1["Build Status", link="https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms"]
 
-This project aims to develop efficient, well tested graph algorithm implementations for Neo4j.
+This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.
 
-Those algorithms will run on a clean API which is fed by loading data from Neo4j or running on Neo4j directly.
+You can find the documentation (WIP) here http://neo4j-contrib.github.io/neo4j-graph-algorithms
 
-The algorithms will be exposed as user defined procedures
+Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
 
+The goal is to provide parallel versions of common graph algorithms for Neo4j exposed as Cypher user defined procedures:
 
-=== Building
+* Page Rank
+* Betweenness Centrality
+* Closeness Centrality
+* Clustering: Louvain
+* Clustering: Label Propagation
+* Minimum Weight Spanning Tree
+* All Pairs- and Single Source - Shortest Path
+* (Weakly) Connected Components
+* Strongly Connected Components
+
+These procedures work on a subgraph optionally filtered by label and relationship-type. Future versions will also provide filtering and projection using Cypher queries.
+
+We'd love your feedback, so please try out these algorithms and let us know how well they work for your use-case. Also please note things that you miss from installation instructions, readme, etc. 
+
+Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
+
+== Installation
+
+Just copy the `graph-algorithms-algo-*.jar` from the https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[release] into your `$NEO4J_HOME/plugins` directory and restart Neo4j.
+
+Then running `call dbms.procedures();` should also list the algorithm procedures.
+
+Details on how to call them can be found in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
+
+== Building
 
 Currently aiming at Neo4j 3.1
 
