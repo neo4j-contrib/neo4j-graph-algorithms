@@ -136,6 +136,11 @@ public final class ParallelUtil {
             futures.add(executor.submit(task));
         }
 
+        awaitTermination(futures);
+    }
+
+    public static void awaitTermination(Collection<Future<?>> futures) {
+
         boolean done = false;
         Throwable error = null;
         try {

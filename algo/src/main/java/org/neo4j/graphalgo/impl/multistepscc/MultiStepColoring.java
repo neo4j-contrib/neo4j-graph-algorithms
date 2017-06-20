@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.sources.ParallelNodeIterator;
 import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
 import org.neo4j.graphalgo.core.utils.container.FlipStack;
 import org.neo4j.graphdb.Direction;
@@ -28,8 +29,7 @@ import java.util.function.IntPredicate;
  */
 public class MultiStepColoring {
 
-    // TODO
-    public static final int MIN_BATCH_SIZE = 1;
+    public static final int MIN_BATCH_SIZE = 100_000;
 
     private final Graph graph;
     private final ExecutorService executorService;
@@ -284,11 +284,4 @@ public class MultiStepColoring {
         }
     }
 
-    // TODO remove
-    public void printColor() {
-        System.out.println("uniqueColors:");
-        for (int i = 0; i < colors.length(); i++) {
-            System.out.printf("%d -> %d%n", i, colors.get(i));
-        }
-    }
 }

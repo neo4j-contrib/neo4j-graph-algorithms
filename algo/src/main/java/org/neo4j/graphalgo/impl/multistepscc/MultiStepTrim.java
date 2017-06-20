@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl.multistepscc;
 
-import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
@@ -72,7 +71,7 @@ public class MultiStepTrim {
                     filter[0] = true;
                 }
                 // rm nodes without outgoing arcs and update target degrees
-                if (inDegree[node] == 0) {
+                if (outDegree[node] == 0) {
                     graph.forEachRelationship(node, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
                         inDegree[targetNodeId]--;
                         return true;
