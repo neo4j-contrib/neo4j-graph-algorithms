@@ -39,4 +39,29 @@ public class AtomicBitSetTest {
     public void testSetInvalidValue() throws Exception {
         set.set(-1);
     }
+
+    @Test
+    public void test() throws Exception {
+        final AtomicBitSet set = new AtomicBitSet(2);
+
+        set.set(0);
+        set.set(1);
+        assertTrue(set.get(0));
+        assertTrue(set.get(1));
+
+        set.unset(1);
+        assertTrue(set.get(0));
+        assertFalse(set.get(1));
+
+        set.set(1);
+        set.unset(0);
+        assertFalse(set.get(0));
+        assertTrue(set.get(1));
+
+        set.unset(0);
+        set.unset(1);
+        assertFalse(set.get(0));
+        assertFalse(set.get(1));
+
+    }
 }
