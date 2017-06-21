@@ -1,16 +1,12 @@
 package org.neo4j.graphalgo.impl.multistepscc;
 
-import com.carrotsearch.hppc.IntArrayDeque;
-import com.carrotsearch.hppc.IntDeque;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
+import org.neo4j.graphalgo.core.utils.queue.IntMaxPriorityQueue;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
+import org.neo4j.helpers.Exceptions;
 
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -25,7 +21,7 @@ public class ParallelTraverse {
     private final AtomicBitSet visited;
     private final ExecutorService executorService;
     private final int concurrency;
-    private final ArrayList<Future<?>> futures;
+    private final ConcurrentLinkedQueue<Future<?>> futures;
 
     public ParallelTraverse(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -33,49 +29,84 @@ public class ParallelTraverse {
         this.executorService = executorService;
         this.concurrency = concurrency;
         threads = new AtomicInteger(0);
-        futures = new ArrayList<Future<?>>();
+        futures = new ConcurrentLinkedQueue<>();
+    }
+
+    public ParallelTraverse reset() {
+        visited.clear();
+        futures.clear();
+        return this;
+    }
+
+    public ParallelTraverse awaitTermination() {
+
+        boolean done = false;
+        Throwable error = null;
+        try {
+
+            while (!futures.isEmpty()) {
+                try {
+                    futures.poll().get();
+                } catch (ExecutionException ee) {
+                    error = Exceptions.chain(error, ee.getCause());
+                } catch (CancellationException ignore) {
+                }
+            }
+            done = true;
+        } catch (InterruptedException e) {
+            error = Exceptions.chain(e, error);
+        } finally {
+            if (!done) {
+                for (final Future<?> future : futures) {
+                    future.cancel(true);
+                }
+            }
+        }
+        if (error != null) {
+            throw Exceptions.launderedException(error);
+        }
+        return this;
     }
 
     /**
-     * bfs for finding all reachable nodes of set starting from pivotNode
+     * bfs for finding reachable nodes
      */
-    public void bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
+    public ParallelTraverse bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
         if (!predicate.test(startNodeId)) {
-            return;
+            return this;
         }
-        final IntArrayDeque queue = new IntArrayDeque();
-        queue.addLast(startNodeId);
+        final IntMaxPriorityQueue queue = new IntMaxPriorityQueue();
+        queue.add(startNodeId, 0d);
         visited.set(startNodeId);
         while (!queue.isEmpty()) {
-            final int node = queue.removeLast();
+            final int node = queue.pop();
             if (canAddThread()) {
                 futures.add(executorService.submit(() -> bfs(node, direction, predicate, visitor)));
             } else {
-                visitor.accept(node);
-                visited.set(node);
-                graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                    // should we visit this node?
-                    if (!predicate.test(targetNodeId)) {
+                if (visited.trySet(node)) {
+                    visitor.accept(node);
+                    graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                        // should we visit this node?
+                        if (!predicate.test(targetNodeId)) {
+                            return true;
+                        }
+                        // don't visit id's twice
+                        if (visited.get(targetNodeId)) {
+                            return true;
+                        }
+                        queue.add(targetNodeId, graph.degree(targetNodeId, direction));
                         return true;
-                    }
-                    // don't visit id's twice
-                    if (visited.get(targetNodeId)) {
-                        return true;
-                    }
-                    queue.addLast(targetNodeId);
-                    return true;
-                });
+                    });
+                }
             }
         }
-    }
-
-    public void awaitTermination() {
-        ParallelUtil.awaitTermination(futures);
+        threads.decrementAndGet();
+        return this;
     }
 
     private boolean canAddThread() {
         final int t = threads.get();
-        if (t >= concurrency) {
+        if (t >= concurrency - 1) {
             return false;
         }
         return threads.compareAndSet(t, t + 1);

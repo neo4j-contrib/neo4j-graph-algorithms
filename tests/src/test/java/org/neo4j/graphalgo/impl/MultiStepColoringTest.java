@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl;
 
 import algo.Pools;
 import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -15,11 +14,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.*;
 
@@ -86,7 +82,7 @@ public class MultiStepColoringTest {
         final IntPredicate mock = mock(IntPredicate.class);
         when(mock.test(anyInt())).thenReturn(true);
 
-        new MultiStepColoring(graph, Pools.DEFAULT, 1)
+        new MultiStepColoring(graph, Pools.DEFAULT, 10)
                 .compute(allNodes())
                 .forEachColor(mock);
 

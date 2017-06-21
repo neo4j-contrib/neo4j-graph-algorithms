@@ -85,14 +85,11 @@ public class MultistepSCCProcTest {
     @Test
     public void test() throws Exception {
         String cypher = "CALL algo.scc.multistep.stream('Node', 'TYPE', {concurrency:4, cutoff:0}) YIELD nodeId, clusterId RETURN nodeId, clusterId";
-
         final LongLongScatterMap testMap = new LongLongScatterMap();
-
         api.execute(cypher).accept(row -> {
             testMap.addTo(row.getNumber("clusterId").longValue(), 1);
             return true;
         });
-
         // we expect 3 clusters
         assertEquals(3, testMap.size());
         // with 3 elements each

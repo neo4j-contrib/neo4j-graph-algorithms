@@ -13,6 +13,12 @@ public class AtomicBitSet {
         elements = new AtomicIntegerArray((length + 31) >>> 5);
     }
 
+    public void clear() {
+        for (int i = elements.length() - 1; i >= 0; i--) {
+            elements.set(i, 0);
+        }
+    }
+
     public void set(long n) {
         int bit = 1 << n;
         int index = (int) (n >>> 5);
@@ -24,7 +30,6 @@ public class AtomicBitSet {
         }
     }
 
-
     public boolean trySet(long n) {
         int bit = 1 << n;
         int index = (int) (n >>> 5);
@@ -35,8 +40,6 @@ public class AtomicBitSet {
         }
         return false;
     }
-
-
 
     public void unset(long n) {
         final int bit = ~(1 << n);

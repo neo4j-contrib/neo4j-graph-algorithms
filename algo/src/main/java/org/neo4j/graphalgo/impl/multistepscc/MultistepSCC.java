@@ -14,10 +14,9 @@ import java.util.stream.StreamSupport;
  */
 public class MultistepSCC {
 
-    private final Traverse traverse;
+    private final ParallelTraverse traverse;
     private final MultiStepColoring coloring;
     private final Graph graph;
-    private final int concurrency;
     private final int cutOff;
     private final MultiStepTrim trimming;
     private final MultiStepFWBW fwbw;
@@ -28,20 +27,17 @@ public class MultistepSCC {
 
     public MultistepSCC(Graph graph, ExecutorService executorService, int concurrency, int cutOff) {
         this.graph = graph;
-        this.concurrency = concurrency;
         this.cutOff = cutOff;
-        traverse = new Traverse(graph);
         trimming = new MultiStepTrim(graph);
         coloring = new MultiStepColoring(graph, executorService, concurrency);
-        fwbw = new MultiStepFWBW(graph);
+        fwbw = new MultiStepFWBW(graph, executorService, concurrency);
+        traverse = new ParallelTraverse(graph, executorService, concurrency);
         tarjan = new AbstractMultiStepTarjan(graph) {
-
             @Override
             public void processSCC(int root, IntHashSet connected) {
                 MultistepSCC.this.processSCC(root, connected);
             }
         };
-
         connectedComponents = new IntObjectScatterMap<>();
     }
 
@@ -97,11 +93,14 @@ public class MultistepSCC {
      */
     private IntSet pred(final IntSet nodes, AtomicIntegerArray colors, final int cv) {
         final IntScatterSet set = new IntScatterSet();
-        traverse.bfs(cv, Direction.INCOMING, nodes::contains, node -> {
-            if (colors.get(node) == cv) {
-                set.add(node);
-            }
-        });
+        traverse.reset()
+                .bfs(cv, Direction.INCOMING, nodes::contains, node -> {
+                    if (colors.get(node) == cv) {
+                        set.add(node);
+                    }
+                })
+                .awaitTermination();
+
         return set;
     }
 
