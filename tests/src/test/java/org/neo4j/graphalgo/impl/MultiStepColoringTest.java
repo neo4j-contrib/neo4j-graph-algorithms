@@ -86,7 +86,6 @@ public class MultiStepColoringTest {
                 .compute(allNodes())
                 .forEachColor(mock);
 
-
         verify(mock, times(4)).test(anyInt());
         verify(mock, times(1)).test(eq(2));
         verify(mock, times(1)).test(eq(5));
@@ -94,7 +93,7 @@ public class MultiStepColoringTest {
         verify(mock, times(1)).test(eq(9));
     }
 
-    public IntSet allNodes() {
+    private IntSet allNodes() {
         final IntHashSet set = new IntHashSet(graph.nodeCount());
         for (int i = 0; i < graph.nodeCount(); i++) {
             set.add(i);
