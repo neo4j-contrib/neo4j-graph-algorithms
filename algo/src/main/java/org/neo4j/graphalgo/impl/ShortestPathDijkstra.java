@@ -50,6 +50,10 @@ public class ShortestPathDijkstra {
         finalPath = new IntArrayDeque();
     }
 
+    /**
+     * compute shortest path between startNode and goalNode
+     * @return itself
+     */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
         visited.clear();
         queue.clear();
@@ -69,15 +73,27 @@ public class ShortestPathDijkstra {
         return this;
     }
 
+    /**
+     * return the result stream
+     * @return stream of result DTOs
+     */
     public Stream<Result> resultStream() {
         return StreamSupport.stream(finalPath.spliterator(), false)
                 .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), costs.get(cursor.value)));
     }
 
+    /**
+     * get the distance sum of the path
+     * @return sum of distances between start and goal
+     */
     public double getTotalCost() {
         return totalCost;
     }
 
+    /**
+     * return the number of nodes the path consists of
+     * @return number of nodes in the path
+     */
     public int getPathLength() {
         return finalPath.size();
     }
@@ -112,9 +128,18 @@ public class ShortestPathDijkstra {
         }
     }
 
+    /**
+     * Result DTO
+     */
     public static class Result {
 
+        /**
+         * the neo4j node id
+         */
         public final Long nodeId;
+        /**
+         * cost to reach the node from startNode
+         */
         public final Double cost;
 
         public Result(Long nodeId, Double cost) {
