@@ -9,7 +9,19 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 /**
- * parallel UF implementation
+ * parallel UnionFind using common ForkJoin-Pool only.
+ *
+ * Implementation based on the idea that DisjointSetStruct can be built using
+ * just a partition of the nodes which then can be merged pairwise.
+ *
+ * The UnionFindTask extracts a nodePartition if its input-set is too big and
+ * calculates its result while lending the rest-nodeSet to another FJ-Task.
+ *
+ * Note: The splitting method might be sub-optimal since the resulting work-tree is
+ * very unbalanced so each thread needs to wait for its predecessor to complete
+ * before merging his set into the parent set.
+ *
+ * NOTE: same as {@link ParallelUnionFind}
  *
  * @author mknblch
  */
