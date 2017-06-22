@@ -10,17 +10,31 @@ import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Dijkstra single source - single target shortest path algorithm
+ *
+ * The algorithm computes a (there might be more then one) shortest path
+ * between a given start and target-NodeId. It returns result tuples of
+ * [nodeId, distance] of each node in the path.
+ *
+ */
 public class ShortestPathDijkstra {
 
     private final Graph graph;
 
+    // node to cost map
     private final IntDoubleMap costs;
+    // next node priority queue
     private final IntPriorityQueue queue;
+    // auxiliary path map
     private final IntIntMap path;
+    // path map (stores the resulting shortest path)
     private final IntArrayDeque finalPath;
+    // visited set
     private final SimpleBitSet visited;
-
+    // overall cost of the path
     private double totalCost;
+    // target node id
     private int goal;
 
     public ShortestPathDijkstra(Graph graph) {
@@ -79,14 +93,14 @@ public class ShortestPathDijkstra {
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
-                    Direction.OUTGOING,
-                    (WeightedRelationshipConsumer)(source, target, relId, weight) -> {
+                    Direction.OUTGOING, (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
                         }
                         return true;
                     });
+
         }
     }
 
@@ -97,7 +111,6 @@ public class ShortestPathDijkstra {
             path.put(target, source);
         }
     }
-
 
     public static class Result {
 
