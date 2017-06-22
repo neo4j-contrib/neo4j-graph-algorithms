@@ -41,12 +41,14 @@ public class ShortestPathDeltaStepping {
     private int iDelta;
 
     private final Graph graph;
-    // collections of
+    // collections of runnables containing either heavy edge relax-operations or light edge relax-ops.
     private final Collection<Runnable> light, heavy;
+    // list of futures of light and heavy edge relax-operations
     private final Collection<Future<?>> futures;
 
     private ExecutorService executorService;
 
+    // multiplier used to scale an double to int
     private double multiplier = 100_000d; // double type is intended
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {

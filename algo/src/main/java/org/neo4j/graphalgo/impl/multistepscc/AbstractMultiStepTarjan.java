@@ -7,17 +7,22 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphdb.Direction;
 
 /**
+ * Abstract impl. of Tarjan Strongly Connected Components
+ *
  * @author mknblch
  */
 public abstract class AbstractMultiStepTarjan {
 
     private final Graph graph;
-
+    // determine if the node is on the stack
     private BitSet onStack;
+    // index map
     private IntIntMap indices;
+    // low link map
     private IntIntMap lowLink;
+    // working stack
     private IntStack stack;
-
+    // current index
     private int index;
 
     public AbstractMultiStepTarjan(Graph graph) {

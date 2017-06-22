@@ -10,19 +10,47 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Multistep: parallel strongly connected component algorithm
+ *
+ * The algorithm consists of multiple steps to calculate strongly connected components.
+ *
+ * The algo. starts by trimming all nodes without either incoming or outgoing
+ * relationships to minimize the search vector. It then does a Forward-Backward coloring
+ * which first determines the starting point by evaluating the highest product of in- and
+ * out- degree in the graph. Starting from this point the algorithm colors all reachable
+ * nodes (with outgoing relationships) with their highest node-id as color. The resulting
+ * node-set is called the descendant-set. It then calculates a set of nodes by collecting
+ * all reachable nodes using incoming relationships, called the predecessor set. The
+ * intersection of both sets builds a strongly connected component. With high probability
+ * the biggest SCC in the Graph.
+ *
+ * After finding the biggest SCC it removes its nodes from the original nodeSet which
+ * results in the rest-set. The set is then used by the coloring algorithm which
+ * extracts one weakly connected component set each time. the main loop builds its predecessor
+ * set and the intersection of both (which is also an SCC). After removing the the SCC from
+ * the nodeSet the algorithm continues with the next color/scc-element until the nodeCount
+ * falls under a threshold. Sequential Tarjan algorithm is then used to extract remaining
+ * SCCs of the nodeSet until no more set can be build.
+ *
  * @author mknblch
  */
 public class MultistepSCC {
 
-    private final ParallelTraverse traverse;
-    private final MultiStepColoring coloring;
+    // the graph
     private final Graph graph;
+    // parallel BFS impl.
+    private final ParallelTraverse traverse;
+    // parallel multistep coloring algo
+    private final MultiStepColoring coloring;
+    // cutoff value (threshold for sequential tarjan)
     private final int cutOff;
+    // trimming algorithm
     private final MultiStepTrim trimming;
+    // forward backward coloring algorithm
     private final MultiStepFWBW fwbw;
-
+    // map rootNode -> {set of strongly connected node ID's}
     private final IntObjectMap<IntSet> connectedComponents;
-
+    // sequential tarjan algorithm
     private final AbstractMultiStepTarjan tarjan;
 
     public MultistepSCC(Graph graph, ExecutorService executorService, int concurrency, int cutOff) {
@@ -67,16 +95,29 @@ public class MultistepSCC {
         return this;
     }
 
+    /**
+     * return the result stream
+     * @return stream of result DTOs
+     */
     public Stream<SCCStreamResult> resultStream() {
         return StreamSupport.stream(connectedComponents.spliterator(), false)
                 .flatMap(mapCursor -> StreamSupport.stream(mapCursor.value.spliterator(), false)
                         .map(setCursor -> new SCCStreamResult(graph.toOriginalNodeId(setCursor.value), mapCursor.key)));
     }
 
+    /**
+     * get the whole map of connected components
+     * @return
+     */
     public IntObjectMap<IntSet> getConnectedComponents() {
         return connectedComponents;
     }
 
+    /**
+     * process a SCC if found (may be empty)
+     * @param root
+     * @param elements
+     */
     private void processSCC(int root, IntSet elements) {
         if (elements.isEmpty()) {
             return;
