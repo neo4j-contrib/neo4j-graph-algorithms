@@ -9,6 +9,15 @@ import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * sequential single source Dijkstra implementation.
+ *
+ * Calculates the minimum distance from a startNode to every other
+ * node in the graph. {@link Double#POSITIVE_INFINITY} is returned
+ * if no path exists between those nodes.
+ *
+ * @author mknblch
+ */
 public class ShortestPaths {
 
     private final Graph graph;
@@ -22,6 +31,11 @@ public class ShortestPaths {
         queue = new IntMinPriorityQueue();
     }
 
+    /**
+     * compute the shortest paths from startNode
+     * @param startNode the start node id (original neo4j id)
+     * @return itself
+     */
     public ShortestPaths compute(long startNode) {
         graph.forEachNode(node -> {
             costs.put(node, Double.POSITIVE_INFINITY);
@@ -35,13 +49,16 @@ public class ShortestPaths {
     }
 
     /**
-     * scale down integer representation to double[]
      * @return mapped-id to costSum array
      */
     public IntDoubleMap getShortestPaths() {
         return costs;
     }
 
+    /**
+     * @return a stream of [nodeId, min-distance]-pairs from
+     * start node to each other node
+     */
     public Stream<Result> resultStream() {
         return StreamSupport.stream(costs.spliterator(), false)
                 .map(cursor -> new Result(graph.toOriginalNodeId(cursor.key), cursor.value));
@@ -68,9 +85,18 @@ public class ShortestPaths {
         }
     }
 
+    /**
+     * The Result DTO
+     */
     public static class Result {
 
+        /**
+         * the neo4j node id
+         */
         public final long nodeId;
+        /**
+         * distance to nodeId from startNode
+         */
         public final double distance;
 
         public Result(Long nodeId, Double distance) {
