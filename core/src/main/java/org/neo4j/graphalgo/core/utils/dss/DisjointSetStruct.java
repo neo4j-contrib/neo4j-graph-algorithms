@@ -15,6 +15,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * disjoint-set-struct is a data structure that keeps track of a set
+ * of elements partitioned into a number of disjoint (non-overlapping) subsets.
+ *
+ * More info:
+ *
+ * <a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure">Wiki</a>
+ *
  * @author mknblch
  */
 public final class DisjointSetStruct {

@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.api;
 
 /**
+ * TODO: remove
+ *
  * @author mknblch
  */
 public interface NodeWeights {

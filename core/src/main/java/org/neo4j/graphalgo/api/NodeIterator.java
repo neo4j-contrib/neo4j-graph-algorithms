@@ -6,13 +6,15 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
- * Iterate over each graph-nodeId
+ * Iterate over each node Id until either
+ * all nodes have been consumed or the consumer
+ * decides to stop the iteration.
  *
  * @author mknblch
  */
 public interface NodeIterator {
     /**
-     * Iterate over each graph-nodeId
+     * Iterate over each nodeId
      */
     void forEachNode(IntPredicate consumer);
 

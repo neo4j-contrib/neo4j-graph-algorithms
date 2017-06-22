@@ -3,7 +3,9 @@ package org.neo4j.graphalgo.api;
 import java.util.Iterator;
 
 /**
- * Iterator for both-relations based on nodeId
+ * Iterator for both-relations based on nodeId.
+ *
+ * TODO: remove interface
  *
  * @author mknblch
  */
