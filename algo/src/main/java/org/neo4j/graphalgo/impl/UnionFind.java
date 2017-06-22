@@ -6,7 +6,13 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import java.util.Objects;
 
 /**
- * UF implementation using an {@link AllRelationshipIterator}
+ * Sequential UnionFind:
+ *
+ * The algorithm computes sets of weakly connected components.
+ *
+ * This impl. is using the AllRelationshipIterator which is able
+ * to iterate over each relationships without the need to supply a start
+ * node
  *
  * @author mknblch
  */
