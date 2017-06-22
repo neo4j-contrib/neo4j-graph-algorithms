@@ -11,13 +11,32 @@ import java.util.Iterator;
 
 /**
  * MultiStep SCC trimming algorithm. Removes trivial non-strongly connected
- * components
+ * components. Its result is a set of nodes without trivial weakly connected nodes
+ * as well as dangling nodes without relationships to others.
+ *
+ * In simple mode only one iteration over all nodeIds is made. During the computation
+ * all nodes with either zero incoming or outgoing connections are removed because such
+ * nodes can never build a SCC.
+ *
+ * Using complete mode the logic tries to reduce all nodes until no more changes can be
+ * made. It also removes self referencing nodes (which build an SCC only with itself).
+ *
+ * MultistepSCC basically uses simple-trimming but there may be circumstances where
+ * complete trimming results in a better overall performance.
+ *
+ * Since we cannot alter the Graph I decided to build the reduction using auxiliary degree-arrays.
+ * Once initialized with all degrees I do update only it's in- and out- degrees to determine
+ * if a node got decoupled in the previous iteration.
+ *
  * @author mknblch
  */
 public class MultiStepTrim {
 
+    // the graph iface
     private final Graph graph;
+    // overall node count
     private final int nodeCount;
+    // initial node set
     private final IntSet nodes;
 
     // auxiliary arrays for nodeCounts
@@ -32,12 +51,20 @@ public class MultiStepTrim {
         outDegree = new int[nodeCount];
     }
 
+    /**
+     * compute the resulting nodeSet after trimming
+     * @param complete determine if complete or simple trimming should be made
+     * @return set of nodes without trivial weakly connected components
+     */
     public IntSet compute(boolean complete) {
         reset();
         trim(complete);
         return nodes;
     }
 
+    /**
+     * reset auxiliary degree arrays
+     */
     private void reset() {
         for (int i = nodeCount - 1; i >= 0; i--) {
             nodes.add(i);
@@ -78,8 +105,8 @@ public class MultiStepTrim {
                     });
                     filter[0] = true;
                 }
-                // rm self loops
-                if (inDegree[node] == 1 && outDegree[node] == 1) {
+                // rm self loops (only in complete mode)
+                if (complete && inDegree[node] == 1 && outDegree[node] == 1) {
                     graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                         if (sourceNodeId == targetNodeId) {
                             filter[0] = true;
@@ -94,6 +121,7 @@ public class MultiStepTrim {
                 }
                 changes |= filter[0];
             }
+            // unfortunately the iterator does not support removing
             nodes.removeAll(remove);
         } while (changes && complete);
     }
