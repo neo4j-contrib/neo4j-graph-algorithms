@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 @Threads(1)
 @Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g"})
-@Warmup(iterations = 1)
-@Measurement(iterations = 1)
+@Warmup(iterations = 2)
+@Measurement(iterations = 4)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -38,14 +38,16 @@ public class PageRankBenchmarkLdbc {
     @Param({"5", "20"})
     int iterations;
 
-   @Param({"10000", "1000000000"})
+   @Param({"10000", "2000000000"})
    int parallelBatchSize;
 
     private GraphDatabaseAPI db;
+    private Graph grph;
 
     @Setup
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb();
+        grph = new GraphLoader(db, Pools.DEFAULT).load(this.graph.impl);
     }
 
     @TearDown
@@ -56,21 +58,17 @@ public class PageRankBenchmarkLdbc {
 
     @Benchmark
     public double[] run() throws Exception {
-        final Graph graph = new GraphLoader(db).load(this.graph.impl);
-        try {
-            PageRank pageRank = new PageRank(
-                    Pools.DEFAULT,
-                    parallelBatchSize,
-                    graph,
-                    graph,
-                    graph,
-                    graph,
-                    0.85);
-            return pageRank.compute(iterations).getPageRank();
-        } finally {
-            if (graph instanceof AutoCloseable) {
-                ((AutoCloseable) graph).close();
-            }
-        }
+        final Graph graph = grph;
+        return new PageRank(
+                Pools.DEFAULT,
+                Pools.getNoThreadsInDefaultPool(),
+                parallelBatchSize,
+                graph,
+                graph,
+                graph,
+                graph,
+                0.85)
+                .compute(iterations)
+                .getPageRank();
     }
 }

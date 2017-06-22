@@ -190,6 +190,7 @@ public final class LargeishPageRanker {
                 iterations);
         PageRank pageRankAlgo = new PageRank(
                 pool,
+                Pools.getNoThreadsInDefaultPool(),
                 ParallelUtil.DEFAULT_BATCH_SIZE,
                 graph, graph, graph, graph, 0.85);
         long t2 = System.nanoTime();

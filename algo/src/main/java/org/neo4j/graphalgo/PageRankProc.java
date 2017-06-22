@@ -104,10 +104,12 @@ public final class PageRankProc {
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
+        final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
         PageRank algo = new PageRank(
                 Pools.DEFAULT,
+                concurrency,
                 batchSize,
                 graph,
                 graph,
