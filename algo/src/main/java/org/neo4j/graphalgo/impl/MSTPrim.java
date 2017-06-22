@@ -8,9 +8,18 @@ import org.neo4j.graphalgo.core.utils.queue.LongMinPriorityQueue;
 import static org.neo4j.graphalgo.core.utils.RawValues.*;
 
 /**
- * Impl. Prim's Minimum Weight Spanning Tree
  *
- * @author mknobloch
+ * Sequential Single-Source minimum weight spanning tree algorithm (PRIM).
+ *
+ * The algorithm computes the MST by traversing all nodes from a given
+ * startNodeId. It aggregates all transitions into a MinPriorityQueue
+ * and visits each (unvisited) connected node by following only the
+ * cheapest transition and adding it to a specialized form of {@link UndirectedTree}.
+ *
+ * The algorithm also computes the minimum, maximum and sum of all
+ * weights in the MST.
+ *
+ * @author mknblch
  */
 public class MSTPrim {
 
@@ -105,8 +114,6 @@ public class MSTPrim {
             private double sum = 0.0;
             private double min = Double.MAX_VALUE;
             private double max = Double.MIN_VALUE;
-            private int count;
-
 
             private Aggregator(RelationshipWeights relationshipWeights) {
                 this.relationshipWeights = relationshipWeights;
@@ -121,7 +128,6 @@ public class MSTPrim {
                 if (weight > max) {
                     max = weight;
                 }
-                count++;
                 sum += weight;
                 return true;
             }
@@ -136,10 +142,6 @@ public class MSTPrim {
 
             public double getMax() {
                 return max;
-            }
-
-            public int getCount() {
-                return count;
             }
         }
     }

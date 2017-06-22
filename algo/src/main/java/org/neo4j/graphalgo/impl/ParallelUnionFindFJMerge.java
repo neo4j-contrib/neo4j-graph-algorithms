@@ -11,6 +11,16 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 /**
+ * parallel UnionFind using ExecutorService and common ForkJoin-Pool.
+ *
+ * Implementation based on the idea that DisjointSetStruct can be built using
+ * just a partition of the nodes which then can be merged pairwise.
+ *
+ * Like in {@link ParallelUnionFind} the resulting DSS of each node-partition
+ * is merged by the ForkJoin pool while calculating the DSS is done by the
+ * ExecutorService.
+ *
+ * This might lead to a better distribution of tasks in the merge-tree.
  *
  * @author mknblch
  */
@@ -24,6 +34,7 @@ public class ParallelUnionFindFJMerge {
 
     /**
      * initialize UF
+     *
      * @param graph
      * @param executor
      */
@@ -65,6 +76,9 @@ public class ParallelUnionFindFJMerge {
         return struct;
     }
 
+    /**
+     * Process for finding unions of weakly connected components
+     */
     private class UFProcess implements Runnable {
 
         protected final int offset;
@@ -97,6 +111,9 @@ public class ParallelUnionFindFJMerge {
         }
     }
 
+    /**
+     * Process to calc a DSS using a threshold
+     */
     private class TUFProcess extends UFProcess {
 
         private final double threshold;
