@@ -147,7 +147,7 @@ public final class ParallelUtil {
             futures.add(executor.submit(task));
         }
 
-        await(futures);
+        awaitTermination(futures);
     }
 
     public static void run(
@@ -179,11 +179,10 @@ public final class ParallelUtil {
             futures.add(executor.submit(task));
         }
 
-        selfTask.run();
-        await(futures);
+        awaitTermination(futures);
     }
 
-    public static void await(Iterable<? extends Future<?>> futures) {
+    public static void awaitTermination(Collection<Future<?>> futures) {
         boolean done = false;
         Throwable error = null;
         try {

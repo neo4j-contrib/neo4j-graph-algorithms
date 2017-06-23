@@ -64,7 +64,7 @@ public class ParallelUnionFindQueue {
     }
 
     private void await() {
-        ParallelUtil.await(futures);
+        ParallelUtil.awaitTermination(futures);
     }
 
     public ParallelUnionFindQueue compute(double threshold) {
