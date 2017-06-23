@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.ForwardBackwardScc;
 import org.neo4j.graphalgo.impl.MultiStepSCCExporter;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.impl.SCCTarjan;
@@ -16,6 +17,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.Map;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -138,6 +140,31 @@ public class StronglyConnectedComponentsProc {
         multistep.compute();
 
         return multistep.resultStream();
+    }
+
+
+    @Procedure(value = "algo.scc.fwbw.stream")
+    @Description("CALL algo.scc.fwbw.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
+            "nodeId")
+    public Stream<ForwardBackwardScc.Result> fwbwStream(
+            @Name(value = "startNodeId", defaultValue = "0") long startNodeId,
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+
+        return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
+                configuration.getConcurrency(1))
+                .compute(graph.toMappedNodeId(startNodeId))
+                .resultStream();
     }
 
 }
