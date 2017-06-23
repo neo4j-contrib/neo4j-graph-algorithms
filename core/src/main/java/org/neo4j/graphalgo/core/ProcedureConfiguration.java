@@ -53,7 +53,7 @@ public class ProcedureConfiguration {
 
     /**
      * override property param
-     * @param property the property
+     * @param weightProperty the property
      * @return self
      */
     public ProcedureConfiguration overrideProperty(String weightProperty) {
@@ -127,6 +127,14 @@ public class ProcedureConfiguration {
 
     public int getBatchSize(int defaultValue) {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
+    }
+
+    public int getConcurrency(int defaultValue) {
+        return getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
+    }
+
+    public int getConcurrency() {
+        return getConcurrency(ProcedureConstants.DEFAULT_CONCURRENCY);
     }
 
     public String getDirectionName() {
