@@ -114,6 +114,8 @@ public class MSTPrim {
             private double sum = 0.0;
             private double min = Double.MAX_VALUE;
             private double max = Double.MIN_VALUE;
+            private int count;
+
 
             private Aggregator(RelationshipWeights relationshipWeights) {
                 this.relationshipWeights = relationshipWeights;
@@ -128,6 +130,7 @@ public class MSTPrim {
                 if (weight > max) {
                     max = weight;
                 }
+                count++;
                 sum += weight;
                 return true;
             }
@@ -142,6 +145,10 @@ public class MSTPrim {
 
             public double getMax() {
                 return max;
+            }
+
+            public int getCount() {
+                return count;
             }
         }
     }
