@@ -173,6 +173,17 @@ public class PageRankProcIntegrationTest {
         assertResult("pagerank");
     }
 
+    @Test
+    public void testPageRankParallelExecution() throws Exception {
+        final Map<Long, Double> actual = new HashMap<>();
+        runQuery(
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {batchSize:2, graph:'"+graphImpl+"'}) YIELD node, score",
+                row -> actual.put(
+                        row.getNode("node").getId(),
+                        (Double) row.get("score")));
+        assertMapEquals(expected, actual);
+    }
+
     private static void runQuery(
             String query,
             Consumer<Result.ResultRow> check) {

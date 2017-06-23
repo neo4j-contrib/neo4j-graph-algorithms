@@ -195,6 +195,14 @@ public class ProcedureConfiguration {
      * TODO
      * @return
      */
+    public int getConcurrency(int defaultValue) {
+        return getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
+    }
+
+    public int getConcurrency() {
+        return getConcurrency(ProcedureConstants.DEFAULT_CONCURRENCY);
+    }
+
     public String getDirectionName() {
         return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
     }
