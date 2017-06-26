@@ -36,8 +36,11 @@ public class GraphSetup {
     public final String nodeStatement;
     /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
     public final String relationshipStatement;
-
+    /**
+     * batchSize for parallel compuation
+     */
     public final int batchSize;
+    // TODO
     public final boolean accumulateWeights;
 
     /**
@@ -137,6 +140,7 @@ public class GraphSetup {
     public boolean loadConcurrent() {
         return executor != null;
     }
+
     public int concurrency() {
         if (!loadConcurrent()) return 1;
 // todo make configurable

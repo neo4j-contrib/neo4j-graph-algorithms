@@ -12,6 +12,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
+ * Wrapper around configuration options map
+ *
  * @author mknblch
  */
 public class ProcedureConfiguration {
@@ -22,6 +24,11 @@ public class ProcedureConfiguration {
         this.config = new HashMap<>(config);
     }
 
+    /**
+     * check if all given keys exist
+     * @param keys one or many keys
+     * @return true if key is known, false otherwise
+     */
     public boolean containsKeys(String... keys) {
         for (String key : keys) {
             if (!config.containsKey(key)) {
@@ -53,7 +60,6 @@ public class ProcedureConfiguration {
 
     /**
      * override property param
-     * @param weightProperty the property
      * @return self
      */
     public ProcedureConfiguration overrideProperty(String weightProperty) {
@@ -61,10 +67,20 @@ public class ProcedureConfiguration {
         return this;
     }
 
+    /**
+     * return either the Label or the cypher query for node request
+     * @return the label or query
+     */
     public String getNodeLabelOrQuery() {
         return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
     }
 
+    /**
+     * return either the Label or the cypher query for node request
+     * @param defaultValue default value if {@link ProcedureConstants#NODE_LABEL_QUERY_PARAM}
+     *                     is not set
+     * @return the label or query
+     */
     public String getNodeLabelOrQuery(String defaultValue) {
         return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
     }
@@ -73,30 +89,62 @@ public class ProcedureConfiguration {
         return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
     }
 
+    /**
+     * return the name of the property to write to
+     * @return property name
+     */
     public String getWriteProperty() {
         return getWriteProperty(null);
     }
 
+    /**
+     * return either the name of the property to write to if given or defaultValue
+     * @param defaultValue a default value
+     * @return the property name
+     */
     public String getWriteProperty(String defaultValue) {
         return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, defaultValue);
     }
 
+    /**
+     * return either the relationship name or a cypher query for requesting the relationships
+     * TODO: @mh pls. validate
+     * @param defaultValue a default value
+     * @return the relationship name or query
+     */
     public String getRelationshipOrQuery(String defaultValue) {
         return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
     }
 
+    /**
+     * return whether the write-back option has been set
+     * @return true if write is activated, false otherwise
+     */
     public boolean isWriteFlag() {
         return isWriteFlag(false);
     }
 
+    /**
+     * TODO
+     * @return
+     */
     public boolean isCypherFlag() {
         return isCypherFlag(false);
     }
 
+    /**
+     * flag for requesting additional result stats
+     * @return true if stat flag is activated, false otherwise
+     */
     public boolean isStatsFlag() {
         return isStatsFlag(false);
     }
 
+    /**
+     * return whether the write-back option has been set
+     * @param defaultValue a default value
+     * @return true if write is activated, false otherwise
+     */
     public boolean isWriteFlag(boolean defaultValue) {
         return get(ProcedureConstants.WRITE_FLAG, defaultValue);
     }
@@ -109,6 +157,11 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.STATS_FLAG, defaultValue);
     }
 
+    /**
+     * get property name
+     *
+     * @return
+     */
     public String getProperty() {
         return getStringOrNull(ProcedureConstants.PROPERTY_PARAM, null);
     }
@@ -117,10 +170,19 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.DEFAULT_PROPERTY_VALUE_PARAM, defaultValue);
     }
 
+    /**
+     * return the number of iterations a algorithm has to compute
+     * @param defaultValue a default value
+     * @return
+     */
     public int getIterations(int defaultValue) {
         return getNumber(ProcedureConstants.ITERATIONS_PARAM, defaultValue).intValue();
     }
 
+    /**
+     * get the batchSize for parallel evaluation
+     * @return batch size
+     */
     public int getBatchSize() {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, ParallelUtil.DEFAULT_BATCH_SIZE).intValue();
     }
@@ -129,6 +191,10 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
     }
 
+    /**
+     * TODO
+     * @return
+     */
     public int getConcurrency(int defaultValue) {
         return getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
     }
@@ -141,6 +207,10 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
     }
 
+    /**
+     * return the Graph-Implementation Factory class
+     * @return
+     */
     public Class<? extends GraphFactory> getGraphImpl() {
         final String graphImpl = getStringOrNull(
                 ProcedureConstants.GRAPH_IMPL_PARAM,

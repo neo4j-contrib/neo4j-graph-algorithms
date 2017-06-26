@@ -13,7 +13,14 @@ import java.util.BitSet;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
-
+/**
+ * Sequential strongly connected components algorithm (Tarjan).
+ *
+ * Builds sets of node-Ids which represent a strongly connected component
+ * within the graph. Also calculates minimum and maximum setSize as well
+ * as the overall count of distinct sets.
+ *
+ */
 public class SCCTarjan {
 
     private final Graph graph;
@@ -37,14 +44,28 @@ public class SCCTarjan {
         return this;
     }
 
+    /**
+     * get connected components list
+     *
+     * @return list of sets of strongly connected component ID's
+     */
     public ObjectArrayList<IntSet> getConnectedComponents() {
         return aggregator.connectedComponents;
     }
 
+    /**
+     * return the maximum set size
+     * @return the maximum set size
+     */
     public long getMaxSetSize() {
         return graph.nodeCount() == 0 ? 0 : aggregator.maxSetSize;
     }
 
+    /**
+     * return the minimum set size
+     *
+     * @return minimum set size
+     */
     public long getMinSetSize() {
         return graph.nodeCount() == 0 ? 0 : aggregator.minSetSize;
     }
@@ -54,7 +75,7 @@ public class SCCTarjan {
         private final Graph graph;
         private final int[] indices;
         private final int[] lowLink;
-        private final ObjectArrayList<IntSet> connectedComponents; // TODO find better container (maybe DisjointSetStruct)
+        private final ObjectArrayList<IntSet> connectedComponents;
         private final BitSet onStack;
         private final IntStack stack;
         private int index;

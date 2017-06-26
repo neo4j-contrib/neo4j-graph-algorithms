@@ -10,11 +10,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+/**
+ * AllShortestPaths:
+ *
+ * multi-source parallel dijkstra algorithm for computing the shortest path between
+ * each pair of nodes.
+ *
+ * Since all nodeId's have already been ordered by the idMapping we can use an integer
+ * instead of a queue which just count's up for each startNodeId as long as it is
+ * < nodeCount. Each thread tries to take one int from the counter at one time and
+ * starts its computation on it.
+ *
+ * The {@link AllShortestPaths#concurrency} value determines the count of workers
+ * that should be spawned.
+ *
+ * Due to the high memory footprint the result set would have we emit each result into
+ * a blocking queue. The result stream takes elements from the queue while the workers
+ * add elements to it. The result stream is limited by N^2. If the stream gets closed
+ * prematurely the workers get closed too.
+ *
+ */
 public class AllShortestPaths {
 
     private final Graph graph;
     private final int nodeCount;
+
+    /**
+     * maximum number of workers
+     */
     private final int concurrency;
+    /**
+     * nodeId counter (init with nodeCount,
+     * counts down for each node)
+     */
     private final AtomicInteger counter;
     private final ExecutorService executorService;
     private final BlockingQueue<Result> resultQueue;
@@ -33,7 +61,11 @@ public class AllShortestPaths {
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
 
-
+    /**
+     * the resultStream(..) method starts the computation and
+     * returns a Stream of SP-Tuples (source, target, minDist)
+     * @return the result stream
+     */
     public Stream<Result> resultStream() {
 
         counter.set(0);
@@ -56,6 +88,11 @@ public class AllShortestPaths {
                 });
     }
 
+    /**
+     * Dijkstra Task. Takes one element of the counter at a time
+     * and starts dijkstra on it. It starts emitting results to the
+     * queue once all reachable nodes have been visited.
+     */
     private class ShortestPathTask implements Runnable {
 
         private final IntMinPriorityQueue queue;
@@ -90,8 +127,7 @@ public class AllShortestPaths {
             Arrays.fill(distance, Double.POSITIVE_INFINITY);
             distance[startNode] = 0d;
             queue.add(startNode, 0d);
-
-            while (!queue.isEmpty()) {
+            while (running && !queue.isEmpty()) {
                 final int node = queue.pop();
                 final double sourceDistance = distance[node];
                 // scan relationships
@@ -111,12 +147,22 @@ public class AllShortestPaths {
         }
     }
 
+    /**
+     * Result DTO
+     */
     public static class Result {
 
+        /**
+         * neo4j nodeId of the source node
+         */
         public final long sourceNodeId;
-
+        /**
+         * neo4j nodeId of the target node
+         */
         public final long targetNodeId;
-
+        /**
+         * minimum distance between source and target
+         */
         public final double distance;
 
         public Result(long sourceNodeId, long targetNodeId, double distance) {

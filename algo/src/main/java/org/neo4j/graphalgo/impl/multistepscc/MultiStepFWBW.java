@@ -9,6 +9,13 @@ import org.neo4j.graphdb.Direction;
 import java.util.concurrent.ExecutorService;
 
 /**
+ * Multistep ForwardBackward Coloring algorithm.
+ *
+ * The algorithm computes the (most likely) biggest SCC in a set of nodes
+ * by intersecting the (descendant) set of reachable nodes using only
+ * OUTGOING connections with its predecessor-set of reachable nodes using
+ * only INCOMING relationships. Its intersection builds a SCC.
+ *
  * @author mknblch
  */
 public class MultiStepFWBW {
@@ -38,6 +45,10 @@ public class MultiStepFWBW {
         return rootSCC;
     }
 
+    /**
+     * return the root id of the biggest SCC
+     * @return root id of SCC
+     */
     public int getRoot() {
         return root;
     }

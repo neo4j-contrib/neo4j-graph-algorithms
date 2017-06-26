@@ -19,7 +19,14 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntPredicate;
 
 /**
- * Multistep SCC coloring algorithm
+ * Multistep SCC coloring algorithm.
+ *
+ * The algorithm assigns a color to each node. The color always reflects
+ * the highest node id in the set. Initially all nodes are colored using their
+ * own nodeId. The algorithm itself builds weakly connected components
+ * which are then merged with its predecessor set to get a SCC.
+ *
+ * More Info:
  *
  * http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf
  * https://www.osti.gov/scitech/servlets/purl/1115145

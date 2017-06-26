@@ -13,6 +13,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * parallel non-negative single source shortest path algorithm
+ *
  * Delta-Stepping is a parallel non-negative single source shortest paths (NSSSP) algorithm
  * to calculate the length of the shortest paths from a starting node to all other
  * nodes in the graph. It can be tweaked using the delta-parameter which controls
@@ -25,25 +27,28 @@ import java.util.stream.Stream;
  * <a href="http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf">http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf</a><br>
  * <a href="http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf">http://www.dis.uniroma1.it/challenge9/papers/madduri.pdf</a>
  *
- * TODO: we would benefit from changing weights from doubles to integer values as proposed in issue #103
- *
  * @author mknblch
  */
 public class ShortestPathDeltaStepping {
 
+    // distance array
     private final AtomicIntegerArray distance;
+    // bucket impl
     private final Buckets buckets;
-
+    // delta parameter
     private final double delta;
+    // scaled delta
     private int iDelta;
 
     private final Graph graph;
-
+    // collections of runnables containing either heavy edge relax-operations or light edge relax-ops.
     private final Collection<Runnable> light, heavy;
+    // list of futures of light and heavy edge relax-operations
     private final Collection<Future<?>> futures;
 
     private ExecutorService executorService;
 
+    // multiplier used to scale an double to int
     private double multiplier = 100_000d; // double type is intended
 
     public ShortestPathDeltaStepping(Graph graph, double delta) {
@@ -206,10 +211,16 @@ public class ShortestPathDeltaStepping {
      */
     public static class DeltaSteppingResult {
 
-        public final Long nodeId;
-        public final Double distance;
+        /**
+         * the neo4j node id
+         */
+        public final long nodeId;
+        /**
+         * minimum distance from startNode to nodeId
+         */
+        public final double distance;
 
-        public DeltaSteppingResult(Long nodeId, Double distance) {
+        public DeltaSteppingResult(long nodeId, double distance) {
             this.nodeId = nodeId;
             this.distance = distance;
         }

@@ -3,7 +3,10 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.WeightMapping;
 
 /**
- * @author mknobloch
+ * WeightMapping implementation which always returns
+ * a given default weight upon invocation
+ *
+ * @author mknblch
  */
 public class NullWeightMap implements WeightMapping {
 

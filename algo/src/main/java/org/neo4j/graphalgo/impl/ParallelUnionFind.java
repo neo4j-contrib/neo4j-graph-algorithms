@@ -4,20 +4,28 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 /**
- * parallel UF implementation
+ * parallel UnionFind using common ForkJoin-Pool only.
+ *
+ * Implementation based on the idea that DisjointSetStruct can be built using
+ * just a partition of the nodes which then can be merged pairwise.
+ *
+ * The UnionFindTask extracts a nodePartition if its input-set is too big and
+ * calculates its result while lending the rest-nodeSet to another FJ-Task.
+ *
+ * Note: The splitting method might be sub-optimal since the resulting work-tree is
+ * very unbalanced so each thread needs to wait for its predecessor to complete
+ * before merging his set into the parent set.
  *
  * @author mknblch
  */
 public class ParallelUnionFind {
 
     private final Graph graph;
-    private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
     private DisjointSetStruct struct;
@@ -25,11 +33,10 @@ public class ParallelUnionFind {
     /**
      * initialize parallel UF
      * @param graph
-     * @param executor
+     *
      */
-    public ParallelUnionFind(Graph graph, ExecutorService executor, int batchSize) {
+    public ParallelUnionFind(Graph graph, int batchSize) {
         this.graph = graph;
-        this.executor = executor;
         nodeCount = graph.nodeCount();
         this.batchSize = batchSize;
 

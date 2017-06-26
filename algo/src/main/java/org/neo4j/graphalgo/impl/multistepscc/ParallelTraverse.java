@@ -12,15 +12,23 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
+ * parallel breadth first search
+ *
  * @author mknblch
  */
 public class ParallelTraverse {
 
-    private final AtomicInteger threads;
+    // the graph
     private final Graph graph;
+    // number of active threads
+    private final AtomicInteger threads;
+    // set of visited ID's
     private final AtomicBitSet visited;
+    // the executor
     private final ExecutorService executorService;
+    // intended number of concurrently active threads
     private final int concurrency;
+    // result future queue
     private final ConcurrentLinkedQueue<Future<?>> futures;
 
     public ParallelTraverse(Graph graph, ExecutorService executorService, int concurrency) {
@@ -32,12 +40,20 @@ public class ParallelTraverse {
         futures = new ConcurrentLinkedQueue<>();
     }
 
+    /**
+     * reset underlying container
+     * @return itself
+     */
     public ParallelTraverse reset() {
         visited.clear();
         futures.clear();
         return this;
     }
 
+    /**
+     * wait for all started futures to complete
+     * @return itself
+     */
     public ParallelTraverse awaitTermination() {
 
         boolean done = false;
@@ -69,7 +85,11 @@ public class ParallelTraverse {
     }
 
     /**
-     * bfs for finding reachable nodes
+     * start bfs at startNodeId using the supplied direction. On each relationship the targetNode is tested
+     * using the predicate. If it succeeds the node is enqueued for the next iteration. Upon first arrival at a
+     * node the visitor is called with its node Id.
+     *
+     * NOTE: predicate and visitor must be thread safe
      */
     public ParallelTraverse bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
         if (!predicate.test(startNodeId)) {
@@ -104,6 +124,10 @@ public class ParallelTraverse {
         return this;
     }
 
+    /**
+     * tell whether a new thread can be added or not
+     * @return true if there is room for another thread, false otherwise
+     */
     private boolean canAddThread() {
         final int t = threads.get();
         if (t >= concurrency - 1) {

@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.api;
 
 /**
+ * consumer interface for unweighted relationships.
+ *
  * @author mknblch
  */
 public interface RelationshipConsumer {
