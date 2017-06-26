@@ -8,7 +8,6 @@ import org.junit.runners.Parameterized;
 import org.mockito.Matchers;
 import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -18,12 +17,9 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.DoubleConsumer;
-import java.util.regex.Matcher;
 
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Matchers.anyDouble;
 
 
 /**         5     5      5

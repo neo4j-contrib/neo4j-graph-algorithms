@@ -8,7 +8,6 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**

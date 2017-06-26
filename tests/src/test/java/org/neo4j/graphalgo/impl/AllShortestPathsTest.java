@@ -9,16 +9,10 @@ import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.AllShortestPaths.Result;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;

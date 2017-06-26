@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.core;
 
-import java.util.Locale;
-
 /**
  * @author mknblch
  */

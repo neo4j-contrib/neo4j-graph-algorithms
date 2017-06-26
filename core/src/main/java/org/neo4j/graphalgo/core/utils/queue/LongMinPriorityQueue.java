@@ -1,10 +1,7 @@
 package org.neo4j.graphalgo.core.utils.queue;
 
-import com.carrotsearch.hppc.IntDoubleScatterMap;
 import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 

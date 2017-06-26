@@ -3,11 +3,7 @@ package org.neo4j.graphalgo.algo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mockito.Mockito;
 import org.neo4j.graphalgo.AllShortestPathsProc;
-import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -15,17 +11,8 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.function.DoubleConsumer;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.AdditionalMatchers.eq;
-import static org.mockito.AdditionalMatchers.gt;
-import static org.mockito.Matchers.anyDouble;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 

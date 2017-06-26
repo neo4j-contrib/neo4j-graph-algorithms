@@ -5,9 +5,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.HashSet;
-import java.util.function.Consumer;
-
 /**
  * RingBuilder creates a ring of nodes where each node is
  * connected to its successor while the last element of the

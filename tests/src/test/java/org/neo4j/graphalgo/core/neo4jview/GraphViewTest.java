@@ -1,12 +1,9 @@
 package org.neo4j.graphalgo.core.neo4jview;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.neo4j.graphalgo.SimpleGraphSetup;
 import org.neo4j.graphalgo.SimpleGraphTestCase;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 /**

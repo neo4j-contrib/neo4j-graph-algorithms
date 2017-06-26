@@ -1,8 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,8 +11,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
-
-import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertEquals;
 

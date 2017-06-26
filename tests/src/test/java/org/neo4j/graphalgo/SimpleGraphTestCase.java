@@ -10,15 +10,9 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.RawValues;
 
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
-import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyDouble;
 import static org.mockito.Mockito.*;
 import static org.neo4j.graphdb.Direction.INCOMING;
 import static org.neo4j.graphdb.Direction.OUTGOING;

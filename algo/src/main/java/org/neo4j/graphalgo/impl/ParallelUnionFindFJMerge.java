@@ -16,7 +16,7 @@ import java.util.concurrent.RecursiveTask;
  * Implementation based on the idea that DisjointSetStruct can be built using
  * just a partition of the nodes which then can be merged pairwise.
  *
- * Like in {@link ParallelUnionFind} the resulting DSS of each node-partition
+ * Like in {@link ParallelUnionFindForkJoin} the resulting DSS of each node-partition
  * is merged by the ForkJoin pool while calculating the DSS is done by the
  * ExecutorService.
  *

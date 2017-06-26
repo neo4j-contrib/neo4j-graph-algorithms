@@ -15,7 +15,6 @@ import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.Consumer;
 
 /**
