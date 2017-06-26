@@ -16,7 +16,6 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.function.IntPredicate;
 
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.*;
 
 /**

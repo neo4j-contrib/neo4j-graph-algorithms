@@ -1,9 +1,6 @@
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphdb.Direction;
-
-import java.util.function.ToLongFunction;
 
 /**
  * TODO: find suitable name or move

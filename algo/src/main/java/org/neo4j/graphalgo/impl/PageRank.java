@@ -349,12 +349,10 @@ public class PageRank {
 
         private void run(int iterations) {
             for (int i = 0; i < iterations; i++) {
-                futures.clear();
-                 // calculate scores
+                // calculate scores
                 ParallelUtil.run(steps, last, pool, futures);
                 synchronizeScores();
-                futures.clear();
-                 // sync scores
+                // sync scores
                 ParallelUtil.run(steps, last, pool, futures);
             }
         }

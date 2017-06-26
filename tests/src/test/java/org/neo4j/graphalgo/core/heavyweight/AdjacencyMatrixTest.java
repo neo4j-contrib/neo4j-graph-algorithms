@@ -14,7 +14,6 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 import static org.neo4j.graphdb.Direction.INCOMING;
 import static org.neo4j.graphdb.Direction.OUTGOING;

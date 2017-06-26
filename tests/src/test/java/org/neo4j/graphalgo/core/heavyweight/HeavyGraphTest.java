@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.heavyweight;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.neo4j.graphalgo.SimpleGraphTestCase;
 import org.neo4j.graphalgo.SimpleGraphSetup;
 

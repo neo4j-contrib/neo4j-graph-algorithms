@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.utils.container;
 
 import org.apache.lucene.util.ArrayUtil;
 
-import java.util.Arrays;
 import java.util.function.IntPredicate;
 
 /**

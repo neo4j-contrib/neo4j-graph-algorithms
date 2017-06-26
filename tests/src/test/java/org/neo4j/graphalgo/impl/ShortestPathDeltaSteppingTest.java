@@ -1,31 +1,19 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.Pools;
-import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.LongDoubleMap;
-import com.carrotsearch.hppc.cursors.IntDoubleCursor;
-import com.carrotsearch.hppc.cursors.LongDoubleCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
-import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 
 /**         5     5      5

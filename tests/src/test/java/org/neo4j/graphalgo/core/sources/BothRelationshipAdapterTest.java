@@ -6,14 +6,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.*;
 
 /**

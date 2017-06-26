@@ -21,8 +21,6 @@ import java.util.concurrent.RecursiveTask;
  * very unbalanced so each thread needs to wait for its predecessor to complete
  * before merging his set into the parent set.
  *
- * NOTE: same as {@link ParallelUnionFind}
- *
  * @author mknblch
  */
 public class ParallelUnionFindForkJoin {

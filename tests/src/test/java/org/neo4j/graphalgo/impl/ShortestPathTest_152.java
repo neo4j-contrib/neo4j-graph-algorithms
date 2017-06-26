@@ -1,14 +1,8 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.algo.PathFinding;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
 import org.neo4j.graphalgo.ShortestPathProc;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;

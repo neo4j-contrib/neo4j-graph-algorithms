@@ -15,9 +15,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.function.Consumer;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
