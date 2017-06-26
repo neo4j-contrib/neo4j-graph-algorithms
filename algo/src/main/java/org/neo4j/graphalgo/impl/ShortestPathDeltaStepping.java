@@ -126,9 +126,7 @@ public class ShortestPathDeltaStepping {
                 });
                 return true;
             });
-            futures.clear();
             ParallelUtil.run(light, executorService, futures);
-            futures.clear();
             ParallelUtil.run(heavy, executorService, futures);
         }
 

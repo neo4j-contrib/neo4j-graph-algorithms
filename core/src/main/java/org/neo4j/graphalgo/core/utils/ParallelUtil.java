@@ -142,6 +142,8 @@ public final class ParallelUtil {
 
         if (futures == null) {
             futures = new ArrayList<>(tasks.size());
+        } else {
+            futures.clear();
         }
 
         for (Runnable task : tasks) {
@@ -174,6 +176,8 @@ public final class ParallelUtil {
 
         if (futures == null) {
             futures = new ArrayList<>(tasks.size());
+        } else {
+            futures.clear();
         }
 
         for (Runnable task : tasks) {
