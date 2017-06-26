@@ -14,6 +14,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -189,6 +190,33 @@ public final class ParallelUtil {
             for (Future<?> future : futures) {
                 try {
                     future.get();
+                } catch (ExecutionException ee) {
+                    error = Exceptions.chain(error, ee.getCause());
+                } catch (CancellationException ignore) {
+                }
+            }
+            done = true;
+        } catch (InterruptedException e) {
+            error = Exceptions.chain(e, error);
+        } finally {
+            if (!done) {
+                for (final Future<?> future : futures) {
+                    future.cancel(true);
+                }
+            }
+        }
+        if (error != null) {
+            throw Exceptions.launderedException(error);
+        }
+    }
+
+    public static void awaitTerminations(Queue<Future<?>> futures) {
+        boolean done = false;
+        Throwable error = null;
+        try {
+            while (!futures.isEmpty()) {
+                try {
+                    futures.poll().get();
                 } catch (ExecutionException ee) {
                     error = Exceptions.chain(error, ee.getCause());
                 } catch (CancellationException ignore) {
