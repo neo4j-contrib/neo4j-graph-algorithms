@@ -35,11 +35,11 @@ public class ParallelUnionFindQueue {
     /**
      * initialize parallel UF
      */
-    public ParallelUnionFindQueue(Graph graph, ExecutorService executor, int batchSize) {
+    public ParallelUnionFindQueue(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
-        this.batchSize = batchSize;
+        this.batchSize = ParallelUtil.adjustBatchSize(graph.nodeCount(), concurrency, minBatchSize);
         queue = new LinkedBlockingQueue<>();
         futures = new ArrayList<>();
     }
