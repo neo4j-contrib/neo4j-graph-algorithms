@@ -6,7 +6,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ForwardBackwardScc;
-import org.neo4j.graphalgo.impl.MultiStepSCCExporter;
+import org.neo4j.graphalgo.impl.MultistepSCCExporter;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.impl.SCCTarjan;
 import org.neo4j.graphalgo.impl.SCCTarjanExporter;
@@ -17,9 +17,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.Map;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * @author mknblch
@@ -105,9 +103,13 @@ public class StronglyConnectedComponentsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new MultiStepSCCExporter(api)
-                        .withIdMapping(graph)
-                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
+                new MultistepSCCExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new MultistepSCCExporter.NodeBatch(graph.nodeCount()),
+                        configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(multistep.getConnectedComponents());
             });
         }
@@ -141,7 +143,6 @@ public class StronglyConnectedComponentsProc {
 
         return multistep.resultStream();
     }
-
 
     @Procedure(value = "algo.scc.fwbw.stream")
     @Description("CALL algo.scc.fwbw.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
