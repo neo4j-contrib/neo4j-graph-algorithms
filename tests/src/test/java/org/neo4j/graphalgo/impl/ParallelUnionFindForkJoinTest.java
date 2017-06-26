@@ -82,7 +82,7 @@ public class ParallelUnionFindForkJoinTest {
 
         System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
-        final DisjointSetStruct struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 8)
+        final DisjointSetStruct struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 8, 8)
                 .compute()
                 .getStruct();
 

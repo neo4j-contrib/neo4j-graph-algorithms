@@ -113,12 +113,12 @@ public class UnionFindProc4 {
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
-                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize())
+                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
-                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize())
+                struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
                         .compute()
                         .getStruct();
             }

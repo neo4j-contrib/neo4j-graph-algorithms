@@ -8,9 +8,11 @@ import org.neo4j.graphalgo.api.BatchNodeIterable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -98,6 +100,31 @@ public final class ParallelUtilTest extends RandomizedTest {
         for (Object t : tasks) {
             assertSame(task, t);
         }
+    }
+
+    @Test
+    public void batchingShouldCatenatePartitions() throws Exception {
+        int minBatchSize = randomIntBetween(5, 25);
+        int maxConcurrency = randomIntBetween(2, 10);
+        int nodeCount = randomIntBetween(500, 1500);
+
+        String params = String.format(
+                " [bs=%d,c=%d,n=%d]",
+                minBatchSize,
+                maxConcurrency,
+                nodeCount);
+
+        int batchSize = ParallelUtil.adjustBatchSize(
+                nodeCount,
+                maxConcurrency,
+                minBatchSize);
+
+        assertTrue(
+                "batchSize smaller than minSize" + params,
+                batchSize >= minBatchSize);
+        assertTrue(
+                "batchSize too small to satisfy desired concurrency" + params,
+                (int) Math.ceil(nodeCount / (double) batchSize) <= maxConcurrency);
     }
 
     private PrimitiveIntIterable ints(int from, int size) {

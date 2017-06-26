@@ -85,7 +85,7 @@ public class ParallelUnionFindTest {
         System.out.println("graph.nodeCount() = " + graph.nodeCount());
 
 
-        final DisjointSetStruct struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, mul)
+        final DisjointSetStruct struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, mul, 8)
                 .compute()
                 .getStruct();
         assertEquals(8, struct.getSetCount());

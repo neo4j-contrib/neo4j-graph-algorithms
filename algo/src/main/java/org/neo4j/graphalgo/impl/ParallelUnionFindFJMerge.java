@@ -38,15 +38,14 @@ public class ParallelUnionFindFJMerge {
      * @param graph
      * @param executor
      */
-    public ParallelUnionFindFJMerge(Graph graph, ExecutorService executor, int batchSize) {
+    public ParallelUnionFindFJMerge(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
-        this.batchSize = batchSize;
+        this.batchSize = ParallelUtil.adjustBatchSize(graph.nodeCount(), concurrency, minBatchSize);
     }
 
     public ParallelUnionFindFJMerge compute() {
-
         final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new UFProcess(i, batchSize));
@@ -56,7 +55,6 @@ public class ParallelUnionFindFJMerge {
     }
 
     public ParallelUnionFindFJMerge compute(double threshold) {
-
         final ArrayList<TUFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
@@ -95,7 +93,6 @@ public class ParallelUnionFindFJMerge {
         public void run() {
             for (int node = offset; node < end && node < nodeCount; node++) {
                 try {
-
                     graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                         if (!struct.connected(sourceNodeId, targetNodeId)) {
                             struct.union(sourceNodeId, targetNodeId);

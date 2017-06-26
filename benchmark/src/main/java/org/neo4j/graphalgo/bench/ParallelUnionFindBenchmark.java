@@ -159,28 +159,28 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object parallelUnionFindForkJoinMerge_400000() {
-        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 400_000)
+        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 400_000, 8)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoinMerge_800000() {
-        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 800_000)
+        return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 800_000, 8)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoin_400000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 400_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 400_000, 8)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoin_800000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000)
+        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000, 8)
                 .compute()
                 .getStruct();
     }

@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
@@ -36,11 +37,11 @@ public class ParallelUnionFindForkJoin {
      * @param graph
      * @param executor
      */
-    public ParallelUnionFindForkJoin(Graph graph, ExecutorService executor, int batchSize) {
+    public ParallelUnionFindForkJoin(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
         this.graph = graph;
         this.executor = executor;
         nodeCount = graph.nodeCount();
-        this.batchSize = batchSize;
+        this.batchSize = ParallelUtil.adjustBatchSize(graph.nodeCount(), concurrency, minBatchSize);
 
     }
 

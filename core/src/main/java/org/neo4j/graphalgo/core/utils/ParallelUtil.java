@@ -34,6 +34,17 @@ public final class ParallelUtil {
         return (int) Math.ceil(elementCount / (double) batchSize);
     }
 
+    public static int adjustBatchSize(
+            int nodeCount,
+            int concurrency,
+            int minBatchSize) {
+        if (concurrency <= 0) {
+            concurrency = nodeCount;
+        }
+        int targetBatchSize = threadSize(concurrency, nodeCount);
+        return Math.max(minBatchSize, targetBatchSize);
+    }
+
     public static boolean canRunInParallel(ExecutorService executor) {
         return executor != null && !(executor.isShutdown() || executor.isTerminated());
     }
