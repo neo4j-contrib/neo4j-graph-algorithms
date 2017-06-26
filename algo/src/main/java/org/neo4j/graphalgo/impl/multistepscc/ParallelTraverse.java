@@ -104,10 +104,13 @@ public class ParallelTraverse {
      * @return true if there is room for another thread, false otherwise
      */
     private boolean canAddThread() {
-        final int t = threads.get();
-        if (t >= concurrency - 1) {
-            return false;
-        }
-        return threads.compareAndSet(t, t + 1);
+        int t;
+        do {
+            t = threads.get();
+            if (t >= concurrency - 1) {
+                return false;
+            }
+        } while (!threads.compareAndSet(t, t + 1));
+        return true;
     }
 }
