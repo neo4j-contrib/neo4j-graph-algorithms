@@ -1,0 +1,15 @@
+org.neo4j.graphalgo.impl.AllShortestPaths	        algo.allShortestPaths
+org.neo4j.graphalgo.impl.BetweennessCentrality  	algo.betweenness
+org.neo4j.graphalgo.impl.MSTPrim	                algo.mst
+org.neo4j.graphalgo.impl.PageRank	                algo.pageRank
+org.neo4j.graphalgo.impl.ShortestPathDijkstra	    algo.shortestPath
+org.neo4j.graphalgo.impl.ShortestPathDeltaStepping	algho.shortestPath.deltaStepping
+org.neo4j.graphalgo.impl.ShortestPaths	            algo.shortestPaths
+org.neo4j.graphalgo.impl.multistepscc.MultistepSCC	algo.scc.multistep
+org.neo4j.graphalgo.impl.SCCTarjan	                algo.scc
+org.neo4j.graphalgo.impl.ForwardBackwardScc	        algo.scc.forwardBackward
+org.neo4j.graphalgo.impl.GraphUnionFind	            algo.unionFind
+org.neo4j.graphalgo.impl.ParallelUnionFindQueue	    algo.unionFind.exp1
+org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge	algo.unionFind.exp2
+org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin	algo.unionFind.exp3
+org.neo4j.graphalgo.impl.LabelPropagation	        algo.labelPropagation

@@ -7,6 +7,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author mknblch
  */
+@Ignore
 public class MultistepSCCTest {
 
 

@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.LongLongScatterMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphalgo.api.Graph;
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
+@Ignore
 public class MultistepSCCProcTest {
 
     private static GraphDatabaseAPI api;
