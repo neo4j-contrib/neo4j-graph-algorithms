@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
-@Ignore
 public class ForwardBackwardSccProcTest {
 
     private static GraphDatabaseAPI api;

@@ -37,7 +37,6 @@ import static org.junit.Assert.assertTrue;
  *
  * @author mknblch
  */
-@Ignore
 public class MultistepSCCTest {
 
 
