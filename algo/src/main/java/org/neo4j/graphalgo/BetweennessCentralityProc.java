@@ -5,6 +5,8 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
+import org.neo4j.graphalgo.impl.BetweennessCentralityExporter;
+import org.neo4j.graphalgo.impl.MultistepSCCExporter;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -75,10 +77,16 @@ public class BetweennessCentralityProc {
         });
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() ->
-                    new BetweennessCentrality.BCExporter(api)
-                            .withTargetProperty(configuration.getWriteProperty())
-                            .write(bc));
+            builder.timeWrite(() -> {
+                new BetweennessCentralityExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new BetweennessCentralityExporter.NodeBatch(graph.nodeCount()),
+                        configuration.getWriteProperty(),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                        .write(bc.getCentrality());
+            });
         }
 
         return Stream.of(builder.build());

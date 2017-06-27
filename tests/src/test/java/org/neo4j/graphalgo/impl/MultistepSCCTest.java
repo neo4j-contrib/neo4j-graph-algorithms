@@ -17,9 +17,13 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**        _______
@@ -109,7 +113,7 @@ public class MultistepSCCTest {
     @Test
     public void testSequential() throws Exception {
 
-        final IntObjectMap<IntSet> connectedComponents =
+        final int[] connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 1, 0)
                         .compute()
                         .getConnectedComponents();
@@ -120,7 +124,7 @@ public class MultistepSCCTest {
     @Test
     public void testParallel() throws Exception {
 
-        final IntObjectMap<IntSet> connectedComponents =
+        final int[] connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 4, 0)
                         .compute()
                         .getConnectedComponents();
@@ -131,7 +135,7 @@ public class MultistepSCCTest {
     @Test
     public void testHighCut() throws Exception {
 
-        final IntObjectMap<IntSet> connectedComponents =
+        final int[] connectedComponents =
                 new MultistepSCC(graph, Pools.DEFAULT, 4, 100_000)
                         .compute()
                         .getConnectedComponents();
@@ -139,7 +143,7 @@ public class MultistepSCCTest {
         assertCC(connectedComponents);
     }
 
-    private void assertCC(IntObjectMap<IntSet> connectedComponents) {
+    private void assertCC(int[] connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),
                 getMappedNodeId("b"),
@@ -154,15 +158,21 @@ public class MultistepSCCTest {
                 getMappedNodeId("i"));
     }
 
-    private static void assertBelongSameSet(IntObjectMap<IntSet> result, int... expected) {
-        final int needle = expected[0];
-        result.forEach((Consumer<? super IntObjectCursor<IntSet>>) cursor -> {
-            if (cursor.value.contains(needle)) {
-                assertEquals("Set size differs", expected.length, cursor.value.size());
-                for (int i : expected) {
-                    assertTrue("Set " + cursor.value + " did not contain " + i, cursor.value.contains(i));
-                }
+    private static void assertBelongSameSet(int[] data, Integer... expected) {
+        // check if all belong to same set
+        final int needle = data[expected[0]];
+        for (int i : expected) {
+            assertEquals(needle, data[i]);
+        }
+
+        final List<Integer> exp = Arrays.asList(expected);
+        // check no other element belongs to this set
+        for (int i = 0; i < data.length; i++) {
+            if (exp.contains(i)) {
+                continue;
             }
-        });
+            assertNotEquals(needle, data[i]);
+        }
+
     }
 }

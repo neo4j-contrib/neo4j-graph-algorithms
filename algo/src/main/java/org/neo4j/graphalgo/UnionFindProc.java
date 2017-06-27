@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
@@ -116,12 +117,15 @@ public class UnionFindProc {
         return struct;
     }
 
-    private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration config) {
+    private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration configuration) {
         log.debug("Writing results");
-        new DisjointSetStruct.DSSExporter(api,
+        new UnionFindExporter(
+                configuration.getBatchSize(),
+                api,
                 graph,
-                config.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
-                .write(struct);
+                new UnionFindExporter.NodeBatch(graph.nodeCount()),
+                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                Pools.DEFAULT).write(struct);
     }
 
 }
