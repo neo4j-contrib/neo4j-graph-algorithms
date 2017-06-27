@@ -33,7 +33,7 @@ public class ParallelLocalQueueBFS implements BFS {
     // count the number of created threads during evaluation
     private AtomicInteger threadsCreated = new AtomicInteger(0);
 
-    // probability
+    // probability for a thread to get started
     private double concurrencyFactor = 0.5;
 
     public ParallelLocalQueueBFS(Graph graph, ExecutorService executorService, int concurrency) {
