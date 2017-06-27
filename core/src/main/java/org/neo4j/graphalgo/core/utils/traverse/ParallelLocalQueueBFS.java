@@ -24,7 +24,6 @@ public class ParallelLocalQueueBFS implements BFS {
     private final AtomicInteger threads;
     // set of visited ID's
     private final AtomicBitSet visited;
-
     // the executor
     private final ExecutorService executorService;
     // intended number of concurrently active threads
@@ -35,7 +34,7 @@ public class ParallelLocalQueueBFS implements BFS {
     private AtomicInteger threadsCreated = new AtomicInteger(0);
 
     // probability
-    private double concurrencyFactor = 1;
+    private double concurrencyFactor = 0.5;
 
     public ParallelLocalQueueBFS(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -117,9 +116,9 @@ public class ParallelLocalQueueBFS implements BFS {
      * @return true if there is room for another thread, false otherwise
      */
     private boolean addThread(Runnable runnable) {
-//        if (Math.random() >= concurrencyFactor) {
-//            return false;
-//        }
+        if (Math.random() >= concurrencyFactor) {
+            return false;
+        }
         int current;
         current = threads.get();
         if (current >= concurrency) {
@@ -131,11 +130,6 @@ public class ParallelLocalQueueBFS implements BFS {
             return true;
         }
         return false;
-    }
-
-
-    private static void print(String txt) {
-        System.out.printf("[%s] %s%n", Thread.currentThread().getName(), txt);
     }
 
     public int getThreadsCreated() {
