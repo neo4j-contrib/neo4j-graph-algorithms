@@ -72,7 +72,6 @@ public class ParallelTraverse {
         }
         final IntMaxPriorityQueue queue = new IntMaxPriorityQueue();
         queue.add(startNodeId, 0d);
-        visited.set(startNodeId);
         while (!queue.isEmpty()) {
             final int node = queue.pop();
             if (canAddThread()) {
@@ -104,13 +103,10 @@ public class ParallelTraverse {
      * @return true if there is room for another thread, false otherwise
      */
     private boolean canAddThread() {
-        int t;
-        do {
-            t = threads.get();
-            if (t >= concurrency - 1) {
-                return false;
-            }
-        } while (!threads.compareAndSet(t, t + 1));
-        return true;
+        final int t = threads.get();
+        if (t >= concurrency - 1) {
+            return false;
+        }
+        return threads.compareAndSet(t, t + 1);
     }
 }
