@@ -33,6 +33,18 @@ public class StronglyConnectedComponentsProc {
     @Context
     public Log log;
 
+
+    @Procedure(value = "algo.scc.tarjan", mode = Mode.WRITE)
+    @Description("CALL algo.scc.tarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
+    public Stream<SCCResult> sccDefaultMethod(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        return sccTarjan(label, relationship, config);
+    }
+
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
     @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
@@ -144,8 +156,8 @@ public class StronglyConnectedComponentsProc {
         return multistep.resultStream();
     }
 
-    @Procedure(value = "algo.scc.fwbw.stream")
-    @Description("CALL algo.scc.fwbw.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
+    @Procedure(value = "algo.scc.forwardBackward.stream")
+    @Description("CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
             "nodeId")
     public Stream<ForwardBackwardScc.Result> fwbwStream(
             @Name(value = "startNodeId", defaultValue = "0") long startNodeId,

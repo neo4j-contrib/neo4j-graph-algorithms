@@ -34,7 +34,6 @@ import static org.mockito.Mockito.verify;
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
-@Ignore // TODO
 @RunWith(Parameterized.class)
 public final class ShortestPathDeltaSteppingProcTest {
 
@@ -110,7 +109,7 @@ public final class ShortestPathDeltaSteppingProcTest {
 
         final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0,{graph:'"+graphImpl+"'}) " +
+        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0,{graph:'"+graphImpl+"'}) " +
                 "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
@@ -130,7 +129,7 @@ public final class ShortestPathDeltaSteppingProcTest {
     @Test
     public void testWriteBack() throws Exception {
 
-        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp', graph:'"+graphImpl+"'}) " +
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPath.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp', graph:'"+graphImpl+"'}) " +
                 "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
 
         api.execute(matchCypher).accept(row -> {

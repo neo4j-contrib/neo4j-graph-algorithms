@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.algo;
 import com.carrotsearch.hppc.LongScatterSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphalgo.api.Graph;
@@ -105,7 +106,7 @@ public class ForwardBackwardSccProcTest {
     }
 
     public LongScatterSet call(long nodeId) throws Exception {
-        String cypher = String.format("CALL algo.scc.fwbw.stream(%d, 'Node', 'TYPE', {concurrency:4}) YIELD nodeId RETURN nodeId", nodeId);
+        String cypher = String.format("CALL algo.scc.forwardBackward.stream(%d, 'Node', 'TYPE', {concurrency:4}) YIELD nodeId RETURN nodeId", nodeId);
         final LongScatterSet set = new LongScatterSet();
         api.execute(cypher).accept(row -> {
             set.add(row.getNumber("nodeId").longValue());
