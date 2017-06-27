@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl.multistepscc;
+package org.neo4j.graphalgo.core.utils.traverse;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
@@ -6,6 +6,8 @@ import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
 import org.neo4j.graphalgo.core.utils.queue.IntMaxPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
@@ -16,7 +18,7 @@ import java.util.function.IntPredicate;
  *
  * @author mknblch
  */
-public class ParallelTraverse {
+public class ParallelLocalQueueBFS implements BFS {
 
     // the graph
     private final Graph graph;
@@ -30,8 +32,13 @@ public class ParallelTraverse {
     private final int concurrency;
     // result future queue
     private final ConcurrentLinkedQueue<Future<?>> futures;
+    // count the number of created threads during evaluation
+    private AtomicInteger threadsCreated = new AtomicInteger(0);
 
-    public ParallelTraverse(Graph graph, ExecutorService executorService, int concurrency) {
+    // probability
+    private double concurrencyFactor = 1;
+
+    public ParallelLocalQueueBFS(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         visited = new AtomicBitSet(graph.nodeCount());
         this.executorService = executorService;
@@ -44,9 +51,11 @@ public class ParallelTraverse {
      * reset underlying container
      * @return itself
      */
-    public ParallelTraverse reset() {
+    public ParallelLocalQueueBFS reset() {
         visited.clear();
         futures.clear();
+        threadsCreated.set(0);
+        threads.set(0);
         return this;
     }
 
@@ -54,7 +63,7 @@ public class ParallelTraverse {
      * wait for all started futures to complete
      * @return itself
      */
-    public ParallelTraverse awaitTermination() {
+    public ParallelLocalQueueBFS awaitTermination() {
         ParallelUtil.awaitTerminations(futures);
         return this;
     }
@@ -66,7 +75,7 @@ public class ParallelTraverse {
      *
      * NOTE: predicate and visitor must be thread safe
      */
-    public ParallelTraverse bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
+    public ParallelLocalQueueBFS bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
         if (!predicate.test(startNodeId)) {
             return this;
         }
@@ -74,39 +83,60 @@ public class ParallelTraverse {
         queue.add(startNodeId, 0d);
         while (!queue.isEmpty()) {
             final int node = queue.pop();
-            if (canAddThread()) {
-                futures.add(executorService.submit(() -> bfs(node, direction, predicate, visitor)));
-            } else {
-                if (visited.trySet(node)) {
-                    visitor.accept(node);
-                    graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                        // should we visit this node?
-                        if (!predicate.test(targetNodeId)) {
-                            return true;
-                        }
-                        // don't visit id's twice
-                        if (visited.get(targetNodeId)) {
-                            return true;
-                        }
-                        queue.add(targetNodeId, graph.degree(targetNodeId, direction));
-                        return true;
-                    });
-                }
+
+
+            if (visited.get(node)) {
+                continue;
             }
+            visited.set(node);
+            visitor.accept(node);
+
+            graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                // should we visit this node?
+                if (!predicate.test(targetNodeId)) {
+                    return true;
+                }
+                // don't visit id's twice
+                if (visited.get(targetNodeId)) {
+                    return true;
+                }
+                if (!addThread(() -> bfs(targetNodeId, direction, predicate, visitor))) {
+                    queue.add(targetNodeId, (double) graph.degree(targetNodeId, direction));
+                }
+                return true;
+            });
         }
         threads.decrementAndGet();
         return this;
     }
 
+    public ParallelLocalQueueBFS withConcurrencyFactor(double concurrencyFactor) {
+        this.concurrencyFactor = concurrencyFactor;
+        return this;
+    }
+
     /**
-     * tell whether a new thread can be added or not
+     * tell whether a new thread was added or not
      * @return true if there is room for another thread, false otherwise
      */
-    private boolean canAddThread() {
-        final int t = threads.get();
-        if (t >= concurrency - 1) {
-            return false;
+    private boolean addThread(Runnable runnable) {
+//        if (Math.random() >= concurrencyFactor) {
+//            return false;
+//        }
+        if (threads.getAndIncrement() < concurrency) {
+            futures.add(executorService.submit(runnable));
+            threadsCreated.incrementAndGet();
+            return true;
         }
-        return threads.compareAndSet(t, t + 1);
+        return false;
+    }
+
+
+    private static void print(String txt) {
+        System.out.printf("[%s] %s%n", Thread.currentThread().getName(), txt);
+    }
+
+    public int getThreadsCreated() {
+        return threadsCreated.get();
     }
 }

@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl.multistepscc;
+package org.neo4j.graphalgo.core.utils.traverse;
 
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntDeque;
@@ -12,13 +12,13 @@ import java.util.function.IntPredicate;
 /**
  * @author mknblch
  */
-public class Traverse {
+public class SequentialTraverse {
 
     private final Graph graph;
     private final SimpleBitSet visited;
     private final IntDeque queue;
 
-    public Traverse(Graph graph) {
+    public SequentialTraverse(Graph graph) {
         this.graph = graph;
         visited = new SimpleBitSet(graph.nodeCount());
         queue = new IntArrayDeque();

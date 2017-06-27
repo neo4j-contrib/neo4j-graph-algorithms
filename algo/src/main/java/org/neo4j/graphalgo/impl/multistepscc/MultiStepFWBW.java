@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
@@ -21,12 +22,12 @@ import java.util.concurrent.ExecutorService;
 public class MultiStepFWBW {
 
     private final Graph graph;
-    private final ParallelTraverse traverse;
+    private final ParallelLocalQueueBFS traverse;
     private int root;
 
     public MultiStepFWBW(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        traverse = new ParallelTraverse(graph, executorService, concurrency);
+        traverse = new ParallelLocalQueueBFS(graph, executorService, concurrency);
     }
 
     public IntSet compute(IntSet nodes) {
