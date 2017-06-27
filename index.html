@@ -422,7 +422,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>Neo4j Graph Algorithms</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
-<ul class="sectlevel2">
+<ul class="sectlevel1">
+<li><a href="#_installation">Installation</a></li>
 <li><a href="#_building">Building</a></li>
 <li><a href="#_overview_of_algorithm_procedures">Overview of Algorithm Procedures</a></li>
 <li><a href="#_algorithms">Algorithms</a>
@@ -452,18 +453,84 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j.</p>
+<p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.</p>
 </div>
 <div class="paragraph">
-<p>Those algorithms will run on a clean API which is fed by loading data from Neo4j or running on Neo4j directly.</p>
+<p>You can find the documentation (WIP) here <a href="http://neo4j-contrib.github.io/neo4j-graph-algorithms" class="bare">http://neo4j-contrib.github.io/neo4j-graph-algorithms</a></p>
 </div>
 <div class="paragraph">
-<p>The algorithms will be exposed as user defined procedures</p>
+<p>Releases are available here: <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases" class="bare">https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases</a></p>
+</div>
+<div class="paragraph">
+<p>The goal is to provide parallel versions of common graph algorithms for Neo4j exposed as Cypher user defined procedures:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Page Rank</p>
+</li>
+<li>
+<p>Betweenness Centrality</p>
+</li>
+<li>
+<p>Closeness Centrality</p>
+</li>
+<li>
+<p>Clustering: Louvain</p>
+</li>
+<li>
+<p>Clustering: Label Propagation</p>
+</li>
+<li>
+<p>Minimum Weight Spanning Tree</p>
+</li>
+<li>
+<p>All Pairs- and Single Source - Shortest Path</p>
+</li>
+<li>
+<p>(Weakly) Connected Components</p>
+</li>
+<li>
+<p>Strongly Connected Components</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These procedures work on a subgraph optionally filtered by label and relationship-type. Future versions will also provide filtering and projection using Cypher queries.</p>
+</div>
+<div class="paragraph">
+<p>We&#8217;d love your feedback, so please try out these algorithms and let us know how well they work for your use-case. Also please note things that you miss from installation instructions, readme, etc.</p>
+</div>
+<div class="paragraph">
+<p>Please raise <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues">GitHub issues</a> for anything you encounter or join the <a href="http://neo4j.com/developer/slack">neo4j-users Slack group</a> and ask in the <code>#neo4j-graph-algorithm</code> channel.</p>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_building"><a class="link" href="#_building">Building</a></h3>
+<div class="sect1">
+<h2 id="_installation"><a class="link" href="#_installation">Installation</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Just copy the <code>graph-algorithms-algo-*.jar</code> from the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases">release</a> into your <code>$NEO4J_HOME/plugins</code> directory and restart Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>Then running <code>call dbms.procedures();</code> should also list the algorithm procedures.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>call dbms.procedures() yield name, description
+where name starts with "algo." and not name starts with "algo.algo."
+return name, description
+order by name</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Details on how to call them can be found in the <a href="http://neo4j-contrib.github.io/neo4j-graph-algorithms">project&#8217;s documentation</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_building"><a class="link" href="#_building">Building</a></h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Currently aiming at Neo4j 3.1</p>
 </div>
@@ -472,6 +539,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre>mvn clean install
 cp algo/target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart</pre>
+</div>
 </div>
 </div>
 </div>
@@ -578,6 +646,18 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.multistep</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.multistep.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD nodeId, clusterId</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.fwbw.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.fwbw.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD nodeId</code></p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -676,35 +756,35 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Home</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.419</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3.232</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Product</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.059</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Links</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.059</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">About</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.137</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.059</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Site A</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.328</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Site B</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.328</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Site C</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.328</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Site D</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.042</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.328</p></td>
 </tr>
 </tbody>
 </table>
@@ -3426,7 +3506,7 @@ for creating the Graph using the core db.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-07 15:50:34 MESZ
+Last updated 2017-06-27 00:44:52 MESZ
 </div>
 </div>
 </body>
