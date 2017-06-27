@@ -6,8 +6,6 @@ import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
 import org.neo4j.graphalgo.core.utils.queue.IntMaxPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
@@ -26,6 +24,7 @@ public class ParallelLocalQueueBFS implements BFS {
     private final AtomicInteger threads;
     // set of visited ID's
     private final AtomicBitSet visited;
+
     // the executor
     private final ExecutorService executorService;
     // intended number of concurrently active threads
@@ -84,11 +83,9 @@ public class ParallelLocalQueueBFS implements BFS {
         while (!queue.isEmpty()) {
             final int node = queue.pop();
 
-
-            if (visited.get(node)) {
+            if (!visited.trySet(node)) {
                 continue;
             }
-            visited.set(node);
             visitor.accept(node);
 
             graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId) -> {
@@ -123,7 +120,12 @@ public class ParallelLocalQueueBFS implements BFS {
 //        if (Math.random() >= concurrencyFactor) {
 //            return false;
 //        }
-        if (threads.getAndIncrement() < concurrency) {
+        int current;
+        current = threads.get();
+        if (current >= concurrency) {
+            return false;
+        }
+        if (threads.compareAndSet(current, current + 1)) {
             futures.add(executorService.submit(runnable));
             threadsCreated.incrementAndGet();
             return true;

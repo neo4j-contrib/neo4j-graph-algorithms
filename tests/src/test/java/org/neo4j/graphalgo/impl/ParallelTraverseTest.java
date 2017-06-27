@@ -4,7 +4,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -99,7 +98,7 @@ public class ParallelTraverseTest {
         final ParallelLocalQueueBFS traverse = new ParallelLocalQueueBFS(graph, Pools.DEFAULT, 10);
         final AtomicInteger ai = new AtomicInteger(0);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 2500; i++) {
 
             ai.set(0);
 
