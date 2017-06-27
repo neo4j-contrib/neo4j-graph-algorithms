@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.impl.multistepscc.ParallelTraverse;
+import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
@@ -15,13 +15,13 @@ import java.util.stream.StreamSupport;
  */
 public class ForwardBackwardScc {
 
-    private final ParallelTraverse traverse;
+    private final ParallelLocalQueueBFS traverse;
     private final IntSet scc = new IntScatterSet();
     private final Graph graph;
 
     public ForwardBackwardScc(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        traverse = new ParallelTraverse(graph, executorService, concurrency);
+        traverse = new ParallelLocalQueueBFS(graph, executorService, concurrency);
     }
 
     public ForwardBackwardScc compute(int startNodeId) {
