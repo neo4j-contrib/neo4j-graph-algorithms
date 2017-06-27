@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
+import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -136,12 +137,14 @@ public class UnionFindProc4 {
         return struct;
     }
 
-    private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration config) {
+    private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration configuration) {
         log.debug("Writing results");
-        new DisjointSetStruct.DSSExporter(api,
+        new UnionFindExporter(
+                configuration.getBatchSize(),
+                api,
                 graph,
-                config.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY))
-                .write(struct);
+                new UnionFindExporter.NodeBatch(graph.nodeCount()),
+                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                Pools.DEFAULT).write(struct);
     }
-
 }
