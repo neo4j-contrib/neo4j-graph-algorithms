@@ -38,6 +38,14 @@ public class ParallelBetweennessCentrality {
     // number of threads to spawn
     private final int concurrency;
 
+    /**
+     * constructs a parallel centrality solver
+     *
+     * @param graph the graph iface
+     * @param scaleFactor factor used to scale up doubles to integers in AtomicDoubleArray
+     * @param executorService the executor service
+     * @param concurrency desired number of threads to spawn
+     */
     public ParallelBetweennessCentrality(Graph graph, double scaleFactor, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = graph.nodeCount();
@@ -101,19 +109,19 @@ public class ParallelBetweennessCentrality {
     private class BCTask implements Runnable {
 
         private final Paths paths;
+        private final IntStack stack;
+        private final IntArrayDeque queue;
         private final double[] delta;
         private final int[] sigma;
         private final int[] distance;
-        private final IntStack stack;
-        private final IntArrayDeque queue;
 
         private BCTask() {
             this.paths = new Paths();
             this.stack = new IntStack();
-            this.sigma = new int[nodeCount];
-            this.distance = new int[graph.nodeCount()];
             this.queue = new IntArrayDeque();
-            this.delta = new double[graph.nodeCount()];
+            this.sigma = new int[nodeCount];
+            this.distance = new int[nodeCount];
+            this.delta = new double[nodeCount];
 
         }
 
@@ -156,6 +164,9 @@ public class ParallelBetweennessCentrality {
             }
         }
 
+        /**
+         * reset local state
+         */
         private void reset() {
             paths.clear();
             stack.clear();
