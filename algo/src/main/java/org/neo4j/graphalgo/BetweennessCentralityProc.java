@@ -3,10 +3,10 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.BetweennessCentrality;
-import org.neo4j.graphalgo.impl.BetweennessCentralityExporter;
-import org.neo4j.graphalgo.impl.MultistepSCCExporter;
+import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -34,11 +34,21 @@ public class BetweennessCentralityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
                 .load(configuration.getGraphImpl());
+
+        if (configuration.getConcurrency(-1) > 0) {
+            return new ParallelBetweennessCentrality(graph,
+                    configuration.getNumber("scaleFactor", 100_000).intValue(),
+                    Pools.DEFAULT,
+                    configuration.getConcurrency())
+                    .compute()
+                    .resultStream();
+        }
 
         return new BetweennessCentrality(graph)
                 .compute()
@@ -54,6 +64,18 @@ public class BetweennessCentralityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        if (configuration.getConcurrency(-1) > 0) {
+            return computeBetweennessParallel(label, relationship, configuration);
+        } else {
+            return computeBetweenness(label, relationship, configuration);
+        }
+    }
+
+    public Stream<BetweennessCentralityProcResult> computeBetweenness(
+            String label,
+            String relationship,
+            ProcedureConfiguration configuration) {
 
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
@@ -92,6 +114,54 @@ public class BetweennessCentralityProc {
         return Stream.of(builder.build());
     }
 
+    public Stream<BetweennessCentralityProcResult> computeBetweennessParallel(
+            String label,
+            String relationship,
+            ProcedureConfiguration configuration) {
+
+        final BetweennessCentralityProcResult.Builder builder =
+                BetweennessCentralityProcResult.builder();
+
+        Graph graph;
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutNodeProperties()
+                    .load(configuration.getGraphImpl());
+        }
+
+        builder.withNodeCount(graph.nodeCount());
+
+        final ParallelBetweennessCentrality bc = new ParallelBetweennessCentrality(
+                graph,
+                configuration.getNumber("scaleFactor", 100_000).doubleValue(),
+                Pools.DEFAULT,
+                configuration.getConcurrency());
+
+        builder.timeEval(() -> {
+            bc.compute();
+            if (configuration.isStatsFlag()) {
+                computeStats(builder, bc);
+            }
+        });
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new ParallelBetweennessCentralityExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new BetweennessCentralityExporter.NodeBatch(graph.nodeCount()),
+                        configuration.getWriteProperty(),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                        .write(bc.getCentrality());
+            });
+        }
+
+        return Stream.of(builder.build());
+    }
+
     private void computeStats(BetweennessCentralityProcResult.Builder builder, BetweennessCentrality bc) {
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
@@ -99,6 +169,26 @@ public class BetweennessCentralityProc {
         double[] centrality = bc.getCentrality();
         for (int i = centrality.length - 1; i >= 0; i--) {
             final double c = centrality[i];
+            if (c < min) {
+                min = c;
+            }
+            if (c > max) {
+                max = c;
+            }
+            sum += c;
+        }
+        builder.withCentralityMax(max)
+                .withCentralityMin(min)
+                .withCentralitySum(sum);
+    }
+
+    private void computeStats(BetweennessCentralityProcResult.Builder builder, ParallelBetweennessCentrality bc) {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        double sum = 0.0;
+        AtomicDoubleArray centrality = bc.getCentrality();
+        for (int i = centrality.length() - 1; i >= 0; i--) {
+            final double c = centrality.get(i);
             if (c < min) {
                 min = c;
             }
