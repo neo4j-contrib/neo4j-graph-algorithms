@@ -3,10 +3,12 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphalgo.impl.BetweennessCentralityExporter;
 import org.neo4j.graphalgo.impl.MultistepSCCExporter;
+import org.neo4j.graphalgo.impl.ParallelBetweennessCentrality;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -34,11 +36,21 @@ public class BetweennessCentralityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
                 .load(configuration.getGraphImpl());
+
+        if (configuration.getConcurrency(-1) != -1) {
+            return new ParallelBetweennessCentrality(graph,
+                    configuration.getNumber("scaleFactor", 100_000).intValue(),
+                    Pools.DEFAULT,
+                    configuration.getConcurrency())
+                    .compute()
+                    .resultStream();
+        }
 
         return new BetweennessCentrality(graph)
                 .compute()
