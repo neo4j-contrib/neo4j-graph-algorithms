@@ -52,7 +52,6 @@ public class ParallelBetweennessCentrality {
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
-        nodeQueue.set(0);
     }
 
     /**
@@ -60,6 +59,7 @@ public class ParallelBetweennessCentrality {
      * @return itself for method chaining
      */
     public ParallelBetweennessCentrality compute() {
+        nodeQueue.set(0);
         final ArrayList<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
             futures.add(executorService.submit(new BCTask()));
@@ -174,21 +174,6 @@ public class ParallelBetweennessCentrality {
             Arrays.fill(sigma, 0);
             Arrays.fill(delta, 0);
             Arrays.fill(distance, -1);
-        }
-    }
-
-    /**
-     * Result class used for streaming
-     */
-    public static final class Result {
-
-        public final long nodeId;
-
-        public final double centrality;
-
-        public Result(Long nodeId, Double centrality) {
-            this.nodeId = nodeId;
-            this.centrality = centrality;
         }
     }
 }

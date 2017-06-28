@@ -23,4 +23,8 @@ public class AtomicDoubleArray {
     public void add(int index, double value) {
         data.addAndGet(index, (int) (scaleFactor * value));
     }
+
+    public int length() {
+        return data.length();
+    }
 }
