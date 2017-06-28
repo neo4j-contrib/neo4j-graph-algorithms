@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 public class ParallelBetweennessCentrality {
 
     private final Graph graph;
-    private final AtomicInteger nodeQueue = new AtomicInteger();
+    private volatile AtomicInteger nodeQueue = new AtomicInteger();
     private final AtomicDoubleArray centrality;
     private final int nodeCount;
     private final ExecutorService executorService;
@@ -39,7 +39,7 @@ public class ParallelBetweennessCentrality {
         this.concurrency = concurrency;
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
         // init nodeQAI to the highest nodeId
-        nodeQueue.set(graph.nodeCount() - 1);
+        nodeQueue.set(0);
     }
 
     /**
@@ -82,7 +82,6 @@ public class ParallelBetweennessCentrality {
                                 centrality.get(nodeId)));
     }
 
-
     private class BCTask implements Runnable {
 
         private final Paths paths;
@@ -104,8 +103,12 @@ public class ParallelBetweennessCentrality {
 
         @Override
         public void run() {
-            for (int startNodeId = nodeQueue.getAndDecrement(); startNodeId >= 0; ) {
+            for (;;) {
                 reset();
+                final int startNodeId = nodeQueue.getAndIncrement();
+                if (startNodeId >= nodeCount) {
+                    return;
+                }
                 sigma[startNodeId] = 1;
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);
@@ -141,7 +144,7 @@ public class ParallelBetweennessCentrality {
             paths.clear();
             stack.clear();
             queue.clear();
-            Arrays.fill(delta, 0);
+            Arrays.fill(sigma, 0);
             Arrays.fill(delta, 0);
             Arrays.fill(distance, -1);
         }
