@@ -19,17 +19,23 @@ import java.util.stream.Stream;
 /**
  * Implements Betweenness Centrality for unweighted graphs
  * as specified in <a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
- * using node-partitioning and atomic distance array
+ * using node-partitioning
  *
  * @author mknblch
  */
 public class ParallelBetweennessCentrality {
 
+    // the graph
     private final Graph graph;
+    // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
+    // atomic double array which supports only atomic-add
     private final AtomicDoubleArray centrality;
+    // the node count
     private final int nodeCount;
+    // global executor service
     private final ExecutorService executorService;
+    // number of threads to spawn
     private final int concurrency;
 
     public ParallelBetweennessCentrality(Graph graph, double scaleFactor, ExecutorService executorService, int concurrency) {
@@ -38,7 +44,6 @@ public class ParallelBetweennessCentrality {
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
-        // init nodeQAI to the highest nodeId
         nodeQueue.set(0);
     }
 
@@ -55,7 +60,10 @@ public class ParallelBetweennessCentrality {
         return this;
     }
 
-
+    /**
+     * get the centrality array
+     * @return array with centrality
+     */
     public AtomicDoubleArray getCentrality() {
         return centrality;
     }
@@ -74,6 +82,10 @@ public class ParallelBetweennessCentrality {
         }
     }
 
+    /**
+     * emit the result stream
+     * @return stream if Results
+     */
     public Stream<BetweennessCentrality.Result> resultStream() {
         return IntStream.range(0, graph.nodeCount())
                 .mapToObj(nodeId ->
@@ -82,6 +94,10 @@ public class ParallelBetweennessCentrality {
                                 centrality.get(nodeId)));
     }
 
+    /**
+     * a BCTask takes one element from the nodeQueue as long as
+     * it is lower then nodeCount and calculates it's centrality
+     */
     private class BCTask implements Runnable {
 
         private final Paths paths;
