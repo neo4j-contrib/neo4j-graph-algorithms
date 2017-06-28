@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
@@ -35,7 +36,7 @@ public class BetweennessCentralityBenchmark {
     private static GraphDatabaseAPI db;
     private static List<Node> lines = new ArrayList<>();
 
-    @Param({/*"1", */"2", "4", "8"})
+    @Param({"0", "1", "2", "4", "8"})
     static int concurrency;
 
     private static final Map<String, Object> params = new HashMap<>();
@@ -51,11 +52,18 @@ public class BetweennessCentralityBenchmark {
                 .registerProcedure(BetweennessCentralityProc.class);
 
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("setup took " + l + "ms"))) {
-            createNet(20); // 10000 nodes; 1000000 edges
+            createNet(50); // size^2 nodes; size^3 edges
         }
 
         params.put("head", lines.get(0).getId());
         params.put("concurrency", concurrency);
+    }
+
+
+    @TearDown
+    public static void tearDown() {
+        db.shutdown();
+        Pools.DEFAULT.shutdownNow();
     }
 
     private static void createNet(int size) {
@@ -96,7 +104,8 @@ public class BetweennessCentralityBenchmark {
     @Benchmark
     public Object _01_benchmark() {
 
-        return db.execute("CALL algo.betweenness.stream('', '', {concurrency: $concurrency}) YIELD nodeId, centrality", params)
+        return db.execute("CALL algo.betweenness('','', {concurrency: $concurrency, write:false, stats:false}) YIELD " +
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis", params)
                 .stream()
                 .count();
     }

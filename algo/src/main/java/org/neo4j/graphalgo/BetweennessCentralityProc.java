@@ -41,7 +41,7 @@ public class BetweennessCentralityProc {
                 .withoutNodeProperties()
                 .load(configuration.getGraphImpl());
 
-        if (configuration.getConcurrency(-1) != -1) {
+        if (configuration.getConcurrency(-1) > 0) {
             return new ParallelBetweennessCentrality(graph,
                     configuration.getNumber("scaleFactor", 100_000).intValue(),
                     Pools.DEFAULT,
@@ -65,7 +65,7 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        if (configuration.getConcurrency(-1) > 1) {
+        if (configuration.getConcurrency(-1) > 0) {
             return computeBetweennessParallel(label, relationship, configuration);
         } else {
             return computeBetweenness(label, relationship, configuration);

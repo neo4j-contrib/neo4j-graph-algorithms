@@ -12,12 +12,12 @@ import java.util.function.IntPredicate;
  */
 public class Paths {
 
-    public static final int INITIAL_PATH_CAPACITY = 10;
+    public static final int INITIAL_PATH_CAPACITY = 100;
 
     private final IntObjectMap<Path> paths;
 
     public Paths() {
-        this(10);
+        this(10000);
     }
 
     public Paths(int expectedElements) {

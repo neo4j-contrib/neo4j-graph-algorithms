@@ -1,11 +1,16 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayDeque;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.IntStack;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.Paths;
+import org.neo4j.graphalgo.core.utils.container.PathsArray;
+import org.neo4j.graphalgo.core.utils.container.PathsBag;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -122,7 +127,6 @@ public class ParallelBetweennessCentrality {
             this.sigma = new int[nodeCount];
             this.distance = new int[nodeCount];
             this.delta = new double[nodeCount];
-
         }
 
         @Override
@@ -151,8 +155,9 @@ public class ParallelBetweennessCentrality {
                         return true;
                     });
                 }
+
                 while (!stack.isEmpty()) {
-                    final int node = stack.pop();
+                    int node = stack.pop();
                     paths.forEach(node, v -> {
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                         if (node != startNodeId) {
