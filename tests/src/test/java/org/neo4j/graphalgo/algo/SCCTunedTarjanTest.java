@@ -145,6 +145,26 @@ public class SCCTunedTarjanTest {
         }
     }
 
+
+    @Test
+    public void testCypherStream() throws Exception {
+
+        final IntIntScatterMap testMap = new IntIntScatterMap();
+
+        String cypher = "CALL algo.scc.tunedTarjan.stream() YIELD nodeId, cluster";
+
+        api.execute(cypher).accept(row -> {
+            testMap.addTo(row.getNumber("cluster").intValue(), 1);
+            return true;
+        });
+
+        // 3 sets with 3 elements each
+        assertEquals(3, testMap.size());
+        for (IntIntCursor cursor : testMap) {
+            assertEquals(3, cursor.value);
+        }
+    }
+
     private void assertCC(int[] connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),

@@ -2,9 +2,12 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Sequential strongly connected components algorithm (TunedTarjan).
@@ -46,6 +49,12 @@ public class SCCTunedTarjan {
 
     public int[] getConnectedComponents() {
         return connectedComponents;
+    }
+
+    public Stream<SCCStreamResult> resultStream() {
+        return IntStream.range(0, nodeCount)
+                .filter(i -> connectedComponents[i] != -1)
+                .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
     }
 
     private int lowPointDFS(int nodeId) {

@@ -7,7 +7,8 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
-import org.neo4j.graphalgo.results.MultiStepSCCResult;
+import org.neo4j.graphalgo.results.SCCStreamResult;
+import org.neo4j.graphalgo.results.SimpleSCCResult;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -30,9 +31,9 @@ public class StronglyConnectedComponentsProc {
     @Context
     public Log log;
 
-
-    @Procedure(value = "algo.scc.tarjan", mode = Mode.WRITE)
-    @Description("CALL algo.scc.tarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    // default algo.scc -> tarjan
+    @Procedure(value = "algo.scc", mode = Mode.WRITE)
+    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccDefaultMethod(
             @Name(value = "label", defaultValue = "") String label,
@@ -42,8 +43,9 @@ public class StronglyConnectedComponentsProc {
         return sccTarjan(label, relationship, config);
     }
 
-    @Procedure(value = "algo.scc", mode = Mode.WRITE)
-    @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    // algo.scc.tarjan
+    @Procedure(value = "algo.scc.tarjan", mode = Mode.WRITE)
+    @Description("CALL algo.scc.tarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
             @Name(value = "label", defaultValue = "") String label,
@@ -56,11 +58,11 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
         loadTimer.stop();
 
         SCCTarjan tarjan = new SCCTarjan(graph);
@@ -83,6 +85,7 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build());
     }
 
+    // algo.scc.tunedTarjan
     @Procedure(value = "algo.scc.tunedTarjan", mode = Mode.WRITE)
     @Description("CALL algo.scc.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis")
@@ -97,11 +100,11 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
         loadTimer.stop();
 
         SCCTunedTarjan tarjan = new SCCTunedTarjan(graph);
@@ -123,6 +126,30 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build());
     }
 
+    // algo.scc.tunedTarjan.stream
+    @Procedure(value = "algo.scc.tunedTarjan.stream", mode = Mode.WRITE)
+    @Description("CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis")
+    public Stream<SCCStreamResult> sccTunedTarjanStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        Graph graph = new GraphLoader(api)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
+
+        return new SCCTunedTarjan(graph)
+                .compute()
+                .resultStream();
+    }
+
+    // algo.scc.iterative
     @Procedure(value = "algo.scc.iterative", mode = Mode.WRITE)
     @Description("CALL algo.scc.iterative(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis")
@@ -163,17 +190,42 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.scc.multistep", mode = Mode.WRITE)
-    @Description("CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
+    // algo.scc.iterative.stream
+    @Procedure(value = "algo.scc.iterative.stream", mode = Mode.WRITE)
+    @Description("CALL algo.scc.iterative.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis")
-    public Stream<MultiStepSCCResult> multistep(
+    public Stream<SCCStreamResult> sccIterativeTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        MultiStepSCCResult.Builder builder = MultiStepSCCResult.builder();
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+
+        return new SCCIterativeTarjan(graph)
+                .compute()
+                .resultStream();
+    }
+
+
+    // algo.scc.multistep
+    @Procedure(value = "algo.scc.multistep", mode = Mode.WRITE)
+    @Description("CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
+            "loadMillis, computeMillis, writeMillis")
+    public Stream<SimpleSCCResult> multistep(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        SimpleSCCResult.Builder builder = SimpleSCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
@@ -206,10 +258,11 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build());
     }
 
+    // algo.scc.multistep.stream
     @Procedure(value = "algo.scc.multistep.stream")
     @Description("CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
             "nodeId, clusterId")
-    public Stream<MultistepSCC.SCCStreamResult> multistepStream(
+    public Stream<SCCStreamResult> multistepStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -233,6 +286,7 @@ public class StronglyConnectedComponentsProc {
         return multistep.resultStream();
     }
 
+    // algo.scc.forwardBackward.stream
     @Procedure(value = "algo.scc.forwardBackward.stream")
     @Description("CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
             "nodeId")
@@ -256,5 +310,4 @@ public class StronglyConnectedComponentsProc {
                 .compute(graph.toMappedNodeId(startNodeId))
                 .resultStream();
     }
-
 }

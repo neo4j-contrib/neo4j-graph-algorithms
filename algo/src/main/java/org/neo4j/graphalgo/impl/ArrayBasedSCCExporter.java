@@ -34,6 +34,9 @@ public final class ArrayBasedSCCExporter extends ParallelExporter<int[]> {
     @Override
     protected ParallelGraphExporter newParallelExporter(int[] data) {
         return (ParallelGraphExporter.Simple) ((ops, nodeId) -> {
+            if (data[nodeId] == -1) {
+                return;
+            }
             ops.nodeSetProperty(
                     idMapping.toOriginalNodeId(nodeId),
                     DefinedProperty.doubleProperty(propertyId, data[nodeId])

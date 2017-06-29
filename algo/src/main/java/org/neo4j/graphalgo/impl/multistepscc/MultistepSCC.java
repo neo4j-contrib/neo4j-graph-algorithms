@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
+import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -155,22 +156,4 @@ public class MultistepSCC {
     }
 
 
-    public static class SCCStreamResult {
-
-        /**
-         * the node id
-         */
-        public final long nodeId;
-
-        /**
-         * the set id of the stronly connected component or
-         * -1 of not part of a SCC
-         */
-        public final long clusterId;
-
-        public SCCStreamResult(long nodeId, int clusterId) {
-            this.nodeId = nodeId;
-            this.clusterId = clusterId;
-        }
-    }
 }

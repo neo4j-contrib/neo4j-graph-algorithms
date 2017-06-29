@@ -115,7 +115,6 @@ public class IterativeTarjanSCCTest {
         assertCC(connectedComponents);
     }
 
-
     @Test
     public void testCypher() throws Exception {
 
@@ -135,6 +134,25 @@ public class IterativeTarjanSCCTest {
         final IntIntScatterMap testMap = new IntIntScatterMap();
         api.execute(cypher2).accept(row -> {
             testMap.addTo(row.getNumber("c").intValue(), 1);
+            return true;
+        });
+
+        // 3 sets with 3 elements each
+        assertEquals(3, testMap.size());
+        for (IntIntCursor cursor : testMap) {
+            assertEquals(3, cursor.value);
+        }
+    }
+
+    @Test
+    public void testCypherStream() throws Exception {
+
+        final IntIntScatterMap testMap = new IntIntScatterMap();
+
+        String cypher = "CALL algo.scc.iterative.stream() YIELD nodeId, cluster";
+
+        api.execute(cypher).accept(row -> {
+            testMap.addTo(row.getNumber("cluster").intValue(), 1);
             return true;
         });
 
