@@ -138,21 +138,21 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object parallelUnionFindQueue_200000() {
-        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 200_000)
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 200_000, 8)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFindQueue_400000() {
-        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 400_000)
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 400_000, 8)
                 .compute()
                 .getStruct();
     }
 
     @Benchmark
     public Object parallelUnionFindQueue_800000() {
-        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 800_000)
+        return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 800_000, 8)
                 .compute()
                 .getStruct();
     }

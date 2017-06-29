@@ -52,6 +52,7 @@ public class BetweennessCentralityIntegrationTest {
                         .newGraphDatabase();
 
         builder = GraphBuilder.create(db)
+                .setLabel("Node")
                 .setRelationship(TYPE);
 
         final RelationshipType type = RelationshipType.withName(TYPE);
@@ -62,6 +63,7 @@ public class BetweennessCentralityIntegrationTest {
          * each node of ring B.
          */
         final Node center = builder.newDefaultBuilder()
+                .setLabel("Node")
                 .createNode();
 
         centerNodeId = center.getId();
@@ -112,11 +114,29 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testBetweennessStream() throws Exception {
 
-        db.execute("CALL algo.betweenness.stream() YIELD nodeId, centrality")
+        db.execute("CALL algo.betweenness.stream('Node', 'TYPE') YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.consume(
                             (long) row.getNumber("nodeId"),
                             (double) row.getNumber("centrality"));
+                    return true;
+                });
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
+    public void testParallelBetweennessStream() throws Exception {
+
+        db.execute("CALL algo.betweenness.stream('Node', 'TYPE', {concurrency:4}) YIELD nodeId, centrality")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    System.out.printf("%d -> %f%n",
+                            row.getNumber("nodeId").intValue(),
+                            row.getNumber("centrality").doubleValue());
+                    consumer.consume(
+                            row.getNumber("nodeId").intValue(),
+                            row.getNumber("centrality").doubleValue());
                     return true;
                 });
 

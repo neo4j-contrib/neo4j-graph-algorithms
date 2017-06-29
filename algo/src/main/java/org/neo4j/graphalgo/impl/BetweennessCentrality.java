@@ -53,6 +53,7 @@ public class BetweennessCentrality {
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
+        Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
         return this;
     }
