@@ -9,9 +9,9 @@ import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 import java.util.Arrays;
 
 /**
- * Sequential strongly connected components algorithm (TunedTarjan).
+ * non recursive sequential strongly connected components algorithm.
  *
- * as specified in: https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
+ * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
 public class SCCIterativeTarjan {
 
