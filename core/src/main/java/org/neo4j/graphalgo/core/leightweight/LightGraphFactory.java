@@ -7,6 +7,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
@@ -33,7 +34,7 @@ public final class LightGraphFactory extends GraphFactory {
     private long outAdjacencyIdx;
     protected int nodeCount;
     private int labelId;
-    private int[] relationId;
+    private int relationId;
     private int weightId;
 
     public LightGraphFactory(
@@ -47,7 +48,7 @@ public final class LightGraphFactory extends GraphFactory {
             if (!setup.loadAnyRelationshipType()) {
                 int relId = readOp.relationshipTypeGetForName(setup.relationshipType);
                 if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
-                    relationId = new int[]{relId};
+                    relationId = relId;
                 }
             }
             weightId = setup.loadDefaultRelationshipWeight()
@@ -92,7 +93,7 @@ public final class LightGraphFactory extends GraphFactory {
             }
             mapping.buildMappedIds();
 
-            try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
+            try (Cursor<Kernel.NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodeCursorGetAll()
                     : readOp.nodeCursorGetForLabel(labelId)) {
                 while (cursor.next()) {
@@ -119,7 +120,7 @@ public final class LightGraphFactory extends GraphFactory {
     }
 
     private void readNode(
-            NodeItem node,
+            Kernel.NodeItem node,
             boolean loadIncoming,
             boolean loadOutgoing) {
         long sourceNodeId = node.id();
@@ -153,7 +154,7 @@ public final class LightGraphFactory extends GraphFactory {
 
     private long readRelationships(
             int sourceGraphId,
-            NodeItem node,
+            Kernel.NodeItem node,
             Direction direction,
             IdCombiner idCombiner,
             long[] offsets,
@@ -162,30 +163,31 @@ public final class LightGraphFactory extends GraphFactory {
             long adjacencyIdx) {
 
         offsets[sourceGraphId] = adjacencyIdx;
-        int degree = relationId == null
+        int degree = relationId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE
                 ? node.degree(direction)
-                : node.degree(direction, relationId[0]);
+                : node.degree(direction, relationId);
 
         if (degree > 0) {
             adjacency.bulkAdder(adjacencyIdx, degree, bulkAdder);
-            try (Cursor<RelationshipItem> rels = relationId == null
+            try (Cursor<Kernel.RelationshipItem> rels = relationId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE
                     ? node.relationships(direction)
                     : node.relationships(direction, relationId)) {
                 while (rels.next()) {
-                    RelationshipItem rel = rels.get();
+                    Kernel.RelationshipItem rel = rels.get();
 
                     long targetNodeId = rel.otherNode(node.id());
                     int targetGraphId = mapping.get(targetNodeId);
                     if (targetGraphId == -1) {
                         continue;
                     }
-
-                    try (Cursor<PropertyItem> weights = rel.property(weightId)) {
-                        if (weights.next()) {
-                            long relId = idCombiner.apply(
-                                    sourceGraphId,
-                                    targetGraphId);
-                            this.weights.set(relId, weights.get().value());
+                    if (weightId != StatementConstants.NO_SUCH_PROPERTY_KEY) {
+                        try (Cursor<PropertyItem> weights = rel.property(weightId)) {
+                            if (weights.next()) {
+                                long relId = idCombiner.apply(
+                                        sourceGraphId,
+                                        targetGraphId);
+                                this.weights.set(relId, weights.get().value());
+                            }
                         }
                     }
 

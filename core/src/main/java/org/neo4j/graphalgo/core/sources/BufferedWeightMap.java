@@ -3,8 +3,10 @@ package org.neo4j.graphalgo.core.sources;
 import com.carrotsearch.hppc.LongDoubleMap;
 import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.neo4j.cursor.Cursor;
+import org.neo4j.cursor.RawCursor;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipWeights;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
@@ -103,7 +105,7 @@ public class BufferedWeightMap implements RelationshipWeights {
 
             withinTransaction(readOp -> {
 
-                final Cursor<NodeItem> nodeItemCursor;
+                final RawCursor<Kernel.NodeItem,RuntimeException> nodeItemCursor;
                 if (labelId == ReadOperations.ANY_LABEL) {
                     nodeItemCursor = readOp.nodeCursorGetAll();
                 } else {

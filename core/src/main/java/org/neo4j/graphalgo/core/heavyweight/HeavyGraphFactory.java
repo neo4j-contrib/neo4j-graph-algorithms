@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
@@ -51,8 +52,7 @@ public class HeavyGraphFactory extends GraphFactory {
     private int nodeWeightId;
     private int nodePropId;
     private int labelId;
-    private int[] relationId;
-
+    private int relationId;
     private int nodeCount;
 
     public HeavyGraphFactory(
@@ -65,12 +65,9 @@ public class HeavyGraphFactory extends GraphFactory {
             labelId = setup.loadAnyLabel()
                     ? ReadOperations.ANY_LABEL
                     : readOp.labelGetForName(setup.startLabel);
-            if (!setup.loadAnyRelationshipType()) {
-                int relId = readOp.relationshipTypeGetForName(setup.relationshipType);
-                if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
-                    relationId = new int[]{relId};
-                }
-            }
+            relationId = setup.loadAnyRelationshipType()
+                    ? ReadOperations.ANY_RELATIONSHIP_TYPE
+                    : readOp.relationshipTypeGetForName(setup.relationshipType);
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
             relWeightId = setup.loadDefaultRelationshipWeight()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
@@ -156,7 +153,7 @@ public class HeavyGraphFactory extends GraphFactory {
     }
 
     private static void readNode(
-            NodeItem node,
+            Kernel.NodeItem node,
             int nodeId,
             IdMap idMap,
             AdjacencyMatrix matrix,
@@ -168,21 +165,21 @@ public class HeavyGraphFactory extends GraphFactory {
             WeightMapping nodeWeights,
             int nodePropId,
             WeightMapping nodeProps,
-            int... relationType) {
+            int relationType) {
         final int outDegree;
         final int inDegree;
-        final Cursor<RelationshipItem> outCursor;
-        final Cursor<RelationshipItem> inCursor;
-        if (relationType == null) {
+        final Cursor<Kernel.RelationshipItem> outCursor;
+        final Cursor<Kernel.RelationshipItem> inCursor;
+        if (relationType == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
             outDegree = loadOutgoing ? node.degree(Direction.OUTGOING) : 0;
             inDegree = loadIncoming ? node.degree(Direction.INCOMING) : 0;
-            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING) : NO_RELS;
-            inCursor = loadIncoming ? node.relationships(Direction.INCOMING) : NO_RELS;
+            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING) : Kernel.EMPTY_CURSOR;
+            inCursor = loadIncoming ? node.relationships(Direction.INCOMING) : Kernel.EMPTY_CURSOR;
         } else {
-            outDegree = loadOutgoing ? node.degree(Direction.OUTGOING, relationType[0]) : 0;
-            inDegree = loadIncoming ? node.degree(Direction.INCOMING, relationType[0]) : 0;
-            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING, relationType) : NO_RELS;
-            inCursor = loadIncoming ? node.relationships(Direction.INCOMING, relationType) : NO_RELS;
+            outDegree = loadOutgoing ? node.degree(Direction.OUTGOING, relationType) : 0;
+            inDegree = loadIncoming ? node.degree(Direction.INCOMING, relationType) : 0;
+            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING, relationType) : Kernel.EMPTY_CURSOR;
+            inCursor = loadIncoming ? node.relationships(Direction.INCOMING, relationType) : Kernel.EMPTY_CURSOR;
         }
         try (Cursor<PropertyItem> weights = node.property(nodeWeightId)) {
             if (weights.next()) {
@@ -196,9 +193,9 @@ public class HeavyGraphFactory extends GraphFactory {
         }
 
         matrix.armOut(nodeId, outDegree);
-        try (Cursor<RelationshipItem> rels = outCursor) {
+        try (Cursor<Kernel.RelationshipItem> rels = outCursor) {
             while (rels.next()) {
-                final RelationshipItem rel = rels.get();
+                final Kernel.RelationshipItem rel = rels.get();
                 final long endNode = rel.endNode();
                 final int targetNodeId = idMap.get(endNode);
                 if (targetNodeId == -1) {
@@ -216,7 +213,7 @@ public class HeavyGraphFactory extends GraphFactory {
             }
         }
         matrix.armIn(nodeId, inDegree);
-        try (Cursor<RelationshipItem> rels = inCursor) {
+        try (Cursor<Kernel.RelationshipItem> rels = inCursor) {
             while (rels.next()) {
                 final RelationshipItem rel = rels.get();
                 final long startNode = rel.startNode();
@@ -229,7 +226,7 @@ public class HeavyGraphFactory extends GraphFactory {
         }
     }
 
-    private final class ImportTask implements Runnable, Consumer<ReadOperations> {
+    private final class ImportTask implements Runnable, Consumer<Kernel> {
         private final AdjacencyMatrix matrix;
         private final int nodeOffset;
         private final int maxNodeId;
@@ -239,8 +236,7 @@ public class HeavyGraphFactory extends GraphFactory {
         private final WeightMapping relWeights;
         private final WeightMapping nodeWeights;
         private final WeightMapping nodeProps;
-
-        private final int[] relationId;
+        private final int relationId;
 
         ImportTask(
                 int batchSize,
@@ -251,7 +247,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 WeightMapping relWeights,
                 WeightMapping nodeWeights,
                 WeightMapping nodeProps,
-                int... relationId) {
+                int relationId) {
             int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
             this.nodeOffset = nodeOffset;
             this.idMap = idMap;
@@ -270,7 +266,7 @@ public class HeavyGraphFactory extends GraphFactory {
             withReadOps(this);
         }
         @Override
-        public void accept(final ReadOperations readOp) {
+        public void accept(final Kernel readOp) {
             int nodeOffset = this.nodeOffset;
             int nodeCount = 0;
             PrimitiveIntIterator iterator = nodes.iterator();
@@ -278,7 +274,7 @@ public class HeavyGraphFactory extends GraphFactory {
             boolean loadOutgoing = setup.loadOutgoing;
             while (iterator.hasNext()) {
                 int nodeId = iterator.next();
-                try (Cursor<NodeItem> cursor = readOp.nodeCursor(idMap.toOriginalNodeId(nodeId))) {
+                try (Cursor<Kernel.NodeItem> cursor = readOp.nodeCursor(idMap.toOriginalNodeId(nodeId))) {
                     if (cursor.next()) {
                         nodeCount++;
                         HeavyGraphFactory.readNode(

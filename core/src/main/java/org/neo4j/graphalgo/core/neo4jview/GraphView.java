@@ -6,6 +6,7 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
@@ -90,10 +91,9 @@ public class GraphView implements Graph {
             long relId = RawValues.combineIntInt(
                     (int) item.startNode(),
                     (int) item.endNode());
-            Object property = item.getProperty(propertyKey);
-            double weight = property != null
-                    ? ((Number) property).doubleValue()
-                    : propertyDefaultWeight;
+            double weight = (propertyKey == StatementConstants.NO_SUCH_PROPERTY_KEY) ? propertyDefaultWeight :
+                    ((Number) item.property(propertyKey)).doubleValue();
+
             consumer.accept(
                     nodeId,
                     toMappedNodeId(item.otherNode(originalNodeId)),
@@ -106,16 +106,16 @@ public class GraphView implements Graph {
     private void forAllRelationships(
             int nodeId,
             Direction direction,
-            Consumer<RelationshipItem> action) {
+            Consumer<Kernel.RelationshipItem> action) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         org.neo4j.storageengine.api.Direction d = mediate(direction);
         withinTransaction(read -> {
-            try (Cursor<NodeItem> nodes = read.nodeCursor(originalNodeId)) {
+            try (Cursor<Kernel.NodeItem> nodes = read.nodeCursor(originalNodeId)) {
                 while (nodes.next()) {
-                    NodeItem nodeItem = nodes.get();
-                    try (Cursor<RelationshipItem> rels = relationships(d, nodeItem)) {
+                    Kernel.NodeItem nodeItem = nodes.get();
+                    try (Cursor<Kernel.RelationshipItem> rels = relationships(d, nodeItem)) {
                         while (rels.next()) {
-                            RelationshipItem item = rels.get();
+                            Kernel.RelationshipItem item = rels.get();
                             if (idMapping.contains(item.otherNode(originalNodeId))) {
                                 action.accept(item);
                             }
@@ -126,9 +126,9 @@ public class GraphView implements Graph {
         });
     }
 
-    private Cursor<RelationshipItem> relationships(
+    private Cursor<Kernel.RelationshipItem> relationships(
             final org.neo4j.storageengine.api.Direction d,
-            final NodeItem nodeItem) {
+            final Kernel.NodeItem nodeItem) {
         if (relationTypeId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
             return nodeItem.relationships(d);
         }
@@ -144,7 +144,7 @@ public class GraphView implements Graph {
     public void forEachNode(IntPredicate consumer) {
         withinTransaction(read -> {
             if (labelId == StatementConstants.NO_SUCH_LABEL) {
-                try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
+                try (Cursor<Kernel.NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
                     while (nodeItemCursor.next()) {
                         if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
                             break;
@@ -152,7 +152,7 @@ public class GraphView implements Graph {
                     }
                 }
             } else {
-                try (Cursor<NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
+                try (Cursor<Kernel.NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
                     while (nodeItemCursor.next()) {
                         if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
                             break;
@@ -228,19 +228,19 @@ public class GraphView implements Graph {
         }
     }
 
-    private <T> T withinTransactionTyped(Function<ReadOperations, T> block) {
+    private <T> T withinTransactionTyped(Function<Kernel, T> block) {
         try (final Transaction tx = db.beginTx();
              Statement statement = contextBridge.get()) {
-            final T result = block.apply(statement.readOperations());
+            final T result = block.apply(new Kernel(statement));
             tx.success();
             return result;
         }
     }
 
-    private void withinTransaction(Consumer<ReadOperations> block) {
+    private void withinTransaction(Consumer<Kernel> block) {
         try (final Transaction tx = db.beginTx();
              Statement statement = contextBridge.get()) {
-            block.accept(statement.readOperations());
+            block.accept(new Kernel(statement));
             tx.success();
         }
     }

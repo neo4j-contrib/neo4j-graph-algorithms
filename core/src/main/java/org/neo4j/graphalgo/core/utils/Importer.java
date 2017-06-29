@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -46,7 +47,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      */
     protected int labelId = ReadOperations.ANY_LABEL;
     protected int endLabelId = ReadOperations.ANY_LABEL;
-    protected int[] relationId = null;
+    protected int relationId = -1;
     protected int propertyId = StatementConstants.NO_SUCH_PROPERTY_KEY;
 
     /**
@@ -72,7 +73,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
             if (!loadAnyRelationship()) {
                 int relId = readOp.relationshipTypeGetForName(relationship);
                 if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
-                    relationId = new int[]{relId};
+                    relationId = relId;
                 }
             }
             propertyId = loadAnyProperty()
@@ -239,10 +240,10 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      *
      * @param block the consumer
      */
-    protected final void withinTransaction(Consumer<ReadOperations> block) {
+    protected final void withinTransaction(Consumer<Kernel> block) {
         try (Transaction tx = api.beginTx();
              Statement statement = bridge.get()) {
-            block.accept(statement.readOperations());
+            block.accept(new Kernel(statement));
             tx.success();
         }
     }
@@ -252,14 +253,14 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      *
      * @param consumer nodeItem consumer
      */
-    protected void forEachNodeItem(Consumer<NodeItem> consumer) {
+    protected void forEachNodeItem(Consumer<Kernel.NodeItem> consumer) {
         try (Transaction tx = api.beginTx();
              Statement statement = bridge.get()) {
-            final ReadOperations readOp = statement.readOperations();
+            Kernel kernel = new Kernel(statement);
             if (labelId == ReadOperations.ANY_LABEL) {
-                readOp.nodeCursorGetAll().forAll(consumer);
+                kernel.nodeCursorGetAll().forAll(consumer);
             } else {
-                readOp.nodeCursorGetForLabel(labelId).forAll(consumer);
+                kernel.nodeCursorGetForLabel(labelId).forAll(consumer);
             }
             tx.success();
         }

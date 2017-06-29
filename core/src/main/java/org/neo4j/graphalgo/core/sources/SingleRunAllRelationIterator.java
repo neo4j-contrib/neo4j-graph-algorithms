@@ -1,7 +1,9 @@
 package org.neo4j.graphalgo.core.sources;
 
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.api.KernelAPI;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
@@ -28,9 +30,8 @@ public class SingleRunAllRelationIterator implements AllRelationshipIterator {
              Statement statement = api.getDependencyResolver()
                     .resolveDependency(ThreadToStatementContextBridge.class)
                     .get()) {
-            final ReadOperations readOperations = statement
-                    .readOperations();
-            readOperations.relationshipCursorGetAll().forAll(c -> {
+            Kernel kernel = new Kernel(statement);
+            kernel.relationshipCursorGetAll().forAll(c -> {
                 long startNode = c.startNode();
                 consumer.accept(
                         idMapping.toMappedNodeId(startNode),

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.utils.container;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -141,13 +142,13 @@ public class RelationshipContainer {
             return builder.build();
         }
 
-        private void importNode(Builder builder, NodeItem nodeItem) {
+        private void importNode(Builder builder, Kernel.NodeItem nodeItem) {
             final long neo4jId = nodeItem.id();
             final int nodeId = idMapping.toMappedNodeId(neo4jId);
-            if (null == relationId) {
+            if (-1 == relationId) {
                 builder.aim(nodeId, nodeItem.degree(direction));
             } else {
-                builder.aim(nodeId, nodeItem.degree(direction, relationId[0]));
+                builder.aim(nodeId, nodeItem.degree(direction, relationId));
             }
             nodeItem.relationships(direction, relationId).forAll(ri -> {
                 builder.add(idMapping.toMappedNodeId(ri.otherNode(neo4jId)));

@@ -9,7 +9,7 @@ import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
-import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
+import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationException;
 import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -36,13 +36,7 @@ public class SCCTarjanExporter extends AbstractExporter<ObjectArrayList<IntSet>>
     }
 
     public SCCTarjanExporter withWriteProperty(String writeProperty) {
-        writeInTransaction(write -> {
-            try {
-                this.writePropertyId = write.propertyKeyGetOrCreateForName(writeProperty);
-            } catch (IllegalTokenNameException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        this.writePropertyId = getOrCreatePropertyId(writeProperty);
         return this;
     }
 
@@ -57,7 +51,7 @@ public class SCCTarjanExporter extends AbstractExporter<ObjectArrayList<IntSet>>
                         write.nodeSetProperty(idMapping.toOriginalNodeId(iCursor.value),
                                 property);
                     } catch (EntityNotFoundException
-                            | ConstraintValidationKernelException
+                            | ConstraintValidationException
                             | InvalidTransactionTypeKernelException
                             | AutoIndexingKernelException e) {
                         throw new RuntimeException(e);

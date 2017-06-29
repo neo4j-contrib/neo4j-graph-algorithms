@@ -2,8 +2,8 @@ package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
+import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -46,10 +46,10 @@ public abstract class GraphFactory {
      *
      * @param block the consumer
      */
-    protected final void withReadOps(Consumer<ReadOperations> block) {
+    protected final void withReadOps(Consumer<Kernel> block) {
         try (final Transaction tx = api.beginTx();
              Statement statement = contextBridge.get()) {
-            block.accept(statement.readOperations());
+            block.accept(new Kernel(statement));
             tx.success();
         }
     }
