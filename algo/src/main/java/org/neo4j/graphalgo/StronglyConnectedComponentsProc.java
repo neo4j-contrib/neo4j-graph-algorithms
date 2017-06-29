@@ -123,6 +123,46 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build());
     }
 
+    @Procedure(value = "algo.scc.iterative", mode = Mode.WRITE)
+    @Description("CALL algo.scc.iterative(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis")
+    public Stream<SCCResult> sccIterativeTarjan(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        SCCResult.Builder builder = SCCResult.builder();
+
+        ProgressTimer loadTimer = builder.timeLoad();
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+        loadTimer.stop();
+
+        SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph);
+        builder.timeEval(tarjan::compute);
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new ArrayBasedSCCExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
+                        configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                        .write(tarjan.getConnectedComponents());
+            });
+        }
+
+        return Stream.of(builder.build());
+    }
+
     @Procedure(value = "algo.scc.multistep", mode = Mode.WRITE)
     @Description("CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
             "loadMillis, computeMillis, writeMillis")
