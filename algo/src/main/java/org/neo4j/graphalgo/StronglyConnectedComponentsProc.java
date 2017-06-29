@@ -8,8 +8,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ForwardBackwardScc;
 import org.neo4j.graphalgo.impl.MultistepSCCExporter;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
-import org.neo4j.graphalgo.impl.SCCTarjan;
-import org.neo4j.graphalgo.impl.SCCTarjanExporter;
+import org.neo4j.graphalgo.impl.SCCTunedTarjan;
 import org.neo4j.graphalgo.results.MultiStepSCCResult;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -66,22 +65,23 @@ public class StronglyConnectedComponentsProc {
                     .load(configuration.getGraphImpl());
         loadTimer.stop();
 
-        SCCTarjan tarjan = new SCCTarjan(graph);
-        builder.timeEval(() -> {
-            tarjan.compute();
-            builder.withMaxSetSize(tarjan.getMaxSetSize())
-                    .withMinSetSize(tarjan.getMinSetSize())
-                    .withSetCount(tarjan.getConnectedComponents().size());
-        });
-
-        if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> {
-                new SCCTarjanExporter(api)
-                        .withIdMapping(graph)
-                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
-                        .write(tarjan.getConnectedComponents());
-            });
-        }
+        SCCTunedTarjan tarjan = new SCCTunedTarjan(graph);
+        // TODO
+//        builder.timeEval(() -> {
+//            tarjan.compute();
+//            builder.withMaxSetSize(tarjan.getMaxSetSize())
+//                    .withMinSetSize(tarjan.getMinSetSize())
+//                    .withSetCount(tarjan.getConnectedComponents().size());
+//        });
+//
+//        if (configuration.isWriteFlag()) {
+//            builder.timeWrite(() -> {
+//                new SCCTarjanExporter(api)
+//                        .withIdMapping(graph)
+//                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
+//                        .write(tarjan.getConnectedComponents());
+//            });
+//        }
 
         return Stream.of(builder.build());
     }

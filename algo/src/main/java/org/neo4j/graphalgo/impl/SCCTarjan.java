@@ -7,10 +7,10 @@ import com.carrotsearch.hppc.ObjectArrayList;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -24,69 +24,131 @@ import java.util.function.IntPredicate;
 public class SCCTarjan {
 
     private final Graph graph;
-    private final int nodeCount;
-
-    private int dfsCount = 0;
-    private int sccCount = 0;
-
-    private final int[] compNumArray;
-    private final IntStack edgeStack;
-    private final IntStack open;
+    private Aggregator aggregator;
 
     public SCCTarjan(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
-        indices = new int[nodeCount];
-        lowLink = new int[nodeCount];
-        connectedComponents = new ObjectArrayList<>();
-        onStack = new SimpleBitSet(nodeCount);
-        stack = new IntStack();
-        compNumArray = new int[nodeCount];
+        int nodeCount = graph.nodeCount();
 
+        aggregator = new Aggregator(graph,
+                new int[nodeCount],
+                new int[nodeCount],
+                new ObjectArrayList<>(),
+                new BitSet(nodeCount),
+                new IntStack(nodeCount));
     }
 
     public SCCTarjan compute() {
-        reset();
-
-        dfsCount = -(nodeCount + 1);
-        sccCount = 0;
-        Arrays.fill(compNumArray);
-
-
+        aggregator.reset();
+        graph.forEachNode(aggregator);
         return this;
     }
 
-    private void reset() {
+    /**
+     * get connected components list
+     *
+     * @return list of sets of strongly connected component ID's
+     */
+    public ObjectArrayList<IntSet> getConnectedComponents() {
+        return aggregator.connectedComponents;
     }
 
-    private int lowPointDFS(int nodeId) {
+    /**
+     * return the maximum set size
+     * @return the maximum set size
+     */
+    public long getMaxSetSize() {
+        return graph.nodeCount() == 0 ? 0 : aggregator.maxSetSize;
+    }
 
-        final int dfsNum = dfsCount++;
-        compNumArray[nodeId] = dfsNum;
-        open.push();
-        final int sz = edgeStack.size();
-        graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-            edgeStack.push(targetNodeId);
-            return true;
-        });
-        int lowPoint = dfsNum;
-        while (edgeStack.size() > sz) {
-            int w = edgeStack.pop();
-            int d = compNumArray[w];
-            if (d == -1) {
-                d = lowPointDFS(w);
-            }
-            if (d < lowPoint) {
-                lowPoint = d;
+    /**
+     * return the minimum set size
+     *
+     * @return minimum set size
+     */
+    public long getMinSetSize() {
+        return graph.nodeCount() == 0 ? 0 : aggregator.minSetSize;
+    }
+
+    private static final class Aggregator implements IntPredicate, RelationshipConsumer {
+
+        private final Graph graph;
+        private final int[] indices;
+        private final int[] lowLink;
+        private final ObjectArrayList<IntSet> connectedComponents;
+        private final BitSet onStack;
+        private final IntStack stack;
+        private int index;
+        private long minSetSize = Long.MAX_VALUE;
+        private long maxSetSize = 0;
+
+        private Aggregator(Graph graph, int[] indices, int[] lowLink, ObjectArrayList<IntSet> connectedComponents, BitSet onStack, IntStack stack) {
+            this.graph = graph;
+            this.indices = indices;
+            this.lowLink = lowLink;
+            this.connectedComponents = connectedComponents;
+            this.onStack = onStack;
+            this.stack = stack;
+        }
+
+        public void reset() {
+            connectedComponents.clear();
+            Arrays.fill(indices, -1);
+            Arrays.fill(lowLink, -1);
+            onStack.clear();
+            stack.clear();
+            index = 0;
+            minSetSize = Long.MAX_VALUE;
+            maxSetSize = 0;
+        }
+
+        private void strongConnect(int node) {
+            lowLink[node] = index;
+            indices[node] = index;
+            index++;
+            stack.push(node);
+            onStack.set(node);
+            graph.forEachRelationship(node, Direction.OUTGOING, this);
+            if (indices[node] == lowLink[node]) {
+                relax(node);
             }
         }
-        if (dfsNum == lowPoint) {
-            int u;
+
+        private void relax(int nodeId) {
+            IntHashSet connected = new IntHashSet();
+            int w;
             do {
-                u = open.pop();
-                compNumArray[u] = sccCount;
-            } while (u != nodeId);
+                w = stack.pop();
+                onStack.clear(w);
+                connected.add(w);
+            } while (w != nodeId);
+            connectedComponents.add(connected);
+            int size = connected.size();
+            if (size < minSetSize) {
+                minSetSize = size;
+            }
+            if (size > maxSetSize) {
+                maxSetSize = size;
+            }
         }
-        return lowPoint;
+
+        @Override
+        public boolean accept(int source, int target, long edgeId) {
+            if (indices[target] == -1) {
+                strongConnect(target);
+                lowLink[source] = Math.min(lowLink[source], lowLink[target]);
+            } else if (onStack.get(target)) {
+                lowLink[source] = Math.min(lowLink[source], indices[target]);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean test(int node) {
+            if (indices[node] == -1) {
+                strongConnect(node);
+            }
+            return true;
+        }
     }
 }
