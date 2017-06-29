@@ -39,6 +39,10 @@ public class ForwardBackwardScc {
         return this;
     }
 
+    public IntSet getScc() {
+        return scc;
+    }
+
     public Stream<Result> resultStream() {
         return StreamSupport.stream(scc.spliterator(), false)
                 .map(node -> new Result(graph.toOriginalNodeId(node.value)));

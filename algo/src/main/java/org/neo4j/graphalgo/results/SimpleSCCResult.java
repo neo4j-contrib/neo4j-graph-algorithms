@@ -3,15 +3,15 @@ package org.neo4j.graphalgo.results;
 /**
  * @author mknblch
  */
-public class MultiStepSCCResult {
+public class SimpleSCCResult {
 
     public final long loadMillis;
     public final long computeMillis;
     public final long writeMillis;
 
-    public MultiStepSCCResult(Long loadMillis,
-                              Long computeMillis,
-                              Long writeMillis) {
+    public SimpleSCCResult(Long loadMillis,
+                           Long computeMillis,
+                           Long writeMillis) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.writeMillis = writeMillis;
@@ -21,7 +21,7 @@ public class MultiStepSCCResult {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractResultBuilder<MultiStepSCCResult> {
+    public static final class Builder extends AbstractResultBuilder<SimpleSCCResult> {
 
         private long setCount;
         private long minSetSize;
@@ -43,8 +43,8 @@ public class MultiStepSCCResult {
         }
 
         @Override
-        public MultiStepSCCResult build() {
-            return new MultiStepSCCResult(loadDuration,
+        public SimpleSCCResult build() {
+            return new SimpleSCCResult(loadDuration,
                     evalDuration,
                     writeDuration);
         }

@@ -10,6 +10,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**

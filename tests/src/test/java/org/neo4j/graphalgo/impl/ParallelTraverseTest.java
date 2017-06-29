@@ -98,7 +98,7 @@ public class ParallelTraverseTest {
         final ParallelLocalQueueBFS traverse = new ParallelLocalQueueBFS(graph, Pools.DEFAULT, 10);
         final AtomicInteger ai = new AtomicInteger(0);
 
-        for (int i = 0; i < 2500; i++) {
+        for (int i = 0; i < 100; i++) {
 
             ai.set(0);
 
@@ -107,8 +107,6 @@ public class ParallelTraverseTest {
                     .withConcurrencyFactor(1)
                     .bfs(rootNodeId, Direction.OUTGOING, n -> true, node -> ai.incrementAndGet())
                     .awaitTermination();
-
-            System.out.println("traverse.getThreadsCreated() = " + traverse.getThreadsCreated());
 
             assertEquals("Iteration " + i + " results in error", nodeCount, ai.get());
         }

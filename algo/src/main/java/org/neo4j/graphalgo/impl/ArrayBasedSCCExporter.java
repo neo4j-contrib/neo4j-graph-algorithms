@@ -14,12 +14,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 
-public final class MultistepSCCExporter extends ParallelExporter<int[]> {
+public final class ArrayBasedSCCExporter extends ParallelExporter<int[]> {
 
     private final IdMapping idMapping;
     private final int propertyId;
 
-    public MultistepSCCExporter(
+    public ArrayBasedSCCExporter(
             int batchSize,
             GraphDatabaseAPI api,
             IdMapping idMapping,
@@ -34,6 +34,9 @@ public final class MultistepSCCExporter extends ParallelExporter<int[]> {
     @Override
     protected ParallelGraphExporter newParallelExporter(int[] data) {
         return (ParallelGraphExporter.Simple) ((ops, nodeId) -> {
+            if (data[nodeId] == -1) {
+                return;
+            }
             ops.nodeSetProperty(
                     idMapping.toOriginalNodeId(nodeId),
                     DefinedProperty.doubleProperty(propertyId, data[nodeId])
