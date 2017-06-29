@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphdb.Direction;
