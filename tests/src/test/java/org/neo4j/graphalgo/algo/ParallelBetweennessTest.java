@@ -40,7 +40,7 @@ public class ParallelBetweennessTest {
                 .registerProcedure(BetweennessCentralityProc.class);
 
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("setup took " + l + "ms"))) {
-            createNet(125); // 10000 nodes; 1000000 edges
+            createNet(25); // 10000 nodes; 1000000 edges
         }
 
     }
