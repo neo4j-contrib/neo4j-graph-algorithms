@@ -1,13 +1,22 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.algo;
 
+import com.carrotsearch.hppc.IntIntScatterMap;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphalgo.ShortestPathsProc;
+import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.impl.SCCTunedTarjan;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
@@ -16,6 +25,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 /**        _______
  *        /       \
@@ -35,7 +45,7 @@ public class SCCTunedTarjanTest {
     private static Graph graph;
 
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws KernelException {
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
                         "CREATE (b:Node {name:'b'})\n" +
@@ -46,7 +56,6 @@ public class SCCTunedTarjanTest {
                         "CREATE (g:Node {name:'g'})\n" +
                         "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (i:Node {name:'i'})\n" +
-                        "CREATE (x:Node {name:'x'})\n" +
                         "CREATE" +
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
                         " (b)-[:TYPE {cost:5}]->(c),\n" +
@@ -66,6 +75,11 @@ public class SCCTunedTarjanTest {
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
+
+        api.getDependencyResolver()
+                .resolveDependency(Procedures.class)
+                .registerProcedure(StronglyConnectedComponentsProc.class);
+
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
             tx.success();
@@ -93,13 +107,42 @@ public class SCCTunedTarjanTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testDirect() throws Exception {
 
         final int[] connectedComponents = new SCCTunedTarjan(graph)
                 .compute()
                 .getConnectedComponents();
 
         assertCC(connectedComponents);
+    }
+
+    @Test
+    public void testCypher() throws Exception {
+
+        String cypher = "CALL algo.scc.tunedTarjan('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
+
+        api.execute(cypher).accept(row -> {
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            assertNotEquals(-1, loadMillis);
+            assertNotEquals(-1, computeMillis);
+            assertNotEquals(-1, writeMillis);
+            return true;
+        });
+
+        String cypher2 = "MATCH (n) RETURN n.cluster as c";
+        final IntIntScatterMap testMap = new IntIntScatterMap();
+        api.execute(cypher2).accept(row -> {
+            testMap.addTo(row.getNumber("c").intValue(), 1);
+            return true;
+        });
+
+        // 3 sets with 3 elements each
+        assertEquals(3, testMap.size());
+        for (IntIntCursor cursor : testMap) {
+            assertEquals(3, cursor.value);
+        }
     }
 
     private void assertCC(int[] connectedComponents) {

@@ -5,10 +5,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.ForwardBackwardScc;
-import org.neo4j.graphalgo.impl.MultistepSCCExporter;
+import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
-import org.neo4j.graphalgo.impl.SCCTunedTarjan;
 import org.neo4j.graphalgo.results.MultiStepSCCResult;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -65,23 +63,62 @@ public class StronglyConnectedComponentsProc {
                     .load(configuration.getGraphImpl());
         loadTimer.stop();
 
+        SCCTarjan tarjan = new SCCTarjan(graph);
+        builder.timeEval(() -> {
+            tarjan.compute();
+            builder.withMaxSetSize(tarjan.getMaxSetSize())
+                    .withMinSetSize(tarjan.getMinSetSize())
+                    .withSetCount(tarjan.getConnectedComponents().size());
+        });
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new SCCTarjanExporter(api)
+                        .withIdMapping(graph)
+                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
+                        .write(tarjan.getConnectedComponents());
+            });
+        }
+
+        return Stream.of(builder.build());
+    }
+
+    @Procedure(value = "algo.scc.tunedTarjan", mode = Mode.WRITE)
+    @Description("CALL algo.scc.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis")
+    public Stream<SCCResult> sccTunedTarjan(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        SCCResult.Builder builder = SCCResult.builder();
+
+        ProgressTimer loadTimer = builder.timeLoad();
+        Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutRelationshipWeights()
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+        loadTimer.stop();
+
         SCCTunedTarjan tarjan = new SCCTunedTarjan(graph);
-        // TODO
-//        builder.timeEval(() -> {
-//            tarjan.compute();
-//            builder.withMaxSetSize(tarjan.getMaxSetSize())
-//                    .withMinSetSize(tarjan.getMinSetSize())
-//                    .withSetCount(tarjan.getConnectedComponents().size());
-//        });
-//
-//        if (configuration.isWriteFlag()) {
-//            builder.timeWrite(() -> {
-//                new SCCTarjanExporter(api)
-//                        .withIdMapping(graph)
-//                        .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
-//                        .write(tarjan.getConnectedComponents());
-//            });
-//        }
+        builder.timeEval(tarjan::compute);
+
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                new ArrayBasedSCCExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
+                        configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                        .write(tarjan.getConnectedComponents());
+            });
+        }
 
         return Stream.of(builder.build());
     }
@@ -115,11 +152,11 @@ public class StronglyConnectedComponentsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new MultistepSCCExporter(
+                new ArrayBasedSCCExporter(
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new MultistepSCCExporter.NodeBatch(graph.nodeCount()),
+                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(multistep.getConnectedComponents());
