@@ -59,6 +59,10 @@ public class MultistepSCC {
     // overall node count
     private final int nodeCount;
 
+    private int minSetSize;
+    private int maxSetSize;
+    private int setCount;
+
     public MultistepSCC(Graph graph, ExecutorService executorService, int concurrency, int cutOff) {
         this.graph = graph;
         this.cutOff = cutOff;
@@ -77,6 +81,9 @@ public class MultistepSCC {
     }
 
     public MultistepSCC compute() {
+        minSetSize = Integer.MAX_VALUE;
+        maxSetSize = 0;
+        setCount = 0;
         Arrays.fill(connectedComponents, -1);
         // V <- simpleTrim (V)
         final IntSet nodeSet = trimming.compute(false);
@@ -123,6 +130,18 @@ public class MultistepSCC {
         return connectedComponents;
     }
 
+    public int getSetCount() {
+        return setCount;
+    }
+
+    public int getMinSetSize() {
+        return minSetSize;
+    }
+
+    public int getMaxSetSize() {
+        return maxSetSize;
+    }
+
     /**
      * process a SCC if found (may be empty)
      * @param root
@@ -132,6 +151,9 @@ public class MultistepSCC {
         if (elements.isEmpty()) {
             return;
         }
+        minSetSize = Math.min(minSetSize, elements.size());
+        maxSetSize = Math.max(maxSetSize, elements.size());
+        setCount++;
         elements.forEach((IntProcedure) node -> connectedComponents[node] = root);
     }
 

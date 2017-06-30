@@ -19,6 +19,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author mknblch
@@ -85,11 +86,31 @@ public class MultistepSCCProcTest {
     }
 
     @Test
-    public void test() throws Exception {
-        String cypher = "CALL algo.scc.multistep.stream('Node', 'TYPE', {concurrency:4, cutoff:0}) YIELD nodeId, clusterId RETURN nodeId, clusterId";
+    public void testWrite() throws Exception {
+        String cypher = "CALL algo.scc.multistep('Node', 'TYPE', {concurrency:4, cutoff:0}) " +
+                "YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize " +
+                "RETURN loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize";
+
+        api.execute(cypher).accept(row -> {
+
+            assertTrue(row.getNumber("loadMillis").longValue() > 0L);
+            assertTrue(row.getNumber("computeMillis").longValue() > 0L);
+            assertTrue(row.getNumber("writeMillis").longValue() > 0L);
+
+            assertEquals(3, row.getNumber("setCount").intValue());
+            assertEquals(3, row.getNumber("minSetSize").intValue());
+            assertEquals(3, row.getNumber("maxSetSize").intValue());
+
+            return true;
+        });
+    }
+
+    @Test
+    public void testStream() throws Exception {
+        String cypher = "CALL algo.scc.multistep.stream('Node', 'TYPE', {write:true, concurrency:4, cutoff:0}) YIELD nodeId, cluster RETURN nodeId, cluster";
         final LongLongScatterMap testMap = new LongLongScatterMap();
         api.execute(cypher).accept(row -> {
-            testMap.addTo(row.getNumber("clusterId").longValue(), 1);
+            testMap.addTo(row.getNumber("cluster").longValue(), 1);
             return true;
         });
         // we expect 3 clusters

@@ -1,13 +1,10 @@
 package org.neo4j.graphalgo.impl;
 
 import algo.Pools;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -18,10 +15,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -114,34 +109,41 @@ public class MultistepSCCTest {
     @Test
     public void testSequential() throws Exception {
 
-        final int[] connectedComponents =
-                new MultistepSCC(graph, Pools.DEFAULT, 1, 0)
-                        .compute()
-                        .getConnectedComponents();
+        final MultistepSCC multistep = new MultistepSCC(graph, Pools.DEFAULT, 1, 0)
+                .compute();
 
-        assertCC(connectedComponents);
+        assertCC(multistep.getConnectedComponents());
+
+        assertEquals(3, multistep.getMaxSetSize());
+        assertEquals(3, multistep.getMinSetSize());
+        assertEquals(3, multistep.getSetCount());
+
     }
 
     @Test
     public void testParallel() throws Exception {
 
-        final int[] connectedComponents =
-                new MultistepSCC(graph, Pools.DEFAULT, 4, 0)
-                        .compute()
-                        .getConnectedComponents();
+        final MultistepSCC multistep = new MultistepSCC(graph, Pools.DEFAULT, 4, 0)
+                .compute();
 
-        assertCC(connectedComponents);
+        assertCC(multistep.getConnectedComponents());
+
+        assertEquals(3, multistep.getMaxSetSize());
+        assertEquals(3, multistep.getMinSetSize());
+        assertEquals(3, multistep.getSetCount());
     }
 
     @Test
     public void testHighCut() throws Exception {
 
-        final int[] connectedComponents =
-                new MultistepSCC(graph, Pools.DEFAULT, 4, 100_000)
-                        .compute()
-                        .getConnectedComponents();
+        final MultistepSCC multistep = new MultistepSCC(graph, Pools.DEFAULT, 4, 100_000)
+                .compute();
 
-        assertCC(connectedComponents);
+        assertCC(multistep.getConnectedComponents());
+
+        assertEquals(3, multistep.getMaxSetSize());
+        assertEquals(3, multistep.getMinSetSize());
+        assertEquals(3, multistep.getSetCount());
     }
 
     private void assertCC(int[] connectedComponents) {

@@ -24,7 +24,11 @@ public class SCCTunedTarjan {
     private final int nodeCount;
 
     private int dfs = 0;
-    private int scc = 0;
+    private int setCount = 0;
+    private int minSetSize = Integer.MAX_VALUE;
+    private int maxSetSize = 0;
+
+
 
     public SCCTunedTarjan(Graph graph) {
         this.graph = graph;
@@ -35,9 +39,13 @@ public class SCCTunedTarjan {
     }
 
     public SCCTunedTarjan compute() {
-        dfs = -(nodeCount + 1);
-        scc = 0;
         Arrays.fill(connectedComponents, -1);
+        setCount = 0;
+        dfs = 0;
+        setCount = 0;
+        maxSetSize = 0;
+        minSetSize = Integer.MAX_VALUE;
+        dfs = -(nodeCount + 1);
         graph.forEachNode(node -> {
             if (connectedComponents[node] == -1) {
                 lowPointDFS(node);
@@ -57,13 +65,23 @@ public class SCCTunedTarjan {
                 .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
     }
 
-    private int lowPointDFS(int nodeId) {
+    public int getSetCount() {
+        return setCount;
+    }
 
+    public int getMinSetSize() {
+        return minSetSize;
+    }
+
+    public int getMaxSetSize() {
+        return maxSetSize;
+    }
+
+    private int lowPointDFS(int nodeId) {
         final int dfsNum = dfs++;
         connectedComponents[nodeId] = dfsNum;
         int lowPoint = dfsNum;
         open.push(nodeId);
-
         final int sz = edgeStack.size();
         graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
             edgeStack.push(targetNodeId);
@@ -81,12 +99,16 @@ public class SCCTunedTarjan {
             }
         }
         if (dfsNum == lowPoint) {
-            int u;
+            int elementCount = 0;
+            int element;
             do {
-                u = open.pop();
-                connectedComponents[u] = scc;
-            } while (u != nodeId);
-            scc++;
+                element = open.pop();
+                connectedComponents[element] = setCount;
+                elementCount++;
+            } while (element != nodeId);
+            this.minSetSize = Math.min(this.minSetSize, elementCount);
+            this.maxSetSize = Math.max(this.maxSetSize, elementCount);
+            setCount++;
         }
         return lowPoint;
     }
