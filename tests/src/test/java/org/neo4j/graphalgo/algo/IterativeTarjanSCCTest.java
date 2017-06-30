@@ -108,11 +108,13 @@ public class IterativeTarjanSCCTest {
     @Test
     public void testDirect() throws Exception {
 
-        final int[] connectedComponents = new SCCIterativeTarjan(graph)
-                .compute()
-                .getConnectedComponents();
+        final SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
+                .compute();
 
-        assertCC(connectedComponents);
+        assertCC(tarjan.getConnectedComponents());
+        assertEquals(3, tarjan.getMaxSetSize());
+        assertEquals(3, tarjan.getMinSetSize());
+        assertEquals(3, tarjan.getSetCount());
     }
 
     @Test

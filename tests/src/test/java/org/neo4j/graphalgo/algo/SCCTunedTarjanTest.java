@@ -109,11 +109,15 @@ public class SCCTunedTarjanTest {
     @Test
     public void testDirect() throws Exception {
 
-        final int[] connectedComponents = new SCCTunedTarjan(graph)
-                .compute()
-                .getConnectedComponents();
+        final SCCTunedTarjan tarjan = new SCCTunedTarjan(graph)
+                .compute();
 
-        assertCC(connectedComponents);
+        assertCC(tarjan
+                .getConnectedComponents());
+
+        assertEquals(3, tarjan.getMaxSetSize());
+        assertEquals(3, tarjan.getMinSetSize());
+        assertEquals(3, tarjan.getSetCount());
     }
 
     @Test
