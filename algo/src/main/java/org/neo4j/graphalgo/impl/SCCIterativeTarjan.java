@@ -38,6 +38,10 @@ public class SCCIterativeTarjan {
     private final IntStack boundaries;
     private final IntStack todo;
 
+    private int setCount;
+    private int minSetSize;
+    private int maxSetSize;
+
     public SCCIterativeTarjan(Graph graph) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
@@ -50,6 +54,9 @@ public class SCCIterativeTarjan {
     }
 
     public SCCIterativeTarjan compute() {
+        setCount = 0;
+        minSetSize = Integer.MAX_VALUE;
+        maxSetSize = 0;
         Arrays.fill(index, -1);
         Arrays.fill(connectedComponents, -1);
         todo.clear();
@@ -67,6 +74,18 @@ public class SCCIterativeTarjan {
         return IntStream.range(0, nodeCount)
                 .filter(i -> connectedComponents[i] != -1)
                 .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
+    }
+
+    public int getSetCount() {
+        return setCount;
+    }
+
+    public int getMinSetSize() {
+        return minSetSize;
+    }
+
+    public int getMaxSetSize() {
+        return maxSetSize;
     }
 
     private boolean compute(int nodeId) {
@@ -88,11 +107,11 @@ public class SCCIterativeTarjan {
         return true;
     }
 
-    private void visitEdge(int node) {
-        if (index[node] == -1) {
-            push(Action.VISIT, node);
-        } else if (!visited.contains(node)){
-            while (index[node] < boundaries.peek()) {
+    private void visitEdge(int nodeId) {
+        if (index[nodeId] == -1) {
+            push(Action.VISIT, nodeId);
+        } else if (!visited.contains(nodeId)){
+            while (index[nodeId] < boundaries.peek()) {
                 boundaries.pop();
             }
         }
@@ -101,16 +120,19 @@ public class SCCIterativeTarjan {
     private void postVisit(int nodeId) {
         if (boundaries.peek() == index[nodeId]) {
             boundaries.pop();
-            int w, k = -1;
+            int elementCount = 0;
+            int element;
             do {
-                w = stack.pop();
-                if (k == -1) {
-                    k = w;
-                }
-                connectedComponents[w] = k;
-                visited.put(w);
-            } while (w != nodeId);
+                element = stack.pop();
+                connectedComponents[element] = nodeId;
+                visited.put(element);
+                elementCount++;
+            } while (element != nodeId);
+            minSetSize = Math.min(minSetSize, elementCount);
+            maxSetSize = Math.max(maxSetSize, elementCount);
+            setCount++;
         }
+
     }
 
     private void visit(int nodeId) {

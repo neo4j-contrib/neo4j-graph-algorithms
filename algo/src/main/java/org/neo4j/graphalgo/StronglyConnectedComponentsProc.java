@@ -152,7 +152,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.iterative
     @Procedure(value = "algo.scc.iterative", mode = Mode.WRITE)
     @Description("CALL algo.scc.iterative(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "loadMillis, computeMillis, writeMillis")
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccIterativeTarjan(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -172,7 +172,12 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph);
+
         builder.timeEval(tarjan::compute);
+
+        builder.withSetCount(tarjan.getSetCount())
+                .withMinSetSize(tarjan.getMinSetSize())
+                .withMaxSetSize(tarjan.getMaxSetSize());
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
@@ -193,7 +198,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.iterative.stream
     @Procedure(value = "algo.scc.iterative.stream", mode = Mode.WRITE)
     @Description("CALL algo.scc.iterative.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "loadMillis, computeMillis, writeMillis")
+            "nodeId, cluster")
     public Stream<SCCStreamResult> sccIterativeTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -261,7 +266,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.multistep.stream
     @Procedure(value = "algo.scc.multistep.stream")
     @Description("CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
-            "nodeId, clusterId")
+            "nodeId, cluster")
     public Stream<SCCStreamResult> multistepStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
