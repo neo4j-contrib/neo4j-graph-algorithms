@@ -52,9 +52,8 @@ public final class ParallelBetweennessCentralityExporter extends ParallelExporte
 
         @Override
         public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-            int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
             ArrayList<PrimitiveIntIterable> result = new ArrayList<>();
-            for (int i = 0; i < numberOfBatches; i += batchSize) {
+            for (int i = 0; i < nodeCount; i += batchSize) {
                 int end = i + batchSize > nodeCount ? nodeCount : i + batchSize;
                 result.add(new BatchedNodeIterator(i, end));
             }

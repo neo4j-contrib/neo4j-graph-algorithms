@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.impl.ShortestPathsExporter;
@@ -117,9 +116,8 @@ public class ShortestPathsProc {
 
         @Override
         public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-            int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
             ArrayList<PrimitiveIntIterable> result = new ArrayList<>();
-            for (int i = 0; i < numberOfBatches; i += batchSize) {
+            for (int i = 0; i < nodeCount; i += batchSize) {
                 int end = i + batchSize > nodeCount ? nodeCount : i + batchSize;
                 result.add(new ShortestPathsProc.BatchedNodeIterator(i, end));
             }
