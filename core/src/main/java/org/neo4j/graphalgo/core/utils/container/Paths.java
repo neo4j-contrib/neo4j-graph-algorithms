@@ -49,4 +49,11 @@ public class Paths {
     public void clear() {
         paths.forEach((Consumer<IntObjectCursor<Path>>) p -> p.value.clear());
     }
+
+    public void clear(int pathId) {
+        final Path path = paths.get(pathId);
+        if (null != path) {
+            path.clear();
+        }
+    }
 }
