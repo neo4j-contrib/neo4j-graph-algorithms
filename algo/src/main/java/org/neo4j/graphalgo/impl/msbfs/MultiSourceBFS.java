@@ -186,6 +186,7 @@ public final class MultiSourceBFS implements Runnable {
 
             if (nodeId == -2) {
                 // nothing more to visit, stop bfs
+                nextAndSeen.reset();
                 return;
             }
 
