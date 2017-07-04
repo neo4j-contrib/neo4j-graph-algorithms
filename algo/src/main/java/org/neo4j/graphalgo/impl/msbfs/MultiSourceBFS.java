@@ -1,7 +1,8 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
@@ -59,30 +60,35 @@ public final class MultiSourceBFS implements Runnable {
     private static final int OMEGA = 32;
     private static final long MEMORY_PER_NODE = Long.BYTES + Integer.BYTES;
 
-    private final Graph graph;
+    private final IdMapping nodeIds;
+    private final RelationshipIterator relationships;
     private final Direction direction;
     private final BfsConsumer perNodeAction;
     private final int[] startNodes;
     private int nodeOffset, sourceNodeCount;
 
     public MultiSourceBFS(
-            Graph graph,
+            IdMapping nodeIds,
+            RelationshipIterator relationships,
             Direction direction,
             BfsConsumer perNodeAction,
             int... startNodes) {
-        this.graph = graph;
+        this.nodeIds = nodeIds;
+        this.relationships = relationships;
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = (startNodes != null && startNodes.length > 0) ? startNodes : null;
     }
 
     private MultiSourceBFS(
-            Graph graph,
+            IdMapping nodeIds,
+            RelationshipIterator relationships,
             Direction direction,
             BfsConsumer perNodeAction,
             int nodeOffset,
             int sourceNodeCount) {
-        this.graph = graph;
+        this.nodeIds = nodeIds;
+        this.relationships = relationships;
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = null;
@@ -110,7 +116,7 @@ public final class MultiSourceBFS implements Runnable {
      */
     public long estimateMemory() {
         int sourceLength = sourceLength();
-        long memoryUsage = estimateMemoryUsage(graph.nodeCount(), sourceLength);
+        long memoryUsage = estimateMemoryUsage(nodeIds.nodeCount(), sourceLength);
 
         MemoryUsage heap = ManagementFactory
                 .getMemoryMXBean()
@@ -128,12 +134,12 @@ public final class MultiSourceBFS implements Runnable {
             runParallel(executor, threads);
         } else {
             if (sourceLength > OMEGA) {
-                // TODO support running multiple chunks sequential
+                // TODO support running multiple chunks sequentially
                 throw new IllegalArgumentException("In order to run MS-BFS on " + sourceLength + " sources, you have to provide a valid ExecutorService");
             }
             if (startNodes == null) {
                 nodeOffset = 0;
-                sourceNodeCount = graph.nodeCount();
+                sourceNodeCount = nodeIds.nodeCount();
             }
             run();
         }
@@ -151,7 +157,7 @@ public final class MultiSourceBFS implements Runnable {
                 ? new SourceNodes(startNodes)
                 : new SourceNodes(nodeOffset, sourceNodeCount);
 
-        int nodeCount = graph.nodeCount();
+        int nodeCount = nodeIds.nodeCount();
         MultiBitSet32 visit = new MultiBitSet32(nodeCount);
         BiMultiBitSet32 nextAndSeen = new BiMultiBitSet32(nodeCount);
 
@@ -174,7 +180,7 @@ public final class MultiSourceBFS implements Runnable {
             while ((nodeId = visit.nextSetNodeId(nodeId + 1)) >= 0) {
                 int nodeVisit = visit.get(nodeId);
                 assert nodeVisit != 0;
-                graph.forEachRelationship(
+                relationships.forEachRelationship(
                         nodeId,
                         direction,
                         (src, tgt, rel) -> {
@@ -208,7 +214,7 @@ public final class MultiSourceBFS implements Runnable {
             return startNodes.length;
         }
         if (sourceNodeCount == 0) {
-            return graph.nodeCount();
+            return nodeIds.nodeCount();
         }
         return sourceNodeCount;
     }
@@ -216,13 +222,14 @@ public final class MultiSourceBFS implements Runnable {
     private void runParallel(ExecutorService executor, int threads) {
         MultiSourceBFS[] bfss;
         if (startNodes == null) {
-            int sourceLength = graph.nodeCount();
+            int sourceLength = nodeIds.nodeCount();
             int start = 0;
             bfss = new MultiSourceBFS[threads];
             for (int i = 0; i < threads; i++) {
                 int len = Math.min(OMEGA, sourceLength - start);
                 bfss[i] = new MultiSourceBFS(
-                        graph,
+                        nodeIds,
+                        relationships,
                         direction,
                         perNodeAction,
                         start,
@@ -238,7 +245,8 @@ public final class MultiSourceBFS implements Runnable {
             for (int i = 0; i < threads; i++) {
                 int to = Math.min(sourceLength, start + OMEGA);
                 bfss[i] = new MultiSourceBFS(
-                        graph,
+                        nodeIds,
+                        relationships,
                         direction,
                         perNodeAction,
                         Arrays.copyOfRange(startNodes, start, to)

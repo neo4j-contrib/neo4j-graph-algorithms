@@ -58,6 +58,7 @@ public final class MultiSourceBFSTest {
             BfsConsumer mock = mock(BfsConsumer.class);
             MultiSourceBFS msbfs = new MultiSourceBFS(
                     graph,
+                    graph,
                     OUTGOING,
                     (i, d, s) -> mock.accept(i + 1, d, toList(s, x -> x + 1)),
                     0, 1
@@ -80,6 +81,7 @@ public final class MultiSourceBFSTest {
         withGraph(PAPER_CYPHER, graph -> {
             BfsConsumer mock = mock(BfsConsumer.class);
             MultiSourceBFS msbfs = new MultiSourceBFS(
+                    graph,
                     graph,
                     OUTGOING,
                     (i, d, s) -> mock.accept(i + 1, d, toList(s, x -> x + 1))
@@ -122,6 +124,7 @@ public final class MultiSourceBFSTest {
                     Set<Pair<Integer, Integer>> seen = new HashSet<>();
                     MultiSourceBFS msbfs = new MultiSourceBFS(
                             graph,
+                            graph,
                             OUTGOING,
                             (i, d, s) -> {
                                 String message = String.format(
@@ -145,6 +148,7 @@ public final class MultiSourceBFSTest {
                 gb -> gb.newCompleteGraphBuilder().createCompleteGraph(100),
                 graph -> {
                     MultiSourceBFS msbfs = new MultiSourceBFS(
+                            graph,
                             graph,
                             OUTGOING,
                             (i, d, s) -> {
