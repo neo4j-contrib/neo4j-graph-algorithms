@@ -153,9 +153,8 @@ public final class MultiSourceBFS implements Runnable {
                 ? new SourceNodes(startNodes)
                 : new SourceNodes(nodeOffset, sourceNodeCount);
 
-        int nodeCount = nodeIds.nodeCount();
-        MultiBitSet32 visit = visitSet(nodeCount);
-        BiMultiBitSet32 nextAndSeen = nextAndSeenSet(nodeCount);
+        MultiBitSet32 visit = visits.get();
+        BiMultiBitSet32 nextAndSeen = nextAndSeens.get();
 
         if (startNodes != null) {
             for (int i = 0; i < startNodes.length; i++) {
@@ -213,28 +212,6 @@ public final class MultiSourceBFS implements Runnable {
             return nodeIds.nodeCount();
         }
         return sourceNodeCount;
-    }
-
-    private MultiBitSet32 visitSet(int nodeCount) {
-        MultiBitSet32 visit = visits.get();
-        if (visit == null) {
-            visit = new MultiBitSet32(nodeCount);
-            visits.set(visit);
-        } else {
-            visit.reset();
-        }
-        return visit;
-    }
-
-    private BiMultiBitSet32 nextAndSeenSet(int nodeCount) {
-        BiMultiBitSet32 nextAndSeen = nextAndSeens.get();
-        if (nextAndSeen == null) {
-            nextAndSeen = new BiMultiBitSet32(nodeCount);
-            nextAndSeens.set(nextAndSeen);
-        } else {
-            nextAndSeen.reset();
-        }
-        return nextAndSeen;
     }
 
     private void runParallel(ExecutorService executor, int threads) {
