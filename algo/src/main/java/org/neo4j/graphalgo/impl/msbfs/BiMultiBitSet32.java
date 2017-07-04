@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
+import java.util.Arrays;
+
 /**
  * Two 32-bit wide BitSets per node.
  * This class represents the fixed-size bit field as described in [1].
@@ -126,5 +128,12 @@ final class BiMultiBitSet32 {
             target.set(i, bit);
             bits[i] &= AUX_MASK;
         }
+    }
+
+    /**
+     * Resets all bits to 0.
+     */
+    void reset() {
+        Arrays.fill(bits, 0L);
     }
 }

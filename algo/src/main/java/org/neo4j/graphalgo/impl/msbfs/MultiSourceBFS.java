@@ -6,8 +6,6 @@ import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryUsage;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
@@ -58,7 +56,9 @@ public final class MultiSourceBFS implements Runnable {
 
     // how many sources can be traversed simultaneously
     private static final int OMEGA = 32;
-    private static final long MEMORY_PER_NODE = Long.BYTES + Integer.BYTES;
+
+    private final ThreadLocal<MultiBitSet32> visits;
+    private final ThreadLocal<BiMultiBitSet32> nextAndSeens;
 
     private final IdMapping nodeIds;
     private final RelationshipIterator relationships;
@@ -78,6 +78,26 @@ public final class MultiSourceBFS implements Runnable {
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = (startNodes != null && startNodes.length > 0) ? startNodes : null;
+        this.visits = new VisitLocal(nodeIds.nodeCount());
+        this.nextAndSeens = new NextAndSeenLocal(nodeIds.nodeCount());
+    }
+
+    private MultiSourceBFS(
+            IdMapping nodeIds,
+            RelationshipIterator relationships,
+            Direction direction,
+            BfsConsumer perNodeAction,
+            ThreadLocal<MultiBitSet32> visits,
+            ThreadLocal<BiMultiBitSet32> nextAndSeens,
+            int... startNodes) {
+        assert startNodes != null && startNodes.length > 0;
+        this.nodeIds = nodeIds;
+        this.relationships = relationships;
+        this.direction = direction;
+        this.perNodeAction = perNodeAction;
+        this.startNodes = startNodes;
+        this.visits = visits;
+        this.nextAndSeens = nextAndSeens;
     }
 
     private MultiSourceBFS(
@@ -86,7 +106,9 @@ public final class MultiSourceBFS implements Runnable {
             Direction direction,
             BfsConsumer perNodeAction,
             int nodeOffset,
-            int sourceNodeCount) {
+            int sourceNodeCount,
+            ThreadLocal<MultiBitSet32> visits,
+            ThreadLocal<BiMultiBitSet32> nextAndSeens) {
         this.nodeIds = nodeIds;
         this.relationships = relationships;
         this.direction = direction;
@@ -94,34 +116,8 @@ public final class MultiSourceBFS implements Runnable {
         this.startNodes = null;
         this.nodeOffset = nodeOffset;
         this.sourceNodeCount = sourceNodeCount;
-    }
-
-    public static long estimateMemoryUsage(
-            int nodeCount,
-            int sourceCount) {
-        int threads = ParallelUtil.threadSize(OMEGA, sourceCount);
-        long perThreadSize = MEMORY_PER_NODE * nodeCount;
-        // object headers and alignment for two bit sets and their arrays
-        perThreadSize += 64;
-        return perThreadSize * threads;
-    }
-
-    /**
-     * Returns how much memory would be left on the heap after running the MS-BFS.
-     * This is estimated as it doesn't account for various object instances or GC
-     * that may happen.
-     * If the value is positive, there is enough memory available to run the algorithm.
-     * If the value is negative, there isn't enough memory and {@code abs(returnValue)}
-     * more bytes are required.
-     */
-    public long estimateMemory() {
-        int sourceLength = sourceLength();
-        long memoryUsage = estimateMemoryUsage(nodeIds.nodeCount(), sourceLength);
-
-        MemoryUsage heap = ManagementFactory
-                .getMemoryMXBean()
-                .getHeapMemoryUsage();
-        return heap.getMax() - heap.getUsed() - memoryUsage;
+        this.visits = visits;
+        this.nextAndSeens = nextAndSeens;
     }
 
     /**
@@ -158,8 +154,8 @@ public final class MultiSourceBFS implements Runnable {
                 : new SourceNodes(nodeOffset, sourceNodeCount);
 
         int nodeCount = nodeIds.nodeCount();
-        MultiBitSet32 visit = new MultiBitSet32(nodeCount);
-        BiMultiBitSet32 nextAndSeen = new BiMultiBitSet32(nodeCount);
+        MultiBitSet32 visit = visitSet(nodeCount);
+        BiMultiBitSet32 nextAndSeen = nextAndSeenSet(nodeCount);
 
         if (startNodes != null) {
             for (int i = 0; i < startNodes.length; i++) {
@@ -219,6 +215,28 @@ public final class MultiSourceBFS implements Runnable {
         return sourceNodeCount;
     }
 
+    private MultiBitSet32 visitSet(int nodeCount) {
+        MultiBitSet32 visit = visits.get();
+        if (visit == null) {
+            visit = new MultiBitSet32(nodeCount);
+            visits.set(visit);
+        } else {
+            visit.reset();
+        }
+        return visit;
+    }
+
+    private BiMultiBitSet32 nextAndSeenSet(int nodeCount) {
+        BiMultiBitSet32 nextAndSeen = nextAndSeens.get();
+        if (nextAndSeen == null) {
+            nextAndSeen = new BiMultiBitSet32(nodeCount);
+            nextAndSeens.set(nextAndSeen);
+        } else {
+            nextAndSeen.reset();
+        }
+        return nextAndSeen;
+    }
+
     private void runParallel(ExecutorService executor, int threads) {
         MultiSourceBFS[] bfss;
         if (startNodes == null) {
@@ -233,7 +251,9 @@ public final class MultiSourceBFS implements Runnable {
                         direction,
                         perNodeAction,
                         start,
-                        len
+                        len,
+                        visits,
+                        nextAndSeens
                 );
                 start += len;
             }
@@ -249,6 +269,8 @@ public final class MultiSourceBFS implements Runnable {
                         relationships,
                         direction,
                         perNodeAction,
+                        visits,
+                        nextAndSeens,
                         Arrays.copyOfRange(startNodes, start, to)
                 );
             }
@@ -304,6 +326,32 @@ public final class MultiSourceBFS implements Runnable {
             //noinspection StatementWithEmptyBody
             while (++pos < maxPos && (sourceMask & (1 << pos)) == 0)
                 ;
+        }
+    }
+
+    private static final class VisitLocal extends ThreadLocal<MultiBitSet32> {
+        private final int nodeCount;
+
+        private VisitLocal(final int nodeCount) {
+            this.nodeCount = nodeCount;
+        }
+
+        @Override
+        protected MultiBitSet32 initialValue() {
+            return new MultiBitSet32(nodeCount);
+        }
+    }
+
+    private static final class NextAndSeenLocal extends ThreadLocal<BiMultiBitSet32> {
+        private final int nodeCount;
+
+        private NextAndSeenLocal(final int nodeCount) {
+            this.nodeCount = nodeCount;
+        }
+
+        @Override
+        protected BiMultiBitSet32 initialValue() {
+            return new BiMultiBitSet32(nodeCount);
         }
     }
 }
