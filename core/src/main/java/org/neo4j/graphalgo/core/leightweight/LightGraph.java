@@ -1,9 +1,14 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipCursor;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipCursor;
+import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
@@ -13,26 +18,28 @@ import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
- *
  * @author phorn@avantgarde-labs.de
  */
 public class LightGraph implements Graph {
 
     private final IdMap idMapping;
     private final WeightMapping weightMapping;
-    private final IntArray adjacency;
+    private final IntArray inAdjacency;
+    private final IntArray outAdjacency;
     private final long[] inOffsets;
     private final long[] outOffsets;
 
     LightGraph(
             final IdMap idMapping,
             final WeightMapping weightMapping,
-            final IntArray adjacency,
+            final IntArray inAdjacency,
+            final IntArray outAdjacency,
             final long[] inOffsets,
             final long[] outOffsets) {
         this.idMapping = idMapping;
         this.weightMapping = weightMapping;
-        this.adjacency = adjacency;
+        this.inAdjacency = inAdjacency;
+        this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
     }
@@ -58,7 +65,10 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachRelationship(int vertexId, Direction direction, RelationshipConsumer consumer) {
+    public void forEachRelationship(
+            int vertexId,
+            Direction direction,
+            RelationshipConsumer consumer) {
         switch (direction) {
             case INCOMING:
                 forEachIncoming(vertexId, consumer);
@@ -79,7 +89,10 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public void forEachRelationship(int vertexId, Direction direction, WeightedRelationshipConsumer consumer) {
+    public void forEachRelationship(
+            int vertexId,
+            Direction direction,
+            WeightedRelationshipConsumer consumer) {
         switch (direction) {
             case INCOMING:
                 forEachIncoming(vertexId, consumer);
@@ -100,40 +113,45 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(int vertexId, Direction direction) {
+    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
+            int vertexId,
+            Direction direction) {
 
         switch (direction) {
             case INCOMING: {
                 final long offset = inOffsets[vertexId];
-                final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, adjacency, direction);
+                final int length = (int) (inOffsets[vertexId + 1] - offset);
+                return new WeightedRelationIteratorImpl(vertexId, offset, length, weightMapping, inAdjacency, direction);
             }
 
             case OUTGOING: {
                 final long offset = outOffsets[vertexId];
-                final int length = adjacency.get(offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset + 1, length, weightMapping, adjacency, direction);
+                final int length = (int) (outOffsets[vertexId + 1] - offset);
+                return new WeightedRelationIteratorImpl(vertexId, offset, length, weightMapping, outAdjacency, direction);
             }
             default: {
-                throw new IllegalArgumentException("Direction.BOTH not yet implemented");
+                throw new IllegalArgumentException(
+                        "Direction.BOTH not yet implemented");
             }
         }
     }
 
     @Override
-    public Iterator<RelationshipCursor> relationshipIterator(int vertexId, Direction direction) {
+    public Iterator<RelationshipCursor> relationshipIterator(
+            int vertexId,
+            Direction direction) {
 
         switch (direction) {
             case INCOMING: {
                 final long offset = inOffsets[vertexId];
-                final int length = adjacency.get(offset);
-                return new RelationIteratorImpl(vertexId, offset + 1, length, adjacency, direction);
+                final int length = (int) (inOffsets[vertexId + 1] - offset);
+                return new RelationIteratorImpl(vertexId, offset, length, inAdjacency, direction);
             }
 
             case OUTGOING: {
                 final long offset = outOffsets[vertexId];
-                final int length = adjacency.get(offset);
-                return new RelationIteratorImpl(vertexId, offset + 1, length, adjacency, direction);
+                final int length = (int) (outOffsets[vertexId + 1] - offset);
+                return new RelationIteratorImpl(vertexId, offset, length, outAdjacency, direction);
             }
 
             default: {
@@ -149,14 +167,13 @@ public class LightGraph implements Graph {
             final Direction direction) {
         switch (direction) {
             case INCOMING:
-                return adjacency.get(inOffsets[node]);
+                return (int) (inOffsets[node + 1] - inOffsets[node]);
 
             case OUTGOING:
-                return adjacency.get(outOffsets[node]);
+                return (int) (outOffsets[node + 1] - outOffsets[node]);
 
             case BOTH:
-                return adjacency.get(inOffsets[node])
-                        + adjacency.get(outOffsets[node]);
+                return (int) (inOffsets[node + 1] - inOffsets[node] + outOffsets[node + 1] - outOffsets[node]);
 
             default:
                 throw new IllegalArgumentException(direction + "");
@@ -177,35 +194,39 @@ public class LightGraph implements Graph {
     public void forEachIncoming(
             final int node,
             final RelationshipConsumer consumer) {
-        consumeNodes(node, cursor(node, inOffsets), RawValues.INCOMING, consumer);
+        IntArray.Cursor cursor = cursor(node, inOffsets, inAdjacency);
+        consumeNodes(node, cursor, RawValues.INCOMING, consumer);
     }
 
     public void forEachOutgoing(
             final int node,
             final RelationshipConsumer consumer) {
-        consumeNodes(node, cursor(node, outOffsets), RawValues.OUTGOING, consumer);
+        IntArray.Cursor cursor = cursor(node, outOffsets, outAdjacency);
+        consumeNodes(node, cursor, RawValues.OUTGOING, consumer);
     }
 
-    public void forEachIncoming(
+    private void forEachIncoming(
             final int node,
             final WeightedRelationshipConsumer consumer) {
-        consumeNodes(node, cursor(node, inOffsets), RawValues.INCOMING, consumer);
+        IntArray.Cursor cursor = cursor(node, inOffsets, inAdjacency);
+        consumeNodes(node, cursor, RawValues.INCOMING, consumer);
     }
 
-    public void forEachOutgoing(
+    private void forEachOutgoing(
             final int node,
             final WeightedRelationshipConsumer consumer) {
-        consumeNodes(node, cursor(node, outOffsets), RawValues.OUTGOING, consumer);
+        IntArray.Cursor cursor = cursor(node, outOffsets, outAdjacency);
+        consumeNodes(node, cursor, RawValues.OUTGOING, consumer);
     }
 
-    private IntArray.Cursor cursor(int node, long[] offsets) {
-        final long offset = offsets[node];
-        final int length = adjacency.get(offset);
-        return adjacency.cursor(offset + 1, length);
+     private IntArray.Cursor cursor(int node, long[] offsets, IntArray array) {
+         final long offset = offsets[node];
+         final long length = offsets[node + 1] - offset;
+         return array.cursor(offset, length);
     }
 
     private void consumeNodes(
-            int node,
+            int startNode,
             IntArray.Cursor cursor,
             IdCombiner relId,
             WeightedRelationshipConsumer consumer) {
@@ -214,24 +235,33 @@ public class LightGraph implements Graph {
         while (cursor.next()) {
             final int[] array = cursor.array;
             int offset = cursor.offset;
-            final int limit = cursor.length + offset;
+            final int limit = cursor.limit;
             while (offset < limit) {
-                consumer.accept(node, array[offset], relId.apply(node, array[offset]), weightMap.get((long) offset++));
+                int targetNode = array[offset++];
+                long relationId = relId.apply(startNode, targetNode);
+                consumer.accept(
+                        startNode,
+                        targetNode,
+                        relationId,
+                        weightMap.get(relationId)
+                );
             }
         }
     }
 
     private void consumeNodes(
-            int node,
+            int startNode,
             IntArray.Cursor cursor,
             IdCombiner relId,
             RelationshipConsumer consumer) {
         while (cursor.next()) {
             final int[] array = cursor.array;
             int offset = cursor.offset;
-            final int limit = cursor.length + offset;
+            final int limit = cursor.limit;
             while (offset < limit) {
-                consumer.accept(node, array[offset], relId.apply(node, array[offset++]));
+                int targetNode = array[offset++];
+                long relationId = relId.apply(startNode, targetNode);
+                consumer.accept(startNode, targetNode, relationId);
             }
         }
     }

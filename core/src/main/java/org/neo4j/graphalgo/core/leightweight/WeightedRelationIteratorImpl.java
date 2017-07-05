@@ -74,7 +74,7 @@ class WeightedRelationIteratorImpl implements Iterator<WeightedRelationshipCurso
         if (adjCursor.next()) {
             array = adjCursor.array;
             pos = adjCursor.offset;
-            limit = adjCursor.offset + adjCursor.length;
+            limit = adjCursor.limit;
             return true;
         }
         pos = limit = 0;

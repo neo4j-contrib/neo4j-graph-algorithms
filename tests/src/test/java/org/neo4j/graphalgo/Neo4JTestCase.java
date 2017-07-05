@@ -34,8 +34,6 @@ public abstract class Neo4JTestCase {
             db.shutdown();
             db = null;
         }
-        // calling shutdown takes some 10 seconds or so :(
-//         db.shutdown();
     }
 
     public static int newNode() {

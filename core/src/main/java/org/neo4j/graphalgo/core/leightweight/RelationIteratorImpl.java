@@ -59,7 +59,7 @@ class RelationIteratorImpl implements Iterator<RelationshipCursor> {
         if (adjCursor.next()) {
             array = adjCursor.array;
             pos = adjCursor.offset;
-            limit = adjCursor.offset + adjCursor.length;
+            limit = adjCursor.limit;
             return true;
         }
         pos = limit = 0;
