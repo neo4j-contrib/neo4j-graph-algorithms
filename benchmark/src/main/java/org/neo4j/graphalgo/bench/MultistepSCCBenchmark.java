@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author mknblch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = {"-Xms4G", "-Xss4G"})
+@Fork(value = 1, jvmArgs = {"-Xms4G", "-Xmx4G"})
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
 @State(Scope.Thread)
