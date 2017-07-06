@@ -42,4 +42,9 @@ public class AtomicDoubleArray {
         return data.length();
     }
 
+    public void clear() { // TODO parallel ?!
+        for (int i = data.length() - 1; i >= 0; i--) {
+            data.set(i, 0);
+        }
+    }
 }

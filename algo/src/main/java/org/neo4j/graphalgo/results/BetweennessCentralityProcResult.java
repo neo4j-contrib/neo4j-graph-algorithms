@@ -5,13 +5,13 @@ package org.neo4j.graphalgo.results;
  */
 public class BetweennessCentralityProcResult {
 
-    public final Long loadMillis;
-    public final Long computeMillis;
-    public final Long writeMillis;
-    public final Long nodes;
-    public final Double minCentrality;
-    public final Double maxCentrality;
-    public final Double sumCentrality;
+    public final long loadMillis;
+    public final long computeMillis;
+    public final long writeMillis;
+    public final long nodes;
+    public final double minCentrality;
+    public final double maxCentrality;
+    public final double sumCentrality;
 
     private BetweennessCentralityProcResult(Long loadMillis,
                                             Long computeMillis,

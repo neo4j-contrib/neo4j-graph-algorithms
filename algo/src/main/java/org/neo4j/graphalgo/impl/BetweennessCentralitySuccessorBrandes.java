@@ -12,11 +12,15 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Implements Betweenness Centrality for unweighted graphs
+ * Implements Betweenness Centrality for unweighted graphs.
+ *
+ * The algorithm is based on Brandes definition but with some changes
+ * regarding the dependency-accumulation step.
  *
  * taken from: http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
  *
@@ -34,15 +38,13 @@ public class BetweennessCentralitySuccessorBrandes {
     private final ExecutorService executorService;
 
     private final int[] sigma;
-    private final int[] d;
+    private final AtomicIntegerArray d;
     private final double[] delta;
     private final AtomicInteger count;
     private int phase;
-    private Paths successor;
+    private Paths successors;
     private MultiQueue phaseQueue;
     private final ArrayList<Future<?>> futures = new ArrayList<>();
-
-
 
     /**
      * constructs a parallel centrality solver
@@ -58,8 +60,8 @@ public class BetweennessCentralitySuccessorBrandes {
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
         sigma = new int[nodeCount];
         delta = new double[nodeCount];
-        d = new int[nodeCount];
-        successor = new Paths();
+        d = new AtomicIntegerArray(nodeCount);
+        successors = new Paths();
         phaseQueue = new MultiQueue(executorService, nodeCount);
 
         count = new AtomicInteger();
@@ -70,7 +72,7 @@ public class BetweennessCentralitySuccessorBrandes {
      * @return itself for method chaining
      */
     public BetweennessCentralitySuccessorBrandes compute() {
-
+        centrality.clear();
         graph.forEachNode(this::compute);
         return this;
     }
@@ -78,13 +80,19 @@ public class BetweennessCentralitySuccessorBrandes {
     private boolean compute(int startNodeId) {
 
         // initialization
-        successor.clear();
+        successors.clear();
+
         phaseQueue.clear();
         phaseQueue.addOrCreate(0, startNodeId);
+
+        for (int i = nodeCount - 1; i >= 0; i--) {
+            d.set(i, -1);
+        }
+        d.set(startNodeId, 0);
+
         Arrays.fill(sigma, 0);
-        Arrays.fill(d, -1);
         sigma[startNodeId] = 1;
-        d[startNodeId] = 0;
+
         phase = 0;
         count.set(1);
 
@@ -93,15 +101,16 @@ public class BetweennessCentralitySuccessorBrandes {
             futures.clear();
             phaseQueue.forEach(futures, phase, v -> { // in parallel
                 graph.forEachRelationship(v, Direction.OUTGOING, (sourceNodeId, w, relationId) -> { // in parallel
-
-                    if (d[w] < 0) {
+                    int dw = d.get(w);
+                    d.compareAndSet(w, -1, phase + 1);
+                    if (dw == -1) {
                         phaseQueue.addOrCreate(phase + 1, w);
                         count.incrementAndGet();
-                        d[w] = d[v] + 1;
+                        dw = phase + 1;
                     }
-                    if (d[w] == d[v] + 1) {
+                    if (dw == phase + 1) {
                         sigma[w] += sigma[v];
-                        successor.append(v, w);
+                        successors.append(v, w);
                     }
                     return true;
                 });
@@ -112,14 +121,13 @@ public class BetweennessCentralitySuccessorBrandes {
         }
 
         // back propagation + dependency accumulation
-
         Arrays.fill(delta, 0d);
         while (--phase > 0) {
             futures.clear();
             phaseQueue.forEach(futures, phase, w -> {
                 final double[] dsw = {0.0};
                 final double sw = sigma[w];
-                successor.forEach(w, v -> {
+                successors.forEach(w, v -> {
                     dsw[0] += (sw / (double) sigma[v]) * (1.0 + delta[v]);
                     return true;
                 });

@@ -13,9 +13,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
-import org.neo4j.graphalgo.impl.BetweennessCentralitySuccessorBrandes;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -104,11 +102,48 @@ public class ParallelBetweennessCentralityIntegrationTest {
     }
 
     @Test
-    public void testDirect() throws Exception {
-        new BetweennessCentralitySuccessorBrandes(graph, 100_000,
-                Pools.DEFAULT)
-                .compute()
-                .forEach(consumer);
+    public void testParallelBC() throws Exception {
+
+        String cypher = "CALL algo.betweenness('', '', {concurrency:4, write:true, writeProperty:'bc', stats:true}) YIELD " +
+                "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality";
+
+        testBetweennessWrite(cypher);
+    }
+
+    @Test
+    public void testBC() throws Exception {
+
+        String cypher = "CALL algo.betweenness('', '', {write:true, writeProperty:'bc', stats:true}) YIELD " +
+                "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality";
+
+        testBetweennessWrite(cypher);
+    }
+
+    @Test
+    public void testSuccessorBCWrite() throws Exception {
+
+        String cypher = "CALL algo.betweenness.exp1('', '', {write:true, writeProperty:'bc', stats:true}) YIELD " +
+                "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality";
+
+        testBetweennessWrite(cypher);
+
+    }
+
+    public void testBetweennessWrite(String cypher) {
+        db.execute(cypher).accept(row -> {
+            assertNotEquals(-1L, row.getNumber("writeMillis").longValue());
+            assertEquals(6.0, row.getNumber("minCentrality"));
+            assertEquals(25.0, row.getNumber("maxCentrality"));
+            assertEquals(85.0, row.getNumber("sumCentrality"));
+            return true;
+        });
+
+        db.execute("MATCH (n:Node) WHERE exists(n.bc) RETURN id(n) as id, n.bc as bc").accept(row -> {
+            consumer.consume(row.getNumber("id").longValue(),
+                    row.getNumber("bc").doubleValue());
+            return true;
+        });
+
         verify(consumer, times(10)).consume(anyLong(), eq(6.0));
         verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
     }

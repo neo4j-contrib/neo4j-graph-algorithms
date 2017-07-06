@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
@@ -127,23 +128,19 @@ public class BetweennessCentralityTest2 {
                 .compute()
                 .resultStream()
                 .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));
+
         verifyMock(testConsumer);
     }
 
     @Test
-    public void test() throws Exception {
+    public void testSuccessorBrandes() throws Exception {
 
-        for (int i = 0; i < 100; i++) {
+        new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
+                .compute()
+                .resultStream()
+                .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));
 
-            new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
-                    .compute()
-                    .resultStream()
-                    .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));
-
-            verifyMock(testConsumer);
-        }
-
-
+        verifyMock(testConsumer);
     }
 
     public void verifyMock(TestConsumer mock) {

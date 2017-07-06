@@ -110,7 +110,7 @@ public class BetweennessCentralityTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testSuccessorBrandes() throws Exception {
 
         final TestConsumer mock = mock(TestConsumer.class);
 
