@@ -2,11 +2,13 @@ package org.neo4j.graphalgo.core.utils.container;
 
 import org.apache.lucene.util.ArrayUtil;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 
 /**
  * @author mknblch
@@ -26,10 +28,12 @@ public class MultiQueue {
         queue = new int[nodeCount][];
     }
 
-    public void clear() {
-        for (int i = 0; i < nodeCount; i++) {
-            offsets.set(i, 0);
-        }
+    public AtomicIntegerArray getOffsets() {
+        return offsets;
+    }
+
+    public void clear(int phase) {
+        offsets.set(phase, 0);
     }
 
     public void addOrCreate(int phase, int element) {
@@ -63,7 +67,7 @@ public class MultiQueue {
         }
     }
 
-    public void forEach(List<Future<?>> futures, int phase, IntConsumer consumer) {
+    public void forEach(Collection<Future<?>> futures, int phase, IntConsumer consumer) {
 
         futures.add(executorService.submit(() -> {
             final int length = offsets.get(phase);

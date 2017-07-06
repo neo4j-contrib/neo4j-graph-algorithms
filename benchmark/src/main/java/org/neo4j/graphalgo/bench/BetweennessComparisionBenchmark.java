@@ -103,20 +103,6 @@ public class BetweennessComparisionBenchmark {
     }
 
     @Benchmark
-    public Object _02_benchmark_parallel2() {
-        return db.execute("CALL algo.betweenness('','', {write:false, concurrency:2}) YIELD computeMillis")
-                .stream()
-                .count();
-    }
-
-    @Benchmark
-    public Object _03_benchmark_parallel4() {
-        return db.execute("CALL algo.betweenness('','', {write:false, concurrency:4}) YIELD computeMillis")
-                .stream()
-                .count();
-    }
-
-    @Benchmark
     public Object _04_benchmark_parallel8() {
         return db.execute("CALL algo.betweenness('','', {write:false, concurrency:8}) YIELD computeMillis")
                 .stream()

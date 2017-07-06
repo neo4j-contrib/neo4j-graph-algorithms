@@ -37,12 +37,12 @@ public class BetweennessCentralitySuccessorBrandes {
     // global executor service
     private final ExecutorService executorService;
 
-    private final int[] sigma;
-    private final AtomicIntegerArray d;
+    private final AtomicIntegerArray sigma;
+    private AtomicIntegerArray d;
     private final double[] delta;
     private final AtomicInteger count;
     private int phase;
-    private Paths successors;
+    private MultiQueue successors;
     private MultiQueue phaseQueue;
     private final ArrayList<Future<?>> futures = new ArrayList<>();
 
@@ -58,10 +58,10 @@ public class BetweennessCentralitySuccessorBrandes {
         this.nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
-        sigma = new int[nodeCount];
+        sigma = new AtomicIntegerArray(nodeCount);
         delta = new double[nodeCount];
         d = new AtomicIntegerArray(nodeCount);
-        successors = new Paths();
+        successors = new MultiQueue(executorService, nodeCount);
         phaseQueue = new MultiQueue(executorService, nodeCount);
 
         count = new AtomicInteger();
@@ -72,7 +72,6 @@ public class BetweennessCentralitySuccessorBrandes {
      * @return itself for method chaining
      */
     public BetweennessCentralitySuccessorBrandes compute() {
-        centrality.clear();
         graph.forEachNode(this::compute);
         return this;
     }
@@ -80,18 +79,23 @@ public class BetweennessCentralitySuccessorBrandes {
     private boolean compute(int startNodeId) {
 
         // initialization
-        successors.clear();
 
-        phaseQueue.clear();
-        phaseQueue.addOrCreate(0, startNodeId);
+        final AtomicIntegerArray offsets = phaseQueue.getOffsets();
 
-        for (int i = nodeCount - 1; i >= 0; i--) {
+//        for (int i = nodeCount - 1; i >= 0; i--) {
+//            d.set(i, -1);
+//            sigma.set(i, 0);
+//            offsets.set(i, 0);
+//        }
+        ParallelUtil.iterateParallel(executorService, nodeCount, 4, i -> {
             d.set(i, -1);
-        }
-        d.set(startNodeId, 0);
+            sigma.set(i, 0);
+            offsets.set(i, 0);
+        });
 
-        Arrays.fill(sigma, 0);
-        sigma[startNodeId] = 1;
+        phaseQueue.addOrCreate(0, startNodeId);
+        d.set(startNodeId, 0);
+        sigma.set(startNodeId, 1);
 
         phase = 0;
         count.set(1);
@@ -100,7 +104,8 @@ public class BetweennessCentralitySuccessorBrandes {
         while (count.getAndSet(0) > 0) {
             futures.clear();
             phaseQueue.forEach(futures, phase, v -> { // in parallel
-                graph.forEachRelationship(v, Direction.OUTGOING, (sourceNodeId, w, relationId) -> { // in parallel
+                successors.clear(v);
+                graph.forEachRelationship(v, Direction.OUTGOING, (sourceNodeId, w, relationId) -> {
                     int dw = d.get(w);
                     d.compareAndSet(w, -1, phase + 1);
                     if (dw == -1) {
@@ -109,14 +114,13 @@ public class BetweennessCentralitySuccessorBrandes {
                         dw = phase + 1;
                     }
                     if (dw == phase + 1) {
-                        sigma[w] += sigma[v];
-                        successors.append(v, w);
+                        sigma.addAndGet(w, sigma.get(v));
+                        successors.addOrCreate(v, w);
                     }
                     return true;
                 });
             });
             ParallelUtil.awaitTermination(futures);
-
             phase++;
         }
 
@@ -126,11 +130,8 @@ public class BetweennessCentralitySuccessorBrandes {
             futures.clear();
             phaseQueue.forEach(futures, phase, w -> {
                 final double[] dsw = {0.0};
-                final double sw = sigma[w];
-                successors.forEach(w, v -> {
-                    dsw[0] += (sw / (double) sigma[v]) * (1.0 + delta[v]);
-                    return true;
-                });
+                final double sw = sigma.get(w);
+                successors.forEach(w, v -> dsw[0] += (sw / (double) sigma.get(v)) * (1.0 + delta[v]));
                 delta[w] = dsw[0];
                 centrality.add(w, dsw[0]);
             });
@@ -173,5 +174,7 @@ public class BetweennessCentralitySuccessorBrandes {
                                 graph.toOriginalNodeId(nodeId),
                                 centrality.get(nodeId)));
     }
+
+
 
 }

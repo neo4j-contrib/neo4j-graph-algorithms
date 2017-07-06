@@ -34,6 +34,10 @@ public class AtomicDoubleArray {
         return (double) data.get(index) / scaleFactor;
     }
 
+    public void set(int index, double value) {
+        data.set(index, (int) (value * scaleFactor));
+    }
+
     public void add(int index, double value) {
         data.addAndGet(index, (int) (scaleFactor * value));
     }

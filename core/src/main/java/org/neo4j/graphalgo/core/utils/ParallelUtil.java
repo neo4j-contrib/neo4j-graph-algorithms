@@ -19,6 +19,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.IntConsumer;
 
 public final class ParallelUtil {
 
@@ -263,6 +264,21 @@ public final class ParallelUtil {
         ).run();
     }
 
+
+    public static void iterateParallel(ExecutorService executorService, int size, int concurrency, IntConsumer consumer) {
+        final List<Future<?>> futures = new ArrayList<>();
+        final int batchSize = size / concurrency;
+        for (int i = 0; i < size; i += batchSize) {
+            final int start = i;
+            final int end = Math.min(size, start + batchSize);
+            futures.add(executorService.submit(() -> {
+                for (int j = start; j < end; j++) {
+                    consumer.accept(j);
+                }
+            }));
+        }
+        awaitTermination(futures);
+    }
 
     private static final class BatchExportRunnable implements Runnable {
         private final GraphDatabaseAPI db;

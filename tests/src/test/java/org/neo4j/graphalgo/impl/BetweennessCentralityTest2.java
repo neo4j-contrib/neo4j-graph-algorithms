@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -19,6 +20,10 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -151,6 +156,21 @@ public class BetweennessCentralityTest2 {
         verify(mock, times(1)).accept(eq("e"), eq(8.0));
         verify(mock, times(1)).accept(eq("f"), eq(0.0));
         verify(mock, times(1)).accept(eq("g"), eq(0.0));
+    }
+
+
+    @Test
+    public void testIterateParallel() throws Exception {
+
+        final AtomicIntegerArray ai = new AtomicIntegerArray(1001);
+
+        ParallelUtil.iterateParallel(Pools.DEFAULT, 1001, 8, i -> {
+            ai.set(i, i);
+        });
+
+        for (int i = 0; i < 1001; i++) {
+            assertEquals(i, ai.get(i));
+        }
     }
 
 }
