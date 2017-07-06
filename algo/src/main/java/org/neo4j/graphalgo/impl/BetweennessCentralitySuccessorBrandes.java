@@ -2,11 +2,16 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -17,7 +22,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class BetweennessCentralityBrandesDeltaStepping {
+public class BetweennessCentralitySuccessorBrandes {
 
     // the graph
     private final Graph graph;
@@ -31,10 +36,11 @@ public class BetweennessCentralityBrandesDeltaStepping {
     private final int[] sigma;
     private final int[] d;
     private final double[] delta;
-    private int count;
+    private final AtomicInteger count;
     private int phase;
-    private Paths P;
-    private Paths S;
+    private Paths successor;
+    private MultiQueue phaseQueue;
+    private final ArrayList<Future<?>> futures = new ArrayList<>();
 
 
 
@@ -45,7 +51,7 @@ public class BetweennessCentralityBrandesDeltaStepping {
      * @param scaleFactor factor used to scale up doubles to integers in AtomicDoubleArray
      * @param executorService the executor service
      */
-    public BetweennessCentralityBrandesDeltaStepping(Graph graph, double scaleFactor, ExecutorService executorService) {
+    public BetweennessCentralitySuccessorBrandes(Graph graph, double scaleFactor, ExecutorService executorService) {
         this.graph = graph;
         this.nodeCount = graph.nodeCount();
         this.executorService = executorService;
@@ -53,16 +59,17 @@ public class BetweennessCentralityBrandesDeltaStepping {
         sigma = new int[nodeCount];
         delta = new double[nodeCount];
         d = new int[nodeCount];
-        P = new Paths();
-        S = new Paths();
+        successor = new Paths();
+        phaseQueue = new MultiQueue(executorService, nodeCount);
 
+        count = new AtomicInteger();
     }
 
     /**
      * compute centrality
      * @return itself for method chaining
      */
-    public BetweennessCentralityBrandesDeltaStepping compute() {
+    public BetweennessCentralitySuccessorBrandes compute() {
 
         graph.forEachNode(this::compute);
         return this;
@@ -71,51 +78,55 @@ public class BetweennessCentralityBrandesDeltaStepping {
     private boolean compute(int startNodeId) {
 
         // initialization
-        P.clear();
-        S.clear(0);
-        S.append(0, startNodeId);
+        successor.clear();
+        phaseQueue.clear();
+        phaseQueue.addOrCreate(0, startNodeId);
         Arrays.fill(sigma, 0);
         Arrays.fill(d, -1);
         sigma[startNodeId] = 1;
         d[startNodeId] = 0;
-        count = 1;
         phase = 0;
+        count.set(1);
 
         // computation
-        while (count > 0) {
-            count = 0;
-            S.clear(phase + 1);
-            S.forEach(phase, v -> { // in parallel
+        while (count.getAndSet(0) > 0) {
+            futures.clear();
+            phaseQueue.forEach(futures, phase, v -> { // in parallel
                 graph.forEachRelationship(v, Direction.OUTGOING, (sourceNodeId, w, relationId) -> { // in parallel
+
                     if (d[w] < 0) {
-                        S.append(phase + 1, w);
-                        count++;
+                        phaseQueue.addOrCreate(phase + 1, w);
+                        count.incrementAndGet();
                         d[w] = d[v] + 1;
                     }
                     if (d[w] == d[v] + 1) {
                         sigma[w] += sigma[v];
-                        P.append(v, w);
+                        successor.append(v, w);
                     }
                     return true;
                 });
-                return true;
             });
+            ParallelUtil.awaitTermination(futures);
+
             phase++;
         }
-        phase--;
 
-        // back propagation
+        // back propagation + dependency accumulation
+
         Arrays.fill(delta, 0d);
-        while (phase > 0) {
-            S.forEach(phase, w -> {
-                P.forEach(w, v -> {
-                    delta[w] += ((double) sigma[w] / (double) sigma[v]) * (1.0 + delta[v]);
+        while (--phase > 0) {
+            futures.clear();
+            phaseQueue.forEach(futures, phase, w -> {
+                final double[] dsw = {0.0};
+                final double sw = sigma[w];
+                successor.forEach(w, v -> {
+                    dsw[0] += (sw / (double) sigma[v]) * (1.0 + delta[v]);
                     return true;
                 });
-                centrality.add(w, delta[w]);
-                return true;
+                delta[w] = dsw[0];
+                centrality.add(w, dsw[0]);
             });
-            phase--;
+            ParallelUtil.awaitTermination(futures);
         }
 
         return true;
@@ -154,4 +165,5 @@ public class BetweennessCentralityBrandesDeltaStepping {
                                 graph.toOriginalNodeId(nodeId),
                                 centrality.get(nodeId)));
     }
+
 }

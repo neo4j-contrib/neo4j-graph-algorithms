@@ -114,23 +114,24 @@ public class BetweennessCentralityTest {
 
         final TestConsumer mock = mock(TestConsumer.class);
 
-        final AtomicDoubleArray centrality = new BetweennessCentralityBrandesDeltaStepping(graph, 100_000, Pools.DEFAULT)
-                .compute()
-                .getCentrality();
+        final BetweennessCentralitySuccessorBrandes bc =
+                new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
+                        .compute();
+
+        final AtomicDoubleArray centrality = bc.getCentrality();
 
 
         for (int i = 0; i < centrality.length(); i++) {
             System.out.println(i + ":" + centrality.get(i));
         }
 
-//                .resultStream()
-//                .forEach(r -> mock.consume(name(r.nodeId), r.centrality));
-//
-//        verify(mock, times(1)).consume(eq("a"), eq(0.0));
-//        verify(mock, times(1)).consume(eq("b"), eq(3.0));
-//        verify(mock, times(1)).consume(eq("c"), eq(4.0));
-//        verify(mock, times(1)).consume(eq("d"), eq(3.0));
-//        verify(mock, times(1)).consume(eq("e"), eq(0.0));
+        bc.resultStream().forEach(r -> mock.consume(name(r.nodeId), r.centrality));
+
+        verify(mock, times(1)).consume(eq("a"), eq(0.0));
+        verify(mock, times(1)).consume(eq("b"), eq(3.0));
+        verify(mock, times(1)).consume(eq("c"), eq(4.0));
+        verify(mock, times(1)).consume(eq("d"), eq(3.0));
+        verify(mock, times(1)).consume(eq("e"), eq(0.0));
     }
 
     interface TestConsumer {

@@ -15,7 +15,7 @@ import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
-import org.neo4j.graphalgo.impl.BetweennessCentralityBrandesDeltaStepping;
+import org.neo4j.graphalgo.impl.BetweennessCentralitySuccessorBrandes;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -105,7 +105,7 @@ public class ParallelBetweennessCentralityIntegrationTest {
 
     @Test
     public void testDirect() throws Exception {
-        new BetweennessCentralityBrandesDeltaStepping(graph, 100_000,
+        new BetweennessCentralitySuccessorBrandes(graph, 100_000,
                 Pools.DEFAULT)
                 .compute()
                 .forEach(consumer);
