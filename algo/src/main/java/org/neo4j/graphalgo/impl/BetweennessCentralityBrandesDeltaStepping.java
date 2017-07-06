@@ -90,11 +90,11 @@ public class BetweennessCentralityBrandesDeltaStepping {
                     if (d[w] < 0) {
                         S.append(phase + 1, w);
                         count++;
-                        d[w] = d[sourceNodeId] + 1;
+                        d[w] = d[v] + 1;
                     }
                     if (d[w] == d[v] + 1) {
                         sigma[w] += sigma[v];
-                        P.append(w, v);
+                        P.append(v, w);
                     }
                     return true;
                 });
@@ -109,7 +109,7 @@ public class BetweennessCentralityBrandesDeltaStepping {
         while (phase > 0) {
             S.forEach(phase, w -> {
                 P.forEach(w, v -> {
-                    delta[v] += ((double) sigma[v] / (double) sigma[w]) * (1.0 + delta[w]);
+                    delta[w] += ((double) sigma[w] / (double) sigma[v]) * (1.0 + delta[v]);
                     return true;
                 });
                 centrality.add(w, delta[w]);
