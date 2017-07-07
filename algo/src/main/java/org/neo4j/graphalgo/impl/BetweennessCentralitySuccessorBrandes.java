@@ -63,7 +63,6 @@ public class BetweennessCentralitySuccessorBrandes {
         d = new AtomicIntegerArray(nodeCount);
         successors = new MultiQueue(executorService, nodeCount);
         phaseQueue = new MultiQueue(executorService, nodeCount);
-
         count = new AtomicInteger();
     }
 
@@ -82,11 +81,6 @@ public class BetweennessCentralitySuccessorBrandes {
 
         final AtomicIntegerArray offsets = phaseQueue.getOffsets();
 
-//        for (int i = nodeCount - 1; i >= 0; i--) {
-//            d.set(i, -1);
-//            sigma.set(i, 0);
-//            offsets.set(i, 0);
-//        }
         ParallelUtil.iterateParallel(executorService, nodeCount, 4, i -> {
             d.set(i, -1);
             sigma.set(i, 0);
