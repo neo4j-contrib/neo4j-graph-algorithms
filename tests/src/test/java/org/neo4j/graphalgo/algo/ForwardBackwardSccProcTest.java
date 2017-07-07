@@ -80,7 +80,6 @@ public class ForwardBackwardSccProcTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
-        Pools.DEFAULT.shutdown();
     }
 
     private long getNodeId(String name) {

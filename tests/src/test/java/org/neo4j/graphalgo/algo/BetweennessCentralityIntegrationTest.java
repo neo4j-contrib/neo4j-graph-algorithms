@@ -13,6 +13,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
