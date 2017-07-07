@@ -95,7 +95,6 @@ public final class ShortestPathDeltaSteppingTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
-//        Pools.DEFAULT.shutdownNow();
     }
 
     @Test

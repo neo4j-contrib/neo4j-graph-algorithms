@@ -57,7 +57,6 @@ public class ParallelUnionFindTest {
     @AfterClass
     public static void shutdown() {
         db.shutdown();
-//        Pools.DEFAULT.shutdownNow();
     }
 
 

@@ -55,7 +55,6 @@ public class ParallelUnionFindForkJoinTest {
     @AfterClass
     public static void shutdown() {
         db.shutdown();
-//        Pools.DEFAULT.shutdownNow();
     }
 
 
