@@ -53,13 +53,13 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
     private List<Node> createLine(int length) {
         ArrayList<Node> nodes = new ArrayList<>();
         Node temp = createNode();
-        nodes.add(temp);
         for (int i = 1; i < length; i++) {
             Node node = createNode();
             nodes.add(temp);
             createRelationship(temp, node);
             temp = node;
         }
+        nodes.add(temp);
         lines.add(nodes);
         return nodes;
     }
