@@ -98,7 +98,6 @@ public class ClosenessCentralityIntegrationTest {
     public static void tearDown() throws Exception {
         if (db!=null) db.shutdown();
         graph = null;
-        Pools.DEFAULT.shutdown();
     }
 
     @Test
