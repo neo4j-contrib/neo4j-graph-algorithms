@@ -21,19 +21,19 @@ import static org.junit.Assert.*;
  * Calculation:
  *
  * N = 5        // number of nodes
- * k = N-1 = 4
+ * k = N-1 = 4  // used for normalization
  *
  *      A     B     C     D     E
- *  --|---------------------------------
- *  A | 0     1     2     3     4     -      // farness from between each pair of nodes
- *  B | 1     0     1     2     3     -
- *  C | 2     1     0     1     2     -
- *  D | 3     2     1     0     1     -
- *  E | 4     3     2     1     0     -
- *  --|---------------------------------
- *  S | 10    7     6     7     10    -      // sum each row
- *  --|---------------------------------
- * k/S| 0.4  0.57  0.67  0.57   0.4          // normalized centrality
+ *  --|-----------------------------
+ *  A | 0     1     2     3     4       // farness between each pair of nodes
+ *  B | 1     0     1     2     3
+ *  C | 2     1     0     1     2
+ *  D | 3     2     1     0     1
+ *  E | 4     3     2     1     0
+ *  --|-----------------------------
+ *  S | 10    7     6     7     10      // sum each row
+ *  ==|=============================
+ * k/S| 0.4  0.57  0.67  0.57   0.4     // normalized centrality
  *
  * @author mknblch
  */
