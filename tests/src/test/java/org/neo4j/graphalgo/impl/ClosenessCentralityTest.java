@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  *  D | 3     2     1     0     1
  *  E | 4     3     2     1     0
  *  --|-----------------------------
- *  S | 10    7     6     7     10      // sum each row
+ *  S | 10    7     6     7     10      // sum each column
  *  ==|=============================
  * k/S| 0.4  0.57  0.67  0.57   0.4     // normalized centrality
  *
