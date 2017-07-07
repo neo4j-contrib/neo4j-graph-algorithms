@@ -115,7 +115,7 @@ public class ClosenessCentralityIntegrationTest {
     }
 
     @Test
-    public void testBetweennessWrite() throws Exception {
+    public void testClosenessWrite() throws Exception {
 
         db.execute("CALL algo.closeness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, loadMillis, computeMillis, writeMillis")
