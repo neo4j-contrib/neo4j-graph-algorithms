@@ -74,7 +74,7 @@ public class ParallelDeltaSteppingTest {
     @AfterClass
     public static void tearDown() {
         db.shutdown();
-        Pools.DEFAULT.shutdown();s
+        Pools.DEFAULT.shutdown();
     }
 
     @Test
