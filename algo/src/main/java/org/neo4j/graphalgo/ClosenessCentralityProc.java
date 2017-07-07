@@ -28,7 +28,7 @@ public class ClosenessCentralityProc {
     public Log log;
 
     @Procedure(value = "algo.closeness.stream")
-    @Description("CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<MSClosenessCentrality.Result> closenessStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -49,7 +49,7 @@ public class ClosenessCentralityProc {
 
     @Procedure(value = "algo.closeness", mode = Mode.WRITE)
     @Description("CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) YIELD " +
-            "loadMillis, computeMillis, writeMillis, nodes] - yields status of evaluation")
+            "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
     public Stream<ClosenessCentralityProcResult> closeness(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,

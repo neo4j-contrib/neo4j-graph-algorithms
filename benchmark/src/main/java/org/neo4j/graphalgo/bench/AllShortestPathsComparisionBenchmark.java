@@ -86,7 +86,7 @@ public class AllShortestPathsComparisionBenchmark {
                 if (null != temp) {
                     for (int j = 0; j < size; j++) {
                         for (int k = 0; k < size; k++) {
-                            if (i == k) {
+                            if (j == k) {
                                 continue;
                             }
                             createRelation(temp.get(j), line.get(k));
