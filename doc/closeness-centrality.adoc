@@ -17,6 +17,61 @@ _Closeness Centrality_ of a node is a measure of centrality in a network, calcul
 
 == Example Usage
 
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) 
+YIELD loadMillis, computeMillis, writeMillis 
+- calculates closeness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'centrality' | yes | property name written back to
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | betweenness centrality weight 
+|===
+
+
 == References
 
 == Implementation Details
