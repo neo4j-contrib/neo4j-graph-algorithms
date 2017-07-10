@@ -423,8 +423,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#_introduction">Introduction</a>
+<ul class="sectlevel2">
 <li><a href="#_installation">Installation</a></li>
+<li><a href="#_usage">Usage</a></li>
 <li><a href="#_building">Building</a></li>
+</ul>
+</li>
 <li><a href="#_overview_of_algorithm_procedures">Overview of Algorithm Procedures</a></li>
 <li><a href="#_algorithms">Algorithms</a>
 <ul class="sectlevel2">
@@ -450,13 +455,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_introduction"><a class="link" href="#_introduction">Introduction</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.</p>
-</div>
-<div class="paragraph">
-<p>You can find the documentation (WIP) here <a href="http://neo4j-contrib.github.io/neo4j-graph-algorithms" class="bare">http://neo4j-contrib.github.io/neo4j-graph-algorithms</a></p>
 </div>
 <div class="paragraph">
 <p>Releases are available here: <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases" class="bare">https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases</a></p>
@@ -504,11 +507,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>Please raise <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues">GitHub issues</a> for anything you encounter or join the <a href="http://neo4j.com/developer/slack">neo4j-users Slack group</a> and ask in the <code>#neo4j-graph-algorithm</code> channel.</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_installation"><a class="link" href="#_installation">Installation</a></h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_installation"><a class="link" href="#_installation">Installation</a></h3>
 <div class="paragraph">
 <p>Just copy the <code>graph-algorithms-algo-*.jar</code> from the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases">release</a> into your <code>$NEO4J_HOME/plugins</code> directory and restart Neo4j.</p>
 </div>
@@ -523,22 +523,90 @@ return name, description
 order by name</pre>
 </div>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
 <div class="paragraph">
-<p>Details on how to call them can be found in the <a href="http://neo4j-contrib.github.io/neo4j-graph-algorithms">project&#8217;s documentation</a></p>
+<p>For safety reasons, in <strong>Neo4j 3.2.x</strong> you will need to add/enable this line in your <code>$NEO4J_HOME/conf/neo4j.conf</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>dbms.security.procedures.unrestricted=algo.*</pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_usage"><a class="link" href="#_usage">Usage</a></h3>
+<div class="paragraph">
+<p>These algorithms are exposed as Neo4j procedures.
+You can call them directly from Cypher in your Neo4j Browser, from cypher-shell or your client code.</p>
+</div>
+<div class="paragraph">
+<p>For most algorithms there are two procedures, one that writes results back to the graph as node-properties and one (named <code>algo.&lt;name&gt;.stream</code>) that returns a stream of data, e.g. node-ids and computed values.</p>
+</div>
+<div class="paragraph">
+<p>The general call syntax is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.&lt;name&gt;([label],[relType],{config})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example for page rank on dbpedia:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Page','LINK',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
+// YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
+
+CALL algo.pageRank.stream('Page','LINK',{iterations:5, dampingFactor:0.85})
+YIELD node, score
+RETURN node, score
+ORDER BY score DESC LIMIT 10;</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_cypher_loading"><a class="link" href="#_cypher_loading">Cypher Loading</a></h4>
+<div class="paragraph">
+<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on,
+you can use Cypher statements to load or project subsets of your graph.
+Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use <code>graph:'cypher'</code> in the config.</p>
+</div>
+<div class="paragraph">
+<p>You can also return the value or weight property (according to your config) in addition to the id&#8217;s from these statements.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(
+'MATCH (p:Page) RETURN id(p) as id',
+'MATCH (p:Page)-[:LINK]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', iterations:5, write: true});</code></pre>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_building"><a class="link" href="#_building">Building</a></h2>
-<div class="sectionbody">
+</div>
+<div class="sect2">
+<h3 id="_building"><a class="link" href="#_building">Building</a></h3>
 <div class="paragraph">
 <p>Currently aiming at Neo4j 3.1</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>mvn clean install
-cp algo/target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+<pre>git clone https://github.com/neo4j-contrib/neo4j-graph-algorithms
+cd neo4j-graph-algorithms
+mvn clean install
+cp algo/target/graph-algorithms-*.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart</pre>
+</div>
 </div>
 </div>
 </div>
@@ -561,6 +629,14 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.allShortestPaths.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.allShortestPaths.stream(propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.closeness.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.closeness</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) YIELD loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.mst</code></p></td>
@@ -611,20 +687,28 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness.exp1.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness.exp1.stream(label:String, relationship:String, {scaleFactor:1000000}) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node</code></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness.exp1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness.exp1(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true, scaleFactor:100000}) YIELD loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality] - yields status of evaluation</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.betweenness</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, meanCentrality] - yields status of evaluation</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.deltaStepping.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.deltaStepping.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.deltaStepping</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.deltaStepping(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.deltaStepping</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
@@ -640,23 +724,43 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.tarjan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.tarjan(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.tunedTarjan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.tunedTarjan(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.tunedTarjan.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD nodeId, cluster</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.iterative</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.iterative(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.iterative.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.iterative.stream(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD nodeId, cluster</code></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.multistep</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD loadMillis, computeMillis, writeMillis</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.multistep.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD nodeId, clusterId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD nodeId, cluster</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.fwbw.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.fwbw.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD nodeId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.forwardBackward.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD nodeId</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -3506,7 +3610,7 @@ for creating the Graph using the core db.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-27 00:44:52 MESZ
+Last updated 2017-07-10 18:44:33 MESZ
 </div>
 </div>
 </body>
