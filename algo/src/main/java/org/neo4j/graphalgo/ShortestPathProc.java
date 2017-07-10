@@ -10,10 +10,7 @@ import org.neo4j.graphalgo.results.DijkstraResult;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
-import org.neo4j.procedure.Description;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -56,11 +53,10 @@ public class ShortestPathProc {
                 .resultStream();
     }
 
-
-    @Procedure("algo.shortestPath")
+    @Procedure(value = "algo.shortestPath", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
-            "YIELD nodeId, cost, loadDuration, evalDuration - yields nodeCount, totalCost, loadDuration, evalDuration")
+            "YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis")
     public Stream<DijkstraResult> dijkstra(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -72,24 +68,33 @@ public class ShortestPathProc {
 
         DijkstraResult.Builder builder = DijkstraResult.builder();
 
-        ProgressTimer load = builder.load();
-        final Graph graph = new GraphLoader(api)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .withOptionalRelationshipWeightsFromProperty(
-                        propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
-                .withExecutorService(Pools.DEFAULT)
-                .load(configuration.getGraphImpl());
-        load.stop();
+        final Graph graph;
+        final ShortestPathDijkstra dijkstra;
 
-        ProgressTimer eval = builder.eval();
-        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
-                .compute(startNode.getId(), endNode.getId());
-        eval.stop();
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = new GraphLoader(api)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .withOptionalRelationshipWeightsFromProperty(
+                            propertyName,
+                            configuration.getPropertyDefaultValue(1.0))
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+        };
 
-        builder.withNodeCount(dijkstra.getPathLength())
-                .withTotalCosts(dijkstra.getTotalCost());
+        try (ProgressTimer timer = builder.timeEval()) {
+            dijkstra = new ShortestPathDijkstra(graph)
+                    .compute(startNode.getId(), endNode.getId());
+            builder.withNodeCount(dijkstra.getPathLength())
+                    .withTotalCosts(dijkstra.getTotalCost());
+        };
+
+        if (configuration.isWriteFlag()) {
+            try (ProgressTimer timer = builder.timeWrite()) {
+                new ShortestPathDijkstra.SPExporter(graph, api, configuration.getWriteProperty())
+                        .write(dijkstra.getFinalPath());
+            }
+        }
 
         return Stream.of(builder.build());
     }

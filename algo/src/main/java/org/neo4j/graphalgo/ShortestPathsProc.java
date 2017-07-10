@@ -86,10 +86,9 @@ public class ShortestPathsProc {
                 .load(configuration.getGraphImpl());
         load.stop();
 
-        ProgressTimer eval = builder.timeEval();
-        final ShortestPaths algorithm = new ShortestPaths(graph)
-                .compute(startNode.getId());
-        eval.stop();
+        final ShortestPaths algorithm = new ShortestPaths(graph);
+
+        builder.timeEval(() -> algorithm.compute(startNode.getId()));
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
@@ -97,7 +96,7 @@ public class ShortestPathsProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
                         Pools.DEFAULT).write(algorithm.getShortestPaths());
             });
@@ -106,49 +105,4 @@ public class ShortestPathsProc {
         return Stream.of(builder.build());
     }
 
-    private final static class NodeBatch implements BatchNodeIterable {
-
-        public final int nodeCount;
-
-        private NodeBatch(int nodeCount) {
-            this.nodeCount = nodeCount;
-        }
-
-        @Override
-        public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-            ArrayList<PrimitiveIntIterable> result = new ArrayList<>();
-            for (int i = 0; i < nodeCount; i += batchSize) {
-                int end = i + batchSize > nodeCount ? nodeCount : i + batchSize;
-                result.add(new ShortestPathsProc.BatchedNodeIterator(i, end));
-            }
-            return result;
-        }
-
-    }
-
-    private static class BatchedNodeIterator implements PrimitiveIntIterator, PrimitiveIntIterable {
-
-        private final int end;
-        private int current;
-
-        private BatchedNodeIterator(int start, int end) {
-            this.end = end;
-            this.current = start;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return current < end;
-        }
-
-        @Override
-        public int next() {
-            return current++;
-        }
-
-        @Override
-        public PrimitiveIntIterator iterator() {
-            return this;
-        }
-    }
 }

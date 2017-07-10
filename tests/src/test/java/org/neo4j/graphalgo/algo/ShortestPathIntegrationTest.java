@@ -17,9 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyDouble;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,28 +32,28 @@ public class ShortestPathIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @BeforeClass
     public static void setup() throws KernelException {
         String createGraph =
                 "CREATE (nA:Node{type:'start'})\n" + // start
-                "CREATE (nB:Node)\n" +
-                "CREATE (nC:Node)\n" +
-                "CREATE (nD:Node)\n" +
-                "CREATE (nX:Node{type:'end'})\n" + // end
-                "CREATE\n" +
+                        "CREATE (nB:Node)\n" +
+                        "CREATE (nC:Node)\n" +
+                        "CREATE (nD:Node)\n" +
+                        "CREATE (nX:Node{type:'end'})\n" + // end
+                        "CREATE\n" +
 
-                // sum: 5.0
-                "  (nA)-[:TYPE {cost:5.0}]->(nX),\n" +
-                // sum: 4.0
-                "  (nA)-[:TYPE {cost:2.0}]->(nB),\n" +
-                "  (nB)-[:TYPE {cost:2.0}]->(nX),\n" +
-                // sum: 3.0
-                "  (nA)-[:TYPE {cost:1.0}]->(nC),\n" +
-                "  (nC)-[:TYPE {cost:1.0}]->(nD),\n" +
-                "  (nD)-[:TYPE {cost:1.0}]->(nX)";
+                        // sum: 5.0
+                        "  (nA)-[:TYPE {cost:5.0}]->(nX),\n" +
+                        // sum: 4.0
+                        "  (nA)-[:TYPE {cost:2.0}]->(nB),\n" +
+                        "  (nB)-[:TYPE {cost:2.0}]->(nX),\n" +
+                        // sum: 3.0
+                        "  (nA)-[:TYPE {cost:1.0}]->(nC),\n" +
+                        "  (nC)-[:TYPE {cost:1.0}]->(nD),\n" +
+                        "  (nD)-[:TYPE {cost:1.0}]->(nX)";
 
 
         db = (GraphDatabaseAPI)
@@ -88,8 +86,8 @@ public class ShortestPathIntegrationTest {
         PathConsumer consumer = mock(PathConsumer.class);
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.shortestPath.stream(start, end, 'cost',{graph:'"+graphImpl+"'}) YIELD nodeId, cost\n" +
-                        "RETURN nodeId, cost")
+                        "CALL algo.shortestPath.stream(start, end, 'cost',{graph:'" + graphImpl + "'}) " +
+                        "YIELD nodeId, cost RETURN nodeId, cost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept((Long) row.getNumber("nodeId"), (Double) row.getNumber("cost"));
                     return true;
@@ -101,24 +99,44 @@ public class ShortestPathIntegrationTest {
         verify(consumer, times(1)).accept(anyLong(), eq(3.0));
     }
 
-
     @Test
     public void testDijkstra() throws Exception {
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
-                        "CALL algo.shortestPath(start, end, 'cost',{graph:'"+graphImpl+"'}) YIELD loadDuration, evalDuration, nodeCount, totalCost\n" +
-                        "RETURN loadDuration, evalDuration, nodeCount, totalCost")
+                        "CALL algo.shortestPath(start, end, 'cost',{graph:'" + graphImpl + "', write:true, writeProperty:'step'}) " +
+                        "YIELD loadMillis, evalMillis, writeMillis, nodeCount, totalCost\n" +
+                        "RETURN loadMillis, evalMillis, writeMillis, nodeCount, totalCost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(3.0, (Double) row.getNumber("totalCost"), 10E2);
                     assertEquals(4L, row.getNumber("nodeCount"));
-                    assertNotEquals(-1L, row.getNumber("loadDuration"));
-                    assertNotEquals(-1L, row.getNumber("evalDuration"));
+                    assertNotEquals(-1L, row.getNumber("loadMillis"));
+                    assertNotEquals(-1L, row.getNumber("evalMillis"));
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
                     return false;
                 });
+
+        final StepConsumer mock = mock(StepConsumer.class);
+
+        db.execute("MATCH (n) WHERE exists(n.step) RETURN id(n) as id, n.step as step")
+                .accept(row -> {
+                    mock.accept(row.getNumber("id").longValue(),
+                            row.getNumber("step").intValue());
+                    return true;
+                });
+
+        verify(mock, times(4)).accept(anyLong(), anyInt());
+
+        verify(mock, times(1)).accept(anyLong(), eq(0));
+        verify(mock, times(1)).accept(anyLong(), eq(1));
+        verify(mock, times(1)).accept(anyLong(), eq(2));
+        verify(mock, times(1)).accept(anyLong(), eq(3));
     }
 
     private interface PathConsumer {
         void accept(long nodeId, double cost);
     }
 
+    interface StepConsumer {
+        void accept(long nodeId, int step);
+    }
 }

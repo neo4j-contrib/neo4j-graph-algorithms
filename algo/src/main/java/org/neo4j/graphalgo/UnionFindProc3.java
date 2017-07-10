@@ -143,7 +143,7 @@ public class UnionFindProc3 {
                 configuration.getBatchSize(),
                 api,
                 graph,
-                new UnionFindExporter.NodeBatch(graph.nodeCount()),
+                graph,
                 configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
                 Pools.DEFAULT).write(struct);
     }
