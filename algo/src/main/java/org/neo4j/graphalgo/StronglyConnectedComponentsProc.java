@@ -120,7 +120,7 @@ public class StronglyConnectedComponentsProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(tarjan.getConnectedComponents());
@@ -189,7 +189,7 @@ public class StronglyConnectedComponentsProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(tarjan.getConnectedComponents());
@@ -261,7 +261,7 @@ public class StronglyConnectedComponentsProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new ArrayBasedSCCExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(multistep.getConnectedComponents());

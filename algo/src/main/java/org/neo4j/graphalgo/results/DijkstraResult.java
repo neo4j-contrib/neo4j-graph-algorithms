@@ -1,22 +1,20 @@
 package org.neo4j.graphalgo.results;
 
-import org.neo4j.graphalgo.core.utils.ProgressTimer;
-
 /**
  * @author mknblch
  */
 public class DijkstraResult {
 
-    public final Long loadDuration;
-    public final Long evalDuration;
-    public final Long writeDuration;
-    public final Long nodeCount;
-    public final Double totalCost;
+    public final long loadMillis;
+    public final long evalMillis;
+    public final long writeMillis;
+    public final long nodeCount;
+    public final double totalCost;
 
-    public DijkstraResult(Long loadDuration, Long evalDuration, Long writeDuration, Long nodeCount, Double totalCost) {
-        this.loadDuration = loadDuration;
-        this.evalDuration = evalDuration;
-        this.writeDuration = writeDuration;
+    public DijkstraResult(long loadMillis, long evalMillis, long writeMillis, long nodeCount, double totalCost) {
+        this.loadMillis = loadMillis;
+        this.evalMillis = evalMillis;
+        this.writeMillis = writeMillis;
         this.nodeCount = nodeCount;
         this.totalCost = totalCost;
     }
@@ -25,25 +23,10 @@ public class DijkstraResult {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractResultBuilder<DijkstraResult>{
 
-        protected long loadDuration = -1;
-        protected long evalDuration = -1;
-        protected long writeDuration = -1;
         protected long nodeCount = 0;
         protected double totalCosts = 0.0;
-
-        public ProgressTimer load() {
-            return ProgressTimer.start(res -> loadDuration = res);
-        }
-
-        public ProgressTimer eval() {
-            return ProgressTimer.start(res -> evalDuration = res);
-        }
-
-        public ProgressTimer write() {
-            return ProgressTimer.start(res -> writeDuration = res);
-        }
 
         public Builder withNodeCount(long nodeCount) {
             this.nodeCount = nodeCount;

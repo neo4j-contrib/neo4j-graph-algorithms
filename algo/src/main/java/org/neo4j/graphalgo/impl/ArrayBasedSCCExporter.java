@@ -43,49 +43,4 @@ public final class ArrayBasedSCCExporter extends ParallelExporter<int[]> {
             );
         });
     }
-
-    public static class NodeBatch implements BatchNodeIterable {
-
-        public final int nodeCount;
-
-        public NodeBatch(int nodeCount) {
-            this.nodeCount = nodeCount;
-        }
-
-        @Override
-        public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-            ArrayList<PrimitiveIntIterable> result = new ArrayList<>();
-            for (int i = 0; i < nodeCount; i += batchSize) {
-                int end = i + batchSize > nodeCount ? nodeCount : i + batchSize;
-                result.add(new BatchedNodeIterator(i, end));
-            }
-            return result;
-        }
-    }
-
-    public static class BatchedNodeIterator implements PrimitiveIntIterator, PrimitiveIntIterable {
-
-        private final int end;
-        private int current;
-
-        private BatchedNodeIterator(int start, int end) {
-            this.end = end;
-            this.current = start;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return current < end;
-        }
-
-        @Override
-        public int next() {
-            return current++;
-        }
-
-        @Override
-        public PrimitiveIntIterator iterator() {
-            return this;
-        }
-    }
 }

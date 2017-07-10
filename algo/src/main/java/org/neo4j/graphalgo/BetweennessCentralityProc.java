@@ -118,7 +118,7 @@ public class BetweennessCentralityProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new BetweennessCentralityExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.getWriteProperty(),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(bc.getCentrality());
@@ -178,7 +178,7 @@ public class BetweennessCentralityProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new BetweennessCentralityExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.getWriteProperty(),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(bc.getCentrality());
@@ -226,7 +226,7 @@ public class BetweennessCentralityProc {
                         configuration.getBatchSize(),
                         api,
                         graph,
-                        new BetweennessCentralityExporter.NodeBatch(graph.nodeCount()),
+                        graph,
                         configuration.getWriteProperty(),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(bc.getCentrality());

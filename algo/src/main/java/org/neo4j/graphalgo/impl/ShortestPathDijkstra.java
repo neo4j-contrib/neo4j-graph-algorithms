@@ -2,10 +2,17 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.Exporter;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
+import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
+import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
+import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -82,6 +89,10 @@ public class ShortestPathDijkstra {
                 .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), costs.get(cursor.value)));
     }
 
+    public IntArrayDeque getFinalPath() {
+        return finalPath;
+    }
+
     /**
      * get the distance sum of the path
      * @return sum of distances between start and goal
@@ -116,7 +127,6 @@ public class ShortestPathDijkstra {
                         }
                         return true;
                     });
-
         }
     }
 
@@ -147,4 +157,33 @@ public class ShortestPathDijkstra {
             this.cost = cost;
         }
     }
+
+    public static class SPExporter extends Exporter<IntArrayDeque> {
+
+        private final IdMapping idMapping;
+        private final int propertyId;
+
+        public SPExporter(IdMapping idMapping, GraphDatabaseAPI api, String propertyName) {
+            super(api);
+            this.idMapping = idMapping;
+            propertyId = getOrCreatePropertyId(propertyName);
+        }
+
+        @Override
+        public void write(IntArrayDeque data) {
+            writeInTransaction(writeOp -> {
+                int distance = 0;
+                while (!data.isEmpty()) {
+                    final int node = data.removeFirst();
+                    try {
+                        writeOp.nodeSetProperty(idMapping.toOriginalNodeId(node),
+                                DefinedProperty.numberProperty(propertyId, distance++));
+                    } catch (EntityNotFoundException | ConstraintValidationKernelException | InvalidTransactionTypeKernelException | AutoIndexingKernelException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        }
+    }
+
 }
