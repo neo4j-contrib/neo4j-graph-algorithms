@@ -8,12 +8,8 @@ import org.mockito.AdditionalMatchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.ClosenessCentralityProc;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
@@ -35,7 +31,6 @@ public class ClosenessCentralityIntegrationTest {
     public static final String TYPE = "TYPE";
 
     private static GraphDatabaseAPI db;
-    private static Graph graph;
     private static DefaultBuilder builder;
     private static long centerNodeId;
 
@@ -83,12 +78,6 @@ public class ClosenessCentralityIntegrationTest {
                     center.createRelationshipTo(node, type);
                 });
 
-        graph = new GraphLoader(db)
-                .withAnyRelationshipType()
-                .withAnyLabel()
-                .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
-
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(ClosenessCentralityProc.class);
@@ -97,7 +86,6 @@ public class ClosenessCentralityIntegrationTest {
     @AfterClass
     public static void tearDown() throws Exception {
         if (db!=null) db.shutdown();
-        graph = null;
     }
 
     @Test

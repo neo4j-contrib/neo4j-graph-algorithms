@@ -37,10 +37,12 @@ public class MSClosenessCentrality {
 
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             // TODO size of sourceNodeIds
+            int len = 0;
             while (sourceNodeIds.hasNext()) {
                 sourceNodeIds.next();
-                farness.addAndGet(nodeId, depth);
+                len++;
             }
+            farness.addAndGet(nodeId, len * depth);
         };
 
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
