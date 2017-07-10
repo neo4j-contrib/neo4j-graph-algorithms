@@ -96,7 +96,6 @@ public final class ShortestPathsTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
-//        Pools.DEFAULT.shutdownNow();
     }
 
     @Test

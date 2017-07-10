@@ -1,20 +1,19 @@
 package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.AdditionalMatchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.neo4j.graphalgo.BetweennessCentralityProc;
+import org.neo4j.graphalgo.ClosenessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
@@ -23,7 +22,6 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.*;
 
@@ -32,7 +30,7 @@ import static org.mockito.Mockito.*;
  * @author mknblch
  */
 @RunWith(MockitoJUnitRunner.class)
-public class BetweennessCentralityIntegrationTest {
+public class ClosenessCentralityIntegrationTest {
 
     public static final String TYPE = "TYPE";
 
@@ -41,8 +39,13 @@ public class BetweennessCentralityIntegrationTest {
     private static DefaultBuilder builder;
     private static long centerNodeId;
 
+    interface TestConsumer {
+
+        void accept(long nodeId, double centrality);
+    }
+
     @Mock
-    private BetweennessCentrality.ResultConsumer consumer;
+    private TestConsumer consumer;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -88,13 +91,7 @@ public class BetweennessCentralityIntegrationTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(BetweennessCentralityProc.class);
-    }
-
-    @Before
-    public void setupMocks() {
-        when(consumer.consume(anyLong(), anyDouble()))
-                .thenReturn(true);
+                .registerProcedure(ClosenessCentralityProc.class);
     }
 
     @AfterClass
@@ -104,70 +101,45 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
-    public void testDirect() throws Exception {
-        new BetweennessCentrality(graph)
-                .compute()
-                .forEach(consumer);
-        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
-        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
-    }
+    public void testClosenessStream() throws Exception {
 
-    @Test
-    public void testBetweennessStream() throws Exception {
-
-        db.execute("CALL algo.betweenness.stream('Node', 'TYPE') YIELD nodeId, centrality")
+        db.execute("CALL algo.closeness.stream('Node', 'TYPE') YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    consumer.consume(
-                            (long) row.getNumber("nodeId"),
-                            (double) row.getNumber("centrality"));
-                    return true;
-                });
-
-        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
-        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
-    }
-
-    @Test
-    public void testParallelBetweennessStream() throws Exception {
-
-        db.execute("CALL algo.betweenness.stream('Node', 'TYPE', {concurrency:4}) YIELD nodeId, centrality")
-                .accept((Result.ResultVisitor<Exception>) row -> {
-                    System.out.printf("%d -> %f%n",
-                            row.getNumber("nodeId").intValue(),
-                            row.getNumber("centrality").doubleValue());
-                    consumer.consume(
-                            row.getNumber("nodeId").intValue(),
+                    consumer.accept(
+                            row.getNumber("nodeId").longValue(),
                             row.getNumber("centrality").doubleValue());
                     return true;
                 });
 
-        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
-        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+        verifyMock();
     }
 
     @Test
-    public void testBetweennessWrite() throws Exception {
+    public void testClosenessWrite() throws Exception {
 
-        db.execute("CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
-                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+        db.execute("CALL algo.closeness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+                "nodes, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    System.out.println("nodes: " + row.get("nodes"));
-                    System.out.println("min: " + row.get("minCentrality"));
-                    System.out.println("max: " + row.get("maxCentrality"));
-                    System.out.println("sum: " + row.get("sumCentrality"));
-                    System.out.println("load: " + row.get("loadMillis"));
-                    System.out.println("eval: " + row.get("computeMillis"));
-                    System.out.println("write: " + row.get("writeMillis"));
-
-                    assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
-                    assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
-                    assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     assertNotEquals(-1L, row.getNumber("computeMillis"));
                     assertNotEquals(-1L, row.getNumber("nodes"));
-
-
                     return true;
                 });
+
+        db.execute("MATCH (n) WHERE exists(n.centrality) RETURN id(n) as id, n.centrality as centrality")
+                .accept(row -> {
+                    consumer.accept(
+                            row.getNumber("id").longValue(),
+                            row.getNumber("centrality").doubleValue());
+                    return true;
+                });
+
+        verifyMock();
+    }
+
+    private void verifyMock() {
+        verify(consumer, times(1)).accept(eq(centerNodeId), eq(2.0));
+        verify(consumer, times(5)).accept(anyLong(), eq(1.0));
+        verify(consumer, times(5)).accept(anyLong(), AdditionalMatchers.eq(0.47, 0.1));
     }
 }

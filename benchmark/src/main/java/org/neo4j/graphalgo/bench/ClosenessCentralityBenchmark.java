@@ -1,8 +1,10 @@
 package org.neo4j.graphalgo.bench;
 
-import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
+import org.neo4j.graphalgo.BetweennessCentralityProc;
+import org.neo4j.graphalgo.ClosenessCentralityProc;
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -27,21 +29,12 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class ShortestPathBenchmark {
+public class ClosenessCentralityBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
     private static GraphDatabaseAPI db;
     private static List<Node> lines = new ArrayList<>();
-
-//    @Param({"1.0", "5.0", "10.0"})
-//    static double delta;
-    static double delta = 2.5;
-
-    @Param({"1", "2", "4", "8"})
-    static int concurrency;
-
-    private static final Map<String, Object> params = new HashMap<>();
 
     @Setup
     public static void setup() throws KernelException {
@@ -51,11 +44,18 @@ public class ShortestPathBenchmark {
                         .newGraphDatabase();
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(ShortestPathDeltaSteppingProc.class);
-        createNet(100); // 10000 nodes; 1000000 edges
-        params.put("head", lines.get(0).getId());
-        params.put("delta", delta);
-        params.put("concurrency", concurrency);
+                .registerProcedure(ClosenessCentralityProc.class);
+
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("setup took " + l + "ms"))) {
+            createNet(30); // size^2 nodes; size^3 edges
+        }
+    }
+
+
+    @TearDown
+    public static void tearDown() {
+        db.shutdown();
+        Pools.DEFAULT.shutdown();
     }
 
     private static void createNet(int size) {
@@ -69,7 +69,7 @@ public class ShortestPathBenchmark {
                             if (j == k) {
                                 continue;
                             }
-                            createRelation(temp.get(j), line.get(k));
+                            temp.get(j).createRelationshipTo(line.get(k), RELATIONSHIP_TYPE);
                         }
                     }
                 }
@@ -87,25 +87,17 @@ public class ShortestPathBenchmark {
         for (int i = 1; i < length; i++) {
             Node node = db.createNode();
             nodes.add(temp);
-            createRelation(temp, node);
+            temp.createRelationshipTo(node, RELATIONSHIP_TYPE);
             temp = node;
         }
         return nodes;
     }
 
-    private static Relationship createRelation(Node from, Node to) {
-        Relationship relationship = from.createRelationshipTo(to, RELATIONSHIP_TYPE);
-        double rndCost = Math.random() * 5.0; //(to.getId() % 5) + 1.0; // (0-5)
-        relationship.setProperty("cost",  rndCost);
-        return relationship;
-    }
-
     @Benchmark
     public Object _01_benchmark() {
 
-        return db.execute("MATCH (n {id:$head}) WITH n CALL algo.deltaStepping.stream(n, 'cost', $delta" +
-                ", {concurrency:$concurrency})" +
-                " YIELD nodeId, distance RETURN nodeId, distance", params)
+        return db.execute("CALL algo.closeness('','', {write:false, stats:false}) YIELD " +
+                "nodes, loadMillis, computeMillis, writeMillis")
                 .stream()
                 .count();
     }

@@ -90,7 +90,6 @@ public final class ShortestPathDeltaSteppingProcTest {
     @AfterClass
     public static void shutdownGraph() throws Exception {
         api.shutdown();
-//        Pools.DEFAULT.shutdownNow();
     }
 
     @Parameterized.Parameters(name = "{0}")
