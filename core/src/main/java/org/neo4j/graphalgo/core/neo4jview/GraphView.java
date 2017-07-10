@@ -5,6 +5,8 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
@@ -39,6 +41,7 @@ public class GraphView implements Graph {
     private int nodeCount;
     private int propertyKey;
     private int labelId;
+    private final IdMapping idMapping;
 
     public GraphView(GraphDatabaseAPI db, String label, String relation, String propertyName, double propertyDefaultWeight) {
         this.db = db;
@@ -52,6 +55,21 @@ public class GraphView implements Graph {
             relationTypeId = read.relationshipTypeGetForName(relation);
             propertyKey = read.propertyKeyGetForName(propertyName);
         });
+        idMapping = createIdMapping();
+    }
+
+    private IdMapping createIdMapping() {
+        if (labelId == StatementConstants.NO_SUCH_LABEL) return new DirectIdMapping(nodeCount);
+        IdMap idMap = new IdMap(nodeCount);
+        // TODO parallelize?
+        withinTransaction(read -> {
+            PrimitiveLongIterator it = read.nodesGetForLabel(labelId);
+            while (it.hasNext()) {
+                idMap.add(it.next());
+            }
+        });
+        idMap.buildMappedIds();
+        return idMap;
     }
 
     @Override
@@ -186,12 +204,12 @@ public class GraphView implements Graph {
 
     @Override
     public int toMappedNodeId(long nodeId) {
-        return Math.toIntExact(nodeId);
+        return idMapping.toMappedNodeId(nodeId);
     }
 
     @Override
     public long toOriginalNodeId(int nodeId) {
-        return nodeId;
+        return idMapping.toOriginalNodeId(nodeId);
     }
 
     private int withinTransactionInt(ToIntFunction<ReadOperations> block) {

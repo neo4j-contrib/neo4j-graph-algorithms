@@ -32,10 +32,6 @@ public class GraphSetup {
     // the executor service for parallel execution. null means single threaded evaluation.
     @Deprecated
     public final ExecutorService executor;
-    /** statement to load nodes, has to return "id" and optionally "weight" or "value" */
-    public final String nodeStatement;
-    /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
-    public final String relationshipStatement;
     /**
      * batchSize for parallel compuation
      */
@@ -58,8 +54,6 @@ public class GraphSetup {
 *                         null means the default value is used for each value.
      * @param nodeDefaultPropertyValue the default node value if property is not given.
      * @param executor the executor. null means single threaded evaluation
-     * @param nodeStatement statement to load nodes, has to return "id" and optionally "weight" or "value"
-     * @param relationshipStatement statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
      * @param batchSize batch size for parallel loading
      * @param accumulateWeights true if relationship-weights should be summed within the loader
      */
@@ -74,8 +68,6 @@ public class GraphSetup {
             String nodePropertyName,
             double nodeDefaultPropertyValue,
             ExecutorService executor,
-            String nodeStatement,
-            String relationshipStatement,
             int batchSize, boolean accumulateWeights) {
 
         this.startLabel = startLabel;
@@ -88,8 +80,6 @@ public class GraphSetup {
         this.nodePropertyName = nodePropertyName;
         this.nodeDefaultPropertyValue = nodeDefaultPropertyValue;
         this.executor = executor;
-        this.nodeStatement = nodeStatement;
-        this.relationshipStatement = relationshipStatement;
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
     }
@@ -108,8 +98,6 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = null;
-        this.nodeStatement = null;
-        this.relationshipStatement = null;
         this.batchSize = -1;
         this.accumulateWeights = false;
     }
@@ -131,8 +119,6 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = executor;
-        this.nodeStatement = null;
-        this.relationshipStatement = null;
         this.batchSize = -1;
         this.accumulateWeights = false;
     }

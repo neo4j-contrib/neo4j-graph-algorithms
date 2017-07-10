@@ -103,7 +103,7 @@ public class UnionFindProc3 {
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withExecutorService(Pools.DEFAULT)
-                .load(HeavyGraphFactory.class);
+                .load(config.getGraphImpl());
     }
 
     private DisjointSetStruct evaluate(Graph graph, ProcedureConfiguration config) {

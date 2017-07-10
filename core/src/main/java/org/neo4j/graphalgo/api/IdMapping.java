@@ -29,4 +29,5 @@ public interface IdMapping {
      * count of nodes
      */
     int nodeCount();
+
 }

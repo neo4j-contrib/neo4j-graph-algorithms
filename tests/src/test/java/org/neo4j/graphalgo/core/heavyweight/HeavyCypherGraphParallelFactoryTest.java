@@ -84,8 +84,8 @@ public class HeavyCypherGraphParallelFactoryTest {
                 .withBatchSize(1000)
                 .withAccumulateWeights(accumulateWeights)
                 .withRelationshipWeightsFromProperty("prop",0d)
-                .withNodeStatement(nodeStatement)
-                .withRelationshipStatement(relStatement)
+                .withLabel(nodeStatement)
+                .withRelationshipType(relStatement)
                 .load(HeavyCypherGraphFactory.class);
 
         Assert.assertEquals(COUNT, graph.nodeCount());

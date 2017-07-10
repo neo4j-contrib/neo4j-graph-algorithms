@@ -8,6 +8,7 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
@@ -33,12 +34,14 @@ public final class PageRankTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
+                new Object[]{HeavyCypherGraphFactory.class, "HeavyCypherGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }
 
     private static final String DB_CYPHER = "" +
+            "CREATE (_:Label0 {name:\"_\"})\n" +
             "CREATE (a:Label1 {name:\"a\"})\n" +
             "CREATE (b:Label1 {name:\"b\"})\n" +
             "CREATE (c:Label1 {name:\"c\"})\n" +
@@ -122,10 +125,20 @@ public final class PageRankTest {
             tx.close();
         }
 
-        final Graph graph = new GraphLoader(db)
-                .withLabel(label)
-                .withRelationshipType("TYPE1")
-                .load(graphImpl);
+        final Graph graph;
+        if (graphImpl.isAssignableFrom(HeavyCypherGraphFactory.class)) {
+            graph = new GraphLoader(db)
+                    .withLabel("MATCH (n:Label1) RETURN id(n) as id")
+                    .withRelationshipType("MATCH (n:Label1)-[:TYPE1]->(m:Label1) RETURN id(n) as source,id(m) as target")
+                    .load(graphImpl);
+
+        } else {
+            graph = new GraphLoader(db)
+                    .withLabel(label)
+                    .withRelationshipType("TYPE1")
+                    .load(graphImpl);
+
+        }
 
         final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();
 

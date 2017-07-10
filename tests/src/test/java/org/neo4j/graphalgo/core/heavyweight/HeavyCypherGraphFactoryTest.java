@@ -49,8 +49,8 @@ public class HeavyCypherGraphFactoryTest {
 
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
                 .withRelationshipWeightsFromProperty("prop",0)
-                .withNodeStatement(nodes)
-                .withRelationshipStatement(rels)
+                .withLabel(nodes)
+                .withRelationshipType(rels)
                 .load(HeavyCypherGraphFactory.class);
 
         assertEquals(3, graph.nodeCount());

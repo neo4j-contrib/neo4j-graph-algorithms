@@ -5,8 +5,11 @@
 :sectlinks:
 :toclevels: 2
 :img: https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.1/doc/img
+:env-docs: true
 
-include::../readme.adoc[lines=4..-1]
+== Introduction
+
+include::../readme.adoc[tags=readme,leveloffset=1]
 
 == Overview of Algorithm Procedures
 
