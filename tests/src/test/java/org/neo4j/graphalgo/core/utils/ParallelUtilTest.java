@@ -6,9 +6,11 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntStack;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -126,6 +128,7 @@ public final class ParallelUtilTest extends RandomizedTest {
                 "batchSize too small to satisfy desired concurrency" + params,
                 (int) Math.ceil(nodeCount / (double) batchSize) <= maxConcurrency);
     }
+
 
     private PrimitiveIntIterable ints(int from, int size) {
         final PrimitiveIntStack stack = new PrimitiveIntStack(size);

@@ -15,6 +15,8 @@ import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
+import org.neo4j.graphalgo.impl.BetweennessCentralitySuccessorBrandes;
+import org.neo4j.graphalgo.impl.ParallelBetweennessCentrality;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
@@ -104,8 +106,26 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
-    public void testDirect() throws Exception {
+    public void testBCDirect() throws Exception {
         new BetweennessCentrality(graph)
+                .compute()
+                .forEach(consumer);
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
+    public void testSuccessorBCDirect() throws Exception {
+        new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
+                .compute()
+                .forEach(consumer);
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
+    public void testParallelBCDirect() throws Exception {
+        new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
                 .compute()
                 .forEach(consumer);
         verify(consumer, times(10)).consume(anyLong(), eq(6.0));
@@ -128,13 +148,25 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
+    public void testSuccessorBetweennessStream() throws Exception {
+
+        db.execute("CALL algo.betweenness.exp1.stream('Node', 'TYPE') YIELD nodeId, centrality")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    consumer.consume(
+                            (long) row.getNumber("nodeId"),
+                            (double) row.getNumber("centrality"));
+                    return true;
+                });
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
     public void testParallelBetweennessStream() throws Exception {
 
         db.execute("CALL algo.betweenness.stream('Node', 'TYPE', {concurrency:4}) YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    System.out.printf("%d -> %f%n",
-                            row.getNumber("nodeId").intValue(),
-                            row.getNumber("centrality").doubleValue());
                     consumer.consume(
                             row.getNumber("nodeId").intValue(),
                             row.getNumber("centrality").doubleValue());
@@ -146,27 +178,64 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
-    public void testBetweennessWrite() throws Exception {
+    public void testSucessorBetweennessStream() throws Exception {
 
-        db.execute("CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.exp1.stream('Node', 'TYPE') YIELD nodeId, centrality")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    consumer.consume(
+                            row.getNumber("nodeId").intValue(),
+                            row.getNumber("centrality").doubleValue());
+                    return true;
+                });
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
+    public void testParallelBetweennessWrite() throws Exception {
+
+        db.execute("CALL algo.betweenness('','', {concurrency:4, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    System.out.println("nodes: " + row.get("nodes"));
-                    System.out.println("min: " + row.get("minCentrality"));
-                    System.out.println("max: " + row.get("maxCentrality"));
-                    System.out.println("sum: " + row.get("sumCentrality"));
-                    System.out.println("load: " + row.get("loadMillis"));
-                    System.out.println("eval: " + row.get("computeMillis"));
-                    System.out.println("write: " + row.get("writeMillis"));
-
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
                     assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
                     assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     assertNotEquals(-1L, row.getNumber("computeMillis"));
                     assertNotEquals(-1L, row.getNumber("nodes"));
+                    return true;
+                });
+    }
 
+    @Test
+    public void testBetweennessWrite() throws Exception {
 
+        db.execute("CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
+                    assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
+                    assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
+                    return true;
+                });
+    }
+
+    @Test
+    public void testSucessorBetweennessWrite() throws Exception {
+
+        db.execute("CALL algo.betweenness.exp1('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
+                    assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
+                    assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
                     return true;
                 });
     }
