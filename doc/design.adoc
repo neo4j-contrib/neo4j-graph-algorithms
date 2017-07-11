@@ -1,0 +1,102 @@
+= Neo4j Graph Algorithms
+
+== The Goal
+
+The goal of the project is an API optimized for the development of graph algorithms.
+ Furthermore, various implementations should  be integrated on the basis of the API.
+ Focus is on efficiency.
+
+== Model
+
+=== Design Decisions
+
+- each algorithm has different requirements to the graph API
+- so we distributed the graph api to several interfaces
+- each is responsible for access to different parts of the graph data
+
+[ditaa]
+----
+                            +---------+
+                            |         |
+                            |  Neo4j  |
+                            |    {s}  |
+                            +----+----+
+                                 ^
+                                 |
+        +-------------+----------+------+--------+--------- ...
+        |             |          |               |
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+    | NodeIter | | Degree | | RelIter | | WeightedRelIter | ...
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+
+----
+
+- most algorithms need repeated access to the data while some others don't
+- there are _data sources_ which buffer data locally while others do direct access to the Neo4J DB
+- the implementation itself decides which strategy it uses
+- the goal is to have several implementations with different properties regarding parallelizability, buffering and efficiency
+- each algorithm depend on a set of these _data sources_
+
+[ditaa]
+----
+
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+    | NodeIter | | Degree | | RelIter | | WeightedRelIter | ...
+    +---+------+ +----+---+ +----+----+ +--------+--------+
+        ^             ^          ^               ^
+        |             |          |               |
+        |             +-----+ +--+               |
+        +-----------------+ | | +----------------+
+                          | | | |
+                      +---+-+-+-+---+
+                      |             |
+                      |  Algorithm  |
+                      |             |
+                      +----+--------+
+
+----
+
+
+
+
+Basically, mathematics categorizes a graph according to various characteristics. For example, a distinction
+ is made between weighted and unweighted or directed or connected graphs. In addition, any properties can
+ exist at nodes and edges. Structural data such as neighborhood, cycles, or degrees are also of interest -
+ all of which strongly influence the data structures used and their abilities.
+
+Also not every Algorithm needs the whole feature set of the API. Therefore, we decided to divide the model into several
+ parts - we call them _data sources_. In addition, many of the algorithms require repeated access to the data,
+ with a few  exceptions. Buffering the data therefore is often an advantage but can also be a disadvantage if
+ no repeated access is necessary - due to the increased loading time.
+
+The model therefore defines several interfaces to access various parts of the data. E.g. an Iterator
+ for iterating over either incoming and outgoing relationships of a given node. Or the more precise
+ definition which only defines a way to iterate over either incoming or outgoing nodes and thus saves
+ some memory. The actual implementation, however, does not need to buffer the data and it is also free
+ to include many sources at once and it may or may not be accessible concurrently.
+
+Our intention for the future is to add a way to annotate the capabilities of each _data source_ and requirements
+ of the algorithms. The information can be used to dynamically build an algo-object-graph which can process many
+ algorithms concurrently or use the results of a previous algorithm as input for the next one.
+
+Up to now we have the definition of the API, it's _data sources_ and different Implementations. Each of them
+ defines it's own logic for importing and exporting which is also part of future improvement.
+
+In conclusion, every _data source_ defines a way to access different features of the graph but
+ the implementation itself decides if concurrent or repeated access is supported. Currently
+ the instantiation of an algorithm, its importer, exporter is hardcoded in each procedure.
+
+Some of
+them are especially created for concurrent access but most do not even specify if its implementation
+must support concurrent access. Also the implementation decides if repeated data access is
+
+=== Data Sources
+
+Due to the different requirements of an algorithm to the graph we decided to move away from a single centralized
+ data source, to a more flexible approach and divided the methods on multiple interfaces. The existing
+ implementations of the Graph-interface do still exist and are part of development. It now can be seen
+ as a composition of different interfaces into an optimized component.
+
+The new approach allows us to separate different data sets from importing and thus saves memory and loading time.
+ We can also have many implementations for a _data source_ with different characteristics.
+
