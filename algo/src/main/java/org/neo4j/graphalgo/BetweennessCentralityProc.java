@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -39,6 +40,7 @@ public class BetweennessCentralityProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
+                .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
         return new BetweennessCentralitySuccessorBrandes(graph,
@@ -61,6 +63,7 @@ public class BetweennessCentralityProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
+                .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
         if (configuration.getConcurrency(-1) > 0) {
@@ -95,6 +98,7 @@ public class BetweennessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
+                    .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
         }
 
@@ -160,6 +164,7 @@ public class BetweennessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
+                    .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
         }
 
@@ -202,6 +207,7 @@ public class BetweennessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
+                    .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
         }
 

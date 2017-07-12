@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.impl.PageRank;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -90,7 +91,7 @@ public class PageRankBenchmark {
 
     @Benchmark
     public double[] run() throws Exception {
-        final Graph graph = new GraphLoader(db).load(impl.impl);
+        final Graph graph = new GraphLoader(db).withDirection(Direction.OUTGOING).load(impl.impl);
         try {
             PageRank pageRank = new PageRank(
                     graph,

@@ -74,6 +74,7 @@ public final class LabelPropagationProc {
         HeavyGraph graph = load(
                 configuration.getNodeLabelOrQuery(),
                 configuration.getRelationshipOrQuery(),
+                direction,
                 partitionProperty,
                 weightProperty,
                 stats);
@@ -92,6 +93,7 @@ public final class LabelPropagationProc {
     private HeavyGraph load(
             String label,
             String relationshipType,
+            Direction direction,
             String partitionKey,
             String weightKey,
             LabelPropagationStats.Builder stats) {
@@ -103,6 +105,7 @@ public final class LabelPropagationProc {
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
+                    .withDirection(direction)
                     .withExecutorService(Pools.DEFAULT)
                     .load(HeavyGraphFactory.class);
         }
