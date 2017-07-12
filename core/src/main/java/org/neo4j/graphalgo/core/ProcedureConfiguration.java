@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphdb.Direction;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -205,6 +206,10 @@ public class ProcedureConfiguration {
 
     public String getDirectionName() {
         return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
+    }
+
+    public Direction getDirection() {
+        return Direction.valueOf(getDirectionName().toUpperCase());
     }
 
     /**

@@ -2,6 +2,8 @@ package org.neo4j.graphalgo.results;
 
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 
+import java.util.function.Supplier;
+
 /**
  * @author mknblch
  */
@@ -41,6 +43,12 @@ public abstract class AbstractResultBuilder<R> {
     public void timeLoad(Runnable runnable) {
         try(ProgressTimer timer = timeLoad()) {
             runnable.run();
+        }
+    }
+
+    public <T> T timeLoad(Supplier<T> runnable) {
+        try(ProgressTimer timer = timeLoad()) {
+            return runnable.get();
         }
     }
 
