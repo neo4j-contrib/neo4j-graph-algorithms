@@ -14,7 +14,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.impl.LabelPropagationExporter;
-import org.neo4j.graphalgo.impl.LabelPropagationStats;
+import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Context;
