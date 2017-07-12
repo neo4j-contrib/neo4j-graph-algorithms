@@ -176,3 +176,13 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 ## TODO
 
 - adapt apoc-procedure to algorithm-api
+
+== Details
+
+==== algo.betweenness
+
+- implementation of brandes-bc algorithm and nodePartitioning extension
+
+==== algo.betweenness.exp1
+
+- brandes-like algorithm which uses successor sets instead of predecessor sets
