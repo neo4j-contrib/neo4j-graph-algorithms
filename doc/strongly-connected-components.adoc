@@ -120,3 +120,29 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 - [ ] parallelization
 - [ ] evaluation
 - [ ] documentation
+
+== Details
+
+==== algo.scc.tarjan
+
+- original *recursive* tarjan implementation
+- result is a cluster-id at all nodes
+- each cluster is a scc
+
+==== algo.scc.tunedTarjan
+
+- also a recursive tarjan implementation
+- result is a cluster-id at all nodes
+
+==== algo.scc.iterative
+
+- iterative adaption of tarjan algorithm
+- result is a cluster-id at all nodes
+
+==== algo.scc.multistep
+
+- parallel scc algorithm
+- composition of several scc algorithms (FWBW, coloring, tarjan)
+- uses FWBW + coloring to find big scc's
+- starts simple tarjan once the cutoff threshold is reached
+

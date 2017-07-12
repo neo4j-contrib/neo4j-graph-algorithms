@@ -87,3 +87,22 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 ### evaluation
 
 - Performance tests on different dataset sizes / level of concurrency
+
+
+== Details
+
+
+==== algo.shortestPath
+
+- returns the *path-elements* (the nodeIds) and their distance to the start
+- there may be more then one shortest path, algo returns only one
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
+ terms of count of nodes in the path.
+
+==== algo.shortestPath.deltaStepping
+
+TODO naming!?
+
+- returns minimum distance to *all other nodes*
+- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
+ the number of nodes to reach the target
