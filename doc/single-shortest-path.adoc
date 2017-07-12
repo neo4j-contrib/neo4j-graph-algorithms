@@ -106,3 +106,7 @@ TODO naming!?
 - returns minimum distance to *all other nodes*
 - if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
  the number of nodes to reach the target
+
+==== algo.allShortestPaths
+
+- returns a stream of source-target node to distance tuples for each pair of nodes
