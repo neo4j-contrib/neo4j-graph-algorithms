@@ -8,12 +8,10 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.Neo4JTestCase;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.function.Consumer;
 
 import static org.mockito.Mockito.*;
 
@@ -77,30 +75,5 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
     public void testVXForEach() throws Exception {
         container.forEach(42, consumer);
         verify(consumer, never()).accept(anyInt(), anyInt(), anyLong());
-    }
-
-    @Test
-    public void testV0Iterator() throws Exception {
-        container.iterator(a).forEachRemaining(consume(consumer));
-        verify(consumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(consumer, times(1)).accept(eq(a), eq(b), eq(-1L));
-        verify(consumer, times(1)).accept(eq(a), eq(c), eq(-1L));
-    }
-
-    @Test
-    public void testV1Iterator() throws Exception {
-        container.iterator(b).forEachRemaining(consume(consumer));
-        verify(consumer, times(1)).accept(anyInt(), anyInt(), anyLong());
-        verify(consumer, times(1)).accept(eq(b), eq(c), eq(-1L));
-    }
-
-    @Test
-    public void testVXIterator() throws Exception {
-        container.iterator(42).forEachRemaining(consume(consumer));
-        verify(consumer, never()).accept(anyInt(), anyInt(), anyLong());
-    }
-
-    private static Consumer<RelationshipCursor> consume(RelationshipConsumer consumer) {
-        return cursor -> consumer.accept(cursor.sourceNodeId, cursor.targetNodeId, -1L);
     }
 }

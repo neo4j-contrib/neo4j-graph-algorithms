@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
@@ -79,18 +78,6 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
             final Direction direction,
             final WeightedRelationshipConsumer consumer) {
         container.forEach(nodeId, direction, relationshipWeights, consumer);
-    }
-
-    @Override
-    public Iterator<RelationshipCursor> relationshipIterator(int nodeId, Direction direction) {
-        return container.relationIterator(nodeId, direction);
-    }
-
-    @Override
-    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
-            final int nodeId, final Direction direction) {
-        return container.weightedRelationIterator(nodeId,
-                relationshipWeights, direction);
     }
 
     @Override

@@ -3,12 +3,10 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
@@ -159,36 +157,6 @@ class AdjacencyMatrix {
     }
 
     /**
-     * return an iterator for unweighted edges
-     */
-    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return new RelationIterator(nodeId, outgoing[nodeId], outOffsets[nodeId], direction);
-            case INCOMING:
-                return new RelationIterator(nodeId, incoming[nodeId], inOffsets[nodeId], direction);
-            default:
-                throw new IllegalArgumentException("Direction " + direction + " not implemented");
-        }
-
-    }
-
-    /**
-     * return an iterator for weighted edges
-     */
-    public Iterator<WeightedRelationshipCursor> weightedRelationIterator(int nodeId, WeightMapping weights, Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return new WeightedRelationIterator(nodeId, outgoing[nodeId], outOffsets[nodeId], weights, direction);
-            case INCOMING:
-                return new WeightedRelationIterator(nodeId, incoming[nodeId], inOffsets[nodeId], weights, direction);
-            default:
-                throw new IllegalArgumentException("Direction " + direction + " not implemented");
-        }
-
-    }
-
-    /**
      * iterate over each edge at the given node using an unweighted consumer
      */
     public void forEach(int nodeId, Direction direction, RelationshipConsumer consumer) {
@@ -274,77 +242,6 @@ class AdjacencyMatrix {
             return new DegreeCheckingNodeIterator(outOffsets);
         } else {
             return new DegreeCheckingNodeIterator(inOffsets);
-        }
-    }
-
-    private static class RelationIterator implements Iterator<RelationshipCursor> {
-
-        private final RelationshipCursor cursor;
-        private final int[] targetNodes;
-        private final int nodeCount;
-        private final IdCombiner relId;
-        private int offset = 0;
-
-        private RelationIterator(
-                int nodeId,
-                int[] targetNodes,
-                int nodeCount,
-                Direction direction) {
-            this.targetNodes = targetNodes;
-            this.nodeCount = nodeCount;
-            cursor = new RelationshipCursor();
-            cursor.sourceNodeId = nodeId;
-            relId = RawValues.combiner(direction);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return offset < nodeCount;
-        }
-
-        @Override
-        public RelationshipCursor next() {
-            cursor.targetNodeId = targetNodes[offset++];
-            cursor.relationshipId = relId.apply(cursor);
-            return cursor;
-        }
-    }
-
-    private static class WeightedRelationIterator implements Iterator<WeightedRelationshipCursor> {
-
-        private final WeightedRelationshipCursor cursor;
-        private final int[] targetNodes;
-        private final int nodeCount;
-        private final WeightMapping weights;
-        private final IdCombiner relId;
-        private int offset = 0;
-
-        private WeightedRelationIterator(
-                int nodeId,
-                int[] targetNodes,
-                int nodeCount,
-                WeightMapping weights,
-                Direction direction) {
-            this.targetNodes = targetNodes;
-            this.nodeCount = nodeCount;
-            this.weights = weights;
-            cursor = new WeightedRelationshipCursor();
-            cursor.sourceNodeId = nodeId;
-            relId = RawValues.combiner(direction);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return offset < nodeCount;
-        }
-
-        @Override
-        public WeightedRelationshipCursor next() {
-            cursor.targetNodeId = targetNodes[offset++];
-            long relationId = relId.apply(cursor);
-            cursor.relationshipId = relationId;
-            cursor.weight = weights.get(relationId);
-            return cursor;
         }
     }
 

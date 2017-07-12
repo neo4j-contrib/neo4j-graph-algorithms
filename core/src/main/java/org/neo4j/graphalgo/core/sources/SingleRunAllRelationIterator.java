@@ -7,8 +7,6 @@ import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.Iterator;
-
 /**
  * Unbuffered RelationshipIterator working directly with Neo4j
  *
@@ -41,10 +39,5 @@ public class SingleRunAllRelationIterator implements AllRelationshipIterator {
             });
             transaction.success();
         }
-    }
-
-    @Override
-    public Iterator<RelationshipCursor> allRelationshipIterator() {
-        throw new UnsupportedOperationException();
     }
 }

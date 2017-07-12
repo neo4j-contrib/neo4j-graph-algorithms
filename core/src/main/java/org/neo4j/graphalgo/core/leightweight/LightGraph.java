@@ -14,7 +14,6 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
@@ -109,55 +108,6 @@ public class LightGraph implements Graph {
 
             default:
                 throw new IllegalArgumentException(direction + "");
-        }
-    }
-
-    @Override
-    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
-            int vertexId,
-            Direction direction) {
-
-        switch (direction) {
-            case INCOMING: {
-                final long offset = inOffsets[vertexId];
-                final int length = (int) (inOffsets[vertexId + 1] - offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset, length, weightMapping, inAdjacency, direction);
-            }
-
-            case OUTGOING: {
-                final long offset = outOffsets[vertexId];
-                final int length = (int) (outOffsets[vertexId + 1] - offset);
-                return new WeightedRelationIteratorImpl(vertexId, offset, length, weightMapping, outAdjacency, direction);
-            }
-            default: {
-                throw new IllegalArgumentException(
-                        "Direction.BOTH not yet implemented");
-            }
-        }
-    }
-
-    @Override
-    public Iterator<RelationshipCursor> relationshipIterator(
-            int vertexId,
-            Direction direction) {
-
-        switch (direction) {
-            case INCOMING: {
-                final long offset = inOffsets[vertexId];
-                final int length = (int) (inOffsets[vertexId + 1] - offset);
-                return new RelationIteratorImpl(vertexId, offset, length, inAdjacency, direction);
-            }
-
-            case OUTGOING: {
-                final long offset = outOffsets[vertexId];
-                final int length = (int) (outOffsets[vertexId + 1] - offset);
-                return new RelationIteratorImpl(vertexId, offset, length, outAdjacency, direction);
-            }
-
-            default: {
-                throw new IllegalArgumentException("Not yet implemented");
-            }
-
         }
     }
 

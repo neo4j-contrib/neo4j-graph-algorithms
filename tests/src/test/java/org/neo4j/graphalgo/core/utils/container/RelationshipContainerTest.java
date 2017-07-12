@@ -59,30 +59,4 @@ public class RelationshipContainerTest {
         container.forEach(42, consumer);
         verify(consumer, never()).accept(anyInt(), anyInt(), anyLong());
     }
-
-    @Test
-    public void testV0Iterator() throws Exception {
-        container.iterator(0).forEachRemaining(consume(consumer));
-        verify(consumer, times(2)).accept(anyInt(), anyInt(), anyLong());
-        verify(consumer, times(1)).accept(eq(0), eq(1), eq(-1L));
-        verify(consumer, times(1)).accept(eq(0), eq(2), eq(-1L));
-    }
-
-    @Test
-    public void testV1Iterator() throws Exception {
-        container.iterator(1).forEachRemaining(consume(consumer));
-        verify(consumer, times(1)).accept(anyInt(), anyInt(), anyLong());
-        verify(consumer, times(1)).accept(eq(1), eq(2), eq(-1L));
-    }
-
-    @Test
-    public void testVXIterator() throws Exception {
-        container.iterator(42).forEachRemaining(consume(consumer));
-        verify(consumer, never()).accept(anyInt(), anyInt(), anyLong());
-    }
-
-
-    private static Consumer<RelationshipCursor> consume(RelationshipConsumer consumer) {
-        return cursor -> consumer.accept(cursor.sourceNodeId, cursor.targetNodeId, -1L);
-    }
 }

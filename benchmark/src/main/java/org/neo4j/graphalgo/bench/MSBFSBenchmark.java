@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.bench;
 import algo.Pools;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
@@ -24,7 +23,6 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
@@ -116,14 +114,6 @@ public class MSBFSBenchmark {
                     consumer.accept(nodeId, i, -1L);
                 }
             }
-        }
-
-        @Override
-        public Iterator<RelationshipCursor> relationshipIterator(
-                int nodeId,
-                Direction direction) {
-            throw new UnsupportedOperationException(
-                    ".relationshipIterator is not implemented.");
         }
     }
 }
