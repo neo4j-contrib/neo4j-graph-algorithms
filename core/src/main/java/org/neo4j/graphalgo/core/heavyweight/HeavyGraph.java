@@ -87,7 +87,12 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
 
     @Override
     public long toOriginalNodeId(int mappedNodeId) {
-        return nodeIdMap.unmap(mappedNodeId);
+        return nodeIdMap.toOriginalNodeId(mappedNodeId);
+    }
+
+    @Override
+    public boolean contains(final long nodeId) {
+        return nodeIdMap.contains(nodeId);
     }
 
     @Override

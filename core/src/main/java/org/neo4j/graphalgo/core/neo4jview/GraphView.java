@@ -109,10 +109,21 @@ public class GraphView implements Graph {
             Consumer<RelationshipItem> action) {
         final long originalNodeId = toOriginalNodeId(nodeId);
         org.neo4j.storageengine.api.Direction d = mediate(direction);
-        withinTransaction(read -> read
-                .nodeCursor(originalNodeId)
-                .forAll(nodeItem -> relationships(d, nodeItem)
-                        .forAll(action)));
+        withinTransaction(read -> {
+            try (Cursor<NodeItem> nodes = read.nodeCursor(originalNodeId)) {
+                while (nodes.next()) {
+                    NodeItem nodeItem = nodes.get();
+                    try (Cursor<RelationshipItem> rels = relationships(d, nodeItem)) {
+                        while (rels.next()) {
+                            RelationshipItem item = rels.get();
+                            if (idMapping.contains(item.otherNode(originalNodeId))) {
+                                action.accept(item);
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     private Cursor<RelationshipItem> relationships(
@@ -201,6 +212,11 @@ public class GraphView implements Graph {
     @Override
     public long toOriginalNodeId(int nodeId) {
         return idMapping.toOriginalNodeId(nodeId);
+    }
+
+    @Override
+    public boolean contains(final long nodeId) {
+        return idMapping.contains(nodeId);
     }
 
     private int withinTransactionInt(ToIntFunction<ReadOperations> block) {

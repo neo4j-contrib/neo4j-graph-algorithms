@@ -138,7 +138,12 @@ public class LightGraph implements Graph {
 
     @Override
     public long toOriginalNodeId(int vertexId) {
-        return idMapping.unmap(vertexId);
+        return idMapping.toOriginalNodeId(vertexId);
+    }
+
+    @Override
+    public boolean contains(final long nodeId) {
+        return idMapping.contains(nodeId);
     }
 
     public void forEachIncoming(
