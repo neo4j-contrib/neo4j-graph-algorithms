@@ -38,12 +38,20 @@ class AdjacencyMatrix {
     final int[][] incoming;
 
     AdjacencyMatrix(int nodeCount) {
-        this.outOffsets = new int[nodeCount];
-        this.inOffsets = new int[nodeCount];
-        this.outgoing = new int[nodeCount][];
-        this.incoming = new int[nodeCount][];
-        Arrays.fill(outgoing, EMPTY_INTS);
-        Arrays.fill(incoming, EMPTY_INTS);
+        this(nodeCount, true, true);
+    }
+
+    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing) {
+        this.outOffsets = withOutgoing ? new int[nodeCount] : null;
+        this.inOffsets = withIncoming ? new int[nodeCount] : null;
+        this.outgoing = withOutgoing ? new int[nodeCount][] : null;
+        this.incoming = withIncoming ? new int[nodeCount][] : null;
+        if (outgoing != null) {
+            Arrays.fill(outgoing, EMPTY_INTS);
+        }
+        if (incoming != null) {
+            Arrays.fill(incoming, EMPTY_INTS);
+        }
     }
 
     AdjacencyMatrix(
@@ -61,14 +69,18 @@ class AdjacencyMatrix {
      * initialize array for outgoing connections
      */
     public void armOut(int sourceNodeId, int degree) {
-        outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId], degree);
+        if (degree > 0) {
+            outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId], degree);
+        }
     }
 
     /**
      * initialize array for incoming connections
      */
     public void armIn(int targetNodeId, int degree) {
-        incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId], degree);
+        if (degree > 0) {
+            incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId], degree);
+        }
     }
 
     /**
@@ -141,6 +153,7 @@ class AdjacencyMatrix {
 
     /**
      * get the degree for node / direction
+     * @throws NullPointerException if the direction hasn't been loaded.
      */
     public int degree(int nodeId, Direction direction) {
         switch (direction) {
@@ -193,14 +206,22 @@ class AdjacencyMatrix {
     }
 
     public int capacity() {
-        return outOffsets.length;
+        return outOffsets != null
+                ? outOffsets.length
+                : inOffsets != null
+                ? inOffsets.length
+                : 0;
     }
 
     public void addMatrix(AdjacencyMatrix other, int offset, int length) {
-        System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
-        System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
-        System.arraycopy(other.outgoing, 0, outgoing, offset, length);
-        System.arraycopy(other.incoming, 0, incoming, offset, length);
+        if (other.outgoing != null) {
+            System.arraycopy(other.outgoing, 0, outgoing, offset, length);
+            System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
+        }
+        if (other.incoming != null) {
+            System.arraycopy(other.incoming, 0, incoming, offset, length);
+            System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
+        }
     }
 
     private void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
@@ -249,7 +270,7 @@ class AdjacencyMatrix {
         private final int[] array;
 
         DegreeCheckingNodeIterator(int[] array) {
-            this.array = array;
+            this.array = array != null ? array : EMPTY_INTS;
         }
 
         @Override

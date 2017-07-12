@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.Exceptions;
@@ -37,6 +38,7 @@ public class GraphLoader {
     private String relWeightProp = null;
     private String nodeWeightProp = null;
     private String nodeProp = null;
+    private Direction direction = Direction.BOTH;
 
     private final GraphDatabaseAPI api;
     private ExecutorService executorService;
@@ -172,6 +174,16 @@ public class GraphLoader {
      */
     public GraphLoader withAnyRelationshipType() {
         this.relation = null;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load only relationship of the given direction.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDirection(Direction direction) {
+        this.direction = direction;
         return this;
     }
 
@@ -360,6 +372,7 @@ public class GraphLoader {
                 label,
                 null,
                 relation,
+                direction,
                 relWeightProp,
                 relWeightDefault,
                 nodeWeightProp,

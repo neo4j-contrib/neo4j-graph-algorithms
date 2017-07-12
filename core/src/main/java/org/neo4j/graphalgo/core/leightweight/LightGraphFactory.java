@@ -25,6 +25,8 @@ public final class LightGraphFactory extends GraphFactory {
     private long[] outOffsets;
     private IntArray inAdjacency;
     private IntArray outAdjacency;
+    private IntArray.BulkAdder inAdder;
+    private IntArray.BulkAdder outAdder;
     private WeightMapping weights;
     private long inAdjacencyIdx;
     private long outAdjacencyIdx;
@@ -56,16 +58,23 @@ public final class LightGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
+        boolean loadIncoming = setup.loadIncoming;
+        boolean loadOutgoing = setup.loadOutgoing;
 
         mapping = new IdMap(nodeCount);
-        // we allocate one more offset and set it to the nodeCount in order
-        // to avoid having to check for the last element during degree access
-        inOffsets = new long[nodeCount + 1];
-        outOffsets = new long[nodeCount + 1];
-        inOffsets[nodeCount] = nodeCount;
-        outOffsets[nodeCount] = nodeCount;
-        inAdjacency = IntArray.newArray(nodeCount);
-        outAdjacency = IntArray.newArray(nodeCount);
+        // we allocate one more offset in order to avoid having to
+        // check for the last element during degree access
+        if (loadIncoming) {
+            inOffsets = new long[nodeCount + 1];
+            inAdjacency = IntArray.newArray(nodeCount);
+            inAdder = inAdjacency.bulkAdder();
+        }
+        if (loadOutgoing) {
+            outOffsets = new long[nodeCount + 1];
+            outOffsets[nodeCount] = nodeCount;
+            outAdjacency = IntArray.newArray(nodeCount);
+            outAdder = outAdjacency.bulkAdder();
+        }
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
                 : new WeightMap(nodeCount, setup.relationDefaultWeight);
@@ -83,17 +92,21 @@ public final class LightGraphFactory extends GraphFactory {
             }
             mapping.buildMappedIds();
 
-            IntArray.BulkAdder inBulkAdder = inAdjacency.bulkAdder();
-            IntArray.BulkAdder outBulkAdder = outAdjacency.bulkAdder();
-
             try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodeCursorGetAll()
                     : readOp.nodeCursorGetForLabel(labelId)) {
                 while (cursor.next()) {
-                    readNode(cursor.get(), inBulkAdder, outBulkAdder);
+                    readNode(cursor.get(), loadIncoming, loadOutgoing);
                 }
             }
         });
+
+        if (inOffsets != null) {
+            inOffsets[nodeCount] = inAdjacencyIdx;
+        }
+        if (outOffsets != null) {
+            outOffsets[nodeCount] = outAdjacencyIdx;
+        }
 
         return new LightGraph(
                 mapping,
@@ -107,29 +120,33 @@ public final class LightGraphFactory extends GraphFactory {
 
     private void readNode(
             NodeItem node,
-            IntArray.BulkAdder inBulkAdder,
-            IntArray.BulkAdder outBulkAdder) {
+            boolean loadIncoming,
+            boolean loadOutgoing) {
         long sourceNodeId = node.id();
         int sourceGraphId = mapping.get(sourceNodeId);
 
-        outAdjacencyIdx = readRelationships(
-                sourceGraphId,
-                node,
-                Direction.OUTGOING,
-                outOffsets,
-                outAdjacency,
-                outBulkAdder,
-                outAdjacencyIdx
-        );
-        inAdjacencyIdx = readRelationships(
-                sourceGraphId,
-                node,
-                Direction.INCOMING,
-                inOffsets,
-                inAdjacency,
-                inBulkAdder,
-                inAdjacencyIdx
-        );
+        if (loadOutgoing) {
+            outAdjacencyIdx = readRelationships(
+                    sourceGraphId,
+                    node,
+                    Direction.OUTGOING,
+                    outOffsets,
+                    outAdjacency,
+                    outAdder,
+                    outAdjacencyIdx
+            );
+        }
+        if (loadIncoming) {
+            inAdjacencyIdx = readRelationships(
+                    sourceGraphId,
+                    node,
+                    Direction.INCOMING,
+                    inOffsets,
+                    inAdjacency,
+                    inAdder,
+                    inAdjacencyIdx
+            );
+        }
     }
 
     private long readRelationships(

@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.api;
 
+import org.neo4j.graphdb.Direction;
+
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -16,6 +18,10 @@ public class GraphSetup {
     public final String endLabel;
     // relationtype name. null means any relation.
     public final String relationshipType;
+    // load incoming relationships.
+    public final boolean loadIncoming;
+    // load outgoing relationships.
+    public final boolean loadOutgoing;
     // property of relationship weights. null means NO property (the default value will be used instead).
     public final String relationWeightPropertyName;
     // default property is used for weighted relationships if property is not set.
@@ -61,6 +67,7 @@ public class GraphSetup {
             String startLabel,
             String endLabel,
             String relationshipType,
+            Direction direction,
             String relationWeightPropertyName,
             double relationDefaultWeight,
             String nodeWeightPropertyName,
@@ -73,6 +80,8 @@ public class GraphSetup {
         this.startLabel = startLabel;
         this.endLabel = endLabel;
         this.relationshipType = relationshipType;
+        this.loadIncoming = direction == Direction.INCOMING || direction == Direction.BOTH;
+        this.loadOutgoing = direction == Direction.OUTGOING || direction == Direction.BOTH;
         this.relationWeightPropertyName = relationWeightPropertyName;
         this.relationDefaultWeight = relationDefaultWeight;
         this.nodeWeightPropertyName = nodeWeightPropertyName;
@@ -91,6 +100,7 @@ public class GraphSetup {
         this.startLabel = null;
         this.endLabel = null;
         this.relationshipType = null;
+        this.loadIncoming = this.loadOutgoing = true;
         this.relationWeightPropertyName = null;
         this.relationDefaultWeight = 1.0;
         this.nodeWeightPropertyName = null;
@@ -112,6 +122,7 @@ public class GraphSetup {
         this.startLabel = null;
         this.endLabel = null;
         this.relationshipType = null;
+        this.loadIncoming = this.loadOutgoing = true;
         this.relationWeightPropertyName = null;
         this.relationDefaultWeight = 1.0;
         this.nodeWeightPropertyName = null;
