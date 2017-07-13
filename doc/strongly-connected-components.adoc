@@ -136,7 +136,7 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 
 ==== algo.scc.iterative
 
-- iterative adaption of tarjan algorithm
+- *iterative* adaption of tarjan algorithm
 - result is a cluster-id at all nodes
 
 ==== algo.scc.multistep
