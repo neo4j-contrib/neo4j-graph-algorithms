@@ -13,7 +13,7 @@ import java.util.stream.StreamSupport;
 /**
  * @author mknblch
  */
-public class ForwardBackwardScc {
+public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
 
     private final ParallelLocalQueueBFS traverse;
     private final IntSet scc = new IntScatterSet();
@@ -25,15 +25,20 @@ public class ForwardBackwardScc {
     }
 
     public ForwardBackwardScc compute(int startNodeId) {
+
+        resetProgress();
+
         scc.clear();
         // D <- BFS( G(V,E(V)), v)
         final IntScatterSet descendant = new IntScatterSet();
         traverse.bfs(startNodeId, Direction.OUTGOING, node -> true, descendant::add)
                 .awaitTermination();
+        logProgress(.5);
         // ST <- BFS( G(V, E'(V)), v)
         traverse.reset()
                 .bfs(startNodeId, Direction.INCOMING, descendant::contains, scc::add)
                 .awaitTermination();
+        logProgress(1.0);
         // SCC <- V & ST
         scc.retainAll(descendant);
         return this;
@@ -46,6 +51,11 @@ public class ForwardBackwardScc {
     public Stream<Result> resultStream() {
         return StreamSupport.stream(scc.spliterator(), false)
                 .map(node -> new Result(graph.toOriginalNodeId(node.value)));
+    }
+
+    @Override
+    public ForwardBackwardScc me() {
+        return this;
     }
 
     public class Result {

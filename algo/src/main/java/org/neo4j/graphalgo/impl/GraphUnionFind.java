@@ -19,15 +19,17 @@ import org.neo4j.graphdb.Direction;
  *
  * @author mknblch
  */
-public class GraphUnionFind {
+public class GraphUnionFind extends Algorithm<GraphUnionFind> {
 
     private final Graph graph;
 
     private final DisjointSetStruct dss;
+    private final int nodeCount;
 
     public GraphUnionFind(Graph graph) {
         this.graph = graph;
-        this.dss = new DisjointSetStruct(graph.nodeCount());
+        nodeCount = graph.nodeCount();
+        this.dss = new DisjointSetStruct(nodeCount);
     }
 
     /**
@@ -41,6 +43,7 @@ public class GraphUnionFind {
                 dss.union(source, target);
                 return true;
             });
+            logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;
@@ -60,8 +63,14 @@ public class GraphUnionFind {
                 }
                 return true;
             });
+            logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;
+    }
+
+    @Override
+    public GraphUnionFind me() {
+        return this;
     }
 }

@@ -25,7 +25,7 @@ import java.util.stream.StreamSupport;
  * [nodeId, distance] of each node in the path.
  *
  */
-public class ShortestPathDijkstra {
+public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     private final Graph graph;
 
@@ -39,6 +39,7 @@ public class ShortestPathDijkstra {
     private final IntArrayDeque finalPath;
     // visited set
     private final SimpleBitSet visited;
+    private final int nodeCount;
     // overall cost of the path
     private double totalCost;
     // target node id
@@ -46,7 +47,7 @@ public class ShortestPathDijkstra {
 
     public ShortestPathDijkstra(Graph graph) {
         this.graph = graph;
-        int nodeCount = graph.nodeCount();
+        nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new SharedIntMinPriorityQueue(
                 nodeCount,
@@ -62,6 +63,7 @@ public class ShortestPathDijkstra {
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
+        resetProgress();
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
@@ -127,6 +129,7 @@ public class ShortestPathDijkstra {
                         }
                         return true;
                     });
+            logProgress((double) node / (nodeCount - 1));
         }
     }
 
@@ -136,6 +139,11 @@ public class ShortestPathDijkstra {
             costs.put(target, newCosts);
             path.put(target, source);
         }
+    }
+
+    @Override
+    public ShortestPathDijkstra me() {
+        return this;
     }
 
     /**

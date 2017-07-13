@@ -32,14 +32,16 @@ import java.util.stream.StreamSupport;
  * add elements to it. The result stream is limited by N^2. If the stream gets closed
  * prematurely the workers get closed too.
  */
-public class MSBFSAllShortestPaths {
+public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
     private final Graph graph;
     private final ExecutorService executorService;
     private final BlockingQueue<Result> resultQueue;
+    private final int nodeCount;
 
     public MSBFSAllShortestPaths(Graph graph, ExecutorService executorService) {
         this.graph = graph;
+        nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
@@ -51,6 +53,9 @@ public class MSBFSAllShortestPaths {
      * @return the result stream
      */
     public Stream<Result> resultStream() {
+
+        resetProgress();
+
         executorService.submit(new ShortestPathTask(executorService));
         Iterator<Result> iterator = new AbstractIterator<Result>() {
             @Override
@@ -69,6 +74,11 @@ public class MSBFSAllShortestPaths {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
                 iterator,
                 0), false);
+    }
+
+    @Override
+    public MSBFSAllShortestPaths me() {
+        return this;
     }
 
     /**
@@ -104,6 +114,7 @@ public class MSBFSAllShortestPaths {
                                 throw new RuntimeException(e);
                             }
                         }
+                        logProgress((double) target / (nodeCount - 1));
                     }
             ).run(executorService);
             resultQueue.add(new Result(-1, -1, -1));

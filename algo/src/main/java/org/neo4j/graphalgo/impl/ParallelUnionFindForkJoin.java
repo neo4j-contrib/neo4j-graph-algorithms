@@ -24,7 +24,7 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class ParallelUnionFindForkJoin {
+public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJoin> {
 
     private final Graph graph;
     private final ExecutorService executor;
@@ -46,18 +46,25 @@ public class ParallelUnionFindForkJoin {
     }
 
     public ParallelUnionFindForkJoin compute() {
+        resetProgress();
         struct = ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
         return this;
     }
 
 
     public ParallelUnionFindForkJoin compute(double threshold) {
+        resetProgress();
         struct = ForkJoinPool.commonPool().invoke(new ThresholdUFTask(0, threshold));
         return this;
     }
 
     public DisjointSetStruct getStruct() {
         return struct;
+    }
+
+    @Override
+    public ParallelUnionFindForkJoin me() {
+        return this;
     }
 
     private class UnionFindTask extends RecursiveTask<DisjointSetStruct> {
@@ -90,6 +97,7 @@ public class ParallelUnionFindForkJoin {
                     return true;
                 });
             }
+            logProgress((end - 1.0) / (nodeCount - 1.0));
             return struct;
         }
     }

@@ -49,6 +49,7 @@ public class ShortestPathProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDijkstra(graph)
+                .withLog(log)
                 .compute(startNode.getId(), endNode.getId())
                 .resultStream();
     }

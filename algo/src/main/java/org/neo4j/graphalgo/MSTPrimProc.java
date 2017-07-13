@@ -78,7 +78,8 @@ public class MSTPrimProc {
         final MSTPrim mstPrim = new MSTPrim(
                 idMapper,
                 new BothRelationshipAdapter(relationshipContainer),
-                weightMap);
+                weightMap)
+                .withLog(log);
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);

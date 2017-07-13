@@ -24,7 +24,7 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class ParallelUnionFindFJMerge {
+public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge> {
 
     private final Graph graph;
     private final ExecutorService executor;
@@ -46,6 +46,7 @@ public class ParallelUnionFindFJMerge {
     }
 
     public ParallelUnionFindFJMerge compute() {
+        resetProgress();
         final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new UFProcess(i, batchSize));
@@ -55,6 +56,7 @@ public class ParallelUnionFindFJMerge {
     }
 
     public ParallelUnionFindFJMerge compute(double threshold) {
+        resetProgress();
         final ArrayList<TUFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
@@ -72,6 +74,11 @@ public class ParallelUnionFindFJMerge {
 
     public DisjointSetStruct getStruct() {
         return struct;
+    }
+
+    @Override
+    public ParallelUnionFindFJMerge me() {
+        return this;
     }
 
     /**
@@ -105,6 +112,7 @@ public class ParallelUnionFindFJMerge {
                     return;
                 }
             }
+            logProgress((end - 1) / (nodeCount - 1));
         }
     }
 

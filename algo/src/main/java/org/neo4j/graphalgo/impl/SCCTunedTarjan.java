@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  *
  * as specified in: https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
  */
-public class SCCTunedTarjan {
+public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
 
     private final Graph graph;
     private final IntStack edgeStack;
@@ -28,8 +28,6 @@ public class SCCTunedTarjan {
     private int minSetSize = Integer.MAX_VALUE;
     private int maxSetSize = 0;
 
-
-
     public SCCTunedTarjan(Graph graph) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
@@ -39,6 +37,7 @@ public class SCCTunedTarjan {
     }
 
     public SCCTunedTarjan compute() {
+        resetProgress();
         Arrays.fill(connectedComponents, -1);
         setCount = 0;
         dfs = 0;
@@ -50,6 +49,7 @@ public class SCCTunedTarjan {
             if (connectedComponents[node] == -1) {
                 lowPointDFS(node);
             }
+            logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return this;
@@ -111,5 +111,10 @@ public class SCCTunedTarjan {
             setCount++;
         }
         return lowPoint;
+    }
+
+    @Override
+    public SCCTunedTarjan me() {
+        return this;
     }
 }

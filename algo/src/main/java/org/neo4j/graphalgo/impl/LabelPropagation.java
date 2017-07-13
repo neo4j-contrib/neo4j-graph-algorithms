@@ -14,19 +14,21 @@ import org.neo4j.graphdb.Direction;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 
-public final class LabelPropagation {
+public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
     private static final double[] EMPTY_DOUBLES = new double[0];
     private static final int[] EMPTY_INTS = new int[0];
 
     private final HeavyGraph graph;
     private final ExecutorService executor;
+    private final int nodeCount;
     private Direction direction;
 
     public LabelPropagation(
             HeavyGraph graph,
             ExecutorService executor) {
         this.graph = graph;
+        nodeCount = graph.nodeCount();
         this.executor = executor;
     }
 
@@ -38,6 +40,8 @@ public final class LabelPropagation {
             throw new IllegalArgumentException("Must iterate at least 1 time");
         }
         this.direction = direction;
+
+        resetProgress();
 
         Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
                     batchSize,
@@ -55,6 +59,11 @@ public final class LabelPropagation {
         }
 
         return labels;
+    }
+
+    @Override
+    public LabelPropagation me() {
+        return this;
     }
 
     private final class ComputeStep implements Runnable, RelationshipConsumer {
@@ -89,10 +98,10 @@ public final class LabelPropagation {
                     partition = vote.key;
                 }
             }
-
             if (partition != originalPartition) {
                 labels.put(nodeId, partition);
             }
+            logProgress((double) nodeId / (nodeCount - 1));
         }
 
         @Override

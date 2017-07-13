@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class ShortestPathDeltaStepping {
+public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaStepping> {
 
     // distance array
     private final AtomicIntegerArray distance;
@@ -37,6 +37,7 @@ public class ShortestPathDeltaStepping {
     private final Buckets buckets;
     // delta parameter
     private final double delta;
+    private final int nodeCount;
     // scaled delta
     private int iDelta;
 
@@ -55,8 +56,9 @@ public class ShortestPathDeltaStepping {
         this.graph = graph;
         this.delta = delta;
         this.iDelta = (int) (multiplier * delta);
-        distance = new AtomicIntegerArray(graph.nodeCount());
-        buckets = new Buckets(graph.nodeCount());
+        nodeCount = graph.nodeCount();
+        distance = new AtomicIntegerArray(nodeCount);
+        buckets = new Buckets(nodeCount);
         heavy = new ArrayDeque<>(1024);
         light = new ArrayDeque<>(1024);
         futures = new ArrayDeque<>(128);
@@ -95,7 +97,7 @@ public class ShortestPathDeltaStepping {
     public ShortestPathDeltaStepping compute(long startNode) {
 
         // reset
-        for (int i = 0; i < graph.nodeCount(); i++) {
+        for (int i = 0; i < nodeCount; i++) {
             distance.set(i, Integer.MAX_VALUE);
         }
         buckets.reset();
@@ -129,7 +131,6 @@ public class ShortestPathDeltaStepping {
             ParallelUtil.run(light, executorService, futures);
             ParallelUtil.run(heavy, executorService, futures);
         }
-
         return this;
     }
 
@@ -187,8 +188,8 @@ public class ShortestPathDeltaStepping {
      * @return mapped-id to costSum array
      */
     public double[] getShortestPaths() {
-        double[] d = new double[graph.nodeCount()];
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+        double[] d = new double[nodeCount];
+        for (int i = nodeCount - 1; i >= 0; i--) {
             d[i] = get(i);
         }
         return d;
@@ -199,9 +200,14 @@ public class ShortestPathDeltaStepping {
      * @return Stream of results containing neo4j-NodeId and Sum of Costs of the shortest path
      */
     public Stream<DeltaSteppingResult> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(node ->
                         new DeltaSteppingResult(graph.toOriginalNodeId(node), get(node)));
+    }
+
+    @Override
+    public ShortestPathDeltaStepping me() {
+        return this;
     }
 
     /**

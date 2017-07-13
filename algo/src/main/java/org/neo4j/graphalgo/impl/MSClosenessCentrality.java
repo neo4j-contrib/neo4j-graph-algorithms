@@ -16,7 +16,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class MSClosenessCentrality {
+public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     private final Graph graph;
 
@@ -35,6 +35,8 @@ public class MSClosenessCentrality {
 
     public MSClosenessCentrality compute() {
 
+        resetProgress();
+
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             // TODO size of sourceNodeIds
             int len = 0;
@@ -43,6 +45,7 @@ public class MSClosenessCentrality {
                 len++;
             }
             farness.addAndGet(nodeId, len * depth);
+            logProgress((double) nodeId / (nodeCount - 1));
         };
 
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
@@ -71,6 +74,11 @@ public class MSClosenessCentrality {
                         new Result(
                                 graph.toOriginalNodeId(nodeId),
                                 k / farness.get(nodeId)));
+    }
+
+    @Override
+    public MSClosenessCentrality me() {
+        return this;
     }
 
     /**

@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class BetweennessCentrality {
+public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     private final Graph graph;
 
@@ -36,16 +36,18 @@ public class BetweennessCentrality {
     private final IntStack stack;
     private final IntArrayDeque queue;
     private final Path[] paths; // TODO find a better container impl
+    private final int nodeCount;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
-        this.centrality = new double[graph.nodeCount()];
+        nodeCount = graph.nodeCount();
+        this.centrality = new double[nodeCount];
         this.stack = new IntStack();
-        this.sigma = new int[graph.nodeCount()];
-        this.distance = new int[graph.nodeCount()];
+        this.sigma = new int[nodeCount];
+        this.distance = new int[nodeCount];
         queue = new IntArrayDeque();
-        paths = new Path[graph.nodeCount()];
-        delta = new double[graph.nodeCount()];
+        paths = new Path[nodeCount];
+        delta = new double[nodeCount];
     }
 
     /**
@@ -53,6 +55,7 @@ public class BetweennessCentrality {
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
+        resetProgress();
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
         return this;
@@ -69,7 +72,7 @@ public class BetweennessCentrality {
      * @param consumer the result consumer
      */
     public void forEach(ResultConsumer consumer) {
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+        for (int i = nodeCount - 1; i >= 0; i--) {
             if (!consumer.consume(graph.toOriginalNodeId(i), centrality[i])) {
                 return;
             }
@@ -122,6 +125,7 @@ public class BetweennessCentrality {
                 return true;
             });
         }
+        logProgress((double) startNode / (nodeCount - 1));
         return true;
     }
 
@@ -145,6 +149,11 @@ public class BetweennessCentrality {
             }
             path.clear();
         }
+    }
+
+    @Override
+    public BetweennessCentrality me() {
+        return this;
     }
 
     /**

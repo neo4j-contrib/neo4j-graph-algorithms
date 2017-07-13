@@ -44,6 +44,7 @@ public class AllShortestPathsProc {
                 .load(configuration.getGraphImpl());
 
         return new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
+                .withLog(log)
                 .resultStream();
     }
 }

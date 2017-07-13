@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
+import org.omg.PortableInterceptor.LOCATION_FORWARD;
 
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -18,15 +19,16 @@ import java.util.stream.StreamSupport;
  *
  * @author mknblch
  */
-public class ShortestPaths {
+public class ShortestPaths extends Algorithm<ShortestPaths> {
 
     private final Graph graph;
     private final IntDoubleMap costs;
     private final IntMinPriorityQueue queue;
+    private final int nodeCount;
 
     public ShortestPaths(Graph graph) {
         this.graph = graph;
-        int nodeCount = graph.nodeCount();
+        nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new IntMinPriorityQueue();
     }
@@ -37,6 +39,7 @@ public class ShortestPaths {
      * @return itself
      */
     public ShortestPaths compute(long startNode) {
+        resetProgress();
         graph.forEachNode(node -> {
             costs.put(node, Double.POSITIVE_INFINITY);
             return true;
@@ -81,8 +84,13 @@ public class ShortestPaths {
                         }
                         return true;
                     });
-
+            logProgress((double) node / (nodeCount - 1));
         }
+    }
+
+    @Override
+    public ShortestPaths me() {
+        return this;
     }
 
     /**

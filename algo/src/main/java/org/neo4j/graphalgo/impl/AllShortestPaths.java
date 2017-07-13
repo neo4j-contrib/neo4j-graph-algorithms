@@ -12,25 +12,24 @@ import java.util.stream.Stream;
 
 /**
  * AllShortestPaths:
- *
+ * <p>
  * multi-source parallel dijkstra algorithm for computing the shortest path between
  * each pair of nodes.
- *
+ * <p>
  * Since all nodeId's have already been ordered by the idMapping we can use an integer
  * instead of a queue which just count's up for each startNodeId as long as it is
  * < nodeCount. Each thread tries to take one int from the counter at one time and
  * starts its computation on it.
- *
+ * <p>
  * The {@link AllShortestPaths#concurrency} value determines the count of workers
  * that should be spawned.
- *
+ * <p>
  * Due to the high memory footprint the result set would have we emit each result into
  * a blocking queue. The result stream takes elements from the queue while the workers
  * add elements to it. The result stream is limited by N^2. If the stream gets closed
  * prematurely the workers get closed too.
- *
  */
-public class AllShortestPaths {
+public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
     private final Graph graph;
     private final int nodeCount;
@@ -64,9 +63,12 @@ public class AllShortestPaths {
     /**
      * the resultStream(..) method starts the computation and
      * returns a Stream of SP-Tuples (source, target, minDist)
+     *
      * @return the result stream
      */
     public Stream<Result> resultStream() {
+
+        resetProgress();
 
         counter.set(0);
         running = true;
@@ -86,6 +88,11 @@ public class AllShortestPaths {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+    @Override
+    public AllShortestPaths me() {
+        return this;
     }
 
     /**
@@ -108,6 +115,7 @@ public class AllShortestPaths {
             int startNode;
             while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
+                logProgress((double) startNode / (nodeCount - 1));
                 for (int i = 0; i < nodeCount; i++) {
                     final Result result = new Result(
                             graph.toOriginalNodeId(startNode),

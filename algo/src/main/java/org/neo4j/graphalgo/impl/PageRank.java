@@ -70,7 +70,7 @@ import java.util.concurrent.Future;
  * [1]: <a href="http://delab.csd.auth.gr/~dimitris/courses/ir_spring06/page_rank_computing/01531136.pdf">An Efficient Partition-Based Parallel PageRank Algorithm</a><br>
  * [2]: <a href="https://www.cs.purdue.edu/homes/dgleich/publications/gleich2004-parallel.pdf">Fast Parallel PageRank: A Linear System Approach</a>
  */
-public class PageRank {
+public class PageRank extends Algorithm<PageRank> {
 
     private final ComputeSteps computeSteps;
 
@@ -136,6 +136,7 @@ public class PageRank {
      * compute pageRank for n iterations
      */
     public PageRank compute(int iterations) {
+        resetProgress();
         assert iterations >= 1;
         computeSteps.run(iterations);
         return this;
@@ -266,6 +267,11 @@ public class PageRank {
             }
         }
         return low - 1;
+    }
+
+    @Override
+    public PageRank me() {
+        return this;
     }
 
     private static final class Partition {
