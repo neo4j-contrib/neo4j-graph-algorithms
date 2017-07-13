@@ -117,7 +117,7 @@ public final class PageRankProc {
                 graph,
                 dampingFactor)
                 .withLog(log)
-                .withLogEnabled(true);
+                .withLogEnabled(configuration.isLogProgress());
 
         statsBuilder.timeEval(() -> algo.compute(iterations));
 

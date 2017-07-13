@@ -82,7 +82,7 @@ public final class LabelPropagationProc {
                 weightProperty,
                 stats);
 
-        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, stats);
+        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, configuration, stats);
 
         stats.nodes(labels.size());
 
@@ -117,12 +117,13 @@ public final class LabelPropagationProc {
             int iterations,
             int batchSize,
             HeavyGraph graph,
+            ProcedureConfiguration configuration,
             LabelPropagationStats.Builder stats) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             return new LabelPropagation(graph, pool)
                     .withLog(log)
-                    .withLogEnabled(true)
+                    .withLogEnabled(configuration.isLogProgress())
                     .compute(
                     direction,
                     iterations,

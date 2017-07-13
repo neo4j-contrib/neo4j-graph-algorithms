@@ -25,6 +25,14 @@ public class ProcedureConfiguration {
     }
 
     /**
+     * tells the algorithm to emit progress-logs
+     * @return true if enabled, false otherwise
+     */
+    public boolean isLogProgress() {
+        return get(ProcedureConstants.PROGRESS_LOG, Boolean.FALSE);
+    }
+
+    /**
      * check if all given keys exist
      * @param keys one or many keys
      * @return true if key is known, false otherwise

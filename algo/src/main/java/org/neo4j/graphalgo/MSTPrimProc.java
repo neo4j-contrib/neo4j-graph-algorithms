@@ -80,7 +80,7 @@ public class MSTPrimProc {
                 new BothRelationshipAdapter(relationshipContainer),
                 weightMap)
                 .withLog(log)
-                .withLogEnabled(true);
+                .withLogEnabled(configuration.isLogProgress());
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);

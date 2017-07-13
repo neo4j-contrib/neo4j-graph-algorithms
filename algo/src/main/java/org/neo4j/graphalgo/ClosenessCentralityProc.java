@@ -45,7 +45,7 @@ public class ClosenessCentralityProc {
         return new MSClosenessCentrality(graph, Pools.DEFAULT)
                 .compute()
                 .withLog(log)
-                .withLogEnabled(true)
+                .withLogEnabled(configuration.isLogProgress())
                 .resultStream();
     }
 
@@ -74,7 +74,7 @@ public class ClosenessCentralityProc {
 
         final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, Pools.DEFAULT)
                 .withLog(log)
-                .withLogEnabled(true);
+                .withLogEnabled(configuration.isLogProgress());
 
         builder.timeEval(centrality::compute);
 

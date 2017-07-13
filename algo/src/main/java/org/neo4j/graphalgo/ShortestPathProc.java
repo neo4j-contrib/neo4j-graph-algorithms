@@ -50,7 +50,7 @@ public class ShortestPathProc {
 
         return new ShortestPathDijkstra(graph)
                 .withLog(log)
-                .withLogEnabled(true)
+                .withLogEnabled(configuration.isLogProgress())
                 .compute(startNode.getId(), endNode.getId())
                 .resultStream();
     }
@@ -87,7 +87,7 @@ public class ShortestPathProc {
         try (ProgressTimer timer = builder.timeEval()) {
             dijkstra = new ShortestPathDijkstra(graph)
                     .withLog(log)
-                    .withLogEnabled(true)
+                    .withLogEnabled(configuration.isLogProgress())
                     .compute(startNode.getId(), endNode.getId());
             builder.withNodeCount(dijkstra.getPathLength())
                     .withTotalCosts(dijkstra.getTotalCost());

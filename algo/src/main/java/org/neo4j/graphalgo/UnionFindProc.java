@@ -111,13 +111,13 @@ public class UnionFindProc {
             log.debug("Computing union find with threshold " + threshold);
             struct = new GraphUnionFind(graph)
                     .withLog(log)
-                    .withLogEnabled(true)
+                    .withLogEnabled(config.isLogProgress())
                     .compute(threshold);
         } else {
             log.debug("Computing union find without threshold");
             struct = new GraphUnionFind(graph)
                     .withLog(log)
-                    .withLogEnabled(true)
+                    .withLogEnabled(config.isLogProgress())
                     .compute();
         }
         return struct;

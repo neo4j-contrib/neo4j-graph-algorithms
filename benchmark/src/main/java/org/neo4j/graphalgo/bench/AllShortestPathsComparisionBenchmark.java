@@ -131,7 +131,7 @@ public class AllShortestPathsComparisionBenchmark {
     @Benchmark
     public long _02_benchmark_ASP_Logging() {
         return new AllShortestPaths(graph, Pools.DEFAULT, 8)
-                .withLogEnabled(true)
+                .withLogEnabled(config.isLogProgress())
                 .resultStream()
                 .count();
     }
@@ -145,7 +145,7 @@ public class AllShortestPathsComparisionBenchmark {
     @Benchmark
     public long _03_benchmark_MS_ASP_Logging() {
         return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
-                .withLogEnabled(true)
+                .withLogEnabled(config.isLogProgress())
                 .resultStream().count();
     }
 
