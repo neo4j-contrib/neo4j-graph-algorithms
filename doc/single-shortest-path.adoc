@@ -107,6 +107,7 @@ TODO naming!?
 - if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
  the number of nodes to reach the target
 
-==== algo.allShortestPaths
+==== algo.allShortestPaths.stream
 
 - returns a stream of source-target node to distance tuples for each pair of nodes
+- writeback not supported
