@@ -136,7 +136,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.tunedTarjan.stream
     @Procedure(value = "algo.scc.tunedTarjan.stream", mode = Mode.WRITE)
     @Description("CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> sccTunedTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -207,7 +207,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.iterative.stream
     @Procedure(value = "algo.scc.iterative.stream", mode = Mode.WRITE)
     @Description("CALL algo.scc.iterative.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> sccIterativeTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -280,7 +280,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.multistep.stream
     @Procedure(value = "algo.scc.multistep.stream")
     @Description("CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> multistepStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -308,7 +308,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.forwardBackward.stream
     @Procedure(value = "algo.scc.forwardBackward.stream")
     @Description("CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
-            "nodeId")
+            "nodeId, partition")
     public Stream<ForwardBackwardScc.Result> fwbwStream(
             @Name(value = "startNodeId", defaultValue = "0") long startNodeId,
             @Name(value = "label", defaultValue = "") String label,
