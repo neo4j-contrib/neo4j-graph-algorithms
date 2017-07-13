@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
 import org.junit.Test;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
@@ -171,6 +170,45 @@ public final class MultiSourceBFSTest {
         }
     }
 
+    @Test
+    public void testSize() {
+        int maxNodes = 100;
+        // [ last i, expected source from, exptected source to ]
+        int[] state = {-1, 0, MultiSourceBFS.OMEGA};
+        withGrid(
+                gb -> gb.newCompleteGraphBuilder().createCompleteGraph(maxNodes),
+                graph -> {
+                    MultiSourceBFS msbfs = new MultiSourceBFS(
+                            graph,
+                            graph,
+                            OUTGOING,
+                            (i, d, s) -> {
+                                int prev = state[0];
+                                if (i < prev) {
+                                    // we complete a source chunk and start again for the next one
+                                    state[1] = state[2];
+                                    state[2] = Math.min(
+                                            state[2] + MultiSourceBFS.OMEGA,
+                                            maxNodes);
+                                }
+                                state[0] = i;
+                                int sourceFrom = state[1];
+                                int sourceTo = state[2];
+
+                                int expectedSize = sourceTo - sourceFrom;
+                                if (i >= sourceFrom && i < sourceTo) {
+                                    // if the current node is in the sources
+                                    // if will not be traversed
+                                    expectedSize -= 1;
+                                }
+
+                                assertEquals(expectedSize, s.size());
+                            });
+                    // run sequentially to guarantee order
+                    msbfs.run(null);
+                });
+    }
+
     private static void withGraph(
             String cypher,
             Consumer<? super Graph> block) {
@@ -213,8 +251,8 @@ public final class MultiSourceBFSTest {
         }
     }
 
-    private static PrimitiveIntIterator toList(
-            PrimitiveIntIterator sources,
+    private static BfsSources toList(
+            BfsSources sources,
             IntUnaryOperator modify) {
         List<Integer> ints = new ArrayList<>();
         while (sources.hasNext()) {
@@ -223,7 +261,7 @@ public final class MultiSourceBFSTest {
         return new FakeListIterator(ints);
     }
 
-    private static PrimitiveIntIterator toList(int... sources) {
+    private static BfsSources toList(int... sources) {
         List<Integer> ints = new ArrayList<>();
         for (int source : sources) {
             ints.add(source);
@@ -231,7 +269,7 @@ public final class MultiSourceBFSTest {
         return new FakeListIterator(ints);
     }
 
-    private static final class FakeListIterator implements PrimitiveIntIterator {
+    private static final class FakeListIterator implements BfsSources {
         private List<?> ints;
 
         private FakeListIterator(List<Integer> ints) {
@@ -247,6 +285,11 @@ public final class MultiSourceBFSTest {
         @Override
         public int next() {
             return 0;
+        }
+
+        @Override
+        public int size() {
+            return ints.size();
         }
 
         @Override
