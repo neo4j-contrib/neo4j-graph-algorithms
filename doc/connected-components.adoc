@@ -172,9 +172,9 @@ YIELD nodeId, setId - yields a setId to each node id
 
 == References
 
-http://math.hws.edu/eck/cs327_s04/chapter9.pdf
+* http://math.hws.edu/eck/cs327_s04/chapter9.pdf
 
-https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
+* https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
 
 == Implementation Details
 
