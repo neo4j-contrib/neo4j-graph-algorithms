@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -40,6 +41,7 @@ public class ClosenessCentralityProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
+                .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
         return new MSClosenessCentrality(graph, Pools.DEFAULT)
@@ -65,6 +67,7 @@ public class ClosenessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
+                    .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
         }
 

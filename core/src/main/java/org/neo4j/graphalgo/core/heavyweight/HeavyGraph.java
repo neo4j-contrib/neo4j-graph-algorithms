@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
@@ -82,25 +81,18 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     }
 
     @Override
-    public Iterator<RelationshipCursor> relationshipIterator(int nodeId, Direction direction) {
-        return container.relationIterator(nodeId, direction);
-    }
-
-    @Override
-    public Iterator<WeightedRelationshipCursor> weightedRelationshipIterator(
-            final int nodeId, final Direction direction) {
-        return container.weightedRelationIterator(nodeId,
-                relationshipWeights, direction);
-    }
-
-    @Override
     public int toMappedNodeId(long originalNodeId) {
         return nodeIdMap.get(originalNodeId);
     }
 
     @Override
     public long toOriginalNodeId(int mappedNodeId) {
-        return nodeIdMap.unmap(mappedNodeId);
+        return nodeIdMap.toOriginalNodeId(mappedNodeId);
+    }
+
+    @Override
+    public boolean contains(final long nodeId) {
+        return nodeIdMap.contains(nodeId);
     }
 
     @Override

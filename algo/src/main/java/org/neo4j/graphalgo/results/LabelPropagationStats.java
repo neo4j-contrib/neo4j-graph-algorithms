@@ -1,6 +1,4 @@
-package org.neo4j.graphalgo.impl;
-
-import org.neo4j.graphalgo.results.AbstractResultBuilder;
+package org.neo4j.graphalgo.results;
 
 public class LabelPropagationStats {
 

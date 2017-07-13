@@ -3,12 +3,10 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
@@ -40,12 +38,20 @@ class AdjacencyMatrix {
     final int[][] incoming;
 
     AdjacencyMatrix(int nodeCount) {
-        this.outOffsets = new int[nodeCount];
-        this.inOffsets = new int[nodeCount];
-        this.outgoing = new int[nodeCount][];
-        this.incoming = new int[nodeCount][];
-        Arrays.fill(outgoing, EMPTY_INTS);
-        Arrays.fill(incoming, EMPTY_INTS);
+        this(nodeCount, true, true);
+    }
+
+    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing) {
+        this.outOffsets = withOutgoing ? new int[nodeCount] : null;
+        this.inOffsets = withIncoming ? new int[nodeCount] : null;
+        this.outgoing = withOutgoing ? new int[nodeCount][] : null;
+        this.incoming = withIncoming ? new int[nodeCount][] : null;
+        if (outgoing != null) {
+            Arrays.fill(outgoing, EMPTY_INTS);
+        }
+        if (incoming != null) {
+            Arrays.fill(incoming, EMPTY_INTS);
+        }
     }
 
     AdjacencyMatrix(
@@ -63,14 +69,18 @@ class AdjacencyMatrix {
      * initialize array for outgoing connections
      */
     public void armOut(int sourceNodeId, int degree) {
-        outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId], degree);
+        if (degree > 0) {
+            outgoing[sourceNodeId] = Arrays.copyOf(outgoing[sourceNodeId], degree);
+        }
     }
 
     /**
      * initialize array for incoming connections
      */
     public void armIn(int targetNodeId, int degree) {
-        incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId], degree);
+        if (degree > 0) {
+            incoming[targetNodeId] = Arrays.copyOf(incoming[targetNodeId], degree);
+        }
     }
 
     /**
@@ -143,6 +153,7 @@ class AdjacencyMatrix {
 
     /**
      * get the degree for node / direction
+     * @throws NullPointerException if the direction hasn't been loaded.
      */
     public int degree(int nodeId, Direction direction) {
         switch (direction) {
@@ -156,36 +167,6 @@ class AdjacencyMatrix {
                 return inOffsets[nodeId] + outOffsets[nodeId];
             }
         }
-    }
-
-    /**
-     * return an iterator for unweighted edges
-     */
-    public Iterator<RelationshipCursor> relationIterator(int nodeId, Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return new RelationIterator(nodeId, outgoing[nodeId], outOffsets[nodeId], direction);
-            case INCOMING:
-                return new RelationIterator(nodeId, incoming[nodeId], inOffsets[nodeId], direction);
-            default:
-                throw new IllegalArgumentException("Direction " + direction + " not implemented");
-        }
-
-    }
-
-    /**
-     * return an iterator for weighted edges
-     */
-    public Iterator<WeightedRelationshipCursor> weightedRelationIterator(int nodeId, WeightMapping weights, Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return new WeightedRelationIterator(nodeId, outgoing[nodeId], outOffsets[nodeId], weights, direction);
-            case INCOMING:
-                return new WeightedRelationIterator(nodeId, incoming[nodeId], inOffsets[nodeId], weights, direction);
-            default:
-                throw new IllegalArgumentException("Direction " + direction + " not implemented");
-        }
-
     }
 
     /**
@@ -225,14 +206,22 @@ class AdjacencyMatrix {
     }
 
     public int capacity() {
-        return outOffsets.length;
+        return outOffsets != null
+                ? outOffsets.length
+                : inOffsets != null
+                ? inOffsets.length
+                : 0;
     }
 
     public void addMatrix(AdjacencyMatrix other, int offset, int length) {
-        System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
-        System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
-        System.arraycopy(other.outgoing, 0, outgoing, offset, length);
-        System.arraycopy(other.incoming, 0, incoming, offset, length);
+        if (other.outgoing != null) {
+            System.arraycopy(other.outgoing, 0, outgoing, offset, length);
+            System.arraycopy(other.outOffsets, 0, outOffsets, offset, length);
+        }
+        if (other.incoming != null) {
+            System.arraycopy(other.incoming, 0, incoming, offset, length);
+            System.arraycopy(other.inOffsets, 0, inOffsets, offset, length);
+        }
     }
 
     private void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
@@ -277,82 +266,11 @@ class AdjacencyMatrix {
         }
     }
 
-    private static class RelationIterator implements Iterator<RelationshipCursor> {
-
-        private final RelationshipCursor cursor;
-        private final int[] targetNodes;
-        private final int nodeCount;
-        private final IdCombiner relId;
-        private int offset = 0;
-
-        private RelationIterator(
-                int nodeId,
-                int[] targetNodes,
-                int nodeCount,
-                Direction direction) {
-            this.targetNodes = targetNodes;
-            this.nodeCount = nodeCount;
-            cursor = new RelationshipCursor();
-            cursor.sourceNodeId = nodeId;
-            relId = RawValues.combiner(direction);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return offset < nodeCount;
-        }
-
-        @Override
-        public RelationshipCursor next() {
-            cursor.targetNodeId = targetNodes[offset++];
-            cursor.relationshipId = relId.apply(cursor);
-            return cursor;
-        }
-    }
-
-    private static class WeightedRelationIterator implements Iterator<WeightedRelationshipCursor> {
-
-        private final WeightedRelationshipCursor cursor;
-        private final int[] targetNodes;
-        private final int nodeCount;
-        private final WeightMapping weights;
-        private final IdCombiner relId;
-        private int offset = 0;
-
-        private WeightedRelationIterator(
-                int nodeId,
-                int[] targetNodes,
-                int nodeCount,
-                WeightMapping weights,
-                Direction direction) {
-            this.targetNodes = targetNodes;
-            this.nodeCount = nodeCount;
-            this.weights = weights;
-            cursor = new WeightedRelationshipCursor();
-            cursor.sourceNodeId = nodeId;
-            relId = RawValues.combiner(direction);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return offset < nodeCount;
-        }
-
-        @Override
-        public WeightedRelationshipCursor next() {
-            cursor.targetNodeId = targetNodes[offset++];
-            long relationId = relId.apply(cursor);
-            cursor.relationshipId = relationId;
-            cursor.weight = weights.get(relationId);
-            return cursor;
-        }
-    }
-
     private static class DegreeCheckingNodeIterator implements NodeIterator {
         private final int[] array;
 
         DegreeCheckingNodeIterator(int[] array) {
-            this.array = array;
+            this.array = array != null ? array : EMPTY_INTS;
         }
 
         @Override

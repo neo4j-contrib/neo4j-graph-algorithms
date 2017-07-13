@@ -141,6 +141,8 @@ public class HeavyGraphFactory extends GraphFactory {
             int nodeId,
             IdMap idMap,
             AdjacencyMatrix matrix,
+            boolean loadIncoming,
+            boolean loadOutgoing,
             int relWeightId,
             WeightMapping relWeights,
             int nodeWeightId,
@@ -153,15 +155,15 @@ public class HeavyGraphFactory extends GraphFactory {
         final Cursor<RelationshipItem> outCursor;
         final Cursor<RelationshipItem> inCursor;
         if (relationType == null) {
-            outDegree = node.degree(Direction.OUTGOING);
-            inDegree = node.degree(Direction.INCOMING);
-            outCursor = node.relationships(Direction.OUTGOING);
-            inCursor = node.relationships(Direction.INCOMING);
+            outDegree = loadOutgoing ? node.degree(Direction.OUTGOING) : 0;
+            inDegree = loadIncoming ? node.degree(Direction.INCOMING) : 0;
+            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING) : NO_RELS;
+            inCursor = loadIncoming ? node.relationships(Direction.INCOMING) : NO_RELS;
         } else {
-            outDegree = node.degree(Direction.OUTGOING, relationType[0]);
-            inDegree = node.degree(Direction.INCOMING, relationType[0]);
-            outCursor = node.relationships(Direction.OUTGOING, relationType);
-            inCursor = node.relationships(Direction.INCOMING, relationType);
+            outDegree = loadOutgoing ? node.degree(Direction.OUTGOING, relationType[0]) : 0;
+            inDegree = loadIncoming ? node.degree(Direction.INCOMING, relationType[0]) : 0;
+            outCursor = loadOutgoing ? node.relationships(Direction.OUTGOING, relationType) : NO_RELS;
+            inCursor = loadIncoming ? node.relationships(Direction.INCOMING, relationType) : NO_RELS;
         }
         try (Cursor<PropertyItem> weights = node.property(nodeWeightId)) {
             if (weights.next()) {
@@ -236,7 +238,7 @@ public class HeavyGraphFactory extends GraphFactory {
             this.nodeWeights = nodeWeights;
             this.nodeProps = nodeProps;
             this.relationId = relationId;
-            this.matrix = new AdjacencyMatrix(nodeSize);
+            this.matrix = new AdjacencyMatrix(nodeSize, setup.loadIncoming, setup.loadOutgoing);
             this.nodeCount = 0;
         }
 
@@ -250,6 +252,8 @@ public class HeavyGraphFactory extends GraphFactory {
             int nodeOffset = this.nodeOffset;
             int nodeCount = 0;
             PrimitiveIntIterator iterator = nodes.iterator();
+            boolean loadIncoming = setup.loadIncoming;
+            boolean loadOutgoing = setup.loadOutgoing;
             while (iterator.hasNext()) {
                 int nodeId = iterator.next();
                 try (Cursor<NodeItem> cursor = readOp.nodeCursor(idMap.toOriginalNodeId(nodeId))) {
@@ -260,6 +264,8 @@ public class HeavyGraphFactory extends GraphFactory {
                                 nodeId - nodeOffset,
                                 idMap,
                                 matrix,
+                                loadIncoming,
+                                loadOutgoing,
                                 relWeightId,
                                 relWeights,
                                 nodeWeightId,
@@ -273,4 +279,21 @@ public class HeavyGraphFactory extends GraphFactory {
             this.nodeCount = nodeCount;
         }
     }
+
+    private static final Cursor<RelationshipItem> NO_RELS = new Cursor<RelationshipItem>() {
+        @Override
+        public boolean next() {
+            return false;
+        }
+
+        @Override
+        public void close() {
+
+        }
+
+        @Override
+        public RelationshipItem get() {
+            throw new UnsupportedOperationException(".get is not implemented.");
+        }
+    };
 }

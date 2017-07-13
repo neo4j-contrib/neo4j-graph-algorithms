@@ -58,6 +58,11 @@ public class LazyIdMapper implements IdMapping {
     }
 
     @Override
+    public boolean contains(final long nodeId) {
+        return forward.containsKey(nodeId);
+    }
+
+    @Override
     public int nodeCount() {
         return nodeCount == -1 ? forward.size() : nodeCount;
     }

@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphalgo.results.SCCResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -60,6 +61,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -102,6 +104,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -145,6 +148,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
@@ -171,6 +175,7 @@ public class StronglyConnectedComponentsProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutRelationshipWeights()
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -214,6 +219,7 @@ public class StronglyConnectedComponentsProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutRelationshipWeights()
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
 

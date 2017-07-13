@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -65,6 +66,7 @@ public class ShortestPathDeltaSteppingProc {
                 .withRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(Double.MAX_VALUE))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
@@ -98,6 +100,7 @@ public class ShortestPathDeltaSteppingProc {
                     .withRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getPropertyDefaultValue(Double.MAX_VALUE))
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         }

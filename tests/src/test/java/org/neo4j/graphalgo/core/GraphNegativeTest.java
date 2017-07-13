@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.core;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -18,21 +20,22 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.helpers.collection.Pair;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public final class GraphNegativeTest extends RandomGraphTestCase {
 
     private Class<? extends GraphFactory> graphImpl;
+
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
 
     @Parameters(name = "{1}")
     public static Collection<Object[]> data() {
@@ -118,68 +121,66 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     private void testRelationships(final Graph graph) {
-        testAnyRelationship(graph, (rs, rel) -> Pair.of(
-                graph.relationshipIterator(
-                        graph.toMappedNodeId(rel.getStartNode().getId()),
-                        Direction.OUTGOING),
-                cursor -> {}
-        ));
+        testAnyRelationship(graph, (w, r) -> {});
     }
 
     private void testWeightedRelationships(final Graph graph) {
-        testAnyRelationship(graph, (rs, rel) -> {
-            double weight = ((Number) rel.getProperty("weight")).doubleValue();
-            return Pair.of(
-                    graph.weightedRelationshipIterator(
-                            graph.toMappedNodeId(rel.getStartNode().getId()),
-                            Direction.OUTGOING),
-                    (cursor) -> assertEquals(
-                            rs + " wrong weight",
-                            weight,
-                            cursor.weight,
-                            0.001
-                    )
-            );
-        });
+        testAnyRelationship(graph, (w, rel) -> collector.checkThat(
+                "wrong weight for " + failMsg(rel),
+                w,
+                closeTo(((Number) rel.getProperty("weight")).doubleValue(), 0.001)
+        ));
     }
 
     private <T extends RelationshipCursor> void testAnyRelationship(
             Graph graph,
-            BiFunction<String, Relationship, Pair<Iterator<T>, Consumer<T>>> tester) {
+            BiConsumer<Double, Relationship> tester) {
         try (Transaction tx = db.beginTx()) {
             ResourceIterable<Relationship> rels = db.getAllRelationships();
             ResourceIterator<Relationship> iterator = rels.iterator();
             while (iterator.hasNext()) {
                 Relationship rel = iterator.next();
-                String rs = String.format(
-                        "(%s)-[%s]->(%s)",
-                        rel.getStartNode().getId(),
-                        rel.getId(),
-                        rel.getEndNode().getId());
-                Pair<Iterator<T>, Consumer<T>> test =
-                        tester.apply(rs, rel);
-
-                boolean hasRelation = false;
-                Iterator<T> relIter = test.first();
-                while (relIter.hasNext()) {
-                    T cursor = relIter.next();
-                    long relId = RawValues.combineIntInt((int) rel.getStartNode().getId(), (int) rel.getEndNode().getId());
-                    if (cursor.relationshipId == relId) {
-                        hasRelation = true;
-                        assertEquals(
-                                rs,
+                final boolean[] hasRelation = {false};
+                long startNode = rel.getStartNode().getId();
+                long targetRelId = RawValues.combineIntInt((int) startNode, (int) rel.getEndNode().getId());
+                int startId = graph.toMappedNodeId(startNode);
+                graph.forEachRelationship(startId, Direction.OUTGOING, (src, tgt, relId) -> {
+                    if (relId == targetRelId) {
+                        hasRelation[0] = true;
+                        collector.checkThat(
+                                failMsg(rel),
                                 rel.getEndNode().getId(),
-                                graph.toOriginalNodeId(cursor.targetNodeId)
-                        );
-                        test.other().accept(cursor);
+                                is(graph.toOriginalNodeId(tgt)));
                     }
-                }
-                assertTrue(
-                        "did not find relation " + rs,
-                        hasRelation);
+                    return true;
+                });
+                // test weighted consumer as well
+                graph.forEachRelationship(startId, Direction.OUTGOING, (src, tgt, relId, weight) -> {
+                    if (relId == targetRelId) {
+                        collector.checkThat(
+                                failMsg(rel),
+                                rel.getEndNode().getId(),
+                                is(graph.toOriginalNodeId(tgt)));
+                        tester.accept(weight, rel);
+                    }
+                    return true;
+                });
+                collector.checkThat(
+                        "did not find relation " + failMsg(rel),
+                        hasRelation[0],
+                        is(true)
+                );
             }
             iterator.close();
             tx.success();
         }
+    }
+
+    private static String failMsg(Relationship rel) {
+        return String.format(
+                "(%s)-[%s]->(%s)",
+                rel.getStartNode().getId(),
+                rel.getId(),
+                rel.getEndNode().getId());
     }
 }

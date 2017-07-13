@@ -83,7 +83,7 @@ public final class IdMapTest extends RandomizedTest {
                 int next = iterator.next();
                 long id = ids[i];
                 assertEquals(i++, next);
-                assertEquals(id, idMap.unmap(next));
+                assertEquals(id, idMap.toOriginalNodeId(next));
             }
         }
     }

@@ -7,6 +7,7 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -45,6 +46,7 @@ public class ShortestPathProc {
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
@@ -78,6 +80,7 @@ public class ShortestPathProc {
                     .withOptionalRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getPropertyDefaultValue(1.0))
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         };

@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -99,6 +100,7 @@ public class UnionFindProc {
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }

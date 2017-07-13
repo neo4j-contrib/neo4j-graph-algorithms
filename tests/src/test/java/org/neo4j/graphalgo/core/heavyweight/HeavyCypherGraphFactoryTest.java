@@ -59,7 +59,10 @@ public class HeavyCypherGraphFactoryTest {
         assertEquals(0, graph.degree(graph.toMappedNodeId(id3), Direction.OUTGOING));
         AtomicInteger total = new AtomicInteger();
         graph.forEachNode(n -> {
-            graph.weightedRelationshipIterator(n, Direction.OUTGOING).forEachRemaining(rel -> total.addAndGet((int) rel.weight));
+            graph.forEachRelationship(n, Direction.OUTGOING, (s, t, r, w) -> {
+                total.addAndGet((int) w);
+                return true;
+            });
             return true;
         });
         assertEquals(6,total.get());
