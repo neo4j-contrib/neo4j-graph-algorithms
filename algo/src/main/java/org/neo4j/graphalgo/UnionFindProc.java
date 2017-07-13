@@ -110,11 +110,15 @@ public class UnionFindProc {
             final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
             log.debug("Computing union find with threshold " + threshold);
             struct = new GraphUnionFind(graph)
-                    .withLog(log).compute(threshold);
+                    .withLog(log)
+                    .withLogEnabled(true)
+                    .compute(threshold);
         } else {
             log.debug("Computing union find without threshold");
             struct = new GraphUnionFind(graph)
-                    .withLog(log).compute();
+                    .withLog(log)
+                    .withLogEnabled(true)
+                    .compute();
         }
         return struct;
     }

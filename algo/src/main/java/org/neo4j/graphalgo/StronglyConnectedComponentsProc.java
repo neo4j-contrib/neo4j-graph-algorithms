@@ -65,7 +65,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTarjan tarjan = new SCCTarjan(graph)
-                .withLog(log);
+                .withLog(log)
+                .withLogEnabled(true);
 
         builder.timeEval(() -> {
             tarjan.compute();
@@ -109,7 +110,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTunedTarjan tarjan = new SCCTunedTarjan(graph)
-                .withLog(log);
+                .withLog(log)
+                .withLogEnabled(true);
 
         builder.timeEval(tarjan::compute);
 
@@ -153,6 +155,7 @@ public class StronglyConnectedComponentsProc {
 
         return new SCCTunedTarjan(graph)
                 .withLog(log)
+                .withLogEnabled(true)
                 .compute()
                 .resultStream();
     }
@@ -180,7 +183,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
-                .withLog(log);
+                .withLog(log)
+                .withLogEnabled(true);
 
         builder.timeEval(tarjan::compute);
 
@@ -224,6 +228,7 @@ public class StronglyConnectedComponentsProc {
 
         return new SCCIterativeTarjan(graph)
                 .withLog(log)
+                .withLogEnabled(true)
                 .compute()
                 .resultStream();
     }
@@ -254,7 +259,8 @@ public class StronglyConnectedComponentsProc {
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
-                .withLog(log);
+                .withLog(log)
+                .withLogEnabled(true);
 
         builder.timeEval(multistep::compute);
 
@@ -300,7 +306,8 @@ public class StronglyConnectedComponentsProc {
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
-                .withLog(log);
+                .withLog(log)
+                .withLogEnabled(true);
 
         multistep.compute();
 
@@ -329,6 +336,7 @@ public class StronglyConnectedComponentsProc {
         return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getConcurrency(1))
                 .withLog(log)
+                .withLogEnabled(true)
                 .compute(graph.toMappedNodeId(startNodeId))
                 .resultStream();
     }
