@@ -36,12 +36,7 @@ public class MSClosenessCentrality {
     public MSClosenessCentrality compute() {
 
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            // TODO size of sourceNodeIds
-            int len = 0;
-            while (sourceNodeIds.hasNext()) {
-                sourceNodeIds.next();
-                len++;
-            }
+            int len = sourceNodeIds.size();
             farness.addAndGet(nodeId, len * depth);
         };
 
