@@ -1,4 +1,4 @@
-= API 2 Model
+= API 2 Model (outdated)
 
 == Current Approach
 

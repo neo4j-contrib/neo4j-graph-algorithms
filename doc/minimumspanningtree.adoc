@@ -24,8 +24,6 @@ weight. (wiki)
 
 == Example Usage
 
-
-
 == References
 
 == Implementation Details
