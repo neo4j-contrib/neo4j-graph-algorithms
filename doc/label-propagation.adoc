@@ -1,10 +1,16 @@
-= Clustering: Label Propagation
+= Graph Partitioning: Label Propagation
 
-_Label Propagation_ algorithm (LPA) is an extremely fast community detection method and is widely used in large scale networks. Community detection and analysis is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
+_Label Propagation_ algorithm (LPA) is an extremely fast graph partitioning method and is widely used in large scale networks. 
+Graph partitioning ( community detection ) is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
 
 == History, Explanation
 
-Community structure is considered one of the most interesting features in complex networks. Many real-world complex systems exhibit community structure, where individuals with similar properties form a community. The identification of communities in a network is important for understanding the structure of said network, in a specific perspective. Thus, community detection in complex networks gained immense interest over the last decade. A lot of community detection methods were proposed, and one of them is the label propagation algorithm (LPA). The simplicity and time efficiency of the LPA make it a popular community detection method. 
+Community structure is considered one of the most interesting features in complex networks. 
+Many real-world complex systems exhibit community structure, where individuals with similar properties form a partition (community). 
+The identification of partitions in a network is important for understanding the structure of said network, in a specific perspective. 
+Thus, graph partitioning in complex networks gained immense interest over the last decade. 
+A lot of graph partitioning methods were proposed, and one of them is the label propagation algorithm (LPA).
+The simplicity and time efficiency of the LPA make it a popular graph partitioning method. 
 
 
 == When to use it / use-cases
@@ -69,7 +75,7 @@ partitionProperty - simple label propagation kernel
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/95
 
-_Label Propagation_ is a clustering algorithm already implemented in current apoc-procedures. 
+_Label Propagation_ is a graph partitioning algorithm already implemented in current apoc-procedures. 
 
 ## Progress
 

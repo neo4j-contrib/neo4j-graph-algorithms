@@ -132,7 +132,7 @@ public class IterativeTarjanSCCTest {
             return true;
         });
 
-        String cypher2 = "MATCH (n) RETURN n.cluster as c";
+        String cypher2 = "MATCH (n) RETURN n.partition as c";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         api.execute(cypher2).accept(row -> {
             testMap.addTo(row.getNumber("c").intValue(), 1);
@@ -151,10 +151,10 @@ public class IterativeTarjanSCCTest {
 
         final IntIntScatterMap testMap = new IntIntScatterMap();
 
-        String cypher = "CALL algo.scc.iterative.stream() YIELD nodeId, cluster";
+        String cypher = "CALL algo.scc.iterative.stream() YIELD nodeId, partition";
 
         api.execute(cypher).accept(row -> {
-            testMap.addTo(row.getNumber("cluster").intValue(), 1);
+            testMap.addTo(row.getNumber("partition").intValue(), 1);
             return true;
         });
 
