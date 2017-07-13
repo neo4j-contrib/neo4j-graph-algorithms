@@ -4,14 +4,14 @@ _Betweenness Centrality_ is a measure of centrality in a graph. In graph theory 
 
 == History, Explanation
 
-_Anthonisse (1971) saw the rush in a graph as the amount a node in a network has to
-intermediate between other nodes. Freeman (1977, 1979) defined betweenness
-centrality as one of the “three distinct intuitive conceptions of centrality” (Freeman,
-1979: 215). Betweenness centrality is often connected with the notion of control over the
-flow of information. Betweenness centrality is calculated by a breath-first search
-algorithm which calculates the shortest paths from every node to all other nodes (Brandes
-2001). The nodes which lie on these shortest paths are favored in the betweenness
-centrality score. 
+Anthonisse (1971) introduced the concept _rush_ in a graph as the amount a node in a network has to intermediate between other nodes. 
+Freeman (1977, 1979) defined betweenness centrality as one of the “three distinct intuitive conceptions of centrality” (Freeman, 1979: 215). 
+Betweenness centrality is often connected with the notion of control over the flow of information. 
+Betweenness centrality is calculated by a breath-first search algorithm which calculates the shortest paths from every node to all other nodes (Brandes 2001). 
+The nodes which most frequently lie on these shortest paths are favored in the betweenness centrality score. 
+
+
+_Betweenness Centrality_ finds wide application in network theory. It represents the degree of which nodes stand between each other. For example, in a telecommunications network, a node with higher betweenness centrality would have more control over the network, because more information will pass through that node. Betweenness centrality was devised as a general measure of centrality. It applies to a wide range of problems in network theory, including problems related to social networks, biology, transport and scientific cooperation.
 
 
 == When to use it / use-cases
