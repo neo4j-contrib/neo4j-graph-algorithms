@@ -1,7 +1,6 @@
 = Closeness Centrality
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, 
-that measures the nearness (as opposite from the distance) from a node to all other nodes. 
+_Closeness Centrality_ of a node is a measure of centrality in a network, that measures the nearness (as opposite from the distance) from a node to all other nodes. 
 Nodes having a high closeness score have the shortest distances to all other nodes.
 This is important for the availability of knowledge and resources.
 
