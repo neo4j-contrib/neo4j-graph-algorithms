@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
@@ -53,9 +54,6 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
      * @return the result stream
      */
     public Stream<Result> resultStream() {
-
-        getProgressLog().resetProgress();
-
         executorService.submit(new ShortestPathTask(executorService));
         Iterator<Result> iterator = new AbstractIterator<Result>() {
             @Override
@@ -96,6 +94,9 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
         @Override
         public void run() {
+
+            final ProgressLogger progressLogger = getProgressLogger();
+
             new MultiSourceBFS(
                     graph,
                     graph,
@@ -114,9 +115,10 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
                                 throw new RuntimeException(e);
                             }
                         }
-                        getProgressLog().logProgress((double) target / (nodeCount - 1));
+                        progressLogger.logProgress((double) target / (nodeCount - 1));
                     }
             ).run(executorService);
+
             resultQueue.add(new Result(-1, -1, -1));
         }
     }

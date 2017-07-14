@@ -45,15 +45,10 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
     }
 
     public ParallelUnionFindQueue compute() {
-
-        getProgressLog().resetProgress();
-
         final int steps = Math.floorDiv(nodeCount, batchSize) - 1;
-
         for (int i = 0; i < nodeCount; i += batchSize) {
             futures.add(executor.submit(new UnionFindTask(i)));
         }
-
         for (int i = steps - 1; i >= 0; i--) {
             futures.add(executor.submit(() -> {
                 final DisjointSetStruct a;
@@ -116,7 +111,7 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
                     return true;
                 });
             }
-            getProgressLog().logProgress((end - 1.0) / (nodeCount - 1.0));
+            getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
             queue.add(struct);
         }
     }

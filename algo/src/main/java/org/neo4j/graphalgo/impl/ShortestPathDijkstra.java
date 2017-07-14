@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -44,6 +45,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     private double totalCost;
     // target node id
     private int goal;
+    private ProgressLogger progressLogger;
 
     public ShortestPathDijkstra(Graph graph) {
         this.graph = graph;
@@ -56,6 +58,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         path = new IntIntScatterMap(nodeCount);
         visited = new SimpleBitSet(nodeCount);
         finalPath = new IntArrayDeque();
+        progressLogger = getProgressLogger();
     }
 
     /**
@@ -63,7 +66,6 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
-        getProgressLog().resetProgress();
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
@@ -129,7 +131,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                         }
                         return true;
                     });
-            getProgressLog().logProgress((double) node / (nodeCount - 1));
+            progressLogger.logProgress((double) node / (nodeCount - 1));
         }
     }
 

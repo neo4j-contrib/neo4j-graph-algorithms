@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 
@@ -37,7 +38,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
     }
 
     public SCCTunedTarjan compute() {
-        getProgressLog().resetProgress();
+        final ProgressLogger progressLogger = getProgressLogger();
         Arrays.fill(connectedComponents, -1);
         setCount = 0;
         dfs = 0;
@@ -49,7 +50,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
             if (connectedComponents[node] == -1) {
                 lowPointDFS(node);
             }
-            getProgressLog().logProgress((double) node / (nodeCount - 1));
+            progressLogger.logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return this;

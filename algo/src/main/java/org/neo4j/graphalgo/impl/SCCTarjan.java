@@ -6,11 +6,11 @@ import com.carrotsearch.hppc.IntStack;
 import com.carrotsearch.hppc.ObjectArrayList;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -40,7 +40,6 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
     }
 
     public SCCTarjan compute() {
-        getProgressLog().resetProgress();
         aggregator.reset();
         graph.forEachNode(aggregator);
         return this;
@@ -88,6 +87,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
         private int index;
         private long minSetSize = Long.MAX_VALUE;
         private long maxSetSize = 0;
+        private ProgressLogger progressLogger;
 
         private Aggregator(Graph graph, int[] indices, int[] lowLink, ObjectArrayList<IntSet> connectedComponents, BitSet onStack, IntStack stack) {
             this.graph = graph;
@@ -96,6 +96,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
             this.connectedComponents = connectedComponents;
             this.onStack = onStack;
             this.stack = stack;
+            this.progressLogger = getProgressLogger();
         }
 
         public void reset() {
@@ -155,7 +156,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
             if (indices[node] == -1) {
                 strongConnect(node);
             }
-            getProgressLog().logProgress((double) node / (nodeCount -1));
+            progressLogger.logProgress((double) node / (nodeCount -1));
             return true;
         }
     }

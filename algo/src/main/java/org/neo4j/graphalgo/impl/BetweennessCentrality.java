@@ -5,7 +5,6 @@ import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.Exporter;
 import org.neo4j.graphalgo.core.utils.container.Path;
-import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
@@ -15,7 +14,6 @@ import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -55,7 +53,6 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
-        getProgressLog().resetProgress();
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
         return this;
@@ -125,7 +122,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
         }
-        getProgressLog().logProgress((double) startNode / (nodeCount - 1));
+        getProgressLogger().logProgress((double) startNode / (nodeCount - 1));
         return true;
     }
 

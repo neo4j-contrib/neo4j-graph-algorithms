@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
@@ -68,8 +69,6 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
      */
     public Stream<Result> resultStream() {
 
-        getProgressLog().resetProgress();
-
         counter.set(0);
         running = true;
 
@@ -112,6 +111,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
         @Override
         public void run() {
+            final ProgressLogger progressLogger = getProgressLogger();
             int startNode;
             while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
@@ -127,7 +127,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
                         throw new RuntimeException(e);
                     }
                 }
-                getProgressLog().logProgress((double) startNode / (nodeCount - 1));
+                progressLogger.logProgress((double) startNode / (nodeCount - 1));
             }
         }
 

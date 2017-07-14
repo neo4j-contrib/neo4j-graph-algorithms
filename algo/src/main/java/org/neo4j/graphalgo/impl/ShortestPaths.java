@@ -2,10 +2,9 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
-import org.omg.PortableInterceptor.LOCATION_FORWARD;
 
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -25,12 +24,14 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
     private final IntDoubleMap costs;
     private final IntMinPriorityQueue queue;
     private final int nodeCount;
+    private ProgressLogger progressLogger;
 
     public ShortestPaths(Graph graph) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new IntMinPriorityQueue();
+        progressLogger = getProgressLogger();
     }
 
     /**
@@ -39,7 +40,6 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
      * @return itself
      */
     public ShortestPaths compute(long startNode) {
-        getProgressLog().resetProgress();
         graph.forEachNode(node -> {
             costs.put(node, Double.POSITIVE_INFINITY);
             return true;
@@ -84,7 +84,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
                         }
                         return true;
                     });
-            getProgressLog().logProgress((double) node / (nodeCount - 1));
+            progressLogger.logProgress((double) node / (nodeCount - 1));
         }
     }
 

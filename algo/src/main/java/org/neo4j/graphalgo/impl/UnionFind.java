@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
 import java.util.Objects;
@@ -40,8 +41,8 @@ public class UnionFind extends Algorithm<UnionFind> {
      * @return a DSS
      */
     public DisjointSetStruct compute(IntBinaryPredicate constraint) {
-        getProgressLog().resetProgress();
         Objects.requireNonNull(constraint);
+        final ProgressLogger progressLogger = getProgressLogger();
         final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
         dss.reset();
         stepCount = 0;
@@ -50,7 +51,7 @@ public class UnionFind extends Algorithm<UnionFind> {
                 dss.union(source, target);
             }
             stepCount++;
-            getProgressLog().logProgress((double) stepCount / (nodeCount - 1));
+            progressLogger.logProgress((double) stepCount / (nodeCount - 1));
             return true;
         });
         return dss;
@@ -62,14 +63,14 @@ public class UnionFind extends Algorithm<UnionFind> {
      * @return a DSS
      */
     public DisjointSetStruct compute() {
-        getProgressLog().resetProgress();
         final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
+        final ProgressLogger progressLogger = getProgressLogger();
         dss.reset();
         stepCount = 0;
         iterator.forEachRelationship((source, target, relationship) -> {
             dss.union(source, target);
             stepCount++;
-            getProgressLog().logProgress((double) stepCount / (nodeCount - 1));
+            progressLogger.logProgress((double) stepCount / (nodeCount - 1));
             return true;
         });
         return dss;

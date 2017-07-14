@@ -46,7 +46,7 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
     }
 
     public ParallelUnionFindFJMerge compute() {
-        getProgressLog().resetProgress();
+
         final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new UFProcess(i, batchSize));
@@ -56,7 +56,6 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
     }
 
     public ParallelUnionFindFJMerge compute(double threshold) {
-        getProgressLog().resetProgress();
         final ArrayList<TUFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
@@ -112,7 +111,7 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
                     return;
                 }
             }
-            getProgressLog().logProgress((end - 1) / (nodeCount - 1));
+            getProgressLogger().logProgress((end - 1) / (nodeCount - 1));
         }
     }
 

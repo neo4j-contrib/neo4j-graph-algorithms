@@ -61,7 +61,6 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      * @return itself for method chaining
      */
     public ParallelBetweennessCentrality compute() {
-        getProgressLog().resetProgress();
         nodeQueue.set(0);
         final ArrayList<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -140,7 +139,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                 if (startNodeId >= nodeCount) {
                     return;
                 }
-                getProgressLog().logProgress((double) startNodeId / (nodeCount - 1));
+                getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
                 sigma[startNodeId] = 1;
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);

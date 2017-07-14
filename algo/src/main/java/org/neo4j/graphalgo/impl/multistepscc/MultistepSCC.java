@@ -82,7 +82,7 @@ public class MultistepSCC extends Algorithm<MultistepSCC> {
     }
 
     public MultistepSCC compute() {
-        getProgressLog().resetProgress();
+
         minSetSize = Integer.MAX_VALUE;
         maxSetSize = 0;
         setCount = 0;

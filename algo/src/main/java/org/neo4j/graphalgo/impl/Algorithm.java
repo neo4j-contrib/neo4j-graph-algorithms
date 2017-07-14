@@ -9,16 +9,19 @@ import org.neo4j.logging.*;
  */
 public abstract class Algorithm<ME extends Algorithm<ME>> {
 
-    protected ProgressLogger log = ProgressLogger.NULL_LOGGER;
+    private Log log = NullLog.getInstance();
+
+    private ProgressLogger progressLogger;
 
     public abstract ME me();
 
     public ME withLog(Log log) {
-        this.log = new ProgressLoggerAdapter(log);
+        this.log = log;
+        this.progressLogger = new ProgressLoggerAdapter(log);
         return me();
     }
 
-    public ProgressLogger getProgressLog() {
-        return log;
+    public ProgressLogger getProgressLogger() {
+        return progressLogger;
     }
 }

@@ -9,6 +9,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -41,9 +42,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         }
         this.direction = direction;
 
-        getProgressLog().resetProgress();
-
-        Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
+        final Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
                     batchSize,
                     graph,
                     (offset, nodes) -> new ComputeStep(batchSize, nodes),
@@ -52,7 +51,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         for (long i = 1; i < times; i++) {
             ParallelUtil.run(computeSteps, executor);
         }
-        IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
+        final IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
         for (ComputeStep computeStep : computeSteps) {
             labels.putAll(computeStep.labels);
             computeStep.release();
@@ -70,11 +69,13 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private final PrimitiveIntIterable nodes;
         private final DoubleDoubleHashMap votes;
         private final IntDoubleHashMap labels;
+        private ProgressLogger progressLogger;
 
         private ComputeStep(int nodeSize, PrimitiveIntIterable nodes) {
             this.nodes = nodes;
             votes = new DoubleDoubleHashMap();
             labels = new IntDoubleHashMap(nodeSize);
+            progressLogger = getProgressLogger();
         }
 
         @Override
@@ -88,7 +89,6 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private void compute(int nodeId) {
             votes.clear();
             graph.forEachRelationship(nodeId, direction, this);
-
             double originalPartition = partition(nodeId);
             double partition = originalPartition;
             double weight = Double.NEGATIVE_INFINITY;
@@ -101,7 +101,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             if (partition != originalPartition) {
                 labels.put(nodeId, partition);
             }
-            getProgressLog().logProgress((double) nodeId / (nodeCount - 1));
+            progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         }
 
         @Override
