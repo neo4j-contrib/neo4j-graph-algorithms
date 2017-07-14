@@ -11,7 +11,7 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
 
     private Log log = NullLog.getInstance();
 
-    private ProgressLogger progressLogger;
+    private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
     public abstract ME me();
 
