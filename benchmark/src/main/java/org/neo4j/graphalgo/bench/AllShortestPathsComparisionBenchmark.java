@@ -127,26 +127,9 @@ public class AllShortestPathsComparisionBenchmark {
                 .count();
     }
 
-
-    @Benchmark
-    public long _02_benchmark_ASP_Logging() {
-        return new AllShortestPaths(graph, Pools.DEFAULT, 8)
-                .withLogEnabled(config.isLogProgress())
-                .resultStream()
-                .count();
-    }
-
     @Benchmark
     public long _03_benchmark_MS_ASP() {
         return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
                 .resultStream().count();
     }
-
-    @Benchmark
-    public long _03_benchmark_MS_ASP_Logging() {
-        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
-                .withLogEnabled(config.isLogProgress())
-                .resultStream().count();
-    }
-
 }

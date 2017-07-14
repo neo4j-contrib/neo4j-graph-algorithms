@@ -116,14 +116,12 @@ public class UnionFindProc4 {
                 log.debug("Computing union find with threshold in parallel" + threshold);
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
                         .withLog(log)
-                        .withLogEnabled(config.isLogProgress())
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
                         .withLog(log)
-                        .withLogEnabled(config.isLogProgress())
                         .compute()
                         .getStruct();
             }
@@ -133,13 +131,11 @@ public class UnionFindProc4 {
                 log.debug("Computing union find with threshold " + threshold);
                 struct = new GraphUnionFind(graph)
                         .withLog(log)
-                        .withLogEnabled(config.isLogProgress())
                         .compute(threshold);
             } else {
                 log.debug("Computing union find without threshold");
                 struct = new GraphUnionFind(graph)
                         .withLog(log)
-                        .withLogEnabled(config.isLogProgress())
                         .compute();
             }
         }

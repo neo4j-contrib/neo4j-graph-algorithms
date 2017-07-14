@@ -41,7 +41,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         }
         this.direction = direction;
 
-        resetProgress();
+        getProgressLog().resetProgress();
 
         Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
                     batchSize,
@@ -101,7 +101,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             if (partition != originalPartition) {
                 labels.put(nodeId, partition);
             }
-            logProgress((double) nodeId / (nodeCount - 1));
+            getProgressLog().logProgress((double) nodeId / (nodeCount - 1));
         }
 
         @Override

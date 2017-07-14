@@ -55,7 +55,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
         return this;
@@ -125,7 +125,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
         }
-        logProgress((double) startNode / (nodeCount - 1));
+        getProgressLog().logProgress((double) startNode / (nodeCount - 1));
         return true;
     }
 

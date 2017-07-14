@@ -123,7 +123,6 @@ public final class LabelPropagationProc {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             return new LabelPropagation(graph, pool)
                     .withLog(log)
-                    .withLogEnabled(configuration.isLogProgress())
                     .compute(
                     direction,
                     iterations,

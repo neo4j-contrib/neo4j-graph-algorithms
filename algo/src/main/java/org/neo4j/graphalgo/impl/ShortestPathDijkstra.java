@@ -63,7 +63,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
-        resetProgress();
+        getProgressLog().resetProgress();
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
@@ -129,7 +129,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                         }
                         return true;
                     });
-            logProgress((double) node / (nodeCount - 1));
+            getProgressLog().logProgress((double) node / (nodeCount - 1));
         }
     }
 

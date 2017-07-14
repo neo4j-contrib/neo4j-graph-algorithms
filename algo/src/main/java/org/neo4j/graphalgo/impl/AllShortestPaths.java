@@ -68,7 +68,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
      */
     public Stream<Result> resultStream() {
 
-        resetProgress();
+        getProgressLog().resetProgress();
 
         counter.set(0);
         running = true;
@@ -115,7 +115,6 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
             int startNode;
             while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
-                logProgress((double) startNode / (nodeCount - 1));
                 for (int i = 0; i < nodeCount; i++) {
                     final Result result = new Result(
                             graph.toOriginalNodeId(startNode),
@@ -128,6 +127,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
                         throw new RuntimeException(e);
                     }
                 }
+                getProgressLog().logProgress((double) startNode / (nodeCount - 1));
             }
         }
 

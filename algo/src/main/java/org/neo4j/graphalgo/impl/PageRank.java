@@ -136,7 +136,7 @@ public class PageRank extends Algorithm<PageRank> {
      * compute pageRank for n iterations
      */
     public PageRank compute(int iterations) {
-        resetProgress();
+        getProgressLog().resetProgress();
         assert iterations >= 1;
         computeSteps.run(iterations);
         return this;

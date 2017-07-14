@@ -37,7 +37,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
     }
 
     public SCCTunedTarjan compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         Arrays.fill(connectedComponents, -1);
         setCount = 0;
         dfs = 0;
@@ -49,7 +49,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
             if (connectedComponents[node] == -1) {
                 lowPointDFS(node);
             }
-            logProgress((double) node / (nodeCount - 1));
+            getProgressLog().logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return this;

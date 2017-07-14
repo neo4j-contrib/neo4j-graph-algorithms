@@ -45,7 +45,6 @@ public class BetweennessCentralityProc {
                 configuration.getNumber("scaleFactor", 100_000).intValue(),
                 Pools.DEFAULT)
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress())
                 .compute()
                 .resultStream();
     }
@@ -71,7 +70,6 @@ public class BetweennessCentralityProc {
                     Pools.DEFAULT,
                     configuration.getConcurrency())
                     .withLog(log)
-                    .withLogEnabled(configuration.isLogProgress())
                     .compute()
                     .resultStream();
         }
@@ -108,8 +106,7 @@ public class BetweennessCentralityProc {
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> {
             bc.compute();
@@ -171,8 +168,7 @@ public class BetweennessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> {
             bc.compute();
@@ -221,8 +217,7 @@ public class BetweennessCentralityProc {
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT,
                 configuration.getConcurrency())
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> {
             bc.compute();

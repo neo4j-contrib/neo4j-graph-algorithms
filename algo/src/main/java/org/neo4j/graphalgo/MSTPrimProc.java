@@ -79,8 +79,7 @@ public class MSTPrimProc {
                 idMapper,
                 new BothRelationshipAdapter(relationshipContainer),
                 weightMap)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);

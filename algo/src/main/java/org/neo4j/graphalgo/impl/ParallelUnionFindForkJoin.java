@@ -46,14 +46,14 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
     }
 
     public ParallelUnionFindForkJoin compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         struct = ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
         return this;
     }
 
 
     public ParallelUnionFindForkJoin compute(double threshold) {
-        resetProgress();
+        getProgressLog().resetProgress();
         struct = ForkJoinPool.commonPool().invoke(new ThresholdUFTask(0, threshold));
         return this;
     }
@@ -97,7 +97,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
                     return true;
                 });
             }
-            logProgress((end - 1.0) / (nodeCount - 1.0));
+            getProgressLog().logProgress((end - 1.0) / (nodeCount - 1.0));
             return struct;
         }
     }

@@ -54,7 +54,7 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
      */
     public Stream<Result> resultStream() {
 
-        resetProgress();
+        getProgressLog().resetProgress();
 
         executorService.submit(new ShortestPathTask(executorService));
         Iterator<Result> iterator = new AbstractIterator<Result>() {
@@ -114,7 +114,7 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
                                 throw new RuntimeException(e);
                             }
                         }
-                        logProgress((double) target / (nodeCount - 1));
+                        getProgressLog().logProgress((double) target / (nodeCount - 1));
                     }
             ).run(executorService);
             resultQueue.add(new Result(-1, -1, -1));

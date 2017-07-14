@@ -40,7 +40,7 @@ public class UnionFind extends Algorithm<UnionFind> {
      * @return a DSS
      */
     public DisjointSetStruct compute(IntBinaryPredicate constraint) {
-        resetProgress();
+        getProgressLog().resetProgress();
         Objects.requireNonNull(constraint);
         final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
         dss.reset();
@@ -50,7 +50,7 @@ public class UnionFind extends Algorithm<UnionFind> {
                 dss.union(source, target);
             }
             stepCount++;
-            logProgress((double) stepCount / (nodeCount - 1));
+            getProgressLog().logProgress((double) stepCount / (nodeCount - 1));
             return true;
         });
         return dss;
@@ -62,14 +62,14 @@ public class UnionFind extends Algorithm<UnionFind> {
      * @return a DSS
      */
     public DisjointSetStruct compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         final DisjointSetStruct dss = new DisjointSetStruct(nodeCount);
         dss.reset();
         stepCount = 0;
         iterator.forEachRelationship((source, target, relationship) -> {
             dss.union(source, target);
             stepCount++;
-            logProgress((double) stepCount / (nodeCount - 1));
+            getProgressLog().logProgress((double) stepCount / (nodeCount - 1));
             return true;
         });
         return dss;

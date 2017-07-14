@@ -43,7 +43,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
                 dss.union(source, target);
                 return true;
             });
-            logProgress((double) node / (nodeCount - 1));
+            getProgressLog().logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;
@@ -63,7 +63,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
                 }
                 return true;
             });
-            logProgress((double) node / (nodeCount - 1));
+            getProgressLog().logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;

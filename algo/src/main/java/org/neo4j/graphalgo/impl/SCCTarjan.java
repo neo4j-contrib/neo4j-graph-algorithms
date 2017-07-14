@@ -40,7 +40,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
     }
 
     public SCCTarjan compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         aggregator.reset();
         graph.forEachNode(aggregator);
         return this;
@@ -155,7 +155,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
             if (indices[node] == -1) {
                 strongConnect(node);
             }
-            logProgress((double) node / (nodeCount -1));
+            getProgressLog().logProgress((double) node / (nodeCount -1));
             return true;
         }
     }

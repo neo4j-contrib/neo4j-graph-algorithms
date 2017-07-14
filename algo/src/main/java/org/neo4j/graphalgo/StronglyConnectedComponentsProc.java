@@ -65,8 +65,7 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTarjan tarjan = new SCCTarjan(graph)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> {
             tarjan.compute();
@@ -110,8 +109,7 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTunedTarjan tarjan = new SCCTunedTarjan(graph)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(tarjan::compute);
 
@@ -155,7 +153,6 @@ public class StronglyConnectedComponentsProc {
 
         return new SCCTunedTarjan(graph)
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress())
                 .compute()
                 .resultStream();
     }
@@ -183,8 +180,7 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(tarjan::compute);
 
@@ -228,7 +224,6 @@ public class StronglyConnectedComponentsProc {
 
         return new SCCIterativeTarjan(graph)
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress())
                 .compute()
                 .resultStream();
     }
@@ -260,7 +255,7 @@ public class StronglyConnectedComponentsProc {
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                ;
 
         builder.timeEval(multistep::compute);
 
@@ -306,8 +301,7 @@ public class StronglyConnectedComponentsProc {
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         multistep.compute();
 
@@ -336,7 +330,6 @@ public class StronglyConnectedComponentsProc {
         return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getConcurrency(1))
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress())
                 .compute(graph.toMappedNodeId(startNodeId))
                 .resultStream();
     }

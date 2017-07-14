@@ -58,7 +58,6 @@ public class ShortestPathsProc {
 
         return new ShortestPaths(graph)
                 .withLog(log)
-                .withLogEnabled(configuration.isLogProgress())
                 .compute(startNode.getId())
                 .resultStream();
     }
@@ -89,8 +88,7 @@ public class ShortestPathsProc {
         load.stop();
 
         final ShortestPaths algorithm = new ShortestPaths(graph)
-                .withLog(log)
-                .withLogEnabled(configuration.isLogProgress());
+                .withLog(log);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
 

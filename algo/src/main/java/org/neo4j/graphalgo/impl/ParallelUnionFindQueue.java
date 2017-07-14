@@ -46,7 +46,7 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
 
     public ParallelUnionFindQueue compute() {
 
-        resetProgress();
+        getProgressLog().resetProgress();
 
         final int steps = Math.floorDiv(nodeCount, batchSize) - 1;
 
@@ -116,7 +116,7 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
                     return true;
                 });
             }
-            logProgress((end - 1.0) / (nodeCount - 1.0));
+            getProgressLog().logProgress((end - 1.0) / (nodeCount - 1.0));
             queue.add(struct);
         }
     }

@@ -54,7 +54,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
     }
 
     public SCCIterativeTarjan compute() {
-        resetProgress();
+        getProgressLog().resetProgress();
         setCount = 0;
         minSetSize = Integer.MAX_VALUE;
         maxSetSize = 0;
@@ -110,7 +110,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
                 postVisit(node);
             }
         }
-        logProgress((double) nodeId / (nodeCount - 1));
+        getProgressLog().logProgress((double) nodeId / (nodeCount - 1));
         return true;
     }
 

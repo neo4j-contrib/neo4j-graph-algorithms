@@ -26,19 +26,19 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
 
     public ForwardBackwardScc compute(int startNodeId) {
 
-        resetProgress();
+        getProgressLog().resetProgress();
 
         scc.clear();
         // D <- BFS( G(V,E(V)), v)
         final IntScatterSet descendant = new IntScatterSet();
         traverse.bfs(startNodeId, Direction.OUTGOING, node -> true, descendant::add)
                 .awaitTermination();
-        logProgress(.5);
+        getProgressLog().logProgress(.5);
         // ST <- BFS( G(V, E'(V)), v)
         traverse.reset()
                 .bfs(startNodeId, Direction.INCOMING, descendant::contains, scc::add)
                 .awaitTermination();
-        logProgress(1.0);
+        getProgressLog().logProgress(1.0);
         // SCC <- V & ST
         scc.retainAll(descendant);
         return this;

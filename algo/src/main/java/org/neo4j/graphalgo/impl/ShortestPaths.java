@@ -39,7 +39,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
      * @return itself
      */
     public ShortestPaths compute(long startNode) {
-        resetProgress();
+        getProgressLog().resetProgress();
         graph.forEachNode(node -> {
             costs.put(node, Double.POSITIVE_INFINITY);
             return true;
@@ -84,7 +84,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
                         }
                         return true;
                     });
-            logProgress((double) node / (nodeCount - 1));
+            getProgressLog().logProgress((double) node / (nodeCount - 1));
         }
     }
 
