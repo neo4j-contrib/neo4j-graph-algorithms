@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.api;
 
-import java.util.Iterator;
-
 /**
  * Iterator for incoming relations based on nodeId.
  *
@@ -17,6 +15,4 @@ public interface IncomingRelationshipIterator {
      * @param consumer a relationship consumer
      */
     void forEachIncoming(int nodeId, RelationshipConsumer consumer);
-
-    Iterator<RelationshipCursor> incomingIterator(int nodeId);
 }

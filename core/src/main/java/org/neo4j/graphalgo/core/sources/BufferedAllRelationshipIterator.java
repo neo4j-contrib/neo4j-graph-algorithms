@@ -5,12 +5,10 @@ import com.carrotsearch.hppc.cursors.LongCursor;
 import org.neo4j.graphalgo.api.AllRelationshipIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.Iterator;
 import java.util.function.Consumer;
 
 /**
@@ -36,35 +34,6 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
 
     public static BufferedAllRelationshipIterator.Builder builder() {
         return new Builder();
-    }
-
-    @Override
-    public Iterator<RelationshipCursor> allRelationshipIterator() {
-        return new AllIterator(container.iterator());
-    }
-
-    private static class AllIterator implements Iterator<RelationshipCursor> {
-
-        private final Iterator<LongCursor> iterator;
-        private final RelationshipCursor relationCursor = new RelationshipCursor();
-
-        public AllIterator(Iterator<LongCursor> iterator) {
-            this.iterator = iterator;
-            relationCursor.relationshipId = -1;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return iterator.hasNext();
-        }
-
-        @Override
-        public RelationshipCursor next() {
-            final LongCursor cursor = iterator.next();
-            relationCursor.sourceNodeId = RawValues.getHead(cursor.value);
-            relationCursor.targetNodeId = RawValues.getTail(cursor.value);
-            return relationCursor;
-        }
     }
 
     public static class Builder {

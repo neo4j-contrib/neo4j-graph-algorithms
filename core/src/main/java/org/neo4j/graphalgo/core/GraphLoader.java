@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.Exceptions;
@@ -37,16 +38,13 @@ public class GraphLoader {
     private String relWeightProp = null;
     private String nodeWeightProp = null;
     private String nodeProp = null;
+    private Direction direction = Direction.BOTH;
 
     private final GraphDatabaseAPI api;
     private ExecutorService executorService;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
     private double nodePropDefault = 0.0;
-    /** statement to load nodes, has to return "id" and optionally "weight" or "value" */
-    private String nodeStatement;
-    /** statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight" */
-    private String relationshipStatement;
     private int batchSize;
     private boolean accumulateWeights;
 
@@ -176,6 +174,16 @@ public class GraphLoader {
      */
     public GraphLoader withAnyRelationshipType() {
         this.relation = null;
+        return this;
+    }
+
+    /**
+     * Instructs the loader to load only relationship of the given direction.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDirection(Direction direction) {
+        this.direction = direction;
         return this;
     }
 
@@ -364,6 +372,7 @@ public class GraphLoader {
                 label,
                 null,
                 relation,
+                direction,
                 relWeightProp,
                 relWeightDefault,
                 nodeWeightProp,
@@ -371,8 +380,6 @@ public class GraphLoader {
                 nodeProp,
                 nodePropDefault,
                 executorService,
-                nodeStatement,
-                relationshipStatement,
                 batchSize,
                 accumulateWeights);
 
@@ -391,7 +398,7 @@ public class GraphLoader {
      * @return itself to enable fluent interface
      */
     public GraphLoader withNodeStatement(String nodeStatement) {
-        this.nodeStatement = nodeStatement;
+        this.label = nodeStatement;
         return this;
     }
 
@@ -401,7 +408,7 @@ public class GraphLoader {
      * @return itself to enable fluent interface
      */
     public GraphLoader withRelationshipStatement(String relationshipStatement) {
-        this.relationshipStatement = relationshipStatement;
+        this.relation = relationshipStatement;
         return this;
     }
 

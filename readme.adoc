@@ -2,9 +2,13 @@
 
 image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.1["Build Status", link="https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms"]
 
+// tag::readme[]
+
 This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.
 
+ifndef::env-docs[]
 You can find the documentation (WIP) here http://neo4j-contrib.github.io/neo4j-graph-algorithms
+endif::env-docs[]
 
 Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
 
@@ -39,15 +43,73 @@ return name, description
 order by name
 ----
 
-Details on how to call them can be found in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
+[WARNING]
+====
+For safety reasons, in *Neo4j 3.2.x* you will need to add/enable this line in your `$NEO4J_HOME/conf/neo4j.conf`:
+
+----
+dbms.security.procedures.unrestricted=algo.*
+----
+====
+
+== Usage
+
+These algorithms are exposed as Neo4j procedures.
+You can call them directly from Cypher in your Neo4j Browser, from cypher-shell or your client code.
+
+For most algorithms there are two procedures, one that writes results back to the graph as node-properties and one (named `algo.<name>.stream`) that returns a stream of data, e.g. node-ids and computed values.
+
+The general call syntax is:
+
+[source,cypher]
+----
+CALL algo.<name>([label],[relType],{config})
+----
+
+For example for page rank on dbpedia:
+
+[source,cypher]
+----
+CALL algo.pageRank('Page','LINK',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
+// YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
+
+CALL algo.pageRank.stream('Page','LINK',{iterations:5, dampingFactor:0.85})
+YIELD node, score
+RETURN node, score
+ORDER BY score DESC LIMIT 10;
+----
+
+=== Cypher Loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on,
+you can use Cypher statements to load or project subsets of your graph.
+Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
+
+You can also return the value or weight property (according to your config) in addition to the id's from these statements.
+
+[source,cypher]
+----
+CALL algo.pageRank(
+'MATCH (p:Page) RETURN id(p) as id',
+'MATCH (p:Page)-[:LINK]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', iterations:5, write: true});
+----
+
+ifndef::env-docs[]
+Details on how to call the individual algorithms can be found in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
+endif::env-docs[]
+
 
 == Building
 
 Currently aiming at Neo4j 3.1
 
 ----
+git clone https://github.com/neo4j-contrib/neo4j-graph-algorithms
+cd neo4j-graph-algorithms
 mvn clean install
-cp algo/target/graph-algorithms-3.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+cp algo/target/graph-algorithms-*.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart
 ----
 
+// end::readme[]

@@ -1,6 +1,6 @@
-= Clustering: Louvain
+= Graph Partitioning: Louvain
 
-_Louvain_ is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity. 
+_Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity. 
 
 == History, Explanation
 
@@ -23,7 +23,7 @@ _Louvain_ is an algorithm for detecting communities in networks that relies upon
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/96
 
-_Louvain_ is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity. 
+_Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity. 
 
 - [ ] single threaded implementation
 - [ ] tests

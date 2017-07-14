@@ -1,6 +1,5 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.results;
 
-import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.graphdb.Node;
 
 public class PageRankScore {

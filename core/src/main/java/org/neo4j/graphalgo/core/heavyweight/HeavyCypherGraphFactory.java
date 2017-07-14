@@ -72,11 +72,11 @@ public class HeavyCypherGraphFactory extends GraphFactory {
     public Graph build() {
         int batchSize = setup.batchSize;
 
-        Nodes nodes = canBatchLoad(batchSize, setup.nodeStatement) ?
+        Nodes nodes = canBatchLoad(batchSize, setup.startLabel) ?
                 batchLoadNodes(batchSize) :
                 loadNodes(0, NO_BATCH);
         Relationships relationships;
-        relationships = canBatchLoad(batchSize, setup.relationshipStatement) ?
+        relationships = canBatchLoad(batchSize, setup.relationshipType) ?
                 batchLoadRelationships(batchSize, nodes) :
                 loadRelationships(0, NO_BATCH, nodes);
 
@@ -263,7 +263,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
             }
         }
         RelationshipRowVisitor visitor = new RelationshipRowVisitor();
-        api.execute(setup.relationshipStatement, params(offset, batchSize)).accept(visitor);
+        api.execute(setup.relationshipType, params(offset, batchSize)).accept(visitor);
         return new Relationships(offset, visitor.rows, matrix, relWeigths);
     }
 
@@ -295,7 +295,8 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         }
 
         NodeRowVisitor visitor = new NodeRowVisitor();
-        api.execute(setup.nodeStatement, params(offset, batchSize)).accept(visitor);
+        api.execute(setup.startLabel, params(offset, batchSize)).accept(visitor);
+        idMap.buildMappedIds();
         return new Nodes(offset, visitor.rows, idMap, nodeWeights, nodeProps);
     }
 

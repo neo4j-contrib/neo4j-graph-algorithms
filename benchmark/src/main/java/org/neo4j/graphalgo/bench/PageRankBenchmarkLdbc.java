@@ -4,6 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.PageRank;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -47,7 +48,7 @@ public class PageRankBenchmarkLdbc {
     @Setup
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb();
-        grph = new GraphLoader(db, Pools.DEFAULT).load(this.graph.impl);
+        grph = new GraphLoader(db, Pools.DEFAULT).withDirection(Direction.OUTGOING).load(this.graph.impl);
     }
 
     @TearDown

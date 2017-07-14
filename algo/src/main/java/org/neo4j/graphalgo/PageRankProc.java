@@ -8,7 +8,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.impl.PageRankExporter;
-import org.neo4j.graphalgo.impl.PageRankScore;
+import org.neo4j.graphalgo.results.PageRankScore;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -86,6 +87,7 @@ public final class PageRankProc {
         GraphLoader graphLoader = new GraphLoader(api)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
+                .withDirection(Direction.OUTGOING)
                 .withoutRelationshipWeights()
                 .withExecutorService(Pools.DEFAULT);
 

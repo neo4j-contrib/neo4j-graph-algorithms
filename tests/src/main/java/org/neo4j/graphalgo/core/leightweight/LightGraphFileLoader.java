@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
+import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +58,9 @@ public class LightGraphFileLoader {
 
             return new LightGraph(
                     idMap, weightMapping,
-                    adjacency, inOffsets, outOffsets
+                    adjacency,
+                    adjacency, // TODO
+                    inOffsets, outOffsets
             );
         }
     }

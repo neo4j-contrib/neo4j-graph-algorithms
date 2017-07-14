@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.impl.ShortestPathsExporter;
 import org.neo4j.graphalgo.results.ShortestPathResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -53,6 +54,7 @@ public class ShortestPathsProc {
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
@@ -82,6 +84,7 @@ public class ShortestPathsProc {
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         load.stop();

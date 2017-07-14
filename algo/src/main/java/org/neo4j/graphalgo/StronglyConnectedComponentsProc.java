@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphalgo.results.SCCResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -21,8 +22,8 @@ import java.util.stream.Stream;
  */
 public class StronglyConnectedComponentsProc {
 
-    public static final String CONFIG_WRITE_PROPERTY = "clusterProperty";
-    public static final String CONFIG_CLUSTER = "cluster";
+    public static final String CONFIG_WRITE_PROPERTY = "partitionProperty";
+    public static final String CONFIG_CLUSTER = "partition";
 
     @Context
     public GraphDatabaseAPI api;
@@ -60,6 +61,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -102,6 +104,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -133,7 +136,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.tunedTarjan.stream
     @Procedure(value = "algo.scc.tunedTarjan.stream", mode = Mode.WRITE)
     @Description("CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> sccTunedTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -145,6 +148,7 @@ public class StronglyConnectedComponentsProc {
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
@@ -171,6 +175,7 @@ public class StronglyConnectedComponentsProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutRelationshipWeights()
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -202,7 +207,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.iterative.stream
     @Procedure(value = "algo.scc.iterative.stream", mode = Mode.WRITE)
     @Description("CALL algo.scc.iterative.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> sccIterativeTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -214,6 +219,7 @@ public class StronglyConnectedComponentsProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutRelationshipWeights()
+                    .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
 
@@ -274,7 +280,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.multistep.stream
     @Procedure(value = "algo.scc.multistep.stream")
     @Description("CALL algo.scc.multistep.stream(label:String, relationship:String, {write:true, concurrency:4, cutoff:100000}) YIELD " +
-            "nodeId, cluster")
+            "nodeId, partition")
     public Stream<SCCStreamResult> multistepStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -302,7 +308,7 @@ public class StronglyConnectedComponentsProc {
     // algo.scc.forwardBackward.stream
     @Procedure(value = "algo.scc.forwardBackward.stream")
     @Description("CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD " +
-            "nodeId")
+            "nodeId, partition")
     public Stream<ForwardBackwardScc.Result> fwbwStream(
             @Name(value = "startNodeId", defaultValue = "0") long startNodeId,
             @Name(value = "label", defaultValue = "") String label,
