@@ -226,4 +226,32 @@ One approach to parallelize _UnionFind_ might be _relationship partitioning_ whe
 
 ### evaluation
 
-- Performance tests on different dataset sizes / level of concurrency 
+- Performance tests on different dataset sizes / level of concurrency
+
+== Details
+
+- writes a cluster-id to each node representing the a connected component where each node
+is reachable from any other node
+
+==== algo.unionFind
+
+- if a threshold configuration parameter is supplied only relationships with a property value higher then the threshold
+are merged
+
+==== algo.unionFind.exp1
+
+- parallel UnionFind using ExecutorService only.
+- Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
+which are then merged pairwise.
+- The implementation is based on a queue which acts as a buffer for each computed DSS. As long as there are
+more elements on the queue the algorithm takes two, merges them and adds its result to the queue until only
+1 element remains.
+
+==== algo.unionFind.exp2
+
+-  Like in *exp1* the resulting DSS of each node-partition is merged by the ForkJoin pool while
+the calculation of the DSS is done by the ExecutorService.
+
+==== algo.unionFind.exp3
+
+- calculation and merge using forkJoinPool

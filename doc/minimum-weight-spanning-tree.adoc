@@ -21,6 +21,17 @@ There are quite a few use cases for minimum spanning trees. One example would be
 
 == Algorithm explanation on simple sample graph
 
+
+       a                a
+   1 /   \ 2          /  \
+    /     \          /    \
+   b --3-- c        b      c
+   |       |   =>   |      |
+   4       5        |      |
+   |       |        |      |
+   d --6-- e        d      e
+
+
 [source,cypher]
 ----
 MATCH(n:Node{start:true}) 
