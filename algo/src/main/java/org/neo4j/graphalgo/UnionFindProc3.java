@@ -117,11 +117,13 @@ public class UnionFindProc3 {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
                 struct = new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                        .withLog(log)
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
                 struct = new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                        .withLog(log)
                         .compute()
                         .getStruct();
             }
@@ -129,10 +131,14 @@ public class UnionFindProc3 {
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold " + threshold);
-                struct = new GraphUnionFind(graph).compute(threshold);
+                struct = new GraphUnionFind(graph)
+                        .withLog(log)
+                        .compute(threshold);
             } else {
                 log.debug("Computing union find without threshold");
-                struct = new GraphUnionFind(graph).compute();
+                struct = new GraphUnionFind(graph)
+                        .withLog(log)
+                        .compute();
             }
         }
 

@@ -46,6 +46,7 @@ public class ClosenessCentralityProc {
 
         return new MSClosenessCentrality(graph, Pools.DEFAULT)
                 .compute()
+                .withLog(log)
                 .resultStream();
     }
 
@@ -73,7 +74,9 @@ public class ClosenessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
-        final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, Pools.DEFAULT);
+        final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, Pools.DEFAULT)
+                .withLog(log);
+
         builder.timeEval(centrality::compute);
 
         if (configuration.isWriteFlag()) {

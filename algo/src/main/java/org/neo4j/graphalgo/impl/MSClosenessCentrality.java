@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class MSClosenessCentrality {
+public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     private final Graph graph;
 
@@ -35,9 +36,12 @@ public class MSClosenessCentrality {
 
     public MSClosenessCentrality compute() {
 
+        final ProgressLogger progressLogger = getProgressLogger();
+
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             int len = sourceNodeIds.size();
             farness.addAndGet(nodeId, len * depth);
+            progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
 
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
@@ -66,6 +70,11 @@ public class MSClosenessCentrality {
                         new Result(
                                 graph.toOriginalNodeId(nodeId),
                                 k / farness.get(nodeId)));
+    }
+
+    @Override
+    public MSClosenessCentrality me() {
+        return this;
     }
 
     /**

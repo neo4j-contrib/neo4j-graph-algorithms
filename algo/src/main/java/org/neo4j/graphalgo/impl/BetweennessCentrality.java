@@ -5,7 +5,6 @@ import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.Exporter;
 import org.neo4j.graphalgo.core.utils.container.Path;
-import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
@@ -15,7 +14,6 @@ import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -25,7 +23,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class BetweennessCentrality {
+public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     private final Graph graph;
 
@@ -36,16 +34,18 @@ public class BetweennessCentrality {
     private final IntStack stack;
     private final IntArrayDeque queue;
     private final Path[] paths; // TODO find a better container impl
+    private final int nodeCount;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
-        this.centrality = new double[graph.nodeCount()];
+        nodeCount = graph.nodeCount();
+        this.centrality = new double[nodeCount];
         this.stack = new IntStack();
-        this.sigma = new int[graph.nodeCount()];
-        this.distance = new int[graph.nodeCount()];
+        this.sigma = new int[nodeCount];
+        this.distance = new int[nodeCount];
         queue = new IntArrayDeque();
-        paths = new Path[graph.nodeCount()];
-        delta = new double[graph.nodeCount()];
+        paths = new Path[nodeCount];
+        delta = new double[nodeCount];
     }
 
     /**
@@ -69,7 +69,7 @@ public class BetweennessCentrality {
      * @param consumer the result consumer
      */
     public void forEach(ResultConsumer consumer) {
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+        for (int i = nodeCount - 1; i >= 0; i--) {
             if (!consumer.consume(graph.toOriginalNodeId(i), centrality[i])) {
                 return;
             }
@@ -122,6 +122,7 @@ public class BetweennessCentrality {
                 return true;
             });
         }
+        getProgressLogger().logProgress((double) startNode / (nodeCount - 1));
         return true;
     }
 
@@ -145,6 +146,11 @@ public class BetweennessCentrality {
             }
             path.clear();
         }
+    }
+
+    @Override
+    public BetweennessCentrality me() {
+        return this;
     }
 
     /**

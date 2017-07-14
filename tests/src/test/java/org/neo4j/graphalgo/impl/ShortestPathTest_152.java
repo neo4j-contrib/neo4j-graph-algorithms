@@ -4,6 +4,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.ShortestPathProc;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -12,6 +17,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.function.DoubleConsumer;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -23,6 +29,9 @@ import static org.mockito.Mockito.verify;
 public class ShortestPathTest_152 {
 
     private static GraphDatabaseAPI db;
+    private static long startNodeId;
+    private static long endNodeId;
+    private double totalCost;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -55,6 +64,10 @@ public class ShortestPathTest_152 {
 
         try (Transaction tx = db.beginTx()) {
             db.execute(cypher);
+
+            startNodeId = db.findNode(Label.label("Loc"), "name", "A").getId();
+            endNodeId = db.findNode(Label.label("Loc"), "name", "F").getId();
+
             tx.success();
         }
     }
@@ -64,6 +77,29 @@ public class ShortestPathTest_152 {
         db.shutdown();
     }
 
+    @Test
+    public void testDirect() throws Exception {
+
+        DoubleConsumer mock = mock(DoubleConsumer.class);
+
+        final Graph graph = new GraphLoader(db, Pools.DEFAULT)
+                .withOptionalLabel("Log")
+                .withAnyRelationshipType()
+                .withOptionalRelationshipWeightsFromProperty("d", 0)
+                .load(HeavyGraphFactory.class);
+
+        new ShortestPathDijkstra(graph)
+                .compute(startNodeId, endNodeId)
+                .resultStream()
+                .forEach(r -> mock.accept(r.cost));
+
+        verify(mock, times(1)).accept(eq(0.0));
+        verify(mock, times(1)).accept(eq(50.0));
+        verify(mock, times(1)).accept(eq(90.0));
+        verify(mock, times(1)).accept(eq(120.0));
+        verify(mock, times(1)).accept(eq(160.0));
+    }
+    
     @Test
     public void testDijkstraProcedure() throws Exception {
 

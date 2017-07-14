@@ -123,13 +123,13 @@ public class AllShortestPathsComparisionBenchmark {
     @Benchmark
     public long _01_benchmark_ASP() {
         return new AllShortestPaths(graph, Pools.DEFAULT, 8)
-                .resultStream().count();
+                .resultStream()
+                .count();
     }
 
     @Benchmark
-    public long _02_benchmark_MS_ASP() {
+    public long _03_benchmark_MS_ASP() {
         return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
                 .resultStream().count();
     }
-
 }

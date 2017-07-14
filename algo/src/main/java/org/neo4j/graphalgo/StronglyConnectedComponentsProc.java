@@ -66,7 +66,9 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
-        SCCTarjan tarjan = new SCCTarjan(graph);
+        SCCTarjan tarjan = new SCCTarjan(graph)
+                .withLog(log);
+
         builder.timeEval(() -> {
             tarjan.compute();
             builder.withMaxSetSize(tarjan.getMaxSetSize())
@@ -109,7 +111,8 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
-        SCCTunedTarjan tarjan = new SCCTunedTarjan(graph);
+        SCCTunedTarjan tarjan = new SCCTunedTarjan(graph)
+                .withLog(log);
 
         builder.timeEval(tarjan::compute);
 
@@ -153,6 +156,7 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
 
         return new SCCTunedTarjan(graph)
+                .withLog(log)
                 .compute()
                 .resultStream();
     }
@@ -180,7 +184,8 @@ public class StronglyConnectedComponentsProc {
                     .load(configuration.getGraphImpl());
         loadTimer.stop();
 
-        SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph);
+        SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
+                .withLog(log);
 
         builder.timeEval(tarjan::compute);
 
@@ -224,6 +229,7 @@ public class StronglyConnectedComponentsProc {
                     .load(configuration.getGraphImpl());
 
         return new SCCIterativeTarjan(graph)
+                .withLog(log)
                 .compute()
                 .resultStream();
     }
@@ -253,7 +259,9 @@ public class StronglyConnectedComponentsProc {
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
-                configuration.getNumber("cutoff", 100_000).intValue());
+                configuration.getNumber("cutoff", 100_000).intValue())
+                .withLog(log)
+                ;
 
         builder.timeEval(multistep::compute);
 
@@ -298,7 +306,8 @@ public class StronglyConnectedComponentsProc {
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
-                configuration.getNumber("cutoff", 100_000).intValue());
+                configuration.getNumber("cutoff", 100_000).intValue())
+                .withLog(log);
 
         multistep.compute();
 
@@ -326,6 +335,7 @@ public class StronglyConnectedComponentsProc {
 
         return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getConcurrency(1))
+                .withLog(log)
                 .compute(graph.toMappedNodeId(startNodeId))
                 .resultStream();
     }

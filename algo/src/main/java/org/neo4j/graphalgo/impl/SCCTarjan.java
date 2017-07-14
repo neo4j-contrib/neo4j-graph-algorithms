@@ -6,11 +6,11 @@ import com.carrotsearch.hppc.IntStack;
 import com.carrotsearch.hppc.ObjectArrayList;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -21,14 +21,15 @@ import java.util.function.IntPredicate;
  * as the overall count of distinct sets.
  *
  */
-public class SCCTarjan {
+public class SCCTarjan extends Algorithm<SCCTarjan> {
 
     private final Graph graph;
+    private final int nodeCount;
     private Aggregator aggregator;
 
     public SCCTarjan(Graph graph) {
         this.graph = graph;
-        int nodeCount = graph.nodeCount();
+        nodeCount = graph.nodeCount();
 
         aggregator = new Aggregator(graph,
                 new int[nodeCount],
@@ -70,7 +71,12 @@ public class SCCTarjan {
         return graph.nodeCount() == 0 ? 0 : aggregator.minSetSize;
     }
 
-    private static final class Aggregator implements IntPredicate, RelationshipConsumer {
+    @Override
+    public SCCTarjan me() {
+        return this;
+    }
+
+    private final class Aggregator implements IntPredicate, RelationshipConsumer {
 
         private final Graph graph;
         private final int[] indices;
@@ -81,6 +87,7 @@ public class SCCTarjan {
         private int index;
         private long minSetSize = Long.MAX_VALUE;
         private long maxSetSize = 0;
+        private ProgressLogger progressLogger;
 
         private Aggregator(Graph graph, int[] indices, int[] lowLink, ObjectArrayList<IntSet> connectedComponents, BitSet onStack, IntStack stack) {
             this.graph = graph;
@@ -89,6 +96,7 @@ public class SCCTarjan {
             this.connectedComponents = connectedComponents;
             this.onStack = onStack;
             this.stack = stack;
+            this.progressLogger = getProgressLogger();
         }
 
         public void reset() {
@@ -148,6 +156,7 @@ public class SCCTarjan {
             if (indices[node] == -1) {
                 strongConnect(node);
             }
+            progressLogger.logProgress((double) node / (nodeCount -1));
             return true;
         }
     }

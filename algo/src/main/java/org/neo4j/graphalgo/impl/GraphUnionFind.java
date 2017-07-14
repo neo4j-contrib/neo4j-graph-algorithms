@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
@@ -19,15 +20,17 @@ import org.neo4j.graphdb.Direction;
  *
  * @author mknblch
  */
-public class GraphUnionFind {
+public class GraphUnionFind extends Algorithm<GraphUnionFind> {
 
     private final Graph graph;
 
     private final DisjointSetStruct dss;
+    private final int nodeCount;
 
     public GraphUnionFind(Graph graph) {
         this.graph = graph;
-        this.dss = new DisjointSetStruct(graph.nodeCount());
+        nodeCount = graph.nodeCount();
+        this.dss = new DisjointSetStruct(nodeCount);
     }
 
     /**
@@ -36,11 +39,13 @@ public class GraphUnionFind {
      */
     public DisjointSetStruct compute() {
         dss.reset();
+        final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id) -> {
                 dss.union(source, target);
                 return true;
             });
+            progressLogger.logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;
@@ -53,6 +58,7 @@ public class GraphUnionFind {
      */
     public DisjointSetStruct compute(final double threshold) {
         dss.reset();
+        final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id, weight) -> {
                 if (weight >= threshold) {
@@ -60,8 +66,14 @@ public class GraphUnionFind {
                 }
                 return true;
             });
+            progressLogger.logProgress((double) node / (nodeCount - 1));
             return true;
         });
         return dss;
+    }
+
+    @Override
+    public GraphUnionFind me() {
+        return this;
     }
 }

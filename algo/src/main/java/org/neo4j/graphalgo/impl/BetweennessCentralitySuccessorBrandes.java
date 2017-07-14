@@ -18,15 +18,15 @@ import java.util.stream.Stream;
 
 /**
  * Implements Betweenness Centrality for unweighted graphs.
- *
+ * <p>
  * The algorithm is based on Brandes definition but with some changes
  * regarding the dependency-accumulation step.
- *
+ * <p>
  * taken from: http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
  *
  * @author mknblch
  */
-public class BetweennessCentralitySuccessorBrandes {
+public class BetweennessCentralitySuccessorBrandes extends Algorithm<BetweennessCentralitySuccessorBrandes> {
 
     // the graph
     private final Graph graph;
@@ -49,8 +49,8 @@ public class BetweennessCentralitySuccessorBrandes {
     /**
      * constructs a parallel centrality solver
      *
-     * @param graph the graph iface
-     * @param scaleFactor factor used to scale up doubles to integers in AtomicDoubleArray
+     * @param graph           the graph iface
+     * @param scaleFactor     factor used to scale up doubles to integers in AtomicDoubleArray
      * @param executorService the executor service
      */
     public BetweennessCentralitySuccessorBrandes(Graph graph, double scaleFactor, ExecutorService executorService) {
@@ -68,6 +68,7 @@ public class BetweennessCentralitySuccessorBrandes {
 
     /**
      * compute centrality
+     *
      * @return itself for method chaining
      */
     public BetweennessCentralitySuccessorBrandes compute() {
@@ -137,6 +138,7 @@ public class BetweennessCentralitySuccessorBrandes {
 
     /**
      * get the centrality array
+     *
      * @return array with centrality
      */
     public AtomicDoubleArray getCentrality() {
@@ -159,6 +161,7 @@ public class BetweennessCentralitySuccessorBrandes {
 
     /**
      * emit the result stream
+     *
      * @return stream if Results
      */
     public Stream<BetweennessCentrality.Result> resultStream() {
@@ -170,5 +173,8 @@ public class BetweennessCentralitySuccessorBrandes {
     }
 
 
-
+    @Override
+    public BetweennessCentralitySuccessorBrandes me() {
+        return this;
+    }
 }

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -25,7 +26,7 @@ import java.util.stream.StreamSupport;
  * [nodeId, distance] of each node in the path.
  *
  */
-public class ShortestPathDijkstra {
+public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     private final Graph graph;
 
@@ -39,14 +40,16 @@ public class ShortestPathDijkstra {
     private final IntArrayDeque finalPath;
     // visited set
     private final SimpleBitSet visited;
+    private final int nodeCount;
     // overall cost of the path
     private double totalCost;
     // target node id
     private int goal;
+    private ProgressLogger progressLogger;
 
     public ShortestPathDijkstra(Graph graph) {
         this.graph = graph;
-        int nodeCount = graph.nodeCount();
+        nodeCount = graph.nodeCount();
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new SharedIntMinPriorityQueue(
                 nodeCount,
@@ -55,6 +58,7 @@ public class ShortestPathDijkstra {
         path = new IntIntScatterMap(nodeCount);
         visited = new SimpleBitSet(nodeCount);
         finalPath = new IntArrayDeque();
+        progressLogger = getProgressLogger();
     }
 
     /**
@@ -127,6 +131,7 @@ public class ShortestPathDijkstra {
                         }
                         return true;
                     });
+            progressLogger.logProgress((double) node / (nodeCount - 1));
         }
     }
 
@@ -136,6 +141,11 @@ public class ShortestPathDijkstra {
             costs.put(target, newCosts);
             path.put(target, source);
         }
+    }
+
+    @Override
+    public ShortestPathDijkstra me() {
+        return this;
     }
 
     /**

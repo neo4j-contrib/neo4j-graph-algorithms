@@ -71,6 +71,7 @@ public class ShortestPathDeltaSteppingProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDeltaStepping(graph, delta)
+                .withLog(log)
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
                 ))
@@ -106,6 +107,7 @@ public class ShortestPathDeltaSteppingProc {
         }
 
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
+                .withLog(log)
                 .withExecutorService(Pools.DEFAULT);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
