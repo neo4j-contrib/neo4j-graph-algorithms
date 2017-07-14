@@ -1,7 +1,10 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
@@ -14,6 +17,52 @@ public final class BiMultiBitSet32Test extends RandomizedTest {
             bitSet.setAuxBit(0, i);
             long expected = i == 31 ? 0xFFFFFFFF00000000L : (((1L << i + 1) - 1) << 32);
             assertEquals("" + i, expected, bitSet.get(0));
+        }
+    }
+
+    @Test
+    public void shouldSetAuxiliaryBitsRange() {
+        int nodes = between(2, 64);
+        int startNode = between(0, nodes / 2);
+        int endNode = between(startNode, Math.min(nodes, startNode + 32));
+        BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
+        bitSet.setAuxBits(startNode, endNode);
+        String msg = String.format(" for range=[%d..%d] of %d nodes", startNode, endNode, nodes);
+        for (int i = 0; i < startNode; i++) {
+            assertEquals(i + msg, 0L, bitSet.get(i));
+        }
+        for (int i = startNode; i < endNode; i++) {
+            long expected = 1L << (i - startNode + 32);
+            assertEquals(i + msg, expected, bitSet.get(i));
+        }
+        for (int i = endNode; i < nodes; i++) {
+            assertEquals(i + msg, 0L, bitSet.get(i));
+        }
+    }
+
+    @Test
+    public void shouldSetAuxiliaryBitsArray() {
+        int nodes = between(2, 64);
+        int sourceNodeCount = between(nodes / 4, Math.min(32, nodes));
+        IntHashSet sources = new IntHashSet(sourceNodeCount);
+        while (sources.size() < sourceNodeCount) {
+            sources.add(between(0, nodes - 1));
+        }
+        int[] sourceNodes = sources.toArray();
+        Arrays.sort(sourceNodes);
+
+        BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
+        bitSet.setAuxBits(sourceNodes);
+
+        String msg = String.format(" for sources=[%s] of %d nodes", Arrays.toString(sourceNodes), nodes);
+        for (int i = 0; i < nodes; i++) {
+            if (sources.contains(i)) {
+                int bitPos = Arrays.binarySearch(sourceNodes, i);
+                long expected = 1L << (bitPos + 32);
+                assertEquals(i + msg, expected, bitSet.get(i));
+            } else {
+                assertEquals(i + msg, 0L, bitSet.get(i));
+            }
         }
     }
 

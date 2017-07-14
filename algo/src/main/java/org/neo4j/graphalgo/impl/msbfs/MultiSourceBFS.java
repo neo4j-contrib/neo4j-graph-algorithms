@@ -80,6 +80,9 @@ public final class MultiSourceBFS implements Runnable {
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = (startNodes != null && startNodes.length > 0) ? startNodes : null;
+        if (this.startNodes != null) {
+            Arrays.sort(this.startNodes);
+        }
         this.visits = new VisitLocal(nodeIds.nodeCount());
         this.nextAndSeens = new NextAndSeenLocal(nodeIds.nodeCount());
     }
@@ -152,13 +155,13 @@ public final class MultiSourceBFS implements Runnable {
         BiMultiBitSet32 nextAndSeen = nextAndSeens.get();
 
         if (startNodes != null) {
+            nextAndSeen.setAuxBits(startNodes);
             for (int i = 0; i < startNodes.length; i++) {
-                nextAndSeen.setAuxBit(startNodes[i], i);
                 visit.setBit(startNodes[i], i);
             }
         } else {
+            nextAndSeen.setAuxBits(nodeOffset, nodeOffset + sourceNodeCount);
             for (int i = 0; i < sourceNodeCount; i++) {
-                nextAndSeen.setAuxBit(i + nodeOffset, i);
                 visit.setBit(i + nodeOffset, i);
             }
         }
@@ -179,12 +182,6 @@ public final class MultiSourceBFS implements Runnable {
                         });
             }
 
-            if (nodeId == -2) {
-                // nothing more to visit, stop bfs
-                nextAndSeen.reset();
-                return;
-            }
-
             depth++;
             nodeId = -1;
             // TODO: implement Direction-Optimized Traversal (4.1.2.)
@@ -196,7 +193,10 @@ public final class MultiSourceBFS implements Runnable {
                 }
             }
 
-            nextAndSeen.copyInto(visit);
+            if (!nextAndSeen.copyInto(visit)) {
+                // nothing more to visit, stop bfs
+                return;
+            }
         }
     }
 
