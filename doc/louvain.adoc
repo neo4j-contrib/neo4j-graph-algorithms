@@ -34,3 +34,7 @@ _Louvain_ is an algorithm for detecting graph partitions in networks that relies
 - [ ] parallelization
 - [ ] evaluation
 - [ ] documentation
+
+== Details
+
+*not yet implemented*

@@ -23,8 +23,8 @@ As the distance between nodes in disconnected components of a network is infinit
 
 == Algorithm explanation on simple sample graph
 
-- counts farness in each msbfs-callback
-- divides by N-1
+- count farness in each msbfs-callback
+- divide by N-1
 
 Graph:
 
@@ -136,5 +136,8 @@ Thus the more central a node is, the closer it is to all other nodes.
 
 == Details
 
-
 - use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
+- MSBFS gives depth and number of sources.
+- in this scheme the farness can be calculated as follows
+
+ farness(v) = farness(v) + numberOfSources(v) * depth(v)
