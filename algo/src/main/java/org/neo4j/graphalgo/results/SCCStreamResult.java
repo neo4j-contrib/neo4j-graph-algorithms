@@ -14,10 +14,10 @@ public class SCCStreamResult {
      * the set id of the stronly connected component or
      * -1 of not part of a SCC
      */
-    public final long cluster;
+    public final long partition;
 
     public SCCStreamResult(long nodeId, int clusterId) {
         this.nodeId = nodeId;
-        this.cluster = clusterId;
+        this.partition = clusterId;
     }
 }

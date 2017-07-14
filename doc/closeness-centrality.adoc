@@ -1,30 +1,113 @@
 = Closeness Centrality
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.
+_Closeness Centrality_ of a node is a measure of centrality in a network, that measures the nearness (as opposite from the distance) from a node to all other nodes. 
+Nodes having a high closeness score have the shortest distances to all other nodes.
+This is important for the availability of knowledge and resources.
 
 == History, Explanation
 
+Sabidussi (1966) described the sum of the shortest path distances from one node to every other node as the node’s farness. 
+Freeman (1979) used this idea to define closeness centrality of a node as the inverse of Sabidussi’s farness.
+Nodes having a high closeness centrality are nearby all other nodes and have advantages in accessing resources in a network or having a good overview of the agents in a network.
+
 == When to use it / use-cases
 
+The most central nodes according to closeness centrality can quickly interact to all others because they are close to all others.
+This measure is preferable to degree centrality, because it does not take into account only direct connections among nodes, but also indirect connections.
+
 == Constraints / when not to use it
+
+A key node centrality measure in networks is closeness centrality (Freeman, 1978; Opsahl et al., 2010; Wasserman and Faust, 1994). 
+It is defined as the inverse of farness, which in turn, is the sum of distances to all other nodes. 
+As the distance between nodes in disconnected components of a network is infinite, this measure cannot be applied to networks with disconnected components (Opsahl et al., 2010; Wasserman and Faust, 1994). 
 
 == Algorithm explanation on simple sample graph
 
 [source,cypher]
 ----
+CALL algo.closeness('Person', 'KNOWS', {write:true, writeProperty:'centrality'}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis 
+- calculates closeness centrality and potentially writes back
+----
 
+[source,cypher]
+----
+CALL algo.closeness.stream('Person', 'KNOWS') YIELD nodeId, centrality - yields centrality for each node
 ----
 
 == Example Usage
 
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis 
+- calculates closeness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'centrality' | yes | property name written back to
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | closeness centrality weight 
+|===
+
+
 == References
+
+* https://toreopsahl.com/2010/03/20/closeness-centrality-in-networks-with-disconnected-components/
+
+* http://www.casos.cs.cmu.edu/publications/papers/CMU-ISR-11-113.pdf
+
+* http://mrvar.fdv.uni-lj.si/sola/info4/uvod/part4.pdf
 
 == Implementation Details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus the more central a node is, the closer it is to all other nodes.
+_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. 
+Thus the more central a node is, the closer it is to all other nodes.
 
 ## Progress
 

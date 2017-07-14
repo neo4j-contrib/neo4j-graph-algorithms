@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.UnionFind;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -142,10 +143,10 @@ public class UnionFindBenchmark {
     }
 
     private Graph loadLight() {
-        return new GraphLoader(db).load(LightGraphFactory.class);
+        return new GraphLoader(db).withDirection(Direction.OUTGOING).load(LightGraphFactory.class);
     }
 
     private Graph loadHeavy() {
-        return new GraphLoader(db).load(HeavyGraphFactory.class);
+        return new GraphLoader(db).withDirection(Direction.OUTGOING).load(HeavyGraphFactory.class);
     }
 }

@@ -6,6 +6,12 @@ _All Pairs Shortest Path_ on the other hand calculates a shortest path forest co
 
 == History, Explanation
 
+Path finding, in particular searching in a maze, belongs to the classical graph problems, and the classical references are Wiener [1873], Lucas [1882] (describing a method due to C.P. Tr´emaux), and Tarry [1895] – see Biggs, Lloyd, and Wilson [1976]. 
+They form the basis for depth-first search techniques.
+Path problems were also studied at the beginning of the 1950’s in the context of ‘alternate routing’, that is, finding a second shortest route if the shortest route is blocked. 
+This applies to freeway usage (Trueblood [1952]), but also to telephone call routing. 
+At that time making long-distance calls in the U.S.A. was automatized, and alternate routes for telephone calls over the U.S. telephone network nation-wide should be found automatically.
+
 == When to use it / use-cases
 
 == Constraints / when not to use it
@@ -47,6 +53,8 @@ YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loa
 == Example Usage
 
 == References
+
+* http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
 
 == Implementation Details
 

@@ -18,19 +18,6 @@ import java.util.Iterator;
  */
 public class RelationshipContainer {
 
-    private static final Iterator<RelationshipCursor> EMPTY_IT = new Iterator<RelationshipCursor>() {
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public RelationshipCursor next() {
-            return null;
-        }
-    };
-
     private final int[][] data;
 
     private RelationshipContainer(int nodeCount) {
@@ -53,16 +40,6 @@ public class RelationshipContainer {
     }
 
     /**
-     * get an iterator for each relation
-     */
-    public Iterator<RelationshipCursor> iterator(int nodeId) {
-        if (nodeId >= data.length) {
-            return EMPTY_IT;
-        }
-        return new RelationIterator(data, nodeId);
-    }
-
-    /**
      * get RelationContainer.Builder to ease construction of the container
      * @param nodeCount the nodeCount
      * @return a Builder for RelationContainers
@@ -78,32 +55,6 @@ public class RelationshipContainer {
      */
     public static RCImporter importer(GraphDatabaseAPI api) {
         return new RCImporter(api);
-    }
-
-    private static class RelationIterator implements Iterator<RelationshipCursor> {
-
-        private final RelationshipCursor cursor;
-        private final int[] relationships;
-        private final int size;
-        private int offset = 0;
-
-        private RelationIterator(int[][] data, int sourceNodeId) {
-            this.relationships = data[sourceNodeId];
-            size = relationships.length;
-            cursor = new RelationshipCursor();
-            cursor.sourceNodeId = sourceNodeId;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return offset < size;
-        }
-
-        @Override
-        public RelationshipCursor next() {
-            cursor.targetNodeId = relationships[offset++];
-            return cursor;
-        }
     }
 
     public static class Builder {

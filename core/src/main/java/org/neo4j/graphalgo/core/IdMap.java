@@ -68,10 +68,6 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         return nodeToGraphIds.getOrDefault(longValue, -1);
     }
 
-    public long unmap(int intValue) {
-        return graphIds[intValue];
-    }
-
     public void buildMappedIds() {
         graphIds = new long[size()];
         for (final LongIntCursor cursor : nodeToGraphIds) {
@@ -86,6 +82,7 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     public long[] mappedIds() {
         return graphIds;
     }
+
     public LongIntMap nodeToGraphIds() {
         return nodeToGraphIds;
     }
@@ -107,6 +104,11 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     @Override
     public long toOriginalNodeId(int nodeId) {
         return graphIds[nodeId];
+    }
+
+    @Override
+    public boolean contains(final long nodeId) {
+        return nodeToGraphIds.containsKey(nodeId);
     }
 
     @Override

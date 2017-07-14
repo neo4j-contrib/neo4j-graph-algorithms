@@ -13,6 +13,7 @@ import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphalgo.impl.ParallelUnionFindQueue;
 import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -26,8 +27,8 @@ import java.util.stream.Stream;
 public class UnionFindProc2 {
 
     public static final String CONFIG_THRESHOLD = "threshold";
-    public static final String CONFIG_CLUSTER_PROPERTY = "clusterProperty";
-    public static final String DEFAULT_CLUSTER_PROPERTY = "cluster";
+    public static final String CONFIG_CLUSTER_PROPERTY = "partitionProperty";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "partition";
 
     @Context
     public GraphDatabaseAPI api;
@@ -37,7 +38,7 @@ public class UnionFindProc2 {
 
     @Procedure(value = "algo.unionFind.exp1", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
-            "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, clusterProperty:'cluster'}) " +
+            "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition'}) " +
             "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
     public Stream<UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
@@ -102,6 +103,7 @@ public class UnionFindProc2 {
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
+                .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }

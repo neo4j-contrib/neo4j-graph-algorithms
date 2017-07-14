@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.apache.lucene.util.ArrayUtil;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.IntSupplier;
@@ -35,8 +36,9 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
     private IntArray(long size) {
         this.size = size;
         pages = new int[numPages(size)][];
+        int maxPageSize = (int) Math.min(size, PAGE_SIZE);
         for (int i = 0; i < pages.length; ++i) {
-            pages[i] = newIntPage();
+            pages[i] = newIntPage(maxPageSize);
         }
     }
 
@@ -99,13 +101,41 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
      */
     public void grow(final long newSize) {
         if (size < newSize) {
+            final int currentNumPages = pages.length;
             final int numPages = numPages(newSize);
-            pages = ArrayUtil.grow(pages, numPages);
-            for (int i = numPages - 1; i >= 0 && pages[i] == null; --i) {
-                pages[i] = newIntPage();
+            if (numPages > currentNumPages) {
+                if (currentNumPages == 1) {
+                    // fill first page to full size
+                    pages[0] = Arrays.copyOf(
+                            pages[currentNumPages - 1],
+                            PAGE_SIZE);
+                }
+                pages = Arrays.copyOf(pages, numPages);
+                for (int i = currentNumPages; i < numPages ; i++) {
+                    // we don't strip the last page here as we're already somewhat big
+                    pages[i] = newIntPage();
+                }
+                this.size = (long) numPages << (long) PAGE_SHIFT;
+            } else if (currentNumPages == 1) {
+                int firstPageSize = Math.min(
+                        PAGE_SIZE,
+                        ArrayUtil.oversize((int) newSize, Integer.BYTES));
+                pages[0] = Arrays.copyOf(pages[0], firstPageSize);
+                this.size = (long) firstPageSize;
             }
-            this.size = newSize;
         }
+    }
+
+    public BulkAdder bulkAdder() {
+        return new BulkAdder();
+    }
+
+    public BulkAdder bulkAdder(long offset, long length) {
+        return bulkAdder(offset, length, bulkAdder());
+    }
+
+    public BulkAdder bulkAdder(long offset, long length, BulkAdder reuse) {
+        return reuse.init(offset, length);
     }
 
     public Cursor newCursor() {
@@ -157,6 +187,10 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         return new int[PAGE_SIZE];
     }
 
+    private static int[] newIntPage(int size) {
+        return new int[size];
+    }
+
     private static void fill(int[] array, IntSupplier value) {
         fill(array, 0, array.length, value);
     }
@@ -171,10 +205,10 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         boolean accept(int value) throws E;
     }
 
-    public class Cursor {
+    private abstract class BaseCursor {
         public int[] array;
         public int offset;
-        public int length;
+        public int limit;
 
         private long from;
         private long to;
@@ -183,7 +217,8 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         private int toPage;
         private int currentPage;
 
-        private Cursor init(long fromIndex, long length) {
+        BaseCursor init(long fromIndex, long length) {
+            array = null;
             from = fromIndex;
             to = fromIndex + length;
             size = length;
@@ -198,27 +233,56 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
             if (currentPage == fromPage) {
                 array = pages[currentPage];
                 offset = indexInPage(from);
-                length = (int) Math.min(PAGE_SIZE - offset, size);
+                int length = (int) Math.min(PAGE_SIZE - offset, size);
+                limit = offset + length;
                 return true;
             }
             if (currentPage < toPage) {
                 array = pages[currentPage];
                 offset = 0;
-                length = PAGE_SIZE;
+                limit = offset + PAGE_SIZE;
                 return true;
             }
             if (currentPage == toPage) {
                 array = pages[currentPage];
                 offset = 0;
-                length = indexInPage(to - 1) + 1;
+                int length = indexInPage(to - 1) + 1;
+                limit = offset + length;
                 return true;
             }
+            array = null;
             return false;
+        }
+    }
+
+    public final class BulkAdder extends BaseCursor {
+
+        BulkAdder init(long fromIndex, long length) {
+            grow(fromIndex + length);
+            super.init(fromIndex, length);
+            next();
+            return this;
+        }
+
+        public boolean add(int v) {
+            int offset = this.offset++;
+            if (offset < limit) {
+                array[offset] = v;
+                return true;
+            }
+            return next() && add(v);
+        }
+    }
+
+    public final class Cursor extends BaseCursor {
+        Cursor init(long fromIndex, long length) {
+            super.init(fromIndex, length);
+            return this;
         }
 
         public <E extends Exception> void forEach(IntAction<E> action) throws E {
             final int[] array = this.array;
-            final int limit = length + offset;
+            final int limit = this.limit;
             int offset = this.offset;
             //noinspection StatementWithEmptyBody
             while (offset < limit && action.accept(array[offset++]));

@@ -1,12 +1,14 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
+import java.util.AbstractCollection;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -55,7 +57,7 @@ import java.util.concurrent.ExecutorService;
 public final class MultiSourceBFS implements Runnable {
 
     // how many sources can be traversed simultaneously
-    private static final int OMEGA = 32;
+    static final int OMEGA = 32;
 
     private final ThreadLocal<MultiBitSet32> visits;
     private final ThreadLocal<BiMultiBitSet32> nextAndSeens;
@@ -126,19 +128,12 @@ public final class MultiSourceBFS implements Runnable {
     public void run(ExecutorService executor) {
         int sourceLength = sourceLength();
         int threads = ParallelUtil.threadSize(OMEGA, sourceLength);
-        if (threads > 1 && ParallelUtil.canRunInParallel(executor)) {
-            runParallel(executor, threads);
-        } else {
-            if (sourceLength > OMEGA) {
-                // TODO support running multiple chunks sequentially
-                throw new IllegalArgumentException("In order to run MS-BFS on " + sourceLength + " sources, you have to provide a valid ExecutorService");
-            }
-            if (startNodes == null) {
-                nodeOffset = 0;
-                sourceNodeCount = nodeIds.nodeCount();
-            }
-            run();
+        Collection<MultiSourceBFS> bfss = allSourceBfss(threads);
+        if (!ParallelUtil.canRunInParallel(executor)) {
+            // fallback to sequentially running all MS-BFS instances
+            executor = null;
         }
+        ParallelUtil.run(bfss, executor);
     }
 
     /**
@@ -215,50 +210,45 @@ public final class MultiSourceBFS implements Runnable {
         return sourceNodeCount;
     }
 
-    private void runParallel(ExecutorService executor, int threads) {
-        MultiSourceBFS[] bfss;
+    // lazily creates MS-BFS instances for OMEGA sized source chunks
+    private Collection<MultiSourceBFS> allSourceBfss(int threads) {
         if (startNodes == null) {
             int sourceLength = nodeIds.nodeCount();
-            int start = 0;
-            bfss = new MultiSourceBFS[threads];
-            for (int i = 0; i < threads; i++) {
-                int len = Math.min(OMEGA, sourceLength - start);
-                bfss[i] = new MultiSourceBFS(
-                        nodeIds,
-                        relationships,
-                        direction,
-                        perNodeAction,
-                        start,
-                        len,
-                        visits,
-                        nextAndSeens
-                );
-                start += len;
-            }
-        } else {
-            int[] startNodes = this.startNodes;
-            int sourceLength = startNodes.length;
-            int start = 0;
-            bfss = new MultiSourceBFS[threads];
-            for (int i = 0; i < threads; i++) {
-                int to = Math.min(sourceLength, start + OMEGA);
-                bfss[i] = new MultiSourceBFS(
+            return new ParallelMultiSources(threads, sourceLength) {
+                @Override
+                MultiSourceBFS next(final int from, final int length) {
+                    return new MultiSourceBFS(
+                            nodeIds,
+                            relationships,
+                            direction,
+                            perNodeAction,
+                            from,
+                            length,
+                            visits,
+                            nextAndSeens
+                    );
+                }
+            };
+        }
+        int[] startNodes = this.startNodes;
+        int sourceLength = startNodes.length;
+        return new ParallelMultiSources(threads, sourceLength) {
+            @Override
+            MultiSourceBFS next(final int from, final int length) {
+                return new MultiSourceBFS(
                         nodeIds,
                         relationships,
                         direction,
                         perNodeAction,
                         visits,
                         nextAndSeens,
-                        Arrays.copyOfRange(startNodes, start, to)
+                        Arrays.copyOfRange(startNodes, from, from + length)
                 );
             }
-        }
-
-        ParallelUtil.run(Arrays.asList(bfss), executor);
+        };
     }
 
-
-    private static final class SourceNodes implements PrimitiveIntIterator {
+    private static final class SourceNodes implements BfsSources {
         private final int[] sourceNodes;
         private final int maxPos;
         private final int startPos;
@@ -300,11 +290,56 @@ public final class MultiSourceBFS implements Runnable {
             return sourceNodes != null ? sourceNodes[current] : current + offset;
         }
 
+        @Override
+        public int size() {
+            return Integer.bitCount(sourceMask);
+        }
+
         private void fetchNext() {
             //noinspection StatementWithEmptyBody
             while (++pos < maxPos && (sourceMask & (1 << pos)) == 0)
                 ;
         }
+    }
+
+    private static abstract class ParallelMultiSources extends AbstractCollection<MultiSourceBFS> implements Iterator<MultiSourceBFS> {
+        private final int threads;
+        private final int sourceLength;
+        private int start = 0;
+        private int i = 0;
+
+        private ParallelMultiSources(int threads, int sourceLength) {
+            this.threads = threads;
+            this.sourceLength = sourceLength;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return i < threads;
+        }
+
+        @Override
+        public int size() {
+            return threads;
+        }
+
+        @Override
+        public Iterator<MultiSourceBFS> iterator() {
+            start = 0;
+            i = 0;
+            return this;
+        }
+
+        @Override
+        public MultiSourceBFS next() {
+            int len = Math.min(OMEGA, sourceLength - start);
+            MultiSourceBFS bfs = next(start, len);
+            start += len;
+            i++;
+            return bfs;
+        }
+
+        abstract MultiSourceBFS next(int from, int length);
     }
 
     private static final class VisitLocal extends ThreadLocal<MultiBitSet32> {

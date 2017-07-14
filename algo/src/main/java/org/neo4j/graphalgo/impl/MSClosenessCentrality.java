@@ -38,12 +38,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
         getProgressLog().resetProgress();
 
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            // TODO size of sourceNodeIds
-            int len = 0;
-            while (sourceNodeIds.hasNext()) {
-                sourceNodeIds.next();
-                len++;
-            }
+            int len = sourceNodeIds.size();
             farness.addAndGet(nodeId, len * depth);
             getProgressLog().logProgress((double) nodeId / (nodeCount - 1));
         };

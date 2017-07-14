@@ -94,7 +94,10 @@ public class HeavyCypherGraphParallelFactoryTest {
         Assert.assertEquals(COUNT, relCount.get());
         AtomicInteger total = new AtomicInteger();
         graph.forEachNode(n -> {
-            graph.weightedRelationshipIterator(n, Direction.OUTGOING).forEachRemaining(rel -> total.addAndGet((int) rel.weight));
+            graph.forEachRelationship(n, Direction.OUTGOING, (s, t, r, w) -> {
+                total.addAndGet((int) w);
+                return true;
+            });
             return true;
         });
         assertEquals(9*COUNT/2,total.get());
