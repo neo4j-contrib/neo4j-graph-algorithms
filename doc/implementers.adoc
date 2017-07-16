@@ -2,70 +2,61 @@
 
 == Development Notes
 
-NOTE: When implementing a procedure that yields any results (is not `void`) and writes back to the database, make sure to consume the `Result` after running the algo call!
+NOTE: When implementing a procedure that yields any results (is not `void`) and writes back to the database, make sure to consume the `Result` after running the algorithm call!
 
-Algorithms are executed within a transaction, that is opened and closed by cypher. The transaction is only marked successful if the results are consumed.
+Algorithms are executed within a transaction, that is opened and closed by Cypher. 
+The transaction is only marked successful if the results are consumed.
 Closing the Result directly will fail and rollback any open transactions and thus will revert all write-back operations.
 // StandardInternalExecutionResult#successful is only set to true _after_ the result has been consumed
 
 
 == The Model
 
-The basic idea behind our model is to have a fast cache for the
-topology of the graph containing only relevant nodes, relations
-and in addition the weights. It implicitly maps (long) node-id's to
-a temporary integer-id in ascending order which ensures that no id gets bigger
-then the maximum node count. This approach allows us to use primitive
-arrays as container for example.
+The basic idea behind our model is to have a fast cache for the topology of the graph containing only relevant nodes, relations and in addition the weights. 
+It implicitly maps (long) node-id's to an internal integer-id (32bit) in ascending order which ensures that no id gets bigger
+then the maximum node count. 
+This approach allows us to use primitive arrays as container for example.
 
 === Graph Interface
 
-[horizontal]
-int vertexCount()::
+The `Graph` interface specifies methods for iterating over all nodes of the graph as well as iterating over relationships of a given node in the form of `forEach...(..)`-methods. 
+The Graph knows the `nodeCount` and `degree` of each node and can map nodeId to internalId and vice versa. 
+// An Iterator is implemented for (single-)weighted and unweighted edges.
 
 
-    Return the count of vertices in the graph
+[options=header,cols="m,"]
+|===
+| Method | Description
+| Collection<PrimitiveIntIterable> batchIterables(int batchSize);
+| return a collection of iterables over every node, partitioned by the given batch size.
 
+| boolean contains(long nodeId);
+| Returns true iff the nodeId is mapped, otherwise false
 
-void forEachNode(IntConsumer)::
+| int degree(int nodeId, Direction direction);
+| degree of the node in that direction
 
-    Calls consumer for each vertex id
+| void forEachNode(IntPredicate consumer);
+| Iterate over each nodeId
 
+| void forEachRelationship(int nodeId, Direction direction, RelationshipConsumer consumer);
+| Iterate over all relationships of a node
 
-PrimitiveIntIterator vertexIterator()::
+| void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer);
+| Iterate over all weighted relationships of a node
 
-    Returns an vertex id Iterator
+| int nodeCount();
+| count of nodes
+| PrimitiveIntIterator nodeIterator();
+| iterate over all nodes
 
+| int toMappedNodeId(long nodeId);
+| Map neo4j nodeId to internal nodeId
 
-int degree(int, Direction)::
+| long toOriginalNodeId(int nodeId);
+| Map internal nodeId back to original nodeId
 
-    Return the degree for the given vertex / direction
-
-void forEachEdge(int, Direction, EdgeConsumer) & ::
-
-Iterator<EdgeCursor> edgeIterator(int, Direction)::
-
-    Iterates over each edge of the given vertex / direction
-
-void forEachEdge(int, Direction, WeightedEdgeConsumer) & ::
-
-Iterator<WeightedEdgeCursor> weightedEdgeIterator(int, Direction)::
-
-    Iterates over each edge of the given vertex / direction.
-
-int toNodeId(long)::
-
-     Map node id to vertex id
-
-long toNodeId(int)::
-
-      Map vertex id back to it's original node id
-
-The interface specifies Methods for iterating over all vertices of the
-graph as well as iterating over edges of a given vertex in the form of *forEach(..)*-
-and *relationshipIterator()*-Methods. The Graph knows the *nodeCount* and *degree* of each node and can *map*
-nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weighted and unweighted edges.
-
+|===
 
 [ditaa]
 ----
@@ -90,34 +81,33 @@ nodeId to vertexId and vice versa. An Iterator is implemented for (single-)weigh
 ----
 
 [NOTE]
-Currently we have 3 different implementations aiming for different goals like performance, memory
-consumption and accuracy.
+Currently we have 3 different implementations aiming for different goals like performance, memory consumption and accuracy.
 
-HeavyGraph::
+`HeavyGraph`
 
 This implementations utilizes an int-matrix for storing connections between vertices.
-It has a high memory consumption but performs basic calculations on the graph
-around 3 times faster then the memory efficient implementation. Furthermore the
-number of edges per node is limited only to the maximum array size of the VM and
-connections can be added in arbitrary order.
+It has a higher memory consumption but performs basic calculations on the graph around 3 times faster then the memory efficient implementation.
+Furthermore the number of edges per node is limited only to the maximum array size (2bn) of the JVM.
+Relationships can be added in arbitrary order.
 
-LightGraph::
+`LightGraph`
 
-This implementation takes 3 times less heap due to a more intelligent
-memory layout. The drawback is the higher evaluation time.
+This implementation takes 3 times less heap due to a more intelligent memory layout. 
+The drawback is slightly higher evaluation time and that the data cannot be loaded in parallel (yet).
 
-View::
-The View is just a single threaded Wrapper around the Neo4j core api. It has been
-implemented for tests and benchmarks.
+`GraphView`
+
+The View is just a simple wrapper around the Neo4j Kernel API. 
+It has been implemented for tests and benchmarks baselines.
 
 == Import
 
-A fair amount of the work is to fetch the relevant targetNodes from the neo4j core db
-and import it into our model. Fortunately we can use a multithreading approach to fill
-the Graph. This is part of current development.
+A fair amount of the work is to fetch the relevant data from Neo4j and import it into our model. 
+Fortunately we can use a multithreading approach to load the graph. 
+This is part of the current implementation.
 
-The abstract GraphFactory specifies a Constructor and the build Method. It is responsible
-for creating the Graph using the core db.
+The abstract `GraphFactory` specifies a constructor and the `build` method. 
+It is responsible for creating the Graph using the Neo4j Kernel API.
 
 [ditaa]
 ----
@@ -139,6 +129,7 @@ for creating the Graph using the core db.
 
 Loading the Graph is done by using the GraphLoader which implements a simple fluent Builder Pattern.
 
+[source,java]
 ----
 final Graph graph = new GraphLoader( graphDatabaseAPI )
         .setLabel( .. )

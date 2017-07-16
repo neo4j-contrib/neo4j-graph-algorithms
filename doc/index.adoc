@@ -25,6 +25,17 @@ include::algorithms.adoc[leveloffset=1]
 
 include::algo-procedures-api.adoc[leveloffset=2]
 
-include::developer-api.adoc[leveloffset=2]
+// include::developer-api.adoc[leveloffset=2]
 
 include::implementers.adoc[leveloffset=2]
+
+++++
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#table-all').DataTable();
+} );
+</script>
+++++
