@@ -5,6 +5,7 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.locking.Lock;
@@ -360,6 +361,14 @@ public class Kernel {
             return item.lock();
         }
 
+        public Object propertyValue(int propertyId) {
+            try {
+                return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY ? null : readOperations.nodeGetProperty(item.id(), propertyId);
+            } catch (EntityNotFoundException e) {
+                return null;
+            }
+        }
+
         PropertyItemCursor cursor = new PropertyItemCursor();
         public Cursor<PropertyItem> property(int propertyId) {
             try {
@@ -384,6 +393,13 @@ public class Kernel {
         public RelationshipItem() {
         }
 
+        public Object propertyValue(int propertyId) {
+            try {
+                return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY ? null : readOperations.relationshipGetProperty(item.id(), propertyId);
+            } catch (EntityNotFoundException e) {
+                return null;
+            }
+        }
         public Cursor<PropertyItem> property(int propertyId) {
             try {
                 cursor.propertyId = propertyId;

@@ -17,6 +17,7 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.NodeItem;
+import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.util.Arrays;
@@ -91,8 +92,11 @@ public class GraphView implements Graph {
             long relId = RawValues.combineIntInt(
                     (int) item.startNode(),
                     (int) item.endNode());
-            double weight = (propertyKey == StatementConstants.NO_SUCH_PROPERTY_KEY) ? propertyDefaultWeight :
-                    ((Number) item.property(propertyKey)).doubleValue();
+            double weight = propertyDefaultWeight;
+            Object value = item.propertyValue(propertyKey);
+            if (value instanceof Number) {
+                weight = ((Number) value).doubleValue();
+            }
 
             consumer.accept(
                     nodeId,
