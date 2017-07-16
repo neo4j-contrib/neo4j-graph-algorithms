@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
@@ -17,8 +16,6 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 /**

@@ -1,15 +1,12 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
-import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;

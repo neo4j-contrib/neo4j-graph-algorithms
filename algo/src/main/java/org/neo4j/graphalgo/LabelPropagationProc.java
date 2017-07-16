@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;

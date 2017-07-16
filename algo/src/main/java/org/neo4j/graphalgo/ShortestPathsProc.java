@@ -1,9 +1,5 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -17,8 +13,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
