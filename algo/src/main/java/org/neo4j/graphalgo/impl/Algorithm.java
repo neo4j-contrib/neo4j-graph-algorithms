@@ -9,7 +9,7 @@ import org.neo4j.logging.*;
  */
 public abstract class Algorithm<ME extends Algorithm<ME>> {
 
-    private static final String TASK = "computation";
+    private static final String TASK = "COMPUTE";
 
     private Log log = NullLog.getInstance();
 
