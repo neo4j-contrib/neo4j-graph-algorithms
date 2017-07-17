@@ -446,7 +446,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_implementers_section">Implementers Section</a>
 <ul class="sectlevel2">
 <li><a href="#_algorithm_procedures_api_discussion">Algorithm Procedures API Discussion</a></li>
-<li><a href="#_implementers_documentation">Implementers Documentation</a></li>
+<li><a href="#_api_documentation">API Documentation</a></li>
+<li><a href="#_pagerank">PageRank</a></li>
+<li><a href="#_betweenness_centrality_2">Betweenness Centrality</a></li>
+<li><a href="#_closeness_centrality_2">Closeness Centrality</a></li>
+<li><a href="#_minimum_weight_spanning_tree_2">Minimum Weight Spanning Tree</a></li>
+<li><a href="#_single_shortest_path">Single Shortest Path</a></li>
+<li><a href="#_label_propagation">Label Propagation</a></li>
+<li><a href="#_weakly_connected_components">Weakly Connected Components</a></li>
+<li><a href="#_strongly_connected_components_2">Strongly Connected Components</a></li>
 </ul>
 </li>
 </ul>
@@ -457,13 +465,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_introduction"><a class="link" href="#_introduction">Introduction</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.</p>
+<p>This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1 and 3.2.</p>
 </div>
 <div class="paragraph">
 <p>Releases are available here: <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases" class="bare">https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases</a></p>
 </div>
 <div class="paragraph">
 <p>The goal is to provide parallel versions of common graph algorithms for Neo4j exposed as Cypher user defined procedures:</p>
+</div>
+<div class="paragraph">
+<p>Centralities:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -476,17 +487,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li>
 <p>Closeness Centrality</p>
 </li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Graph Partitioning:</p>
+</div>
+<div class="ulist">
+<ul>
 <li>
-<p>Clustering: Louvain</p>
-</li>
-<li>
-<p>Clustering: Label Propagation</p>
-</li>
-<li>
-<p>Minimum Weight Spanning Tree</p>
-</li>
-<li>
-<p>All Pairs- and Single Source - Shortest Path</p>
+<p>Label Propagation</p>
 </li>
 <li>
 <p>(Weakly) Connected Components</p>
@@ -497,10 +506,25 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </div>
 <div class="paragraph">
-<p>These procedures work on a subgraph optionally filtered by label and relationship-type. Future versions will also provide filtering and projection using Cypher queries.</p>
+<p>Path Finding:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Minimum Weight Spanning Tree</p>
+</li>
+<li>
+<p>All Pairs- and Single Source - Shortest Path</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
-<p>We&#8217;d love your feedback, so please try out these algorithms and let us know how well they work for your use-case. Also please note things that you miss from installation instructions, readme, etc.</p>
+<p>These procedures work on a subgraphm optionally filtered by label and relationship-type.
+Future versions will also provide filtering and projection using Cypher queries.</p>
+</div>
+<div class="paragraph">
+<p><strong>We&#8217;d love your feedback</strong>, so please try out these algorithms and let us know how well they work for your use-case.
+Also please note things that you miss from installation instructions, readme, etc.</p>
 </div>
 <div class="paragraph">
 <p>Please raise <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues">GitHub issues</a> for anything you encounter or join the <a href="http://neo4j.com/developer/slack">neo4j-users Slack group</a> and ask in the <code>#neo4j-graph-algorithm</code> channel.</p>
@@ -508,17 +532,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_installation"><a class="link" href="#_installation">Installation</a></h3>
 <div class="paragraph">
-<p>Just copy the <code>graph-algorithms-algo-*.jar</code> from the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases">release</a> into your <code>$NEO4J_HOME/plugins</code> directory and restart Neo4j.</p>
+<p>Just copy the <code>graph-algorithms-algo-*.jar</code> from <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases">the matching release</a> into your <code>$NEO4J_HOME/plugins</code> directory and restart Neo4j.</p>
 </div>
 <div class="paragraph">
 <p>Then running <code>call dbms.procedures();</code> should also list the algorithm procedures.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>call dbms.procedures() yield name, description
-where name starts with "algo." and not name starts with "algo.algo."
-return name, description
-order by name</pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL dbms.procedures() YIELD name, description, signature
+WHERE name STARTS WITH "algo."
+RETURN name, description, signature
+ORDER BY name</code></pre>
 </div>
 </div>
 <div class="admonitionblock warning">
@@ -548,7 +572,7 @@ order by name</pre>
 You can call them directly from Cypher in your Neo4j Browser, from cypher-shell or your client code.</p>
 </div>
 <div class="paragraph">
-<p>For most algorithms there are two procedures, one that writes results back to the graph as node-properties and one (named <code>algo.&lt;name&gt;.stream</code>) that returns a stream of data, e.g. node-ids and computed values.</p>
+<p>For most algorithms there are two procedures, one that writes results back to the graph as node-properties and another (named <code>algo.&lt;name&gt;.stream</code>) that returns a stream of data, e.g. node-ids and computed values.</p>
 </div>
 <div class="paragraph">
 <p>The general call syntax is:</p>
@@ -563,10 +587,10 @@ You can call them directly from Cypher in your Neo4j Browser, from cypher-shell 
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Page','LINK',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
 // YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 
-CALL algo.pageRank.stream('Page','LINK',{iterations:5, dampingFactor:0.85})
+CALL algo.pageRank.stream('Page','Link',{iterations:5, dampingFactor:0.85})
 YIELD node, score
 RETURN node, score
 ORDER BY score DESC LIMIT 10;</code></pre>
@@ -575,18 +599,17 @@ ORDER BY score DESC LIMIT 10;</code></pre>
 <div class="sect3">
 <h4 id="_cypher_loading"><a class="link" href="#_cypher_loading">Cypher Loading</a></h4>
 <div class="paragraph">
-<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on,
-you can use Cypher statements to load or project subsets of your graph.
+<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use <code>graph:'cypher'</code> in the config.</p>
 </div>
 <div class="paragraph">
-<p>You can also return the value or weight property (according to your config) in addition to the id&#8217;s from these statements.</p>
+<p>You can also return a property value or weight (according to your config) in addition to the id&#8217;s from these statements.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p:Page)-[:LINK]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p:Page)-[:Link]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
 {graph:'cypher', iterations:5, write: true});</code></pre>
 </div>
 </div>
@@ -595,7 +618,7 @@ Then use a node-statement instead of the label parameter and a relationship-stat
 <div class="sect2">
 <h3 id="_building"><a class="link" href="#_building">Building</a></h3>
 <div class="paragraph">
-<p>Currently aiming at Neo4j 3.1</p>
+<p>Currently aiming at Neo4j 3.1 and 3.2 (in the 3.2 branch)</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1156,175 +1179,6 @@ YIELD node, score - calculates page rank and streams results</code></pre>
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_implementation_details"><a class="link" href="#_implementation_details">Implementation Details</a></h4>
-<div class="paragraph">
-<p><em>PageRank</em> is Googles popular search algorithm.</p>
-</div>
-<div class="paragraph">
-<p>More: [<a href="https://en.wikipedia.org/wiki/PageRank" class="bare">https://en.wikipedia.org/wiki/PageRank</a>](url)</p>
-</div>
-<div class="sect4">
-<h5 id="_progress"><a class="link" href="#_progress">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10003; single threaded implementation</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10003; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; implement procedure</p>
-</li>
-<li>
-<p>&#10003; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_requirements"><a class="link" href="#_requirements">Requirements</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>NodeIterator</p>
-</li>
-<li>
-<p>Incoming Relationships</p>
-</li>
-<li>
-<p>Outgoing Degrees</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_data_structured_involved"><a class="link" href="#_data_structured_involved">Data structured involved</a></h5>
-<div class="paragraph">
-<p>Our current approach needs one double array for storing ranks.</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo"><a class="link" href="#_todo">ToDo</a></h5>
-<div class="sect5">
-<h6 id="_parallelization"><a class="link" href="#_parallelization">parallelization</a></h6>
-<div class="paragraph">
-<p>One approach to parallelize <em>PageRank</em> might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration.</p>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_evaluation"><a class="link" href="#_evaluation">evaluation</a></h6>
-<div class="ulist">
-<ul>
-<li>
-<p>Performance tests on different dataset sizes / level of concurrency</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_future_improvements"><a class="link" href="#_future_improvements">Future Improvements</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>we might scale up the ranks to ints for faster multiplication.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_details"><a class="link" href="#_details">Details</a></h5>
-<div class="paragraph">
-<p>Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]-</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Each partition thread has its local array of only the nodes that it is responsible for,
-not for all nodes. Combined, all partitions hold all page rank scores for every node once.
-Instead of writing partition files and transferring them across the network
-(as done in the paper since they were concerned with parallelising across multiple nodes),
-we use integer arrays to write the results to.
-The actual score is upscaled from a double to an integer by multiplying it with {@code 100_000}.</p>
-</li>
-<li>
-<p>To avoid contention by writing to a shared array, we partition the result array.</p>
-</li>
-<li>
-<p>During execution, the scores arrays are shaped like this:</p>
-<div class="literalblock">
-<div class="content">
-<pre>[ executing partition ] -&gt; [ calculated partition ] -&gt; [ local page rank scores ]</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Each single partition writes in a partitioned array, calculation the scores
-for every receiving partition. A single partition only sees:</p>
-<div class="literalblock">
-<div class="content">
-<pre>[ calculated partition ] -&gt; [ local page rank scores ]</pre>
-</div>
-</div>
-</li>
-<li>
-<p>The coordinating thread then builds the transpose of all written partitions from every partition:</p>
-<div class="literalblock">
-<div class="content">
-<pre>[ calculated partition ] -&gt; [ executing partition ] -&gt; [ local page rank scores ]</pre>
-</div>
-</div>
-</li>
-<li>
-<p>This step does not happen in parallel, but does not involve extensive copying.
-The local page rank scores needn&#8217;t be copied, only the partitioning arrays.
-All in all, {@code concurrency^2} array element reads and assignments have to
-be performed.</p>
-</li>
-<li>
-<p>For the next iteration, every partition first updates its scores, in parallel.
-A single partition now sees:</p>
-<div class="literalblock">
-<div class="content">
-<pre>[ executing partition ] -&gt; [ local page rank scores ]</pre>
-</div>
-</div>
-</li>
-<li>
-<p>That is, a list of all calculated scores for it self, grouped by the partition that
-calculated these scores.
-This means, most of the synchronization happens in parallel, too.</p>
-</li>
-<li>
-<p>Partitioning is not done by number of nodes but by the accumulated degree –
-as described in "Fast Parallel PageRank: A Linear System Approach" [2].
-Every partition should have about the same number of relationships to operate on.</p>
-</li>
-<li>
-<p>This is done to avoid having one partition with super nodes and instead have
-all partitions run in approximately equal time.
-Smaller partitions are merged down until we have at most {@code concurrency} partitions,
-in order to batch partitions and keep the number of threads in use predictable/configurable.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>[1]: An Efficient Partition-Based Parallel PageRank Algorithm
-[2]: &lt;a href="https://www.cs.purdue.edu/homes/dgleich/</p>
-</div>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_betweenness_centrality"><a class="link" href="#_betweenness_centrality">Betweenness Centrality</a></h3>
@@ -1661,96 +1515,6 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_implementation_details_2"><a class="link" href="#_implementation_details_2">Implementation Details</a></h4>
-<div class="paragraph">
-<p>In graph theory, betweenness centrality is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through (for unweighted graphs) or the sum of the weights of the edges (for weighted graphs) is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_2"><a class="link" href="#_progress_2">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10063; adapt apoc-procedure to algorithm-api</p>
-</li>
-<li>
-<p>&#10003; implement procedure</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10063; edge case tests</p>
-</li>
-<li>
-<p>&#10063; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-<li>
-<p>&#10063; documentation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo_2"><a class="link" href="#_todo_2">TODO</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>adapt apoc-procedure to algorithm-api</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_details_2"><a class="link" href="#_details_2">Details</a></h5>
-<div class="sect6">
-<h7 id="_algo_betweenness"><a class="link" href="#_algo_betweenness">algo.betweenness</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>implementation of brandes-bc algorithm and nodePartitioning extension</p>
-</li>
-<li>
-<p><a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf" class="bare">http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf</a></p>
-</li>
-<li>
-<p>if <code>concurrency</code> parameter is set (and &gt;1) ParallelBetweennessCentrality is used</p>
-</li>
-<li>
-<p>ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
-calculates the BC for one node at a time</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_betweenness_exp1"><a class="link" href="#_algo_betweenness_exp1">algo.betweenness.exp1</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>brandes-like algorithm which uses successor sets instead of predecessor sets</p>
-</li>
-<li>
-<p>The algorithm is based on Brandes definition but with some changes
-regarding the dependency-accumulation step.</p>
-</li>
-<li>
-<p><a href="http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf" class="bare">http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_closeness_centrality"><a class="link" href="#_closeness_centrality">Closeness Centrality</a></h3>
@@ -2020,34 +1784,6 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_implementation_details_3"><a class="link" href="#_implementation_details_3">Implementation Details</a></h4>
-<div class="paragraph">
-<p><em>Closeness Centrality</em> of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph.
-Thus the more central a node is, the closer it is to all other nodes.</p>
-</div>
-<div class="sect4">
-<h5 id="_details_3"><a class="link" href="#_details_3">Details</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>use <code>org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS</code> for BFS</p>
-</li>
-<li>
-<p>MSBFS gives depth and number of sources.</p>
-</li>
-<li>
-<p>in this scheme the farness can be calculated as follows</p>
-<div class="literalblock">
-<div class="content">
-<pre>farness(v) = farness(v) + numberOfSources(v) * depth(v)</pre>
-</div>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_minimum_weight_spanning_tree"><a class="link" href="#_minimum_weight_spanning_tree">Minimum Weight Spanning Tree</a></h3>
@@ -2234,87 +1970,12 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 </div>
 <div class="sect3">
 <h4 id="_references_4"><a class="link" href="#_references_4">References</a></h4>
-<div class="paragraph">
+<div class="ulist">
+<ul>
+<li>
 <p><a href="https://en.wikipedia.org/wiki/Minimum_spanning_tree" class="bare">https://en.wikipedia.org/wiki/Minimum_spanning_tree</a></p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_implementation_details_4"><a class="link" href="#_implementation_details_4">Implementation Details</a></h4>
-<div class="paragraph">
-<p>A <em>Minimum Weight Spanning Tree</em> is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. It can be used to cluster the graph (KMeans). Our current approach uses <em>Prim&#8217;s Algorithm</em> to calculate the MST starting at a given node. This might not cover the whole graph. But if the nodes are connected the MST is always identical regardless at which node the execution starts.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_3"><a class="link" href="#_progress_3">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10003; single threaded implementation</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10003; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; implement procedure</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_requirements_2"><a class="link" href="#_requirements_2">Requirements</a></h5>
-<div class="paragraph">
-<p><code>BothRelationshipIterator</code> &amp; <code>Weights</code></p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_data_structured_involved_2"><a class="link" href="#_data_structured_involved_2">Data structured involved</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p><code>org.neo4j.graphalgo.core.utils.container.UndirectedTree</code> as container for efficient splitting and iterate</p>
-</li>
-<li>
-<p>An int-based Fibonacci Heap priority queue.</p>
-</li>
-<li>
-<p>Container for visited state</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo_3"><a class="link" href="#_todo_3">ToDo</a></h5>
-<div class="sect5">
-<h6 id="_benchmark"><a class="link" href="#_benchmark">benchmark</a></h6>
-<div class="paragraph">
-<p>Implement benchmark on big graph</p>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_parallelization_2"><a class="link" href="#_parallelization_2">parallelization</a></h6>
-
-</div>
-<div class="sect5">
-<h6 id="_evaluation_2"><a class="link" href="#_evaluation_2">evaluation</a></h6>
-<div class="ulist">
-<ul>
-<li>
-<p>Performance tests on different dataset sizes / level of concurrency</p>
-</li>
-</ul>
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -2385,152 +2046,6 @@ YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loa
 <p><a href="http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf" class="bare">http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf</a></p>
 </li>
 </ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_implementation_details_5"><a class="link" href="#_implementation_details_5">Implementation Details</a></h4>
-<div class="paragraph">
-<p>A <em>Single Source Shortest Path</em> algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. <em>All Pairs Shortest Path</em> on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson&#8217;s algorithm.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_4"><a class="link" href="#_progress_4">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10003; single threaded implementation</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10003; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; implement procedure</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_requirements_3"><a class="link" href="#_requirements_3">Requirements</a></h5>
-<div class="paragraph">
-<p><code>(Outgoing)RelationshipIterator</code> &amp; <code>Weights</code></p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_data_structured_involved_3"><a class="link" href="#_data_structured_involved_3">Data structured involved</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>An int-based Fibonacci Heap which implements an efficient priority queue.</p>
-</li>
-<li>
-<p>Different Container for Costs / visited state / paths</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo_4"><a class="link" href="#_todo_4">ToDo</a></h5>
-<div class="sect5">
-<h6 id="_benchmark_2"><a class="link" href="#_benchmark_2">benchmark</a></h6>
-<div class="paragraph">
-<p>Implement benchmark on big graph</p>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_parallelization_3"><a class="link" href="#_parallelization_3">parallelization</a></h6>
-<div class="paragraph">
-<p>Parallizing <em>All Pairs Shortest Path</em> might be easy using Dijkstra on each thread for a different node. An easy approach for <em>Single Source SP</em> may use two threads. One starting at the start-node, one at the end-node. The first wins. [More](<a href="https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf" class="bare">https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf</a>)</p>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_evaluation_3"><a class="link" href="#_evaluation_3">evaluation</a></h6>
-<div class="ulist">
-<ul>
-<li>
-<p>Performance tests on different dataset sizes / level of concurrency</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_details_4"><a class="link" href="#_details_4">Details</a></h5>
-<div class="sect6">
-<h7 id="_algo_shortestpath"><a class="link" href="#_algo_shortestpath">algo.shortestPath</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>Dijkstra single source shortest path algorithm</p>
-</li>
-<li>
-<p>The algorithm computes a shortest path on weighted graphs
-between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
-in the path</p>
-</li>
-<li>
-<p>there may be more then one shortest path, algo returns only one</p>
-</li>
-<li>
-<p>if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
-terms of count of nodes in the path.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_shortestpath_deltastepping"><a class="link" href="#_algo_shortestpath_deltastepping">algo.shortestPath.deltaStepping</a></h7>
-<div class="paragraph">
-<p>TODO naming!?
-- parallel non-negative single source shortest path algorithm for weighted graphs
-- It can be tweaked using the delta-parameter which controls the grade of concurrency.
-- returns minimum distance to <strong>all other nodes</strong>
-- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
- the number of nodes to reach the target</p>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_allshortestpaths_stream"><a class="link" href="#_algo_allshortestpaths_stream">algo.allShortestPaths.stream</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>returns a stream of source-target node to distance tuples for each pair of nodes</p>
-</li>
-<li>
-<p>Since all nodeId&#8217;s have already been ordered by the idMapping we can use an integer
-instead of a queue which just count&#8217;s up for each startNodeId as long as it is
-&lt; nodeCount.</p>
-</li>
-<li>
-<p>Each thread tries to take one int from the counter at one time and starts its computation on it.</p>
-</li>
-<li>
-<p>The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.</p>
-</li>
-<li>
-<p>Due to the high memory footprint the result set would have we emit each result into
-a blocking queue. The result stream takes elements from the queue while the workers
-add elements to it.</p>
-</li>
-<li>
-<p>The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.</p>
-</li>
-<li>
-<p>writeback not supported!</p>
-</li>
-</ul>
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -2715,59 +2230,6 @@ partitionProperty - simple label propagation kernel</code></pre>
 <div class="sect3">
 <h4 id="_references_6"><a class="link" href="#_references_6">References</a></h4>
 
-</div>
-<div class="sect3">
-<h4 id="_implementation_details_6"><a class="link" href="#_implementation_details_6">Implementation Details</a></h4>
-<div class="paragraph">
-<p><em>Label Propagation</em> is a graph partitioning algorithm already implemented in current apoc-procedures.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_5"><a class="link" href="#_progress_5">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10003; adapt apoc-procedure to algorithm api</p>
-</li>
-<li>
-<p>&#10003; single threaded implementation</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10063; edge case tests</p>
-</li>
-<li>
-<p>&#10003; implement procedure</p>
-</li>
-<li>
-<p>&#10063; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-<li>
-<p>&#10063; documentation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo_5"><a class="link" href="#_todo_5">TODO</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>adapt existing procedure to algorithm api</p>
-</li>
-</ul>
-</div>
-</div>
 </div>
 </div>
 <div class="sect2">
@@ -3168,149 +2630,6 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_implementation_details_7"><a class="link" href="#_implementation_details_7">Implementation Details</a></h4>
-<div class="paragraph">
-<p><em>Connected Components</em> or <em>UnionFind</em> basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows partitioning of the graph based on Relationships and Properties.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_6"><a class="link" href="#_progress_6">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10003; single threaded implementation</p>
-</li>
-<li>
-<p>&#10003; tests</p>
-</li>
-<li>
-<p>&#10003; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; implement procedure</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_requirements_4"><a class="link" href="#_requirements_4">Requirements</a></h5>
-<div class="paragraph">
-<p><code>AllRelationshipIterator</code> &amp; <code>Weights</code></p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_data_structured_involved_4"><a class="link" href="#_data_structured_involved_4">Data structured involved</a></h5>
-<div class="paragraph">
-<p>We use a disjoint-set-structure which is based on a parent-array-tree. The DSS can be used to efficiently ask if two nodes are reachable by each other. [More](<a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure" class="bare">https://en.wikipedia.org/wiki/Disjoint-set_data_structure</a>)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_todo_6"><a class="link" href="#_todo_6">ToDo</a></h5>
-<div class="sect5">
-<h6 id="_benchmark_3"><a class="link" href="#_benchmark_3">benchmark</a></h6>
-<div class="paragraph">
-<p>Implement benchmark on big graph &amp;</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>stream nodeId-setId pairs</p>
-</li>
-<li>
-<p>calculate setSize-setCount</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_parallelization_4"><a class="link" href="#_parallelization_4">parallelization</a></h6>
-<div class="paragraph">
-<p>One approach to parallelize <em>UnionFind</em> might be <em>relationship partitioning</em> where each thread performs the execution into it&#8217;s own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.</p>
-</div>
-</div>
-<div class="sect5">
-<h6 id="_evaluation_4"><a class="link" href="#_evaluation_4">evaluation</a></h6>
-<div class="ulist">
-<ul>
-<li>
-<p>Performance tests on different dataset sizes / level of concurrency</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_details_5"><a class="link" href="#_details_5">Details</a></h5>
-<div class="ulist">
-<ul>
-<li>
-<p>writes a cluster-id to each node representing the a connected component where each node
-is reachable from any other node</p>
-</li>
-</ul>
-</div>
-<div class="sect6">
-<h7 id="_algo_unionfind"><a class="link" href="#_algo_unionfind">algo.unionFind</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>if a threshold configuration parameter is supplied only relationships with a property value higher then the threshold
-are merged</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_unionfind_exp1"><a class="link" href="#_algo_unionfind_exp1">algo.unionFind.exp1</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>parallel UnionFind using ExecutorService only.</p>
-</li>
-<li>
-<p>Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
-which are then merged pairwise.</p>
-</li>
-<li>
-<p>The implementation is based on a queue which acts as a buffer for each computed DSS. As long as there are
-more elements on the queue the algorithm takes two, merges them and adds its result to the queue until only
-1 element remains.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_unionfind_exp2"><a class="link" href="#_algo_unionfind_exp2">algo.unionFind.exp2</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>Like in <strong>exp1</strong> the resulting DSS of each node-partition is merged by the ForkJoin pool while
-the calculation of the DSS is done by the ExecutorService.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_unionfind_exp3"><a class="link" href="#_algo_unionfind_exp3">algo.unionFind.exp3</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>calculation and merge using forkJoinPool</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_strongly_connected_components"><a class="link" href="#_strongly_connected_components">Strongly Connected Components</a></h3>
@@ -3540,124 +2859,6 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 <h4 id="_references_8"><a class="link" href="#_references_8">References</a></h4>
 
 </div>
-<div class="sect3">
-<h4 id="_implementation_details_8"><a class="link" href="#_implementation_details_8">Implementation Details</a></h4>
-<div class="paragraph">
-<p><em>SCC</em> is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements <em>Tarjan&#8217;s</em> SCC algorithm.</p>
-</div>
-<div class="sect4">
-<h5 id="_progress_7"><a class="link" href="#_progress_7">Progress</a></h5>
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p>&#10063; copy implementation from graphtest-project</p>
-</li>
-<li>
-<p>&#10063; implement procedure</p>
-</li>
-<li>
-<p>&#10063; tests</p>
-</li>
-<li>
-<p>&#10063; edge case tests</p>
-</li>
-<li>
-<p>&#10063; simple benchmark</p>
-</li>
-<li>
-<p>&#10063; benchmark on bigger graphs</p>
-</li>
-<li>
-<p>&#10063; parallelization</p>
-</li>
-<li>
-<p>&#10063; evaluation</p>
-</li>
-<li>
-<p>&#10063; documentation</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_details_6"><a class="link" href="#_details_6">Details</a></h5>
-<div class="sect6">
-<h7 id="_algo_scc_tarjan"><a class="link" href="#_algo_scc_tarjan">algo.scc.tarjan</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>original <strong>recursive</strong> tarjan implementation</p>
-</li>
-<li>
-<p>result is a cluster-id at all nodes</p>
-</li>
-<li>
-<p>each cluster is a scc</p>
-</li>
-<li>
-<p>Builds sets of node-Ids which represent a strongly connected component
-within the graph. Also calculates minimum and maximum setSize as well
-as the count of distinct sets.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_scc_tunedtarjan"><a class="link" href="#_algo_scc_tunedtarjan">algo.scc.tunedTarjan</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>also a recursive tarjan implementation</p>
-</li>
-<li>
-<p>result is a cluster-id at all nodes</p>
-</li>
-<li>
-<p><a href="https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf" class="bare">https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf</a></p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_scc_iterative"><a class="link" href="#_algo_scc_iterative">algo.scc.iterative</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>iterative</strong> adaption of tarjan algorithm</p>
-</li>
-<li>
-<p>result is a cluster-id at all nodes</p>
-</li>
-<li>
-<p><a href="http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/" class="bare">http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/</a></p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect6">
-<h7 id="_algo_scc_multistep"><a class="link" href="#_algo_scc_multistep">algo.scc.multistep</a></h7>
-<div class="ulist">
-<ul>
-<li>
-<p>parallel scc algorithm</p>
-</li>
-<li>
-<p>composition of several scc algorithms (FWBW, coloring, tarjan)</p>
-</li>
-<li>
-<p>uses FWBW + coloring to find big scc&#8217;s</p>
-</li>
-<li>
-<p>starts simple tarjan once the cutoff threshold is reached</p>
-</li>
-<li>
-<p><a href="http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf" class="bare">http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -3852,7 +3053,7 @@ MATCH (p1:Person)-[:KNOWS]-(p2:Person) RETURN id(p1) as source, id(p2) as target
 </div>
 </div>
 <div class="sect2">
-<h3 id="_implementers_documentation"><a class="link" href="#_implementers_documentation">Implementers Documentation</a></h3>
+<h3 id="_api_documentation"><a class="link" href="#_api_documentation">API Documentation</a></h3>
 <div class="sect3">
 <h4 id="_development_notes"><a class="link" href="#_development_notes">Development Notes</a></h4>
 <div class="admonitionblock note">
@@ -4012,6 +3213,841 @@ It is responsible for creating the Graph using the Neo4j Kernel API.</p>
         .load( FactoryImpl.class );</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pagerank"><a class="link" href="#_pagerank">PageRank</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details"><a class="link" href="#_implementation_details">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>PageRank</em> is Googles popular search algorithm.</p>
+</div>
+<div class="paragraph">
+<p>More: <a href="https://en.wikipedia.org/wiki/PageRank" class="bare">https://en.wikipedia.org/wiki/PageRank</a></p>
+</div>
+<div class="sect4">
+<h5 id="_progress"><a class="link" href="#_progress">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10003; parallelization</p>
+</li>
+<li>
+<p>&#10003; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements"><a class="link" href="#_requirements">Requirements</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>NodeIterator</p>
+</li>
+<li>
+<p>Incoming Relationships</p>
+</li>
+<li>
+<p>Outgoing Degrees</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved"><a class="link" href="#_data_structured_involved">Data structured involved</a></h5>
+<div class="paragraph">
+<p>Our current approach needs one double array for storing ranks.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo"><a class="link" href="#_todo">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_parallelization"><a class="link" href="#_parallelization">parallelization</a></h6>
+<div class="paragraph">
+<p>One approach to parallelize <em>PageRank</em> might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation"><a class="link" href="#_evaluation">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_future_improvements"><a class="link" href="#_future_improvements">Future Improvements</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>we might scale up the ranks to ints for faster multiplication.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_details"><a class="link" href="#_details">Details</a></h5>
+<div class="paragraph">
+<p>Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]-</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Each partition thread has its local array of only the nodes that it is responsible for,
+not for all nodes. Combined, all partitions hold all page rank scores for every node once.
+Instead of writing partition files and transferring them across the network
+(as done in the paper since they were concerned with parallelising across multiple nodes),
+we use integer arrays to write the results to.
+The actual score is upscaled from a double to an integer by multiplying it with {@code 100_000}.</p>
+</li>
+<li>
+<p>To avoid contention by writing to a shared array, we partition the result array.</p>
+</li>
+<li>
+<p>During execution, the scores arrays are shaped like this:</p>
+<div class="literalblock">
+<div class="content">
+<pre>[ executing partition ] -&gt; [ calculated partition ] -&gt; [ local page rank scores ]</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Each single partition writes in a partitioned array, calculation the scores
+for every receiving partition. A single partition only sees:</p>
+<div class="literalblock">
+<div class="content">
+<pre>[ calculated partition ] -&gt; [ local page rank scores ]</pre>
+</div>
+</div>
+</li>
+<li>
+<p>The coordinating thread then builds the transpose of all written partitions from every partition:</p>
+<div class="literalblock">
+<div class="content">
+<pre>[ calculated partition ] -&gt; [ executing partition ] -&gt; [ local page rank scores ]</pre>
+</div>
+</div>
+</li>
+<li>
+<p>This step does not happen in parallel, but does not involve extensive copying.
+The local page rank scores needn&#8217;t be copied, only the partitioning arrays.
+All in all, {@code concurrency^2} array element reads and assignments have to
+be performed.</p>
+</li>
+<li>
+<p>For the next iteration, every partition first updates its scores, in parallel.
+A single partition now sees:</p>
+<div class="literalblock">
+<div class="content">
+<pre>[ executing partition ] -&gt; [ local page rank scores ]</pre>
+</div>
+</div>
+</li>
+<li>
+<p>That is, a list of all calculated scores for it self, grouped by the partition that
+calculated these scores.
+This means, most of the synchronization happens in parallel, too.</p>
+</li>
+<li>
+<p>Partitioning is not done by number of nodes but by the accumulated degree –
+as described in "Fast Parallel PageRank: A Linear System Approach" [2].
+Every partition should have about the same number of relationships to operate on.</p>
+</li>
+<li>
+<p>This is done to avoid having one partition with super nodes and instead have
+all partitions run in approximately equal time.
+Smaller partitions are merged down until we have at most {@code concurrency} partitions,
+in order to batch partitions and keep the number of threads in use predictable/configurable.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>[1]: An Efficient Partition-Based Parallel PageRank Algorithm
+[2]: &lt;a href="https://www.cs.purdue.edu/homes/dgleich/</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_betweenness_centrality_2"><a class="link" href="#_betweenness_centrality_2">Betweenness Centrality</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_2"><a class="link" href="#_implementation_details_2">Implementation Details</a></h4>
+<div class="paragraph">
+<p>In graph theory, betweenness centrality is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through (for unweighted graphs) or the sum of the weights of the edges (for weighted graphs) is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_2"><a class="link" href="#_progress_2">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; adapt apoc-procedure to algorithm-api</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; edge case tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10003; parallelization</p>
+</li>
+<li>
+<p>&#10003; evaluation</p>
+</li>
+<li>
+<p>&#10003; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_details_2"><a class="link" href="#_details_2">Details</a></h5>
+<div class="sect5">
+<h6 id="_algo_betweenness"><a class="link" href="#_algo_betweenness">algo.betweenness</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>implementation of brandes-bc algorithm and nodePartitioning extension</p>
+</li>
+<li>
+<p><a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf" class="bare">http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf</a></p>
+</li>
+<li>
+<p>if <code>concurrency</code> parameter is set (and &gt;1) ParallelBetweennessCentrality is used</p>
+</li>
+<li>
+<p>ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
+calculates the BC for one node at a time</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_betweenness_exp1"><a class="link" href="#_algo_betweenness_exp1">algo.betweenness.exp1</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>brandes-like algorithm which uses successor sets instead of predecessor sets</p>
+</li>
+<li>
+<p>The algorithm is based on Brandes definition but with some changes
+regarding the dependency-accumulation step.</p>
+</li>
+<li>
+<p><a href="http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf" class="bare">http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_closeness_centrality_2"><a class="link" href="#_closeness_centrality_2">Closeness Centrality</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_3"><a class="link" href="#_implementation_details_3">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Closeness Centrality</em> of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph.
+Thus the more central a node is, the closer it is to all other nodes.</p>
+</div>
+<div class="sect4">
+<h5 id="_details_3"><a class="link" href="#_details_3">Details</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>use <code>org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS</code> for BFS</p>
+</li>
+<li>
+<p>MSBFS gives depth and number of sources.</p>
+</li>
+<li>
+<p>in this scheme the farness can be calculated as follows</p>
+<div class="literalblock">
+<div class="content">
+<pre>farness(v) = farness(v) + numberOfSources(v) * depth(v)</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_minimum_weight_spanning_tree_2"><a class="link" href="#_minimum_weight_spanning_tree_2">Minimum Weight Spanning Tree</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_4"><a class="link" href="#_implementation_details_4">Implementation Details</a></h4>
+<div class="paragraph">
+<p>A <em>Minimum Weight Spanning Tree</em> is a acyclic undirected graph which consists of all connected nodes and whose relationship weights are minimal. It can be used to cluster the graph (KMeans). Our current approach uses <em>Prim&#8217;s Algorithm</em> to calculate the MST starting at a given node. This might not cover the whole graph. But if the nodes are connected the MST is always identical regardless at which node the execution starts.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_3"><a class="link" href="#_progress_3">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>[?] parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_2"><a class="link" href="#_requirements_2">Requirements</a></h5>
+<div class="paragraph">
+<p><code>BothRelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_2"><a class="link" href="#_data_structured_involved_2">Data structured involved</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p><code>org.neo4j.graphalgo.core.utils.container.UndirectedTree</code> as container for efficient splitting and iterate</p>
+</li>
+<li>
+<p>An int-based Fibonacci Heap priority queue.</p>
+</li>
+<li>
+<p>Container for visited state</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_2"><a class="link" href="#_todo_2">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark"><a class="link" href="#_benchmark">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_2"><a class="link" href="#_parallelization_2">parallelization</a></h6>
+
+</div>
+<div class="sect5">
+<h6 id="_evaluation_2"><a class="link" href="#_evaluation_2">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_single_shortest_path"><a class="link" href="#_single_shortest_path">Single Shortest Path</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_5"><a class="link" href="#_implementation_details_5">Implementation Details</a></h4>
+<div class="paragraph">
+<p>A <em>Single Source Shortest Path</em> algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. <em>All Pairs Shortest Path</em> on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson&#8217;s algorithm.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_4"><a class="link" href="#_progress_4">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_3"><a class="link" href="#_requirements_3">Requirements</a></h5>
+<div class="paragraph">
+<p><code>(Outgoing)RelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_3"><a class="link" href="#_data_structured_involved_3">Data structured involved</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>An int-based Fibonacci Heap which implements an efficient priority queue.</p>
+</li>
+<li>
+<p>Different Container for Costs / visited state / paths</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_3"><a class="link" href="#_todo_3">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark_2"><a class="link" href="#_benchmark_2">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_3"><a class="link" href="#_parallelization_3">parallelization</a></h6>
+<div class="paragraph">
+<p>Parallizing <em>All Pairs Shortest Path</em> might be easy using Dijkstra on each thread for a different node. An easy approach for <em>Single Source SP</em> may use two threads. One starting at the start-node, one at the end-node. The first wins. [More](<a href="https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf" class="bare">https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf</a>)</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation_3"><a class="link" href="#_evaluation_3">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_details_4"><a class="link" href="#_details_4">Details</a></h5>
+<div class="sect5">
+<h6 id="_algo_shortestpath"><a class="link" href="#_algo_shortestpath">algo.shortestPath</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Dijkstra single source shortest path algorithm</p>
+</li>
+<li>
+<p>The algorithm computes a shortest path on weighted graphs
+between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
+in the path</p>
+</li>
+<li>
+<p>there may be more then one shortest path, algo returns only one</p>
+</li>
+<li>
+<p>if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
+terms of count of nodes in the path.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_shortestpath_deltastepping"><a class="link" href="#_algo_shortestpath_deltastepping">algo.shortestPath.deltaStepping</a></h6>
+<div class="paragraph">
+<p>TODO naming!?
+- parallel non-negative single source shortest path algorithm for weighted graphs
+- It can be tweaked using the delta-parameter which controls the grade of concurrency.
+- returns minimum distance to <strong>all other nodes</strong>
+- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
+ the number of nodes to reach the target</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_allshortestpaths_stream"><a class="link" href="#_algo_allshortestpaths_stream">algo.allShortestPaths.stream</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>returns a stream of source-target node to distance tuples for each pair of nodes</p>
+</li>
+<li>
+<p>Since all nodeId&#8217;s have already been ordered by the idMapping we can use an integer
+instead of a queue which just count&#8217;s up for each startNodeId as long as it is
+&lt; nodeCount.</p>
+</li>
+<li>
+<p>Each thread tries to take one int from the counter at one time and starts its computation on it.</p>
+</li>
+<li>
+<p>The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.</p>
+</li>
+<li>
+<p>Due to the high memory footprint the result set would have we emit each result into
+a blocking queue. The result stream takes elements from the queue while the workers
+add elements to it.</p>
+</li>
+<li>
+<p>The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.</p>
+</li>
+<li>
+<p>writeback not supported!</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_label_propagation"><a class="link" href="#_label_propagation">Label Propagation</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_6"><a class="link" href="#_implementation_details_6">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Label Propagation</em> is a graph partitioning algorithm already implemented in current apoc-procedures.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_5"><a class="link" href="#_progress_5">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; adapt apoc-procedure to algorithm api</p>
+</li>
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10063; edge case tests</p>
+</li>
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10003; parallelization</p>
+</li>
+<li>
+<p>&#10003; evaluation</p>
+</li>
+<li>
+<p>&#10003; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_4"><a class="link" href="#_todo_4">TODO</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>adapt existing procedure to algorithm api</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_weakly_connected_components"><a class="link" href="#_weakly_connected_components">Weakly Connected Components</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_7"><a class="link" href="#_implementation_details_7">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>Connected Components</em> or <em>UnionFind</em> basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows partitioning of the graph based on Relationships and Properties.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_6"><a class="link" href="#_progress_6">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; single threaded implementation</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10063; implement procedure</p>
+</li>
+<li>
+<p>&#10063; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10063; parallelization</p>
+</li>
+<li>
+<p>&#10063; evaluation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_requirements_4"><a class="link" href="#_requirements_4">Requirements</a></h5>
+<div class="paragraph">
+<p><code>AllRelationshipIterator</code> &amp; <code>Weights</code></p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_data_structured_involved_4"><a class="link" href="#_data_structured_involved_4">Data structured involved</a></h5>
+<div class="paragraph">
+<p>We use a disjoint-set-structure which is based on a parent-array-tree. The DSS can be used to efficiently ask if two nodes are reachable by each other. [More](<a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure" class="bare">https://en.wikipedia.org/wiki/Disjoint-set_data_structure</a>)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_todo_5"><a class="link" href="#_todo_5">ToDo</a></h5>
+<div class="sect5">
+<h6 id="_benchmark_3"><a class="link" href="#_benchmark_3">benchmark</a></h6>
+<div class="paragraph">
+<p>Implement benchmark on big graph &amp;</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>stream nodeId-setId pairs</p>
+</li>
+<li>
+<p>calculate setSize-setCount</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_parallelization_4"><a class="link" href="#_parallelization_4">parallelization</a></h6>
+<div class="paragraph">
+<p>One approach to parallelize <em>UnionFind</em> might be <em>relationship partitioning</em> where each thread performs the execution into it&#8217;s own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_evaluation_4"><a class="link" href="#_evaluation_4">evaluation</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Performance tests on different dataset sizes / level of concurrency</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_details_5"><a class="link" href="#_details_5">Details</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>writes a cluster-id to each node representing the a connected component where each node
+is reachable from any other node</p>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_algo_unionfind"><a class="link" href="#_algo_unionfind">algo.unionFind</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>if a threshold configuration parameter is supplied only relationships with a property value higher then the threshold
+are merged</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_unionfind_exp1"><a class="link" href="#_algo_unionfind_exp1">algo.unionFind.exp1</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>parallel UnionFind using ExecutorService only.</p>
+</li>
+<li>
+<p>Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
+which are then merged pairwise.</p>
+</li>
+<li>
+<p>The implementation is based on a queue which acts as a buffer for each computed DSS. As long as there are
+more elements on the queue the algorithm takes two, merges them and adds its result to the queue until only
+1 element remains.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_unionfind_exp2"><a class="link" href="#_algo_unionfind_exp2">algo.unionFind.exp2</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Like in <strong>exp1</strong> the resulting DSS of each node-partition is merged by the ForkJoin pool while
+the calculation of the DSS is done by the ExecutorService.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_unionfind_exp3"><a class="link" href="#_algo_unionfind_exp3">algo.unionFind.exp3</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>calculation and merge using forkJoinPool</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_strongly_connected_components_2"><a class="link" href="#_strongly_connected_components_2">Strongly Connected Components</a></h3>
+<div class="sect3">
+<h4 id="_implementation_details_8"><a class="link" href="#_implementation_details_8">Implementation Details</a></h4>
+<div class="paragraph">
+<p><em>SCC</em> is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements <em>Tarjan&#8217;s</em> SCC algorithm.</p>
+</div>
+<div class="sect4">
+<h5 id="_progress_7"><a class="link" href="#_progress_7">Progress</a></h5>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; implement procedure</p>
+</li>
+<li>
+<p>&#10003; tests</p>
+</li>
+<li>
+<p>&#10003; edge case tests</p>
+</li>
+<li>
+<p>&#10003; simple benchmark</p>
+</li>
+<li>
+<p>&#10003; benchmark on bigger graphs</p>
+</li>
+<li>
+<p>&#10003; parallelization</p>
+</li>
+<li>
+<p>&#10003; evaluation</p>
+</li>
+<li>
+<p>&#10003; documentation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_details_6"><a class="link" href="#_details_6">Details</a></h5>
+<div class="sect5">
+<h6 id="_algo_scc_tarjan"><a class="link" href="#_algo_scc_tarjan">algo.scc.tarjan</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>original <strong>recursive</strong> tarjan implementation</p>
+</li>
+<li>
+<p>result is a cluster-id at all nodes</p>
+</li>
+<li>
+<p>each cluster is a scc</p>
+</li>
+<li>
+<p>Builds sets of node-Ids which represent a strongly connected component
+within the graph. Also calculates minimum and maximum setSize as well
+as the count of distinct sets.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_scc_tunedtarjan"><a class="link" href="#_algo_scc_tunedtarjan">algo.scc.tunedTarjan</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>also a recursive tarjan implementation</p>
+</li>
+<li>
+<p>result is a cluster-id at all nodes</p>
+</li>
+<li>
+<p><a href="https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf" class="bare">https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_scc_iterative"><a class="link" href="#_algo_scc_iterative">algo.scc.iterative</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>iterative</strong> adaption of tarjan algorithm</p>
+</li>
+<li>
+<p>result is a cluster-id at all nodes</p>
+</li>
+<li>
+<p><a href="http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/" class="bare">http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_algo_scc_multistep"><a class="link" href="#_algo_scc_multistep">algo.scc.multistep</a></h6>
+<div class="ulist">
+<ul>
+<li>
+<p>parallel scc algorithm</p>
+</li>
+<li>
+<p>composition of several scc algorithms (FWBW, coloring, tarjan)</p>
+</li>
+<li>
+<p>uses FWBW + coloring to find big scc&#8217;s</p>
+</li>
+<li>
+<p>starts simple tarjan once the cutoff threshold is reached</p>
+</li>
+<li>
+<p><a href="http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf" class="bare">http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf</a></p>
+</li>
+</ul>
+</div>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
@@ -4025,9 +4061,11 @@ $(document).ready(function() {
 </div>
 </div>
 </div>
+</div>
+</div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-07-17 01:11:37 MESZ
+Last updated 2017-07-17 07:43:12 MESZ
 </div>
 </div>
 </body>
