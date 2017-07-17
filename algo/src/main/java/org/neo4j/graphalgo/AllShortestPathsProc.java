@@ -29,12 +29,27 @@ public class AllShortestPathsProc {
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
     public Stream<AllShortestPaths.Result> allShortestPathsStream(
-            @Name("propertyName") String propertyName,
+            @Name(value = "propertyName") String propertyName,
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
+        // use MSBFS ASP if no weightProperty is set
+        if (null == propertyName || propertyName.isEmpty()) {
+
+            final Graph graph = new GraphLoader(api)
+                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .withDirection(Direction.OUTGOING)
+                    .withExecutorService(Pools.DEFAULT)
+                    .load(configuration.getGraphImpl());
+
+            return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
+                    .resultStream();
+        }
+
+        // weighted ASP otherwise
         final Graph graph = new GraphLoader(api)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
@@ -44,33 +59,11 @@ public class AllShortestPathsProc {
                 .withDirection(Direction.OUTGOING)
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
+
+
 
         return new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withLog(log)
-                .resultStream();
-    }
-
-    @Procedure("algo.allShortestPaths.msbfs.stream")
-    @Description("CALL algo.allShortestPaths.msbfs.stream({nodeQuery:'labelName', relationshipQuery:'relationshipName'}) " +
-            "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
-    public Stream<MSBFSAllShortestPaths.Result> msbfsAllShortestPathsStream(
-            @Name("propertyName") String propertyName,
-            @Name(value = "config", defaultValue = "{}")
-                    Map<String, Object> config) {
-
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-
-        final Graph graph = new GraphLoader(api)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .withOptionalRelationshipWeightsFromProperty(
-                        propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
-                .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
-                .load(configuration.getGraphImpl());
-
-        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
                 .resultStream();
     }
 }

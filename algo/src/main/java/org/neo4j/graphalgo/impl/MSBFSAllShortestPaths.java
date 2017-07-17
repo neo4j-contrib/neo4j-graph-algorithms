@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.impl.AllShortestPaths.Result;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
@@ -113,37 +114,4 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
         }
     }
 
-    /**
-     * Result DTO
-     */
-    public static class Result {
-
-        /**
-         * neo4j nodeId of the source node
-         */
-        public final long sourceNodeId;
-        /**
-         * neo4j nodeId of the target node
-         */
-        public final long targetNodeId;
-        /**
-         * minimum distance between source and target
-         */
-        public final double distance;
-
-        public Result(long sourceNodeId, long targetNodeId, double distance) {
-            this.sourceNodeId = sourceNodeId;
-            this.targetNodeId = targetNodeId;
-            this.distance = distance;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "sourceNodeId=" + sourceNodeId +
-                    ", targetNodeId=" + targetNodeId +
-                    ", distance=" + distance +
-                    '}';
-        }
-    }
 }

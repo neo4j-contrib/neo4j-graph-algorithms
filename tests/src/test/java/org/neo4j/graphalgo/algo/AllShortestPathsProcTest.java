@@ -110,7 +110,7 @@ public final class AllShortestPathsProcTest {
 
         final Consumer consumer = mock(Consumer.class);
 
-        final String cypher = "CALL algo.allShortestPaths.stream('cost', {graph:'"+graphImpl+"'}) " +
+        final String cypher = "CALL algo.allShortestPaths.stream('', {graph:'"+graphImpl+"'}) " +
                 "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
 
         api.execute(cypher).accept(row -> {
@@ -125,16 +125,17 @@ public final class AllShortestPathsProcTest {
             return true;
         });
 
-        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(8.0));
+        // 4 steps from start to end max
+        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(4.0));
 
     }
 
     @Test
-    public void testSimpleASP() throws Exception {
+    public void testWeightedASP() throws Exception {
 
         final Consumer consumer = mock(Consumer.class);
 
-        final String cypher = "CALL algo.allShortestPaths.simple.stream('cost', {graph:'"+graphImpl+"'}) " +
+        final String cypher = "CALL algo.allShortestPaths.stream('cost', {graph:'"+graphImpl+"'}) " +
                 "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
 
         api.execute(cypher).accept(row -> {
