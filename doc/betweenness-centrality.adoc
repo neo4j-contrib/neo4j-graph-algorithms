@@ -180,3 +180,20 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 ## TODO
 
 - adapt apoc-procedure to algorithm-api
+
+== Details
+
+==== algo.betweenness
+
+- implementation of brandes-bc algorithm and nodePartitioning extension
+- http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf
+- if `concurrency` parameter is set (and >1) ParallelBetweennessCentrality is used
+- ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
+ calculates the BC for one node at a time
+
+==== algo.betweenness.exp1
+
+- brandes-like algorithm which uses successor sets instead of predecessor sets
+- The algorithm is based on Brandes definition but with some changes
+ regarding the dependency-accumulation step.
+- http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf

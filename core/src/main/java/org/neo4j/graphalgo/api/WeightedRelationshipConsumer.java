@@ -5,7 +5,6 @@ package org.neo4j.graphalgo.api;
  *
  * @author mknblch
  */
-@Deprecated
 public interface WeightedRelationshipConsumer {
 
     /**

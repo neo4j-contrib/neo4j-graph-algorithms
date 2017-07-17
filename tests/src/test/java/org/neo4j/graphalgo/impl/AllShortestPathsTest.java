@@ -1,12 +1,11 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.Pools;
+import org.neo4j.graphalgo.Pools;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -46,7 +45,6 @@ public class AllShortestPathsTest {
     private static final String RELATIONSHIP = "REL";
 
     private static GraphDatabaseAPI db;
-    private static GridBuilder gridBuilder;
     private static Graph graph;
 
     @BeforeClass
@@ -58,7 +56,7 @@ public class AllShortestPathsTest {
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
-            gridBuilder = GraphBuilder.create(db)
+            GraphBuilder.create(db)
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newGridBuilder()

@@ -141,10 +141,11 @@ public final class MultiSourceBFSTest {
     @Test
     public void testParallel() {
         // each node should only be traversed once for every source node
-        int[][] seen = new int[100][];
-        Arrays.setAll(seen, i -> new int[100]);
+        int maxNodes = 512;
+        int[][] seen = new int[maxNodes][];
+        Arrays.setAll(seen, i -> new int[maxNodes]);
         withGrid(
-                gb -> gb.newCompleteGraphBuilder().createCompleteGraph(100),
+                gb -> gb.newCompleteGraphBuilder().createCompleteGraph(maxNodes),
                 graph -> {
                     MultiSourceBFS msbfs = new MultiSourceBFS(
                             graph,
@@ -161,9 +162,9 @@ public final class MultiSourceBFSTest {
                     msbfs.run(Pools.DEFAULT);
                 });
 
-        for (int i = 0; i < seen.length; i++) {
+        for (int i = 0; i < maxNodes; i++) {
             final int[] ints = seen[i];
-            int[] expected = new int[100];
+            int[] expected = new int[maxNodes];
             Arrays.fill(expected, 1);
             expected[i] = 0; // MS-BFS does not call fn for start nodes
             assertArrayEquals(expected, ints);

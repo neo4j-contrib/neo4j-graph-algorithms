@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.Pools;
+import org.neo4j.graphalgo.Pools;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;

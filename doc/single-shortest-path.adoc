@@ -95,3 +95,40 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 ### evaluation
 
 - Performance tests on different dataset sizes / level of concurrency
+
+
+== Details
+
+
+==== algo.shortestPath
+
+- Dijkstra single source shortest path algorithm
+- The algorithm computes a shortest path on weighted graphs
+ between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
+ in the path
+- there may be more then one shortest path, algo returns only one
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
+ terms of count of nodes in the path.
+
+==== algo.shortestPath.deltaStepping
+
+TODO naming!?
+- parallel non-negative single source shortest path algorithm for weighted graphs
+- It can be tweaked using the delta-parameter which controls the grade of concurrency.
+- returns minimum distance to *all other nodes*
+- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
+ the number of nodes to reach the target
+
+==== algo.allShortestPaths.stream
+
+- returns a stream of source-target node to distance tuples for each pair of nodes
+- Since all nodeId's have already been ordered by the idMapping we can use an integer
+ instead of a queue which just count's up for each startNodeId as long as it is
+ < nodeCount.
+- Each thread tries to take one int from the counter at one time and starts its computation on it.
+- The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.
+- Due to the high memory footprint the result set would have we emit each result into
+ a blocking queue. The result stream takes elements from the queue while the workers
+ add elements to it.
+- The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
+- writeback not supported!

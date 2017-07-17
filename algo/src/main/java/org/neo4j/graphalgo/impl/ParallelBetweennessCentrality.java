@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class ParallelBetweennessCentrality {
+public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweennessCentrality> {
 
     // the graph
     private final Graph graph;
@@ -37,6 +37,8 @@ public class ParallelBetweennessCentrality {
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
+
+    private final AtomicInteger percentDone = new AtomicInteger(0);
 
     /**
      * constructs a parallel centrality solver
@@ -102,6 +104,11 @@ public class ParallelBetweennessCentrality {
                                 centrality.get(nodeId)));
     }
 
+    @Override
+    public ParallelBetweennessCentrality me() {
+        return this;
+    }
+
     /**
      * a BCTask takes one element from the nodeQueue as long as
      * it is lower then nodeCount and calculates it's centrality
@@ -132,6 +139,7 @@ public class ParallelBetweennessCentrality {
                 if (startNodeId >= nodeCount) {
                     return;
                 }
+                getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
                 sigma[startNodeId] = 1;
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);

@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
@@ -87,8 +88,7 @@ public final class LightGraphFactory extends GraphFactory {
                     ? readOp.nodesGetAll()
                     : readOp.nodesGetForLabel(labelId);
             while (nodeIds.hasNext()) {
-                final long nextId = nodeIds.next();
-                mapping.add(nextId);
+                mapping.add(nodeIds.next());
             }
             mapping.buildMappedIds();
 
@@ -130,6 +130,7 @@ public final class LightGraphFactory extends GraphFactory {
                     sourceGraphId,
                     node,
                     Direction.OUTGOING,
+                    RawValues.OUTGOING,
                     outOffsets,
                     outAdjacency,
                     outAdder,
@@ -141,6 +142,7 @@ public final class LightGraphFactory extends GraphFactory {
                     sourceGraphId,
                     node,
                     Direction.INCOMING,
+                    RawValues.INCOMING,
                     inOffsets,
                     inAdjacency,
                     inAdder,
@@ -153,6 +155,7 @@ public final class LightGraphFactory extends GraphFactory {
             int sourceGraphId,
             NodeItem node,
             Direction direction,
+            IdCombiner idCombiner,
             long[] offsets,
             IntArray adjacency,
             IntArray.BulkAdder bulkAdder,
@@ -179,7 +182,7 @@ public final class LightGraphFactory extends GraphFactory {
 
                     try (Cursor<PropertyItem> weights = rel.property(weightId)) {
                         if (weights.next()) {
-                            long relId = RawValues.combineIntInt(
+                            long relId = idCombiner.apply(
                                     sourceGraphId,
                                     targetGraphId);
                             this.weights.set(relId, weights.get().value());

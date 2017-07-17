@@ -15,7 +15,7 @@ import java.util.stream.Stream;
  *
  * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
-public class SCCIterativeTarjan {
+public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     private enum Action {
         VISIT(0),
@@ -27,9 +27,10 @@ public class SCCIterativeTarjan {
         Action(int code) {
             this.code = code;
         }
-    }
 
+    }
     private final Graph graph;
+
     private final int nodeCount;
     private final int[] index;
     private final SimpleBitSet visited;
@@ -37,11 +38,10 @@ public class SCCIterativeTarjan {
     private final IntStack stack;
     private final IntStack boundaries;
     private final IntStack todo;
-
     private int setCount;
+
     private int minSetSize;
     private int maxSetSize;
-
     public SCCIterativeTarjan(Graph graph) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
@@ -63,6 +63,11 @@ public class SCCIterativeTarjan {
         boundaries.clear();
         stack.clear();
         graph.forEachNode(this::compute);
+        return this;
+    }
+
+    @Override
+    public SCCIterativeTarjan me() {
         return this;
     }
 
@@ -104,6 +109,7 @@ public class SCCIterativeTarjan {
                 postVisit(node);
             }
         }
+        getProgressLogger().logProgress((double) nodeId / (nodeCount - 1));
         return true;
     }
 

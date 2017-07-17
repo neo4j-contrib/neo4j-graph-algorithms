@@ -1,4 +1,4 @@
-package algo;
+package org.neo4j.graphalgo;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;

@@ -23,7 +23,32 @@ As the distance between nodes in disconnected components of a network is infinit
 
 == Algorithm explanation on simple sample graph
 
-[source,cypher]
+- count farness in each msbfs-callback
+- divide by N-1
+
+Graph:
+
+( A )<==>( B )<==>( C )<==>( D )<==>( E )
+
+Calculation:
+
+`N = 5`        // number of nodes
+
+`k = N-1 = 4`  // used for normalization
+
+     A     B     C     D     E
+ --|-----------------------------
+ A | 0     1     2     3     4       // farness between each pair of nodes
+ B | 1     0     1     2     3
+ C | 2     1     0     1     2
+ D | 3     2     1     0     1
+ E | 4     3     2     1     0
+ --|-----------------------------
+ S | 10    7     6     7     10      // sum each column
+ ==|=============================
+k/S| 0.4  0.57  0.67  0.57   0.4     // normalized centrality
+
+
 ----
 CALL algo.closeness('Person', 'KNOWS', {write:true, writeProperty:'centrality'}) 
 YIELD nodes,loadMillis, computeMillis, writeMillis 
@@ -109,19 +134,10 @@ CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, cent
 _Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. 
 Thus the more central a node is, the closer it is to all other nodes.
 
-## Progress
+== Details
 
-- [ ] adapt apoc-procedure to algorithm-api
-- [x] implement procedure
-- [x] tests
-- [ ] edge case tests
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
-- [ ] documentation
+- use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
+- MSBFS gives depth and number of sources.
+- in this scheme the farness can be calculated as follows
 
-## TODO
-
-- adapt apoc-procedure to algorithm-api
-- check which variant of CC has been implemented in apoc
+ farness(v) = farness(v) + numberOfSources(v) * depth(v)

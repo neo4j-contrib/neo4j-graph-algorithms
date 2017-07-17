@@ -1,15 +1,12 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
-import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphalgo.impl.UnionFindExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
@@ -117,11 +114,13 @@ public class UnionFindProc4 {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                        .withLog(log)
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                        .withLog(log)
                         .compute()
                         .getStruct();
             }
@@ -129,10 +128,14 @@ public class UnionFindProc4 {
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold " + threshold);
-                struct = new GraphUnionFind(graph).compute(threshold);
+                struct = new GraphUnionFind(graph)
+                        .withLog(log)
+                        .compute(threshold);
             } else {
                 log.debug("Computing union find without threshold");
-                struct = new GraphUnionFind(graph).compute();
+                struct = new GraphUnionFind(graph)
+                        .withLog(log)
+                        .compute();
             }
         }
 

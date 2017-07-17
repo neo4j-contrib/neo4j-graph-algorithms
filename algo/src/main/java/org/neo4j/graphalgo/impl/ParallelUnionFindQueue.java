@@ -21,7 +21,7 @@ import java.util.concurrent.*;
  *
  * @author mknblch
  */
-public class ParallelUnionFindQueue {
+public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
 
     private final Graph graph;
     private final ExecutorService executor;
@@ -45,13 +45,10 @@ public class ParallelUnionFindQueue {
     }
 
     public ParallelUnionFindQueue compute() {
-
         final int steps = Math.floorDiv(nodeCount, batchSize) - 1;
-
         for (int i = 0; i < nodeCount; i += batchSize) {
             futures.add(executor.submit(new UnionFindTask(i)));
         }
-
         for (int i = steps - 1; i >= 0; i--) {
             futures.add(executor.submit(() -> {
                 final DisjointSetStruct a;
@@ -88,6 +85,11 @@ public class ParallelUnionFindQueue {
         return null;
     }
 
+    @Override
+    public ParallelUnionFindQueue me() {
+        return this;
+    }
+
     private class UnionFindTask implements Runnable {
 
         protected final int offset;
@@ -109,6 +111,7 @@ public class ParallelUnionFindQueue {
                     return true;
                 });
             }
+            getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
             queue.add(struct);
         }
     }

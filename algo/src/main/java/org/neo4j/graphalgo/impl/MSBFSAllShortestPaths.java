@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
@@ -32,14 +33,16 @@ import java.util.stream.StreamSupport;
  * add elements to it. The result stream is limited by N^2. If the stream gets closed
  * prematurely the workers get closed too.
  */
-public class MSBFSAllShortestPaths {
+public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
     private final Graph graph;
     private final ExecutorService executorService;
     private final BlockingQueue<Result> resultQueue;
+    private final int nodeCount;
 
     public MSBFSAllShortestPaths(Graph graph, ExecutorService executorService) {
         this.graph = graph;
+        nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
@@ -71,6 +74,11 @@ public class MSBFSAllShortestPaths {
                 0), false);
     }
 
+    @Override
+    public MSBFSAllShortestPaths me() {
+        return this;
+    }
+
     /**
      * Dijkstra Task. Takes one element of the counter at a time
      * and starts dijkstra on it. It starts emitting results to the
@@ -86,6 +94,9 @@ public class MSBFSAllShortestPaths {
 
         @Override
         public void run() {
+
+            final ProgressLogger progressLogger = getProgressLogger();
+
             new MultiSourceBFS(
                     graph,
                     graph,
@@ -104,8 +115,10 @@ public class MSBFSAllShortestPaths {
                                 throw new RuntimeException(e);
                             }
                         }
+                        progressLogger.logProgress((double) target / (nodeCount - 1));
                     }
             ).run(executorService);
+
             resultQueue.add(new Result(-1, -1, -1));
         }
     }

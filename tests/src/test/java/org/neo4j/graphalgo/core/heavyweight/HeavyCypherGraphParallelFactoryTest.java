@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
-import algo.Pools;
+import org.neo4j.graphalgo.Pools;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

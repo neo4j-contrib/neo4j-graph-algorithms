@@ -210,3 +210,53 @@ One approach to parallelize _PageRank_ might be to partition the node into batch
 ## Future Improvements
 
 - we might scale up the ranks to ints for faster multiplication.
+
+== Details
+
+Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]-
+
+- Each partition thread has its local array of only the nodes that it is responsible for,
+not for all nodes. Combined, all partitions hold all page rank scores for every node once.
+Instead of writing partition files and transferring them across the network
+(as done in the paper since they were concerned with parallelising across multiple nodes),
+we use integer arrays to write the results to.
+The actual score is upscaled from a double to an integer by multiplying it with {@code 100_000}.
+
+- To avoid contention by writing to a shared array, we partition the result array.
+- During execution, the scores arrays are shaped like this:
+
+    [ executing partition ] -> [ calculated partition ] -> [ local page rank scores ]
+
+- Each single partition writes in a partitioned array, calculation the scores
+ for every receiving partition. A single partition only sees:
+
+    [ calculated partition ] -> [ local page rank scores ]
+
+- The coordinating thread then builds the transpose of all written partitions from every partition:
+
+    [ calculated partition ] -> [ executing partition ] -> [ local page rank scores ]
+
+- This step does not happen in parallel, but does not involve extensive copying.
+The local page rank scores needn't be copied, only the partitioning arrays.
+All in all, {@code concurrency^2} array element reads and assignments have to
+be performed.
+
+- For the next iteration, every partition first updates its scores, in parallel.
+A single partition now sees:
+
+    [ executing partition ] -> [ local page rank scores ]
+
+- That is, a list of all calculated scores for it self, grouped by the partition that
+calculated these scores.
+This means, most of the synchronization happens in parallel, too.
+
+- Partitioning is not done by number of nodes but by the accumulated degree –
+as described in "Fast Parallel PageRank: A Linear System Approach" [2].
+Every partition should have about the same number of relationships to operate on.
+- This is done to avoid having one partition with super nodes and instead have
+all partitions run in approximately equal time.
+Smaller partitions are merged down until we have at most {@code concurrency} partitions,
+in order to batch partitions and keep the number of threads in use predictable/configurable.
+
+[1]: An Efficient Partition-Based Parallel PageRank Algorithm
+[2]: <a href="https://www.cs.purdue.edu/homes/dgleich/

@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
@@ -12,25 +13,24 @@ import java.util.stream.Stream;
 
 /**
  * AllShortestPaths:
- *
+ * <p>
  * multi-source parallel dijkstra algorithm for computing the shortest path between
  * each pair of nodes.
- *
+ * <p>
  * Since all nodeId's have already been ordered by the idMapping we can use an integer
  * instead of a queue which just count's up for each startNodeId as long as it is
  * < nodeCount. Each thread tries to take one int from the counter at one time and
  * starts its computation on it.
- *
+ * <p>
  * The {@link AllShortestPaths#concurrency} value determines the count of workers
  * that should be spawned.
- *
+ * <p>
  * Due to the high memory footprint the result set would have we emit each result into
  * a blocking queue. The result stream takes elements from the queue while the workers
  * add elements to it. The result stream is limited by N^2. If the stream gets closed
  * prematurely the workers get closed too.
- *
  */
-public class AllShortestPaths {
+public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
     private final Graph graph;
     private final int nodeCount;
@@ -64,6 +64,7 @@ public class AllShortestPaths {
     /**
      * the resultStream(..) method starts the computation and
      * returns a Stream of SP-Tuples (source, target, minDist)
+     *
      * @return the result stream
      */
     public Stream<Result> resultStream() {
@@ -88,6 +89,11 @@ public class AllShortestPaths {
                 });
     }
 
+    @Override
+    public AllShortestPaths me() {
+        return this;
+    }
+
     /**
      * Dijkstra Task. Takes one element of the counter at a time
      * and starts dijkstra on it. It starts emitting results to the
@@ -105,6 +111,7 @@ public class AllShortestPaths {
 
         @Override
         public void run() {
+            final ProgressLogger progressLogger = getProgressLogger();
             int startNode;
             while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
@@ -120,6 +127,7 @@ public class AllShortestPaths {
                         throw new RuntimeException(e);
                     }
                 }
+                progressLogger.logProgress((double) startNode / (nodeCount - 1));
             }
         }
 

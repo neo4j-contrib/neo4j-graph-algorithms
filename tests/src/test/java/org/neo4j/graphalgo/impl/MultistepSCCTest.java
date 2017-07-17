@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import algo.Pools;
+import org.neo4j.graphalgo.Pools;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.junit.AfterClass;

@@ -9,24 +9,27 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 
-public final class LabelPropagation {
+public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
     private static final double[] EMPTY_DOUBLES = new double[0];
     private static final int[] EMPTY_INTS = new int[0];
 
     private final HeavyGraph graph;
     private final ExecutorService executor;
+    private final int nodeCount;
     private Direction direction;
 
     public LabelPropagation(
             HeavyGraph graph,
             ExecutorService executor) {
         this.graph = graph;
+        nodeCount = graph.nodeCount();
         this.executor = executor;
     }
 
@@ -39,7 +42,7 @@ public final class LabelPropagation {
         }
         this.direction = direction;
 
-        Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
+        final Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
                     batchSize,
                     graph,
                     (offset, nodes) -> new ComputeStep(batchSize, nodes),
@@ -48,7 +51,7 @@ public final class LabelPropagation {
         for (long i = 1; i < times; i++) {
             ParallelUtil.run(computeSteps, executor);
         }
-        IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
+        final IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
         for (ComputeStep computeStep : computeSteps) {
             labels.putAll(computeStep.labels);
             computeStep.release();
@@ -57,15 +60,22 @@ public final class LabelPropagation {
         return labels;
     }
 
+    @Override
+    public LabelPropagation me() {
+        return this;
+    }
+
     private final class ComputeStep implements Runnable, RelationshipConsumer {
         private final PrimitiveIntIterable nodes;
         private final DoubleDoubleHashMap votes;
         private final IntDoubleHashMap labels;
+        private ProgressLogger progressLogger;
 
         private ComputeStep(int nodeSize, PrimitiveIntIterable nodes) {
             this.nodes = nodes;
             votes = new DoubleDoubleHashMap();
             labels = new IntDoubleHashMap(nodeSize);
+            progressLogger = getProgressLogger();
         }
 
         @Override
@@ -79,7 +89,6 @@ public final class LabelPropagation {
         private void compute(int nodeId) {
             votes.clear();
             graph.forEachRelationship(nodeId, direction, this);
-
             double originalPartition = partition(nodeId);
             double partition = originalPartition;
             double weight = Double.NEGATIVE_INFINITY;
@@ -89,10 +98,10 @@ public final class LabelPropagation {
                     partition = vote.key;
                 }
             }
-
             if (partition != originalPartition) {
                 labels.put(nodeId, partition);
             }
+            progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         }
 
         @Override

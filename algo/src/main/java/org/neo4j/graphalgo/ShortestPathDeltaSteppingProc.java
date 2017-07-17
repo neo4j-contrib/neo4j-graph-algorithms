@@ -1,13 +1,8 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
@@ -71,6 +66,7 @@ public class ShortestPathDeltaSteppingProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDeltaStepping(graph, delta)
+                .withLog(log)
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
                 ))
@@ -106,6 +102,7 @@ public class ShortestPathDeltaSteppingProc {
         }
 
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
+                .withLog(log)
                 .withExecutorService(Pools.DEFAULT);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));

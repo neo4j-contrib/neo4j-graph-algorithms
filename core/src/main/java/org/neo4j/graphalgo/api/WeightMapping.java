@@ -5,7 +5,6 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 /**
  * @author mknobloch
  */
-@Deprecated
 public interface WeightMapping {
 
     /**

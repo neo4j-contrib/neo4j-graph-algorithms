@@ -53,9 +53,45 @@ final class BiMultiBitSet32 {
      * Sets a particular bit (in [0, 32)) for a node.
      * Only the auxiliary bit is set.
      */
-    void setAuxBit(int nodeId, int bit) {
+    /* test-only */ void setAuxBit(int nodeId, int bit) {
         assert bit < 32;
         bits[nodeId] |= (1L << (bit + 32));
+    }
+
+    /**
+     * Resets all bits while setting the aux bits according to the given
+     * node range.
+     */
+    void setAuxBits(int fromId, int toId) {
+        int len = toId - fromId;
+        assert len <= 32;
+
+        Arrays.fill(bits, 0, fromId, 0L);
+        Arrays.fill(bits, toId, bits.length, 0L);
+        for (int i = 0; i < len; i++) {
+            bits[fromId + i] = (1L << (i + 32));
+        }
+    }
+
+    /**
+     * Resets all bits while setting the aux bits according to the given
+     * start source node array.
+     */
+    void setAuxBits(int[] nodes) {
+        int len = nodes.length;
+        assert len <= 32;
+        assert len >= 1;
+        assert isSorted(nodes) : "aux bits must be sorted";
+
+        int prev = 0;
+        for (int i = 0; i < len; i++) {
+            int node = nodes[i];
+            Arrays.fill(bits, prev, node, 0L);
+            bits[node] = (1L << (i + 32));
+            prev = node + 1;
+        }
+        int lastNode = Math.max(bits.length, nodes[len - 1] + 1);
+        Arrays.fill(bits, lastNode, bits.length, 0L);
     }
 
     /**
@@ -120,20 +156,24 @@ final class BiMultiBitSet32 {
     /**
      * Copies the default bit into the given {@code target} {@link MultiBitSet32}.
      * The default bit is reset to 0 after the copying, the auxiliary bit remains.
+     *
+     * @return true iff some data was copied, false otherwise.
      */
-    void copyInto(final MultiBitSet32 target) {
+    boolean copyInto(final MultiBitSet32 target) {
+        boolean didCopy = false;
         int length = bits.length;
         for (int i = 0; i < length; i++) {
             int bit = (int) bits[i];
+            didCopy = didCopy || bit != 0;
             target.set(i, bit);
             bits[i] &= AUX_MASK;
         }
+        return didCopy;
     }
 
-    /**
-     * Resets all bits to 0.
-     */
-    void reset() {
-        Arrays.fill(bits, 0L);
+    /* assert-only */ private boolean isSorted(int[] nodes) {
+        int[] copy = Arrays.copyOf(nodes, nodes.length);
+        Arrays.sort(copy);
+        return Arrays.equals(copy, nodes);
     }
 }

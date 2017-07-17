@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo;
 
-import algo.Pools;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
@@ -17,6 +16,7 @@ import org.neo4j.graphalgo.impl.LabelPropagationExporter;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -43,6 +43,9 @@ public final class LabelPropagationProc {
 
     @Context
     public GraphDatabaseAPI dbAPI;
+
+    @Context
+    public Log log;
 
     @Procedure(name = "algo.labelPropagation", mode = Mode.WRITE)
     @Description("CALL algo.labelPropagation(" +
@@ -79,7 +82,7 @@ public final class LabelPropagationProc {
                 weightProperty,
                 stats);
 
-        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, stats);
+        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, configuration, stats);
 
         stats.nodes(labels.size());
 
@@ -116,10 +119,13 @@ public final class LabelPropagationProc {
             int iterations,
             int batchSize,
             HeavyGraph graph,
+            ProcedureConfiguration configuration,
             LabelPropagationStats.Builder stats) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
-            return new LabelPropagation(graph, pool).compute(
+            return new LabelPropagation(graph, pool)
+                    .withLog(log)
+                    .compute(
                     direction,
                     iterations,
                     Math.max(1, batchSize)

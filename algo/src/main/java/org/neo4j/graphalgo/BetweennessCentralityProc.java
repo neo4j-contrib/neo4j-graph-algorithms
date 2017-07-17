@@ -46,6 +46,7 @@ public class BetweennessCentralityProc {
         return new BetweennessCentralitySuccessorBrandes(graph,
                 configuration.getNumber("scaleFactor", 100_000).intValue(),
                 Pools.DEFAULT)
+                .withLog(log)
                 .compute()
                 .resultStream();
     }
@@ -71,6 +72,7 @@ public class BetweennessCentralityProc {
                     configuration.getNumber("scaleFactor", 100_000).intValue(),
                     Pools.DEFAULT,
                     configuration.getConcurrency())
+                    .withLog(log)
                     .compute()
                     .resultStream();
         }
@@ -107,7 +109,8 @@ public class BetweennessCentralityProc {
         final BetweennessCentralitySuccessorBrandes bc = new BetweennessCentralitySuccessorBrandes(
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
-                Pools.DEFAULT);
+                Pools.DEFAULT)
+                .withLog(log);
 
         builder.timeEval(() -> {
             bc.compute();
@@ -169,7 +172,9 @@ public class BetweennessCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
-        final BetweennessCentrality bc = new BetweennessCentrality(graph);
+        final BetweennessCentrality bc = new BetweennessCentrality(graph)
+                .withLog(log);
+
         builder.timeEval(() -> {
             bc.compute();
             if (configuration.isStatsFlag()) {
@@ -217,7 +222,8 @@ public class BetweennessCentralityProc {
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT,
-                configuration.getConcurrency());
+                configuration.getConcurrency())
+                .withLog(log);
 
         builder.timeEval(() -> {
             bc.compute();

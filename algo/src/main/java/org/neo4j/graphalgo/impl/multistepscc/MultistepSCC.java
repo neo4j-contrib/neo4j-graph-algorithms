@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 
@@ -15,9 +16,9 @@ import java.util.stream.Stream;
 
 /**
  * Multistep: parallel strongly connected component algorithm
- *
+ * <p>
  * The algorithm consists of multiple steps to calculate strongly connected components.
- *
+ * <p>
  * The algo. starts by trimming all nodes without either incoming or outgoing
  * relationships to minimize the search vector. It then does a Forward-Backward coloring
  * which first determines the starting point by evaluating the highest product of in- and
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
  * all reachable nodes using incoming relationships, called the predecessor set. The
  * intersection of both sets builds a strongly connected component. With high probability
  * the biggest SCC in the Graph.
- *
+ * <p>
  * After finding the biggest SCC it removes its nodes from the original nodeSet which
  * is then used by the coloring algorithm which extracts one weakly connected component
  * set each time. the main loop builds its predecessor set and the intersection of both
@@ -38,7 +39,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class MultistepSCC {
+public class MultistepSCC extends Algorithm<MultistepSCC> {
 
     // the graph
     private final Graph graph;
@@ -81,6 +82,7 @@ public class MultistepSCC {
     }
 
     public MultistepSCC compute() {
+
         minSetSize = Integer.MAX_VALUE;
         maxSetSize = 0;
         setCount = 0;
@@ -112,6 +114,7 @@ public class MultistepSCC {
 
     /**
      * return the result stream
+     *
      * @return stream of result DTOs
      */
     public Stream<SCCStreamResult> resultStream() {
@@ -124,6 +127,7 @@ public class MultistepSCC {
 
     /**
      * get connected components as nodeId -> clusterId array
+     *
      * @return int array representing the clusterId for each node
      */
     public int[] getConnectedComponents() {
@@ -144,6 +148,7 @@ public class MultistepSCC {
 
     /**
      * process a SCC if found (may be empty)
+     *
      * @param root
      * @param elements
      */
@@ -160,8 +165,9 @@ public class MultistepSCC {
     /**
      * traverse backwards and collect all connected nodes with the same color
      * as the start node id ( start color )
+     *
      * @param nodes
-     * @param cv denotes the startNodeId and the color
+     * @param cv    denotes the startNodeId and the color
      * @return set with all nodes reachable backwards with the same color as the startNode (is an SCC)
      */
     private IntSet pred(final IntSet nodes, AtomicIntegerArray colors, final int cv) {
@@ -178,4 +184,8 @@ public class MultistepSCC {
     }
 
 
+    @Override
+    public MultistepSCC me() {
+        return this;
+    }
 }
