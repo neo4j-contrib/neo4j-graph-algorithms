@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  */
 public abstract class GraphFactory {
 
-    private static final String TASK = "LOADING";
+    public static final String TASK_LOADING = "LOADING";
 
     private ThreadToStatementContextBridge contextBridge;
 
@@ -35,9 +35,8 @@ public abstract class GraphFactory {
                 .resolveDependency(ThreadToStatementContextBridge.class);
     }
 
-    public GraphFactory withLog(Log log) {
-        this.progressLogger = new ProgressLoggerAdapter(log, TASK);
-        return this;
+    public void setLog(Log log) {
+        this.progressLogger = new ProgressLoggerAdapter(log, TASK_LOADING);
     }
 
     public abstract Graph build();

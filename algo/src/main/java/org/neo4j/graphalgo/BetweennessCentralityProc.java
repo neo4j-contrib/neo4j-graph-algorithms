@@ -37,11 +37,11 @@ public class BetweennessCentralityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
                 .withDirection(Direction.OUTGOING)
-                .withLog(log)
                 .load(configuration.getGraphImpl());
 
         return new BetweennessCentralitySuccessorBrandes(graph,

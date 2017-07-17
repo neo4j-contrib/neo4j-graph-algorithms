@@ -11,7 +11,7 @@ public interface ProgressLogger {
 
     void logProgress(double percentDone);
 
-    default void logProgress(int numerator, int denominator) {
-        logProgress((double) numerator / denominator);
+    default void logProgress(double numerator, double denominator) {
+        logProgress(numerator / denominator);
     }
 }
