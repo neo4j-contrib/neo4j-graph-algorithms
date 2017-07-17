@@ -18,7 +18,7 @@ public class ProgressLoggerAdapter implements ProgressLogger {
 
     private final Log log;
 
-    private int logInterval = 1; // 10s log interval by default
+    private int logInterval = 10_000; // 10s log interval by default
 
     private AtomicLong lastLog = new AtomicLong(0L);
 

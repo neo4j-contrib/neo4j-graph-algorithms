@@ -28,11 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * The test creates a grid of nodes and computes a reference array
- * of shortest paths using one thread. It then compares the reference
- * against the result of several parallel computations to provoke
- * concurrency errors if any.
- *
  * @author mknblch
  */
 public class GraphLoadingTest {
@@ -63,9 +58,6 @@ public class GraphLoadingTest {
                         rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                     });
         };
-
-
-
     }
 
     @AfterClass
