@@ -29,6 +29,42 @@ include::algo-procedures-api.adoc[leveloffset=2]
 
 include::implementers.adoc[leveloffset=2]
 
+:implementation:
+
+=== PageRank
+
+include::pagerank.adoc[leveloffset=2,tags=implementation]
+
+=== Betweenness Centrality
+
+include::betweenness-centrality.adoc[leveloffset=2,tags=implementation]
+
+=== Closeness Centrality
+
+include::closeness-centrality.adoc[leveloffset=2,tags=implementation]
+
+=== Minimum Weight Spanning Tree
+
+include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
+
+=== Single Shortest Path
+
+include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
+
+=== Label Propagation
+
+include::label-propagation.adoc[leveloffset=2,tags=implementation]
+
+// include::louvain.adoc[leveloffset=2,tags=implementation]
+
+=== Weakly Connected Components
+
+include::connected-components.adoc[leveloffset=2,tags=implementation]
+
+=== Strongly Connected Components
+
+include::strongly-connected-components.adoc[leveloffset=2,tags=implementation]
+
 ++++
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>

@@ -150,8 +150,6 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 | loadMillis | int | milliseconds for loading data
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
-
-
 |===
 
 
@@ -184,6 +182,9 @@ YIELD nodeId, setId - yields a setId to each node id
 * http://math.hws.edu/eck/cs327_s04/chapter9.pdf
 
 * https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
+
+ifdef::implementation[]
+// tag::implementation[]
 
 == Implementation Details
 
@@ -233,12 +234,12 @@ One approach to parallelize _UnionFind_ might be _relationship partitioning_ whe
 - writes a cluster-id to each node representing the a connected component where each node
 is reachable from any other node
 
-==== algo.unionFind
+=== algo.unionFind
 
 - if a threshold configuration parameter is supplied only relationships with a property value higher then the threshold
 are merged
 
-==== algo.unionFind.exp1
+=== algo.unionFind.exp1
 
 - parallel UnionFind using ExecutorService only.
 - Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
@@ -247,11 +248,14 @@ which are then merged pairwise.
 more elements on the queue the algorithm takes two, merges them and adds its result to the queue until only
 1 element remains.
 
-==== algo.unionFind.exp2
+=== algo.unionFind.exp2
 
 -  Like in *exp1* the resulting DSS of each node-partition is merged by the ForkJoin pool while
 the calculation of the DSS is done by the ExecutorService.
 
-==== algo.unionFind.exp3
+=== algo.unionFind.exp3
 
 - calculation and merge using forkJoinPool
+
+// end::implementation[]
+endif::implementation[]

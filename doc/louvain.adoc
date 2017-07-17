@@ -18,6 +18,8 @@ _Louvain_ is an algorithm for detecting graph partitions in networks that relies
 
 == References
 
+ifdef::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -38,3 +40,5 @@ _Louvain_ is an algorithm for detecting graph partitions in networks that relies
 == Details
 
 *not yet implemented*
+
+endif::implementation[]

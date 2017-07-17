@@ -107,6 +107,9 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 
 == References
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -116,19 +119,18 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 
 ## Progress
 
-- [ ] copy implementation from graphtest-project
-- [ ] implement procedure
-- [ ] tests
-- [ ] edge case tests
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
-- [ ] documentation
+- [x] implement procedure
+- [x] tests
+- [x] edge case tests
+- [x] simple benchmark 
+- [x] benchmark on bigger graphs
+- [x] parallelization
+- [x] evaluation
+- [x] documentation
 
 == Details
 
-==== algo.scc.tarjan
+=== algo.scc.tarjan
 
 - original *recursive* tarjan implementation
 - result is a cluster-id at all nodes
@@ -137,22 +139,26 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
  within the graph. Also calculates minimum and maximum setSize as well
  as the count of distinct sets.
 
-==== algo.scc.tunedTarjan
+=== algo.scc.tunedTarjan
 
 - also a recursive tarjan implementation
 - result is a cluster-id at all nodes
 - https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
 
-==== algo.scc.iterative
+=== algo.scc.iterative
 
 - *iterative* adaption of tarjan algorithm
 - result is a cluster-id at all nodes
 - http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
 
-==== algo.scc.multistep
+=== algo.scc.multistep
 
 - parallel scc algorithm
 - composition of several scc algorithms (FWBW, coloring, tarjan)
 - uses FWBW + coloring to find big scc's
 - starts simple tarjan once the cutoff threshold is reached
 - http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf
+
+
+// end::implementation[]
+endif::implementation[]

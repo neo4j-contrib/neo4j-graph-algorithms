@@ -20,8 +20,6 @@ PageRank or PR(A) can be calculated using a simple iterative algorithm, and corr
 
 == When to use it / use-cases
 
-
-
 == Algorithm explanation on simple sample graph
 
 image::{img}/pagerank.png[]
@@ -167,6 +165,9 @@ YIELD node, score - calculates page rank and streams results
 
 * http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/78
@@ -175,17 +176,17 @@ YIELD node, score - calculates page rank and streams results
 
 _PageRank_ is Googles popular search algorithm.
 
-More: [https://en.wikipedia.org/wiki/PageRank](url)
+More: https://en.wikipedia.org/wiki/PageRank
 
 ## Progress
 
 - [x] single threaded implementation
 - [x] tests
 - [x] simple benchmark
-- [ ] implement procedure
+- [x] implement procedure
 - [x] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
+- [x] parallelization
+- [x] evaluation
 
 ## Requirements
 
@@ -260,3 +261,6 @@ in order to batch partitions and keep the number of threads in use predictable/c
 
 [1]: An Efficient Partition-Based Parallel PageRank Algorithm
 [2]: <a href="https://www.cs.purdue.edu/homes/dgleich/
+
+// end::implementation[]
+endif::implementation[]
