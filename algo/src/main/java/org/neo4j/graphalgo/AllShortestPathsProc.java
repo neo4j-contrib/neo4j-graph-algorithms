@@ -24,8 +24,8 @@ public class AllShortestPathsProc {
     @Context
     public Log log;
 
-    @Procedure("algo.allShortestPaths.simple.stream")
-    @Description("CALL algo.allShortestPaths.simple.stream(propertyName:String" +
+    @Procedure("algo.allShortestPaths.stream")
+    @Description("CALL algo.allShortestPaths.stream(propertyName:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
     public Stream<AllShortestPaths.Result> allShortestPathsStream(
@@ -50,9 +50,8 @@ public class AllShortestPathsProc {
                 .resultStream();
     }
 
-    @Procedure("algo.allShortestPaths.stream")
-    @Description("CALL algo.allShortestPaths.stream(propertyName:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
+    @Procedure("algo.allShortestPaths.msbfs.stream")
+    @Description("CALL algo.allShortestPaths.msbfs.stream({nodeQuery:'labelName', relationshipQuery:'relationshipName'}) " +
             "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
     public Stream<MSBFSAllShortestPaths.Result> msbfsAllShortestPathsStream(
             @Name("propertyName") String propertyName,

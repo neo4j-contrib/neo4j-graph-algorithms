@@ -17,21 +17,11 @@ import java.util.stream.StreamSupport;
 /**
  * AllShortestPaths:
  * <p>
- * multi-source parallel dijkstra algorithm for computing the shortest path between
- * each pair of nodes.
- * <p>
- * Since all nodeId's have already been ordered by the idMapping we can use an integer
- * instead of a queue which just count's up for each startNodeId as long as it is
- * < nodeCount. Each thread tries to take one int from the counter at one time and
- * starts its computation on it.
- * <p>
- * The {@link MSBFSAllShortestPaths} value determines the count of workers
- * that should be spawned.
+ * multi-source parallel shortest path between each pair of nodes.
  * <p>
  * Due to the high memory footprint the result set would have we emit each result into
  * a blocking queue. The result stream takes elements from the queue while the workers
- * add elements to it. The result stream is limited by N^2. If the stream gets closed
- * prematurely the workers get closed too.
+ * add elements to it.
  */
 public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
