@@ -1,10 +1,11 @@
 package org.neo4j.graphalgo.bench;
 
-import algo.Pools;
+import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphdb.Direction;
@@ -186,6 +187,15 @@ public class ParallelUnionFindBenchmark {
                 .compute()
                 .getStruct();
     }
+
+    @Benchmark
+    public Object multiSourceColoring() {
+        return new MSColoring(graph, Pools.DEFAULT)
+                .compute()
+                .getColors();
+    }
+
+
 
     @Benchmark
     public Object sequentialUnionFind() {

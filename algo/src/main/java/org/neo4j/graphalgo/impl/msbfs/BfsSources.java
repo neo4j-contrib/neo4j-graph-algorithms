@@ -5,4 +5,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterator;
 public interface BfsSources extends PrimitiveIntIterator {
 
     int size();
+
+    void reset();
 }
