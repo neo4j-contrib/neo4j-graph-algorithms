@@ -57,6 +57,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
@@ -102,6 +103,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
@@ -147,6 +149,7 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
@@ -175,12 +178,13 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withDirection(Direction.OUTGOING)
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withLog(log)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
         loadTimer.stop();
 
         SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
@@ -220,12 +224,13 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withDirection(Direction.OUTGOING)
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withLog(log)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withDirection(Direction.OUTGOING)
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
 
         return new SCCIterativeTarjan(graph)
                 .withLog(log)
@@ -249,11 +254,12 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withLog(log)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
         loadTimer.stop();
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
@@ -295,13 +301,13 @@ public class StronglyConnectedComponentsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withLog(log)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
@@ -326,11 +332,12 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
-                    .withoutRelationshipWeights()
-                    .withExecutorService(Pools.DEFAULT)
-                    .load(configuration.getGraphImpl());
+                .withLog(log)
+                .withOptionalLabel(label)
+                .withOptionalRelationshipType(relationship)
+                .withoutRelationshipWeights()
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
 
         return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getConcurrency(1))

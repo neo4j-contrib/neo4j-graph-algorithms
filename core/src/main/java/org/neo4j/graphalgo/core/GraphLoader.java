@@ -8,6 +8,8 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
+import org.neo4j.logging.NullLog;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -47,6 +49,7 @@ public class GraphLoader {
     private double nodePropDefault = 0.0;
     private int batchSize;
     private boolean accumulateWeights;
+    private Log log = NullLog.getInstance();
 
     /**
      * Creates a new serial GraphLoader.
@@ -54,6 +57,11 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api) {
         this.api = Objects.requireNonNull(api);
         this.executorService = null;
+    }
+
+    public GraphLoader withLog(Log log) {
+        this.log = log;
+        return this;
     }
 
     /**
@@ -381,7 +389,8 @@ public class GraphLoader {
                 nodePropDefault,
                 executorService,
                 batchSize,
-                accumulateWeights);
+                accumulateWeights,
+                log);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);

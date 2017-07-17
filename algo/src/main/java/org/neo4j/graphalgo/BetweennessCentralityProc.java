@@ -41,6 +41,7 @@ public class BetweennessCentralityProc {
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
                 .withDirection(Direction.OUTGOING)
+                .withLog(log)
                 .load(configuration.getGraphImpl());
 
         return new BetweennessCentralitySuccessorBrandes(graph,
@@ -97,6 +98,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
@@ -164,6 +166,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
@@ -209,6 +212,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()

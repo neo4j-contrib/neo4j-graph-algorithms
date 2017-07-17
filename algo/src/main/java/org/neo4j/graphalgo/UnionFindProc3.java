@@ -95,6 +95,7 @@ public class UnionFindProc3 {
 
     private Graph load(ProcedureConfiguration config) {
         return new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(

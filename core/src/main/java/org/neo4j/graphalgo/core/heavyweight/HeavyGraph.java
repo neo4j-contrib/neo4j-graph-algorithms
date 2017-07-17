@@ -12,13 +12,6 @@ import java.util.function.IntPredicate;
 /**
  * Heavy weighted graph built of an adjacency matrix.
  *
- * Pro:
- *  - ~3 times faster due to little overhead in index lookups
- *  - connections can be added in arbitrary order
- *
- * Cons:
- *  - has a higher memory consumption // TODO evaluate
- *
  * @author mknblch
  */
 public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, NodeProperties {

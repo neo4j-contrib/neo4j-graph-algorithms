@@ -103,6 +103,7 @@ public final class LabelPropagationProc {
 
         try (ProgressTimer timer = stats.timeLoad()) {
             return (HeavyGraph) new GraphLoader(dbAPI)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationshipType)
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)

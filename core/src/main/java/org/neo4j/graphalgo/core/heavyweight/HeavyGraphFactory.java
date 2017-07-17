@@ -275,6 +275,7 @@ public class HeavyGraphFactory extends GraphFactory {
                                 relationId);
                     }
                 }
+                progressLogger.logProgress(nodeId, nodeCount - 1);
             }
             this.nodeCount = nodeCount;
         }
