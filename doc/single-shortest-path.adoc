@@ -56,6 +56,9 @@ YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loa
 
 * http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -68,7 +71,7 @@ A _Single Source Shortest Path_ algorithms calculates a path between a pair of n
 - [x] single threaded implementation
 - [x] tests
 - [x] simple benchmark 
-- [ ] implement procedure
+- [x] implement procedure
 - [ ] benchmark on bigger graphs
 - [ ] parallelization
 - [ ] evaluation
@@ -100,7 +103,7 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 == Details
 
 
-==== algo.shortestPath
+=== algo.shortestPath
 
 - Dijkstra single source shortest path algorithm
 - The algorithm computes a shortest path on weighted graphs
@@ -110,7 +113,7 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 - if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
  terms of count of nodes in the path.
 
-==== algo.shortestPath.deltaStepping
+=== algo.shortestPath.deltaStepping
 
 TODO naming!?
 - parallel non-negative single source shortest path algorithm for weighted graphs
@@ -119,7 +122,7 @@ TODO naming!?
 - if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
  the number of nodes to reach the target
 
-==== algo.allShortestPaths.stream
+=== algo.allShortestPaths.stream
 
 - returns a stream of source-target node to distance tuples for each pair of nodes
 - Since all nodeId's have already been ordered by the idMapping we can use an integer
@@ -132,3 +135,6 @@ TODO naming!?
  add elements to it.
 - The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
 - writeback not supported!
+
+// end::implementation[]
+endif::implementation[]

@@ -4,7 +4,7 @@ image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.1[
 
 // tag::readme[]
 
-This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1.
+This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1 and 3.2.
 
 ifndef::env-docs[]
 You can find the documentation (WIP) here http://neo4j-contrib.github.io/neo4j-graph-algorithms
@@ -14,33 +14,44 @@ Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algori
 
 The goal is to provide parallel versions of common graph algorithms for Neo4j exposed as Cypher user defined procedures:
 
+Centralities:
+
 * Page Rank
 * Betweenness Centrality
 * Closeness Centrality
-* Clustering: Louvain
-* Clustering: Label Propagation
-* Minimum Weight Spanning Tree
-* All Pairs- and Single Source - Shortest Path
+
+Graph Partitioning:
+
+// * Louvain
+* Label Propagation
 * (Weakly) Connected Components
 * Strongly Connected Components
 
-These procedures work on a subgraph optionally filtered by label and relationship-type. Future versions will also provide filtering and projection using Cypher queries.
+Path Finding:
 
-We'd love your feedback, so please try out these algorithms and let us know how well they work for your use-case. Also please note things that you miss from installation instructions, readme, etc. 
+* Minimum Weight Spanning Tree
+* All Pairs- and Single Source - Shortest Path
+
+These procedures work on a subgraphm optionally filtered by label and relationship-type. 
+Future versions will also provide filtering and projection using Cypher queries.
+
+*We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case. 
+Also please note things that you miss from installation instructions, readme, etc. 
 
 Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
 
 == Installation
 
-Just copy the `graph-algorithms-algo-*.jar` from the https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[release] into your `$NEO4J_HOME/plugins` directory and restart Neo4j.
+Just copy the `graph-algorithms-algo-*.jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] into your `$NEO4J_HOME/plugins` directory and restart Neo4j.
 
 Then running `call dbms.procedures();` should also list the algorithm procedures.
 
+[source,cypher]
 ----
-call dbms.procedures() yield name, description 
-where name starts with "algo." and not name starts with "algo.algo."
-return name, description
-order by name
+CALL dbms.procedures() YIELD name, description, signature
+WHERE name STARTS WITH "algo."
+RETURN name, description, signature
+ORDER BY name
 ----
 
 [WARNING]
@@ -57,7 +68,7 @@ dbms.security.procedures.unrestricted=algo.*
 These algorithms are exposed as Neo4j procedures.
 You can call them directly from Cypher in your Neo4j Browser, from cypher-shell or your client code.
 
-For most algorithms there are two procedures, one that writes results back to the graph as node-properties and one (named `algo.<name>.stream`) that returns a stream of data, e.g. node-ids and computed values.
+For most algorithms there are two procedures, one that writes results back to the graph as node-properties and another (named `algo.<name>.stream`) that returns a stream of data, e.g. node-ids and computed values.
 
 The general call syntax is:
 
@@ -70,10 +81,10 @@ For example for page rank on dbpedia:
 
 [source,cypher]
 ----
-CALL algo.pageRank('Page','LINK',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
+CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
 // YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 
-CALL algo.pageRank.stream('Page','LINK',{iterations:5, dampingFactor:0.85})
+CALL algo.pageRank.stream('Page','Link',{iterations:5, dampingFactor:0.85})
 YIELD node, score
 RETURN node, score
 ORDER BY score DESC LIMIT 10;
@@ -81,17 +92,16 @@ ORDER BY score DESC LIMIT 10;
 
 === Cypher Loading
 
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on,
-you can use Cypher statements to load or project subsets of your graph.
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
 
-You can also return the value or weight property (according to your config) in addition to the id's from these statements.
+You can also return a property value or weight (according to your config) in addition to the id's from these statements.
 
 [source,cypher]
 ----
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p:Page)-[:LINK]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
 {graph:'cypher', iterations:5, write: true});
 ----
 
@@ -102,7 +112,7 @@ endif::env-docs[]
 
 == Building
 
-Currently aiming at Neo4j 3.1
+Currently aiming at Neo4j 3.1 and 3.2 (in the 3.2 branch)
 
 ----
 git clone https://github.com/neo4j-contrib/neo4j-graph-algorithms

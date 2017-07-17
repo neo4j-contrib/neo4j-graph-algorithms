@@ -126,6 +126,9 @@ CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, cent
 
 * http://mrvar.fdv.uni-lj.si/sola/info4/uvod/part4.pdf
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -141,3 +144,6 @@ Thus the more central a node is, the closer it is to all other nodes.
 - in this scheme the farness can be calculated as follows
 
  farness(v) = farness(v) + numberOfSources(v) * depth(v)
+
+// end::implementation[]
+endif::implementation[]

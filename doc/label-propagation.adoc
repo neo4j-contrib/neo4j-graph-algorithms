@@ -70,6 +70,9 @@ partitionProperty - simple label propagation kernel
 |===
 == References
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -84,12 +87,15 @@ _Label Propagation_ is a graph partitioning algorithm already implemented in cur
 - [x] tests
 - [ ] edge case tests
 - [x] implement procedure
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
-- [ ] documentation
+- [x] simple benchmark 
+- [x] benchmark on bigger graphs
+- [x] parallelization
+- [x] evaluation
+- [x] documentation
 
 ## TODO
 
 - adapt existing procedure to algorithm api
+
+// tag::implementation[]
+endif::implementation[]

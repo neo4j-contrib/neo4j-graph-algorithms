@@ -158,6 +158,9 @@ CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, ce
 
 * http://iima.org/wp/wp-content/uploads/2017/04/Curriculum-Structure-and-Assessment-Placement_Lightfoot.pdf
 
+ifdef::implementation[]
+// tag::implementation[]
+
 == Implementation Details
 
 :leveloffset: +1
@@ -167,23 +170,20 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 
 ## Progress
 
-- [ ] adapt apoc-procedure to algorithm-api
+- [x] adapt apoc-procedure to algorithm-api
 - [x] implement procedure
 - [x] tests
-- [ ] edge case tests
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
-- [ ] documentation
+- [x] edge case tests
+- [x] simple benchmark 
+- [x] benchmark on bigger graphs
+- [x] parallelization
+- [x] evaluation
+- [x] documentation
 
-## TODO
-
-- adapt apoc-procedure to algorithm-api
 
 == Details
 
-==== algo.betweenness
+=== algo.betweenness
 
 - implementation of brandes-bc algorithm and nodePartitioning extension
 - http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf
@@ -191,9 +191,12 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 - ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
  calculates the BC for one node at a time
 
-==== algo.betweenness.exp1
+=== algo.betweenness.exp1
 
 - brandes-like algorithm which uses successor sets instead of predecessor sets
 - The algorithm is based on Brandes definition but with some changes
  regarding the dependency-accumulation step.
 - http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
+
+// end::implementation[]
+endif::implementation[]

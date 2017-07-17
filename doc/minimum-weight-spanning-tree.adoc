@@ -79,7 +79,10 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 |===
 == References
 
-https://en.wikipedia.org/wiki/Minimum_spanning_tree
+* https://en.wikipedia.org/wiki/Minimum_spanning_tree
+
+ifdef::implementation[]
+// tag::implementation[]
 
 == Implementation Details
 
@@ -93,9 +96,9 @@ A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of
 - [x] single threaded implementation
 - [x] tests
 - [x] simple benchmark 
-- [ ] implement procedure
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
+- [x] implement procedure
+- [x] benchmark on bigger graphs
+- [?] parallelization
 - [ ] evaluation
 
 ## Requirements
@@ -119,3 +122,6 @@ Implement benchmark on big graph
 ### evaluation
 
 - Performance tests on different dataset sizes / level of concurrency
+
+// end::implementation[]
+endif::implementation[]
