@@ -181,36 +181,4 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             this.centrality = centrality;
         }
     }
-
-    public static class BCExporter extends Exporter<BetweennessCentrality> {
-
-        private int targetPropertyId = -1;
-
-        public BCExporter(GraphDatabaseAPI api) {
-            super(api);
-        }
-
-        public BCExporter withTargetProperty(String targetProperty) {
-            this.targetPropertyId = getOrCreatePropertyId(targetProperty);
-            return this;
-        }
-
-        @Override
-        public void write(BetweennessCentrality bc) {
-            writeInTransaction(writeOp -> {
-                bc.forEach(((originalNodeId, value) -> {
-                    try {
-                        writeOp.nodeSetProperty(originalNodeId, Property.doubleProperty(targetPropertyId, value));
-                    } catch (EntityNotFoundException
-                            | ConstraintValidationKernelException
-                            | InvalidTransactionTypeKernelException
-                            | AutoIndexingKernelException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return true;
-                }));
-            });
-        }
-    }
-
 }

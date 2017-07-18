@@ -1,6 +1,7 @@
-package org.neo4j.graphalgo.impl.exporter;
+package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.PExporter;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -9,25 +10,24 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  * @author mknblch
  */
-public class AtomicIntArrayExporter extends PExporter<AtomicIntegerArray> {
+public class AtomicDoubleArrayExporter extends PExporter<AtomicDoubleArray> {
 
-    public AtomicIntArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
+    public AtomicDoubleArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
         super(db, idMapping, log, writeProperty);
     }
 
-    public AtomicIntArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
+    public AtomicDoubleArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
         super(db, idMapping, log, writeProperty, executorService);
     }
 
     @Override
-    protected void doWrite(DataWriteOperations writeOperations, AtomicIntegerArray data, int offset) throws KernelException {
+    protected void doWrite(DataWriteOperations writeOperations, AtomicDoubleArray data, int offset) throws KernelException {
         writeOperations.nodeSetProperty(idMapping.toOriginalNodeId(offset),
-                DefinedProperty.intProperty(writePropertyId, data.get(offset)));
+                DefinedProperty.doubleProperty(writePropertyId, data.get(offset)));
     }
 }
 

@@ -6,7 +6,7 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.UnionFindExporter;
-import org.neo4j.graphalgo.impl.exporter.DisjointSetStructExporter;
+import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;

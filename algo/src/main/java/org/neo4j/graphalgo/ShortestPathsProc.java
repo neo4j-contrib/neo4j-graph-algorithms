@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPaths;
-import org.neo4j.graphalgo.impl.exporter.IntDoubleMapExporter;
+import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;

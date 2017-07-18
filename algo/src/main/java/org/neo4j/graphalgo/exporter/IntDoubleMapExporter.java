@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl.exporter;
+package org.neo4j.graphalgo.exporter;
 
 import com.carrotsearch.hppc.IntDoubleMap;
 import org.neo4j.graphalgo.api.IdMapping;

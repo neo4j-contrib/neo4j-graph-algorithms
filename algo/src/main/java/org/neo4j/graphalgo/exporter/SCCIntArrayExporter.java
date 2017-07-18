@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl.exporter;
+package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.utils.PExporter;

@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.impl.exporter;
+package org.neo4j.graphalgo.exporter;
 
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.ObjectArrayList;
