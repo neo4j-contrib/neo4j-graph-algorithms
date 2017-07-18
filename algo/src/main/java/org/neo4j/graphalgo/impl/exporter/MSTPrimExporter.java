@@ -1,7 +1,8 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;

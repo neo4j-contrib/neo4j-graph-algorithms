@@ -128,7 +128,7 @@ public final class DisjointSetStruct {
      */
     public int findNoOpt(int p) {
         while (-1 != parent[p]) {
-            p = parent[parent[p]];
+            p = parent[p];
         }
         return p;
     }

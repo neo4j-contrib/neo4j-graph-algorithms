@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.impl.PageRankExporter;
+import org.neo4j.graphalgo.impl.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.PageRankScore;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -138,15 +139,10 @@ public final class PageRankProc {
         if (configuration.isWriteFlag(true)) {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
-            int batchSize = configuration.getBatchSize();
-            statsBuilder.timeWrite(() -> new PageRankExporter(
-                    batchSize,
-                    api,
-                    graph,
-                    graph,
-                    propertyName,
-                    Pools.DEFAULT)
-                    .write(scores));
+            try (ProgressTimer timer = statsBuilder.timeWrite()) {
+                new DoubleArrayExporter(api, graph, log, propertyName, Pools.DEFAULT)
+                        .write(scores);
+            }
             statsBuilder
                     .withWrite(true)
                     .withProperty(propertyName);

@@ -41,4 +41,23 @@ public class ProgressLoggerAdapter implements ProgressLogger {
     public void withLogInterval(int logInterval) {
         this.logInterval = logInterval;
     }
+
+    public static class SysoutLogger extends FormattedLog {
+
+        public SysoutLogger() {
+            this(
+                    Date::new,
+                    () -> new PrintWriter(System.out),
+                    TimeZone.getDefault(),
+                    new Object(),
+                    "System",
+                    Level.DEBUG,
+                    true
+            );
+        }
+
+        protected SysoutLogger(Supplier<Date> currentDateSupplier, Supplier<PrintWriter> writerSupplier, TimeZone timezone, Object maybeLock, String category, Level level, boolean autoFlush) {
+            super(currentDateSupplier, writerSupplier, timezone, maybeLock, category, level, autoFlush);
+        }
+    }
 }

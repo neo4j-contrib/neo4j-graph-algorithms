@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.DeltaSteppingShortestPathExporter;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
+import org.neo4j.graphalgo.impl.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -111,13 +112,9 @@ public class ShortestPathDeltaSteppingProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new DeltaSteppingShortestPathExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
-                        Pools.DEFAULT).write(algorithm.getShortestPaths());
+                new DoubleArrayExporter(api, graph, log,
+                        configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .write(algorithm.getShortestPaths());
             });
         }
 
