@@ -3,13 +3,8 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.TokenWriteOperations;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
@@ -17,25 +12,19 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author mknblch
  */
-public abstract class ParallelExporter<T> {
+public abstract class ParallelExporter<T> extends AbstractExporter<T> {
 
     public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors() * 2;
 
-    public static final int MIN_BATCH_SIZE = 10;
+    public static final int MIN_BATCH_SIZE = 10_000;
 
     public static final String TASK_EXPORT = "EXPORT";
 
-    private final GraphDatabaseAPI db;
-
     private final ExecutorService executorService;
-
-    private ThreadToStatementContextBridge ctxBridge;
 
     private int concurrency = DEFAULT_CONCURRENCY;
 
@@ -51,23 +40,19 @@ public abstract class ParallelExporter<T> {
 
 
     public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
-        this.db = Objects.requireNonNull(db);
+        super(Objects.requireNonNull(db));
         this.idMapping = Objects.requireNonNull(idMapping);
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.executorService = null;
-        this.ctxBridge = db.getDependencyResolver()
-                .resolveDependency(ThreadToStatementContextBridge.class);
         nodeCount = idMapping.nodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
 
     public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
-        this.db = Objects.requireNonNull(db);
+        super(Objects.requireNonNull(db));
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.idMapping = Objects.requireNonNull(idMapping);
         this.executorService = Objects.requireNonNull(executorService);
-        this.ctxBridge = db.getDependencyResolver()
-                .resolveDependency(ThreadToStatementContextBridge.class);
         nodeCount = idMapping.nodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
@@ -81,59 +66,10 @@ public abstract class ParallelExporter<T> {
         }
     }
 
-    protected int getOrCreatePropertyId(String propertyName) {
-        return tokenWriteInTx(tokenWriteOperations -> {
-            try {
-                return tokenWriteOperations
-                        .propertyKeyGetOrCreateForName(propertyName);
-            } catch (IllegalTokenNameException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    protected int getOrCreateRelationshipId(String relationshipName) {
-        return tokenWriteInTx(tokenWriteOperations -> {
-            try {
-                return tokenWriteOperations
-                        .relationshipTypeGetOrCreateForName(relationshipName);
-            } catch (IllegalTokenNameException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    protected void readInTransaction(Consumer<ReadOperations> consumer) {
-        try (Transaction tx = db.beginTx();
-             Statement statement = ctxBridge.get()) {
-            consumer.accept(statement.readOperations());
-            tx.success();
-        }
-    }
-
-    protected void writeInTransaction(Consumer<DataWriteOperations> consumer) {
-        try (Transaction tx = db.beginTx();
-             Statement statement = ctxBridge.get()) {
-            consumer.accept(statement.dataWriteOperations());
-            tx.success();
-        } catch (InvalidTransactionTypeKernelException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected <V> V tokenWriteInTx(Function<TokenWriteOperations, V> consumer) {
-        try (Transaction tx = db.beginTx();
-             Statement statement = ctxBridge.get()) {
-            V v = consumer.apply(statement.tokenWriteOperations());
-            tx.success();
-            return v;
-        }
-    }
-
     private void writeSequential(T data) {
         verify();
-        try (Transaction tx = db.beginTx();
-             Statement statement = ctxBridge.get()) {
+        try (Transaction tx = api.beginTx();
+             Statement statement = bridge.get()) {
             DataWriteOperations ops = statement.dataWriteOperations();
             for (int i = 0; i < nodeCount; i++) {
                 doWrite(ops, data, i);
@@ -154,12 +90,12 @@ public abstract class ParallelExporter<T> {
             final int end = Math.min(i + batchSize, nodeCount);
             // create exporter runnables
             runnables.add(() -> {
-                try (Transaction tx = db.beginTx();
-                     Statement statement = ctxBridge.get()) {
+                try (Transaction tx = api.beginTx();
+                     Statement statement = bridge.get()) {
                     DataWriteOperations ops = statement.dataWriteOperations();
                     for (int j = start; j < end; j++) {
                         doWrite(ops, data, j);
-                        progressLogger.logProgress(progress.addAndGet(1), nodeCount - 1);
+                        progressLogger.logProgress(progress.getAndIncrement(), nodeCount - 1);
                     }
                     tx.success();
                 } catch (KernelException e) {

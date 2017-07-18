@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
@@ -168,7 +168,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         }
     }
 
-    public static class SPExporter extends Exporter<IntArrayDeque> {
+    public static class SPExporter extends AbstractExporter<IntArrayDeque> {
 
         private final IdMapping idMapping;
         private final int propertyId;

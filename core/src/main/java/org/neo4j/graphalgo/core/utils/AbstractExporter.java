@@ -16,12 +16,13 @@ import java.util.function.Function;
 /**
  * @author mknblch
  */
-public abstract class Exporter<T> {
+public abstract class AbstractExporter<T> {
 
     protected final GraphDatabaseAPI api;
+
     protected final ThreadToStatementContextBridge bridge;
 
-    public Exporter(GraphDatabaseAPI api) {
+    public AbstractExporter(GraphDatabaseAPI api) {
         this.api = api;
         this.bridge = api
                 .getDependencyResolver()

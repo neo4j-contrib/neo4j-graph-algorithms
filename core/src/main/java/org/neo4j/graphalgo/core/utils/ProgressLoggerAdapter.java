@@ -18,11 +18,11 @@ public class ProgressLoggerAdapter implements ProgressLogger {
 
     private final Log log;
 
+    private final String task;
+
     private int logInterval = 10_000; // 10s log interval by default
 
     private AtomicLong lastLog = new AtomicLong(0L);
-
-    private final String task;
 
     public ProgressLoggerAdapter(Log log, String task) {
         this.log = log;
@@ -40,24 +40,5 @@ public class ProgressLoggerAdapter implements ProgressLogger {
 
     public void withLogInterval(int logInterval) {
         this.logInterval = logInterval;
-    }
-
-    public static class SysoutLogger extends FormattedLog {
-
-        public SysoutLogger() {
-            this(
-                    Date::new,
-                    () -> new PrintWriter(System.out),
-                    TimeZone.getDefault(),
-                    new Object(),
-                    "System",
-                    Level.DEBUG,
-                    true
-            );
-        }
-
-        protected SysoutLogger(Supplier<Date> currentDateSupplier, Supplier<PrintWriter> writerSupplier, TimeZone timezone, Object maybeLock, String category, Level level, boolean autoFlush) {
-            super(currentDateSupplier, writerSupplier, timezone, maybeLock, category, level, autoFlush);
-        }
     }
 }

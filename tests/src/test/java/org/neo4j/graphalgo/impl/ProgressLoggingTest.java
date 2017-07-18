@@ -111,7 +111,6 @@ public class ProgressLoggingTest {
 
         System.out.println(buffer);
 
-
         final String output = buffer.toString();
 
         assertTrue(output.length() > 0);
