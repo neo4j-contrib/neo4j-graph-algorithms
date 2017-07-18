@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.logging.Log;
+import org.neo4j.logging.NullLog;
 
 import java.util.concurrent.ExecutorService;
 
@@ -34,6 +36,8 @@ public class GraphSetup {
     public final String nodePropertyName;
     // default property is used for node properties if property is not set.
     public final double nodeDefaultPropertyValue;
+
+    public final Log log;
 
     // the executor service for parallel execution. null means single threaded evaluation.
     @Deprecated
@@ -75,7 +79,9 @@ public class GraphSetup {
             String nodePropertyName,
             double nodeDefaultPropertyValue,
             ExecutorService executor,
-            int batchSize, boolean accumulateWeights) {
+            int batchSize,
+            boolean accumulateWeights,
+            Log log) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -91,6 +97,7 @@ public class GraphSetup {
         this.executor = executor;
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
+        this.log = log;
     }
 
     /**
@@ -110,6 +117,7 @@ public class GraphSetup {
         this.executor = null;
         this.batchSize = -1;
         this.accumulateWeights = false;
+        this.log = NullLog.getInstance();
     }
 
     /**
@@ -132,6 +140,7 @@ public class GraphSetup {
         this.executor = executor;
         this.batchSize = -1;
         this.accumulateWeights = false;
+        log = NullLog.getInstance();
     }
 
     public boolean loadConcurrent() {

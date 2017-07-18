@@ -85,6 +85,7 @@ public final class PageRankProc {
             PageRankScore.Stats.Builder statsBuilder) {
 
         GraphLoader graphLoader = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withDirection(Direction.OUTGOING)
