@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.core.utils.PExporter;
+import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 /**
  * @author mknblch
  */
-public class AtomicIntArrayExporter extends PExporter<AtomicIntegerArray> {
+public class AtomicIntArrayExporter extends ParallelExporter<AtomicIntegerArray> {
 
     public AtomicIntArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
         super(db, idMapping, log, writeProperty);

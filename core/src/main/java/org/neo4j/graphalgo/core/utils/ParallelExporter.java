@@ -19,18 +19,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * @author mknblch
  */
-public abstract class PExporter<T> {
+public abstract class ParallelExporter<T> {
 
     public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors() * 2;
 
     public static final int MIN_BATCH_SIZE = 10;
 
-    public static final String EXPORT_TASK = "EXPORT";
+    public static final String TASK_EXPORT = "EXPORT";
 
     private final GraphDatabaseAPI db;
 
@@ -51,10 +50,10 @@ public abstract class PExporter<T> {
     protected final int writePropertyId;
 
 
-    public PExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
+    public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
         this.db = Objects.requireNonNull(db);
         this.idMapping = Objects.requireNonNull(idMapping);
-        this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), EXPORT_TASK);
+        this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.executorService = null;
         this.ctxBridge = db.getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
@@ -62,9 +61,9 @@ public abstract class PExporter<T> {
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
 
-    public PExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
+    public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
         this.db = Objects.requireNonNull(db);
-        this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), EXPORT_TASK);
+        this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.idMapping = Objects.requireNonNull(idMapping);
         this.executorService = Objects.requireNonNull(executorService);
         this.ctxBridge = db.getDependencyResolver()
@@ -160,7 +159,7 @@ public abstract class PExporter<T> {
                     DataWriteOperations ops = statement.dataWriteOperations();
                     for (int j = start; j < end; j++) {
                         doWrite(ops, data, j);
-                        progressLogger.logProgress(progress.addAndGet(end - j), nodeCount - 1);
+                        progressLogger.logProgress(progress.addAndGet(1), nodeCount - 1);
                     }
                     tx.success();
                 } catch (KernelException e) {

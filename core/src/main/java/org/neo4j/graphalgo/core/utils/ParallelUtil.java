@@ -220,7 +220,6 @@ public final class ParallelUtil {
         }
     }
 
-
     public static void iterateParallel(ExecutorService executorService, int size, int concurrency, IntConsumer consumer) {
         final List<Future<?>> futures = new ArrayList<>();
         final int batchSize = size / concurrency;

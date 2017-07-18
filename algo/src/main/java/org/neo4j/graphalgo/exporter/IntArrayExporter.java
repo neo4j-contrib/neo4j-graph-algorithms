@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.core.utils.PExporter;
+import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author mknblch
  */
-public class IntArrayExporter extends PExporter<int[]> {
+public class IntArrayExporter extends ParallelExporter<int[]> {
 
     public IntArrayExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
         super(db, idMapping, log, writeProperty);
