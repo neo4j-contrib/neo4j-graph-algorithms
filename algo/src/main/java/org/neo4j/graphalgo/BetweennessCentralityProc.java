@@ -7,6 +7,8 @@ import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
+import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
+import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -123,14 +125,9 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new ParallelBetweennessCentralityExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.getWriteProperty(),
-                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
                         .write(bc.getCentrality());
+
             });
         }
 
@@ -187,13 +184,7 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new BetweennessCentralityExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.getWriteProperty(),
-                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
                         .write(bc.getCentrality());
             });
         }
@@ -236,15 +227,11 @@ public class BetweennessCentralityProc {
             }
         });
 
+        System.out.println("out");
+
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new ParallelBetweennessCentralityExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.getWriteProperty(),
-                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
                         .write(bc.getCentrality());
             });
         }

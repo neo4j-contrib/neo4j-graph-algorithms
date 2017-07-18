@@ -1,18 +1,13 @@
 package org.neo4j.graphalgo;
 
 import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.cursors.IntCursor;
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.LabelPropagation;
-import org.neo4j.graphalgo.impl.LabelPropagationExporter;
+import org.neo4j.graphalgo.exporter.LabelPropagationExporter;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -24,8 +19,6 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
@@ -142,13 +135,7 @@ public final class LabelPropagationProc {
             LabelPropagationStats.Builder stats) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
-            new LabelPropagationExporter(
-                    batchSize,
-                    dbAPI,
-                    graph,
-                    new BatchLabels(labels),
-                    partitionKey,
-                    Pools.DEFAULT)
+            new LabelPropagationExporter(dbAPI, graph, log, partitionKey, Pools.DEFAULT)
                     .write(labels);
         }
     }
@@ -183,57 +170,5 @@ public final class LabelPropagationProc {
             );
         }
         return direction;
-    }
-}
-
-
-final class BatchLabels implements BatchNodeIterable {
-    private IntDoubleMap data;
-
-    BatchLabels(IntDoubleMap data) {
-        this.data = data;
-    }
-
-    @Override
-    public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-        int numberOfBatches = ParallelUtil.threadSize(batchSize, data.size());
-        Iterator<IntCursor> keys = data.keys().iterator();
-        PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
-        Arrays.setAll(iterators, i -> new SegmentIterable(keys, batchSize));
-        return Arrays.asList(iterators);
-    }
-
-    private static final class SegmentIterable implements PrimitiveIntIterable, PrimitiveIntIterator {
-        private int[] keys;
-        private int current;
-        private int limit;
-
-        private SegmentIterable(
-                Iterator<IntCursor> data,
-                int limit) {
-            int[] keys = new int[limit];
-            int i;
-            for (i = 0; i < limit && data.hasNext(); i++) {
-                keys[i] = data.next().value;
-            }
-            this.limit = i;
-            this.keys = keys;
-        }
-
-        @Override
-        public PrimitiveIntIterator iterator() {
-            current = 0;
-            return this;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return current < limit;
-        }
-
-        @Override
-        public int next() {
-            return keys[current++];
-        }
     }
 }

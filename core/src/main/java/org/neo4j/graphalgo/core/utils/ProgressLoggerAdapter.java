@@ -18,11 +18,11 @@ public class ProgressLoggerAdapter implements ProgressLogger {
 
     private final Log log;
 
+    private final String task;
+
     private int logInterval = 10_000; // 10s log interval by default
 
     private AtomicLong lastLog = new AtomicLong(0L);
-
-    private final String task;
 
     public ProgressLoggerAdapter(Log log, String task) {
         this.log = log;

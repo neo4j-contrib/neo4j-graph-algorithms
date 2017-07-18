@@ -9,8 +9,10 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.exporter.IntArrayExporter;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.FormattedLog;
 import org.neo4j.logging.Level;
@@ -19,6 +21,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.function.Supplier;
@@ -30,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author mknblch
  */
-public class GraphLoadingTest {
+public class ProgressLoggingTest {
 
     private static final String PROPERTY = "property";
     private static final String LABEL = "Node";
@@ -58,6 +61,13 @@ public class GraphLoadingTest {
                         rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                     });
         };
+
+        graph = new GraphLoader(db)
+                .withExecutorService(Pools.DEFAULT)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATIONSHIP)
+                .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
+                .load(HeavyGraphFactory.class);
     }
 
     @AfterClass
@@ -66,7 +76,7 @@ public class GraphLoadingTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testLoad() throws Exception {
 
         final StringBuffer buffer = new StringBuffer();
 
@@ -87,6 +97,26 @@ public class GraphLoadingTest {
         assertTrue(output.length() > 0);
         assertTrue(output.contains(GraphFactory.TASK_LOADING));
     }
+
+    @Test
+    public void testWrite() throws Exception {
+
+        final StringBuffer buffer = new StringBuffer();
+
+        final int[] ints = new int[graph.nodeCount()];
+        Arrays.fill(ints, -1);
+
+        new IntArrayExporter(db, graph, new TestLogger(buffer), "test", Pools.DEFAULT)
+                .write(ints);
+
+        System.out.println(buffer);
+
+        final String output = buffer.toString();
+
+        assertTrue(output.length() > 0);
+        assertTrue(output.contains(ParallelExporter.TASK_EXPORT));
+    }
+
 
     public static class TestLogger extends FormattedLog {
 

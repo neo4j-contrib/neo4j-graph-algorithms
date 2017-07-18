@@ -3,15 +3,8 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.Exporter;
 import org.neo4j.graphalgo.core.utils.container.Path;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
-import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
-import org.neo4j.kernel.api.properties.Property;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -181,36 +174,4 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             this.centrality = centrality;
         }
     }
-
-    public static class BCExporter extends Exporter<BetweennessCentrality> {
-
-        private int targetPropertyId = -1;
-
-        public BCExporter(GraphDatabaseAPI api) {
-            super(api);
-        }
-
-        public BCExporter withTargetProperty(String targetProperty) {
-            this.targetPropertyId = getOrCreatePropertyId(targetProperty);
-            return this;
-        }
-
-        @Override
-        public void write(BetweennessCentrality bc) {
-            writeInTransaction(writeOp -> {
-                bc.forEach(((originalNodeId, value) -> {
-                    try {
-                        writeOp.nodeSetProperty(originalNodeId, Property.doubleProperty(targetPropertyId, value));
-                    } catch (EntityNotFoundException
-                            | ConstraintValidationKernelException
-                            | InvalidTransactionTypeKernelException
-                            | AutoIndexingKernelException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return true;
-                }));
-            });
-        }
-    }
-
 }

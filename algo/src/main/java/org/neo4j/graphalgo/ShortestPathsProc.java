@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.ShortestPaths;
-import org.neo4j.graphalgo.impl.ShortestPathsExporter;
+import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -93,13 +93,8 @@ public class ShortestPathsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new ShortestPathsExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
-                        Pools.DEFAULT).write(algorithm.getShortestPaths());
+                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                        .write(algorithm.getShortestPaths());
             });
         }
 

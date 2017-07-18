@@ -7,7 +7,7 @@ import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
 import org.neo4j.graphalgo.impl.MSTPrim;
-import org.neo4j.graphalgo.impl.MSTPrimExporter;
+import org.neo4j.graphalgo.exporter.MSTPrimExporter;
 import org.neo4j.graphalgo.results.MSTPrimResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;

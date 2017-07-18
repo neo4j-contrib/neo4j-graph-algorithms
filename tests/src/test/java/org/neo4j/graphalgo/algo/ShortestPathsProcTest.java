@@ -123,6 +123,8 @@ public final class ShortestPathsProcTest {
             return true;
         });
 
+        System.out.println();
+
         verify(consumer, times(11)).accept(anyDouble());
         verify(consumer, times(1)).accept(eq(8d));
     }
@@ -175,6 +177,8 @@ public final class ShortestPathsProcTest {
             mock.test(nodeId, distance);
             return true;
         });
+
+        System.out.println();
 
         verify(mock, times(11)).test(anyLong(), anyDouble());
         verify(mock, times(1)).test(Matchers.eq(endNode), Matchers.eq(0.0));

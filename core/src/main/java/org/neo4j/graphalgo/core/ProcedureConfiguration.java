@@ -94,7 +94,7 @@ public class ProcedureConfiguration {
      * @return property name
      */
     public String getWriteProperty() {
-        return getWriteProperty(null);
+        return getWriteProperty(ProcedureConstants.WRITE_PROPERTY_DEFAULT);
     }
 
     /**

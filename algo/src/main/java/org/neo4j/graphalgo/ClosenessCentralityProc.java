@@ -3,11 +3,10 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
-import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
+import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -83,13 +82,7 @@ public class ClosenessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new ClosenessCentralityExporter(
-                        configuration.getBatchSize(),
-                        api,
-                        graph,
-                        graph,
-                        configuration.getWriteProperty(),
-                        Pools.DEFAULT)
+                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
                         .write(centrality.getCentrality());
             });
         }

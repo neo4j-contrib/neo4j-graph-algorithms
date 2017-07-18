@@ -51,39 +51,6 @@ public final class ParallelUtil {
     }
 
     /**
-     * Executes write operations in parallel, based on the given batch size
-     * and executor.
-     */
-    public static void writeParallel(
-            int batchSize,
-            BatchNodeIterable idMapping,
-            GraphDatabaseAPI db,
-            ParallelGraphExporter parallelExporter,
-            ExecutorService executor) {
-
-        Collection<PrimitiveIntIterable> iterators =
-                idMapping.batchIterables(batchSize);
-
-        int threads = iterators.size();
-
-        if (!canRunInParallel(executor) || threads == 1) {
-            for (PrimitiveIntIterable iterator : iterators) {
-                writeSequential(db, parallelExporter, iterator);
-            }
-        } else {
-            List<Runnable> tasks = new ArrayList<>(threads);
-            for (PrimitiveIntIterable iterator : iterators) {
-                tasks.add(new BatchExportRunnable(
-                        db,
-                        parallelExporter,
-                        iterator
-                ));
-            }
-            run(tasks, executor);
-        }
-    }
-
-    /**
      * Executes read operations in parallel, based on the given batch size
      * and executor.
      */
@@ -253,18 +220,6 @@ public final class ParallelUtil {
         }
     }
 
-    private static void writeSequential(
-            GraphDatabaseAPI db,
-            ParallelGraphExporter parallelExporter,
-            PrimitiveIntIterable iterator) {
-        new BatchExportRunnable(
-                db,
-                parallelExporter,
-                iterator
-        ).run();
-    }
-
-
     public static void iterateParallel(ExecutorService executorService, int size, int concurrency, IntConsumer consumer) {
         final List<Future<?>> futures = new ArrayList<>();
         final int batchSize = size / concurrency;
@@ -280,42 +235,4 @@ public final class ParallelUtil {
         awaitTermination(futures);
     }
 
-    private static final class BatchExportRunnable implements Runnable {
-        private final GraphDatabaseAPI db;
-        private final ParallelGraphExporter parallelExporter;
-        private final PrimitiveIntIterable iterator;
-        private final ThreadToStatementContextBridge ctx;
-        public volatile boolean RAN = false;
-
-        private BatchExportRunnable(
-                final GraphDatabaseAPI db,
-                final ParallelGraphExporter parallelExporter,
-                final PrimitiveIntIterable iterator) {
-            this.db = db;
-            this.parallelExporter = parallelExporter;
-            this.iterator = iterator;
-            this.ctx = db
-                    .getDependencyResolver()
-                    .resolveDependency(ThreadToStatementContextBridge.class);
-        }
-
-        @Override
-        public void run() {
-            GraphExporter exporter = parallelExporter.newExporter();
-            try (Transaction tx = db.beginTx();
-                 Statement statement = ctx.get()) {
-                DataWriteOperations ops = statement.dataWriteOperations();
-                PrimitiveIntIterator iterator = this.iterator.iterator();
-                while (iterator.hasNext()) {
-                    exporter.write(ops, iterator.next());
-                }
-                tx.success();
-            } catch (KernelException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            } finally {
-                RAN = true;
-            }
-        }
-    }
 }

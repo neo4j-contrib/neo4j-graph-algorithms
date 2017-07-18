@@ -1,7 +1,8 @@
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.core.utils.AbstractExporter;
+import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -9,7 +10,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 /**
  * @author mknblch
  */
-public class MSTPrimExporter extends Exporter<MSTPrim.MinimumSpanningTree> {
+public class MSTPrimExporter extends AbstractExporter<MSTPrim.MinimumSpanningTree> {
 
     private IdMapping idMapping;
     private int relationshipId = -1;

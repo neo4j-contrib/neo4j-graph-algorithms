@@ -5,7 +5,7 @@ import com.carrotsearch.hppc.IntIntScatterMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.core.utils.Exporter;
+import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -128,7 +128,7 @@ public final class DisjointSetStruct {
      */
     public int findNoOpt(int p) {
         while (-1 != parent[p]) {
-            p = parent[parent[p]];
+            p = parent[p];
         }
         return p;
     }
@@ -322,7 +322,7 @@ public final class DisjointSetStruct {
         }
     }
 
-    public static class DSSExporter extends Exporter<DisjointSetStruct> {
+    public static class DSSExporter extends AbstractExporter<DisjointSetStruct> {
 
         private final IdMapping idMapping;
         private int propertyId;
