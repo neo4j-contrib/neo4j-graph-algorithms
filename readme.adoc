@@ -77,7 +77,7 @@ Countries are involved in trading relationships.
 The World Wide Web is a virtual network of information.
 
 
-* _Note that Neo4j cannot save relationships as undirected, but we can treat them as though they are undirected._
+* _Note that Neo4j can only save directed relationships, but we can treat them as though they are undirected when we are doing the analysis_
 
 
 == Usage
