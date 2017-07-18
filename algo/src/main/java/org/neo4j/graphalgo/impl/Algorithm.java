@@ -9,6 +9,8 @@ import org.neo4j.logging.*;
  */
 public abstract class Algorithm<ME extends Algorithm<ME>> {
 
+    private static final String TASK = "COMPUTE";
+
     private Log log = NullLog.getInstance();
 
     private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
@@ -17,7 +19,7 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
 
     public ME withLog(Log log) {
         this.log = log;
-        this.progressLogger = new ProgressLoggerAdapter(log);
+        this.progressLogger = new ProgressLoggerAdapter(log, TASK);
         return me();
     }
 

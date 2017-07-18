@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import javafx.beans.WeakInvalidationListener;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -30,7 +31,21 @@ import java.util.function.Consumer;
  */
 public class HeavyGraphFactory extends GraphFactory {
 
-    private static final int BATCH_SIZE = 100_000;
+    private static final Cursor<RelationshipItem> NO_RELS = new Cursor<RelationshipItem>() {
+        @Override
+        public boolean next() {
+            return false;
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public RelationshipItem get() {
+            throw new UnsupportedOperationException(".get is not implemented.");
+        }
+    };
 
     private final ExecutorService threadPool;
     private int relWeightId;
@@ -38,12 +53,14 @@ public class HeavyGraphFactory extends GraphFactory {
     private int nodePropId;
     private int labelId;
     private int[] relationId;
+
     private int nodeCount;
 
     public HeavyGraphFactory(
             GraphDatabaseAPI api,
             GraphSetup setup) {
         super(api, setup);
+        setLog(setup.log);
         this.threadPool = setup.executor;
         withReadOps(readOp -> {
             labelId = setup.loadAnyLabel()
@@ -70,7 +87,7 @@ public class HeavyGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
-        return build(BATCH_SIZE);
+        return build(ParallelUtil.DEFAULT_BATCH_SIZE);
     }
 
     /* test-private */ Graph build(int batchSize) {
@@ -105,6 +122,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 (offset, nodeIds) -> new ImportTask(
                         batchSize,
                         offset,
+                        nodeCount,
                         idMap,
                         nodeIds,
                         relWeigths,
@@ -113,6 +131,8 @@ public class HeavyGraphFactory extends GraphFactory {
                         relationId
                 ),
                 threadPool);
+
+        progressLogger.logProgress(1.0);
 
         return new HeavyGraph(
                 idMap,
@@ -125,13 +145,13 @@ public class HeavyGraphFactory extends GraphFactory {
     private AdjacencyMatrix buildAdjacencyMatrix(Collection<ImportTask> tasks) {
         if (tasks.size() == 1) {
             ImportTask task = tasks.iterator().next();
-            if (task.matrix.capacity() == task.nodeCount) {
+            if (task.matrix.capacity() == task.currentNodeCount) {
                 return task.matrix;
             }
         }
         AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
         for (ImportTask task : tasks) {
-            matrix.addMatrix(task.matrix, task.nodeOffset, task.nodeCount);
+            matrix.addMatrix(task.matrix, task.nodeOffset, task.currentNodeCount);
         }
         return matrix;
     }
@@ -213,17 +233,20 @@ public class HeavyGraphFactory extends GraphFactory {
     private final class ImportTask implements Runnable, Consumer<ReadOperations> {
         private final AdjacencyMatrix matrix;
         private final int nodeOffset;
-        private int nodeCount;
+        private final int maxNodeId;
+        private int currentNodeCount;
         private final IdMap idMap;
         private final PrimitiveIntIterable nodes;
         private final WeightMapping relWeights;
         private final WeightMapping nodeWeights;
         private final WeightMapping nodeProps;
+
         private final int[] relationId;
 
         ImportTask(
                 int batchSize,
                 int nodeOffset,
+                int nodeCount,
                 IdMap idMap,
                 PrimitiveIntIterable nodes,
                 WeightMapping relWeights,
@@ -239,14 +262,14 @@ public class HeavyGraphFactory extends GraphFactory {
             this.nodeProps = nodeProps;
             this.relationId = relationId;
             this.matrix = new AdjacencyMatrix(nodeSize, setup.loadIncoming, setup.loadOutgoing);
-            this.nodeCount = 0;
+            this.currentNodeCount = 0;
+            this.maxNodeId = nodeCount - 1;
         }
 
         @Override
         public void run() {
             withReadOps(this);
         }
-
         @Override
         public void accept(final ReadOperations readOp) {
             int nodeOffset = this.nodeOffset;
@@ -275,25 +298,10 @@ public class HeavyGraphFactory extends GraphFactory {
                                 relationId);
                     }
                 }
+                progressLogger.logProgress(nodeCount + nodeOffset, maxNodeId);
             }
-            this.nodeCount = nodeCount;
+            this.currentNodeCount = nodeCount;
         }
+
     }
-
-    private static final Cursor<RelationshipItem> NO_RELS = new Cursor<RelationshipItem>() {
-        @Override
-        public boolean next() {
-            return false;
-        }
-
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public RelationshipItem get() {
-            throw new UnsupportedOperationException(".get is not implemented.");
-        }
-    };
 }

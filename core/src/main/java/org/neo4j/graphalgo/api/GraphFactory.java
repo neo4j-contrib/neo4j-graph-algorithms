@@ -1,10 +1,13 @@
 package org.neo4j.graphalgo.api;
 
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
 
 import java.util.function.Consumer;
 
@@ -15,10 +18,14 @@ import java.util.function.Consumer;
  */
 public abstract class GraphFactory {
 
+    public static final String TASK_LOADING = "LOADING";
+
     private ThreadToStatementContextBridge contextBridge;
 
     protected final GraphDatabaseAPI api;
     protected final GraphSetup setup;
+
+    protected ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
     public GraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         this.api = api;
@@ -26,6 +33,10 @@ public abstract class GraphFactory {
         this.contextBridge = api
                 .getDependencyResolver()
                 .resolveDependency(ThreadToStatementContextBridge.class);
+    }
+
+    public void setLog(Log log) {
+        this.progressLogger = new ProgressLoggerAdapter(log, TASK_LOADING);
     }
 
     public abstract Graph build();

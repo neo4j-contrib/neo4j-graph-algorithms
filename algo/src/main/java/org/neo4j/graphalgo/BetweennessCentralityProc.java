@@ -40,6 +40,7 @@ public class BetweennessCentralityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api)
+                .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
@@ -100,6 +101,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
@@ -189,6 +191,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
@@ -234,6 +237,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()

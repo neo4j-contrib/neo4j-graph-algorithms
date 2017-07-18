@@ -106,7 +106,32 @@ public final class AllShortestPathsProcTest {
     public String graphImpl;
 
     @Test
-    public void testResultStream() throws Exception {
+    public void testMSBFSASP() throws Exception {
+
+        final Consumer consumer = mock(Consumer.class);
+
+        final String cypher = "CALL algo.allShortestPaths.stream('', {graph:'"+graphImpl+"'}) " +
+                "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
+
+        api.execute(cypher).accept(row -> {
+            final long source = row.getNumber("sourceNodeId").longValue();
+            final long target = row.getNumber("targetNodeId").longValue();
+            final double distance = row.getNumber("distance").doubleValue();
+            System.out.println(source + " -> " + target + " : " + distance);
+            if (source == target) {
+                assertEquals(0.0, distance, 0.1);
+            }
+            consumer.test(source, target, distance);
+            return true;
+        });
+
+        // 4 steps from start to end max
+        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(4.0));
+
+    }
+
+    @Test
+    public void testWeightedASP() throws Exception {
 
         final Consumer consumer = mock(Consumer.class);
 
