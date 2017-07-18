@@ -54,23 +54,31 @@ CREATE (home)-[:LINKS]->(about)
 
 ----
 
-.Running algorithm and streaming results
+.Running algorithm and streaming results on a _directed_, _unweighted_ graph
 [source,cypher]
 ----
 
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) YIELD node, score
 
-CALL algo.pageRank.stream('MATCH (p:Page) RETURN id(p) as id', 'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target', {graph:'cypher', iterations:20, dampingFactor:0.85}) YIELD node, score
+
+.loading graph with cypher
+CALL algo.pageRank.stream('MATCH (p:Page) RETURN id(p) as id', 
+'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target', 
+{graph:'cypher', iterations:20, dampingFactor:0.85}) 
+YIELD node, score
 
 ----
 
-.Running algorithm and writing back results
+
+.Running algorithm and writing back results on a _directed_, _unweighted_ graph
 [source,cypher]
 ----
 CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85, 
 write: true,writeProperty:"pagerank"}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
 
+
+.loading graph with cypher
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
 'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
