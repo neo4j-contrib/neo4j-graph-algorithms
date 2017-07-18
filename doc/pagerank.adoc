@@ -54,14 +54,16 @@ CREATE (home)-[:LINKS]->(about)
 
 ----
 
-.Running algorithm and streaming results on a _directed_, _unweighted_ graph
+.Running algorithm on a _directed_, _unweighted_ graph and streaming results
 [source,cypher]
 ----
+Loading the subset of the graph with labels and relationship type
 
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) YIELD node, score
 
 
-.loading graph with cypher
+Loading the subset of the graph with cypher query ( can be used to create a virtual graph )
+
 CALL algo.pageRank.stream('MATCH (p:Page) RETURN id(p) as id', 
 'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target', 
 {graph:'cypher', iterations:20, dampingFactor:0.85}) 
@@ -70,15 +72,17 @@ YIELD node, score
 ----
 
 
-.Running algorithm and writing back results on a _directed_, _unweighted_ graph
+.Running algorithm on a _directed_, _unweighted_ graph and writing back results 
 [source,cypher]
 ----
+Loading the subset of the graph with labels and relationship type
+
 CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85, 
 write: true,writeProperty:"pagerank"}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
 
+Loading the subset of the graph with cypher query ( can be used to create a virtual graph )
 
-.loading graph with cypher
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
 'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
