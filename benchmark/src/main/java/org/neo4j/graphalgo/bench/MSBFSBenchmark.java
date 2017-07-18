@@ -1,10 +1,10 @@
 package org.neo4j.graphalgo.bench;
 
-import algo.Pools;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.neo4jview.DirectIdMapping;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;

@@ -1,11 +1,10 @@
 package org.neo4j.graphalgo.bench;
 
-import algo.Pools;
-import algo.algo.LabelPropagation;
 import org.neo4j.graphalgo.LabelPropagationProc;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -59,7 +58,6 @@ public class LabelPropagationBenchmarkLdbc {
 
         Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
         procedures.registerProcedure(LabelPropagationProc.class);
-        procedures.registerProcedure(LabelPropagation.class);
 
         graph = (HeavyGraph) new GraphLoader(db)
                 .withAnyLabel()
@@ -97,14 +95,14 @@ public class LabelPropagationBenchmarkLdbc {
         );
     }
 
-    @Benchmark
-    public Object _02_apoc() {
-        return runVoidQuery(
-                db,
-                "CALL algo.algo.community(" + iterations + ",[],'partition',null,'OUTGOING','weight'," + batchSize + ") "
-                + "YIELD "
-        );
-    }
+//    @Benchmark
+//    public Object _02_apoc() {
+//        return runVoidQuery(
+//                db,
+//                "CALL algo.algo.community(" + iterations + ",[],'partition',null,'OUTGOING','weight'," + batchSize + ") "
+//                + "YIELD "
+//        );
+//    }
 
     @Benchmark
     public Object _03_direct() {
