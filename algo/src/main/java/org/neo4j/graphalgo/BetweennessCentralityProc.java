@@ -4,11 +4,14 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.PExporter;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -129,6 +132,28 @@ public class BetweennessCentralityProc {
                         configuration.getWriteProperty(),
                         org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
                         .write(bc.getCentrality());
+            });
+
+            builder.timeWrite(() -> {
+                new ParallelBetweennessCentralityExporter(
+                        configuration.getBatchSize(),
+                        api,
+                        graph,
+                        graph,
+                        configuration.getWriteProperty(),
+                        org.neo4j.graphalgo.core.utils.Pools.DEFAULT)
+                        .write(bc.getCentrality());
+
+                new PExporter<AtomicDoubleArray>(api, Pools.DEFAULT, graph) {
+
+                    @Override
+                    protected void doWrite(DataWriteOperations ops, AtomicDoubleArray data, int offset) {
+                        ops.nodeSetProperty(
+                                idMapping.toOriginalNodeId(offset),
+                                DefinedProperty.doubleProperty(propertyId, data.get(nodeId))
+                        );
+                    }
+                };
             });
         }
 
