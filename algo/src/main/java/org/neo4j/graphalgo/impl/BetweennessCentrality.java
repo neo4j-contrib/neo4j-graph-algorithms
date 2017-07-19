@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.CancellationFlag;
 import org.neo4j.graphalgo.core.utils.container.Path;
 import org.neo4j.graphdb.Direction;
 
@@ -78,6 +79,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     }
 
     private boolean compute(int startNode) {
+        final CancellationFlag flag = getCancellationFlag();
         clearPaths();
         stack.clear();
         queue.clear();
@@ -87,7 +89,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         sigma[startNode] = 1;
         distance[startNode] = 0;
         queue.addLast(startNode);
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && flag.running()) {
             int node = queue.removeLast();
             stack.push(node);
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
@@ -102,7 +104,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
         }
-        while (!stack.isEmpty()) {
+        while (!stack.isEmpty() && flag.running()) {
             final int node = stack.pop();
             if (null == paths[node]) {
                 continue;
