@@ -63,6 +63,24 @@ dbms.security.procedures.unrestricted=algo.*
 ----
 ====
 
+
+== Introduction
+
+Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes. 
+A graph is made up of nodes (vertices) which are connected by relationships (edges). 
+A graph may be _undirected_, meaning that there is no distinction between the two nodes associated with each relationship, or its relationships may be _directed_ from one node to another.
+Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way.
+ 
+We are tied to our friends. 
+Cities are connected by roads and airline routes. 
+Flora and fauna are bound together in a food web. 
+Countries are involved in trading relationships. 
+The World Wide Web is a virtual network of information.
+
+
+* _Note that Neo4j can only save directed relationships, but we can treat them as though they are undirected when we are doing the analysis_
+
+
 == Usage
 
 These algorithms are exposed as Neo4j procedures.
@@ -101,7 +119,7 @@ You can also return a property value or weight (according to your config) in add
 ----
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
 {graph:'cypher', iterations:5, write: true});
 ----
 

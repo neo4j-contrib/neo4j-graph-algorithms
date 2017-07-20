@@ -59,7 +59,7 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.betweenness.stream() YIELD nodeId, centrality
+CALL algo.betweenness.stream('User','MANAGE') YIELD nodeId, centrality
 ----
 
 .Running algorithm and writing back results
