@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.PageRankScore;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -35,6 +36,9 @@ public final class PageRankProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(value = "algo.pageRank", mode = Mode.WRITE)
     @Description("CALL algo.pageRank(label:String, relationship:String, " +
@@ -119,7 +123,8 @@ public final class PageRankProc {
                 graph,
                 graph,
                 dampingFactor)
-                .withLog(log);
+                .withLog(log)
+                .withKernelTransaction(transaction);
 
         statsBuilder.timeEval(() -> algo.compute(iterations));
 

@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -32,6 +33,9 @@ public class UnionFindProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(value = "algo.unionFind", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
@@ -114,6 +118,7 @@ public class UnionFindProc {
             log.debug("Computing union find with threshold " + threshold);
             struct = new GraphUnionFind(graph)
                     .withLog(log)
+                    .withKernelTransaction(transaction)
                     .compute(threshold);
         } else {
             log.debug("Computing union find without threshold");

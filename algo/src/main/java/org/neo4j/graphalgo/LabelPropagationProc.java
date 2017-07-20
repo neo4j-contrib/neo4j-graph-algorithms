@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.exporter.LabelPropagationExporter;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -40,6 +41,9 @@ public final class LabelPropagationProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(name = "algo.labelPropagation", mode = Mode.WRITE)
     @Description("CALL algo.labelPropagation(" +
@@ -120,6 +124,7 @@ public final class LabelPropagationProc {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             return new LabelPropagation(graph, pool)
                     .withLog(log)
+                    .withKernelTransaction(transaction)
                     .compute(
                     direction,
                     iterations,

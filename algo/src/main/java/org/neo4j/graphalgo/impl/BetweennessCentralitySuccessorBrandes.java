@@ -2,10 +2,9 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.CancellationFlag;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
-import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -82,7 +81,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
         // initialization
 
         final AtomicIntegerArray offsets = phaseQueue.getOffsets();
-        final CancellationFlag flag = getCancellationFlag();
+        final TerminationFlag flag = getTerminationFlag();
 
         ParallelUtil.iterateParallel(executorService, nodeCount, 4, i -> {
             d.set(i, -1);

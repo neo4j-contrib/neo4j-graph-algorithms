@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -30,6 +31,9 @@ public class ShortestPathsProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure("algo.shortestPaths.stream")
     @Description("CALL algo.shortestPaths.stream(startNodeId:long, propertyName:String" +
@@ -56,6 +60,7 @@ public class ShortestPathsProc {
 
         return new ShortestPaths(graph)
                 .withLog(log)
+                .withKernelTransaction(transaction)
                 .compute(startNode.getId())
                 .resultStream();
     }
@@ -88,6 +93,7 @@ public class ShortestPathsProc {
         load.stop();
 
         final ShortestPaths algorithm = new ShortestPaths(graph)
+                .withKernelTransaction(transaction)
                 .withLog(log);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));

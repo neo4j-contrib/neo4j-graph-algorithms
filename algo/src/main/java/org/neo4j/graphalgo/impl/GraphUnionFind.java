@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.utils.CancellationFlag;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
@@ -40,7 +40,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      */
     public DisjointSetStruct compute() {
         dss.reset();
-        final CancellationFlag flag = getCancellationFlag();
+        final TerminationFlag flag = getTerminationFlag();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
             if (!flag.running()) {
@@ -63,7 +63,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      */
     public DisjointSetStruct compute(final double threshold) {
         dss.reset();
-        final CancellationFlag flag = getCancellationFlag();
+        final TerminationFlag flag = getTerminationFlag();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
             if (!flag.running()) {

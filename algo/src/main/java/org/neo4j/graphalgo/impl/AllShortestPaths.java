@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.CancellationFlag;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.graphdb.Direction;
@@ -112,7 +112,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
         @Override
         public void run() {
-            final CancellationFlag flag = getCancellationFlag();
+            final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
             int startNode;
             while (running && flag.running() && (startNode = counter.getAndIncrement()) < nodeCount) {

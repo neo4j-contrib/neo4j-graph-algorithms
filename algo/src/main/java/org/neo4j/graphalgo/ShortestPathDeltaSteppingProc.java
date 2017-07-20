@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -37,11 +38,15 @@ public class ShortestPathDeltaSteppingProc {
 
     public static final String WRITE_PROPERTY = "writeProperty";
     public static final String DEFAULT_TARGET_PROPERTY = "sssp";
+
     @Context
     public GraphDatabaseAPI api;
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure("algo.shortestPath.deltaStepping.stream")
     @Description("CALL algo.shortestPath.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double" +
@@ -69,6 +74,7 @@ public class ShortestPathDeltaSteppingProc {
 
         return new ShortestPathDeltaStepping(graph, delta)
                 .withLog(log)
+                .withKernelTransaction(transaction)
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
                 ))
@@ -106,6 +112,7 @@ public class ShortestPathDeltaSteppingProc {
 
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
                 .withLog(log)
+                .withKernelTransaction(transaction)
                 .withExecutorService(Pools.DEFAULT);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));

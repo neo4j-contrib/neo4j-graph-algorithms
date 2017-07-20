@@ -1,8 +1,10 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.core.utils.CancellationFlag;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
+import org.neo4j.graphalgo.core.utils.TerminationFlagImpl;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.logging.*;
 
 /**
@@ -16,7 +18,7 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
 
     private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
-    private CancellationFlag cancellationFlag;
+    private TerminationFlag terminationFlag = TerminationFlag.ALWAYS_TRUE;
 
     public abstract ME me();
 
@@ -26,16 +28,17 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
         return me();
     }
 
-    public CancellationFlag getCancellationFlag() {
-        return cancellationFlag;
+    public ME withKernelTransaction(KernelTransaction kernelTransaction) {
+        this.terminationFlag = new TerminationFlagImpl(kernelTransaction);
+        return me();
+    }
+
+    public TerminationFlag getTerminationFlag() {
+        return terminationFlag;
     }
 
     public ProgressLogger getProgressLogger() {
         return progressLogger;
     }
 
-    public Algorithm withCancellationFlag(CancellationFlag cancellationFlag) {
-        this.cancellationFlag = cancellationFlag;
-        return this;
-    }
 }

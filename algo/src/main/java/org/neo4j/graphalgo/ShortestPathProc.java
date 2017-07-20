@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -26,6 +27,9 @@ public class ShortestPathProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure("algo.shortestPath.stream")
     @Description("CALL algo.shortestPath.stream(startNodeId:long, endNodeId:long, propertyName:String" +
@@ -53,6 +57,7 @@ public class ShortestPathProc {
 
         return new ShortestPathDijkstra(graph)
                 .withLog(log)
+                .withKernelTransaction(transaction)
                 .compute(startNode.getId(), endNode.getId())
                 .resultStream();
     }
@@ -91,6 +96,7 @@ public class ShortestPathProc {
         try (ProgressTimer timer = builder.timeEval()) {
             dijkstra = new ShortestPathDijkstra(graph)
                     .withLog(log)
+                    .withKernelTransaction(transaction)
                     .compute(startNode.getId(), endNode.getId());
             builder.withNodeCount(dijkstra.getPathLength())
                     .withTotalCosts(dijkstra.getTotalCost());

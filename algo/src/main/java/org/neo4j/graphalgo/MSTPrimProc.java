@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.exporter.MSTPrimExporter;
 import org.neo4j.graphalgo.results.MSTPrimResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -31,6 +32,9 @@ public class MSTPrimProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(value = "algo.mst", mode = Mode.WRITE)
     @Description("CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, " +
@@ -76,7 +80,8 @@ public class MSTPrimProc {
                 idMapper,
                 new BothRelationshipAdapter(relationshipContainer),
                 weightMap)
-                .withLog(log);
+                .withLog(log)
+                .withKernelTransaction(transaction);
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);
