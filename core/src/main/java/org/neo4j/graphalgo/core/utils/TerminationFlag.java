@@ -5,7 +5,7 @@ package org.neo4j.graphalgo.core.utils;
  */
 public interface TerminationFlag {
 
-    TerminationFlag ALWAYS_TRUE = () -> true;
+    TerminationFlag RUNNING_TRUE = () -> true;
 
     boolean running();
 

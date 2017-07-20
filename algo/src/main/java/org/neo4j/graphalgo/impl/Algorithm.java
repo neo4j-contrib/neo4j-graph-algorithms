@@ -18,7 +18,7 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
 
     private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
-    private TerminationFlag terminationFlag = TerminationFlag.ALWAYS_TRUE;
+    private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
 
     public abstract ME me();
 
