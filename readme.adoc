@@ -69,7 +69,8 @@ dbms.security.procedures.unrestricted=algo.*
 Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes. 
 A graph is made up of nodes (vertices) which are connected by relationships (edges). 
 A graph may be _undirected_, meaning that there is no distinction between the two nodes associated with each relationship, or its relationships may be _directed_ from one node to another.
-Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way. 
+Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way.
+ 
 We are tied to our friends. 
 Cities are connected by roads and airline routes. 
 Flora and fauna are bound together in a food web. 

@@ -16,6 +16,8 @@ We assume page A has pages T1...Tn which point to it (i.e., are citations). The 
 
 PR(A) = (1-d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn))
 
+Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.
+
 The underlying mathematics of PageRank has to do with random walks on networks, akin to how random surfers propagate through a network. 
 Precisely, PageRank is an example of a discrete ergodic Markov Chain. 
 Random surfers follow links, but occasionally teleport to random vertices. 
@@ -24,6 +26,9 @@ PageRank is now widely recognized as a way of detecting central nodes in a netwo
 
 
 == When to use it / use-cases
+
+
+== Constraints / when not to use it
 
 
 == Algorithm explanation on simple sample graph
@@ -54,34 +59,18 @@ CREATE (home)-[:LINKS]->(about)
 
 ----
 
-==== Running algorithm on a _directed_, _unweighted_ graph and streaming results
 
-.Loading the subset of the graph with labels and relationship type
+.Running algorithm and streaming results
 [source,cypher]
 ----
 
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) 
-YIELD node, score
-
-----
-
-.Loading the subset of the graph with cypher query ( can be used to create a virtual graph )
-
-[source,cypher]
-----
-
-CALL algo.pageRank.stream('MATCH (p:Page) RETURN id(p) as id', 
-'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target', 
-{graph:'cypher', iterations:20, dampingFactor:0.85}) 
-YIELD node, score
+YIELD node, score order by score desc limit 20
 
 ----
 
 
-
-==== Running algorithm on a _directed_, _unweighted_ graph and writing back results 
-
-.Loading the subset of the graph with labels and relationship type
+.Running algorithm and writing back results 
 [source,cypher]
 ----
 
@@ -91,18 +80,6 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 
 ----
 
-
-
-.Loading the subset of the graph with cypher query ( can be used to create a virtual graph )
-[source,cypher]
-----
-
-CALL algo.pageRank(
-'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', iterations:20, write: true, writeProperty: "pagerank"});
-
-----
 
 .Results
 [opts="header",cols="1,1"]
@@ -126,7 +103,7 @@ As we expected, we see that Home page has the highest pageRank, because it has i
 [source,cypher]
 ----
 CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
-CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score
+CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score order by score desc limit 20
 ----
 
 == Syntax
@@ -193,7 +170,32 @@ YIELD node, score - calculates page rank and streams results
 | score | float | page-rank weight 
 |===
 
-== Constraints / when not to use it
+
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+se `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+CALL algo.pageRank(
+'MATCH (p:Page) RETURN id(p) as id',
+'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', iterations:5, write: true});
+----
+
+== Versions 
+
+We support the following versions of the pageRank algorithm:
+
+* [x] directed, unweighted
+
+* [ ] directed, weighted
+
+* [ ] undirected, unweighted
+
+* [ ] undirected, weighted 
 
 == References
 
