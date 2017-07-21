@@ -128,10 +128,13 @@ public class BetweennessCentralityProc {
             }
         });
 
+        final AtomicDoubleArray centrality = bc.getCentrality();
+        bc.release();
+
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(bc.getCentrality());
+                        .write(centrality);
 
             });
         }
@@ -188,10 +191,13 @@ public class BetweennessCentralityProc {
             }
         });
 
+        final double[] centrality = bc.getCentrality();
+        bc.release();
+
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(bc.getCentrality());
+                        .write(centrality);
             });
         }
 
@@ -236,8 +242,10 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
+                final AtomicDoubleArray centrality = bc.getCentrality();
+                bc.release();
                 new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(bc.getCentrality());
+                        .write(centrality);
             });
         }
 

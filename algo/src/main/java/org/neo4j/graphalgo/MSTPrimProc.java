@@ -99,10 +99,12 @@ public class MSTPrimProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
+                final MSTPrim.MinimumSpanningTree minimumSpanningTree = mstPrim.getMinimumSpanningTree();
+                mstPrim.release();
                 new MSTPrimExporter(api)
                         .withIdMapping(idMapper)
                         .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                        .write(mstPrim.getMinimumSpanningTree());
+                        .write(minimumSpanningTree);
             });
         }
 

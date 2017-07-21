@@ -26,7 +26,7 @@ import java.util.concurrent.RecursiveTask;
  */
 public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJoin> {
 
-    private final Graph graph;
+    private Graph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
@@ -64,6 +64,12 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
     @Override
     public ParallelUnionFindForkJoin me() {
         return this;
+    }
+
+    @Override
+    public ParallelUnionFindForkJoin release() {
+        graph = null;
+        return null;
     }
 
     private class UnionFindTask extends RecursiveTask<DisjointSetStruct> {

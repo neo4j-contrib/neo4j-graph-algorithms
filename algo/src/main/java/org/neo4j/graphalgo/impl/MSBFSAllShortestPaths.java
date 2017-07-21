@@ -26,9 +26,9 @@ import java.util.stream.StreamSupport;
  */
 public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
-    private final Graph graph;
+    private Graph graph;
+    private BlockingQueue<Result> resultQueue;
     private final ExecutorService executorService;
-    private final BlockingQueue<Result> resultQueue;
     private final int nodeCount;
 
     public MSBFSAllShortestPaths(Graph graph, ExecutorService executorService) {
@@ -67,6 +67,13 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
     @Override
     public MSBFSAllShortestPaths me() {
+        return this;
+    }
+
+    @Override
+    public MSBFSAllShortestPaths release() {
+        graph = null;
+        resultQueue = null;
         return this;
     }
 

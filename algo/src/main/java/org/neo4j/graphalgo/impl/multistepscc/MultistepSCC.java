@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 public class MultistepSCC extends Algorithm<MultistepSCC> {
 
     // the graph
-    private final Graph graph;
+    private Graph graph;
     // parallel BFS impl.
     private final ParallelLocalQueueBFS traverse;
     // parallel multistep coloring algo
@@ -186,6 +186,12 @@ public class MultistepSCC extends Algorithm<MultistepSCC> {
 
     @Override
     public MultistepSCC me() {
+        return this;
+    }
+
+    @Override
+    public MultistepSCC release() {
+        graph = null;
         return this;
     }
 }

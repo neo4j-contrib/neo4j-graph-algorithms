@@ -120,10 +120,12 @@ public class ShortestPathDeltaSteppingProc {
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
 
         if (configuration.isWriteFlag()) {
+            final double[] shortestPaths = algorithm.getShortestPaths();
+            algorithm.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log,
                         configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .write(algorithm.getShortestPaths());
+                        .write(shortestPaths);
             });
         }
 

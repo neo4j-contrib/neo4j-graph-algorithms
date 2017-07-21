@@ -19,12 +19,10 @@ import java.util.stream.Stream;
  */
 public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
-    private final Graph graph;
+    private Graph graph;
+    private AtomicIntegerArray farness;
 
     private final ExecutorService executorService;
-
-    private final AtomicIntegerArray farness;
-
     private final int nodeCount;
 
     public MSClosenessCentrality(Graph graph, ExecutorService executorService) {
@@ -74,6 +72,13 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     @Override
     public MSClosenessCentrality me() {
+        return this;
+    }
+
+    @Override
+    public MSClosenessCentrality release() {
+        graph = null;
+        farness = null;
         return this;
     }
 

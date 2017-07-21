@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import com.carrotsearch.hppc.IntArrayDeque;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -106,8 +107,10 @@ public class ShortestPathProc {
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
+                final IntArrayDeque finalPath = dijkstra.getFinalPath();
+                dijkstra.release();
                 new ShortestPathDijkstra.SPExporter(graph, api, configuration.getWriteProperty())
-                        .write(dijkstra.getFinalPath());
+                        .write(finalPath);
             }
         }
 

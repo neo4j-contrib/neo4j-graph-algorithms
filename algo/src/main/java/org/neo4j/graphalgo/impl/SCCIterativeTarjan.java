@@ -29,15 +29,15 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
         }
 
     }
-    private final Graph graph;
+    private Graph graph;
 
     private final int nodeCount;
-    private final int[] index;
-    private final SimpleBitSet visited;
-    private final int[] connectedComponents;
-    private final IntStack stack;
-    private final IntStack boundaries;
-    private final IntStack todo;
+    private int[] index;
+    private SimpleBitSet visited;
+    private int[] connectedComponents;
+    private IntStack stack;
+    private IntStack boundaries;
+    private IntStack todo;
     private int setCount;
 
     private int minSetSize;
@@ -68,6 +68,18 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     @Override
     public SCCIterativeTarjan me() {
+        return this;
+    }
+
+    @Override
+    public SCCIterativeTarjan release() {
+        graph = null;
+        index = null;
+        visited = null;
+        connectedComponents = null;
+        stack = null;
+        boundaries = null;
+        todo = null;
         return this;
     }
 

@@ -115,20 +115,22 @@ public class UnionFindProc {
     private DisjointSetStruct evaluate(Graph graph, ProcedureConfiguration config) {
 
         final DisjointSetStruct struct;
+        final GraphUnionFind graphUnionFind = new GraphUnionFind(graph);
         if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
             final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
             log.debug("Computing union find with threshold " + threshold);
-            struct = new GraphUnionFind(graph)
+            struct = graphUnionFind
                     .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(threshold);
         } else {
             log.debug("Computing union find without threshold");
-            struct = new GraphUnionFind(graph)
+            struct = graphUnionFind
                     .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
         }
+        graphUnionFind.release();
         return struct;
     }
 

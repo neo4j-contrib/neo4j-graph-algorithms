@@ -32,20 +32,20 @@ import java.util.stream.Stream;
 public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaStepping> {
 
     // distance array
-    private final AtomicIntegerArray distance;
+    private AtomicIntegerArray distance;
     // bucket impl
-    private final Buckets buckets;
+    private Buckets buckets;
+    private Graph graph;
+    // collections of runnables containing either heavy edge relax-operations or light edge relax-ops.
+    private Collection<Runnable> light, heavy;
+    // list of futures of light and heavy edge relax-operations
+    private Collection<Future<?>> futures;
+
     // delta parameter
     private final double delta;
     private final int nodeCount;
     // scaled delta
     private int iDelta;
-
-    private final Graph graph;
-    // collections of runnables containing either heavy edge relax-operations or light edge relax-ops.
-    private final Collection<Runnable> light, heavy;
-    // list of futures of light and heavy edge relax-operations
-    private final Collection<Future<?>> futures;
 
     private ExecutorService executorService;
 
@@ -208,6 +208,17 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
     @Override
     public ShortestPathDeltaStepping me() {
         return this;
+    }
+
+    @Override
+    public ShortestPathDeltaStepping release() {
+        distance = null;
+        buckets = null;
+        graph = null;
+        light = null;
+        heavy = null;
+        futures = null;
+        return null;
     }
 
     /**

@@ -17,12 +17,12 @@ import java.util.stream.Stream;
  */
 public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
 
-    private final Graph graph;
-    private final IntStack edgeStack;
+    private Graph graph;
+    private IntStack edgeStack;
 
-    private final IntStack open;
-    private final int[] connectedComponents;
-    private final int nodeCount;
+    private IntStack open;
+    private int[] connectedComponents;
+    private int nodeCount;
 
     private int dfs = 0;
     private int setCount = 0;
@@ -116,6 +116,15 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
 
     @Override
     public SCCTunedTarjan me() {
+        return this;
+    }
+
+    @Override
+    public SCCTunedTarjan release() {
+        graph = null;
+        edgeStack = null;
+        open = null;
+        connectedComponents = null;
         return this;
     }
 }

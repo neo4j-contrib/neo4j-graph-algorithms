@@ -23,9 +23,9 @@ import org.neo4j.graphdb.Direction;
  */
 public class GraphUnionFind extends Algorithm<GraphUnionFind> {
 
-    private final Graph graph;
+    private Graph graph;
 
-    private final DisjointSetStruct dss;
+    private DisjointSetStruct dss;
     private final int nodeCount;
 
     public GraphUnionFind(Graph graph) {
@@ -81,6 +81,13 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
 
     @Override
     public GraphUnionFind me() {
+        return this;
+    }
+
+    @Override
+    public GraphUnionFind release() {
+        graph = null;
+        dss = null;
         return this;
     }
 }

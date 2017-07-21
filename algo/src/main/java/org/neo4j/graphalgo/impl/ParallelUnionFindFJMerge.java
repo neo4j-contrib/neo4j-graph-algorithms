@@ -26,7 +26,7 @@ import java.util.concurrent.RecursiveTask;
  */
 public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge> {
 
-    private final Graph graph;
+    private Graph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
@@ -80,6 +80,13 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
 
     @Override
     public ParallelUnionFindFJMerge me() {
+        return this;
+    }
+
+    @Override
+    public ParallelUnionFindFJMerge release() {
+        graph = null;
+        struct = null;
         return this;
     }
 

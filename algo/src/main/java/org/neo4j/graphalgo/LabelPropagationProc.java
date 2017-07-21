@@ -124,14 +124,17 @@ public final class LabelPropagationProc {
             LabelPropagationStats.Builder stats) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
-            return new LabelPropagation(graph, pool)
+            final LabelPropagation labelPropagation = new LabelPropagation(graph, pool);
+            final IntDoubleMap result = labelPropagation
                     .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(
-                    direction,
-                    iterations,
-                    Math.max(1, batchSize)
-            );
+                            direction,
+                            iterations,
+                            Math.max(1, batchSize)
+                    );
+            labelPropagation.release();
+            return result;
         }
     }
 

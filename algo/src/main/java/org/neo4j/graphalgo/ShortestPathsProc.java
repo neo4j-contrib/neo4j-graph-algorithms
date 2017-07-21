@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import com.carrotsearch.hppc.IntDoubleMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -102,8 +103,10 @@ public class ShortestPathsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
+                final IntDoubleMap shortestPaths = algorithm.getShortestPaths();
+                algorithm.release();
                 new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(algorithm.getShortestPaths());
+                        .write(shortestPaths);
             });
         }
 
