@@ -28,7 +28,7 @@ public class MSColoringTest {
     private static GraphDatabaseAPI db;
     private static Graph graph;
 
-    private static int mul = 2;
+    private static int mul = 1000;
 
     @BeforeClass
     public static void setup() {
@@ -39,7 +39,7 @@ public class MSColoringTest {
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(mul, mul, mul, mul, mul); //, mul, mul, mul);
+            createTestGraph(mul, mul, mul, mul, mul, mul, mul, mul);
             db.execute("MATCH (n) RETURN n");
         }
 
