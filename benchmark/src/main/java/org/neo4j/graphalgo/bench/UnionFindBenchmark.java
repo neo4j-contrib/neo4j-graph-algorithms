@@ -38,6 +38,7 @@ public class UnionFindBenchmark {
     private static BufferedAllRelationshipIterator iterator;
     private static Graph heavyGraph;
     private static Graph lightGraph;
+    private static MSColoring msColoring;
 
     @Setup
     public static void setup() {
@@ -91,6 +92,8 @@ public class UnionFindBenchmark {
         heavyGraph = loadHeavy();
 
         lightGraph = loadLight();
+
+        msColoring = new MSColoring(heavyGraph, Pools.DEFAULT);
     }
 
 
@@ -154,7 +157,7 @@ public class UnionFindBenchmark {
 
     @Benchmark
     public Object _08_multiSourceBFSColoringUnionFind() {
-        return new MSColoring(heavyGraph, Pools.DEFAULT)
+        return msColoring
                 .compute()
                 .getColors();
     }
