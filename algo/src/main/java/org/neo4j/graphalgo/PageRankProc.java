@@ -134,7 +134,10 @@ public final class PageRankProc {
                 .withIterations(iterations)
                 .withDampingFactor(dampingFactor);
 
-        return algo.getPageRank();
+        final double[] pageRank = algo.getPageRank();
+        algo.release();
+
+        return pageRank;
     }
 
     private void write(

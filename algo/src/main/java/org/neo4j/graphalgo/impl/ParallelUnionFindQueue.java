@@ -23,7 +23,7 @@ import java.util.concurrent.*;
  */
 public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
 
-    private final Graph graph;
+    private Graph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
@@ -88,6 +88,12 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
     @Override
     public ParallelUnionFindQueue me() {
         return this;
+    }
+
+    @Override
+    public ParallelUnionFindQueue release() {
+        graph = null;
+        return null;
     }
 
     private class UnionFindTask implements Runnable {

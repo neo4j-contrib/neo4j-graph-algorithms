@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  */
 public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
-    private final Graph graph;
+    private Graph graph;
     private final int nodeCount;
 
     /**
@@ -43,9 +43,9 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
      * nodeId counter (init with nodeCount,
      * counts down for each node)
      */
-    private final AtomicInteger counter;
-    private final ExecutorService executorService;
-    private final BlockingQueue<Result> resultQueue;
+    private AtomicInteger counter;
+    private ExecutorService executorService;
+    private BlockingQueue<Result> resultQueue;
 
     private volatile boolean outputStreamOpen;
 
@@ -91,6 +91,14 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
     @Override
     public AllShortestPaths me() {
+        return this;
+    }
+
+    @Override
+    public AllShortestPaths release() {
+        graph = null;
+        counter = null;
+        resultQueue = null;
         return this;
     }
 

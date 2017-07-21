@@ -19,16 +19,16 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
-    private final Graph graph;
+    private Graph graph;
 
-    private final double[] centrality;
-    private final double[] delta;
-    private final int[] sigma;
-    private final int[] distance;
-    private final IntStack stack;
-    private final IntArrayDeque queue;
-    private final Path[] paths; // TODO find a better container impl
-    private final int nodeCount;
+    private double[] centrality;
+    private double[] delta;
+    private int[] sigma;
+    private int[] distance;
+    private IntStack stack;
+    private IntArrayDeque queue;
+    private Path[] paths; // TODO find a better container impl
+    private int nodeCount;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
@@ -144,6 +144,19 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     @Override
     public BetweennessCentrality me() {
+        return this;
+    }
+
+    @Override
+    public BetweennessCentrality release() {
+        graph = null;
+        centrality = null;
+        delta = null;
+        sigma = null;
+        distance = null;
+        stack = null;
+        queue = null;
+        paths = null;
         return this;
     }
 

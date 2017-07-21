@@ -26,19 +26,17 @@ import java.util.stream.Stream;
 public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweennessCentrality> {
 
     // the graph
-    private final Graph graph;
+    private Graph graph;
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
     // atomic double array which supports only atomic-add
-    private final AtomicDoubleArray centrality;
+    private AtomicDoubleArray centrality;
     // the node count
     private final int nodeCount;
     // global executor service
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-
-    private final AtomicInteger percentDone = new AtomicInteger(0);
 
     /**
      * constructs a parallel centrality solver
@@ -107,6 +105,13 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     @Override
     public ParallelBetweennessCentrality me() {
         return this;
+    }
+
+    @Override
+    public ParallelBetweennessCentrality release() {
+        graph = null;
+        centrality = null;
+        return null;
     }
 
     /**

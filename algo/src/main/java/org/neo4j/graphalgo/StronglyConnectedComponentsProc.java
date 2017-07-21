@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo;
 
+import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.ObjectArrayList;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -88,10 +90,12 @@ public class StronglyConnectedComponentsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
+                final ObjectArrayList<IntSet> connectedComponents = tarjan.getConnectedComponents();
+                tarjan.release();
                 new SCCTarjanExporter(api)
                         .withIdMapping(graph)
                         .withWriteProperty(configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER))
-                        .write(tarjan.getConnectedComponents());
+                        .write(connectedComponents);
             });
         }
 

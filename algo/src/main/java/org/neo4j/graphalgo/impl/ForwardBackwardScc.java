@@ -16,9 +16,9 @@ import java.util.stream.StreamSupport;
  */
 public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
 
-    private final ParallelLocalQueueBFS traverse;
-    private final IntSet scc = new IntScatterSet();
-    private final Graph graph;
+    private ParallelLocalQueueBFS traverse;
+    private IntSet scc = new IntScatterSet();
+    private Graph graph;
 
     public ForwardBackwardScc(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -26,7 +26,6 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
     }
 
     public ForwardBackwardScc compute(int startNodeId) {
-        final TerminationFlag flag = getTerminationFlag();
         scc.clear();
         // D <- BFS( G(V,E(V)), v)
         final IntScatterSet descendant = new IntScatterSet();
@@ -60,6 +59,14 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
 
     @Override
     public ForwardBackwardScc me() {
+        return this;
+    }
+
+    @Override
+    public ForwardBackwardScc release() {
+        graph = null;
+        traverse = null;
+        scc = null;
         return this;
     }
 

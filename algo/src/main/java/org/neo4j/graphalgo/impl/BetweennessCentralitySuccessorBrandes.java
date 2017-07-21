@@ -29,22 +29,22 @@ import java.util.stream.Stream;
 public class BetweennessCentralitySuccessorBrandes extends Algorithm<BetweennessCentralitySuccessorBrandes> {
 
     // the graph
-    private final Graph graph;
+    private Graph graph;
     // atomic double array which supports only atomic-add
-    private final AtomicDoubleArray centrality;
+    private AtomicDoubleArray centrality;
     // the node count
-    private final int nodeCount;
+    private int nodeCount;
     // global executor service
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
 
-    private final AtomicIntegerArray sigma;
+    private AtomicIntegerArray sigma;
     private AtomicIntegerArray d;
-    private final double[] delta;
-    private final AtomicInteger count;
+    private double[] delta;
+    private AtomicInteger count;
     private int phase;
     private MultiQueue successors;
     private MultiQueue phaseQueue;
-    private final ArrayList<Future<?>> futures = new ArrayList<>();
+    private ArrayList<Future<?>> futures = new ArrayList<>();
 
     /**
      * constructs a parallel centrality solver
@@ -175,6 +175,21 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
 
     @Override
     public BetweennessCentralitySuccessorBrandes me() {
+        return this;
+    }
+
+    @Override
+    public BetweennessCentralitySuccessorBrandes release() {
+        graph = null;
+        centrality = null;
+        executorService = null;
+        sigma = null;
+        d = null;
+        delta = null;
+        count = null;
+        successors = null;
+        phaseQueue = null;
+        futures = null;
         return this;
     }
 }

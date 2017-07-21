@@ -23,9 +23,9 @@ import static org.neo4j.graphalgo.core.utils.RawValues.*;
  */
 public class MSTPrim extends Algorithm<MSTPrim> {
 
-    private final IdMapping idMapping;
-    private final BothRelationshipIterator iterator;
-    private final RelationshipWeights weights;
+    private IdMapping idMapping;
+    private BothRelationshipIterator iterator;
+    private RelationshipWeights weights;
     private MinimumSpanningTree minimumSpanningTree;
 
     public MSTPrim(IdMapping idMapping, BothRelationshipIterator iterator, RelationshipWeights weights) {
@@ -76,6 +76,15 @@ public class MSTPrim extends Algorithm<MSTPrim> {
     @Override
     public MSTPrim me() {
         return this;
+    }
+
+    @Override
+    public MSTPrim release() {
+        idMapping = null;
+        iterator = null;
+        weights = null;
+        minimumSpanningTree = null;
+        return null;
     }
 
     public static class MinimumSpanningTree extends UndirectedTree {

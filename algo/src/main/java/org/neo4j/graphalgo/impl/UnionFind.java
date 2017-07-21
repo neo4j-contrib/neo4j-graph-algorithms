@@ -19,7 +19,7 @@ import java.util.Objects;
  */
 public class UnionFind extends Algorithm<UnionFind> {
 
-    private final AllRelationshipIterator iterator;
+    private AllRelationshipIterator iterator;
     private final int nodeCount;
     private int stepCount;
 
@@ -78,6 +78,12 @@ public class UnionFind extends Algorithm<UnionFind> {
 
     @Override
     public UnionFind me() {
+        return this;
+    }
+
+    @Override
+    public UnionFind release() {
+        iterator = null;
         return this;
     }
 }

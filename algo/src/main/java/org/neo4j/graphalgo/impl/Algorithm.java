@@ -16,6 +16,8 @@ public abstract class Algorithm<ME extends Algorithm<ME>> implements Termination
 
     public abstract ME me();
 
+    public abstract ME release();
+
     public ME withProgressLogger(ProgressLogger progressLogger) {
         this.progressLogger = progressLogger;
         return me();

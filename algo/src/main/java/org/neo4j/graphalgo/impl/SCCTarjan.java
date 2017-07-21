@@ -23,7 +23,7 @@ import java.util.function.IntPredicate;
  */
 public class SCCTarjan extends Algorithm<SCCTarjan> {
 
-    private final Graph graph;
+    private Graph graph;
     private final int nodeCount;
     private Aggregator aggregator;
 
@@ -73,6 +73,13 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
 
     @Override
     public SCCTarjan me() {
+        return this;
+    }
+
+    @Override
+    public SCCTarjan release() {
+        aggregator = null;
+        graph = null;
         return this;
     }
 

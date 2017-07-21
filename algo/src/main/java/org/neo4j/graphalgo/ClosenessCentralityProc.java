@@ -89,9 +89,12 @@ public class ClosenessCentralityProc {
         builder.timeEval(centrality::compute);
 
         if (configuration.isWriteFlag()) {
+
+            final double[] centralityResult = centrality.getCentrality();
+            centrality.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(centrality.getCentrality());
+                        .write(centralityResult);
             });
         }
 

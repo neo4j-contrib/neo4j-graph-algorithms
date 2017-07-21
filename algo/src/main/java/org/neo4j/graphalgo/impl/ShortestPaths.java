@@ -20,9 +20,9 @@ import java.util.stream.StreamSupport;
  */
 public class ShortestPaths extends Algorithm<ShortestPaths> {
 
-    private final Graph graph;
-    private final IntDoubleMap costs;
-    private final IntMinPriorityQueue queue;
+    private Graph graph;
+    private IntDoubleMap costs;
+    private IntMinPriorityQueue queue;
     private final int nodeCount;
     private ProgressLogger progressLogger;
 
@@ -90,6 +90,14 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
 
     @Override
     public ShortestPaths me() {
+        return this;
+    }
+
+    @Override
+    public ShortestPaths release() {
+        graph = null;
+        costs = null;
+        queue = null;
         return this;
     }
 
