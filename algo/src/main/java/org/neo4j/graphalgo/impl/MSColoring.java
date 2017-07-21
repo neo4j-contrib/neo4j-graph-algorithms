@@ -68,21 +68,19 @@ public class MSColoring {
 
     private void nodeAction(int node, int depth, BfsSources bfsSources) {
         // evaluate highest color
-        int color = this.colors.get(node);
+        int bestColor = this.colors.get(node);
         while (bfsSources.hasNext()) {
-            final int source = bfsSources.next();
-            color = Math.max(color, source);
+            final int sourceColor = colors.get(bfsSources.next());
+            bestColor = Math.max(bestColor, sourceColor);
         }
         // set color to target node
-        setColor(node, color);
+        setColor(node, bestColor);
         // reset iterator
         bfsSources.reset();
         // set highest color to all sources
         while (bfsSources.hasNext()) {
             final int source = bfsSources.next();
-            if (color > source) {
-                setColor(source, color);
-            }
+            setColor(source, bestColor);
         }
     }
 

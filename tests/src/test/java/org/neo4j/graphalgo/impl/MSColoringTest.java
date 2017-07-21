@@ -4,10 +4,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.neo4j.graphalgo.Pools;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
@@ -28,7 +28,7 @@ public class MSColoringTest {
     private static GraphDatabaseAPI db;
     private static Graph graph;
 
-    private static int mul = 3000;
+    private static int mul = 2;
 
     @BeforeClass
     public static void setup() {
@@ -39,18 +39,15 @@ public class MSColoringTest {
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
-            createTestGraph(mul, mul, mul, mul, mul, mul, mul, mul);
+            createTestGraph(mul, mul, mul, mul, mul); //, mul, mul, mul);
             db.execute("MATCH (n) RETURN n");
         }
-
 
         graph = new GraphLoader(db)
                 .withExecutorService(Pools.DEFAULT)
                 .withAnyLabel()
                 .withRelationshipType(RELATIONSHIP_TYPE)
                 .load(HeavyGraphFactory.class);
-
-
     }
 
     @AfterClass

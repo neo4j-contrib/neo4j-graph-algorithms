@@ -3,9 +3,10 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.exporter.AtomicIntArrayExporter;
 import org.neo4j.graphalgo.impl.MSColoring;
-import org.neo4j.graphalgo.impl.AtomicIntArrayExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -109,11 +110,11 @@ public class MSColoringProc {
     private void write(Graph graph, AtomicIntegerArray struct, ProcedureConfiguration configuration) {
         log.debug("Writing results");
         new AtomicIntArrayExporter(
-                configuration.getBatchSize(),
                 api,
                 graph,
-                graph,
+                log,
                 configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
-                Pools.DEFAULT).write(struct);
+                Pools.DEFAULT
+        ).write(struct);
     }
 }

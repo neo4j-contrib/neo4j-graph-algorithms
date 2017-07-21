@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class Coloring {
+public class Coloring extends Algorithm<Coloring> {
 
     private final Graph graph;
     private final ExecutorService executorService;
@@ -54,7 +54,6 @@ public class Coloring {
                 } else if (targetColor > sourceColor) {
                     setColor(source, targetColor);
                 }
-                return;
             });
             return true;
         });
@@ -75,6 +74,11 @@ public class Coloring {
     public Stream<Result> resultStream() {
         return IntStream.range(0, graph.nodeCount())
                 .mapToObj(i -> new Result(graph.toOriginalNodeId(i), colors.get(i)));
+    }
+
+    @Override
+    public Coloring me() {
+        return this;
     }
 
     private void reset() {
