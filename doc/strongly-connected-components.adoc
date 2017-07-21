@@ -61,7 +61,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | Mark | 2 
 |===
 
-We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second compomenet has Doug and Mark. 
+We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second component has Doug and Mark. 
 
 .Find the largest partition
 [source,cypher]

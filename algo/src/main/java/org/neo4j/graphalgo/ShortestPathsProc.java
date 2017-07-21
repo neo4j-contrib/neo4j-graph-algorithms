@@ -39,7 +39,7 @@ public class ShortestPathsProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.shortestPaths.stream")
-    @Description("CALL algo.shortestPaths.stream(startNodeId:long, propertyName:String" +
+    @Description("CALL algo.shortestPaths.stream(startNode:Node, weightProperty:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPaths.Result> dijkstraStream(
@@ -69,7 +69,7 @@ public class ShortestPathsProc {
     }
 
     @Procedure(value = "algo.shortestPaths", mode = Mode.WRITE)
-    @Description("CALL algo.shortestPaths(startNodeId:long, propertyName:String" +
+    @Description("CALL algo.shortestPaths(startNode:Node, weightProperty:String" +
             "{write:true, targetProperty:'path', nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD loadDuration, evalDuration, writeDuration, nodeCount, targetProperty - yields nodeCount, totalCost, loadDuration, evalDuration")
     public Stream<ShortestPathResult> dijkstra(
