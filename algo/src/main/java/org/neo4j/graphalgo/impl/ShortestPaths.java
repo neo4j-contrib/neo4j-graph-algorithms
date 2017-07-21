@@ -68,7 +68,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
     }
 
     private void run() {
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && running()) {
             final int node = queue.pop();
             double sourceCosts = this.costs.getOrDefault(node, Double.POSITIVE_INFINITY);
             // scan ALL relationships

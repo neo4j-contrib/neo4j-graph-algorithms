@@ -69,7 +69,7 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
     }
 
     private void await() {
-        ParallelUtil.awaitTermination(futures);
+        ParallelUtil.awaitTermination(futures, this);
     }
 
     public ParallelUnionFindQueue compute(double threshold) {

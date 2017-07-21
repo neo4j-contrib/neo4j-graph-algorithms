@@ -51,7 +51,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
                 lowPointDFS(node);
             }
             progressLogger.logProgress((double) node / (nodeCount - 1));
-            return true;
+            return running();
         });
         return this;
     }

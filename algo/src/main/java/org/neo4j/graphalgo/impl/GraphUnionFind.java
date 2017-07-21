@@ -40,10 +40,9 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      */
     public DisjointSetStruct compute() {
         dss.reset();
-        final TerminationFlag flag = getTerminationFlag();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
-            if (!flag.running()) {
+            if (!running()) {
                 return false;
             }
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id) -> {
@@ -63,10 +62,9 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      */
     public DisjointSetStruct compute(final double threshold) {
         dss.reset();
-        final TerminationFlag flag = getTerminationFlag();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
-            if (!flag.running()) {
+            if (!running()) {
                 return false;
             }
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id, weight) -> {

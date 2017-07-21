@@ -136,7 +136,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
             for (;;) {
                 reset();
                 final int startNodeId = nodeQueue.getAndIncrement();
-                if (startNodeId >= nodeCount) {
+                if (startNodeId >= nodeCount || !running()) {
                     return;
                 }
                 getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));

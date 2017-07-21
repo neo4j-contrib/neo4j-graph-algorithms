@@ -8,23 +8,13 @@ import org.neo4j.logging.*;
 /**
  * @author mknblch
  */
-public abstract class Algorithm<ME extends Algorithm<ME>> {
-
-//    private static final String TASK = "COMPUTE";
-
-//    private Log log = NullLog.getInstance();
+public abstract class Algorithm<ME extends Algorithm<ME>> implements TerminationFlag {
 
     private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
     private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
 
     public abstract ME me();
-
-//    public ME withLog(Log log) {
-//        this.log = log;
-//        this.progressLogger = new ProgressLoggerAdapter(log, TASK);
-//        return me();
-//    }
 
     public ME withProgressLogger(ProgressLogger progressLogger) {
         this.progressLogger = progressLogger;
@@ -44,4 +34,8 @@ public abstract class Algorithm<ME extends Algorithm<ME>> {
         return progressLogger;
     }
 
+    @Override
+    public boolean running() {
+        return terminationFlag.running();
+    }
 }

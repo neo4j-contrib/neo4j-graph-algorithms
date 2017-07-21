@@ -94,6 +94,9 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
     }
 
     private boolean compute(int nodeId) {
+        if (!running()) {
+            return false;
+        }
         if (index[nodeId] != -1) {
             return true;
         }

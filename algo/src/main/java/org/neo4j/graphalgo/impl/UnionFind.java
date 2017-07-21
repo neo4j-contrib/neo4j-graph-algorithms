@@ -52,7 +52,7 @@ public class UnionFind extends Algorithm<UnionFind> {
             }
             stepCount++;
             progressLogger.logProgress((double) stepCount / (nodeCount - 1));
-            return true;
+            return running();
         });
         return dss;
     }
@@ -71,7 +71,7 @@ public class UnionFind extends Algorithm<UnionFind> {
             dss.union(source, target);
             stepCount++;
             progressLogger.logProgress((double) stepCount / (nodeCount - 1));
-            return true;
+            return running();
         });
         return dss;
     }

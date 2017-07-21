@@ -50,7 +50,7 @@ public class MSTPrim extends Algorithm<MSTPrim> {
             queue.add(combineIntInt(startNode, targetNodeId), weights.weightOf(sourceNodeId, targetNodeId));
             return true;
         });
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && running()) {
             // retrieve cheapest transition
             final long transition = queue.pop();
             final int nodeId = getTail(transition);

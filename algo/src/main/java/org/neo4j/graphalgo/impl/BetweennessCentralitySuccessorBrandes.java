@@ -81,7 +81,6 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
         // initialization
 
         final AtomicIntegerArray offsets = phaseQueue.getOffsets();
-        final TerminationFlag flag = getTerminationFlag();
 
         ParallelUtil.iterateParallel(executorService, nodeCount, 4, i -> {
             d.set(i, -1);
@@ -97,7 +96,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
         count.set(1);
 
         // computation
-        while (count.getAndSet(0) > 0 && flag.running()) {
+        while (count.getAndSet(0) > 0 && running()) {
             futures.clear();
             phaseQueue.forEach(futures, phase, v -> { // in parallel
                 successors.clear(v);
@@ -122,7 +121,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
 
         // back propagation + dependency accumulation
         Arrays.fill(delta, 0d);
-        while (--phase > 0 && flag.running()) {
+        while (--phase > 0 && running()) {
             futures.clear();
             phaseQueue.forEach(futures, phase, w -> {
                 final double[] dsw = {0.0};

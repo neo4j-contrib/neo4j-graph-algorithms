@@ -32,7 +32,7 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
         final IntScatterSet descendant = new IntScatterSet();
         traverse.bfs(startNodeId,
                 Direction.OUTGOING,
-                node -> flag.running(),
+                node -> running(),
                 descendant::add)
                 .awaitTermination();
         getProgressLogger().logProgress(.5);
@@ -40,7 +40,7 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
         traverse.reset()
                 .bfs(startNodeId,
                         Direction.INCOMING,
-                        node -> descendant.contains(node) && flag.running(),
+                        node -> descendant.contains(node) && running(),
                         scc::add)
                 .awaitTermination();
         getProgressLogger().logProgress(1.0);

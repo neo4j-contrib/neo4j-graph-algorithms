@@ -78,7 +78,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
 
         @Override
         protected DisjointSetStruct compute() {
-            if (nodeCount - end >= batchSize) {
+            if (nodeCount - end >= batchSize && running()) {
                 final UnionFindTask process = new UnionFindTask(end);
                 process.fork();
                 return run().merge(process.join());
@@ -88,7 +88,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
 
         protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
-            for (int node = offset; node < end; node++) {
+            for (int node = offset; node < end && running(); node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     if (!struct.connected(sourceNodeId, targetNodeId)) {
                         struct.union(sourceNodeId, targetNodeId);
@@ -96,7 +96,8 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
                     return true;
                 });
             }
-            getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
+            getProgressLogger().logProgress(end - 1, nodeCount - 1);
+
             return struct;
         }
     }
@@ -112,7 +113,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
 
         protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
-            for (int node = offset; node < end; node++) {
+            for (int node = offset; node < end && running(); node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {
                     if (weight < threshold) {
                         return true;

@@ -79,7 +79,6 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     }
 
     private boolean compute(int startNode) {
-        final TerminationFlag flag = getTerminationFlag();
         clearPaths();
         stack.clear();
         queue.clear();
@@ -89,7 +88,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         sigma[startNode] = 1;
         distance[startNode] = 0;
         queue.addLast(startNode);
-        while (!queue.isEmpty() && flag.running()) {
+        while (!queue.isEmpty() && running()) {
             int node = queue.removeLast();
             stack.push(node);
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
@@ -104,7 +103,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
         }
-        while (!stack.isEmpty() && flag.running()) {
+        while (!stack.isEmpty() && running()) {
             final int node = stack.pop();
             if (null == paths[node]) {
                 continue;

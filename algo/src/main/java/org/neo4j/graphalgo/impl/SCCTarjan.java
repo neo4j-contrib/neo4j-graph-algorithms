@@ -157,7 +157,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
                 strongConnect(node);
             }
             progressLogger.logProgress((double) node / (nodeCount -1));
-            return true;
+            return running();
         }
     }
 }
