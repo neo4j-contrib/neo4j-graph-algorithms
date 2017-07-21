@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.kernel.api.KernelTransaction;
-import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.api.exceptions.TransactionFailureException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -21,36 +21,21 @@ public class TerminateProcedure {
     public Log log;
 
     @Context
-    public KernelTransaction ktx;
+    public KernelTransaction transaction;
 
     @Procedure("test.testProc")
     public void allShortestPathsStream(
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) throws TransactionFailureException {
 
-        // simulate long running algorithm
-        while (true) {
-
-            // check if termination reason is set
-            Status reason = ktx.getReasonIfTerminated();
-            if (reason == null) {
-
-                // check if ktx is still open
-                if (!ktx.isOpen()) {
-                    System.out.println("KernelTransaction is closed");
-                    ktx.failure();
-                    break;
-                }
-
-            } else {
-                System.out.println("reason.code().description() = " + reason.code().description());
-                ktx.failure();
-                break;
-            }
+        final TerminationFlag flag = TerminationFlag.wrap(transaction);
+        while (flag.running()) {
+            // simulate long running algorithm
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignore) {}
         }
-
-        System.out.println("transaction termination successful");
-
+        log.info("algorithm termination successful");
     }
 
     public static class Result {
