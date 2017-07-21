@@ -5,7 +5,9 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
@@ -117,13 +119,14 @@ public class UnionFindProc {
             final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
             log.debug("Computing union find with threshold " + threshold);
             struct = new GraphUnionFind(graph)
-                    .withLog(log)
-                    .withKernelTransaction(transaction)
+                    .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(threshold);
         } else {
             log.debug("Computing union find without threshold");
             struct = new GraphUnionFind(graph)
-                    .withLog(log)
+                    .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
         }
         return struct;

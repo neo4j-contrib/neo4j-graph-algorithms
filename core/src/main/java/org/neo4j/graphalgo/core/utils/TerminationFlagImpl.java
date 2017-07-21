@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.logging.Log;
 
 /**
  * @author mknblch

@@ -4,7 +4,9 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
 import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.graphalgo.exporter.MSTPrimExporter;
@@ -80,8 +82,8 @@ public class MSTPrimProc {
                 idMapper,
                 new BothRelationshipAdapter(relationshipContainer),
                 weightMap)
-                .withLog(log)
-                .withKernelTransaction(transaction);
+                .withProgressLogger(ProgressLogger.wrap(log, "MST(Prim)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> {
             mstPrim.compute(startNodeId);

@@ -4,7 +4,9 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
@@ -49,8 +51,8 @@ public class ClosenessCentralityProc {
                 .load(configuration.getGraphImpl());
 
         return new MSClosenessCentrality(graph, Pools.DEFAULT)
-                .withLog(log)
-                .withKernelTransaction(transaction)
+                .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
                 .resultStream();
     }
@@ -81,8 +83,8 @@ public class ClosenessCentralityProc {
         builder.withNodeCount(graph.nodeCount());
 
         final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, Pools.DEFAULT)
-                .withLog(log)
-                .withKernelTransaction(transaction);
+                .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(centrality::compute);
 

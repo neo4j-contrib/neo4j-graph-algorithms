@@ -4,7 +4,9 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
@@ -73,8 +75,8 @@ public class ShortestPathDeltaSteppingProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDeltaStepping(graph, delta)
-                .withLog(log)
-                .withKernelTransaction(transaction)
+                .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
                 ))
@@ -111,8 +113,8 @@ public class ShortestPathDeltaSteppingProc {
         }
 
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
-                .withLog(log)
-                .withKernelTransaction(transaction)
+                .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Pools.DEFAULT);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));

@@ -5,7 +5,9 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.PageRankScore;
@@ -123,8 +125,8 @@ public final class PageRankProc {
                 graph,
                 graph,
                 dampingFactor)
-                .withLog(log)
-                .withKernelTransaction(transaction);
+                .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         statsBuilder.timeEval(() -> algo.compute(iterations));
 

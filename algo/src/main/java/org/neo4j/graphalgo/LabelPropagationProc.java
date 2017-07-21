@@ -6,7 +6,9 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.exporter.LabelPropagationExporter;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
@@ -123,8 +125,8 @@ public final class LabelPropagationProc {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             return new LabelPropagation(graph, pool)
-                    .withLog(log)
-                    .withKernelTransaction(transaction)
+                    .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(
                     direction,
                     iterations,
