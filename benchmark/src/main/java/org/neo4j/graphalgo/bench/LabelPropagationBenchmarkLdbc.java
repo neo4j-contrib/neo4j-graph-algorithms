@@ -95,15 +95,6 @@ public class LabelPropagationBenchmarkLdbc {
         );
     }
 
-//    @Benchmark
-//    public Object _02_apoc() {
-//        return runVoidQuery(
-//                db,
-//                "CALL algo.algo.community(" + iterations + ",[],'partition',null,'OUTGOING','weight'," + batchSize + ") "
-//                + "YIELD "
-//        );
-//    }
-
     @Benchmark
     public Object _03_direct() {
         return new org.neo4j.graphalgo.impl.LabelPropagation(graph, Pools.DEFAULT)
