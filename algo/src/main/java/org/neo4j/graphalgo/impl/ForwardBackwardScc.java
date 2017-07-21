@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
 import org.neo4j.graphdb.Direction;
 
@@ -25,15 +26,22 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
     }
 
     public ForwardBackwardScc compute(int startNodeId) {
+        final TerminationFlag flag = getTerminationFlag();
         scc.clear();
         // D <- BFS( G(V,E(V)), v)
         final IntScatterSet descendant = new IntScatterSet();
-        traverse.bfs(startNodeId, Direction.OUTGOING, node -> true, descendant::add)
+        traverse.bfs(startNodeId,
+                Direction.OUTGOING,
+                node -> running(),
+                descendant::add)
                 .awaitTermination();
         getProgressLogger().logProgress(.5);
         // ST <- BFS( G(V, E'(V)), v)
         traverse.reset()
-                .bfs(startNodeId, Direction.INCOMING, descendant::contains, scc::add)
+                .bfs(startNodeId,
+                        Direction.INCOMING,
+                        node -> descendant.contains(node) && running(),
+                        scc::add)
                 .awaitTermination();
         getProgressLogger().logProgress(1.0);
         // SCC <- V & ST

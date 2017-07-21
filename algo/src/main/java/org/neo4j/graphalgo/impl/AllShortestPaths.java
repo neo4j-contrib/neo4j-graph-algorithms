@@ -47,7 +47,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
     private final ExecutorService executorService;
     private final BlockingQueue<Result> resultQueue;
 
-    private volatile boolean running;
+    private volatile boolean outputStreamOpen;
 
     public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -70,7 +70,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
     public Stream<Result> resultStream() {
 
         counter.set(0);
-        running = true;
+        outputStreamOpen = true;
 
         for (int i = 0; i < concurrency; i++) {
             executorService.submit(new ShortestPathTask());
@@ -79,7 +79,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
         long end = (long) nodeCount * nodeCount;
 
         return LongStream.range(0, end)
-                .onClose(() -> running = false)
+                .onClose(() -> outputStreamOpen = false)
                 .mapToObj(i -> {
                     try {
                         return resultQueue.take();
@@ -113,7 +113,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
         public void run() {
             final ProgressLogger progressLogger = getProgressLogger();
             int startNode;
-            while (running && (startNode = counter.getAndIncrement()) < nodeCount) {
+            while (outputStreamOpen && running() && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
                 for (int i = 0; i < nodeCount; i++) {
                     final Result result = new Result(
@@ -135,7 +135,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
             Arrays.fill(distance, Double.POSITIVE_INFINITY);
             distance[startNode] = 0d;
             queue.add(startNode, 0d);
-            while (running && !queue.isEmpty()) {
+            while (outputStreamOpen && !queue.isEmpty()) {
                 final int node = queue.pop();
                 final double sourceDistance = distance[node];
                 // scan relationships

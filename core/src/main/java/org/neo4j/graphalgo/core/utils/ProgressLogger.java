@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
 
 /**
@@ -8,6 +9,10 @@ import org.neo4j.logging.NullLog;
 public interface ProgressLogger {
 
     ProgressLogger NULL_LOGGER = new ProgressLoggerAdapter(NullLog.getInstance(), "NULL");
+
+    static ProgressLogger wrap(Log log, String task) {
+        return new ProgressLoggerAdapter(log, task);
+    }
 
     void logProgress(double percentDone);
 

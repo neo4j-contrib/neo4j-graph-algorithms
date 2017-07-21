@@ -106,7 +106,7 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
         relax(graph.toMappedNodeId(startNode), 0);
 
         // as long as the bucket contains any value
-        while (!buckets.isEmpty()) {
+        while (!buckets.isEmpty() && running()) {
             // reset temporary arrays
             light.clear();
             heavy.clear();

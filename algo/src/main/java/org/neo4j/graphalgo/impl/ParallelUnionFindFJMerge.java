@@ -66,6 +66,9 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
 
     public void merge(ArrayList<? extends UFProcess> ufProcesses) {
         ParallelUtil.run(ufProcesses, executor);
+        if (!running()) {
+            return;
+        }
         final Stack<DisjointSetStruct> temp = new Stack<>();
         ufProcesses.forEach(uf -> temp.add(uf.struct));
         struct = ForkJoinPool.commonPool().invoke(new Merge(temp));
@@ -97,7 +100,7 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
 
         @Override
         public void run() {
-            for (int node = offset; node < end && node < nodeCount; node++) {
+            for (int node = offset; node < end && node < nodeCount && running(); node++) {
                 try {
                     graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                         if (!struct.connected(sourceNodeId, targetNodeId)) {
@@ -129,7 +132,7 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
 
         @Override
         public void run() {
-            for (int node = offset; node < end && node < nodeCount; node++) {
+            for (int node = offset; node < end && node < nodeCount && running(); node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {
                     if (weight > threshold) {
                         struct.union(sourceNodeId, targetNodeId);
@@ -152,6 +155,9 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
         protected DisjointSetStruct compute() {
             final int size = structs.size();
             if (size == 1) {
+                return structs.pop();
+            }
+            if (!running()) {
                 return structs.pop();
             }
             if (size == 2) {

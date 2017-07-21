@@ -4,9 +4,12 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.AllShortestPaths;
 import org.neo4j.graphalgo.impl.MSBFSAllShortestPaths;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -24,6 +27,9 @@ public class AllShortestPathsProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure("algo.allShortestPaths.stream")
     @Description("CALL algo.allShortestPaths.stream(propertyName:String" +
@@ -47,6 +53,8 @@ public class AllShortestPathsProc {
                     .load(configuration.getGraphImpl());
 
             return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
+                    .withProgressLogger(ProgressLogger.wrap(log, "AllShortestPaths(MultiSource)"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .resultStream();
         }
 
@@ -61,10 +69,9 @@ public class AllShortestPathsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-
-
         return new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
-                .withLog(log)
+                .withProgressLogger(ProgressLogger.wrap(log, "AllShortestPaths"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .resultStream();
     }
 }

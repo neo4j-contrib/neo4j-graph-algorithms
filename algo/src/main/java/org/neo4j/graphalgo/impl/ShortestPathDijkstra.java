@@ -114,7 +114,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     }
 
     private void run(int goal) {
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && running()) {
             int node = queue.pop();
             if (node == goal) {
                 return;

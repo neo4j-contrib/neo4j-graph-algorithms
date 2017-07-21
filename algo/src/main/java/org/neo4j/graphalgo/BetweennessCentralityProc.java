@@ -3,14 +3,13 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -28,6 +27,9 @@ public class BetweennessCentralityProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(value = "algo.betweenness.exp1.stream")
     @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {scaleFactor:1000000}) YIELD nodeId, centrality - yields centrality for each node")
@@ -49,7 +51,8 @@ public class BetweennessCentralityProc {
         return new BetweennessCentralitySuccessorBrandes(graph,
                 configuration.getNumber("scaleFactor", 100_000).intValue(),
                 Pools.DEFAULT)
-                .withLog(log)
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
                 .compute()
                 .resultStream();
     }
@@ -75,7 +78,8 @@ public class BetweennessCentralityProc {
                     configuration.getNumber("scaleFactor", 100_000).intValue(),
                     Pools.DEFAULT,
                     configuration.getConcurrency())
-                    .withLog(log)
+                    .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute()
                     .resultStream();
         }
@@ -114,7 +118,8 @@ public class BetweennessCentralityProc {
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT)
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> {
             bc.compute();
@@ -173,7 +178,8 @@ public class BetweennessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
-                .withLog(log);
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(sequential)"));
 
         builder.timeEval(() -> {
             bc.compute();
@@ -218,7 +224,8 @@ public class BetweennessCentralityProc {
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT,
                 configuration.getConcurrency())
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> {
             bc.compute();
@@ -226,8 +233,6 @@ public class BetweennessCentralityProc {
                 computeStats(builder, bc.getCentrality());
             }
         });
-
-        System.out.println("out");
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {

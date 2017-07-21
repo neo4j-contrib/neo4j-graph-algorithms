@@ -4,7 +4,9 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.SCCIntArrayExporter;
 import org.neo4j.graphalgo.exporter.SCCTarjanExporter;
@@ -12,6 +14,7 @@ import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -32,6 +35,9 @@ public class StronglyConnectedComponentsProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     // default algo.scc -> tarjan
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
@@ -70,7 +76,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTarjan tarjan = new SCCTarjan(graph)
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(Tarjan)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> {
             tarjan.compute();
@@ -116,7 +123,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCTunedTarjan tarjan = new SCCTunedTarjan(graph)
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(TunedTarjan)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(tarjan::compute);
 
@@ -156,7 +164,8 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
 
         return new SCCTunedTarjan(graph)
-                .withLog(log)
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(TunedTarjan)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
                 .resultStream();
     }
@@ -186,7 +195,8 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(IterativeTarjan)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(tarjan::compute);
 
@@ -226,7 +236,8 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
 
         return new SCCIterativeTarjan(graph)
-                .withLog(log)
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(IterativeTarjan)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
                 .resultStream();
     }
@@ -258,8 +269,8 @@ public class StronglyConnectedComponentsProc {
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
-                .withLog(log)
-                ;
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(multistep::compute);
 
@@ -300,7 +311,8 @@ public class StronglyConnectedComponentsProc {
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getNumber("concurrency", 1).intValue(),
                 configuration.getNumber("cutoff", 100_000).intValue())
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         multistep.compute();
 
@@ -329,7 +341,8 @@ public class StronglyConnectedComponentsProc {
 
         return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
                 configuration.getConcurrency(1))
-                .withLog(log)
+                .withProgressLogger(ProgressLogger.wrap(log, "SCC(ForwardBackward)"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(graph.toMappedNodeId(startNodeId))
                 .resultStream();
     }

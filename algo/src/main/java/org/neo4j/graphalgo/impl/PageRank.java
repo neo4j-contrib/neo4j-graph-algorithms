@@ -303,7 +303,7 @@ public class PageRank extends Algorithm<PageRank> {
         }
     }
 
-    private static final class ComputeSteps {
+    private final class ComputeSteps {
         private final List<ComputeStep> steps;
         private final List<Future<?>> futures;
         private final ExecutorService pool;
@@ -353,7 +353,7 @@ public class PageRank extends Algorithm<PageRank> {
         }
 
         private void run(int iterations) {
-            for (int i = 0; i < iterations; i++) {
+            for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.run(steps, last, pool, futures);
                 synchronizeScores();

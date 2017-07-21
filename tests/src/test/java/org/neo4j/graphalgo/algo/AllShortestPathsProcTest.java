@@ -117,7 +117,6 @@ public final class AllShortestPathsProcTest {
             final long source = row.getNumber("sourceNodeId").longValue();
             final long target = row.getNumber("targetNodeId").longValue();
             final double distance = row.getNumber("distance").doubleValue();
-            System.out.println(source + " -> " + target + " : " + distance);
             if (source == target) {
                 assertEquals(0.0, distance, 0.1);
             }

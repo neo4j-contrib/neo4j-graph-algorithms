@@ -5,13 +5,16 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
 import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -33,6 +36,9 @@ public class UnionFindProc4 {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure(value = "algo.unionFind.exp3", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
@@ -116,13 +122,15 @@ public class UnionFindProc4 {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
-                        .withLog(log)
+                        .withProgressLogger(ProgressLogger.wrap(log, "CC(ParallelUnionFindForkJoin)"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
                 struct = new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
-                        .withLog(log)
+                        .withProgressLogger(ProgressLogger.wrap(log, "CC(ParallelUnionFindForkJoin)"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute()
                         .getStruct();
             }
@@ -131,12 +139,14 @@ public class UnionFindProc4 {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold " + threshold);
                 struct = new GraphUnionFind(graph)
-                        .withLog(log)
+                        .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute(threshold);
             } else {
                 log.debug("Computing union find without threshold");
                 struct = new GraphUnionFind(graph)
-                        .withLog(log)
+                        .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute();
             }
         }

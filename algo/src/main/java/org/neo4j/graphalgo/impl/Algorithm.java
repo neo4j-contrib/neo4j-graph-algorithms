@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.logging.*;
@@ -7,23 +8,34 @@ import org.neo4j.logging.*;
 /**
  * @author mknblch
  */
-public abstract class Algorithm<ME extends Algorithm<ME>> {
-
-    private static final String TASK = "COMPUTE";
-
-    private Log log = NullLog.getInstance();
+public abstract class Algorithm<ME extends Algorithm<ME>> implements TerminationFlag {
 
     private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
+    private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
+
     public abstract ME me();
 
-    public ME withLog(Log log) {
-        this.log = log;
-        this.progressLogger = new ProgressLoggerAdapter(log, TASK);
+    public ME withProgressLogger(ProgressLogger progressLogger) {
+        this.progressLogger = progressLogger;
         return me();
+    }
+
+    public ME withTerminationFlag(TerminationFlag terminationFlag) {
+        this.terminationFlag = terminationFlag;
+        return me();
+    }
+
+    public TerminationFlag getTerminationFlag() {
+        return terminationFlag;
     }
 
     public ProgressLogger getProgressLogger() {
         return progressLogger;
+    }
+
+    @Override
+    public boolean running() {
+        return terminationFlag.running();
     }
 }

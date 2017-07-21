@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
@@ -41,6 +42,9 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
         dss.reset();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
+            if (!running()) {
+                return false;
+            }
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id) -> {
                 dss.union(source, target);
                 return true;
@@ -60,6 +64,9 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
         dss.reset();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode(node -> {
+            if (!running()) {
+                return false;
+            }
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, id, weight) -> {
                 if (weight >= threshold) {
                     dss.union(source, target);

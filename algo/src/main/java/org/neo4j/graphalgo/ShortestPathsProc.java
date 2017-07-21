@@ -4,12 +4,15 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -30,6 +33,9 @@ public class ShortestPathsProc {
 
     @Context
     public Log log;
+
+    @Context
+    public KernelTransaction transaction;
 
     @Procedure("algo.shortestPaths.stream")
     @Description("CALL algo.shortestPaths.stream(startNodeId:long, propertyName:String" +
@@ -55,7 +61,8 @@ public class ShortestPathsProc {
                 .load(configuration.getGraphImpl());
 
         return new ShortestPaths(graph)
-                .withLog(log)
+                .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(startNode.getId())
                 .resultStream();
     }
@@ -88,7 +95,8 @@ public class ShortestPathsProc {
         load.stop();
 
         final ShortestPaths algorithm = new ShortestPaths(graph)
-                .withLog(log);
+                .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
 
