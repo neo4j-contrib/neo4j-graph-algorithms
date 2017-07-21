@@ -64,7 +64,7 @@ public class MSColoringProc {
                     write(graph, struct, configuration));
         }
 
-        return null; // TODO
+        return Stream.of(builder.build());
     }
 
     @Procedure(value = "algo.unionFind.mscoloring.stream")
