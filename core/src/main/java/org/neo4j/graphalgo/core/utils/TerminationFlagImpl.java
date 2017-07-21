@@ -10,7 +10,7 @@ public class TerminationFlagImpl implements TerminationFlag {
 
     private final KernelTransaction transaction;
 
-    private long interval = 1000;
+    private long interval = 10_000;
 
     private volatile long lastCheck = 0;
 
