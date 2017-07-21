@@ -193,36 +193,6 @@ public final class ParallelUtil {
         }
     }
 
-    public static void awaitTermination(Collection<Future<?>> futures, TerminationFlag terminationFlag) {
-        boolean done = false;
-        Throwable error = null;
-        try {
-            for (Future<?> future : futures) {
-                if (!terminationFlag.running()) {
-                    break;
-                }
-                try {
-                    future.get();
-                } catch (ExecutionException ee) {
-                    error = Exceptions.chain(error, ee.getCause());
-                } catch (CancellationException ignore) {
-                }
-            }
-            done = true;
-        } catch (InterruptedException e) {
-            error = Exceptions.chain(e, error);
-        } finally {
-            if (!done) {
-                for (final Future<?> future : futures) {
-                    future.cancel(true);
-                }
-            }
-        }
-        if (error != null) {
-            throw Exceptions.launderedException(error);
-        }
-    }
-
     public static void awaitTerminations(Queue<Future<?>> futures) {
         boolean done = false;
         Throwable error = null;
