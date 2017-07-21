@@ -47,7 +47,7 @@ public class Coloring extends Algorithm<Coloring> {
         // for each node assign color
         graph.forEachNode(source -> {
             final int sourceColor = colors.get(source);
-            bfs.bfs(source, Direction.OUTGOING, i -> true, target -> {
+            bfs.bfs(source, Direction.OUTGOING, i -> running(), target -> {
                 final int targetColor = colors.get(target);
                 if (sourceColor > targetColor) {
                     setColor(target, sourceColor);
