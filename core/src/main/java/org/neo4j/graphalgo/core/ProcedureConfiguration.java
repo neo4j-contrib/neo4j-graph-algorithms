@@ -121,7 +121,7 @@ public class ProcedureConfiguration {
      * @return true if write is activated, false otherwise
      */
     public boolean isWriteFlag() {
-        return isWriteFlag(false);
+        return isWriteFlag(true);
     }
 
     /**
