@@ -24,6 +24,10 @@ import java.util.stream.Stream;
  */
 public class ClosenessCentralityProc {
 
+
+    public static final String DEFAULT_TARGET_PROPERTY = "centrality";
+
+
     @Context
     public GraphDatabaseAPI api;
 
@@ -93,7 +97,7 @@ public class ClosenessCentralityProc {
             final double[] centralityResult = centrality.getCentrality();
             centrality.release();
             builder.timeWrite(() -> {
-                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(centralityResult);
             });
         }

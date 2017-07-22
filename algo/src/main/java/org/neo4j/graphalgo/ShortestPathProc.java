@@ -25,6 +25,9 @@ import java.util.stream.Stream;
  */
 public class ShortestPathProc {
 
+    public static final String DEFAULT_TARGET_PROPERTY = "sssp";
+
+
     @Context
     public GraphDatabaseAPI api;
 
@@ -109,7 +112,7 @@ public class ShortestPathProc {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final IntArrayDeque finalPath = dijkstra.getFinalPath();
                 dijkstra.release();
-                new ShortestPathDijkstra.SPExporter(graph, api, configuration.getWriteProperty())
+                new ShortestPathDijkstra.SPExporter(graph, api, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY))
                         .write(finalPath);
             }
         }

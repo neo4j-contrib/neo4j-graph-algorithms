@@ -105,7 +105,7 @@ public class ShortestPathsProc {
             builder.timeWrite(() -> {
                 final IntDoubleMap shortestPaths = algorithm.getShortestPaths();
                 algorithm.release();
-                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(shortestPaths);
             });
         }
