@@ -105,21 +105,21 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | writeMillis | int | milliseconds for writing result data back
 |===
 
-== Versions
+== Implementations
 
-==== algo.scc.tarjan
+`algo.scc.tarjan`
 
 - original *recursive* tarjan implementation
 
-==== algo.scc.tunedTarjan
+`algo.scc.tunedTarjan`
 
 - also a recursive tarjan implementation
 
-==== algo.scc.iterative
+`algo.scc.iterative`
 
 - *iterative* adaption of tarjan algorithm
 
-==== algo.scc.multistep
+`algo.scc.multistep`
 
 - parallel scc algorithm
 
