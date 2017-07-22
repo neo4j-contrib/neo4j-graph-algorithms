@@ -18,37 +18,138 @@ At that time making long-distance calls in the U.S.A. was automatized, and alter
 
 == Algorithm explanation on simple sample graph
 
+image::{img}/sssp.png[]
+
+.Create sample graph
 [source,cypher]
 ----
-MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
+
+CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}), 
+       (d:Loc{name:'D'}), (e:Loc{name:'E'}), (f:Loc{name:'F'}),
+       (a)-[:ROAD {cost:50}]->(b),
+       (a)-[:ROAD {cost:50}]->(c),
+       (a)-[:ROAD {cost:100}]->(d),
+       (a)-[:RAIL {cost:50}]->(d),
+       (b)-[:ROAD {cost:40}]->(d),
+       (c)-[:ROAD {cost:40}]->(d),
+       (c)-[:ROAD {cost:80}]->(e),
+       (d)-[:ROAD {cost:30}]->(e),
+       (d)-[:ROAD {cost:80}]->(f),
+       (e)-[:ROAD {cost:40}]->(f),
+       (e)-[:RAIL {cost:20}]->(f);
+
+----
+
+==== Dijkstra single source shortest path algorithm
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.shortestPath.stream(start, end, 'cost') 
 YIELD nodeId, cost
+RETURN nodeId, cost LIMIT 20
                        
 ----
 
-
+.Running algorithm and writing back results 
 [source,cypher]
 ----
-MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
-CALL algo.shortestPath(start, end, 'cost') 
-YIELD loadDuration, evalDuration, nodeCount, totalCost
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost',{write:true,writeProperty:'sssp'}) 
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost
 
 ----
 
+==== Delta stepping algorithm
+
+.Running algorithm and streaming results
 [source,cypher]
 ----
-MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0)
-YIELD nodeId, distance RETURN nodeId, distance
+MATCH(n:Loc {name:'A'})
+CALL algo.deltaStepping.stream(n, 'cost', 3.0)
+YIELD nodeId, distance 
+RETURN nodeId, distance LIMIT 20
 
 ----
 
+.Running algorithm and writing back results 
 [source,cypher]
 ----
 
-MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp'})
-YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration
+MATCH(n:Node {name:'s'})
+CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sssp'})
+YIELD nodeCount, loadDuration, evalDuration, writeDuration 
+RETURN nodeCount, loadDuration, evalDuration, writeDuration
 
 ----
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'})
+YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| startNode  | node | null | no | start node
+| endNode | node | null | no | end node
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'sssp' | yes | property name written back to the node sequence of the node in the path
+| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeCount | int | number of nodes considered
+| totalCost | float | sum of all weights along the path
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0})
+ YIELD nodeId, cost
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| startNode  | node | null | no | start node
+| endNode | node | null | no | end node
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| cost | int | cost it takes to get from start node to specific node 
+|===
+
 
 == Example Usage
 

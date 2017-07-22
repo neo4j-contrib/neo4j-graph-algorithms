@@ -150,7 +150,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 .running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85, graph:"heavy"})
+CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85})
 YIELD node, score - calculates page rank and streams results
 ----
 
@@ -162,7 +162,6 @@ YIELD node, score - calculates page rank and streams results
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | iterations | int | 20 | yes | how many iterations of page-rank to run
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
-| graph | string | 'heavy' | yes | ...
 |===
 
 .results
