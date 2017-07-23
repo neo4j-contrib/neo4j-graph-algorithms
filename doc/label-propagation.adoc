@@ -15,7 +15,10 @@ The simplicity and time efficiency of the LPA make it a popular graph partitioni
 
 == When to use it / use-cases
 
-
+Label propagation is an algorithm for finding communities ( partitions ).
+It is one of the state-of-the-art methods, which estimates labels by propagating label information through a graph.
+Label propagation assumes that nodes connected in a graph should have similar labels.
+Consequently, the label estimation heavily depends on relationships in a graph which represent similarity of each node pair.
 
 == Constraints / when not to use it
 
