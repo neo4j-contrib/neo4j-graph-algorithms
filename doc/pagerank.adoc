@@ -113,7 +113,7 @@ CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score order by score de
 [source,cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, 
-write: true,writeProperty:"pagerank",graph:"heavy"}) 
+write: true,writeProperty:'pagerank'}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
 - calculates page rank and potentially writes back
 ----
