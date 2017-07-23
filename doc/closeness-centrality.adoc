@@ -68,7 +68,7 @@ RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality f
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality', graph: 'heavy'}) 
+CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) 
 YIELD nodes,loadMillis, computeMillis, writeMillis 
 - calculates closeness centrality and potentially writes back
 ----
