@@ -22,6 +22,10 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentralityProc {
 
+
+    public static final String DEFAULT_TARGET_PROPERTY = "centrality";
+
+
     @Context
     public GraphDatabaseAPI api;
 
@@ -133,7 +137,7 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(centrality);
 
             });
@@ -196,7 +200,7 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(centrality);
             });
         }
@@ -244,7 +248,7 @@ public class BetweennessCentralityProc {
             builder.timeWrite(() -> {
                 final AtomicDoubleArray centrality = bc.getCentrality();
                 bc.release();
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
+                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(centrality);
             });
         }
