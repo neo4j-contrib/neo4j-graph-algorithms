@@ -14,6 +14,16 @@ At that time making long-distance calls in the U.S.A. was automatized, and alter
 
 == When to use it / use-cases
 
+Shortest path algorithms are applied to automatically find directions between physical locations, such as driving directions on web mapping websites like MapQuest or Google Maps. 
+
+If one represents a nondeterministic abstract machine as a graph where nodes describe states and relationships describe possible transitions, shortest path algorithms can be used to find an optimal sequence of choices to reach a certain goal state, or to establish lower bounds on the time needed to reach a given state. 
+For example, if nodes represent the states of a puzzle like a Rubik's Cube and each directed relationship corresponds to a single move or turn, shortest path algorithms can be used to find a solution that uses the minimum possible number of moves.
+
+In a networking or telecommunications mindset, this shortest path problem is sometimes called the min-delay path problem and usually tied with a widest path problem. 
+For example, the algorithm may seek the shortest (min-delay) widest path, or widest shortest (min-delay) path.
+
+Other applications, often studied in operations research, include plant and facility layout, robotics, transportation, and VLSI design.
+
 == Constraints / when not to use it
 
 == Algorithm explanation on simple sample graph
