@@ -426,6 +426,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_introduction">Introduction</a>
 <ul class="sectlevel2">
 <li><a href="#_installation">Installation</a></li>
+<li><a href="#_introduction_2">Introduction</a></li>
 <li><a href="#_usage">Usage</a></li>
 <li><a href="#_building">Building</a></li>
 </ul>
@@ -566,6 +567,29 @@ ORDER BY name</code></pre>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_introduction_2"><a class="link" href="#_introduction_2">Introduction</a></h3>
+<div class="paragraph">
+<p>Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes.
+A graph is made up of nodes (vertices) which are connected by relationships (edges).
+A graph may be <em>undirected</em>, meaning that there is no distinction between the two nodes associated with each relationship, or its relationships may be <em>directed</em> from one node to another.
+Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way.</p>
+</div>
+<div class="paragraph">
+<p>We are tied to our friends.
+Cities are connected by roads and airline routes.
+Flora and fauna are bound together in a food web.
+Countries are involved in trading relationships.
+The World Wide Web is a virtual network of information.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Note that Neo4j can only save directed relationships, but we can treat them as though they are undirected when we are doing the analysis</em></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_usage"><a class="link" href="#_usage">Usage</a></h3>
 <div class="paragraph">
 <p>These algorithms are exposed as Neo4j procedures.
@@ -609,7 +633,7 @@ Then use a node-statement instead of the label parameter and a relationship-stat
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p:Page)-[:Link]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p1:Page)-[:Link]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
 {graph:'cypher', iterations:5, write: true});</code></pre>
 </div>
 </div>
@@ -649,7 +673,7 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.allShortestPaths.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.allShortestPaths.stream(propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.allShortestPaths.stream(weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.exp2</code></p></td>
@@ -717,11 +741,11 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.deltaStepping.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.deltaStepping</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping(startNode:Node, propertyName:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
@@ -733,19 +757,19 @@ $NEO4J_HOME/bin/neo4j restart</pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.stream(startNodeId:long, endNodeId:long, propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPath</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNodeId:long, endNodeId:long, propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'}) YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPaths.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPaths.stream(startNodeId:long, propertyName:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPaths.stream(startNode:Node, weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD nodeId, distance - yields a stream of {nodeId, cost} from start to end (inclusive)</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.shortestPaths</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPaths(startNodeId:long, propertyName:String{write:true, targetProperty:'path', nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, targetProperty - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPaths(startNode:Node, weightProperty:String{write:true, targetProperty:'path', nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) YIELD loadDuration, evalDuration, writeDuration, nodeCount, targetProperty - yields nodeCount, totalCost, loadDuration, evalDuration</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
@@ -831,11 +855,41 @@ in search, browsing, and traffic estimation.</p>
 <p>Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.</p>
 </div>
 <div class="paragraph">
-<p>PageRank or PR(A) can be calculated using a simple iterative algorithm, and corresponds to the principal eigenvector of the normalized link matrix of the web.</p>
+<p>The underlying mathematics of PageRank has to do with random walks on networks, akin to how random surfers propagate through a network.
+Precisely, PageRank is an example of a discrete ergodic Markov Chain.
+Random surfers follow links, but occasionally teleport to random vertices.
+The PageRank of a node is the probability it is visited by a random surfer with teleportation.
+PageRank is now widely recognized as a way of detecting central nodes in a network, and even has applications in systems biology.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases"><a class="link" href="#_when_to_use_it_use_cases">When to use it / use-cases</a></h4>
+<div class="paragraph">
+<p>The mathematics of PageRank are entirely general and apply to any graph or network in any domain.
+Thus, PageRank is now regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation.
+It&#8217;s even used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.</p>
+</div>
+<div class="paragraph">
+<p>In neuroscience, the PageRank of a neuron in a neural network has been found to correlate with its relative firing rate.</p>
+</div>
+<div class="paragraph">
+<p>Personalized PageRank is used by Twitter to present users with other accounts they may wish to follow.</p>
+</div>
+<div class="paragraph">
+<p>PageRank has been used to rank spaces or streets to predict how many people (pedestrians or vehicles) come to the individual spaces or streets. In lexical semantics it has been used to perform Word Sense Disambiguation,Semantic similarity, and also to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity.</p>
+</div>
+<div class="paragraph">
+<p>In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment.</p>
+</div>
+<div class="paragraph">
+<p>For the analysis of protein networks in biology PageRank is also a useful tool.</p>
+</div>
+<div class="paragraph">
+<p>Pagerank has recently been used to quantify the scientific impact of researchers. The underlying citation and collaboration networks are used in conjunction with pagerank algorithm in order to come up with a ranking system for individual publications which propagates to individual authors. The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index in the context of many drawbacks exhibited by h-index.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_constraints_when_not_to_use_it"><a class="link" href="#_constraints_when_not_to_use_it">Constraints / when not to use it</a></h4>
 
 </div>
 <div class="sect3">
@@ -871,7 +925,9 @@ CREATE (home)-[:LINKS]-&gt;(about)
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) YIELD node, score</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
+YIELD node, score
+RETURN node,score order by score desc limit 20</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -939,7 +995,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <div class="title">minimal</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
-CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score</code></pre>
+CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score order by score desc limit 20</code></pre>
 </div>
 </div>
 </div>
@@ -949,7 +1005,7 @@ CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score</code></pre>
 <div class="title">running algorithm and writing back results</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85,
-write: true,writeProperty:"pagerank"})
+write: true,writeProperty:'pagerank'})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 - calculates page rank and potentially writes back</code></pre>
 </div>
@@ -999,7 +1055,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.85</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank caculation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank calculation</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">write</p></td>
@@ -1014,6 +1070,13 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 <td class="tableblock halign-left valign-top"><p class="tableblock">'pagerank'</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">graph</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">'heavy'</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement</p></td>
 </tr>
 </tbody>
 </table>
@@ -1126,7 +1189,7 @@ YIELD node, score - calculates page rank and streams results</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.85</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank caculation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">damping factor of the page-rank calculation</p></td>
 </tr>
 </tbody>
 </table>
@@ -1157,8 +1220,42 @@ YIELD node, score - calculates page rank and streams results</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_constraints_when_not_to_use_it"><a class="link" href="#_constraints_when_not_to_use_it">Constraints / when not to use it</a></h4>
-
+<h4 id="_cypher_loading_2"><a class="link" href="#_cypher_loading_2">Cypher loading</a></h4>
+<div class="paragraph">
+<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set <code>graph:'cypher'</code> in the config.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank(
+'MATCH (p:Page) RETURN id(p) as id',
+'MATCH (p1:Page)-[:Link]-&gt;(p2:Page) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', iterations:5, write: true});</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_versions"><a class="link" href="#_versions">Versions</a></h4>
+<div class="paragraph">
+<p>We support the following versions of the pageRank algorithm:</p>
+</div>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; directed, unweighted</p>
+</li>
+<li>
+<p>&#10063; directed, weighted</p>
+</li>
+<li>
+<p>&#10063; undirected, unweighted</p>
+</li>
+<li>
+<p>&#10063; undirected, weighted</p>
+</li>
+</ul>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_references"><a class="link" href="#_references">References</a></h4>
@@ -1175,6 +1272,9 @@ YIELD node, score - calculates page rank and streams results</code></pre>
 </li>
 <li>
 <p><a href="http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm" class="bare">http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm</a></p>
+</li>
+<li>
+<p><a href="https://anthonybonato.com/2016/04/13/the-mathematics-of-game-of-thrones/" class="bare">https://anthonybonato.com/2016/04/13/the-mathematics-of-game-of-thrones/</a></p>
 </li>
 </ul>
 </div>
@@ -1248,13 +1348,15 @@ CREATE (nAlice)-[:MANAGE]-&gt;(nBridget)
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness.stream() YIELD nodeId, centrality</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness.stream('User','MANAGE')
+YIELD nodeId, centrality
+RETURN nodeId,centrality order by centrality desc limit 20</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">Running algorithm and writing back results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness('','', {write:true, writeProperty:'centrality'})
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness('User','MANAGE', {write:true, writeProperty:'centrality'})
 YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis</code></pre>
 </div>
 </div>
@@ -1368,6 +1470,13 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 <td class="tableblock halign-left valign-top"><p class="tableblock">'centrality'</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">graph</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">'heavy'</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement</p></td>
 </tr>
 </tbody>
 </table>
@@ -1491,9 +1600,87 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 </table>
 </div>
 <div class="sect3">
+<h4 id="_cypher_loading_3"><a class="link" href="#_cypher_loading_3">Cypher loading</a></h4>
+<div class="paragraph">
+<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set <code>graph:'cypher'</code> in the config.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness(
+'MATCH (p:User) RETURN id(p) as id',
+'MATCH (p1:User)-[:MANAGE]-&gt;(p2:User) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', write: true});</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_versions_2"><a class="link" href="#_versions_2">Versions</a></h4>
+<div class="paragraph">
+<p>We support the following versions of the betweenness centrality algorithm:</p>
+</div>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; directed, unweighted</p>
+</li>
+<li>
+<p>&#10063; directed, weighted</p>
+</li>
+<li>
+<p>&#10063; undirected, unweighted</p>
+</li>
+<li>
+<p>&#10063; undirected, weighted</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_implementations"><a class="link" href="#_implementations">Implementations</a></h4>
+<div class="paragraph">
+<p><code>algo.betweenness()</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>implementation of brandes-bc algorithm and nodePartitioning extension</p>
+</li>
+<li>
+<p>if concurrency parameter is set (and &gt;1) ParallelBetweennessCentrality is used</p>
+</li>
+<li>
+<p>ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
+calculates the BC for one node at a time</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>algo.betweenness.exp1()</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>brandes-like algorithm which uses successor sets instead of predecessor sets</p>
+</li>
+<li>
+<p>The algorithm is based on Brandes definition but with some changes
+regarding the dependency-accumulation step.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_references_2"><a class="link" href="#_references_2">References</a></h4>
 <div class="ulist">
 <ul>
+<li>
+<p><a href="http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf" class="bare">http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf</a></p>
+</li>
+<li>
+<p><a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf" class="bare">http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf</a></p>
+</li>
 <li>
 <p><a href="https://www.sci.unich.it/~francesc/teaching/network/betweeness.html" class="bare">https://www.sci.unich.it/~francesc/teaching/network/betweeness.html</a></p>
 </li>
@@ -1597,7 +1784,8 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.closeness.stream('Person', 'KNOWS') YIELD nodeId, centrality - yields centrality for each node</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.closeness.stream('Person', 'KNOWS') YIELD nodeId, centrality
+RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality for each node</code></pre>
 </div>
 </div>
 </div>
@@ -1661,6 +1849,13 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 <td class="tableblock halign-left valign-top"><p class="tableblock">'centrality'</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">graph</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">'heavy'</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement</p></td>
 </tr>
 </tbody>
 </table>
@@ -1767,6 +1962,44 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect3">
+<h4 id="_cypher_loading_4"><a class="link" href="#_cypher_loading_4">Cypher loading</a></h4>
+<div class="paragraph">
+<p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set <code>graph:'cypher'</code> in the config.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.closeness(
+'MATCH (p:Person) RETURN id(p) as id',
+'MATCH (p1:Person)-[:KNOWS]-&gt;(p2:Person) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', write: true});</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_versions_3"><a class="link" href="#_versions_3">Versions</a></h4>
+<div class="paragraph">
+<p>We support the following versions of the betweenness centrality algorithm:</p>
+</div>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; directed, unweighted</p>
+</li>
+<li>
+<p>&#10063; directed, weighted</p>
+</li>
+<li>
+<p>&#10063; undirected, unweighted</p>
+</li>
+<li>
+<p>&#10063; undirected, weighted</p>
+</li>
+</ul>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_references_3"><a class="link" href="#_references_3">References</a></h4>
@@ -1999,7 +2232,20 @@ At that time making long-distance calls in the U.S.A. was automatized, and alter
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases_5"><a class="link" href="#_when_to_use_it_use_cases_5">When to use it / use-cases</a></h4>
-
+<div class="paragraph">
+<p>Shortest path algorithms are applied to automatically find directions between physical locations, such as driving directions on web mapping websites like MapQuest or Google Maps.</p>
+</div>
+<div class="paragraph">
+<p>If one represents a nondeterministic abstract machine as a graph where nodes describe states and relationships describe possible transitions, shortest path algorithms can be used to find an optimal sequence of choices to reach a certain goal state, or to establish lower bounds on the time needed to reach a given state.
+For example, if nodes represent the states of a puzzle like a Rubik&#8217;s Cube and each directed relationship corresponds to a single move or turn, shortest path algorithms can be used to find a solution that uses the minimum possible number of moves.</p>
+</div>
+<div class="paragraph">
+<p>In a networking or telecommunications mindset, this shortest path problem is sometimes called the min-delay path problem and usually tied with a widest path problem.
+For example, the algorithm may seek the shortest (min-delay) widest path, or widest shortest (min-delay) path.</p>
+</div>
+<div class="paragraph">
+<p>Other applications, often studied in operations research, include plant and facility layout, robotics, transportation, and VLSI design.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_constraints_when_not_to_use_it_5"><a class="link" href="#_constraints_when_not_to_use_it_5">Constraints / when not to use it</a></h4>
@@ -2007,32 +2253,297 @@ At that time making long-distance calls in the U.S.A. was automatized, and alter
 </div>
 <div class="sect3">
 <h4 id="_algorithm_explanation_on_simple_sample_graph_5"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_5">Algorithm explanation on simple sample graph</a></h4>
-<div class="listingblock">
+<div class="imageblock">
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
+<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.1/doc/img/sssp.png" alt="sssp">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Create sample graph</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}),
+       (d:Loc{name:'D'}), (e:Loc{name:'E'}), (f:Loc{name:'F'}),
+       (a)-[:ROAD {cost:50}]-&gt;(b),
+       (a)-[:ROAD {cost:50}]-&gt;(c),
+       (a)-[:ROAD {cost:100}]-&gt;(d),
+       (a)-[:RAIL {cost:50}]-&gt;(d),
+       (b)-[:ROAD {cost:40}]-&gt;(d),
+       (c)-[:ROAD {cost:40}]-&gt;(d),
+       (c)-[:ROAD {cost:80}]-&gt;(e),
+       (d)-[:ROAD {cost:30}]-&gt;(e),
+       (d)-[:ROAD {cost:80}]-&gt;(f),
+       (e)-[:ROAD {cost:40}]-&gt;(f),
+       (e)-[:RAIL {cost:20}]-&gt;(f);</code></pre>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_dijkstra_single_source_shortest_path_algorithm"><a class="link" href="#_dijkstra_single_source_shortest_path_algorithm">Dijkstra single source shortest path algorithm</a></h6>
+<div class="listingblock">
+<div class="title">Running algorithm and streaming results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.shortestPath.stream(start, end, 'cost')
-YIELD nodeId, cost</code></pre>
+YIELD nodeId, cost
+RETURN nodeId, cost LIMIT 20</code></pre>
 </div>
 </div>
 <div class="listingblock">
+<div class="title">Running algorithm and writing back results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (start:Node{type:'start'}), (end:Node{type:'end'})
-CALL algo.shortestPath(start, end, 'cost')
-YIELD loadDuration, evalDuration, nodeCount, totalCost</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost',{write:true,writeProperty:'sssp'})
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost</code></pre>
+</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_delta_stepping_algorithm"><a class="link" href="#_delta_stepping_algorithm">Delta stepping algorithm</a></h6>
+<div class="listingblock">
+<div class="title">Running algorithm and streaming results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH(n:Loc {name:'A'})
+CALL algo.deltaStepping.stream(n, 'cost', 3.0)
+YIELD nodeId, distance
+RETURN nodeId, distance LIMIT 20</code></pre>
 </div>
 </div>
 <div class="listingblock">
+<div class="title">Running algorithm and writing back results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping.stream(n, 'cost', 3.0)
-YIELD nodeId, distance RETURN nodeId, distance</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH(n:Node {name:'s'})
+CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sssp'})
+YIELD nodeCount, loadDuration, evalDuration, writeDuration
+RETURN nodeCount, loadDuration, evalDuration, writeDuration</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_syntax_5"><a class="link" href="#_syntax_5">Syntax</a></h4>
 <div class="listingblock">
+<div class="title">Running algorithm and writing back results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH(n:Node {name:'s'}) WITH n CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sp'})
-YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'})
+YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></pre>
 </div>
 </div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 17. Parameters</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">default</th>
+<th class="tableblock halign-left valign-top">optional</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startNode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start node</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endNode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">end node</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">weightProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name that contains weight, if null treats the graph as unweighted. Must be numeric.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">defaultValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default value of the weight in case it is missing or invalid</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">write</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">if result should be written back as node property</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">writeProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">'sssp'</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name written back to the node sequence of the node in the path</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">nodeQuery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationshipQuery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship-type to load from the graph, if null load all nodes</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 18. Results</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">nodeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">number of nodes considered</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">totalCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">sum of all weights along the path</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">loadMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for loading data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">evalMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for running the algorithm</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">writeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">milliseconds for writing result data back</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="title">Running algorithm and streaming results</div>
+<div class="content">
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0})
+ YIELD nodeId, cost</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 19. Parameters</caption>
+<colgroup>
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 12%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">default</th>
+<th class="tableblock halign-left valign-top">optional</th>
+<th class="tableblock halign-left valign-top">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startNode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start node</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endNode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">end node</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">weightProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name that contains weight, if null treats the graph as unweighted. Must be numeric.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">nodeQuery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">label to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationshipQuery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">relationship-type to load from the graph, if null load all nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">defaultValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default value of the weight in case it is missing or invalid</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 20. Results</caption>
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">nodeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node id</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cost it takes to get from start node to specific node</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect3">
 <h4 id="_example_usage_5"><a class="link" href="#_example_usage_5">Example Usage</a></h4>
@@ -2068,7 +2579,12 @@ The simplicity and time efficiency of the LPA make it a popular graph partitioni
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases_6"><a class="link" href="#_when_to_use_it_use_cases_6">When to use it / use-cases</a></h4>
-
+<div class="paragraph">
+<p>Label propagation is an algorithm for finding communities ( partitions ).
+It is one of the state-of-the-art methods, which estimates labels by propagating label information through a graph.
+Label propagation assumes that nodes connected in a graph should have similar labels.
+Consequently, the label estimation heavily depends on relationships in a graph which represent similarity of each node pair.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_constraints_when_not_to_use_it_6"><a class="link" href="#_constraints_when_not_to_use_it_6">Constraints / when not to use it</a></h4>
@@ -2089,7 +2605,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 
 </div>
 <div class="sect3">
-<h4 id="_syntax_5"><a class="link" href="#_syntax_5">Syntax</a></h4>
+<h4 id="_syntax_6"><a class="link" href="#_syntax_6">Syntax</a></h4>
 <div class="listingblock">
 <div class="title">Running algorithm and writing back results</div>
 <div class="content">
@@ -2100,7 +2616,7 @@ partitionProperty - simple label propagation kernel</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 17. Parameters</caption>
+<caption class="title">Table 21. Parameters</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2170,7 +2686,7 @@ partitionProperty - simple label propagation kernel</code></pre>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 18. Results</caption>
+<caption class="title">Table 22. Results</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2250,15 +2766,17 @@ For example, consider the problem of identifying partitions in a set of items.
 We can represent each item by a node and add an edge between each pair of items that are deemed similar.
 The connected components of this graph correspond to different classes of items.</p>
 </div>
+</div>
+<div class="sect3">
+<h4 id="_when_to_use_it_use_cases_7"><a class="link" href="#_when_to_use_it_use_cases_7">When to use it / use-cases</a></h4>
 <div class="paragraph">
 <p>Testing whether a graph is connected is an essential preprocessing step for every graph algorithm.
 Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be.
 Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.</p>
 </div>
+<div class="paragraph">
+<p>Connected components have other practical use cases, for example, if we are analysing a social network and we want to find all the disconnected groups of people that exist in our graph.</p>
 </div>
-<div class="sect3">
-<h4 id="_when_to_use_it_use_cases_7"><a class="link" href="#_when_to_use_it_use_cases_7">When to use it / use-cases</a></h4>
-
 </div>
 <div class="sect3">
 <h4 id="_constraints_when_not_to_use_it_7"><a class="link" href="#_constraints_when_not_to_use_it_7">Constraints / when not to use it</a></h4>
@@ -2310,7 +2828,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 19. Results</caption>
+<caption class="title">Table 23. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2379,7 +2897,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 20. Results</caption>
+<caption class="title">Table 24. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2427,7 +2945,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></pre>
 
 </div>
 <div class="sect3">
-<h4 id="_syntax_6"><a class="link" href="#_syntax_6">Syntax</a></h4>
+<h4 id="_syntax_7"><a class="link" href="#_syntax_7">Syntax</a></h4>
 <div class="listingblock">
 <div class="title">Running algorithm and writing back results</div>
 <div class="content">
@@ -2438,7 +2956,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 21. Parameters</caption>
+<caption class="title">Table 25. Parameters</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2508,7 +3026,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 22. Results</caption>
+<caption class="title">Table 26. Results</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2557,7 +3075,7 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 23. Parameters</caption>
+<caption class="title">Table 27. Parameters</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2589,10 +3107,31 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">relationship-type to load from the graph, if null load all relationships</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">weightProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">property name that contains weight, if null treats the graph as unweighted. Must be numeric.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">threshold</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">value of the weight above which the relationship is not thrown away</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">defaultValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">float</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">null</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default value of the weight in case it is missing or invalid</p></td>
+</tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 24. Results</caption>
+<caption class="title">Table 28. Results</caption>
 <colgroup>
 <col style="width: 33%;">
 <col style="width: 33%;">
@@ -2648,7 +3187,12 @@ The first linear-time algorithm for strongly connected components is due to Tarj
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases_8"><a class="link" href="#_when_to_use_it_use_cases_8">When to use it / use-cases</a></h4>
-
+<div class="paragraph">
+<p><em>SCC</em> algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
+In social networks, a group of people are generally strongly connected (For example, students of a class or any other common place).
+Many people in these groups generally like some common pages or play common games.
+The SCC algorithms can be used to find such groups and suggest the commonly liked pages or games to the people in the group who have not yet liked commonly liked a page or played a game.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_constraints_when_not_to_use_it_8"><a class="link" href="#_constraints_when_not_to_use_it_8">Constraints / when not to use it</a></h4>
@@ -2694,7 +3238,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 25. Results</caption>
+<caption class="title">Table 29. Results</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -2733,7 +3277,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</
 </tbody>
 </table>
 <div class="paragraph">
-<p>We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second compomenet has Doug and Mark.</p>
+<p>We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second component has Doug and Mark.</p>
 </div>
 <div class="listingblock">
 <div class="title">Find the largest partition</div>
@@ -2748,7 +3292,7 @@ RETURN distinct(u.partition) as partition,count(*) as size_of_partition ORDER by
 
 </div>
 <div class="sect3">
-<h4 id="_syntax_7"><a class="link" href="#_syntax_7">Syntax</a></h4>
+<h4 id="_syntax_8"><a class="link" href="#_syntax_8">Syntax</a></h4>
 <div class="listingblock">
 <div class="title">Running algorithm and writing back results</div>
 <div class="content">
@@ -2759,7 +3303,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 </div>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 26. Parameters</caption>
+<caption class="title">Table 30. Parameters</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2808,7 +3352,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 27. Results</caption>
+<caption class="title">Table 31. Results</caption>
 <colgroup>
 <col style="width: 12%;">
 <col style="width: 12%;">
@@ -2856,8 +3400,63 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 </table>
 </div>
 <div class="sect3">
+<h4 id="_implementations_2"><a class="link" href="#_implementations_2">Implementations</a></h4>
+<div class="paragraph">
+<p><code>algo.scc.tarjan</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>original <strong>recursive</strong> tarjan implementation</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>algo.scc.tunedTarjan</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>also a recursive tarjan implementation</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>algo.scc.iterative</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>iterative</strong> adaption of tarjan algorithm</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>algo.scc.multistep</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>parallel scc algorithm</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_references_8"><a class="link" href="#_references_8">References</a></h4>
-
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf" class="bare">https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf</a></p>
+</li>
+<li>
+<p><a href="http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/" class="bare">http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/</a></p>
+</li>
+<li>
+<p><a href="http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf" class="bare">http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf</a></p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
@@ -4065,7 +4664,7 @@ $(document).ready(function() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-07-17 07:43:12 MESZ
+Last updated 2017-07-17 09:15:48 MESZ
 </div>
 </div>
 </body>
