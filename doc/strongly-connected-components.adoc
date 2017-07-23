@@ -61,7 +61,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | Mark | 2 
 |===
 
-We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second compomenet has Doug and Mark. 
+We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second component has Doug and Mark. 
 
 .Find the largest partition
 [source,cypher]
@@ -105,7 +105,33 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | writeMillis | int | milliseconds for writing result data back
 |===
 
+== Implementations
+
+`algo.scc.tarjan`
+
+- original *recursive* tarjan implementation
+
+`algo.scc.tunedTarjan`
+
+- also a recursive tarjan implementation
+
+`algo.scc.iterative`
+
+- *iterative* adaption of tarjan algorithm
+
+`algo.scc.multistep`
+
+- parallel scc algorithm
+
 == References
+
+* https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
+
+* http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
+
+* http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf
+
+
 
 ifdef::implementation[]
 // tag::implementation[]

@@ -32,7 +32,7 @@ public class AllShortestPathsProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.allShortestPaths.stream")
-    @Description("CALL algo.allShortestPaths.stream(propertyName:String" +
+    @Description("CALL algo.allShortestPaths.stream(weightProperty:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
     public Stream<AllShortestPaths.Result> allShortestPathsStream(

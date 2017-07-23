@@ -166,7 +166,9 @@ YIELD nodeId, setId - yields a setId to each node id
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
-
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| threshold | float | null | yes | value of the weight above which the relationship is not thrown away
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
 |===
 
 .Results
