@@ -27,6 +27,22 @@ PageRank is now widely recognized as a way of detecting central nodes in a netwo
 
 == When to use it / use-cases
 
+The mathematics of PageRank are entirely general and apply to any graph or network in any domain. 
+Thus, PageRank is now regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation. 
+It's even used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.
+
+In neuroscience, the PageRank of a neuron in a neural network has been found to correlate with its relative firing rate.
+
+Personalized PageRank is used by Twitter to present users with other accounts they may wish to follow.
+
+
+PageRank has been used to rank spaces or streets to predict how many people (pedestrians or vehicles) come to the individual spaces or streets. In lexical semantics it has been used to perform Word Sense Disambiguation,Semantic similarity, and also to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity.
+
+In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment.
+
+For the analysis of protein networks in biology PageRank is also a useful tool.
+
+Pagerank has recently been used to quantify the scientific impact of researchers. The underlying citation and collaboration networks are used in conjunction with pagerank algorithm in order to come up with a ranking system for individual publications which propagates to individual authors. The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index in the context of many drawbacks exhibited by h-index.
 
 == Constraints / when not to use it
 
