@@ -29,7 +29,7 @@ public class TerminationFlagImpl implements TerminationFlag {
     public boolean running() {
         final long currentTime = System.currentTimeMillis();
         if (currentTime > lastCheck + interval) {
-            if (transaction.getReasonIfTerminated() != null || !transaction.isOpen()) {
+            if (transaction.getReasonIfTerminated().isPresent() || !transaction.isOpen()) {
                 running = false;
             }
             lastCheck = currentTime;
