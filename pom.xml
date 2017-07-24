@@ -5,7 +5,7 @@
 
     <groupId>org.neo4j</groupId>
     <artifactId>graph-algorithms-parent</artifactId>
-    <version>3.1.5.1</version>
+    <version>3.1.5.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Neo4j Graph Algorithms</name>
 
