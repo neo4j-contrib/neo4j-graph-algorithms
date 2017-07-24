@@ -19,11 +19,9 @@ import org.neo4j.storageengine.api.RelationshipItem;
  * @since 27.06.17
  */
 public class Kernel {
-    private final Statement statement;
     private ReadOperations readOperations;
 
     public Kernel(Statement statement) {
-        this.statement = statement;
         readOperations = statement.readOperations();
     }
 
@@ -52,7 +50,6 @@ public class Kernel {
 
     private Cursor<NodeItem> wrapNodes(PrimitiveLongIterator nodes) {
         return new Cursor<NodeItem>() {
-            Cursor<org.neo4j.storageengine.api.NodeItem> cursor;
             Kernel.NodeItem item = new Kernel.NodeItem();
             @Override
             public boolean next() {
@@ -61,7 +58,7 @@ public class Kernel {
                     if (!hasNext) return false;
                     long nodeId = nodes.next();
                     try {
-                        cursor = readOperations.nodeCursorById(nodeId);
+                        item.item = readOperations.nodeCursorById(nodeId).get();
                         return true;
                     } catch (EntityNotFoundException e) {
                         // throw new RuntimeException(e);
@@ -70,20 +67,16 @@ public class Kernel {
             }
 
             @Override
-            public void close() {
-                cursor.close();
-            }
+            public void close() { }
 
             @Override
             public NodeItem get() {
-                item.item = cursor.get();
                 return item;
             }
         };
     }
     private Cursor<RelationshipItem> wrapRelationships(PrimitiveLongIterator rels) {
         return new Cursor<RelationshipItem>() {
-            Cursor<org.neo4j.storageengine.api.RelationshipItem> cursor;
             Kernel.RelationshipItem item = new Kernel.RelationshipItem();
             @Override
             public boolean next() {
@@ -92,7 +85,7 @@ public class Kernel {
                     if (!hasNext) return false;
                     long relId = rels.next();
                     try {
-                        cursor = readOperations.relationshipCursorById(relId);
+                        item.item = readOperations.relationshipCursorById(relId).get();
                         return true;
                     } catch (EntityNotFoundException e) {
                         // throw new RuntimeException(e);
@@ -102,12 +95,11 @@ public class Kernel {
 
             @Override
             public void close() {
-                if (cursor!=null) cursor.close();
+
             }
 
             @Override
             public Kernel.RelationshipItem get() {
-                item.item = cursor.get();
                 return item;
             }
         };
@@ -150,43 +142,6 @@ public class Kernel {
     }
     public PropertyItem property(RelationshipItem item, int propertyId) {
         return item.property(propertyId).get();
-    }
-
-    public Cursor<RelationshipItem> relationshipCursor(long relationId) {
-        try {
-            return new Cursor<Kernel.RelationshipItem>() {
-                RelationshipItem item = new RelationshipItem(readOperations.relationshipCursorById(relationId).get());
-                boolean first = true;
-
-                @Override
-                public boolean next() {
-                    if (first) {
-                        first = false;
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override
-                public void close() {
-                }
-
-                @Override
-                public RelationshipItem get() {
-                    return item;
-                }
-            };
-        } catch (EntityNotFoundException e) {
-            return EMPTY_CURSOR;
-        }
-    }
-
-    public Object relationshipGetProperty(long relationId, int propertyKey) {
-        try {
-            return readOperations.relationshipGetProperty(relationId,propertyKey);
-        } catch (EntityNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public Cursor<NodeItem> nodeCursor(long nodeId) {
@@ -243,42 +198,6 @@ public class Kernel {
             case BOTH: return org.neo4j.graphdb.Direction.BOTH;
         }
         throw new RuntimeException("Illegal direction "+direction);
-    }
-
-    public long countsForRelationship(int labelId, int relationId, int otherLabelId) {
-        return readOperations.countsForRelationship(labelId, relationId, otherLabelId);
-    }
-
-    public int nodeGetDegree(long nodeId, org.neo4j.graphdb.Direction direction) {
-        try {
-            return readOperations.nodeGetDegree(nodeId,direction);
-        } catch (EntityNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public int nodeGetDegree(long nodeId, org.neo4j.graphdb.Direction direction, int relType) {
-        try {
-            return readOperations.nodeGetDegree(nodeId,direction,relType);
-        } catch (EntityNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public long nodesGetCount() {
-        return readOperations.nodesGetCount();
-    }
-
-    public long countsForNodeWithoutTxState(int labelId) {
-        return readOperations.countsForNodeWithoutTxState(labelId);
-    }
-
-    public long relationshipsGetCount() {
-        return readOperations.relationshipsGetCount();
-    }
-
-    public long countsForRelationshipWithoutTxState(int labelId, int relTypeId, int otherLabelId) {
-        return readOperations.countsForRelationshipWithoutTxState(labelId, relTypeId, otherLabelId);
     }
 
     public class NodeItem implements org.neo4j.storageengine.api.NodeItem {
