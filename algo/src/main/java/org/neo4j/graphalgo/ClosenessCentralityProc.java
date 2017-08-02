@@ -98,6 +98,7 @@ public class ClosenessCentralityProc {
             centrality.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(centralityResult);
             });
         }

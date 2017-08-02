@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.Statement;
@@ -18,15 +19,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ParallelExporter<T> extends AbstractExporter<T> {
 
-    public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors() * 2;
-
     public static final int MIN_BATCH_SIZE = 10_000;
 
     public static final String TASK_EXPORT = "EXPORT";
 
     private final ExecutorService executorService;
 
-    private int concurrency = DEFAULT_CONCURRENCY;
+    private int concurrency = ProcedureConstants.DEFAULT_CONCURRENCY;
 
     private AtomicInteger progress = new AtomicInteger(0);
 
@@ -55,6 +54,11 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
         this.executorService = Objects.requireNonNull(executorService);
         nodeCount = idMapping.nodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
+    }
+
+    public ParallelExporter<T> withConcurrency(int concurrency) {
+        this.concurrency = concurrency;
+        return this;
     }
 
     public void write(T data) {

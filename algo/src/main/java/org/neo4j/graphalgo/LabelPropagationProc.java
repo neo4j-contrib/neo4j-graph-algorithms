@@ -87,7 +87,7 @@ public final class LabelPropagationProc {
         stats.nodes(labels.size());
 
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
-            write(batchSize, partitionProperty, graph, labels, stats);
+            write(batchSize, partitionProperty, graph, labels, stats, configuration);
         }
 
         return Stream.of(stats.build());
@@ -143,10 +143,11 @@ public final class LabelPropagationProc {
             String partitionKey,
             HeavyGraph graph,
             IntDoubleMap labels,
-            LabelPropagationStats.Builder stats) {
+            LabelPropagationStats.Builder stats, ProcedureConfiguration configuration) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
             new LabelPropagationExporter(dbAPI, graph, log, partitionKey, Pools.DEFAULT)
+                    .withConcurrency(configuration.getConcurrency())
                     .write(labels);
         }
     }
