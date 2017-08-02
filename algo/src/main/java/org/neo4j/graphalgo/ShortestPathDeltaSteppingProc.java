@@ -125,6 +125,7 @@ public class ShortestPathDeltaSteppingProc {
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log,
                         configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(shortestPaths);
             });
         }

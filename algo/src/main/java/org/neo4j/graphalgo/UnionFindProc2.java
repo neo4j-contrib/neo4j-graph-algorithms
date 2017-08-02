@@ -162,6 +162,7 @@ public class UnionFindProc2 {
         log.debug("Writing results");
         new DisjointSetStructExporter(api, graph, log,
                 configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY), Pools.DEFAULT)
+                .withConcurrency(configuration.getConcurrency())
                 .write(struct);
     }
 }

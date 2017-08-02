@@ -138,6 +138,7 @@ public class BetweennessCentralityProc {
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(centrality);
 
             });
@@ -201,6 +202,7 @@ public class BetweennessCentralityProc {
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(centrality);
             });
         }
@@ -249,6 +251,7 @@ public class BetweennessCentralityProc {
                 final AtomicDoubleArray centrality = bc.getCentrality();
                 bc.release();
                 new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(centrality);
             });
         }

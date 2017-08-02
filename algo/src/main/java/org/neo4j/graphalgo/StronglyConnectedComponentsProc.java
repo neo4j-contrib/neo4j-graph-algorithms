@@ -140,6 +140,7 @@ public class StronglyConnectedComponentsProc {
             builder.timeWrite(() -> {
                 new SCCIntArrayExporter(api, graph, log,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(tarjan.getConnectedComponents());
             });
         }
@@ -212,6 +213,7 @@ public class StronglyConnectedComponentsProc {
             builder.timeWrite(() -> {
                 new SCCIntArrayExporter(api, graph, log,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(tarjan.getConnectedComponents());
             });
         }
@@ -286,6 +288,7 @@ public class StronglyConnectedComponentsProc {
             builder.timeWrite(() -> {
                 new SCCIntArrayExporter(api, graph, log,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER), Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(multistep.getConnectedComponents());
             });
         }
