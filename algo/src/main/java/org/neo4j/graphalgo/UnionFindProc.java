@@ -131,6 +131,7 @@ public class UnionFindProc {
                     .compute();
         }
         graphUnionFind.release();
+        graph.release();
         return struct;
     }
 

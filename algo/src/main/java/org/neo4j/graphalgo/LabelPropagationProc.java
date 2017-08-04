@@ -134,6 +134,7 @@ public final class LabelPropagationProc {
                             Math.max(1, batchSize)
                     );
             labelPropagation.release();
+            graph.release();
             return result;
         }
     }
