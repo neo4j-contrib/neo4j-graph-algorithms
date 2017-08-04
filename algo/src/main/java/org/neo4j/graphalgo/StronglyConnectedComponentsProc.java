@@ -210,11 +210,14 @@ public class StronglyConnectedComponentsProc {
                 .withMaxSetSize(tarjan.getMaxSetSize());
 
         if (configuration.isWriteFlag()) {
+            final int[] connectedComponents = tarjan.getConnectedComponents();
+            graph.release();
+            tarjan.release();
             builder.timeWrite(() -> {
                 new SCCIntArrayExporter(api, graph, log,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
-                        .write(tarjan.getConnectedComponents());
+                        .write(connectedComponents);
             });
         }
 
@@ -241,11 +244,14 @@ public class StronglyConnectedComponentsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new SCCIterativeTarjan(graph)
+        final SCCIterativeTarjan compute = new SCCIterativeTarjan(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(IterativeTarjan)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute()
-                .resultStream();
+                .compute();
+
+        graph.release();
+
+        return compute.resultStream();
     }
 
 
@@ -285,11 +291,14 @@ public class StronglyConnectedComponentsProc {
                 .withSetCount(multistep.getSetCount());
 
         if (configuration.isWriteFlag()) {
+            final int[] connectedComponents = multistep.getConnectedComponents();
+            graph.release();
+            multistep.release();
             builder.timeWrite(() -> {
                 new SCCIntArrayExporter(api, graph, log,
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
-                        .write(multistep.getConnectedComponents());
+                        .write(connectedComponents);
             });
         }
 
@@ -322,7 +331,7 @@ public class StronglyConnectedComponentsProc {
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         multistep.compute();
-
+        graph.release();
         return multistep.resultStream();
     }
 
@@ -346,11 +355,12 @@ public class StronglyConnectedComponentsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new ForwardBackwardScc(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
+        final ForwardBackwardScc algo = new ForwardBackwardScc(graph, Pools.DEFAULT,
                 configuration.getConcurrency(1))
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(ForwardBackward)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(graph.toMappedNodeId(startNodeId))
-                .resultStream();
+                .compute(graph.toMappedNodeId(startNodeId));
+        graph.release();
+        return algo.resultStream();
     }
 }

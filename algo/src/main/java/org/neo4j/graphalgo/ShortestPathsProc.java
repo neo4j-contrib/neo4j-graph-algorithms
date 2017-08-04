@@ -61,11 +61,12 @@ public class ShortestPathsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new ShortestPaths(graph)
+        final ShortestPaths algo = new ShortestPaths(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(startNode.getId())
-                .resultStream();
+                .compute(startNode.getId());
+        graph.release();
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.shortestPaths", mode = Mode.WRITE)
@@ -105,6 +106,7 @@ public class ShortestPathsProc {
             builder.timeWrite(() -> {
                 final IntDoubleMap shortestPaths = algorithm.getShortestPaths();
                 algorithm.release();
+                graph.release();
                 new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .write(shortestPaths);
             });

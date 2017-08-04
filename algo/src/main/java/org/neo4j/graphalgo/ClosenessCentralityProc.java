@@ -54,11 +54,12 @@ public class ClosenessCentralityProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
-        return new MSClosenessCentrality(graph, Pools.DEFAULT)
+        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute()
-                .resultStream();
+                .compute();
+        graph.release();
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.closeness", mode = Mode.WRITE)
@@ -96,6 +97,7 @@ public class ClosenessCentralityProc {
 
             final double[] centralityResult = centrality.getCentrality();
             centrality.release();
+            graph.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
