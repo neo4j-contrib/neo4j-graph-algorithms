@@ -10,6 +10,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 public class Pools {
+    public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
     public final static ExecutorService SINGLE = createSinglePool();
     public final static ExecutorService DEFAULT = createDefaultPool();
     public final static ScheduledExecutorService SCHEDULED = createScheduledPool();
@@ -20,7 +21,7 @@ public class Pools {
     }
 
     public static ExecutorService createDefaultPool() {
-        int threads = Runtime.getRuntime().availableProcessors()*2;
+        int threads = DEFAULT_CONCURRENCY * 2;
         int queueSize = threads * 25;
         return new ThreadPoolExecutor(threads / 2, threads, 30L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(queueSize),
                 new CallerBlocksPolicy());
@@ -43,7 +44,7 @@ public class Pools {
     }
 
     public static int getNoThreadsInDefaultPool() {
-        return  Runtime.getRuntime().availableProcessors();
+        return  DEFAULT_CONCURRENCY;
     }
 
     private static ExecutorService createSinglePool() {
@@ -51,7 +52,7 @@ public class Pools {
     }
 
     private static ScheduledExecutorService createScheduledPool() {
-        return Executors.newScheduledThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() / 4));
+        return Executors.newScheduledThreadPool(Math.max(1, DEFAULT_CONCURRENCY / 4));
     }
 
     public static <T> Future<Void> processBatch(List<T> batch, GraphDatabaseService db, Consumer<T> action) {

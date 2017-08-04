@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -200,7 +201,7 @@ public class ProcedureConfiguration {
     }
 
     public int getConcurrency() {
-        return getConcurrency(ProcedureConstants.DEFAULT_CONCURRENCY);
+        return getConcurrency(Pools.DEFAULT_CONCURRENCY);
     }
 
     public String getDirectionName() {
