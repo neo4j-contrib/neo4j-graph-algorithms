@@ -112,7 +112,7 @@ public class HeavyGraphFactory extends GraphFactory {
             while (nodeIds.hasNext()) {
                 final long nextId = nodeIds.next();
                 idMap.add(nextId);
-                if (nodes++ % (nodeCount / 10) == 0) {
+                if (nodes++ % ((nodeCount / 10) + 1) == 0) {
                     progressLogger.logProgress(nodes * nodesPercent, nodeCount);
                 }
             }
