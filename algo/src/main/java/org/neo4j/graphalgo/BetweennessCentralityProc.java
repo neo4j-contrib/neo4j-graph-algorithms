@@ -52,13 +52,16 @@ public class BetweennessCentralityProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
-        return new BetweennessCentralitySuccessorBrandes(graph,
+        final BetweennessCentralitySuccessorBrandes algo = new BetweennessCentralitySuccessorBrandes(graph,
                 configuration.getNumber("scaleFactor", 100_000).intValue(),
                 Pools.DEFAULT)
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
-                .compute()
-                .resultStream();
+                .compute();
+
+        graph.release();
+
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.betweenness.stream")
@@ -78,19 +81,21 @@ public class BetweennessCentralityProc {
                 .load(configuration.getGraphImpl());
 
         if (configuration.getConcurrency(-1) > 0) {
-            return new ParallelBetweennessCentrality(graph,
+            final ParallelBetweennessCentrality algo = new ParallelBetweennessCentrality(graph,
                     configuration.getNumber("scaleFactor", 100_000).intValue(),
                     Pools.DEFAULT,
                     configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .compute()
-                    .resultStream();
+                    .compute();
+            graph.release();
+            return algo.resultStream();
         }
 
-        return new BetweennessCentrality(graph)
-                .compute()
-                .resultStream();
+        final BetweennessCentrality compute = new BetweennessCentrality(graph)
+                .compute();
+        graph.release();
+        return compute.resultStream();
     }
 
     @Procedure(value = "algo.betweenness.exp1", mode = Mode.WRITE)
@@ -134,6 +139,7 @@ public class BetweennessCentralityProc {
 
         final AtomicDoubleArray centrality = bc.getCentrality();
         bc.release();
+        graph.release();
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
@@ -198,6 +204,7 @@ public class BetweennessCentralityProc {
 
         final double[] centrality = bc.getCentrality();
         bc.release();
+        graph.release();
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
@@ -250,6 +257,7 @@ public class BetweennessCentralityProc {
             builder.timeWrite(() -> {
                 final AtomicDoubleArray centrality = bc.getCentrality();
                 bc.release();
+                graph.release();
                 new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
                         .write(centrality);

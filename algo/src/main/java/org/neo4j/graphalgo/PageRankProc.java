@@ -136,7 +136,7 @@ public final class PageRankProc {
 
         final double[] pageRank = algo.getPageRank();
         algo.release();
-
+        graph.release();
         return pageRank;
     }
 

@@ -74,14 +74,15 @@ public class ShortestPathDeltaSteppingProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new ShortestPathDeltaStepping(graph, delta)
+        final ShortestPathDeltaStepping algo = new ShortestPathDeltaStepping(graph, delta)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
-                ))
-                .compute(startNode.getId())
-                .resultStream();
+                )).compute(startNode.getId());
+
+        graph.release();
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.shortestPath.deltaStepping", mode = Mode.WRITE)
@@ -122,6 +123,7 @@ public class ShortestPathDeltaSteppingProc {
         if (configuration.isWriteFlag()) {
             final double[] shortestPaths = algorithm.getShortestPaths();
             algorithm.release();
+            graph.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log,
                         configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)

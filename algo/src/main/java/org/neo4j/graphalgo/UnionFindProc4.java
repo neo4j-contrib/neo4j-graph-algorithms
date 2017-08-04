@@ -153,6 +153,7 @@ public class UnionFindProc4 {
                         .compute();
             }
             graphUnionFind.release();
+            graph.release();
         }
 
         return struct;
