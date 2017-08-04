@@ -42,7 +42,7 @@ public class ForwardBackwardScc extends Algorithm<ForwardBackwardScc> {
                         node -> descendant.contains(node) && running(),
                         scc::add)
                 .awaitTermination();
-        getProgressLogger().logProgress(1.0);
+        getProgressLogger().logDone();
         // SCC <- V & ST
         scc.retainAll(descendant);
         return this;

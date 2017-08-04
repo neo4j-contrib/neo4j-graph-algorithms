@@ -41,7 +41,13 @@ public class Kernel {
     }
 
     public long countsForNode(int labelId) {
-        return readOperations.countsForNode(labelId);
+        return readOperations.countsForNodeWithoutTxState(labelId);
+    }
+
+    public long maxCountsForRelationship(int labelId, int relId) {
+        return Math.max(
+                readOperations.countsForRelationshipWithoutTxState(labelId,relId,ReadOperations.ANY_LABEL),
+                readOperations.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL,relId,labelId));
     }
 
     public Cursor<NodeItem> nodeCursorGetAll() {
