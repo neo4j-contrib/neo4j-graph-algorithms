@@ -38,6 +38,11 @@ public class ProgressLoggerAdapter implements ProgressLogger {
         }
     }
 
+    @Override
+    public void logDone() {
+        log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, 100);
+    }
+
     public void withLogInterval(int logInterval) {
         this.logInterval = logInterval;
     }

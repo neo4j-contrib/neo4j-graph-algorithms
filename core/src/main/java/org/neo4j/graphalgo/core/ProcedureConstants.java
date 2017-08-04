@@ -43,5 +43,4 @@ public class ProcedureConstants {
 
     public static final String CONCURRENCY = "concurrency";
 
-    public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
 }

@@ -47,6 +47,7 @@ public class HeavyGraphFactory extends GraphFactory {
     };
 
     private final ExecutorService threadPool;
+    private long maxRelCount;
     private int relWeightId;
     private int nodeWeightId;
     private int nodePropId;
@@ -72,6 +73,10 @@ public class HeavyGraphFactory extends GraphFactory {
                 }
             }
             nodeCount = Math.toIntExact(readOp.countsForNode(labelId));
+            maxRelCount = Math.max(
+                    readOp.countsForRelationshipWithoutTxState(labelId, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], ReadOperations.ANY_LABEL),
+                    readOp.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], labelId)
+                    );
             relWeightId = setup.loadDefaultRelationshipWeight()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
@@ -104,13 +109,19 @@ public class HeavyGraphFactory extends GraphFactory {
                 ? new NullWeightMap(setup.nodeDefaultPropertyValue)
                 : new WeightMap(nodeCount, setup.nodeDefaultPropertyValue);
 
+        long total = nodeCount + maxRelCount;
+        double nodesPercent = (double)nodeCount / total;
         withReadOps(read -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? read.nodesGetAll()
                     : read.nodesGetForLabel(labelId);
+            long nodes = 0;
             while (nodeIds.hasNext()) {
                 final long nextId = nodeIds.next();
                 idMap.add(nextId);
+                if (nodes++ % (nodeCount / 10) == 0) {
+                    progressLogger.logProgress(nodes * nodesPercent, nodeCount);
+                }
             }
             idMap.buildMappedIds();
         });
@@ -127,11 +138,12 @@ public class HeavyGraphFactory extends GraphFactory {
                         relWeigths,
                         nodeWeights,
                         nodeProps,
+                        nodesPercent,
                         relationId
                 ),
                 threadPool);
 
-        progressLogger.logProgress(1.0);
+        progressLogger.logDone();
 
         return new HeavyGraph(
                 idMap,
@@ -233,6 +245,7 @@ public class HeavyGraphFactory extends GraphFactory {
         private final AdjacencyMatrix matrix;
         private final int nodeOffset;
         private final int maxNodeId;
+        private final double nodesPercent;
         private int currentNodeCount;
         private final IdMap idMap;
         private final PrimitiveIntIterable nodes;
@@ -251,7 +264,9 @@ public class HeavyGraphFactory extends GraphFactory {
                 WeightMapping relWeights,
                 WeightMapping nodeWeights,
                 WeightMapping nodeProps,
-                int... relationId) {
+                double nodesPercent,
+                int... relationId
+                ) {
             int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
             this.nodeOffset = nodeOffset;
             this.idMap = idMap;
@@ -263,6 +278,7 @@ public class HeavyGraphFactory extends GraphFactory {
             this.matrix = new AdjacencyMatrix(nodeSize, setup.loadIncoming, setup.loadOutgoing);
             this.currentNodeCount = 0;
             this.maxNodeId = nodeCount - 1;
+            this.nodesPercent = nodesPercent;
         }
 
         @Override
@@ -297,7 +313,7 @@ public class HeavyGraphFactory extends GraphFactory {
                                 relationId);
                     }
                 }
-                progressLogger.logProgress(nodeCount + nodeOffset, maxNodeId);
+                progressLogger.logProgress(nodesPercent * maxNodeId + (1-nodesPercent)*(nodeCount + nodeOffset), maxNodeId);
             }
             this.currentNodeCount = nodeCount;
         }
