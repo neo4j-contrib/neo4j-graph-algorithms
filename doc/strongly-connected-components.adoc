@@ -119,7 +119,8 @@ Set `graph:'cypher'` in the config.
 [source,cypher]
 ----
 CALL algo.scc('MATCH (u:User) RETURN id(u) as id',
-'MATCH (u1:User)-[:FOLLOW]->(u2:User) RETURN id(u1) as source,id(u2) as target', {write:true,graph:'cypher'})
+'MATCH (u1:User)-[:FOLLOW]->(u2:User) RETURN id(u1) as source,id(u2) as target',
+{write:true,graph:'cypher'})
 YIELD loadMillis, computeMillis, writeMillis
 ----
 == Implementations
