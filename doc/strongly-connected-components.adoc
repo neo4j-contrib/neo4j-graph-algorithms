@@ -81,7 +81,7 @@ RETURN distinct(u.partition) as partition,count(*) as size_of_partition ORDER by
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.scc(label:String, relationship:String, {write:true,partitionProperty:'partition'}) 
+CALL algo.scc(label:String, relationship:String, {write:true,partitionProperty:'partition',graph:'heavy'}) 
 YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 
 - finds strongly connected partitions and potentially writes back to the node as a property partition. 
@@ -95,6 +95,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
 | partitionProperty | string | 'partition' | yes | property name written back to
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 
 |===
 
@@ -109,7 +110,19 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 |===
+== Cypher loading
 
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+CALL algo.scc('MATCH (u:User) RETURN id(u) as id',
+'MATCH (u1:User)-[:FOLLOW]->(u2:User) RETURN id(u1) as source,id(u2) as target',
+{write:true,graph:'cypher'})
+YIELD loadMillis, computeMillis, writeMillis
+----
 == Implementations
 
 `algo.scc.tarjan`
