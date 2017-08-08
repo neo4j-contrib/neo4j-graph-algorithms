@@ -124,6 +124,9 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
             while (outputStreamOpen && running() && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
                 for (int i = 0; i < nodeCount; i++) {
+                    if (Double.POSITIVE_INFINITY == distance[i]) {
+                        continue;
+                    }
                     final Result result = new Result(
                             graph.toOriginalNodeId(startNode),
                             graph.toOriginalNodeId(i),
