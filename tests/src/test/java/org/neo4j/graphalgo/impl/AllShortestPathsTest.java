@@ -12,6 +12,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -84,9 +85,8 @@ public class AllShortestPathsTest {
                 .resultStream()
                 .peek(System.out::println)
                 .forEach(r -> {
-                    if (r.sourceNodeId > r.targetNodeId) {
-                        assertEquals(Double.POSITIVE_INFINITY, r.distance, 0.1);
-                    } else if (r.sourceNodeId == r.targetNodeId) {
+                    assertNotEquals(Double.POSITIVE_INFINITY, r.distance);
+                    if (r.sourceNodeId == r.targetNodeId) {
                         assertEquals(0.0, r.distance, 0.1);
                     }
                     mock.test(r.sourceNodeId, r.targetNodeId, r.distance);
@@ -94,7 +94,7 @@ public class AllShortestPathsTest {
 
         final int nodes = (width * height);
 
-        verify(mock, times(nodes * nodes)).test(anyLong(), anyLong(), anyDouble());
+        verify(mock, times(45)).test(anyLong(), anyLong(), anyDouble());
 
         verify(mock, times(1)).test(0, 9, 5.0);
         verify(mock, times(1)).test(0, 0, 0.0);
