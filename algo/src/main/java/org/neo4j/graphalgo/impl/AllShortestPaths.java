@@ -86,7 +86,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                });
+                }).filter(result -> result.distance != Double.POSITIVE_INFINITY);
     }
 
     @Override
