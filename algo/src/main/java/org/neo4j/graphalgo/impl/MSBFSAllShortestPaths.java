@@ -62,7 +62,8 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
         };
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
                 iterator,
-                0), false);
+                0), false)
+                .filter(result -> result.distance != Double.POSITIVE_INFINITY);
     }
 
     @Override
