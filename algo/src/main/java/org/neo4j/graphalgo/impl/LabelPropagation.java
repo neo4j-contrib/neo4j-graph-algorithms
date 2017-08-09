@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.DoubleDoubleHashMap;
 import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.cursors.DoubleDoubleCursor;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
@@ -95,8 +96,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private void compute(int nodeId) {
             votes.clear();
             graph.forEachRelationship(nodeId, direction, this);
-            double originalPartition = partition(nodeId);
-            double partition = originalPartition;
+            double partition = partition(nodeId);
             double weight = Double.NEGATIVE_INFINITY;
             for (DoubleDoubleCursor vote : votes) {
                 if (weight < vote.value) {
@@ -104,9 +104,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                     partition = vote.key;
                 }
             }
-            if (partition != originalPartition) {
-                labels.put(nodeId, partition);
-            }
+            labels.put(nodeId, partition);
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         }
 
