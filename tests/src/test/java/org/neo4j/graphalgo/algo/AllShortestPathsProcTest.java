@@ -15,7 +15,6 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.DoubleConsumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
