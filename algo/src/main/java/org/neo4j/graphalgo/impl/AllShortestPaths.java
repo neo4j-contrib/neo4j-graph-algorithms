@@ -8,7 +8,6 @@ import org.neo4j.graphdb.Direction;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.DoubleSupplier;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
