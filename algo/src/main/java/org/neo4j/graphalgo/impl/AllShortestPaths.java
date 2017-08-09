@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.DoubleSupplier;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -86,7 +87,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                });
+                }).filter(result -> result.distance != Double.POSITIVE_INFINITY);
     }
 
     @Override
@@ -124,9 +125,6 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
             while (outputStreamOpen && running() && (startNode = counter.getAndIncrement()) < nodeCount) {
                 compute(startNode);
                 for (int i = 0; i < nodeCount; i++) {
-                    if (Double.POSITIVE_INFINITY == distance[i]) {
-                        continue;
-                    }
                     final Result result = new Result(
                             graph.toOriginalNodeId(startNode),
                             graph.toOriginalNodeId(i),
