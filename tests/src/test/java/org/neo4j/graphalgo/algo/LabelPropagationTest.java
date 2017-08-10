@@ -109,7 +109,7 @@ public class LabelPropagationTest {
     @Test
     public void testDirectSequential() throws Exception {
         final IntDoubleMap map = new LabelPropagation(graph, Pools.DEFAULT)
-                .compute(Direction.OUTGOING, 1, 1);
+                .compute(Direction.BOTH, 1, 1);
         assertEquals(6, map.size());
     }
 
