@@ -160,7 +160,7 @@ public final class MultiSourceBFS implements Runnable {
                 visit.setBit(startNodes[i], i);
             }
         } else {
-            nextAndSeen.setAuxBits(nodeOffset, nodeOffset + sourceNodeCount);
+            nextAndSeen.setAuxBits(nodeOffset, sourceNodeCount);
             for (int i = 0; i < sourceNodeCount; i++) {
                 visit.setBit(i + nodeOffset, i);
             }

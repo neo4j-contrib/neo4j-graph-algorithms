@@ -26,7 +26,7 @@ public final class BiMultiBitSet32Test extends RandomizedTest {
         int startNode = between(0, nodes / 2);
         int endNode = between(startNode, Math.min(nodes, startNode + 32));
         BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
-        bitSet.setAuxBits(startNode, endNode);
+        bitSet.setAuxBits(startNode, endNode - startNode);
         String msg = String.format(" for range=[%d..%d] of %d nodes", startNode, endNode, nodes);
         for (int i = 0; i < startNode; i++) {
             assertEquals(i + msg, 0L, bitSet.get(i));

@@ -62,12 +62,12 @@ final class BiMultiBitSet32 {
      * Resets all bits while setting the aux bits according to the given
      * node range.
      */
-    void setAuxBits(int fromId, int toId) {
-        int len = toId - fromId;
+    void setAuxBits(int fromId, int len) {
         assert len <= 32;
+        assert len >= 1;
 
         Arrays.fill(bits, 0, fromId, 0L);
-        Arrays.fill(bits, toId, bits.length, 0L);
+        Arrays.fill(bits, fromId + len, bits.length, 0L);
         for (int i = 0; i < len; i++) {
             bits[fromId + i] = (1L << (i + 32));
         }
