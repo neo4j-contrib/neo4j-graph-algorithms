@@ -31,9 +31,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 /**
- *    (b)
- *    /  \
- *  (a)--(c)-->(d)-->(e)<==>(f)
+ *      (b1)
+ *     /   \
+ *  (a0)--(c2)-->(d3)-->(e4)<==>(f5)
  *
  * @author mknblch
  */
@@ -107,23 +107,52 @@ public class LabelPropagationTest {
     }
 
     @Test
-    public void testDirect() throws Exception {
+    public void testDirectSequential() throws Exception {
         final IntDoubleMap map = new LabelPropagation(graph, Pools.DEFAULT)
-                .compute(Direction.OUTGOING, 10, 100_000);
+                .compute(Direction.OUTGOING, 1, 1);
         assertEquals(6, map.size());
     }
 
     @Test
-    public void testCypher() throws Exception {
+    public void testDirectParallel() throws Exception {
+        final IntDoubleMap map = new LabelPropagation(graph, Pools.DEFAULT)
+                .compute(Direction.OUTGOING, 1, 2);
+        assertEquals(6, map.size());
+    }
+
+    @Test
+    public void testCypherSequential() throws Exception {
         String c1 = "CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {" +
-                "iterations:200,partitionProperty:'partition', write:true}) \n" +
+                "iterations:1,partitionProperty:'partition', write:true, batchSize:1}) \n" +
                 "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty";
 
         api.execute(c1).accept(row -> {
-            assertEquals(6, row.getNumber("nodes").intValue());
+            final int nodes = row.getNumber("nodes").intValue();
+            System.out.println("nodes = " + nodes);
+            assertEquals(6, nodes);
             return false;
         });
 
+        printCluster();
+    }
+
+    @Test
+    public void testCypherParallel() throws Exception {
+        String c1 = "CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {" +
+                "iterations:1,partitionProperty:'partition', write:true, batchSize:2}) \n" +
+                "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty";
+
+        api.execute(c1).accept(row -> {
+            final int nodes = row.getNumber("nodes").intValue();
+            System.out.println("nodes = " + nodes);
+            assertEquals(6, nodes);
+            return false;
+        });
+
+        printCluster();
+    }
+
+    public void printCluster() {
         String c2 = "MATCH (n) WHERE exists(n.partition) RETURN id(n) as id, n.partition as p";
         api.execute(c2).accept(row -> {
             final long id = row.getNumber("id").longValue();

@@ -96,7 +96,8 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private void compute(int nodeId) {
             votes.clear();
             graph.forEachRelationship(nodeId, direction, this);
-            double partition = partition(nodeId);
+            double originalPartition = partition(nodeId);
+            double partition = originalPartition;
             double weight = Double.NEGATIVE_INFINITY;
             for (DoubleDoubleCursor vote : votes) {
                 if (weight < vote.value) {
@@ -104,7 +105,16 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                     partition = vote.key;
                 }
             }
-            labels.put(nodeId, partition);
+//            for (IntDoubleCursor label : labels) {
+//                System.out.println(label.key + " = " + label.value);
+//            }
+
+            System.out.println(nodeId + ": partition = " + partition + " originalPartition = " + originalPartition + " " + (partition == originalPartition));
+
+
+            if (partition != originalPartition) {
+                labels.put(nodeId, partition);
+            }
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         }
 
