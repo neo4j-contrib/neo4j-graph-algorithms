@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.bench;
+package org.neo4j.graphalgo.impl.msbfs;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;

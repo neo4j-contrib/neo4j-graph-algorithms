@@ -1,8 +1,6 @@
-package org.neo4j.graphalgo.bench;
+package org.neo4j.graphalgo.impl.msbfs;
 
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
-import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
