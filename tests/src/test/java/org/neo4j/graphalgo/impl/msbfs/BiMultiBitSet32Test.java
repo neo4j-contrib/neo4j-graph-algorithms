@@ -42,14 +42,14 @@ public final class BiMultiBitSet32Test extends RandomizedTest {
 
     @Test
     public void shouldSetAuxiliaryBitsArray() {
-        int nodes = between(2, 64);
+        int nodes = between(8, 64);
         BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
         testSetAuxBits(nodes, bitSet);
     }
 
     @Test
     public void shouldResetAuxiliaryBitsArray() {
-        int nodes = between(2, 64);
+        int nodes = between(8, 64);
         BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
         for (int i = 0; i < nodes; i++) {
             bitSet.setAuxBit(i, between(1, 31));
