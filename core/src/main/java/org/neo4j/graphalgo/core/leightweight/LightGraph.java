@@ -26,6 +26,7 @@ public class LightGraph implements Graph {
     private IntArray outAdjacency;
     private long[] inOffsets;
     private long[] outOffsets;
+    private boolean doRelease;
 
     LightGraph(
             final IdMap idMapping,
@@ -40,6 +41,10 @@ public class LightGraph implements Graph {
         this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
+    }
+
+    void dontRelease() {
+        this.doRelease = false;
     }
 
     @Override
@@ -222,10 +227,12 @@ public class LightGraph implements Graph {
 
     @Override
     public void release() {
-        weightMapping = null;
-        inAdjacency = null;
-        outAdjacency = null;
-        inOffsets = null;
-        outOffsets = null;
+        if (doRelease) {
+            weightMapping = null;
+            inAdjacency = null;
+            outAdjacency = null;
+            inOffsets = null;
+            outOffsets = null;
+        }
     }
 }

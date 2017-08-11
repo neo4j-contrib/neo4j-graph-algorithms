@@ -5,6 +5,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.neo4j.graphalgo.LoadProc;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Result;
@@ -87,9 +88,10 @@ public class PageRankProcIntegrationTest {
             tx.success();
         }
 
-        db.getDependencyResolver()
-                .resolveDependency(Procedures.class)
-                .registerProcedure(PageRankProc.class);
+        Procedures procedures = db.getDependencyResolver()
+                .resolveDependency(Procedures.class);
+        procedures.registerProcedure(PageRankProc.class);
+        procedures.registerProcedure(LoadProc.class);
 
 
         try (Transaction tx = db.beginTx()) {
@@ -128,6 +130,20 @@ public class PageRankProcIntegrationTest {
                 row -> actual.put(
                         row.getNode("node").getId(),
                         (Double) row.get("score")));
+
+        assertMapEquals(expected, actual);
+    }
+    @Test
+    public void testLoadPageRankStream() throws Exception {
+        final Map<Long, Double> actual = new HashMap<>();
+        runQuery(
+                "CALL algo.load('Label1', 'TYPE1',{}) yield graph " +
+                        "CALL algo.pageRank(null, null, {graph:graph}) yield nodes " +
+                        "CALL algo.pageRank.stream(null, null, {graph:graph}) YIELD node, score RETURN nodes, node, score",
+                row -> {
+                    assertEquals(expected.size(), row.getNumber("nodes").intValue());
+                    actual.put(row.getNode("node").getId(), (Double) row.get("score"));
+                });
 
         assertMapEquals(expected, actual);
     }

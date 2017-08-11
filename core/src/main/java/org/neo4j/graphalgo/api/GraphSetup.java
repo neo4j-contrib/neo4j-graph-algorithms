@@ -36,6 +36,8 @@ public class GraphSetup {
     public final String nodePropertyName;
     // default property is used for node properties if property is not set.
     public final double nodeDefaultPropertyValue;
+    // graph resources are releasable
+    public final boolean doRelease;
 
     public final Log log;
 
@@ -81,7 +83,8 @@ public class GraphSetup {
             ExecutorService executor,
             int batchSize,
             boolean accumulateWeights,
-            Log log) {
+            Log log,
+            boolean doRelease) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -98,26 +101,14 @@ public class GraphSetup {
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
         this.log = log;
+        this.doRelease = doRelease;
     }
 
     /**
      * Setup Graph to load any label, any relationship, no property in single threaded mode
      */
     public GraphSetup() {
-        this.startLabel = null;
-        this.endLabel = null;
-        this.relationshipType = null;
-        this.loadIncoming = this.loadOutgoing = true;
-        this.relationWeightPropertyName = null;
-        this.relationDefaultWeight = 1.0;
-        this.nodeWeightPropertyName = null;
-        this.nodeDefaultWeight = 1.0;
-        this.nodePropertyName = null;
-        this.nodeDefaultPropertyValue = 1.0;
-        this.executor = null;
-        this.batchSize = -1;
-        this.accumulateWeights = false;
-        this.log = NullLog.getInstance();
+        this((ExecutorService)null);
     }
 
     /**
@@ -141,6 +132,7 @@ public class GraphSetup {
         this.batchSize = -1;
         this.accumulateWeights = false;
         log = NullLog.getInstance();
+        this.doRelease = true;
     }
 
     public boolean loadConcurrent() {

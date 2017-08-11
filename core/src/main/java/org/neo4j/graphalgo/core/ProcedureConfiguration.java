@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core;
 
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -11,6 +12,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Wrapper around configuration options map
@@ -228,6 +231,12 @@ public class ProcedureConfiguration {
             default:
                 throw new IllegalArgumentException("Unknown impl: " + graphImpl);
         }
+    }
+
+    public Graph loadGraph(Function<Class<? extends GraphFactory>,Graph> graphLoader) {
+        final Object graphImpl = get(ProcedureConstants.GRAPH_IMPL_PARAM, null);
+        if (graphImpl instanceof Graph) return (Graph) graphImpl;
+        return graphLoader.apply(getGraphImpl());
     }
 
     /**

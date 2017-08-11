@@ -50,6 +50,7 @@ public class GraphLoader {
     private int batchSize;
     private boolean accumulateWeights;
     private Log log = NullLog.getInstance();
+    private boolean doRelease = true;
 
     /**
      * Creates a new serial GraphLoader.
@@ -390,7 +391,8 @@ public class GraphLoader {
                 executorService,
                 batchSize,
                 accumulateWeights,
-                log);
+                log,
+                doRelease);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -436,6 +438,11 @@ public class GraphLoader {
      */
     public GraphLoader withAccumulateWeights(boolean accumulateWeights) {
         this.accumulateWeights = accumulateWeights;
+        return this;
+    }
+
+    public GraphLoader dontRelease() {
+        doRelease = false;
         return this;
     }
 }

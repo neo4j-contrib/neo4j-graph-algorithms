@@ -55,7 +55,8 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
+        final Graph graph = configuration.loadGraph( (impl) -> load(label, relationship, impl, statsBuilder) );
+        statsBuilder.withNodes(graph.nodeCount());
         double[] scores = evaluate(graph, configuration, statsBuilder);
         write(graph, scores, configuration, statsBuilder);
 
@@ -74,7 +75,8 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
+        final Graph graph = configuration.loadGraph( (impl) -> load(label, relationship, impl, statsBuilder) );
+        statsBuilder.withNodes(graph.nodeCount());
         double[] scores = evaluate(graph, configuration, statsBuilder);
 
         return IntStream.range(0, scores.length)

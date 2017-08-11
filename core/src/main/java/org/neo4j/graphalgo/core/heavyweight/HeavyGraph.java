@@ -21,6 +21,7 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     private WeightMapping relationshipWeights;
     private WeightMapping nodeWeights;
     private WeightMapping nodeProperties;
+    private boolean doRelease = true;
 
     HeavyGraph(
             IdMap nodeIdMap,
@@ -33,6 +34,10 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
         this.relationshipWeights = relationshipWeights;
         this.nodeWeights = nodeWeights;
         this.nodeProperties = nodeProperties;
+    }
+
+    void dontRelease() {
+        doRelease = false;
     }
 
     @Override
@@ -105,9 +110,11 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
 
     @Override
     public void release() {
-        container = null;
-        relationshipWeights = null;
-        nodeWeights = null;
-        nodeProperties = null;
+        if (doRelease) {
+            container = null;
+            relationshipWeights = null;
+            nodeWeights = null;
+            nodeProperties = null;
+        }
     }
 }

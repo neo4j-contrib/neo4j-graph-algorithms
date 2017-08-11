@@ -138,12 +138,16 @@ public class HeavyGraphFactory extends GraphFactory {
 
         progressLogger.logDone();
 
-        return new HeavyGraph(
+        HeavyGraph graph = new HeavyGraph(
                 idMap,
                 buildAdjacencyMatrix(tasks),
                 relWeigths,
                 nodeWeights,
                 nodeProps);
+        if (!setup.doRelease) {
+            graph.dontRelease();
+        }
+        return graph;
     }
 
     private AdjacencyMatrix buildAdjacencyMatrix(Collection<ImportTask> tasks) {

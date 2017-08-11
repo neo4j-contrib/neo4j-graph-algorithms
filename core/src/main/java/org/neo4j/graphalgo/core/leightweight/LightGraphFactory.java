@@ -109,7 +109,7 @@ public final class LightGraphFactory extends GraphFactory {
             outOffsets[nodeCount] = outAdjacencyIdx;
         }
 
-        return new LightGraph(
+        LightGraph graph = new LightGraph(
                 mapping,
                 weights,
                 inAdjacency,
@@ -117,6 +117,10 @@ public final class LightGraphFactory extends GraphFactory {
                 inOffsets,
                 outOffsets
         );
+        if (!setup.doRelease) {
+            graph.dontRelease();
+        }
+        return graph;
     }
 
     private void readNode(
