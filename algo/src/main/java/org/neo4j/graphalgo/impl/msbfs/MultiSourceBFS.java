@@ -128,7 +128,7 @@ public final class MultiSourceBFS implements Runnable {
     /**
      * Runs MS-BFS, possibly in parallel.
      */
-    public void run(ExecutorService executor) {
+    public void run(int concurrency, ExecutorService executor) {
         int sourceLength = sourceLength();
         int threads = ParallelUtil.threadSize(OMEGA, sourceLength);
         Collection<MultiSourceBFS> bfss = allSourceBfss(threads);
@@ -136,7 +136,10 @@ public final class MultiSourceBFS implements Runnable {
             // fallback to sequentially running all MS-BFS instances
             executor = null;
         }
-        ParallelUtil.run(bfss, executor);
+        ParallelUtil.runWithConcurrency(
+                concurrency,
+                bfss,
+                executor);
     }
 
     /**
