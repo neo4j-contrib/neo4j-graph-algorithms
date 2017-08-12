@@ -18,13 +18,13 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import static org.junit.Assert.assertEquals;
 
 /**
- *   (c)    (d)
+ *   (c)--(d)
  *   /  \
  * (a)--(b)
  *
  * @author mknblch
  */
-public class TriangleCountTest {
+public class TriangleListTest {
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -62,7 +62,18 @@ public class TriangleCountTest {
 
     @Test
     public void testSequential() throws Exception {
-        final int[] triangles = new ParallelTriangleCount(graph, Pools.DEFAULT, 1)
+        final int[] triangles = new ParallelTriangleList(graph, Pools.DEFAULT, 1)
+                .compute()
+                .getTriangles();
+
+        for (int i = 0; i < triangles.length; i++) {
+            System.out.println(i + " " + triangles[i]);
+        }
+    }
+
+    @Test
+    public void testParallel() throws Exception {
+        final int[] triangles = new ParallelTriangleList(graph, Pools.DEFAULT, 4)
                 .compute()
                 .getTriangles();
 

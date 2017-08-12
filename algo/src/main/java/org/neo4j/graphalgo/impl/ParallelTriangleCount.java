@@ -20,34 +20,29 @@ import java.util.stream.StreamSupport;
  */
 public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
 
+    private static final Direction D = Direction.BOTH;
+
     // gapi
     private final Graph graph;
     // executor
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private final int nodeCount;
-    // node queue
-    private volatile AtomicInteger nodeQueue = new AtomicInteger();
 
-    private final IntObjectMap<BitSet> neighbors;
-    private final int[] triangles;
+    private final int nodeCount;
+
+    private int triangleCount;
+
 
     public ParallelTriangleCount(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.executorService = executorService;
         this.concurrency = concurrency;
         nodeCount = graph.nodeCount();
-        triangles = new int[nodeCount];
     }
 
     public int getTriangleCount() {
-        return StreamSupport.stream(Arrays.spliterator(triangles), true)
-                .mapToInt(k -> k).sum();
-    }
-
-    public int[] getTriangles() {
-        return triangles;
+        return triangleCount;
     }
 
     @Override
@@ -57,22 +52,10 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
 
     @Override
     public ParallelTriangleCount release() {
-        return null;
+        return this;
     }
 
     public ParallelTriangleCount compute() {
-
-        graph.forEachNode(node -> {
-            graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                if (graph.degree(sourceNodeId, Direction.OUTGOING) < graph.degree(targetNodeId, Direction.OUTGOING)) {
-                    addNeighbor(sourceNodeId, targetNodeId);
-                } else {
-                    addNeighbor(targetNodeId, sourceNodeId);
-                }
-                return true;
-            });
-            queue.add(i, graph.degree(i, Direction.OUTGOING));
-        });
 
         final ArrayList<Task> tasks = new ArrayList<>();
         final int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, 1);
@@ -81,67 +64,50 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
             tasks.add(new Task(i, end));
         }
         ParallelUtil.run(tasks, executorService);
+
+        triangleCount = tasks.stream()
+                .mapToInt(Task::count)
+                .sum();
+
         return this;
     }
-
-    private void addNeighbor(int source, int target) {
-        if (!neighbors.containsKey(source)) {
-            neighbors.put(source, new BitSet());
-        }
-        neighbors.get(source).set(target);
-    }
-
 
     private class Task implements Runnable {
 
         private final int startIndex;
         private final int endIndex;
-        private final IntMaxPriorityQueue queue;
-
-        private int tCount = 0;
+        private int count = 0;
 
         private Task(int startIndex, int endIndex) {
             this.startIndex = startIndex;
             this.endIndex = endIndex;
-            neighbors = new IntObjectScatterMap<>(endIndex - startIndex);
-            queue = new IntMaxPriorityQueue(endIndex - startIndex);
-            initialize();
-        }
-
-
-        private void initialize() {
-            for (int i = startIndex; i < endIndex && running(); i++) {
-                graph.forEachRelationship(i, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                    if (graph.degree(sourceNodeId, Direction.OUTGOING) < graph.degree(targetNodeId, Direction.OUTGOING)) {
-                        addNeighbor(sourceNodeId, targetNodeId);
-                    } else {
-                        addNeighbor(targetNodeId, sourceNodeId);
-                    }
-                    return true;
-                });
-                queue.add(i, graph.degree(i, Direction.OUTGOING));
-            }
         }
 
         @Override
         public void run() {
-            queue.forEach(node -> {
-                graph.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                    if (graph.degree(sourceNodeId, Direction.OUTGOING) < graph.degree(targetNodeId, Direction.OUTGOING)) {
-                        final BitSet clone = (BitSet) neighbors.get(sourceNodeId).clone();
-                        clone.intersect(neighbors.get(targetNodeId));
-                        final BitSetIterator iterator = clone.iterator();
-                        for (;;) {
-                            final int v = iterator.nextSetBit();
-                            triangles[node]++;
-                        }
-
+            for (int i = startIndex; i < endIndex; i++) {
+                // (u, v, w)
+                graph.forEachRelationship(i, D, (u, v, relationId) -> {
+                    if (v > u) {
+                        graph.forEachRelationship(v, D, (v2, w, relationId2) -> {
+                            if (w > v2) {
+                                graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
+                                    if (t == u) {
+                                        count++;
+                                    }
+                                    return true;
+                                });
+                            }
+                            return true;
+                        });
                     }
                     return true;
                 });
-                return true;
-            });
+            }
+        }
 
+        private int count() {
+            return count;
         }
     }
 }

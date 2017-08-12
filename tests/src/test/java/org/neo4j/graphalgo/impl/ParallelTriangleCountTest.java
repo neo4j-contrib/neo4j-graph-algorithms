@@ -68,7 +68,7 @@ public class ParallelTriangleCountTest {
 
     @Test
     public void testSequential() throws Exception {
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("eval took " + l + "ms"))) {
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential eval took " + l + "ms"))) {
             final int triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 1)
                     .compute()
                     .getTriangleCount();
@@ -78,7 +78,7 @@ public class ParallelTriangleCountTest {
 
     @Test
     public void testParallel() throws Exception {
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("eval took " + l + "ms"))) {
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel eval took " + l + "ms"))) {
             final int triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 8)
                     .compute()
                     .getTriangleCount();
