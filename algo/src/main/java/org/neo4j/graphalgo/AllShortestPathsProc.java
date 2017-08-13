@@ -52,7 +52,7 @@ public class AllShortestPathsProc {
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
 
-            return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
+            return new MSBFSAllShortestPaths(graph, configuration.getConcurrency(), Pools.DEFAULT)
                     .withProgressLogger(ProgressLogger.wrap(log, "AllShortestPaths(MultiSource)"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .resultStream();

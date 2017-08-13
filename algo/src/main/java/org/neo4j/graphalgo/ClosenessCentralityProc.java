@@ -54,7 +54,7 @@ public class ClosenessCentralityProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
-        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, Pools.DEFAULT)
+        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute();
@@ -87,7 +87,7 @@ public class ClosenessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
-        final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, Pools.DEFAULT)
+        final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 

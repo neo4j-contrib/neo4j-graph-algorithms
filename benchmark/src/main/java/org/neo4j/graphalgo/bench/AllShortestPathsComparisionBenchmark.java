@@ -129,7 +129,7 @@ public class AllShortestPathsComparisionBenchmark {
 
     @Benchmark
     public long _03_benchmark_MS_ASP() {
-        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
+        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .resultStream().count();
     }
 }

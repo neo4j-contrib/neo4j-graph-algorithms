@@ -60,7 +60,7 @@ public class MSBFSBenchmark {
                 consume(bh),
                 source.sources);
         try {
-            msbfs.run(Pools.DEFAULT);
+            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
         } catch (StackOverflowError e) {
             Throwable error = e;
             Pools.DEFAULT.shutdownNow();
