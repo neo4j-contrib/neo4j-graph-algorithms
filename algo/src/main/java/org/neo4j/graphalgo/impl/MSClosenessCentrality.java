@@ -22,12 +22,14 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
     private Graph graph;
     private AtomicIntegerArray farness;
 
+    private final int concurrency;
     private final ExecutorService executorService;
     private final int nodeCount;
 
-    public MSClosenessCentrality(Graph graph, ExecutorService executorService) {
+    public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
+        this.concurrency = concurrency;
         this.executorService = executorService;
         farness = new AtomicIntegerArray(nodeCount);
     }
@@ -43,7 +45,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
         };
 
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
-                .run(executorService);
+                .run(concurrency, executorService);
 
         return this;
     }
