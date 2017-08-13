@@ -8,7 +8,6 @@ import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.Coloring;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.impl.UnionFind;
@@ -157,34 +156,6 @@ public class UnionFindBenchmark {
     @Benchmark
     public Object _08_multiSourceBFSColoringUnionFind() {
         return new MSColoring(heavyGraph, Pools.DEFAULT, 8)
-                .compute()
-                .getColors();
-    }
-
-    @Benchmark
-    public Object _09_singleSourceBFSColoringUnionFind_2() {
-        return new Coloring(heavyGraph, Pools.DEFAULT, 2)
-                .compute()
-                .getColors();
-    }
-
-    @Benchmark
-    public Object _10_singleSourceBFSColoringUnionFind_4() {
-        return new Coloring(heavyGraph, Pools.DEFAULT, 4)
-                .compute()
-                .getColors();
-    }
-
-    @Benchmark
-    public Object _11_singleSourceBFSColoringUnionFind_8() {
-        return new Coloring(heavyGraph, Pools.DEFAULT, 8)
-                .compute()
-                .getColors();
-    }
-
-    @Benchmark
-    public Object _12_singleSourceBFSColoringUnionFind_1() {
-        return new Coloring(heavyGraph, Pools.DEFAULT, 1)
                 .compute()
                 .getColors();
     }

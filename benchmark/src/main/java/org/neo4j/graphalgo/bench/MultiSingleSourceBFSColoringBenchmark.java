@@ -6,7 +6,6 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.Coloring;
 import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -143,15 +142,8 @@ public class MultiSingleSourceBFSColoringBenchmark {
     }
 
     @Benchmark
-    public Object _01_singleSourceBFSColoring() throws Exception {
-        return new Coloring(graph, Pools.DEFAULT, 2)
-                .compute()
-                .getColors();
-    }
-
-    @Benchmark
     public Object _02_multiSourceBFSColoring() throws Exception {
-        return new MSColoring(graph, Pools.DEFAULT)
+        return new MSColoring(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
                 .compute()
                 .getColors();
     }
