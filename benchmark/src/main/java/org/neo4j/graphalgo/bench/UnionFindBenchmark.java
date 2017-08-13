@@ -93,7 +93,6 @@ public class UnionFindBenchmark {
 
         lightGraph = loadLight();
 
-        msColoring = new MSColoring(heavyGraph, Pools.DEFAULT);
     }
 
 
@@ -157,7 +156,7 @@ public class UnionFindBenchmark {
 
     @Benchmark
     public Object _08_multiSourceBFSColoringUnionFind() {
-        return msColoring
+        return new MSColoring(heavyGraph, Pools.DEFAULT, 8)
                 .compute()
                 .getColors();
     }

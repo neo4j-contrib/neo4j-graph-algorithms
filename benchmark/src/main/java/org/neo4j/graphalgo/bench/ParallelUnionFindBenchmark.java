@@ -190,7 +190,7 @@ public class ParallelUnionFindBenchmark {
 
     @Benchmark
     public Object multiSourceColoring() {
-        return new MSColoring(graph, Pools.DEFAULT)
+        return new MSColoring(graph, Pools.DEFAULT, 8)
                 .compute()
                 .getColors();
     }
