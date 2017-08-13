@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.impl.msbfs.BfsSources;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
@@ -67,10 +68,6 @@ public class MSColoring {
                 graph.nodeCount(),
                 Runtime.getRuntime().availableProcessors() * 2, // TODO constant/getter anywhere!?
                 offset -> colors.set(offset, offset));
-
-//        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
-//            colors.set(i, i);
-//        }
     }
 
     private void nodeAction(int node, int depth, BfsSources bfsSources) {

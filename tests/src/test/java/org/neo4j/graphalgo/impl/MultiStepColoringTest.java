@@ -1,5 +1,8 @@
 package org.neo4j.graphalgo.impl;
 
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntIntScatterMap;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author mknblch
@@ -140,19 +145,19 @@ public class MultiStepColoringTest {
     public void testMsColoring() throws Exception {
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("MSColoring took " + l + "ms"))) {
-            final AtomicIntegerArray colors = new MSColoring(graph, Pools.DEFAULT, 4)
+            final AtomicIntegerArray colors = new MSColoring(graph, Pools.DEFAULT, 8)
                     .compute()
                     .getColors();
+
+            assertEquals(NUM_SETS, numColors(colors));
         }
     }
 
-    @Test
-    public void testColoring() throws Exception {
-
-        try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("Coloring took " + l + "ms"))) {
-            final AtomicIntegerArray colors = new Coloring(graph, Pools.DEFAULT, 8)
-                    .compute()
-                    .getColors();
+    private static int numColors(AtomicIntegerArray colors) {
+        final IntIntMap map = new IntIntScatterMap();
+        for (int i = colors.length() - 1; i >= 0; i--) {
+            map.addTo(colors.get(i), 1);
         }
+        return map.size();
     }
 }
