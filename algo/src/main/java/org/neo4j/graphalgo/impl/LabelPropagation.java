@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.DoubleDoubleHashMap;
 import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.cursors.DoubleDoubleCursor;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
@@ -104,6 +105,13 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                     partition = vote.key;
                 }
             }
+//            for (IntDoubleCursor label : labels) {
+//                System.out.println(label.key + " = " + label.value);
+//            }
+
+            System.out.println(nodeId + ": partition = " + partition + " originalPartition = " + originalPartition + " " + (partition == originalPartition));
+
+
             if (partition != originalPartition) {
                 labels.put(nodeId, partition);
             }
