@@ -26,7 +26,7 @@ public final class BiMultiBitSet32Test extends RandomizedTest {
         int startNode = between(0, nodes / 2);
         int endNode = between(startNode, Math.min(nodes, startNode + 32));
         BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
-        bitSet.setAuxBits(startNode, endNode);
+        bitSet.setAuxBits(startNode, endNode - startNode);
         String msg = String.format(" for range=[%d..%d] of %d nodes", startNode, endNode, nodes);
         for (int i = 0; i < startNode; i++) {
             assertEquals(i + msg, 0L, bitSet.get(i));
@@ -42,16 +42,30 @@ public final class BiMultiBitSet32Test extends RandomizedTest {
 
     @Test
     public void shouldSetAuxiliaryBitsArray() {
-        int nodes = between(2, 64);
+        int nodes = between(8, 64);
+        BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
+        testSetAuxBits(nodes, bitSet);
+    }
+
+    @Test
+    public void shouldResetAuxiliaryBitsArray() {
+        int nodes = between(8, 64);
+        BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
+        for (int i = 0; i < nodes; i++) {
+            bitSet.setAuxBit(i, between(1, 31));
+        }
+        testSetAuxBits(nodes, bitSet);
+    }
+
+    private void testSetAuxBits(final int nodes, final BiMultiBitSet32 bitSet) {
         int sourceNodeCount = between(nodes / 4, Math.min(32, nodes));
         IntHashSet sources = new IntHashSet(sourceNodeCount);
         while (sources.size() < sourceNodeCount) {
-            sources.add(between(0, nodes - 1));
+            sources.add(between(4, nodes - 4));
         }
+
         int[] sourceNodes = sources.toArray();
         Arrays.sort(sourceNodes);
-
-        BiMultiBitSet32 bitSet = new BiMultiBitSet32(nodes);
         bitSet.setAuxBits(sourceNodes);
 
         String msg = String.format(" for sources=[%s] of %d nodes", Arrays.toString(sourceNodes), nodes);

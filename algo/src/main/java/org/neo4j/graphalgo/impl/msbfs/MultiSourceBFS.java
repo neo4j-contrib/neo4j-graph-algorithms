@@ -141,7 +141,7 @@ public final class MultiSourceBFS implements Runnable {
 
     /**
      * Runs MS-BFS, always single-threaded. Requires that there are at most
-     * 32 startNodes. If there are more, {@link #run(ExecutorService)} must be used.
+     * 32 startNodes. If there are more, {@link #run(int, ExecutorService)} must be used.
      */
     @Override
     public void run() {
@@ -160,7 +160,7 @@ public final class MultiSourceBFS implements Runnable {
                 visit.setBit(startNodes[i], i);
             }
         } else {
-            nextAndSeen.setAuxBits(nodeOffset, nodeOffset + sourceNodeCount);
+            nextAndSeen.setAuxBits(nodeOffset, sourceNodeCount);
             for (int i = 0; i < sourceNodeCount; i++) {
                 visit.setBit(i + nodeOffset, i);
             }
@@ -246,6 +246,20 @@ public final class MultiSourceBFS implements Runnable {
                 );
             }
         };
+    }
+
+    @Override
+    public String toString() {
+        if (startNodes != null && startNodes.length > 0) {
+            return "MSBFS{" + startNodes[0] +
+                    " .. " + (startNodes[startNodes.length - 1] + 1) +
+                    " (" + startNodes.length +
+                    ")}";
+        }
+        return "MSBFS{" + nodeOffset +
+                " .. " + (nodeOffset + sourceNodeCount) +
+                " (" + sourceNodeCount +
+                ")}";
     }
 
     private static final class SourceNodes implements BfsSources {
