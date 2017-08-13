@@ -17,10 +17,10 @@ import java.util.function.IntPredicate;
 public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, NodeProperties {
 
     private final IdMap nodeIdMap;
-    private final AdjacencyMatrix container;
-    private final WeightMapping relationshipWeights;
-    private final WeightMapping nodeWeights;
-    private final WeightMapping nodeProperties;
+    private AdjacencyMatrix container;
+    private WeightMapping relationshipWeights;
+    private WeightMapping nodeWeights;
+    private WeightMapping nodeProperties;
 
     HeavyGraph(
             IdMap nodeIdMap,
@@ -101,5 +101,13 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     @Override
     public double valueOf(final int nodeId, final double defaultValue) {
         return nodeProperties.get(nodeId, defaultValue);
+    }
+
+    @Override
+    public void release() {
+        container = null;
+        relationshipWeights = null;
+        nodeWeights = null;
+        nodeProperties = null;
     }
 }

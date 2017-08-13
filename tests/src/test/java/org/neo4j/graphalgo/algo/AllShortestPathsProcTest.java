@@ -117,6 +117,7 @@ public final class AllShortestPathsProcTest {
             final long source = row.getNumber("sourceNodeId").longValue();
             final long target = row.getNumber("targetNodeId").longValue();
             final double distance = row.getNumber("distance").doubleValue();
+            assertNotEquals(Double.POSITIVE_INFINITY, distance);
             if (source == target) {
                 assertEquals(0.0, distance, 0.1);
             }
@@ -141,6 +142,7 @@ public final class AllShortestPathsProcTest {
             final long source = row.getNumber("sourceNodeId").longValue();
             final long target = row.getNumber("targetNodeId").longValue();
             final double distance = row.getNumber("distance").doubleValue();
+            assertNotEquals(Double.POSITIVE_INFINITY, distance);
             if (source == target) {
                 assertEquals(0.0, distance, 0.1);
             }
@@ -152,7 +154,6 @@ public final class AllShortestPathsProcTest {
         verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(8.0));
 
     }
-
 
     private interface Consumer {
         void test(long source, long target, double distance);

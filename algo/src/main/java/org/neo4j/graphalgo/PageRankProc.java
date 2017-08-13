@@ -134,7 +134,10 @@ public final class PageRankProc {
                 .withIterations(iterations)
                 .withDampingFactor(dampingFactor);
 
-        return algo.getPageRank();
+        final double[] pageRank = algo.getPageRank();
+        algo.release();
+        graph.release();
+        return pageRank;
     }
 
     private void write(
@@ -147,6 +150,7 @@ public final class PageRankProc {
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
             try (ProgressTimer timer = statsBuilder.timeWrite()) {
                 new DoubleArrayExporter(api, graph, log, propertyName, Pools.DEFAULT)
+                        .withConcurrency(configuration.getConcurrency())
                         .write(scores);
             }
             statsBuilder

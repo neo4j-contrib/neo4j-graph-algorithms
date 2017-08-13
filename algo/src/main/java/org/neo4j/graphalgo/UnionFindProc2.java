@@ -118,37 +118,42 @@ public class UnionFindProc2 {
         final DisjointSetStruct struct;
 
         if (config.getBatchSize(-1) != -1) {
+            final ParallelUnionFindQueue parallelUnionFindQueue = new ParallelUnionFindQueue(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency());
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold in parallel" + threshold);
-                struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                struct = parallelUnionFindQueue
                         .withProgressLogger(ProgressLogger.wrap(log, "CC(ParallelUnionFindQueue)"))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute(threshold)
                         .getStruct();
             } else {
                 log.debug("Computing union find without threshold in parallel");
-                struct = new ParallelUnionFindQueue(graph, Pools.DEFAULT, config.getBatchSize(), config.getConcurrency())
+                struct = parallelUnionFindQueue
                         .withProgressLogger(ProgressLogger.wrap(log, "CC(ParallelUnionFindQueue)"))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute()
                         .getStruct();
             }
+            parallelUnionFindQueue.release();
         } else {
+            final GraphUnionFind graphUnionFind = new GraphUnionFind(graph);
             if (config.containsKeys(ProcedureConstants.PROPERTY_PARAM, CONFIG_THRESHOLD)) {
                 final Double threshold = config.get(CONFIG_THRESHOLD, 0.0);
                 log.debug("Computing union find with threshold " + threshold);
-                struct = new GraphUnionFind(graph)
+                struct = graphUnionFind
                         .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute(threshold);
             } else {
                 log.debug("Computing union find without threshold");
-                struct = new GraphUnionFind(graph)
+                struct = graphUnionFind
                         .withProgressLogger(ProgressLogger.wrap(log, "CC(SequentialUnionFind)"))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .compute();
             }
+            graphUnionFind.release();
+            graph.release();
         }
 
         return struct;
@@ -158,6 +163,7 @@ public class UnionFindProc2 {
         log.debug("Writing results");
         new DisjointSetStructExporter(api, graph, log,
                 configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY), Pools.DEFAULT)
+                .withConcurrency(configuration.getConcurrency())
                 .write(struct);
     }
 }

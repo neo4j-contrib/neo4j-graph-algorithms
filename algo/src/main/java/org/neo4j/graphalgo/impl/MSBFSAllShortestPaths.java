@@ -26,14 +26,16 @@ import java.util.stream.StreamSupport;
  */
 public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
-    private final Graph graph;
+    private Graph graph;
+    private BlockingQueue<Result> resultQueue;
+    private final int concurrency;
     private final ExecutorService executorService;
-    private final BlockingQueue<Result> resultQueue;
     private final int nodeCount;
 
-    public MSBFSAllShortestPaths(Graph graph, ExecutorService executorService) {
+    public MSBFSAllShortestPaths(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
+        this.concurrency = concurrency;
         this.executorService = executorService;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
@@ -45,7 +47,7 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
      * @return the result stream
      */
     public Stream<Result> resultStream() {
-        executorService.submit(new ShortestPathTask(executorService));
+        executorService.submit(new ShortestPathTask(concurrency, executorService));
         Iterator<Result> iterator = new AbstractIterator<Result>() {
             @Override
             protected Result fetch() {
@@ -70,6 +72,13 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
         return this;
     }
 
+    @Override
+    public MSBFSAllShortestPaths release() {
+        graph = null;
+        resultQueue = null;
+        return this;
+    }
+
     /**
      * Dijkstra Task. Takes one element of the counter at a time
      * and starts dijkstra on it. It starts emitting results to the
@@ -77,9 +86,13 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
      */
     private class ShortestPathTask implements Runnable {
 
+        private final int concurrency;
         private final ExecutorService executorService;
 
-        private ShortestPathTask(final ExecutorService executorService) {
+        private ShortestPathTask(
+                int concurrency,
+                ExecutorService executorService) {
+            this.concurrency = concurrency;
             this.executorService = executorService;
         }
 
@@ -108,7 +121,7 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
                         }
                         progressLogger.logProgress((double) target / (nodeCount - 1));
                     }
-            ).run(executorService);
+            ).run(concurrency, executorService);
 
             resultQueue.add(new Result(-1, -1, -1));
         }

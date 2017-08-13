@@ -140,7 +140,7 @@ public class MultiStepColoringTest {
     public void testMsColoring() throws Exception {
 
         try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("MSColoring took " + l + "ms"))) {
-            final AtomicIntegerArray colors = new MSColoring(graph, Pools.DEFAULT)
+            final AtomicIntegerArray colors = new MSColoring(graph, Pools.DEFAULT, 4)
                     .compute()
                     .getColors();
         }

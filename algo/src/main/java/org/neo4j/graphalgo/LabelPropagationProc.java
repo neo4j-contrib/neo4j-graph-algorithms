@@ -87,7 +87,7 @@ public final class LabelPropagationProc {
         stats.nodes(labels.size());
 
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
-            write(batchSize, partitionProperty, graph, labels, stats);
+            write(batchSize, partitionProperty, graph, labels, stats, configuration);
         }
 
         return Stream.of(stats.build());
@@ -124,14 +124,18 @@ public final class LabelPropagationProc {
             LabelPropagationStats.Builder stats) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
-            return new LabelPropagation(graph, pool)
+            final LabelPropagation labelPropagation = new LabelPropagation(graph, pool);
+            final IntDoubleMap result = labelPropagation
                     .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(
-                    direction,
-                    iterations,
-                    Math.max(1, batchSize)
-            );
+                            direction,
+                            iterations,
+                            Math.max(1, batchSize)
+                    );
+            labelPropagation.release();
+            graph.release();
+            return result;
         }
     }
 
@@ -140,10 +144,11 @@ public final class LabelPropagationProc {
             String partitionKey,
             HeavyGraph graph,
             IntDoubleMap labels,
-            LabelPropagationStats.Builder stats) {
+            LabelPropagationStats.Builder stats, ProcedureConfiguration configuration) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
             new LabelPropagationExporter(dbAPI, graph, log, partitionKey, Pools.DEFAULT)
+                    .withConcurrency(configuration.getConcurrency())
                     .write(labels);
         }
     }

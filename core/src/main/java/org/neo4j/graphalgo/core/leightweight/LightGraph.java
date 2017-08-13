@@ -21,11 +21,11 @@ import java.util.function.IntPredicate;
 public class LightGraph implements Graph {
 
     private final IdMap idMapping;
-    private final WeightMapping weightMapping;
-    private final IntArray inAdjacency;
-    private final IntArray outAdjacency;
-    private final long[] inOffsets;
-    private final long[] outOffsets;
+    private WeightMapping weightMapping;
+    private IntArray inAdjacency;
+    private IntArray outAdjacency;
+    private long[] inOffsets;
+    private long[] outOffsets;
 
     LightGraph(
             final IdMap idMapping,
@@ -218,5 +218,14 @@ public class LightGraph implements Graph {
                 consumer.accept(startNode, targetNode, relationId);
             }
         }
+    }
+
+    @Override
+    public void release() {
+        weightMapping = null;
+        inAdjacency = null;
+        outAdjacency = null;
+        inOffsets = null;
+        outOffsets = null;
     }
 }

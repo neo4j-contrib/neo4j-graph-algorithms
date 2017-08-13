@@ -81,6 +81,11 @@ public class Coloring extends Algorithm<Coloring> {
         return this;
     }
 
+    @Override
+    public Coloring release() {
+        return this;
+    }
+
     private void reset() {
         ParallelUtil.iterateParallel(executorService,
                 graph.nodeCount(),

@@ -51,7 +51,7 @@ public class ShortestPathDeltaSteppingProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.shortestPath.deltaStepping.stream")
-    @Description("CALL algo.shortestPath.deltaStepping.stream(startNode:Node, propertyName:String, delta:Double" +
+    @Description("CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta:Double" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)")
     public Stream<ShortestPathDeltaStepping.DeltaSteppingResult> deltaSteppingStream(
@@ -74,18 +74,19 @@ public class ShortestPathDeltaSteppingProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new ShortestPathDeltaStepping(graph, delta)
+        final ShortestPathDeltaStepping algo = new ShortestPathDeltaStepping(graph, delta)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Executors.newFixedThreadPool(
                         configuration.getInt("concurrency", 4)
-                ))
-                .compute(startNode.getId())
-                .resultStream();
+                )).compute(startNode.getId());
+
+        graph.release();
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.shortestPath.deltaStepping", mode = Mode.WRITE)
-    @Description("CALL algo.shortestPath.deltaStepping(startNode:Node, propertyName:String, delta:Double" +
+    @Description("CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Double" +
             "{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) " +
             "YIELD loadDuration, evalDuration, writeDuration, nodeCount")
     public Stream<DeltaSteppingProcResult> deltaStepping(
@@ -120,10 +121,14 @@ public class ShortestPathDeltaSteppingProc {
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
 
         if (configuration.isWriteFlag()) {
+            final double[] shortestPaths = algorithm.getShortestPaths();
+            algorithm.release();
+            graph.release();
             builder.timeWrite(() -> {
                 new DoubleArrayExporter(api, graph, log,
                         configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .write(algorithm.getShortestPaths());
+                        .withConcurrency(configuration.getConcurrency())
+                        .write(shortestPaths);
             });
         }
 

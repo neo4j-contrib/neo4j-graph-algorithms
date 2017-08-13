@@ -273,6 +273,12 @@ public class PageRank extends Algorithm<PageRank> {
         return this;
     }
 
+    @Override
+    public PageRank release() {
+
+        return this;
+    }
+
     private static final class Partition {
 
         private final int startNode;

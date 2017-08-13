@@ -26,10 +26,13 @@ public class MSColoring {
 
     private final AtomicIntegerArray colors;
 
-    public MSColoring(Graph graph, ExecutorService executorService) {
+    private final int concurrency;
+
+    public MSColoring(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.executorService = executorService;
         colors = new AtomicIntegerArray(graph.nodeCount());
+        this.concurrency = concurrency;
     }
 
     public AtomicIntegerArray getColors() {
@@ -41,7 +44,7 @@ public class MSColoring {
         reset();
         // start bfs from all sources (direction does not matter)
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, this::nodeAction)
-                .run(executorService);
+                .run(concurrency, executorService);
         return this;
     }
 

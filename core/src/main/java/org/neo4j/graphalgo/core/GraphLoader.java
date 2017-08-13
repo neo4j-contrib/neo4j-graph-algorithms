@@ -267,7 +267,7 @@ public class GraphLoader {
 
     /**
      * Instructs the loader to load node values by reading the given property.
-     * If the property is not set at the relationship, the propertyDefaultValue is used instead.
+     * If the property is not set at the node, the propertyDefaultValue is used instead.
      *
      * @param property May be null
      * @param propertyDefaultValue the default value to use if property is not set

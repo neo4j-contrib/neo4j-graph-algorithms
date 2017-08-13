@@ -77,7 +77,7 @@ public class MSColoringTest {
     @Test
     public void testBigSet() throws Exception {
 
-        final MSColoring algorithm = new MSColoring(graph, Pools.DEFAULT);
+        final MSColoring algorithm = new MSColoring(graph, Pools.DEFAULT, 8);
 
         try (ProgressTimer start = ProgressTimer.start(d ->
                 System.out.println("computation took " + d + "ms for " + graph.nodeCount() + " nodes"))) {

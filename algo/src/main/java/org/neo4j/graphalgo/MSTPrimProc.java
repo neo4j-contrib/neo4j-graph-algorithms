@@ -57,8 +57,8 @@ public class MSTPrimProc {
 
         MSTPrimResult.Builder builder = MSTPrimResult.builder();
 
-        final BufferedWeightMap weightMap;
-        final RelationshipContainer relationshipContainer;
+        BufferedWeightMap weightMap;
+        RelationshipContainer relationshipContainer;
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
@@ -98,11 +98,15 @@ public class MSTPrimProc {
         });
 
         if (configuration.isWriteFlag()) {
+            final MSTPrim.MinimumSpanningTree minimumSpanningTree = mstPrim.getMinimumSpanningTree();
+            mstPrim.release();
+            weightMap = null;
+            relationshipContainer = null;
             builder.timeWrite(() -> {
                 new MSTPrimExporter(api)
                         .withIdMapping(idMapper)
                         .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                        .write(mstPrim.getMinimumSpanningTree());
+                        .write(minimumSpanningTree);
             });
         }
 

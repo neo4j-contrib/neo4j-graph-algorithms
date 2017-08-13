@@ -20,7 +20,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
     private static final double[] EMPTY_DOUBLES = new double[0];
     private static final int[] EMPTY_INTS = new int[0];
 
-    private final HeavyGraph graph;
+    private HeavyGraph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private Direction direction;
@@ -62,6 +62,12 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
     @Override
     public LabelPropagation me() {
+        return this;
+    }
+
+    @Override
+    public LabelPropagation release() {
+        graph = null;
         return this;
     }
 

@@ -59,13 +59,15 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.betweenness.stream('User','MANAGE') YIELD nodeId, centrality
+CALL algo.betweenness.stream('User','MANAGE') 
+YIELD nodeId, centrality 
+RETURN nodeId,centrality order by centrality desc limit 20
 ----
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.betweenness('','', {write:true, writeProperty:'centrality'}) 
+CALL algo.betweenness('User','MANAGE', {write:true, writeProperty:'centrality'}) 
 YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis
 ----
 
@@ -104,6 +106,7 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 | write | boolean | true | yes | if result should be written back as node property
 | stats | boolean | true | yes | if stats about centrality should be returned
 | writeProperty | string | 'centrality' | yes | property name written back to
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
@@ -144,7 +147,52 @@ CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, ce
 | centrality | float | betweenness centrality weight 
 |===
 
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+CALL algo.betweenness(
+'MATCH (p:User) RETURN id(p) as id',
+'MATCH (p1:User)-[:MANAGE]->(p2:User) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', write: true});
+----
+
+== Versions 
+
+We support the following versions of the betweenness centrality algorithm:
+
+* [x] directed, unweighted
+
+* [ ] directed, weighted
+
+* [ ] undirected, unweighted
+
+* [ ] undirected, weighted 
+
+== Implementations
+
+`algo.betweenness()`
+
+- implementation of brandes-bc algorithm and nodePartitioning extension
+- if concurrency parameter is set (and >1) ParallelBetweennessCentrality is used
+- ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
+ calculates the BC for one node at a time
+
+`algo.betweenness.exp1()`
+
+- brandes-like algorithm which uses successor sets instead of predecessor sets
+- The algorithm is based on Brandes definition but with some changes
+ regarding the dependency-accumulation step.
+
 == References
+
+* http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
+
+* http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf
 
 * https://www.sci.unich.it/~francesc/teaching/network/betweeness.html
 

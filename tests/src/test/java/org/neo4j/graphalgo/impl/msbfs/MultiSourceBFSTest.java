@@ -63,7 +63,7 @@ public final class MultiSourceBFSTest {
                     0, 1
             );
 
-            msbfs.run(Pools.DEFAULT);
+            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
 
             verify(mock).accept(3, 1, toList(1, 2));
             verify(mock).accept(4, 1, toList(1, 2));
@@ -86,7 +86,7 @@ public final class MultiSourceBFSTest {
                     (i, d, s) -> mock.accept(i + 1, d, toList(s, x -> x + 1))
             );
 
-            msbfs.run(Pools.DEFAULT);
+            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
 
             verify(mock).accept(1, 1, toList(3, 4));
             verify(mock).accept(2, 1, toList(3, 4));
@@ -134,7 +134,7 @@ public final class MultiSourceBFSTest {
                                 assertTrue(message, seen.add(Pair.of(i, d)));
                             }
                     );
-                    msbfs.run(null);
+                    msbfs.run(1, null);
                 });
     }
 
@@ -159,7 +159,7 @@ public final class MultiSourceBFSTest {
                                     }
                                 }
                             });
-                    msbfs.run(Pools.DEFAULT);
+                    msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
                 });
 
         for (int i = 0; i < maxNodes; i++) {
@@ -206,7 +206,7 @@ public final class MultiSourceBFSTest {
                                 assertEquals(expectedSize, s.size());
                             });
                     // run sequentially to guarantee order
-                    msbfs.run(null);
+                    msbfs.run(1, null);
                 });
     }
 

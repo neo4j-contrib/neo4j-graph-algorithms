@@ -19,17 +19,17 @@ import java.util.stream.Stream;
  */
 public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
-    private final Graph graph;
+    private Graph graph;
+    private AtomicIntegerArray farness;
 
+    private final int concurrency;
     private final ExecutorService executorService;
-
-    private final AtomicIntegerArray farness;
-
     private final int nodeCount;
 
-    public MSClosenessCentrality(Graph graph, ExecutorService executorService) {
+    public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
+        this.concurrency = concurrency;
         this.executorService = executorService;
         farness = new AtomicIntegerArray(nodeCount);
     }
@@ -45,7 +45,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
         };
 
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
-                .run(executorService);
+                .run(concurrency, executorService);
 
         return this;
     }
@@ -74,6 +74,13 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     @Override
     public MSClosenessCentrality me() {
+        return this;
+    }
+
+    @Override
+    public MSClosenessCentrality release() {
+        graph = null;
+        farness = null;
         return this;
     }
 

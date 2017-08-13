@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo;
 
+import com.carrotsearch.hppc.IntDoubleMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -38,7 +39,7 @@ public class ShortestPathsProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.shortestPaths.stream")
-    @Description("CALL algo.shortestPaths.stream(startNodeId:long, propertyName:String" +
+    @Description("CALL algo.shortestPaths.stream(startNode:Node, weightProperty:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPaths.Result> dijkstraStream(
@@ -60,15 +61,16 @@ public class ShortestPathsProc {
                 .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
-        return new ShortestPaths(graph)
+        final ShortestPaths algo = new ShortestPaths(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(startNode.getId())
-                .resultStream();
+                .compute(startNode.getId());
+        graph.release();
+        return algo.resultStream();
     }
 
     @Procedure(value = "algo.shortestPaths", mode = Mode.WRITE)
-    @Description("CALL algo.shortestPaths(startNodeId:long, propertyName:String" +
+    @Description("CALL algo.shortestPaths(startNode:Node, weightProperty:String" +
             "{write:true, targetProperty:'path', nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD loadDuration, evalDuration, writeDuration, nodeCount, targetProperty - yields nodeCount, totalCost, loadDuration, evalDuration")
     public Stream<ShortestPathResult> dijkstra(
@@ -102,8 +104,11 @@ public class ShortestPathsProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(), Pools.DEFAULT)
-                        .write(algorithm.getShortestPaths());
+                final IntDoubleMap shortestPaths = algorithm.getShortestPaths();
+                algorithm.release();
+                graph.release();
+                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                        .write(shortestPaths);
             });
         }
 

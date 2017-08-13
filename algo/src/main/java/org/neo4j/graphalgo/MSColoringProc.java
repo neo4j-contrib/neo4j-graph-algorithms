@@ -84,7 +84,7 @@ public class MSColoringProc {
         final Graph graph = load(configuration);
 
         // evaluation
-        return new MSColoring(graph, Pools.DEFAULT)
+        return new MSColoring(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .compute()
                 .resultStream();
     }
@@ -102,7 +102,7 @@ public class MSColoringProc {
     }
 
     private AtomicIntegerArray evaluate(Graph graph, ProcedureConfiguration config) {
-        return new MSColoring(graph, Pools.DEFAULT)
+        return new MSColoring(graph, Pools.DEFAULT, config.getConcurrency())
                 .compute()
                 .getColors();
     }

@@ -28,18 +28,18 @@ import java.util.stream.StreamSupport;
  */
 public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
-    private final Graph graph;
+    private Graph graph;
 
     // node to cost map
-    private final IntDoubleMap costs;
+    private IntDoubleMap costs;
     // next node priority queue
-    private final IntPriorityQueue queue;
+    private IntPriorityQueue queue;
     // auxiliary path map
-    private final IntIntMap path;
+    private IntIntMap path;
     // path map (stores the resulting shortest path)
-    private final IntArrayDeque finalPath;
+    private IntArrayDeque finalPath;
     // visited set
-    private final SimpleBitSet visited;
+    private SimpleBitSet visited;
     private final int nodeCount;
     // overall cost of the path
     private double totalCost;
@@ -145,6 +145,17 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     @Override
     public ShortestPathDijkstra me() {
+        return this;
+    }
+
+    @Override
+    public ShortestPathDijkstra release() {
+        graph = null;
+        costs = null;
+        queue = null;
+        path = null;
+        finalPath = null;
+        visited = null;
         return this;
     }
 
