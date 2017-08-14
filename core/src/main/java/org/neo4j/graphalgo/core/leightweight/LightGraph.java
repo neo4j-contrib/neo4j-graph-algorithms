@@ -4,7 +4,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
@@ -176,7 +175,7 @@ public class LightGraph implements Graph {
      private IntArray.Cursor cursor(int node, long[] offsets, IntArray array) {
          final long offset = offsets[node];
          final long length = offsets[node + 1] - offset;
-         return array.cursor(offset, length);
+         return array.newCursor(offset, length);
     }
 
     private void consumeNodes(

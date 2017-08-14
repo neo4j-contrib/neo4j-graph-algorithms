@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.leightweight;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterable;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.Graph;
@@ -10,6 +12,7 @@ import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
@@ -19,19 +22,13 @@ import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
 
+import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
+
 public final class LightGraphFactory extends GraphFactory {
 
-    private IdMap mapping;
-    private long[] inOffsets;
-    private long[] outOffsets;
-    private IntArray inAdjacency;
-    private IntArray outAdjacency;
-    private IntArray.BulkAdder inAdder;
-    private IntArray.BulkAdder outAdder;
-    private WeightMapping weights;
-    private long inAdjacencyIdx;
-    private long outAdjacencyIdx;
-    protected int nodeCount;
+    private final ExecutorService threadPool;
+    private int nodeCount;
     private int labelId;
     private int[] relationId;
     private int weightId;
@@ -40,6 +37,8 @@ public final class LightGraphFactory extends GraphFactory {
             GraphDatabaseAPI api,
             GraphSetup setup) {
         super(api, setup);
+        setLog(setup.log);
+        this.threadPool = setup.executor;
         withReadOps(readOp -> {
             labelId = setup.loadAnyLabel()
                     ? ReadOperations.ANY_LABEL
@@ -59,8 +58,19 @@ public final class LightGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
+        return build(ParallelUtil.DEFAULT_BATCH_SIZE);
+    }
+
+    /* test-private */ Graph build(int batchSize) {
         boolean loadIncoming = setup.loadIncoming;
         boolean loadOutgoing = setup.loadOutgoing;
+
+        final IdMap mapping;
+        final WeightMapping weights;
+        long[] inOffsets = null;
+        long[] outOffsets = null;
+        IntArray inAdjacency = null;
+        IntArray outAdjacency = null;
 
         mapping = new IdMap(nodeCount);
         // we allocate one more offset in order to avoid having to
@@ -68,45 +78,64 @@ public final class LightGraphFactory extends GraphFactory {
         if (loadIncoming) {
             inOffsets = new long[nodeCount + 1];
             inAdjacency = IntArray.newArray(nodeCount);
-            inAdder = inAdjacency.bulkAdder();
         }
         if (loadOutgoing) {
             outOffsets = new long[nodeCount + 1];
-            outOffsets[nodeCount] = nodeCount;
             outAdjacency = IntArray.newArray(nodeCount);
-            outAdder = outAdjacency.bulkAdder();
         }
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
                 : new WeightMap(nodeCount, setup.relationDefaultWeight);
 
-        inAdjacencyIdx = 0L;
-        outAdjacencyIdx = 0L;
+        int factor = ((nodeCount / 10) + 1);
+        int fp2 = 1 << (32 - Integer.numberOfLeadingZeros(factor - 1) - 1);
+        int mod = fp2 - 1;
 
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
                     : readOp.nodesGetForLabel(labelId);
+            int nodes = 0;
             while (nodeIds.hasNext()) {
                 mapping.add(nodeIds.next());
-            }
-            mapping.buildMappedIds();
-
-            try (Cursor<NodeItem> cursor = labelId == ReadOperations.ANY_LABEL
-                    ? readOp.nodeCursorGetAll()
-                    : readOp.nodeCursorGetForLabel(labelId)) {
-                while (cursor.next()) {
-                    readNode(cursor.get(), loadIncoming, loadOutgoing);
+                if ((++nodes & mod) == 0) {
+                    progressLogger.logProgress(nodes, nodeCount);
                 }
             }
+            mapping.buildMappedIds();
         });
 
+        final long[] finalInOffsets = inOffsets;
+        final long[] finalOutOffsets = outOffsets;
+        final IntArray finalInAdjacency = inAdjacency;
+        final IntArray finalOutAdjacency = outAdjacency;
+        ParallelUtil.readParallel(
+                batchSize,
+                mapping,
+                (offset, nodeIds) -> new BatchImportTask(
+                        offset,
+                        nodeCount,
+                        mod,
+                        nodeIds,
+                        mapping,
+                        finalInOffsets,
+                        finalOutOffsets,
+                        finalInAdjacency,
+                        finalOutAdjacency,
+                        weights,
+                        relationId,
+                        weightId
+                ),
+                threadPool);
+
         if (inOffsets != null) {
-            inOffsets[nodeCount] = inAdjacencyIdx;
+            inOffsets[nodeCount] = inAdjacency.allocationIndex();
         }
         if (outOffsets != null) {
-            outOffsets[nodeCount] = outAdjacencyIdx;
+            outOffsets[nodeCount] = outAdjacency.allocationIndex();
         }
+
+        progressLogger.logDone();
 
         return new LightGraph(
                 mapping,
@@ -118,82 +147,149 @@ public final class LightGraphFactory extends GraphFactory {
         );
     }
 
-    private void readNode(
-            NodeItem node,
-            boolean loadIncoming,
-            boolean loadOutgoing) {
-        long sourceNodeId = node.id();
-        int sourceGraphId = mapping.get(sourceNodeId);
+    private final class BatchImportTask implements Runnable, Consumer<ReadOperations> {
+        private final int nodeOffset;
+        private final int maxNodeId;
+        private final int progressMod;
+        private final PrimitiveIntIterable nodes;
+        private final IdMap idMap;
+        private final long[] inOffsets;
+        private final long[] outOffsets;
+        private final IntArray inAdjacency;
+        private final IntArray outAdjacency;
+        private final IntArray.BulkAdder inAdder;
+        private final IntArray.BulkAdder outAdder;
+        private final WeightMapping weights;
+        private final int[] relationId;
+        private final int weightId;
 
-        if (loadOutgoing) {
-            outAdjacencyIdx = readRelationships(
-                    sourceGraphId,
-                    node,
-                    Direction.OUTGOING,
-                    RawValues.OUTGOING,
-                    outOffsets,
-                    outAdjacency,
-                    outAdder,
-                    outAdjacencyIdx
-            );
+        BatchImportTask(
+                int nodeOffset,
+                int nodeCount,
+                int progressMod,
+                PrimitiveIntIterable nodes,
+                IdMap idMap,
+                long[] inOffsets,
+                long[] outOffsets,
+                IntArray inAdjacency,
+                IntArray outAdjacency,
+                WeightMapping weights,
+                int[] relationId,
+                int weightId) {
+            this.nodeOffset = nodeOffset;
+            this.maxNodeId = nodeCount - 1;
+            this.progressMod = progressMod;
+            this.nodes = nodes;
+            this.idMap = idMap;
+            this.inOffsets = inOffsets;
+            this.outOffsets = outOffsets;
+            this.inAdjacency = inAdjacency;
+            this.outAdjacency = outAdjacency;
+            this.inAdder = inAdjacency != null ? inAdjacency.newBulkAdder() : null;
+            this.outAdder = outAdjacency != null ? outAdjacency.newBulkAdder() : null;
+            this.weights = weights;
+            this.relationId = relationId;
+            this.weightId = weightId;
         }
-        if (loadIncoming) {
-            inAdjacencyIdx = readRelationships(
-                    sourceGraphId,
-                    node,
-                    Direction.INCOMING,
-                    RawValues.INCOMING,
-                    inOffsets,
-                    inAdjacency,
-                    inAdder,
-                    inAdjacencyIdx
-            );
+
+        @Override
+        public void run() {
+            withReadOps(this);
         }
-    }
 
-    private long readRelationships(
-            int sourceGraphId,
-            NodeItem node,
-            Direction direction,
-            IdCombiner idCombiner,
-            long[] offsets,
-            IntArray adjacency,
-            IntArray.BulkAdder bulkAdder,
-            long adjacencyIdx) {
-
-        offsets[sourceGraphId] = adjacencyIdx;
-        int degree = relationId == null
-                ? node.degree(direction)
-                : node.degree(direction, relationId[0]);
-
-        if (degree > 0) {
-            adjacency.bulkAdder(adjacencyIdx, degree, bulkAdder);
-            try (Cursor<RelationshipItem> rels = relationId == null
-                    ? node.relationships(direction)
-                    : node.relationships(direction, relationId)) {
-                while (rels.next()) {
-                    RelationshipItem rel = rels.get();
-
-                    long targetNodeId = rel.otherNode(node.id());
-                    int targetGraphId = mapping.get(targetNodeId);
-                    if (targetGraphId == -1) {
-                        continue;
-                    }
-
-                    try (Cursor<PropertyItem> weights = rel.property(weightId)) {
-                        if (weights.next()) {
-                            long relId = idCombiner.apply(
-                                    sourceGraphId,
-                                    targetGraphId);
-                            this.weights.set(relId, weights.get().value());
+        @Override
+        public void accept(ReadOperations readOp) {
+            PrimitiveIntIterator iterator = nodes.iterator();
+            boolean loadIncoming = inAdjacency != null;
+            boolean loadOutgoing = outAdjacency != null;
+            int nodes = 0;
+            while (iterator.hasNext()) {
+                int nodeId = iterator.next();
+                try (Cursor<NodeItem> cursor = readOp.nodeCursor(idMap.toOriginalNodeId(nodeId))) {
+                    if (cursor.next()) {
+                        readNodeBatch(cursor.get(), loadIncoming, loadOutgoing);
+                        if ((++nodes & progressMod) == 0) {
+                            progressLogger.logProgress(nodes + nodeOffset, maxNodeId);
                         }
                     }
-
-                    bulkAdder.add(targetGraphId);
-                    adjacencyIdx++;
                 }
             }
         }
-        return adjacencyIdx;
+
+        private void readNodeBatch(
+                NodeItem node,
+                boolean loadIncoming,
+                boolean loadOutgoing) {
+            long sourceNodeId = node.id();
+            int sourceGraphId = idMap.get(sourceNodeId);
+
+            if (loadOutgoing) {
+                readRelationshipsBatch(
+                        sourceGraphId,
+                        node,
+                        Direction.OUTGOING,
+                        RawValues.OUTGOING,
+                        outOffsets,
+                        outAdjacency,
+                        outAdder
+                );
+            }
+            if (loadIncoming) {
+                readRelationshipsBatch(
+                        sourceGraphId,
+                        node,
+                        Direction.INCOMING,
+                        RawValues.INCOMING,
+                        inOffsets,
+                        inAdjacency,
+                        inAdder
+                );
+            }
+        }
+
+        private void readRelationshipsBatch(
+                int sourceGraphId,
+                NodeItem node,
+                Direction direction,
+                IdCombiner idCombiner,
+                long[] offsets,
+                IntArray adjacency,
+                IntArray.BulkAdder bulkAdder) {
+
+            int degree = relationId == null
+                    ? node.degree(direction)
+                    : node.degree(direction, relationId[0]);
+
+            if (degree > 0) {
+                long adjacencyIdx = adjacency.allocate(degree, bulkAdder);
+                offsets[sourceGraphId] = adjacencyIdx;
+                try (Cursor<RelationshipItem> rels = relationId == null
+                        ? node.relationships(direction)
+                        : node.relationships(direction, relationId)) {
+                    while (rels.next()) {
+                        RelationshipItem rel = rels.get();
+
+                        long targetNodeId = rel.otherNode(node.id());
+                        int targetGraphId = idMap.get(targetNodeId);
+                        if (targetGraphId == -1) {
+                            continue;
+                        }
+
+                        try (Cursor<PropertyItem> weights = rel.property(
+                                weightId)) {
+                            if (weights.next()) {
+                                long relId = idCombiner.apply(
+                                        sourceGraphId,
+                                        targetGraphId);
+                                this.weights.set(relId, weights.get().value());
+                            }
+                        }
+                        bulkAdder.add(targetGraphId);
+                    }
+                }
+            } else {
+                offsets[sourceGraphId] = adjacency.allocationIndex();
+            }
+        }
     }
 }

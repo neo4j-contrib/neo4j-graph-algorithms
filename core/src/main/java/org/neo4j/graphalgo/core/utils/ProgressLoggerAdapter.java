@@ -1,15 +1,8 @@
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.logging.FormattedLog;
-import org.neo4j.logging.Level;
 import org.neo4j.logging.Log;
 
-import java.io.PrintWriter;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  * @author mknblch

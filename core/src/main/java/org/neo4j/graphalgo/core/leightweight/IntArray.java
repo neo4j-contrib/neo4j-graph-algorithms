@@ -1,10 +1,12 @@
 package org.neo4j.graphalgo.core.leightweight;
 
 import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntSupplier;
 
 /**
@@ -14,9 +16,6 @@ import java.util.function.IntSupplier;
  */
 public final class IntArray implements Iterable<IntArray.Cursor> {
 
-    private long size;
-    private int[][] pages;
-
     /**
      * Page size in bytes: 16KB
      */
@@ -24,6 +23,7 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
     private static final int PAGE_SIZE = PAGE_SIZE_IN_BYTES / Integer.BYTES;
     private static final int PAGE_SHIFT = Integer.numberOfTrailingZeros(PAGE_SIZE);
     private static final int PAGE_MASK = PAGE_SIZE - 1;
+    private static final long PAGE_SHIFT_L = PAGE_SHIFT;
 
     /**
      * Allocate a new {@link IntArray}.
@@ -33,26 +33,43 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         return new IntArray(size);
     }
 
+    private long size;
+    private long capacity;
+    private int[][] pages;
+
+    private final AtomicLong allocIdx = new AtomicLong();
+
     private IntArray(long size) {
-        this.size = size;
-        pages = new int[numPages(size)][];
-        int maxPageSize = (int) Math.min(size, PAGE_SIZE);
+        int numPages = numPages(size);
+        this.size = 0;
+        this.capacity = ((long) numPages) << PAGE_SHIFT_L;
+        pages = new int[numPages][];
         for (int i = 0; i < pages.length; ++i) {
-            pages[i] = newIntPage(maxPageSize);
+            pages[i] = newIntPage(PAGE_SIZE);
         }
     }
 
     /**
-     * Return the length of this array.
+     * Return the size of this array. Indices up to {@code size} have been filled
+     * with data.
      */
     public final long size() {
         return size;
     }
 
     /**
+     * Return the capacity of this array. Not all indices up to this value may have
+     * sensible data, but it can be safely written up to this index (exclusive).
+     */
+    public final long capacity() {
+        return capacity;
+    }
+
+    /**
      * Get an element given its index.
      */
     public int get(long index) {
+        assert index < capacity;
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage];
@@ -60,8 +77,10 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
 
     /**
      * Set a value at the given index and return the previous value.
+     * This method does not advance the {@link #size()} or {@link #grow(long)}s the array.
      */
     public int set(long index, int value) {
+        assert index < capacity;
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final int[] page = pages[pageIndex];
@@ -72,12 +91,15 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
 
     /**
      * Fill slots between {@code fromIndex} (inclusive) to {@code toIndex} (exclusive) with the value provided by {@code value}.
+     * This method does not advance the {@link #size()} or {@link #grow(long)}s the array.
      */
     public void fill(
             final long fromIndex,
             final long toIndex,
             final IntSupplier value) {
         assert fromIndex <= toIndex : "can only fill positive slice";
+        assert fromIndex < capacity;
+        assert toIndex < capacity;
         final int fromPage = pageIndex(fromIndex);
         final int toPage = pageIndex(toIndex - 1);
         if (fromPage == toPage) {
@@ -96,63 +118,68 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
     }
 
     /**
-     * Grows the IntArray to the new size. The existing content will be preserved.
-     * If the current size is large enough, this is no-op and no downsizing is happening.
+     * Returns a new BulkAdder that can be used to add multiple values consecutively
+     * without the need for capacity checks by pre-allocating enough space on the
+     * internal pages. The BulkAdder will not be positioned and is in an
+     * invalid state and cannot be used until {@link #allocate(long, BulkAdder)} is called.
+     * Only during calls to {@code allocate} does pre-allocation occur.
      */
-    public void grow(final long newSize) {
-        if (size < newSize) {
-            final int currentNumPages = pages.length;
-            final int numPages = numPages(newSize);
-            if (numPages > currentNumPages) {
-                if (currentNumPages == 1) {
-                    // fill first page to full size
-                    pages[0] = Arrays.copyOf(
-                            pages[currentNumPages - 1],
-                            PAGE_SIZE);
-                }
-                pages = Arrays.copyOf(pages, numPages);
-                for (int i = currentNumPages; i < numPages ; i++) {
-                    // we don't strip the last page here as we're already somewhat big
-                    pages[i] = newIntPage();
-                }
-                this.size = (long) numPages << (long) PAGE_SHIFT;
-            } else if (currentNumPages == 1) {
-                int firstPageSize = Math.min(
-                        PAGE_SIZE,
-                        ArrayUtil.oversize((int) newSize, Integer.BYTES));
-                pages[0] = Arrays.copyOf(pages[0], firstPageSize);
-                this.size = (long) firstPageSize;
-            }
-        }
-    }
-
-    public BulkAdder bulkAdder() {
+    BulkAdder newBulkAdder() {
         return new BulkAdder();
     }
 
-    public BulkAdder bulkAdder(long offset, long length) {
-        return bulkAdder(offset, length, bulkAdder());
+    /**
+     * Allocated a certain amount of memory in the internal pages,
+     * repositions the provided BulkAdder {@code into} to point to this region
+     * and return the start offset where the allocation did happen.
+     * this method is thread-safe and can be used to allocate something like
+     * thread-local slabs of memory. Allocated slabs must be used fully without fragmentation.
+     */
+    long allocate(long numberOfElements, BulkAdder into) {
+        long intoIndex = allocIdx.getAndAdd(numberOfElements);
+        into.init(intoIndex, numberOfElements);
+        return intoIndex;
     }
 
-    public BulkAdder bulkAdder(long offset, long length, BulkAdder reuse) {
-        return reuse.init(offset, length);
+    /**
+     * Returns the current index up to which data was allocated using the
+     * {@link #allocate(long, BulkAdder)} method.
+     */
+    long allocationIndex() {
+        return allocIdx.get();
     }
 
+    /**
+     * Return a new cursor that can iterate over this array.
+     * The cursor will not be initialized and is in an invalid state and cannot
+     * be used until {@link #cursor(long, long, Cursor)} is called.
+     */
     public Cursor newCursor() {
         return new Cursor();
     }
 
-    public Cursor cursor(long offset, long length) {
+    /**
+     * Return a new cursor that can iterate over this array.
+     * The cursor will be positioned to the index {@code offset} and will
+     * iterate over {@code length} elements.
+     */
+    public Cursor newCursor(long offset, long length) {
         return cursor(offset, length, newCursor());
     }
 
+    /**
+     * Reposition an existing cursor and return it.
+     * The cursor will be positioned to the index {@code offset} and will
+     * iterate over {@code length} elements.
+     * The return value is always {@code == reuse}.
+     */
     public Cursor cursor(long offset, long length, Cursor reuse) {
         return reuse.init(offset, length);
     }
 
     @Override
     public Iterator<Cursor> iterator() {
-        return new Iter(cursor(0, size));
+        return new Iter(newCursor(0, size));
     }
 
     public Iterator<Cursor> iterator(Cursor reuse) {
@@ -169,6 +196,32 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         return iterator();
     }
 
+    /**
+     * Grows the IntArray to the new size. The existing content will be preserved.
+     * If the current size is large enough, this is no-op and no downsizing is happening.
+     * {@link #size()} will be updated to reflect the new size.
+     */
+    private synchronized void grow(final long newSize) {
+        if (capacity < newSize) {
+            final int currentNumPages = pages.length;
+            int numPages = numPages(newSize);
+            if (numPages > currentNumPages) {
+                numPages = ArrayUtil.oversize(
+                        numPages,
+                        RamUsageEstimator.NUM_BYTES_OBJECT_REF);
+                pages = Arrays.copyOf(pages, numPages);
+                for (int i = currentNumPages; i < numPages ; i++) {
+                    // we don't strip the last page here as we're already somewhat big
+                    pages[i] = newIntPage();
+                }
+                this.capacity = capacityFor(numPages);
+            }
+        }
+        if (size < newSize) {
+            size = newSize;
+        }
+    }
+
     private static int numPages(long capacity) {
         final long numPages = (capacity + PAGE_MASK) >>> PAGE_SHIFT;
         assert numPages <= Integer.MAX_VALUE : "pageSize=" + (PAGE_MASK + 1) + " is too small for such as capacity: " + capacity;
@@ -181,6 +234,10 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
 
     private static int indexInPage(long index) {
         return (int) (index & PAGE_MASK);
+    }
+
+    private static long capacityFor(int numPages) {
+        return ((long) numPages) << PAGE_SHIFT_L;
     }
 
     private static int[] newIntPage() {
@@ -210,9 +267,9 @@ public final class IntArray implements Iterable<IntArray.Cursor> {
         public int offset;
         public int limit;
 
-        private long from;
-        private long to;
-        private long size;
+        protected long from;
+        protected long to;
+        protected long size;
         private int fromPage;
         private int toPage;
         private int currentPage;
