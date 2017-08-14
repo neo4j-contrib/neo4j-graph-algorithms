@@ -118,10 +118,7 @@ public class TerminationTest {
         try {
             executeAndKill("CALL test.testProc()", 2000L, row -> true);
         } catch (RuntimeException e) {
-            if (null != e.getCause()) {
-                throw e.getCause();
-            }
-            throw e;
+            throw e.getCause();
         }
     }
 
