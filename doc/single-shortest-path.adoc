@@ -186,7 +186,7 @@ CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:Strin
 
 == Versions 
 
-We support the following versions of the betweenness centrality algorithm:
+We support the following versions of the shortest path algorithms:
 
 * [x] directed, unweighted:  
 
