@@ -59,10 +59,9 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         return intValue;
     }
 
-    public int add(long longValue) {
+    public void add(long longValue) {
         int intValue = nextGraphId++;
         nodeToGraphIds.put(longValue, intValue);
-        return intValue;
     }
 
     public int get(long longValue) {
