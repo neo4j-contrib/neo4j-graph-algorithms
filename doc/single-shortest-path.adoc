@@ -31,9 +31,9 @@ Other applications, often studied in operations research, include plant and faci
 
 == Constraints / when not to use it
 
-Dijkstra does not support negative weights as it relies on one "simple" fact: if all weights are non-negative, adding an edge can never make a path shorter. 
+Dijkstra does not support negative weights as it relies on one simple fact: if all weights are non-negative, adding an edge can never make a path shorter. 
 That's why picking the shortest candidate edge (local optimality) always ends up being correct (global optimality).
-If that is not the case ( we have negative weights), the "frontier" of candidate edges does not send the right signals; a cheap edge might lure you down a path with positive weights while an expensive one hides a path with negative weights.
+If that is not the case (we have negative weights), the frontier of candidate edges does not send the right signals; a cheap edge might lure you down a path with positive weights while an expensive one hides a path with negative weights.
 
 == Algorithm explanation on simple sample graph
 
@@ -61,6 +61,7 @@ CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}),
 
 ==== Dijkstra single source shortest path algorithm
 
+
 .Running algorithm and streaming results
 [source,cypher]
 ----
@@ -83,11 +84,12 @@ RETURN writeMillis,loadMillis,nodeCount,totalCost
 
 ==== Delta stepping algorithm
 
+
 .Running algorithm and streaming results
 [source,cypher]
 ----
 MATCH (n:Loc {name:'A'})
-CALL algo.deltaStepping.stream(n, 'cost', 3.0)
+CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0)
 YIELD nodeId, distance 
 RETURN nodeId, distance LIMIT 20
 
@@ -98,13 +100,14 @@ RETURN nodeId, distance LIMIT 20
 ----
 
 MATCH (n:Loc {name:'A'})
-CALL algo.deltaStepping(n, 'cost', 3.0, {write:true, writeProperty:'sssp'})
+CALL algo.shortestPath.deltaStepping(n, 'cost', 3.0, {defaultValue:1.0, write:true, writeProperty:'sssp'})
 YIELD nodeCount, loadDuration, evalDuration, writeDuration 
 RETURN nodeCount, loadDuration, evalDuration, writeDuration
 
 ----
 
-==== All shortest paths
+==== All pairs shortest paths
+
 
 .Running algorithm and streaming results
 [source,cypher]
@@ -185,13 +188,13 @@ CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:Strin
 
 We support the following versions of the betweenness centrality algorithm:
 
-* [x] directed, unweighted
+* [x] directed, unweighted:  
 
- leave weightProperty null
+- weightProperty: null
 
-* [x] directed, weighted
+* [x] directed, weighted 
 
- specify weightProperty
+- weightProperty : 'cost'
 
 * [ ] undirected, unweighted
 
@@ -201,39 +204,30 @@ We support the following versions of the betweenness centrality algorithm:
 
 `algo.shortestPath`
 
+- specify start and end node, find the shortest path between them
 - Dijkstra single source shortest path algorithm
-- The algorithm computes a shortest path on weighted graphs
- between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
- in the path
 - there may be more then one shortest path, algo returns only one
-- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
- terms of count of nodes in the path.
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
 
 `algo.shortestPath.deltaStepping`
 
+- specify start node, find the shortest paths to all other nodes
 - parallel non-negative single source shortest path algorithm for weighted graphs
 - It can be tweaked using the delta-parameter which controls the grade of concurrency.
-- returns minimum distance to *all other nodes*
-- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
- the number of nodes to reach the target
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
  
 `algo.shortestPaths` 
 
-- lala
+- specify start node, find the shortest paths to all other nodes
+- Dijkstra single source shortest path algorithm
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
 
 `algo.allShortestPaths.stream`
 
+- find shortest paths between all pairs of nodes
 - returns a stream of source-target node to distance tuples for each pair of nodes
-- Since all nodeId's have already been ordered by the idMapping we can use an integer
- instead of a queue which just count's up for each startNodeId as long as it is
- < nodeCount.
-- Each thread tries to take one int from the counter at one time and starts its computation on it.
-- The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.
-- Due to the high memory footprint the result set would have we emit each result into
- a blocking queue. The result stream takes elements from the queue while the workers
- add elements to it.
-- The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
-- writeback not supported!
+- writeback not supported
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
 
 == References
 
@@ -301,6 +295,14 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 - there may be more then one shortest path, algo returns only one
 - if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
  terms of count of nodes in the path.
+ 
+ 
+=== algo.shortestPaths
+
+- Dijkstra single source shortest path algorithm
+- returns minimum distance to *all other nodes*
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in terms of count of nodes in the path.
+
 
 === algo.shortestPath.deltaStepping
 
