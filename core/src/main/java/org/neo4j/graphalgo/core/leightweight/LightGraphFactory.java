@@ -16,6 +16,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
@@ -91,24 +92,52 @@ public final class LightGraphFactory extends GraphFactory {
         int fp2 = 1 << (32 - Integer.numberOfLeadingZeros(factor - 1) - 1);
         int mod = fp2 - 1;
 
+        final long[] finalInOffsets = inOffsets;
+        final long[] finalOutOffsets = outOffsets;
+        final IntArray finalInAdjacency = inAdjacency;
+        final IntArray finalOutAdjacency = outAdjacency;
+
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
                     : readOp.nodesGetForLabel(labelId);
             int nodes = 0;
-            while (nodeIds.hasNext()) {
-                mapping.add(nodeIds.next());
-                if ((++nodes & mod) == 0) {
-                    progressLogger.logProgress(nodes, nodeCount);
+            int inOffset = 0;
+            int outOffset = 0;
+            try {
+                while (nodeIds.hasNext()) {
+                    long neoId = nodeIds.next();
+                    int graphId = mapping.add(neoId);
+                    if (loadIncoming) {
+                        int degree = relationId == null
+                                ? readOp.nodeGetDegree(neoId, org.neo4j.graphdb.Direction.INCOMING)
+                                : readOp.nodeGetDegree(neoId, org.neo4j.graphdb.Direction.INCOMING, relationId[0]);
+                        finalInOffsets[graphId] = inOffset;
+                        inOffset += degree;
+                    }
+                    if (loadOutgoing) {
+                        int degree = relationId == null
+                                ? readOp.nodeGetDegree(neoId, org.neo4j.graphdb.Direction.OUTGOING)
+                                : readOp.nodeGetDegree(neoId, org.neo4j.graphdb.Direction.OUTGOING, relationId[0]);
+                        finalOutOffsets[graphId] = outOffset;
+                        outOffset += degree;
+                    }
+                    if ((++nodes & mod) == 0) {
+                        progressLogger.logProgress(nodes, nodeCount);
+                    }
                 }
+                if (loadIncoming) {
+                    finalInOffsets[nodeCount] = inOffset;
+                }
+                if (loadOutgoing) {
+                    finalOutOffsets[nodeCount] = outOffset;
+                }
+            } catch (EntityNotFoundException e) {
+                throw new RuntimeException(e);
             }
             mapping.buildMappedIds();
         });
 
-        final long[] finalInOffsets = inOffsets;
-        final long[] finalOutOffsets = outOffsets;
-        final IntArray finalInAdjacency = inAdjacency;
-        final IntArray finalOutAdjacency = outAdjacency;
         ParallelUtil.readParallel(
                 batchSize,
                 mapping,
@@ -127,13 +156,6 @@ public final class LightGraphFactory extends GraphFactory {
                         weightId
                 ),
                 threadPool);
-
-        if (inOffsets != null) {
-            inOffsets[nodeCount] = inAdjacency.allocationIndex();
-        }
-        if (outOffsets != null) {
-            outOffsets[nodeCount] = outAdjacency.allocationIndex();
-        }
 
         progressLogger.logDone();
 
@@ -230,7 +252,6 @@ public final class LightGraphFactory extends GraphFactory {
                         Direction.OUTGOING,
                         RawValues.OUTGOING,
                         outOffsets,
-                        outAdjacency,
                         outAdder
                 );
             }
@@ -241,7 +262,6 @@ public final class LightGraphFactory extends GraphFactory {
                         Direction.INCOMING,
                         RawValues.INCOMING,
                         inOffsets,
-                        inAdjacency,
                         inAdder
                 );
             }
@@ -253,16 +273,13 @@ public final class LightGraphFactory extends GraphFactory {
                 Direction direction,
                 IdCombiner idCombiner,
                 long[] offsets,
-                IntArray adjacency,
                 IntArray.BulkAdder bulkAdder) {
 
-            int degree = relationId == null
-                    ? node.degree(direction)
-                    : node.degree(direction, relationId[0]);
+            long adjacencyIndex = offsets[sourceGraphId];
+            int degree = (int) (offsets[sourceGraphId + 1] - adjacencyIndex);
 
             if (degree > 0) {
-                long adjacencyIdx = adjacency.allocate(degree, bulkAdder);
-                offsets[sourceGraphId] = adjacencyIdx;
+                bulkAdder.init(adjacencyIndex, degree);
                 try (Cursor<RelationshipItem> rels = relationId == null
                         ? node.relationships(direction)
                         : node.relationships(direction, relationId)) {
@@ -287,8 +304,6 @@ public final class LightGraphFactory extends GraphFactory {
                         bulkAdder.add(targetGraphId);
                     }
                 }
-            } else {
-                offsets[sourceGraphId] = adjacency.allocationIndex();
             }
         }
     }
