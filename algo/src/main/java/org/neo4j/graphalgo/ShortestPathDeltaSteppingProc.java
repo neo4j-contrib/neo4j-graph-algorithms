@@ -52,7 +52,7 @@ public class ShortestPathDeltaSteppingProc {
 
     @Procedure("algo.shortestPath.deltaStepping.stream")
     @Description("CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta:Double" +
-            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)")
     public Stream<ShortestPathDeltaStepping.DeltaSteppingResult> deltaSteppingStream(
             @Name("startNode") Node startNode,
@@ -87,7 +87,7 @@ public class ShortestPathDeltaSteppingProc {
 
     @Procedure(value = "algo.shortestPath.deltaStepping", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Double" +
-            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) " +
             "YIELD loadDuration, evalDuration, writeDuration, nodeCount")
     public Stream<DeltaSteppingProcResult> deltaStepping(
             @Name("startNode") Node startNode,
