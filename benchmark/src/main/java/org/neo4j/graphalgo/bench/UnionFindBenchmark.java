@@ -7,7 +7,9 @@ import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
+import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.impl.UnionFind;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
@@ -29,15 +31,15 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class UnionFindBenchmark {
 
-    private GraphDatabaseAPI db;
-    private SingleRunAllRelationIterator singleRunAllRelationIterator;
-    private LazyIdMapper idMapping;
-    private BufferedAllRelationshipIterator iterator;
-    private Graph heavyGraph;
-    private Graph lightGraph;
+    private static GraphDatabaseAPI db;
+    private static SingleRunAllRelationIterator singleRunAllRelationIterator;
+    private static LazyIdMapper idMapping;
+    private static BufferedAllRelationshipIterator iterator;
+    private static Graph heavyGraph;
+    private static Graph lightGraph;
 
     @Setup
-    public void setup() {
+    public static void setup() {
         String createGraph = "CREATE (nA)\n" +
                 "CREATE (nB)\n" +
                 "CREATE (nC)\n" +
@@ -88,6 +90,14 @@ public class UnionFindBenchmark {
         heavyGraph = loadHeavy();
 
         lightGraph = loadLight();
+
+    }
+
+
+    @TearDown
+    public static void tearDown() throws Exception {
+        if (db!=null) db.shutdown();
+        Pools.DEFAULT.shutdownNow();
     }
 
     @Benchmark
@@ -142,11 +152,18 @@ public class UnionFindBenchmark {
         return loadLight();
     }
 
-    private Graph loadLight() {
+    @Benchmark
+    public Object _08_multiSourceBFSColoringUnionFind() {
+        return new MSColoring(heavyGraph, Pools.DEFAULT, 1)
+                .compute()
+                .getColors();
+    }
+
+    private static Graph loadLight() {
         return new GraphLoader(db).withDirection(Direction.OUTGOING).load(LightGraphFactory.class);
     }
 
-    private Graph loadHeavy() {
+    private static Graph loadHeavy() {
         return new GraphLoader(db).withDirection(Direction.OUTGOING).load(HeavyGraphFactory.class);
     }
 }

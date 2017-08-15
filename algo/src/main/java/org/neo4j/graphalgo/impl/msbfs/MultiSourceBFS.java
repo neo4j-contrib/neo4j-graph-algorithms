@@ -289,10 +289,14 @@ public final class MultiSourceBFS implements Runnable {
             this.startPos = -1;
         }
 
-        void reset(int sourceMask) {
-            this.sourceMask = sourceMask;
+        public void reset() {
             this.pos = startPos;
             fetchNext();
+        }
+
+        void reset(int sourceMask) {
+            this.sourceMask = sourceMask;
+            reset();
         }
 
         @Override
