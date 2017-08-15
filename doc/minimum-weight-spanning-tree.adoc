@@ -30,7 +30,7 @@ When there are no more nodes to add, the tree we have built is an minimum spanni
 
 There are quite a few use cases for minimum spanning trees. One example would be a telecommunications company which is trying to lay out cables in new neighborhood. If it is constrained to bury the cable only along certain paths (e.g. along roads), then there would be a graph representing which points are connected by those paths. Some of those paths might be more expensive, because they are longer, or require the cable to be buried deeper; these paths would be represented by edges with larger weights. Currency is an acceptable unit for edge weight – there is no requirement for edge lengths to obey normal rules of geometry such as the triangle inequality. A spanning tree for that graph would be a subset of those paths that has no cycles but still connects to every house; there might be several spanning trees possible. A minimum spanning tree would be one with the lowest total cost, thus would represent the least expensive path for laying the cable.
 
-There are also some indirect applications such as LDPC codes for error correction, image registration with Renyi entropy, learning salient features for real-time face verification, model locality of particle interactions in turbulent fluid flows and autoconfig protocol for Ethernet bridging to avoid cycles in a network
+There are also some indirect applications such as LDPC codes for error correction, image registration with Renyi entropy, learning salient features for real-time face verification, model locality of particle interactions in turbulent fluid flows and autoconfig protocol for Ethernet bridging to avoid cycles in a network.
 
 == Constraints / when not to use it
 
