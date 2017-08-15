@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.bench;
 
+import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -185,6 +186,13 @@ public class ParallelUnionFindBenchmark {
         return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000, 8)
                 .compute()
                 .getStruct();
+    }
+
+    @Benchmark
+    public Object multiSourceColoring() {
+        return new MSColoring(graph, Pools.DEFAULT, 8)
+                .compute()
+                .getColors();
     }
 
     @Benchmark

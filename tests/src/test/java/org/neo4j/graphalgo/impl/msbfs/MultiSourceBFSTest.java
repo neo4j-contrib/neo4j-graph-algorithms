@@ -271,6 +271,7 @@ public final class MultiSourceBFSTest {
     }
 
     private static final class FakeListIterator implements BfsSources {
+
         private List<?> ints;
 
         private FakeListIterator(List<Integer> ints) {
@@ -292,6 +293,9 @@ public final class MultiSourceBFSTest {
         public int size() {
             return ints.size();
         }
+
+        @Override
+        public void reset() {}
 
         @Override
         public boolean equals(final Object obj) {
