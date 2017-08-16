@@ -19,6 +19,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.io.fs.FileUtils;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.api.TokenWriteOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
@@ -99,7 +100,7 @@ public class MultiStepColoringTest {
         final int rIdx;
         try (Transaction tx = db.beginTx();
              Statement stm = bridge.get()) {
-            DataWriteOperations op = stm.dataWriteOperations();
+            TokenWriteOperations op = stm.tokenWriteOperations();
             rIdx = op.relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
             tx.success();
         }
