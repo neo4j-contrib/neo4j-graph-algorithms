@@ -39,7 +39,7 @@ public class MSTPrimProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.mst", mode = Mode.WRITE)
-    @Description("CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String, relationshipTypeOrQuery:String, " +
+    @Description("CALL algo.mst(node:Node, weightProperty:String, {nodeQuery:String, relationshipQuery:String, " +
             "write:boolean, writeProperty:String stats:boolean}) " +
             "YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount")
     public Stream<MSTPrimResult> mst(

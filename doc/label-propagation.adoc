@@ -24,10 +24,33 @@ Consequently, the label estimation heavily depends on relationships in a graph w
 
 == Algorithm explanation on simple sample graph
 
+image::{img}/label_propagation.png[]
+
+.Create sample graph
+[source,cypher]
+----
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FOLLOW]->(nBridget)
+,(nAlice)-[:FOLLOW]->(nCharles)
+,(nMark)-[:FOLLOW]->(nDoug)
+,(nBridget)-[:FOLLOW]->(nMichael)
+,(nDoug)-[:FOLLOW]->(nMark)
+,(nMichael)-[:FOLLOW]->(nAlice)
+,(nAlice)-[:FOLLOW]->(nMichael)
+,(nBridget)-[:FOLLOW]->(nAlice)
+,(nMichael)-[:FOLLOW]->(nBridget)
+,(nCharles)-[:FOLLOW]->(nDoug)
+----
+
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.labelPropagation('Label', '','OUTGOING', {iterations:1,partitionProperty:'partition', write:true}) 
+CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {iterations:10,partitionProperty:'partition', write:true}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty 
 ----
 
@@ -71,6 +94,22 @@ partitionProperty - simple label propagation kernel
 | partitionProperty | string | property name written back to
 | write | boolean | true | yes | if result was written back as node property
 |===
+== Versions 
+
+We support the following versions of the label propagation algorithms:
+
+* [x] directed, unweighted:  
+
+- weightProperty: null
+
+* [x] directed, weighted 
+
+- weightProperty : 'weight'
+
+* [ ] undirected, unweighted
+
+* [ ] undirected, weighted 
+
 == References
 
 ifdef::implementation[]
