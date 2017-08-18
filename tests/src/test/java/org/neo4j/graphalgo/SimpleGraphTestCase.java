@@ -35,6 +35,7 @@ public abstract class SimpleGraphTestCase extends Neo4JTestCase {
     @Before
     public void setupMocks() {
         when(nodeConsumer.test(anyInt())).thenReturn(true);
+        when(relationConsumer.accept(anyInt(), anyInt(), anyLong())).thenReturn(true);
     }
 
     @Test
