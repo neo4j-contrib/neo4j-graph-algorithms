@@ -78,7 +78,7 @@ public class MSBFSAllShortestPathsTest {
 
         final ResultConsumer mock = mock(ResultConsumer.class);
 
-        new MSBFSAllShortestPaths(graph, Pools.DEFAULT)
+        new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .resultStream()
                 .peek(System.out::println)
                 .forEach(r -> {

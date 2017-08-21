@@ -1,6 +1,8 @@
 = Minimum Weight Spanning Tree
 
-A _Minimum Weight Spanning Tree_ (MST) is a subset of the edges of a connected, edge-weighted undirected graph that connects all the vertices together, without any cycles and with the minimum possible total edge weight. That is, it is a spanning tree whose sum of edge weights is as small as possible 
+A _Minimum Weight Spanning Tree_ (MST) is a subset of the relationships of a connected, weighted undirected graph that connects all the nodes together, without any cycles and with the minimum possible total edge weight.
+That is, it is a spanning tree whose sum of relationship weights is as small as possible.
+Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node. 
 It can be used to cluster the graph (KMeans).
 
 == History, Explanation
@@ -13,31 +15,61 @@ A minimum spanning tree is a tree. It is different from other trees in that it m
 
 Czech scientist Otakar Borůvka developed the first known algorithm for finding a minimum spanning tree in 1926. He wanted to solve the problem of finding an efficient coverage of Moravia with electricity. Today, this algorithm is known as Borůvka's algorithm. 
 
+Prim's algorithm (sometimes known as the Jarník-Prim algorithm) is one of the simplest and best-known minimum spanning tree algorithms. 
+It is closely analogous to Dijkstra's algorithm, the only difference being that the length of each relationship is minimized, rather than the total length of the path ending at each relationship. 
+Unlike Dijkstra's, Prim's can tolerate negative-weight edges with no difficulty. It is optimal for dense graphs.
+
+The algorithm then operates as follows: we start with a trivial tree containing only one node (and no relationship).
+It does not matter which node is chosen. 
+Then, we choose a minimal-weight relationship emanating from that node, adding it to our tree. 
+We repeatedly choose a minimal-weight relationship that joins any node in the tree to one not in the tree, adding the new relationship and node to our tree. 
+Such an relationship will always exist when the tree is incomplete because otherwise the partially built tree would be an isolated component (and yet we know that the graph consists of a single connected component.)
+When there are no more nodes to add, the tree we have built is an minimum spanning tree.
+
 == When to use it / use-cases
 
 There are quite a few use cases for minimum spanning trees. One example would be a telecommunications company which is trying to lay out cables in new neighborhood. If it is constrained to bury the cable only along certain paths (e.g. along roads), then there would be a graph representing which points are connected by those paths. Some of those paths might be more expensive, because they are longer, or require the cable to be buried deeper; these paths would be represented by edges with larger weights. Currency is an acceptable unit for edge weight – there is no requirement for edge lengths to obey normal rules of geometry such as the triangle inequality. A spanning tree for that graph would be a subset of those paths that has no cycles but still connects to every house; there might be several spanning trees possible. A minimum spanning tree would be one with the lowest total cost, thus would represent the least expensive path for laying the cable.
 
+There are also some indirect applications such as LDPC codes for error correction, image registration with Renyi entropy, learning salient features for real-time face verification, model locality of particle interactions in turbulent fluid flows and autoconfig protocol for Ethernet bridging to avoid cycles in a network.
+
 == Constraints / when not to use it
+
+There is only weighted version of MST algorithm as if your graph is unweighted, or equivalently, all relationships have the same weight, then any spanning tree is a minimum spanning tree.
+
 
 == Algorithm explanation on simple sample graph
 
-
-       a                a
-   1 /   \ 2          /  \
-    /     \          /    \
-   b --3-- c        b      c
-   |       |   =>   |      |
-   4       5        |      |
-   |       |        |      |
-   d --6-- e        d      e
+image::{img}/mst.png[]
 
 
+.Create sample graph
 [source,cypher]
 ----
-MATCH(n:Node{start:true}) 
-CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
-YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, relationshipCount 
+CREATE (a:Place{id:"A"}),
+       (b:Place{id:"B"}),
+       (c:Place{id:"C"}),
+       (d:Place{id:"D"}),
+       (e:Place{id:"E"})
+CREATE (d)-[:LINK{cost:4}]->(b),
+       (d)-[:LINK{cost:6}]->(e),
+       (b)-[:LINK{cost:1}]->(a),
+       (b)-[:LINK{cost:3}]->(c),
+       (a)-[:LINK{cost:2}]->(c),
+       (c)-[:LINK{cost:5}]->(e)
 ----
+
+.Running algorithm and writing back results 
+[source,cypher]
+----
+MATCH (n:Place{id:"D"}) 
+CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
+YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, relationshipCount
+RETURN loadMillis,computeMillis,writeMillis,weightSum,weightMin,weightMax,relationshipCount
+----
+
+.Results
+image::{img}/mst_result.png[]
+
 
 == Example Usage
 
@@ -46,8 +78,8 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, re
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.mst(node:Node, weightProperty:String, {nodeLabelOrQuery:String,
- relationshipTypeOrQuery:String, write:boolean, writeProperty:String stats:boolean}) 
+CALL algo.mst(node:Node, weightProperty:String, {nodeQuery:String,
+ relationshipQuery:String, write:boolean, writeProperty:String stats:boolean}) 
 YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount
  
 ----
@@ -58,8 +90,8 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 | name | type | default | optional | description
 | node  | Node | null | no | node to load from the graph
 | weightProperty | string | 'cost' | yes | property name that contains weight. Must be numeric.
-| nodeLabelOrQuery | string | null | yes |  label to load from the graph, if null load all nodes
-| relationshipTypeOrQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| nodeQuery | string | null | yes |  label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'mst' | yes | relationship-type written back as result
 
@@ -77,9 +109,24 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 |===
+
+== Versions 
+
+We support the following versions of the minimum weight spanning tree algorithm:
+
+* [x] undirected, weighted 
+
 == References
 
 * https://en.wikipedia.org/wiki/Minimum_spanning_tree
+
+* http://www.statisticshowto.com/minimum-spanning-tree
+
+* http://algs4.cs.princeton.edu/43mst/
+
+* https://www.cs.princeton.edu/~rs/AlgsDS07/14MST.pdf
+
+* https://www.cs.cmu.edu/~wlovas/15122-r11/lectures/old/26-spanning.pdf
 
 ifdef::implementation[]
 // tag::implementation[]

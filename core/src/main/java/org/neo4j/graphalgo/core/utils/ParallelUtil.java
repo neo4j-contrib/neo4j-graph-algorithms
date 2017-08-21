@@ -1,24 +1,26 @@
 package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.IntConsumer;
 
 public final class ParallelUtil {
@@ -166,6 +168,79 @@ public final class ParallelUtil {
         awaitTermination(futures);
     }
 
+    public static void runWithConcurrency(
+        int concurrency,
+        Collection<? extends Runnable> tasks,
+        ExecutorService executor) {
+        runWithConcurrency(concurrency, tasks, TerminationFlag.RUNNING_TRUE, executor);
+    }
+
+    public static void runWithConcurrency(
+            int concurrency,
+            Collection<? extends Runnable> tasks,
+            TerminationFlag terminationFlag,
+            ExecutorService executor) {
+
+        if (!canRunInParallel(executor)
+                || tasks.size() == 1
+                || concurrency <= 1) {
+            Iterator<? extends Runnable> iterator = tasks.iterator();
+            while (iterator.hasNext() && terminationFlag.running()) {
+                iterator.next().run();
+            }
+            return;
+        }
+
+        CompletionService completionService =
+                new CompletionService(executor);
+
+        Iterator<? extends Runnable> ts = tasks.iterator();
+
+        Throwable error = null;
+        // generally assumes that tasks.size is notably larger than concurrency
+        try {
+            // add first concurrency tasks
+            while (concurrency > 0 && ts.hasNext() && terminationFlag.running()) {
+                Runnable next = ts.next();
+                completionService.submit(next);
+                concurrency--;
+            }
+
+            // submit all remaining tasks
+            while (ts.hasNext() && terminationFlag.running()) {
+                try {
+                    completionService.awaitNext();
+                } catch (ExecutionException e) {
+                    error = Exceptions.chain(error, e.getCause());
+                } catch (CancellationException ignore) {
+                }
+                if (terminationFlag.running()) {
+                    Runnable next = ts.next();
+                    completionService.submit(next);
+                }
+            }
+
+            // wait for all tasks to finish
+            while (completionService.hasTasks() && terminationFlag.running()) {
+                try {
+                    completionService.awaitNext();
+                } catch (ExecutionException e) {
+                    error = Exceptions.chain(error, e.getCause());
+                } catch (CancellationException ignore) {
+                }
+            }
+        } catch (InterruptedException e) {
+            error = Exceptions.chain(e, error);
+        } finally {
+            // cancel all regardless of done flag because we could have aborted
+            // from the termination flag
+            completionService.cancelAll();
+        }
+        if (error != null) {
+            throw Exceptions.launderedException(error);
+        }
+    }
+
     public static void awaitTermination(Collection<Future<?>> futures) {
         boolean done = false;
         Throwable error = null;
@@ -220,7 +295,11 @@ public final class ParallelUtil {
         }
     }
 
-    public static void iterateParallel(ExecutorService executorService, int size, int concurrency, IntConsumer consumer) {
+    public static void iterateParallel(
+            ExecutorService executorService,
+            int size,
+            int concurrency,
+            IntConsumer consumer) {
         final List<Future<?>> futures = new ArrayList<>();
         final int batchSize = size / concurrency;
         for (int i = 0; i < size; i += batchSize) {
@@ -235,4 +314,65 @@ public final class ParallelUtil {
         awaitTermination(futures);
     }
 
+
+    /**
+     * Copied from {@link java.util.concurrent.ExecutorCompletionService}
+     * and adapted to reduce indirection.
+     * Does not support {@link java.util.concurrent.ForkJoinPool} as backing executor.
+     */
+    private static final class CompletionService {
+        private final Executor executor;
+        private final Set<Future<Void>> running;
+        private final BlockingQueue<Future<Void>> completionQueue;
+
+        private class QueueingFuture extends FutureTask<Void> {
+            QueueingFuture(final Runnable runnable) {
+                super(runnable, null);
+                running.add(this);
+            }
+
+            @Override
+            protected void done() {
+                running.remove(this);
+                if (!isCancelled()) {
+                    completionQueue.add(this);
+                }
+            }
+        }
+
+        CompletionService(ExecutorService executor) {
+            if (!canRunInParallel(executor)) {
+                throw new IllegalArgumentException("executor already terminated or not usable");
+            }
+            this.executor = executor;
+            this.completionQueue = new LinkedBlockingQueue<>();
+            this.running = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        }
+
+        void submit(Runnable task) {
+            Objects.requireNonNull(task);
+            QueueingFuture future = new QueueingFuture(task);
+            executor.execute(future);
+        }
+
+        boolean hasTasks() {
+            return !(running.isEmpty() && completionQueue.isEmpty());
+        }
+
+        void awaitNext() throws InterruptedException, ExecutionException {
+            completionQueue.take().get();
+        }
+
+        void cancelAll() {
+            stopFutures(running);
+            stopFutures(completionQueue);
+        }
+
+        private void stopFutures(final Collection<Future<Void>> futures) {
+            for (Future<Void> future : futures) {
+                future.cancel(true);
+            }
+            futures.clear();
+        }
+    }
 }

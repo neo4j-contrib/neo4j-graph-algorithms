@@ -62,12 +62,11 @@ final class BiMultiBitSet32 {
      * Resets all bits while setting the aux bits according to the given
      * node range.
      */
-    void setAuxBits(int fromId, int toId) {
-        int len = toId - fromId;
+    void setAuxBits(int fromId, int len) {
         assert len <= 32;
+        assert len >= 1;
 
-        Arrays.fill(bits, 0, fromId, 0L);
-        Arrays.fill(bits, toId, bits.length, 0L);
+        Arrays.fill(bits, 0L);
         for (int i = 0; i < len; i++) {
             bits[fromId + i] = (1L << (i + 32));
         }
@@ -83,15 +82,10 @@ final class BiMultiBitSet32 {
         assert len >= 1;
         assert isSorted(nodes) : "aux bits must be sorted";
 
-        int prev = 0;
+        Arrays.fill(bits, 0L);
         for (int i = 0; i < len; i++) {
-            int node = nodes[i];
-            Arrays.fill(bits, prev, node, 0L);
-            bits[node] = (1L << (i + 32));
-            prev = node + 1;
+            bits[nodes[i]] = (1L << (i + 32));
         }
-        int lastNode = Math.max(bits.length, nodes[len - 1] + 1);
-        Arrays.fill(bits, lastNode, bits.length, 0L);
     }
 
     /**

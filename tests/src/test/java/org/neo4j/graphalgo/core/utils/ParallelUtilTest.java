@@ -6,11 +6,17 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntStack;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -129,6 +135,156 @@ public final class ParallelUtilTest extends RandomizedTest {
                 (int) Math.ceil(nodeCount / (double) batchSize) <= maxConcurrency);
     }
 
+    @Test
+    public void shouldRunAtMostConcurrencyTasks() throws Exception {
+        int tasks = 4;
+        int concurrency = 2;
+
+        AtomicInteger running = new AtomicInteger();
+        AtomicInteger started = new AtomicInteger();
+        ExecutorService pool = Executors.newFixedThreadPool(tasks);
+
+        List<CountDownLatch> waitingForStart = latches(tasks + (tasks - concurrency));
+        List<CountDownLatch> simulateRunning = latches(tasks);
+
+        List<Runnable> runnables = IntStream.range(0, tasks)
+                .mapToObj(index -> (Runnable) () -> {
+                    running.incrementAndGet();
+                    started.incrementAndGet();
+                    waitingForStart.get(index).countDown();
+                    try {
+                        simulateRunning.get(index).await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    running.decrementAndGet();
+                    if (index >= concurrency) {
+                        waitingForStart.get(index + concurrency).countDown();
+                    }
+                })
+                .collect(Collectors.toList());
+
+        Thread thread = new Thread(() -> ParallelUtil
+                .runWithConcurrency(
+                        concurrency,
+                        runnables,
+                        pool
+                )
+        );
+        thread.start();
+
+        try {
+
+            int i;
+            for (i = 0; i < concurrency; i++) {
+                waitingForStart.get(i).await();
+            }
+
+            for (int j = 0; j < (tasks - concurrency); j++) {
+                assertEquals(
+                        concurrency + " tasks currently running",
+                        concurrency,
+                        running.get());
+                assertEquals(i + " tasks have been started", i, started.get());
+
+                simulateRunning.get(j).countDown();
+                waitingForStart.get(i++).await();
+            }
+
+            for (int j = tasks - concurrency; j < tasks; j++) {
+                assertEquals(
+                        (tasks - j) + " tasks currently running",
+                        tasks - j,
+                        running.get());
+                assertEquals(
+                        tasks + " tasks have been started",
+                        tasks,
+                        started.get());
+
+                simulateRunning.get(j).countDown();
+                waitingForStart.get(i++).await();
+            }
+
+            assertEquals("0 tasks currently running", 0, running.get());
+            assertEquals(
+                    tasks + " tasks have been started",
+                    tasks,
+                    started.get());
+
+            thread.join();
+        } finally {
+            pool.shutdownNow();
+            pool.awaitTermination(1, TimeUnit.MINUTES);
+        }
+    }
+
+    @Test
+    public void shouldRunAtMostConcurrencyWithTerminationTasks() throws
+            Exception {
+        int tasks = 4;
+        int concurrency = 2;
+
+        AtomicBoolean isRunning = new AtomicBoolean(true);
+        TerminationFlag runningFlag = isRunning::get;
+
+        AtomicInteger running = new AtomicInteger();
+        AtomicInteger started = new AtomicInteger();
+        ExecutorService pool = Executors.newFixedThreadPool(tasks);
+
+        List<CountDownLatch> waitingForStart = latches(tasks + (tasks - concurrency));
+        List<CountDownLatch> simulateRunning = latches(tasks);
+
+        List<Runnable> runnables = IntStream.range(0, tasks)
+                .mapToObj(index -> (Runnable) () -> {
+                    running.incrementAndGet();
+                    started.incrementAndGet();
+                    waitingForStart.get(index).countDown();
+                    try {
+                        simulateRunning.get(index).await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    running.decrementAndGet();
+                    if (index >= concurrency) {
+                        waitingForStart.get(index + concurrency).countDown();
+                    }
+                })
+                .collect(Collectors.toList());
+
+        Thread thread = new Thread(() -> ParallelUtil
+                .runWithConcurrency(
+                        concurrency,
+                        runnables,
+                        runningFlag,
+                        pool
+                )
+        );
+        thread.start();
+
+        try {
+            // first two already started
+            waitingForStart.get(0).await();
+            waitingForStart.get(1).await();
+
+            // finish one and let another one start
+            simulateRunning.get(0).countDown();
+            waitingForStart.get(2).await();
+
+            // abort execution
+            isRunning.set(false);
+            // let remaining two started finish
+            simulateRunning.get(1).countDown();
+            simulateRunning.get(2).countDown();
+
+            thread.join();
+
+            assertEquals("0 tasks currently running", 0, running.get());
+            assertEquals("3 tasks have been started", 3, started.get());
+        } finally {
+            pool.shutdownNow();
+            pool.awaitTermination(1, TimeUnit.MINUTES);
+        }
+    }
 
     private PrimitiveIntIterable ints(int from, int size) {
         final PrimitiveIntStack stack = new PrimitiveIntStack(size);
@@ -136,5 +292,11 @@ public final class ParallelUtilTest extends RandomizedTest {
             stack.push(i + from);
         }
         return stack;
+    }
+
+    private static List<CountDownLatch> latches(int size) {
+        return IntStream.range(0, size)
+                .mapToObj(i -> new CountDownLatch(1))
+                .collect(Collectors.toList());
     }
 }

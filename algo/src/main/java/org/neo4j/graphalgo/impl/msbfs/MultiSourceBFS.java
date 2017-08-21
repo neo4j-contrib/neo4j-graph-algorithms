@@ -128,7 +128,7 @@ public final class MultiSourceBFS implements Runnable {
     /**
      * Runs MS-BFS, possibly in parallel.
      */
-    public void run(ExecutorService executor) {
+    public void run(int concurrency, ExecutorService executor) {
         int sourceLength = sourceLength();
         int threads = ParallelUtil.threadSize(OMEGA, sourceLength);
         Collection<MultiSourceBFS> bfss = allSourceBfss(threads);
@@ -136,12 +136,15 @@ public final class MultiSourceBFS implements Runnable {
             // fallback to sequentially running all MS-BFS instances
             executor = null;
         }
-        ParallelUtil.run(bfss, executor);
+        ParallelUtil.runWithConcurrency(
+                concurrency,
+                bfss,
+                executor);
     }
 
     /**
      * Runs MS-BFS, always single-threaded. Requires that there are at most
-     * 32 startNodes. If there are more, {@link #run(ExecutorService)} must be used.
+     * 32 startNodes. If there are more, {@link #run(int, ExecutorService)} must be used.
      */
     @Override
     public void run() {
@@ -160,7 +163,7 @@ public final class MultiSourceBFS implements Runnable {
                 visit.setBit(startNodes[i], i);
             }
         } else {
-            nextAndSeen.setAuxBits(nodeOffset, nodeOffset + sourceNodeCount);
+            nextAndSeen.setAuxBits(nodeOffset, sourceNodeCount);
             for (int i = 0; i < sourceNodeCount; i++) {
                 visit.setBit(i + nodeOffset, i);
             }
@@ -248,6 +251,20 @@ public final class MultiSourceBFS implements Runnable {
         };
     }
 
+    @Override
+    public String toString() {
+        if (startNodes != null && startNodes.length > 0) {
+            return "MSBFS{" + startNodes[0] +
+                    " .. " + (startNodes[startNodes.length - 1] + 1) +
+                    " (" + startNodes.length +
+                    ")}";
+        }
+        return "MSBFS{" + nodeOffset +
+                " .. " + (nodeOffset + sourceNodeCount) +
+                " (" + sourceNodeCount +
+                ")}";
+    }
+
     private static final class SourceNodes implements BfsSources {
         private final int[] sourceNodes;
         private final int maxPos;
@@ -272,10 +289,14 @@ public final class MultiSourceBFS implements Runnable {
             this.startPos = -1;
         }
 
-        void reset(int sourceMask) {
-            this.sourceMask = sourceMask;
+        public void reset() {
             this.pos = startPos;
             fetchNext();
+        }
+
+        void reset(int sourceMask) {
+            this.sourceMask = sourceMask;
+            reset();
         }
 
         @Override
