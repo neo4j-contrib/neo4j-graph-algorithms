@@ -90,6 +90,7 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
                                 triangles.incrementAndGet(u);
                                 triangles.incrementAndGet(v);
                                 triangles.incrementAndGet(w);
+                                return false;
                             }
                             return true;
                         });
