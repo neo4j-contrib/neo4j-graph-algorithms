@@ -2,18 +2,35 @@
 
 _Closeness Centrality_ of a node is a measure of centrality in a network, that measures the nearness (as opposite from the distance) from a node to all other nodes. 
 Nodes having a high closeness score have the shortest distances to all other nodes.
+Closeness centrality is based on the idea that nodes with short distance to other nodes can spread information very productively through the network.
 This is important for the availability of knowledge and resources.
+
 
 == History, Explanation
 
 Sabidussi (1966) described the sum of the shortest path distances from one node to every other node as the node’s farness. 
 Freeman (1979) used this idea to define closeness centrality of a node as the inverse of Sabidussi’s farness.
+Closeness centrality is defined as the total number of relationships separating a node from all others along the shortest possible paths. 
+In other words, to calculate closeness, one begins by calculating, for each pair of nodes in the network, the length of the shortest path from one to the other (geodesic distance). 
+Then for each node, one sums up the total distance from the node to all other nodes.
+The greater the *raw closeness centrality*, the greater the time it takes on average for information originating at random points in the network to arrive at the node.
+Equally, one can interpret closeness as the potential ability of a node to reach all other nodes as quickly as possible.
 Nodes having a high closeness centrality are nearby all other nodes and have advantages in accessing resources in a network or having a good overview of the agents in a network.
+
+It is important to note that *raw closeness centrality* is an inverse measure of centrality in that it is nodes with smaller scores that are the most central.
+On the other hand *normalized closeness centrality* is not an inverse measure, as nodes with higher centrality score are more central. 
+Our algorithm returns *normalized closeness centrality* score.
+
 
 == When to use it / use-cases
 
 The most central nodes according to closeness centrality can quickly interact to all others because they are close to all others.
 This measure is preferable to degree centrality, because it does not take into account only direct connections among nodes, but also indirect connections.
+For closeness centrality in directed networks, we split the concept into in-closeness
+and out-closeness. 
+The in-closeness variable measures the extent to which a node is easily reached by others, as in there are short directed paths from others to the node. 
+The out-closeness variable measures the extent to which a node can easily reach others, as in the paths going from the node to all others are relatively short. 
+Closeness centrality makes sense whenever direct access is important, such as access to information, opinion formation, spread of disease and adoption of new technology. 
 
 == Constraints / when not to use it
 
@@ -23,14 +40,46 @@ As the distance between nodes in disconnected components of a network is infinit
 
 == Algorithm explanation on simple sample graph
 
-- count farness in each msbfs-callback
-- divide by N-1
+image::{img}/closeness_centrality.png[]
 
-Graph:
+.Create sample graph
+[source,cypher]
+----
+CREATE (a:Node{id:"A"}),
+       (b:Node{id:"B"}),
+       (c:Node{id:"C"}),
+       (d:Node{id:"D"}),
+       (e:Node{id:"E"})
+CREATE (a)-[:LINK]->(b),
+       (b)-[:LINK]->(a),
+       (b)-[:LINK]->(c),
+       (c)-[:LINK]->(b),
+       (c)-[:LINK]->(d),
+       (d)-[:LINK]->(c),
+       (d)-[:LINK]->(e),
+       (e)-[:LINK]->(d)
+----
 
-( A )<==>( B )<==>( C )<==>( D )<==>( E )
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.closeness.stream('Node', 'LINKS') YIELD nodeId, centrality
+RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality for each node
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.closeness('Node', 'LINK', {write:true, writeProperty:'centrality'}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis 
+- calculates closeness centrality and potentially writes back
+----
 
 Calculation:
+
+
+- count farness in each msbfs-callback
+- divide by N-1
 
 `N = 5`        // number of nodes
 
@@ -44,22 +93,12 @@ Calculation:
  D | 3     2     1     0     1
  E | 4     3     2     1     0
  --|-----------------------------
- S | 10    7     6     7     10      // sum each column
+ S | 10    7     6     7     10      // raw closeness centrality
  ==|=============================
-k/S| 0.4  0.57  0.67  0.57   0.4     // normalized centrality
+k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 
 
-----
-CALL algo.closeness('Person', 'KNOWS', {write:true, writeProperty:'centrality'}) 
-YIELD nodes,loadMillis, computeMillis, writeMillis 
-- calculates closeness centrality and potentially writes back
-----
 
-[source,cypher]
-----
-CALL algo.closeness.stream('Person', 'KNOWS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality for each node
-----
 
 == Example Usage
 
@@ -68,7 +107,7 @@ RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality f
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) 
+CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality',graph:'heavy'}) 
 YIELD nodes,loadMillis, computeMillis, writeMillis 
 - calculates closeness centrality and potentially writes back
 ----
@@ -128,8 +167,8 @@ Set `graph:'cypher'` in the config.
 [source,cypher]
 ----
 CALL algo.closeness(
-'MATCH (p:Person) RETURN id(p) as id',
-'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p:Node) RETURN id(p) as id',
+'MATCH (p1:Node)-[:LINK]->(p2:Node) RETURN id(p1) as source, id(p2) as target',
 {graph:'cypher', write: true});
 ----
 
@@ -153,6 +192,10 @@ We support the following versions of the betweenness centrality algorithm:
 * http://www.casos.cs.cmu.edu/publications/papers/CMU-ISR-11-113.pdf
 
 * http://mrvar.fdv.uni-lj.si/sola/info4/uvod/part4.pdf
+
+* http://qualquant.org/wp-content/uploads/networks/2008%201-7-3.pdf
+
+* https://www.andrew.cmu.edu/user/andersok/Katharine_A._Anderson/Social_Economic_and_Information_Networks_files/CentralitySlides.pdf
 
 ifdef::implementation[]
 // tag::implementation[]
