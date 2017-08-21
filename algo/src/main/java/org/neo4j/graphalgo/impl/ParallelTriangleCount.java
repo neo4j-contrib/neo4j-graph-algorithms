@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
 
-    private static final Direction D = Direction.BOTH;
+    public static final Direction D = Direction.BOTH;
 
     // gapi
     private final Graph graph;
@@ -21,7 +21,7 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
     // number of threads to spawn
     private final int concurrency;
     private final int nodeCount;
-    private int triangleCount;
+    private long triangleCount;
 
 
     public ParallelTriangleCount(Graph graph, ExecutorService executorService, int concurrency) {
@@ -31,7 +31,7 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
         nodeCount = graph.nodeCount();
     }
 
-    public int getTriangleCount() {
+    public long getTriangleCount() {
         return triangleCount;
     }
 
@@ -56,7 +56,7 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
         ParallelUtil.run(tasks, executorService);
 
         triangleCount = tasks.stream()
-                .mapToInt(Task::count)
+                .mapToLong(Task::count)
                 .sum();
 
         return this;
