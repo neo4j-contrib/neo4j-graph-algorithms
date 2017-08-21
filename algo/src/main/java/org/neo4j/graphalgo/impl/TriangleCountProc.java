@@ -24,7 +24,6 @@ import java.util.stream.Stream;
  */
 public class TriangleCountProc {
 
-
     @Context
     public GraphDatabaseAPI api;
 
@@ -34,13 +33,10 @@ public class TriangleCountProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure("algo.allShortestPaths.stream")
-    @Description("CALL algo.allShortestPaths.stream(weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
-            "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
-    public Stream<Result> triangleCount(
-            @Name(value = "propertyName") String propertyName,
-            @Name(value = "config", defaultValue = "{}")
+    @Procedure("algo.triangleCount")
+    @Description("CALL algo.triangleCount({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8}) " +
+            "YIELD loadMillis, evalMillis, nodeCount, triangleCount - yields results")
+    public Stream<Result> triangleCount(@Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
         final Graph graph;
@@ -78,16 +74,16 @@ public class TriangleCountProc {
      */
     public static class Result {
 
-        public final long loadDuration;
-        public final long evalDuration;
-        public final long writeDuration;
+        public final long loadMillis;
+        public final long computeMillis;
+        public final long writeMillis;
         public final long nodeCount;
         public final long triangleCount;
 
-        public Result(long loadDuration, long evalDuration, long writeDuration, long nodeCount, long triangleCount) {
-            this.loadDuration = loadDuration;
-            this.evalDuration = evalDuration;
-            this.writeDuration = writeDuration;
+        public Result(long loadMillis, long computeMillis, long writeMillis, long nodeCount, long triangleCount) {
+            this.loadMillis = loadMillis;
+            this.computeMillis = computeMillis;
+            this.writeMillis = writeMillis;
             this.nodeCount = nodeCount;
             this.triangleCount = triangleCount;
         }

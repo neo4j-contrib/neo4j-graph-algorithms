@@ -28,7 +28,7 @@ public class ParallelTriangleCountTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final int TRIANGLES = 10_000;
+    public static final long TRIANGLES = 10_000L;
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -41,7 +41,7 @@ public class ParallelTriangleCountTest {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
+        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLES + " nodes"))) {
 
             final RelationshipType type = RelationshipType.withName(RELATIONSHIP);
             final DefaultBuilder builder = GraphBuilder.create(db)
@@ -50,7 +50,7 @@ public class ParallelTriangleCountTest {
                     .newDefaultBuilder();
             final Node center = builder.createNode();
             builder.newRingBuilder()
-                    .createRing(TRIANGLES)
+                    .createRing((int)TRIANGLES)
                     .forEachNodeInTx(node -> {
                         center.createRelationshipTo(node, type);
                     });
@@ -69,7 +69,7 @@ public class ParallelTriangleCountTest {
     @Test
     public void testSequential() throws Exception {
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential eval took " + l + "ms"))) {
-            final int triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 1)
+            final long triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 1)
                     .compute()
                     .getTriangleCount();
             assertEquals(TRIANGLES, triangleCount);
@@ -79,7 +79,7 @@ public class ParallelTriangleCountTest {
     @Test
     public void testParallel() throws Exception {
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel eval took " + l + "ms"))) {
-            final int triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 8)
+            final long triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 8)
                     .compute()
                     .getTriangleCount();
             assertEquals(TRIANGLES, triangleCount);
