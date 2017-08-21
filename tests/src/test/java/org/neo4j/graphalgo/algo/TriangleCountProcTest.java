@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.algo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.exporter.TriangleCountProc;
+import org.neo4j.graphalgo.TriangleCountProc;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
