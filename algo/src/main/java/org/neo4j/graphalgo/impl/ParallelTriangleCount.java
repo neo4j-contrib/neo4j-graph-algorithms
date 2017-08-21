@@ -88,6 +88,7 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
                         graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
                             if (t == u) {
                                 count++;
+                                return false;
                             }
                             return true;
                         });
