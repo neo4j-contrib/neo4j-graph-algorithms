@@ -1,19 +1,11 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.cursors.ObjectCursor;
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.queue.IntMaxPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * @author mknblch
@@ -28,9 +20,7 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-
     private final int nodeCount;
-
     private int triangleCount;
 
 
@@ -88,19 +78,21 @@ public class ParallelTriangleCount extends Algorithm<ParallelTriangleCount> {
             for (int i = startIndex; i < endIndex; i++) {
                 // (u, v, w)
                 graph.forEachRelationship(i, D, (u, v, relationId) -> {
-                    if (v > u) {
-                        graph.forEachRelationship(v, D, (v2, w, relationId2) -> {
-                            if (w > v2) {
-                                graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
-                                    if (t == u) {
-                                        count++;
-                                    }
-                                    return true;
-                                });
+                    if (u >= v) {
+                        return true;
+                    }
+                    graph.forEachRelationship(v, D, (v2, w, relationId2) -> {
+                        if (v2 >= w) {
+                            return true;
+                        }
+                        graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
+                            if (t == u) {
+                                count++;
                             }
                             return true;
                         });
-                    }
+                        return true;
+                    });
                     return true;
                 });
             }
