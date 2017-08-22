@@ -25,12 +25,12 @@ import java.util.stream.StreamSupport;
 public class TriangleStream extends Algorithm<TriangleStream> {
 
     public static final Direction D = Direction.BOTH;
-    private final Graph graph;
-    private final ExecutorService executorService;
+    private Graph graph;
+    private ExecutorService executorService;
     private final int concurrency;
     private final int nodeCount;
-    private final AtomicInteger visitedNodes;
-    private final AtomicInteger runningThreads;
+    private AtomicInteger visitedNodes;
+    private AtomicInteger runningThreads;
     private BlockingQueue<Result> resultQueue;
 
     public TriangleStream(Graph graph, ExecutorService executorService, int concurrency) {
@@ -50,33 +50,36 @@ public class TriangleStream extends Algorithm<TriangleStream> {
 
     @Override
     public TriangleStream release() {
-        // TODO
+        visitedNodes = null;
+        runningThreads = null;
+        resultQueue = null;
+        graph = null;
+        executorService = null;
         return this;
     }
 
     public Stream<Result> resultStream() {
         submitTasks();
         final TerminationFlag flag = getTerminationFlag();
-        final Iterator<Result> iterator = new AbstractIterator<Result>() {
+        final Iterator<Result> it = new Iterator<Result>() {
+
             @Override
-            protected Result fetch() {
+            public boolean hasNext() {
+                return flag.running() && (runningThreads.get() > 0 || !resultQueue.isEmpty());
+            }
+
+            @Override
+            public Result next() {
                 try {
-                    if (!flag.running()) {
-                        done();
-                        return null; // TODO null?
-                    }
-                    if (runningThreads.get() == 0 && resultQueue.isEmpty()) {
-                        done();
-                        return null;
-                    }
                     return resultQueue.take();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         };
+
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                iterator,
+                it,
                 0), false);
     }
 

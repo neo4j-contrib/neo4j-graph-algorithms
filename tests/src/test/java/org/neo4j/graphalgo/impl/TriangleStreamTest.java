@@ -79,7 +79,6 @@ public class TriangleStreamTest {
 
         new TriangleStream(graph, Pools.DEFAULT, 1)
                 .resultStream()
-                .peek(System.out::println)
                 .forEach(r -> mock.consume(r.nodeA, r.nodeB, r.nodeC));
 
         verify(mock, times(10)).consume(eq(centerId), anyLong(), anyLong());
@@ -92,7 +91,6 @@ public class TriangleStreamTest {
 
         new TriangleStream(graph, Pools.DEFAULT, 8)
                 .resultStream()
-                .peek(System.out::println)
                 .forEach(r -> mock.consume(r.nodeA, r.nodeB, r.nodeC));
 
         verify(mock, times(10)).consume(eq(centerId), anyLong(), anyLong());

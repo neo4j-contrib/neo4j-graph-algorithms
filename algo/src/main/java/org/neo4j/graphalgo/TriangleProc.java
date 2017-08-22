@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 public class TriangleProc {
 
     public static final String DEFAULT_WRITE_PROPERTY_VALUE = "triangles";
+
     @Context
     public GraphDatabaseAPI api;
 

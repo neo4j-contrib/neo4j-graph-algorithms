@@ -23,15 +23,15 @@ public class TriangleCount extends Algorithm<TriangleCount> {
     public static final Direction D = Direction.BOTH;
 
     // gapi
-    private final Graph graph;
+    private Graph graph;
     // executor
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
     private final int nodeCount;
 
     private final AtomicInteger triangleCount;
-    private final AtomicIntegerArray triangles;
+    private AtomicIntegerArray triangles;
 
     public TriangleCount(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -62,6 +62,9 @@ public class TriangleCount extends Algorithm<TriangleCount> {
 
     @Override
     public TriangleCount release() {
+        graph = null;
+        executorService = null;
+        triangles = null;
         return this;
     }
 
