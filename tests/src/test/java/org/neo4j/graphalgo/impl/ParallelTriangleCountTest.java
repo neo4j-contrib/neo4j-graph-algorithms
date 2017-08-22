@@ -90,14 +90,14 @@ public class ParallelTriangleCountTest {
         assertTriangles(algo.getTriangles());
     }
 
-    private void assertTriangles(AtomicIntegerArray triangles) {
+    private void assertTriangles(int[] triangles) {
         final int centerMapped = graph.toMappedNodeId(centerId);
-        assertEquals(TRIANGLES, triangles.get(centerMapped));
-        for (int i = 0; i < triangles.length(); i++) {
+        assertEquals(TRIANGLES, triangles[centerMapped]);
+        for (int i = 0; i < triangles.length; i++) {
             if (i == centerMapped) {
                 continue;
             }
-            assertEquals(2, triangles.get(i));
+            assertEquals(2, triangles[i]);
         }
     }
 }

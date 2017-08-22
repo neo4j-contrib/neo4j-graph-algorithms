@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -26,29 +27,26 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
     private final int concurrency;
     private final int nodeCount;
 
-    private final AtomicIntegerArray triangles;
-    private final AtomicInteger triangleCount;
-
+    private int[] triangles;
+    private int triangleCount;
 
     public ParallelTriangleList(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.executorService = executorService;
         this.concurrency = concurrency;
         nodeCount = graph.nodeCount();
-        triangles = new AtomicIntegerArray(nodeCount);
-        triangleCount = new AtomicInteger();
     }
 
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
-                .mapToObj(i -> new Result(graph.toOriginalNodeId(i), triangles.get(i)));
+                .mapToObj(i -> new Result(graph.toOriginalNodeId(i), triangles[i]));
     }
 
     public int getTriangleCount() {
-        return triangleCount.get();
+        return triangleCount;
     }
 
-    public AtomicIntegerArray getTriangles() {
+    public int[] getTriangles() {
         return triangles;
     }
 
@@ -63,16 +61,23 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
     }
 
     public ParallelTriangleList compute() {
-
-        triangleCount.set(0);
-
+        // list of runnables
         final ArrayList<Task> tasks = new ArrayList<>();
         final int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, 1);
         for (int i = 0; i < nodeCount; i += batchSize) {
+            // partition
             final int end = Math.min(i + batchSize, nodeCount);
             tasks.add(new Task(i, end));
         }
+        // run
         ParallelUtil.run(tasks, executorService);
+        // merge
+        triangles = new int[nodeCount];
+        triangleCount = 0;
+        for (Task task : tasks) {
+            System.arraycopy(task.triangles, 0, this.triangles, task.startIndex, task.triangles.length);
+            triangleCount += task.triangleCount;
+        }
         return this;
     }
 
@@ -80,10 +85,13 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
 
         private final int startIndex;
         private final int endIndex;
+        private final int[] triangles;
+        private int triangleCount = 0;
 
         private Task(int startIndex, int endIndex) {
             this.startIndex = startIndex;
             this.endIndex = endIndex;
+            this.triangles = new int[endIndex - startIndex];
         }
 
         @Override
@@ -100,10 +108,10 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
                         }
                         graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
                             if (t == u) {
-                                triangleCount.incrementAndGet();
-                                triangles.incrementAndGet(u);
-                                triangles.incrementAndGet(v);
-                                triangles.incrementAndGet(w);
+                                triangleCount++;
+                                triangles[u]++;
+                                triangles[v]++;
+                                triangles[w]++;
                                 return false;
                             }
                             return true;
