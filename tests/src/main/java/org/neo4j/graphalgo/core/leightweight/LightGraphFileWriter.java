@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.leightweight;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
+import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphalgo.serialize.ByteBufferDataOutput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
 import org.neo4j.graphalgo.serialize.PrivateLookup;
@@ -95,12 +96,14 @@ public final class LightGraphFileWriter {
             final ByteBufferDataOutput out = new ByteBufferDataOutput(mbb);
 
             out.writeVLong(adjSize);
-            for (IntArray.Cursor cursor : adjacency) {
+            IntArray.Cursor cursor = adjacency.cursorFor(0, adjSize);
+            while (cursor.next()) {
                 cursor.forEach(i -> {
                     out.writeVInt(i);
                     return true;
                 });
             }
+            adjacency.returnCursor(cursor);
 
             out.writeVInt(inOffsets.length);
             for (long i : inOffsets) {
