@@ -102,6 +102,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     /**
      * run node consumer in tx as long as he returns true
+     *
      * @param consumer the node consumer
      * @return child instance to make methods of the child class accessible.
      */
@@ -148,8 +149,9 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     /**
      * run supplier within a transaction and returns its result
+     *
      * @param supplier the supplier
-     * @param <T> the return type
+     * @param <T>      the return type
      * @return child instance to make methods of the child class accessible.
      */
     public <T> T withinTransaction(Supplier<T> supplier) {
@@ -162,6 +164,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new default builder with its own node-set but
      * inherits the current label and relationship type
+     *
      * @return a new default builder
      */
     public DefaultBuilder newDefaultBuilder() {
@@ -171,6 +174,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new ring builder with its own node-set but
      * inherits current label and relationship type.
+     *
      * @return a new ring builder
      */
     public RingBuilder newRingBuilder() {
@@ -180,6 +184,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * creates a grid of nodes
      * inherits current label and relationship type.
+     *
      * @return the GridBuilder
      */
     public GridBuilder newGridBuilder() {
@@ -189,6 +194,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create lines of nodes where each node is connected to its successor
      * inherits current label and relationship type.
+     *
      * @return the LineBuilder
      */
     public LineBuilder newLineBuilder() {
@@ -198,6 +204,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a complete graph where each node is interconnected
      * inherits current label and relationship type.
+     *
      * @return the CompleteGraphBuilder
      */
     public CompleteGraphBuilder newCompleteGraphBuilder() {

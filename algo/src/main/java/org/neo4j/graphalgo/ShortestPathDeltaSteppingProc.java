@@ -7,8 +7,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
+import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -17,7 +17,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
@@ -26,9 +26,9 @@ import java.util.stream.Stream;
  * to calculate the length of the shortest paths from a starting node to all other
  * nodes in the graph. It can be tweaked using the delta-parameter which controls
  * the grade of concurrency.<br>
- *
+ * <p>
  * More information in:<br>
- *
+ * <p>
  * <a href="https://arxiv.org/pdf/1604.02113v1.pdf">https://arxiv.org/pdf/1604.02113v1.pdf</a><br>
  * <a href="https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf">https://ae.cs.uni-frankfurt.de/pdf/diss_uli.pdf</a><br>
  * <a href="http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf">http://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf</a><br>

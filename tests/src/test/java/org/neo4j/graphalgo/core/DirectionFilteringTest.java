@@ -31,9 +31,9 @@ public final class DirectionFilteringTest extends RandomGraphTestCase {
 
     @SuppressWarnings("unchecked")
     public DirectionFilteringTest(
-            Class<?> graphImpl,
+            Class<? extends GraphFactory> graphImpl,
             String nameIgnoredOnlyForTestName) {
-        this.graphImpl = (Class<? extends GraphFactory>) graphImpl;
+        this.graphImpl = graphImpl;
     }
 
     @Test

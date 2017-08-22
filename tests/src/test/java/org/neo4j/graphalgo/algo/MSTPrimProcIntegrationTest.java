@@ -31,9 +31,10 @@ public class MSTPrimProcIntegrationTest {
 
     private static final RelationshipType type = RelationshipType.withName("TYPE");
     private static GraphDatabaseAPI db;
+
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @BeforeClass
@@ -56,7 +57,7 @@ public class MSTPrimProcIntegrationTest {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        try(Transaction tx = db.beginTx()) {
+        try (Transaction tx = db.beginTx()) {
             db.execute(cypher);
             tx.success();
         }

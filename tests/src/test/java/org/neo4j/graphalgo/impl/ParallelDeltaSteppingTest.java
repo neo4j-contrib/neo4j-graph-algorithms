@@ -9,7 +9,6 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -58,7 +57,7 @@ public class ParallelDeltaSteppingTest {
                     .get(0)
                     .get(0)
                     .getId();
-        };
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
@@ -66,7 +65,7 @@ public class ParallelDeltaSteppingTest {
                     .withRelationshipType(RELATIONSHIP)
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
-        };
+        }
 
         reference = compute(1);
     }

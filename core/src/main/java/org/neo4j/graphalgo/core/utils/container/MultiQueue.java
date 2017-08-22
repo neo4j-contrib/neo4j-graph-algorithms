@@ -3,12 +3,10 @@ package org.neo4j.graphalgo.core.utils.container;
 import org.apache.lucene.util.ArrayUtil;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntConsumer;
-import java.util.stream.Collectors;
 
 /**
  * @author mknblch

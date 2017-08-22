@@ -20,11 +20,10 @@ import java.util.stream.StreamSupport;
 
 /**
  * Dijkstra single source - single target shortest path algorithm
- *
+ * <p>
  * The algorithm computes a (there might be more then one) shortest path
  * between a given start and target-NodeId. It returns result tuples of
  * [nodeId, distance] of each node in the path.
- *
  */
 public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
@@ -63,6 +62,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * compute shortest path between startNode and goalNode
+     *
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
@@ -86,6 +86,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * return the result stream
+     *
      * @return stream of result DTOs
      */
     public Stream<Result> resultStream() {
@@ -99,6 +100,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * get the distance sum of the path
+     *
      * @return sum of distances between start and goal
      */
     public double getTotalCost() {
@@ -107,6 +109,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * return the number of nodes the path consists of
+     *
      * @return number of nodes in the path
      */
     public int getPathLength() {

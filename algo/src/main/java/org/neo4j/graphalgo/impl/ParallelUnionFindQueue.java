@@ -10,10 +10,10 @@ import java.util.concurrent.*;
 
 /**
  * parallel UnionFind using ExecutorService only.
- *
+ * <p>
  * Algorithm based on the idea that DisjointSetStruct can be built using
  * just a partition of the nodes which then can be merged pairwise.
- *
+ * <p>
  * The implementation is based on a queue which acts as a buffer
  * for each computed DSS. As long as there are more elements on
  * the queue the algorithm takes two, merges them and adds its

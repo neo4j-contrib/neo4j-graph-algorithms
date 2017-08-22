@@ -139,7 +139,6 @@ public final class PageRankTest {
                     .withRelationshipType("TYPE1")
                     .withDirection(Direction.OUTGOING)
                     .load(graphImpl);
-
         }
 
         final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();

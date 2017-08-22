@@ -9,9 +9,9 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
+import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
-import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -59,13 +59,13 @@ public class UnionFindProc3 {
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = load(configuration);
-        };
+        }
 
         // evaluation
         final DisjointSetStruct struct;
         try (ProgressTimer timer = builder.timeEval()) {
             struct = evaluate(graph, configuration);
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             // write back

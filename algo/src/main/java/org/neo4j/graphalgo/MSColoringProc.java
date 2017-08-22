@@ -50,13 +50,13 @@ public class MSColoringProc {
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = load(configuration);
-        };
+        }
 
         // evaluation
         final AtomicIntegerArray struct;
         try (ProgressTimer timer = builder.timeEval()) {
             struct = evaluate(graph, configuration);
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             // write back

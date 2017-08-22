@@ -2,14 +2,11 @@ package org.neo4j.graphalgo.core.utils.container;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.storageengine.api.Direction;
 import org.neo4j.storageengine.api.NodeItem;
-
-import java.util.Iterator;
 
 /**
  * Preallocated Container for a single relationship type.
@@ -26,7 +23,8 @@ public class RelationshipContainer {
 
     /**
      * called for each relationship for nodeId
-     * @param nodeId the source nodeid
+     *
+     * @param nodeId   the source nodeid
      * @param consumer the relation consumer
      */
     public void forEach(int nodeId, RelationshipConsumer consumer) {
@@ -41,6 +39,7 @@ public class RelationshipContainer {
 
     /**
      * get RelationContainer.Builder to ease construction of the container
+     *
      * @param nodeCount the nodeCount
      * @return a Builder for RelationContainers
      */
@@ -50,6 +49,7 @@ public class RelationshipContainer {
 
     /**
      * get an Importer object to ease the import from neo4j
+     *
      * @param api the core api
      * @return an Importer for RelationContainer
      */
@@ -84,6 +84,7 @@ public class RelationshipContainer {
 
         /**
          * Adds a new connection from the node which the Builder is pointing to.
+         *
          * @param targetNodeId the targetNodeId
          * @return itself for method chaining
          */

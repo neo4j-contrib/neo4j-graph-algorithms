@@ -25,7 +25,9 @@ public interface IdMapping {
      */
     long toOriginalNodeId(int nodeId);
 
-    /** Returns true iff the nodeId is mapped, otherwise false */
+    /**
+     * Returns true iff the nodeId is mapped, otherwise false
+     */
     boolean contains(long nodeId);
 
     /**

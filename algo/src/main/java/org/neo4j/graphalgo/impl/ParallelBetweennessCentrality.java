@@ -56,6 +56,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     /**
      * compute centrality
+     *
      * @return itself for method chaining
      */
     public ParallelBetweennessCentrality compute() {
@@ -70,6 +71,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     /**
      * get the centrality array
+     *
      * @return array with centrality
      */
     public AtomicDoubleArray getCentrality() {
@@ -92,6 +94,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     /**
      * emit the result stream
+     *
      * @return stream if Results
      */
     public Stream<BetweennessCentrality.Result> resultStream() {

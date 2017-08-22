@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 /**
  * Sequential strongly connected components algorithm (TunedTarjan).
- *
+ * <p>
  * as specified in: https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
  */
 public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {

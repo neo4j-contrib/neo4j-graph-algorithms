@@ -20,14 +20,14 @@ import java.util.function.IntPredicate;
 
 /**
  * Multistep SCC coloring algorithm.
- *
+ * <p>
  * The algorithm assigns a color to each node. The color always reflects
  * the highest node id in the set. Initially all nodes are colored using their
  * own nodeId. The algorithm itself builds weakly connected components
  * which are then merged with its predecessor set to get a SCC.
- *
+ * <p>
  * More Info:
- *
+ * <p>
  * http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf
  * https://www.osti.gov/scitech/servlets/purl/1115145
  *
@@ -56,9 +56,10 @@ public class MultiStepColoring {
 
     /**
      * compute the colors of nodes
+     *
      * @param nodes set of nodes
      * @return self for method chaining
-     * */
+     */
     public MultiStepColoring compute(IntSet nodes) {
         resetColors(nodes);
         msColorParallel(nodes);
@@ -89,6 +90,7 @@ public class MultiStepColoring {
 
     /**
      * parallel multistep coloring algorithm
+     *
      * @param nodeSet
      */
     private void msColorParallel(IntSet nodeSet) {
@@ -224,7 +226,7 @@ public class MultiStepColoring {
     /**
      * extracts a node partition
      *
-     * @param it the node iterator
+     * @param it        the node iterator
      * @param batchSize the maximum batch size
      * @return a batch of nodes with elements <= batchSize
      */
@@ -241,7 +243,7 @@ public class MultiStepColoring {
      * is greater then the existing
      *
      * @param nodeId the node id
-     * @param color the color
+     * @param color  the color
      * @return true if color was assigned, false otherwise
      */
     private boolean cas(int nodeId, int color) {
@@ -259,7 +261,8 @@ public class MultiStepColoring {
 
     /**
      * union all IntContainer from futures into ret set
-     * @param ret result set
+     *
+     * @param ret     result set
      * @param futures
      * @return
      */

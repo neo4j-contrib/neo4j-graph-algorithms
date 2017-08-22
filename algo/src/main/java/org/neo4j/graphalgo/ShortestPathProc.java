@@ -97,7 +97,7 @@ public class ShortestPathProc {
                     .withDirection(Direction.OUTGOING)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
-        };
+        }
 
         try (ProgressTimer timer = builder.timeEval()) {
             dijkstra = new ShortestPathDijkstra(graph)
@@ -106,7 +106,7 @@ public class ShortestPathProc {
                     .compute(startNode.getId(), endNode.getId());
             builder.withNodeCount(dijkstra.getPathLength())
                     .withTotalCosts(dijkstra.getTotalCost());
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {

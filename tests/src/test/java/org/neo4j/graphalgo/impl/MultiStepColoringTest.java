@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -111,7 +110,7 @@ public class MultiStepColoringTest {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createRing(int size, int rIdx) throws Exception{
+    private static Runnable createRing(int size, int rIdx) throws Exception {
         return () -> {
             try (Transaction tx = db.beginTx();
                  Statement stm = bridge.get()) {

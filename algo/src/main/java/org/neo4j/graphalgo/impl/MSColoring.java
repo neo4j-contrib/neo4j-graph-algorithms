@@ -8,7 +8,6 @@ import org.neo4j.graphalgo.impl.msbfs.BfsSources;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;

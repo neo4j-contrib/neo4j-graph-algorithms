@@ -76,6 +76,7 @@ public class GraphLoader {
 
     /**
      * set an executor service
+     *
      * @param executorService the executor service
      * @return itself to enable fluent interface
      */
@@ -86,6 +87,7 @@ public class GraphLoader {
 
     /**
      * disable use of executor service
+     *
      * @return itself to enable fluent interface
      */
     public GraphLoader withoutExecutorService() {
@@ -403,6 +405,7 @@ public class GraphLoader {
 
     /**
      * provide statement to load nodes, has to return "id" and optionally "weight" or "value"
+     *
      * @param nodeStatement
      * @return itself to enable fluent interface
      */
@@ -413,6 +416,7 @@ public class GraphLoader {
 
     /**
      * provide statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
+     *
      * @param relationshipStatement
      * @return itself to enable fluent interface
      */
@@ -423,6 +427,7 @@ public class GraphLoader {
 
     /**
      * provide batch size for parallel loading
+     *
      * @param batchSize
      * @return itself to enable fluent interface
      */
@@ -430,6 +435,7 @@ public class GraphLoader {
         this.batchSize = batchSize;
         return this;
     }
+
     /**
      * @param accumulateWeights true if relationship-weights should be accumulated in the loader
      * @return itself to enable fluent interface

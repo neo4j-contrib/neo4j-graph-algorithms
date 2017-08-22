@@ -9,6 +9,7 @@ public interface RelationshipWeights {
 
     /**
      * get weight between source and target node id
+     *
      * @param sourceNodeId source node
      * @param targetNodeId target node
      * @return the weight

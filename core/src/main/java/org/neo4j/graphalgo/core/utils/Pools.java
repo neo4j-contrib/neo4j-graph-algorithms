@@ -27,6 +27,7 @@ public class Pools {
                 new CallerBlocksPolicy());
 //                new ThreadPoolExecutor.CallerRunsPolicy());
     }
+
     static class CallerBlocksPolicy implements RejectedExecutionHandler {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
@@ -44,7 +45,7 @@ public class Pools {
     }
 
     public static int getNoThreadsInDefaultPool() {
-        return  DEFAULT_CONCURRENCY;
+        return DEFAULT_CONCURRENCY;
     }
 
     private static ExecutorService createSinglePool() {

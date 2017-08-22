@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.bench;
 
-import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.ClosenessCentralityProc;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -14,9 +13,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.core.utils.queue;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
-import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
 import org.neo4j.helpers.collection.Pair;
 
 import java.util.ArrayList;

@@ -1,9 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
-import org.neo4j.logging.*;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 
 /**
  * @author mknblch

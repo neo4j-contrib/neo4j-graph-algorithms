@@ -96,7 +96,7 @@ public class UnionFindBenchmark {
 
     @TearDown
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         Pools.DEFAULT.shutdownNow();
     }
 

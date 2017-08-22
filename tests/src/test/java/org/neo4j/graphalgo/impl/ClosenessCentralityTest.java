@@ -64,7 +64,6 @@ public class ClosenessCentralityTest {
                         " (e)-[:TYPE]->(d)";
 
 
-
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()

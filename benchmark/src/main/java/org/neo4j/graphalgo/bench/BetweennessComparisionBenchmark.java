@@ -1,8 +1,6 @@
 package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.BetweennessCentralityProc;
-import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
-import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -15,9 +13,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,7 +48,7 @@ public class BetweennessComparisionBenchmark {
 
     @TearDown
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         Pools.DEFAULT.shutdownNow();
     }
 

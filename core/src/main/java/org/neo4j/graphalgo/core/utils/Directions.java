@@ -5,7 +5,7 @@ import org.neo4j.graphdb.Direction;
 /**
  * Utility class for converting neo4j kernel api
  * Direction to user space Direction and back
- *
+ * <p>
  * TODO maybe find a better name
  *
  * @author mknblch
