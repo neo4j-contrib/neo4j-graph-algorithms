@@ -5,6 +5,8 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
 import java.util.Arrays;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * A PriorityQueue specialized for ints that maintains a partial ordering of
@@ -127,6 +129,15 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
             return result;
         } else {
             return -1;
+        }
+    }
+
+    public final void forEach(IntPredicate nodeConsumer) {
+        int t;
+        while ((t = pop()) != -1) {
+            if (!nodeConsumer.test(t)) {
+                return;
+            }
         }
     }
 
