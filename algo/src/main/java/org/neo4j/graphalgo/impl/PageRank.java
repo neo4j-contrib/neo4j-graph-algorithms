@@ -7,9 +7,14 @@ import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.exporter.PageRankResult;
+import org.neo4j.graphalgo.exporter.PageRankResultExporter;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,15 +75,16 @@ import java.util.concurrent.ExecutorService;
  * [1]: <a href="http://delab.csd.auth.gr/~dimitris/courses/ir_spring06/page_rank_computing/01531136.pdf">An Efficient Partition-Based Parallel PageRank Algorithm</a><br>
  * [2]: <a href="https://www.cs.purdue.edu/homes/dgleich/publications/gleich2004-parallel.pdf">Fast Parallel PageRank: A Linear System Approach</a>
  */
-public class PageRank extends Algorithm<PageRank> {
+public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     private final ComputeSteps computeSteps;
+    private final IdMapping idMapping;
 
     /**
      * Forces sequential use. If you want parallelism, prefer
      * {@link #PageRank(ExecutorService, int, int, IdMapping, NodeIterator, RelationshipIterator, Degrees, double)}
      */
-    public PageRank(
+    PageRank(
             IdMapping idMapping,
             NodeIterator nodeIterator,
             RelationshipIterator relationshipIterator,
@@ -100,7 +106,7 @@ public class PageRank extends Algorithm<PageRank> {
      * Whether the algorithm actually runs in parallel depends on the given
      * executor and batchSize.
      */
-    public PageRank(
+    PageRank(
             ExecutorService executor,
             int concurrency,
             int batchSize,
@@ -109,7 +115,7 @@ public class PageRank extends Algorithm<PageRank> {
             RelationshipIterator relationshipIterator,
             Degrees degrees,
             double dampingFactor) {
-
+        this.idMapping = idMapping;
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
             partitions = partitionGraph(
@@ -135,17 +141,21 @@ public class PageRank extends Algorithm<PageRank> {
     /**
      * compute pageRank for n iterations
      */
+    @Override
     public PageRank compute(int iterations) {
         assert iterations >= 1;
         computeSteps.run(iterations);
         return this;
     }
 
-    /**
-     * Return the result of the last computation.
-     */
-    public double[] getPageRank() {
+    @Override
+    public PageRankResult result() {
         return computeSteps.getPageRank();
+    }
+
+    @Override
+    public Algorithm<?> algorithm() {
+        return this;
     }
 
     private int adjustBatchSize(int batchSize) {
@@ -326,22 +336,22 @@ public class PageRank extends Algorithm<PageRank> {
             Arrays.setAll(scores, i -> new int[stepSize][]);
         }
 
-        double[] getPageRank() {
-            int nodeCount = 0;
-            for (ComputeStep computeStep : steps) {
-                nodeCount += computeStep.nodeCount;
+        PageRankResult getPageRank() {
+            ComputeStep firstStep = steps.get(0);
+            if (steps.size() == 1) {
+                return new PrimitiveDoubleArrayResult(idMapping, firstStep.pageRank);
             }
-            double[] ranks = new double[nodeCount];
-            for (ComputeStep computeStep : steps) {
-                double[] scores = computeStep.pageRank;
-                System.arraycopy(
-                        scores,
-                        0,
-                        ranks,
-                        computeStep.startNode,
-                        computeStep.nodeCount);
+            double[][] results = new double[steps.size()][];
+            Iterator<ComputeStep> iterator = steps.iterator();
+            int i = 0;
+            while (iterator.hasNext()) {
+                results[i++] = iterator.next().pageRank;
             }
-            return ranks;
+            return new PartitionedPrimitiveDoubleArrayResult(
+                    idMapping,
+                    results,
+                    firstStep.starts
+            );
         }
 
         private void run(int iterations) {
@@ -507,6 +517,96 @@ public class PageRank extends Algorithm<PageRank> {
             int degree = degrees.degree(nodeId, Direction.OUTGOING);
             double rank = degree == 0 ? 0 : pageRank[nodeId - startNode] / degree;
             return (int) (100_000 * rank);
+        }
+    }
+
+    private static abstract class DoubleArrayResult implements PageRankResult {
+
+        private final IdMapping idMapping;
+
+        protected DoubleArrayResult(IdMapping idMapping) {
+            this.idMapping = idMapping;
+        }
+
+        @Override
+        public final double score(final long nodeId) {
+            return score((int) nodeId);
+        }
+
+        @Override
+        public final AbstractExporter<PageRankResult> exporter(
+                final GraphDatabaseAPI db,
+                final Log log,
+                final String writeProperty,
+                final ExecutorService executorService,
+                final int concurrency) {
+            return new PageRankResultExporter(
+                    db,
+                    idMapping,
+                    log,
+                    writeProperty,
+                    executorService)
+                    .withConcurrency(concurrency);
+        }
+    }
+
+    private static final class PartitionedPrimitiveDoubleArrayResult extends DoubleArrayResult {
+        private final double[][] partitions;
+        private final int[] starts;
+
+        private PartitionedPrimitiveDoubleArrayResult(
+                IdMapping idMapping,
+                double[][] partitions,
+                int[] starts) {
+            super(idMapping);
+            this.partitions = partitions;
+            this.starts = starts;
+        }
+
+        @Override
+        public double score(final int nodeId) {
+            int idx = PageRank.idx(nodeId, starts);
+            return partitions[idx][nodeId - starts[idx]];
+        }
+
+        @Override
+        public long size() {
+            long size = 0;
+            for (double[] partition : partitions) {
+                size += partition.length;
+            }
+            return size;
+        }
+    }
+
+    private static final class PrimitiveDoubleArrayResult extends DoubleArrayResult {
+        private final double[] result;
+
+        private PrimitiveDoubleArrayResult(
+                IdMapping idMapping,
+                double[] result) {
+            super(idMapping);
+            this.result = result;
+        }
+
+        @Override
+        public double score(final int nodeId) {
+            return result[nodeId];
+        }
+
+        @Override
+        public long size() {
+            return result.length;
+        }
+
+        @Override
+        public boolean hasFastToDoubleArray() {
+            return true;
+        }
+
+        @Override
+        public double[] toDoubleArray() {
+            return result;
         }
     }
 }

@@ -130,7 +130,11 @@ public final class PageRankWikiTest {
                 .withRelationshipType("TYPE")
                 .load(graphImpl);
 
-        final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();
+        final double[] ranks = PageRankAlgorithm
+                .of(graph, 0.85)
+                .compute(40)
+                .result()
+                .toDoubleArray();
         System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);

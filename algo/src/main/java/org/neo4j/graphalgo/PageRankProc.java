@@ -8,8 +8,10 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.PageRank;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
+import org.neo4j.graphalgo.exporter.PageRankResult;
+import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphalgo.impl.PageRankAlgorithm;
 import org.neo4j.graphalgo.results.PageRankScore;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -56,7 +58,7 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
-        double[] scores = evaluate(graph, configuration, statsBuilder);
+        PageRankResult scores = evaluate(graph, configuration, statsBuilder);
         write(graph, scores, configuration, statsBuilder);
 
         return Stream.of(statsBuilder.build());
@@ -75,12 +77,12 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
-        double[] scores = evaluate(graph, configuration, statsBuilder);
+        PageRankResult scores = evaluate(graph, configuration, statsBuilder);
 
-        return IntStream.range(0, scores.length)
+        return IntStream.range(0, graph.nodeCount())
                 .mapToObj(i -> new PageRankScore(
                         api.getNodeById(graph.toOriginalNodeId(i)),
-                        scores[i]
+                        scores.score(i)
                 ));
     }
 
@@ -105,7 +107,7 @@ public final class PageRankProc {
         }
     }
 
-    private double[] evaluate(
+    private PageRankResult evaluate(
             Graph graph,
             ProcedureConfiguration configuration,
             PageRankScore.Stats.Builder statsBuilder) {
@@ -116,25 +118,24 @@ public final class PageRankProc {
         final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
-        PageRank algo = new PageRank(
+        PageRankAlgorithm prAlgo = PageRankAlgorithm.of(
+                graph,
+                dampingFactor,
                 Pools.DEFAULT,
                 concurrency,
-                batchSize,
-                graph,
-                graph,
-                graph,
-                graph,
-                dampingFactor)
+                batchSize);
+        Algorithm<?> algo = prAlgo
+                .algorithm()
                 .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
-        statsBuilder.timeEval(() -> algo.compute(iterations));
+        statsBuilder.timeEval(() -> prAlgo.compute(iterations));
 
         statsBuilder
                 .withIterations(iterations)
                 .withDampingFactor(dampingFactor);
 
-        final double[] pageRank = algo.getPageRank();
+        final PageRankResult pageRank = prAlgo.result();
         algo.release();
         graph.release();
         return pageRank;
@@ -142,16 +143,31 @@ public final class PageRankProc {
 
     private void write(
             Graph graph,
-            double[] scores,
+            PageRankResult result,
             ProcedureConfiguration configuration,
             final PageRankScore.Stats.Builder statsBuilder) {
         if (configuration.isWriteFlag(true)) {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
             try (ProgressTimer timer = statsBuilder.timeWrite()) {
-                new DoubleArrayExporter(api, graph, log, propertyName, Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(scores);
+                if (result.hasFastToDoubleArray()) {
+                    new DoubleArrayExporter(
+                            api,
+                            graph,
+                            log,
+                            propertyName,
+                            Pools.DEFAULT)
+                            .withConcurrency(configuration.getConcurrency())
+                            .write(result.toDoubleArray());
+                } else {
+                    result.exporter(
+                            api,
+                            log,
+                            propertyName,
+                            Pools.DEFAULT,
+                            configuration.getConcurrency()
+                    ).write(result);
+                }
             }
             statsBuilder
                     .withWrite(true)
