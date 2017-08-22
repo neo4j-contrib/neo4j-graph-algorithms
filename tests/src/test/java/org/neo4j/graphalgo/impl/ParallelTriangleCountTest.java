@@ -18,9 +18,6 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Matchers.anyDouble;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.*;
 
 /**
  *
@@ -30,7 +27,7 @@ public class ParallelTriangleCountTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLES = 10_000L;
+    public static final long TRIANGLES = 10; //_000L;
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -71,8 +68,8 @@ public class ParallelTriangleCountTest {
     }
 
     @Test
-    public void testCountSequential() throws Exception {
-        final ParallelTriangleList algo = new ParallelTriangleList(graph, Pools.DEFAULT, 1);
+    public void testSequential() throws Exception {
+        final ParallelTriangleCount algo = new ParallelTriangleCount(graph, Pools.DEFAULT, 1);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
             algo.compute();
         }
@@ -81,8 +78,8 @@ public class ParallelTriangleCountTest {
     }
 
     @Test
-    public void testCountParallel() throws Exception {
-        final ParallelTriangleList algo = new ParallelTriangleList(graph, Pools.DEFAULT, 1);
+    public void testParallel() throws Exception {
+        final ParallelTriangleCount algo = new ParallelTriangleCount(graph, Pools.DEFAULT, 4);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel count took " + l + "ms"))) {
             algo.compute();
         }
@@ -90,14 +87,14 @@ public class ParallelTriangleCountTest {
         assertTriangles(algo.getTriangles());
     }
 
-    private void assertTriangles(int[] triangles) {
+    private void assertTriangles(AtomicIntegerArray triangles) {
         final int centerMapped = graph.toMappedNodeId(centerId);
-        assertEquals(TRIANGLES, triangles[centerMapped]);
-        for (int i = 0; i < triangles.length; i++) {
+        assertEquals(TRIANGLES, triangles.get(centerMapped));
+        for (int i = 0; i < triangles.length(); i++) {
             if (i == centerMapped) {
                 continue;
             }
-            assertEquals(2, triangles[i]);
+            assertEquals(2, triangles.get(i));
         }
     }
 }

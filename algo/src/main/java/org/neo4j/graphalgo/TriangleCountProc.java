@@ -7,15 +7,14 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.ParallelTriangleList;
+import org.neo4j.graphalgo.exporter.AtomicIntArrayExporter;
+import org.neo4j.graphalgo.exporter.IntArrayExporter;
+import org.neo4j.graphalgo.impl.ParallelTriangleCount;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
-import org.neo4j.procedure.Description;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -25,6 +24,7 @@ import java.util.stream.Stream;
  */
 public class TriangleCountProc {
 
+    public static final String DEFAULT_WRITE_PROPERTY_VALUE = "triangles";
     @Context
     public GraphDatabaseAPI api;
 
@@ -34,15 +34,40 @@ public class TriangleCountProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure("algo.triangleCount")
+    @Procedure("algo.triangles.stream")
     @Description("CALL algo.triangleCount({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8}) " +
-            "YIELD loadMillis, evalMillis, nodeCount, triangleCount - yields results")
+            "YIELD nodeId, triangles - yield nodeId, number of triangles")
+    public Stream<ParallelTriangleCount.Result> triangleCountStream(@Name(value = "config", defaultValue = "{}")
+                    Map<String, Object> config) {
+
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        final Graph graph = new GraphLoader(api)
+                .withOptionalLabel(configuration.getNodeLabelOrQuery())
+                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                .withoutRelationshipWeights()
+                .withoutNodeWeights()
+                .withLog(log)
+                .withDirection(ParallelTriangleCount.D)
+                .withExecutorService(Pools.DEFAULT)
+                .load(configuration.getGraphImpl());
+
+        final ParallelTriangleCount triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
+                .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .compute();
+
+        return triangleCount.resultStream();
+    }
+
+    @Procedure(value = "algo.triangles", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8, write:true, writeProperty:'triangles'}) " +
+            "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount")
     public Stream<Result> triangleCount(@Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
         final Graph graph;
-        final long triangleCount;
-
+        final ParallelTriangleCount triangleCount;
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         final TriangleCountResultBuilder builder = new TriangleCountResultBuilder();
 
@@ -52,22 +77,30 @@ public class TriangleCountProc {
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
-                    .withDirection(ParallelTriangleList.D)
+                    .withLog(log)
+                    .withDirection(ParallelTriangleCount.D)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         };
 
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new ParallelTriangleList(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .compute()
-                    .getTriangleCount();
+                    .compute();
+        };
+
+        if (configuration.isWriteFlag()) {
+            try (ProgressTimer timer = builder.timeWrite()) {
+                new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                        .write(triangleCount.getTriangles());
+            }
         }
 
-        return Stream.of(builder.withTriangleCount(triangleCount)
-                .withNodeCount(graph.nodeCount())
-                .build());
+        builder.withNodeCount(graph.nodeCount())
+                .withTriangleCount(triangleCount.getTriangleCount());
+
+        return Stream.of(builder.build());
     }
 
     /**

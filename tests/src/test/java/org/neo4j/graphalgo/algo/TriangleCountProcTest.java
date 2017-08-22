@@ -78,20 +78,29 @@ public class TriangleCountProcTest {
     @Test
     public void testCypher() throws Exception {
 
-        final String cypher = "CALL algo.triangleCount({labelOrQuery:'Node', relationshipQuery:''}) YIELD loadMillis, computeMillis, nodeCount, triangleCount";
+        final String cypher = "CALL algo.triangles({labelOrQuery:'Node', relationshipQuery:'', concurrency:4}) YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount";
 
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
             final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
             final long nodeCount = row.getNumber("nodeCount").longValue();
             final long triangleCount = row.getNumber("triangleCount").longValue();
             assertNotEquals(-1, loadMillis);
             assertNotEquals(-1, computeMillis);
+            assertNotEquals(-1, writeMillis);
             assertEquals(3, triangleCount);
             assertEquals(9, nodeCount);
             return true;
         });
 
+        final String request = "MATCH (n) WHERE exists(n.triangles) RETURN n.triangles as t";
+
+        api.execute(request).accept(row -> {
+            final int triangles = row.getNumber("t").intValue();
+            assertEquals(1, triangles);
+            return true;
+        });
 
     }
 
