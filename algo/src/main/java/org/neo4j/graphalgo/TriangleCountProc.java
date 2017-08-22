@@ -35,7 +35,7 @@ public class TriangleCountProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.triangles.stream")
-    @Description("CALL algo.triangleCount({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8}) " +
+    @Description("CALL algo.triangles.stream({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<ParallelTriangleCount.Result> triangleCountStream(@Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
@@ -61,7 +61,8 @@ public class TriangleCountProc {
     }
 
     @Procedure(value = "algo.triangles", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount({nodeQuery:'labelName', relationshipQuery:'relationshipName', concurrency:8, write:true, writeProperty:'triangles'}) " +
+    @Description("CALL algo.triangles.stream({nodeQuery:'labelName', relationshipQuery:'relationshipName', " +
+            "concurrency:8, write:true, writeProperty:'triangles'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount")
     public Stream<Result> triangleCount(@Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
