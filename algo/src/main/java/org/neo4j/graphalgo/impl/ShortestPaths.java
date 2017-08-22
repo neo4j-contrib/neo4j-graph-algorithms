@@ -11,7 +11,7 @@ import java.util.stream.StreamSupport;
 
 /**
  * sequential single source Dijkstra implementation.
- *
+ * <p>
  * Calculates the minimum distance from a startNode to every other
  * node in the graph. {@link Double#POSITIVE_INFINITY} is returned
  * if no path exists between those nodes.
@@ -36,6 +36,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
 
     /**
      * compute the shortest paths from startNode
+     *
      * @param startNode the start node id (original neo4j id)
      * @return itself
      */

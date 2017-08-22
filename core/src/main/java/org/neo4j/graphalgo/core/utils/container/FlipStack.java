@@ -8,6 +8,7 @@ import java.util.function.IntConsumer;
 
 /**
  * flippable Stack impl. where pop() and push() operations work on distinct stacks
+ *
  * @author mknblch
  */
 public class FlipStack {
@@ -43,6 +44,7 @@ public class FlipStack {
 
     /**
      * add all elements to the current pushStack
+     *
      * @param container
      */
     public void addAll(IntContainer container) {
@@ -51,6 +53,7 @@ public class FlipStack {
 
     /**
      * push value onto the pushStack
+     *
      * @param value
      */
     public void push(int value) {
@@ -59,6 +62,7 @@ public class FlipStack {
 
     /**
      * pop head of the popStack
+     *
      * @return head of the popStack
      */
     public int pop() {
@@ -67,6 +71,7 @@ public class FlipStack {
 
     /**
      * check if the popStack is empty
+     *
      * @return
      */
     public boolean isEmpty() {
@@ -75,6 +80,7 @@ public class FlipStack {
 
     /**
      * for each element of the popStack
+     *
      * @param consumer
      */
     public void forEach(IntConsumer consumer) {
@@ -83,6 +89,7 @@ public class FlipStack {
 
     /**
      * retrieve the pushStack
+     *
      * @return the pushStack
      */
     public IntStack pushStack() {
@@ -91,6 +98,7 @@ public class FlipStack {
 
     /**
      * retrieve the popStack
+     *
      * @return popStack
      */
     public IntStack popStack() {

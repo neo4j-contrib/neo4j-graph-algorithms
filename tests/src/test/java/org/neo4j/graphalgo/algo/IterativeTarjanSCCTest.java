@@ -1,8 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
 import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.ObjectArrayList;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -12,7 +10,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.impl.SCCIterativeTarjan;
-import org.neo4j.graphalgo.impl.SCCTunedTarjan;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;

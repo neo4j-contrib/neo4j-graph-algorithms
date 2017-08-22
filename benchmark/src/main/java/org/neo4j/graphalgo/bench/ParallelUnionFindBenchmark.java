@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.bench;
 
-import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -117,7 +116,7 @@ public class ParallelUnionFindBenchmark {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createLine(int size, int rIdx) throws Exception{
+    private static Runnable createLine(int size, int rIdx) throws Exception {
         return () -> {
             try (Transaction tx = db.beginTx();
                  Statement stm = bridge.get()) {

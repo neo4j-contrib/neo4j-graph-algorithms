@@ -48,7 +48,7 @@ public class HeavyCypherGraphFactoryTest {
         String rels = "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight";
 
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
-                .withRelationshipWeightsFromProperty("prop",0)
+                .withRelationshipWeightsFromProperty("prop", 0)
                 .withLabel(nodes)
                 .withRelationshipType(rels)
                 .load(HeavyCypherGraphFactory.class);
@@ -65,6 +65,6 @@ public class HeavyCypherGraphFactoryTest {
             });
             return true;
         });
-        assertEquals(6,total.get());
+        assertEquals(6, total.get());
     }
 }

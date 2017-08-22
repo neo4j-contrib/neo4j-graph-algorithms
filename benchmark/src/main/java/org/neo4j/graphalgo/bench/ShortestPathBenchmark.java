@@ -96,7 +96,7 @@ public class ShortestPathBenchmark {
     private static Relationship createRelation(Node from, Node to) {
         Relationship relationship = from.createRelationshipTo(to, RELATIONSHIP_TYPE);
         double rndCost = Math.random() * 5.0; //(to.getId() % 5) + 1.0; // (0-5)
-        relationship.setProperty("cost",  rndCost);
+        relationship.setProperty("cost", rndCost);
         return relationship;
     }
 

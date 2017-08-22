@@ -10,7 +10,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.neo4j.graphdb.Direction.INCOMING;
@@ -92,11 +91,13 @@ public class AdjacencyMatrixTest {
         matrix.forEach(1, OUTGOING, relationConsumer);
         verify(relationConsumer, times(1)).accept(eq(1), eq(2), eq(RawValues.combineIntInt(1, 2)));
     }
+
     @Test
     public void testV2Outgoing() throws Exception {
         matrix.forEach(2, OUTGOING, relationConsumer);
         verify(relationConsumer, never()).accept(anyInt(), anyInt(), anyLong());
     }
+
     @Test
     public void testV0Incoming() throws Exception {
         matrix.forEach(0, INCOMING, relationConsumer);

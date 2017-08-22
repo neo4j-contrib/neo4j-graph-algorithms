@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 /**
  * thread safe BitSet based on AtomicInts.
  * impl. taken from https://stackoverflow.com/questions/12424633/atomicbitset-implementation-for-java
- *
  */
 public class AtomicBitSet {
 
@@ -26,6 +25,7 @@ public class AtomicBitSet {
 
     /**
      * set n
+     *
      * @param n
      */
     public void set(long n) {
@@ -41,6 +41,7 @@ public class AtomicBitSet {
 
     /**
      * try to set n
+     *
      * @param n
      * @return true if successfully set n, false otherwise (another thread did it)
      */
@@ -60,6 +61,7 @@ public class AtomicBitSet {
 
     /**
      * unset n
+     *
      * @param n
      */
     public void unset(long n) {
@@ -75,6 +77,7 @@ public class AtomicBitSet {
 
     /**
      * get state of bit n
+     *
      * @param n the biut
      * @return its state
      */

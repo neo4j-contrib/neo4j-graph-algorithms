@@ -73,7 +73,7 @@ public class PageRankProcIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @BeforeClass

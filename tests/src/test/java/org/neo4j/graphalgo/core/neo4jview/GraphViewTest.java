@@ -21,9 +21,10 @@ public class GraphViewTest extends SimpleGraphTestCase {
         v1 = 1;
         v2 = 2;
     }
+
     @AfterClass
     public static void tearDown() throws Exception {
         if (setup != null) setup.getDb().shutdown();
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 }

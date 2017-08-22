@@ -20,6 +20,7 @@ public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
 
     /**
      * create a relationship within a transaction
+     *
      * @param p the source node
      * @param q the target node
      * @return the relationship object

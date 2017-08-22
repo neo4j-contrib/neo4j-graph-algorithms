@@ -111,7 +111,7 @@ public class MultistepSCCBenchmark {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createRing(int size, int rIdx) throws Exception{
+    private static Runnable createRing(int size, int rIdx) throws Exception {
         return () -> {
             try (Transaction tx = db.beginTx();
                  Statement stm = bridge.get()) {

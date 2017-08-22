@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.container.Path;
 import org.neo4j.graphdb.Direction;
 
@@ -44,6 +43,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     /**
      * compute centrality
+     *
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
@@ -123,7 +123,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     /**
      * append nodeId to path
      *
-     * @param path the selected path
+     * @param path   the selected path
      * @param nodeId the node id
      */
     private void append(int path, int nodeId) {
@@ -168,7 +168,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
          * consume nodeId and centrality value as long as the consumer returns true
          *
          * @param originalNodeId the neo4j node id
-         * @param value centrality value
+         * @param value          centrality value
          * @return a bool indicating if the loop should continue(true) or stop(false)
          */
         boolean consume(long originalNodeId, double value);

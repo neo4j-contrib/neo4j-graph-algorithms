@@ -15,11 +15,10 @@ import java.util.function.IntPredicate;
 
 /**
  * Sequential strongly connected components algorithm (Tarjan).
- *
+ * <p>
  * Builds sets of node-Ids which represent a strongly connected component
  * within the graph. Also calculates minimum and maximum setSize as well
  * as the overall count of distinct sets.
- *
  */
 public class SCCTarjan extends Algorithm<SCCTarjan> {
 
@@ -56,6 +55,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
 
     /**
      * return the maximum set size
+     *
      * @return the maximum set size
      */
     public long getMaxSetSize() {
@@ -163,7 +163,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
             if (indices[node] == -1) {
                 strongConnect(node);
             }
-            progressLogger.logProgress((double) node / (nodeCount -1));
+            progressLogger.logProgress((double) node / (nodeCount - 1));
             return running();
         }
     }

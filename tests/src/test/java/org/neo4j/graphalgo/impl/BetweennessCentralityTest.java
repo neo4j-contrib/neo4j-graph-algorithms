@@ -48,7 +48,6 @@ public class BetweennessCentralityTest {
                         " (d)-[:TYPE]->(e)";
 
 
-
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
@@ -77,7 +76,7 @@ public class BetweennessCentralityTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         graph = null;
     }
 

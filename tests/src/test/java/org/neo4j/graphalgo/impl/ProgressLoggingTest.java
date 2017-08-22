@@ -26,8 +26,6 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -59,7 +57,7 @@ public class ProgressLoggingTest {
                     .forEachRelInTx(rel -> {
                         rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                     });
-        };
+        }
 
         graph = new GraphLoader(db)
                 .withExecutorService(Pools.DEFAULT)
@@ -87,7 +85,7 @@ public class ProgressLoggingTest {
                     .withRelationshipType(RELATIONSHIP)
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
-        };
+        }
 
         System.out.println(buffer);
 

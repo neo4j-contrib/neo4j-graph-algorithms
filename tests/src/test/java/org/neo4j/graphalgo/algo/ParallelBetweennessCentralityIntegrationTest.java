@@ -97,7 +97,7 @@ public class ParallelBetweennessCentralityIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         graph = null;
     }
 

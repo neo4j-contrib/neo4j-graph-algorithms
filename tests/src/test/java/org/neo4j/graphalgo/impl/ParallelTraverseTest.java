@@ -58,7 +58,7 @@ public class ParallelTraverseTest {
                     .setRelationship(RELATIONSHIP)
                     .newGridBuilder()
                     .createGrid(10, 10, 1);
-        };
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
@@ -73,7 +73,7 @@ public class ParallelTraverseTest {
                     .get(0)
                     .get(0)
                     .getId());
-        };
+        }
     }
 
     @Test

@@ -152,6 +152,7 @@ public class UndirectedTree {
 
     /**
      * Verifies that the tree is in a valid shape.
+     *
      * @throws IllegalStateException for invalid trees.
      */
     public void verifyTreeIntegrity() {

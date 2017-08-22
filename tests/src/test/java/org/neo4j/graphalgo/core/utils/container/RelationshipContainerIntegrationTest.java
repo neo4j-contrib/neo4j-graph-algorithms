@@ -12,7 +12,6 @@ import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-
 import static org.mockito.Mockito.*;
 
 /**
@@ -53,7 +52,7 @@ public class RelationshipContainerIntegrationTest extends Neo4JTestCase {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @Test

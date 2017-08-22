@@ -43,10 +43,10 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         this.direction = direction;
 
         final Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
-                    batchSize,
-                    graph,
-                    (offset, nodes) -> new ComputeStep(batchSize, nodes),
-                    executor);
+                batchSize,
+                graph,
+                (offset, nodes) -> new ComputeStep(batchSize, nodes),
+                executor);
 
         for (long i = 1; i < times; i++) {
             ParallelUtil.run(computeSteps, executor);

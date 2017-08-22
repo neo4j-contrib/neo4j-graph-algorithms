@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
@@ -12,14 +12,14 @@ import java.util.concurrent.RecursiveTask;
 
 /**
  * parallel UnionFind using ExecutorService and common ForkJoin-Pool.
- *
+ * <p>
  * Implementation based on the idea that DisjointSetStruct can be built using
  * just a partition of the nodes which then can be merged pairwise.
- *
+ * <p>
  * Like in {@link ParallelUnionFindForkJoin} the resulting DSS of each node-partition
  * is merged by the ForkJoin pool while calculating the DSS is done by the
  * ExecutorService.
- *
+ * <p>
  * This might lead to a better distribution of tasks in the merge-tree.
  *
  * @author mknblch
@@ -184,7 +184,6 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
             return a.merge(b);
         }
     }
-
 
 
 }

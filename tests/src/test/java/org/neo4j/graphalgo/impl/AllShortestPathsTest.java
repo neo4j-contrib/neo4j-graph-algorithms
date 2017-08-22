@@ -65,7 +65,7 @@ public class AllShortestPathsTest {
                     .forEachRelInTx(rel -> {
                         rel.setProperty(PROPERTY, 1.0);
                     });
-        };
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
@@ -73,7 +73,7 @@ public class AllShortestPathsTest {
                     .withRelationshipType(RELATIONSHIP)
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
-        };
+        }
     }
 
     @Test

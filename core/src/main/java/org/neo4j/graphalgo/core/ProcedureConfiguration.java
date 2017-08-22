@@ -27,6 +27,7 @@ public class ProcedureConfiguration {
 
     /**
      * check if all given keys exist
+     *
      * @param keys one or many keys
      * @return true if key is known, false otherwise
      */
@@ -41,6 +42,7 @@ public class ProcedureConfiguration {
 
     /**
      * override the nodeOrLabelQuery param
+     *
      * @param nodeLabelOrQuery the query or identifier
      * @return self
      */
@@ -51,6 +53,7 @@ public class ProcedureConfiguration {
 
     /**
      * override relationshipOrQuery param
+     *
      * @param relationshipTypeOrQuery the relationshipQuery or Identifier
      * @return self
      */
@@ -61,6 +64,7 @@ public class ProcedureConfiguration {
 
     /**
      * override property param
+     *
      * @return self
      */
     public ProcedureConfiguration overrideProperty(String weightProperty) {
@@ -70,6 +74,7 @@ public class ProcedureConfiguration {
 
     /**
      * return either the Label or the cypher query for node request
+     *
      * @return the label or query
      */
     public String getNodeLabelOrQuery() {
@@ -78,6 +83,7 @@ public class ProcedureConfiguration {
 
     /**
      * return either the Label or the cypher query for node request
+     *
      * @param defaultValue default value if {@link ProcedureConstants#NODE_LABEL_QUERY_PARAM}
      *                     is not set
      * @return the label or query
@@ -92,6 +98,7 @@ public class ProcedureConfiguration {
 
     /**
      * return the name of the property to write to
+     *
      * @return property name
      */
     public String getWriteProperty() {
@@ -100,6 +107,7 @@ public class ProcedureConfiguration {
 
     /**
      * return either the name of the property to write to if given or defaultValue
+     *
      * @param defaultValue a default value
      * @return the property name
      */
@@ -110,6 +118,7 @@ public class ProcedureConfiguration {
     /**
      * return either the relationship name or a cypher query for requesting the relationships
      * TODO: @mh pls. validate
+     *
      * @param defaultValue a default value
      * @return the relationship name or query
      */
@@ -119,6 +128,7 @@ public class ProcedureConfiguration {
 
     /**
      * return whether the write-back option has been set
+     *
      * @return true if write is activated, false otherwise
      */
     public boolean isWriteFlag() {
@@ -127,6 +137,7 @@ public class ProcedureConfiguration {
 
     /**
      * TODO
+     *
      * @return
      */
     public boolean isCypherFlag() {
@@ -135,6 +146,7 @@ public class ProcedureConfiguration {
 
     /**
      * flag for requesting additional result stats
+     *
      * @return true if stat flag is activated, false otherwise
      */
     public boolean isStatsFlag() {
@@ -143,6 +155,7 @@ public class ProcedureConfiguration {
 
     /**
      * return whether the write-back option has been set
+     *
      * @param defaultValue a default value
      * @return true if write is activated, false otherwise
      */
@@ -173,6 +186,7 @@ public class ProcedureConfiguration {
 
     /**
      * return the number of iterations a algorithm has to compute
+     *
      * @param defaultValue a default value
      * @return
      */
@@ -182,6 +196,7 @@ public class ProcedureConfiguration {
 
     /**
      * get the batchSize for parallel evaluation
+     *
      * @return batch size
      */
     public int getBatchSize() {
@@ -194,6 +209,7 @@ public class ProcedureConfiguration {
 
     /**
      * TODO
+     *
      * @return
      */
     public int getConcurrency(int defaultValue) {
@@ -210,6 +226,7 @@ public class ProcedureConfiguration {
 
     /**
      * return the Graph-Implementation Factory class
+     *
      * @return
      */
     public Class<? extends GraphFactory> getGraphImpl() {
@@ -235,7 +252,7 @@ public class ProcedureConfiguration {
      * if found, the defaultValue if the key is not found or null if
      * the key is found but its value is empty.
      *
-     * @param key configuration key
+     * @param key          configuration key
      * @param defaultValue the default value if key is not found
      * @return the configuration value
      */

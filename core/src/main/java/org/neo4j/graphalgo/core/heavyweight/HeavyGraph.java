@@ -1,9 +1,9 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;

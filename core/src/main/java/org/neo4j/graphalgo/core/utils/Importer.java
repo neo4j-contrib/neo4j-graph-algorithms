@@ -288,6 +288,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
 
     /**
      * getThis-trick for method chaining in child classes
+     *
      * @return return self
      */
     protected abstract ME me();

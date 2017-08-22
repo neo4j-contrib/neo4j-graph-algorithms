@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 /**
  * non recursive sequential strongly connected components algorithm.
- *
+ * <p>
  * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
 public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
@@ -29,6 +29,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
         }
 
     }
+
     private Graph graph;
 
     private final int nodeCount;
@@ -42,6 +43,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     private int minSetSize;
     private int maxSetSize;
+
     public SCCIterativeTarjan(Graph graph) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
@@ -131,7 +133,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
     private void visitEdge(int nodeId) {
         if (index[nodeId] == -1) {
             push(Action.VISIT, nodeId);
-        } else if (!visited.contains(nodeId)){
+        } else if (!visited.contains(nodeId)) {
             while (index[nodeId] < boundaries.peek()) {
                 boundaries.pop();
             }
@@ -170,6 +172,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     /**
      * pushes an action and a nodeId on the stack
+     *
      * @param action
      * @param value
      */

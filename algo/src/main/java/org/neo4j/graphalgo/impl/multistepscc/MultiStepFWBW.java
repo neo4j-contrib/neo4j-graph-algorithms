@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * Multistep ForwardBackward Coloring algorithm.
- *
+ * <p>
  * The algorithm computes the (most likely) biggest SCC in a set of nodes
  * by intersecting the (descendant) set of reachable nodes using only
  * OUTGOING connections with its predecessor-set of reachable nodes using
@@ -48,6 +48,7 @@ public class MultiStepFWBW {
 
     /**
      * return the root id of the biggest SCC
+     *
      * @return root id of SCC
      */
     public int getRoot() {

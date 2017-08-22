@@ -2,7 +2,6 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphdb.Direction;
@@ -100,20 +99,23 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
             futures.clear();
             phaseQueue.forEach(futures, phase, v -> { // in parallel
                 successors.clear(v);
-                graph.forEachRelationship(v, Direction.OUTGOING, (sourceNodeId, w, relationId) -> {
-                    int dw = d.get(w);
-                    d.compareAndSet(w, -1, phase + 1);
-                    if (dw == -1) {
-                        phaseQueue.addOrCreate(phase + 1, w);
-                        count.incrementAndGet();
-                        dw = phase + 1;
-                    }
-                    if (dw == phase + 1) {
-                        sigma.addAndGet(w, sigma.get(v));
-                        successors.addOrCreate(v, w);
-                    }
-                    return true;
-                });
+                graph.forEachRelationship(
+                        v,
+                        Direction.OUTGOING,
+                        (sourceNodeId, w, relationId) -> {
+                            int dw = d.get(w);
+                            d.compareAndSet(w, -1, phase + 1);
+                            if (dw == -1) {
+                                phaseQueue.addOrCreate(phase + 1, w);
+                                count.incrementAndGet();
+                                dw = phase + 1;
+                            }
+                            if (dw == phase + 1) {
+                                sigma.addAndGet(w, sigma.get(v));
+                                successors.addOrCreate(v, w);
+                            }
+                            return true;
+                        });
             });
             ParallelUtil.awaitTermination(futures);
             phase++;
@@ -126,7 +128,9 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
             phaseQueue.forEach(futures, phase, w -> {
                 final double[] dsw = {0.0};
                 final double sw = sigma.get(w);
-                successors.forEach(w, v -> dsw[0] += (sw / (double) sigma.get(v)) * (1.0 + delta[v]));
+                successors.forEach(
+                        w,
+                        v -> dsw[0] += (sw / (double) sigma.get(v)) * (1.0 + delta[v]));
                 delta[w] = dsw[0];
                 centrality.add(w, dsw[0]);
             });
@@ -153,7 +157,9 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      */
     public void forEach(BetweennessCentrality.ResultConsumer consumer) {
         for (int i = graph.nodeCount() - 1; i >= 0; i--) {
-            if (!consumer.consume(graph.toOriginalNodeId(i), centrality.get(i))) {
+            if (!consumer.consume(
+                    graph.toOriginalNodeId(i),
+                    centrality.get(i))) {
                 return;
             }
         }

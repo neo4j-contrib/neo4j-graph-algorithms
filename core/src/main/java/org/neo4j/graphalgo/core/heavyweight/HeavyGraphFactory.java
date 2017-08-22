@@ -110,7 +110,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 : new WeightMap(nodeCount, setup.nodeDefaultPropertyValue);
 
         long total = nodeCount + maxRelCount;
-        double nodesPercent = (double)nodeCount / total;
+        double nodesPercent = (double) nodeCount / total;
         withReadOps(read -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? read.nodesGetAll()
@@ -266,7 +266,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 WeightMapping nodeProps,
                 double nodesPercent,
                 int... relationId
-                ) {
+        ) {
             int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
             this.nodeOffset = nodeOffset;
             this.idMap = idMap;
@@ -285,6 +285,7 @@ public class HeavyGraphFactory extends GraphFactory {
         public void run() {
             withReadOps(this);
         }
+
         @Override
         public void accept(final ReadOperations readOp) {
             int nodeOffset = this.nodeOffset;

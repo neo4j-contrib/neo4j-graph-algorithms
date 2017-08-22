@@ -46,7 +46,7 @@
             <artifactId>neo4j-io</artifactId>
             <type>test-jar</type>
             <scope>compile</scope>
-            </dependency>
+        </dependency>
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>procedure-compiler</artifactId>

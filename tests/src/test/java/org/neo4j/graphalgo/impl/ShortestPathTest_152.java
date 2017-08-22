@@ -17,7 +17,6 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.function.DoubleConsumer;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -99,7 +98,7 @@ public class ShortestPathTest_152 {
         verify(mock, times(1)).accept(eq(120.0));
         verify(mock, times(1)).accept(eq(160.0));
     }
-    
+
     @Test
     public void testDijkstraProcedure() throws Exception {
 

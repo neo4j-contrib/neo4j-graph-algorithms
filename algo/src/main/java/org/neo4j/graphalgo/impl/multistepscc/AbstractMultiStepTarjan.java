@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.impl.multistepscc;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphdb.Direction;
 
 /**

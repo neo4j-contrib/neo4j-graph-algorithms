@@ -2,11 +2,10 @@ package org.neo4j.graphalgo.core.leightweight;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
+import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
-import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
 
 import java.io.File;
 import java.io.IOException;
