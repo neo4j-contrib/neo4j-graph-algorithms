@@ -7,7 +7,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.ParallelTriangleCount;
+import org.neo4j.graphalgo.impl.ParallelTriangleList;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -52,13 +52,13 @@ public class TriangleCountProc {
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
-                    .withDirection(ParallelTriangleCount.D)
+                    .withDirection(ParallelTriangleList.D)
                     .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         };
 
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = new ParallelTriangleList(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute()

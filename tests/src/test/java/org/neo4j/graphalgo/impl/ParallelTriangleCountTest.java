@@ -14,6 +14,8 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.concurrent.atomic.AtomicIntegerArray;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Matchers.anyDouble;
@@ -32,6 +34,7 @@ public class ParallelTriangleCountTest {
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
+    private static long centerId;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -54,6 +57,7 @@ public class ParallelTriangleCountTest {
                     .forEachNodeInTx(node -> {
                         center.createRelationshipTo(node, type);
                     });
+            centerId = center.getId();
         };
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
@@ -67,22 +71,33 @@ public class ParallelTriangleCountTest {
     }
 
     @Test
-    public void testSequential() throws Exception {
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential eval took " + l + "ms"))) {
-            final long triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 1)
-                    .compute()
-                    .getTriangleCount();
-            assertEquals(TRIANGLES, triangleCount);
+    public void testCountSequential() throws Exception {
+        final ParallelTriangleList algo = new ParallelTriangleList(graph, Pools.DEFAULT, 1);
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
+            algo.compute();
         }
+        assertEquals(TRIANGLES, (long) algo.getTriangleCount());
+        assertTriangles(algo.getTriangles());
     }
 
     @Test
-    public void testParallel() throws Exception {
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel eval took " + l + "ms"))) {
-            final long triangleCount = new ParallelTriangleCount(graph, Pools.DEFAULT, 8)
-                    .compute()
-                    .getTriangleCount();
-            assertEquals(TRIANGLES, triangleCount);
+    public void testCountParallel() throws Exception {
+        final ParallelTriangleList algo = new ParallelTriangleList(graph, Pools.DEFAULT, 1);
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel count took " + l + "ms"))) {
+            algo.compute();
+        }
+        assertEquals(TRIANGLES, (long) algo.getTriangleCount());
+        assertTriangles(algo.getTriangles());
+    }
+
+    private void assertTriangles(AtomicIntegerArray triangles) {
+        final int centerMapped = graph.toMappedNodeId(centerId);
+        assertEquals(TRIANGLES, triangles.get(centerMapped));
+        for (int i = 0; i < triangles.length(); i++) {
+            if (i == centerMapped) {
+                continue;
+            }
+            assertEquals(2, triangles.get(i));
         }
     }
 }

@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -26,6 +27,7 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
     private final int nodeCount;
 
     private final AtomicIntegerArray triangles;
+    private final AtomicInteger triangleCount;
 
 
     public ParallelTriangleList(Graph graph, ExecutorService executorService, int concurrency) {
@@ -34,11 +36,20 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
         this.concurrency = concurrency;
         nodeCount = graph.nodeCount();
         triangles = new AtomicIntegerArray(nodeCount);
+        triangleCount = new AtomicInteger();
     }
 
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(i -> new Result(graph.toOriginalNodeId(i), triangles.get(i)));
+    }
+
+    public int getTriangleCount() {
+        return triangleCount.get();
+    }
+
+    public AtomicIntegerArray getTriangles() {
+        return triangles;
     }
 
     @Override
@@ -52,6 +63,8 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
     }
 
     public ParallelTriangleList compute() {
+
+        triangleCount.set(0);
 
         final ArrayList<Task> tasks = new ArrayList<>();
         final int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, 1);
@@ -87,6 +100,7 @@ public class ParallelTriangleList extends Algorithm<ParallelTriangleList> {
                         }
                         graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
                             if (t == u) {
+                                triangleCount.incrementAndGet();
                                 triangles.incrementAndGet(u);
                                 triangles.incrementAndGet(v);
                                 triangles.incrementAndGet(w);
