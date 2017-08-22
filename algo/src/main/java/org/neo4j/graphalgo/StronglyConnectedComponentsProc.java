@@ -41,7 +41,7 @@ public class StronglyConnectedComponentsProc {
     @Context
     public KernelTransaction transaction;
 
-    // default algo.scc -> tarjan
+    // default algo.scc -> iterative tarjan
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
     @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
@@ -50,11 +50,23 @@ public class StronglyConnectedComponentsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        return sccTarjan(label, relationship, config);
+        return sccIterativeTarjan(label, relationship, config);
+    }
+
+    // default algo.scc -> iter tarjan
+    @Procedure(value = "algo.scc.stream")
+    @Description("CALL algo.scc.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
+    public Stream<SCCStreamResult> sccDefaultMethodStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        return sccIterativeTarjanStream(label, relationship, config);
     }
 
     // algo.scc.tarjan
-    @Procedure(value = "algo.scc.tarjan", mode = Mode.WRITE)
+    @Procedure(value = "algo.scc.recursive.tarjan", mode = Mode.WRITE)
     @Description("CALL algo.scc.tarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
@@ -103,8 +115,8 @@ public class StronglyConnectedComponentsProc {
     }
 
     // algo.scc.tunedTarjan
-    @Procedure(value = "algo.scc.tunedTarjan", mode = Mode.WRITE)
-    @Description("CALL algo.scc.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    @Procedure(value = "algo.scc.recursive.tunedTarjan", mode = Mode.WRITE)
+    @Description("CALL algo.scc.recursive.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTunedTarjan(
             @Name(value = "label", defaultValue = "") String label,
@@ -149,8 +161,8 @@ public class StronglyConnectedComponentsProc {
     }
 
     // algo.scc.tunedTarjan.stream
-    @Procedure(value = "algo.scc.tunedTarjan.stream", mode = Mode.WRITE)
-    @Description("CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    @Procedure(value = "algo.scc.recursive.tunedTarjan.stream", mode = Mode.WRITE)
+    @Description("CALL algo.scc.recursive.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "nodeId, partition")
     public Stream<SCCStreamResult> sccTunedTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
