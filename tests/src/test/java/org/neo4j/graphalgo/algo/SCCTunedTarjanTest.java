@@ -123,7 +123,7 @@ public class SCCTunedTarjanTest {
     @Test
     public void testCypher() throws Exception {
 
-        String cypher = "CALL algo.scc.tunedTarjan('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
+        String cypher = "CALL algo.scc.recursive.tunedTarjan('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
 
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
@@ -155,7 +155,7 @@ public class SCCTunedTarjanTest {
 
         final IntIntScatterMap testMap = new IntIntScatterMap();
 
-        String cypher = "CALL algo.scc.tunedTarjan.stream() YIELD nodeId, partition";
+        String cypher = "CALL algo.scc.recursive.tunedTarjan.stream() YIELD nodeId, partition";
 
         api.execute(cypher).accept(row -> {
             testMap.addTo(row.getNumber("partition").intValue(), 1);
