@@ -25,6 +25,10 @@ public class RawValues {
         return ((long) head << 32) | tail & 0xFFFFFFFFL;
     }
 
+    public static long combineIntInt(Direction direction, int head, int tail) {
+        return direction == Direction.OUTGOING ? combineIntInt(head, tail) : combineIntInt(tail, head);
+    }
+
     public static IdCombiner combiner(Direction direction) {
         return direction == Direction.OUTGOING ? OUTGOING : INCOMING;
     }
