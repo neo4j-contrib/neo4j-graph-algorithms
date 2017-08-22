@@ -1,7 +1,9 @@
 package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
+import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
+import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.helpers.Exceptions;
 
 import java.util.ArrayList;
@@ -37,12 +39,33 @@ public final class ParallelUtil {
         return (int) Math.ceil(elementCount / (double) batchSize);
     }
 
+    public static int threadSize(int batchSize, long elementCount) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Invalid batch size: " + batchSize);
+        }
+        if (batchSize >= elementCount) {
+            return 1;
+        }
+        return (int) Math.ceil(elementCount / (double) batchSize);
+    }
+
     public static int adjustBatchSize(
             int nodeCount,
             int concurrency,
             int minBatchSize) {
         if (concurrency <= 0) {
             concurrency = nodeCount;
+        }
+        int targetBatchSize = threadSize(concurrency, nodeCount);
+        return Math.max(minBatchSize, targetBatchSize);
+    }
+
+    public static int adjustBatchSize(
+            long nodeCount,
+            int concurrency,
+            int minBatchSize) {
+        if (concurrency <= 0) {
+            concurrency = (int) Math.min(nodeCount, (long) Integer.MAX_VALUE);
         }
         int targetBatchSize = threadSize(concurrency, nodeCount);
         return Math.max(minBatchSize, targetBatchSize);
@@ -81,6 +104,43 @@ public final class ParallelUtil {
             List<T> tasks = new ArrayList<>(threads);
             int nodeOffset = 0;
             for (PrimitiveIntIterable iterator : iterators) {
+                tasks.add(importer.newImporter(nodeOffset, iterator));
+                nodeOffset += batchSize;
+            }
+            run(tasks, executor);
+            return tasks;
+        }
+    }
+
+    /**
+     * Executes read operations in parallel, based on the given batch size
+     * and executor.
+     */
+    public static <T extends Runnable> Collection<T> readParallel(
+            int batchSize,
+            HugeBatchNodeIterable idMapping,
+            HugeParallelGraphImporter<T> importer,
+            ExecutorService executor) {
+
+        Collection<PrimitiveLongIterable> iterators =
+                idMapping.hugeBatchIterables(batchSize);
+
+        int threads = iterators.size();
+
+        if (!canRunInParallel(executor) || threads == 1) {
+            long nodeOffset = 0;
+            Collection<T> tasks = new ArrayList<>(threads);
+            for (PrimitiveLongIterable iterator : iterators) {
+                final T task = importer.newImporter(nodeOffset, iterator);
+                tasks.add(task);
+                task.run();
+                nodeOffset += batchSize;
+            }
+            return tasks;
+        } else {
+            List<T> tasks = new ArrayList<>(threads);
+            long nodeOffset = 0;
+            for (PrimitiveLongIterable iterator : iterators) {
                 tasks.add(importer.newImporter(nodeOffset, iterator));
                 nodeOffset += batchSize;
             }
