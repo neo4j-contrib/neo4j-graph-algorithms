@@ -125,15 +125,19 @@ YIELD loadMillis, computeMillis, writeMillis
 ----
 == Implementations
 
-`algo.scc.tarjan`
+`algo.scc`
+
+- *iterative* adaptation (same as `algo.scc.iterative`)
+
+`algo.scc.recursive.tarjan`
 
 - original *recursive* tarjan implementation
 
-`algo.scc.tunedTarjan`
+`algo.scc.recursive.tunedTarjan`
 
-- also a recursive tarjan implementation
+- also a *recursive* tarjan implementation
 
-`algo.scc.iterative`
+`algo.scc.iterative` 
 
 - *iterative* adaption of tarjan algorithm
 
