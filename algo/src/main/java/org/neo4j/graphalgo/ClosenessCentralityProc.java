@@ -77,6 +77,7 @@ public class ClosenessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api)
+                    .withExecutorService(Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
