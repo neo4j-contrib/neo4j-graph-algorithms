@@ -27,7 +27,7 @@ public class TriangleCountTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLES = 10; //_000L;
+    public static final long TRIANGLES = 1000L;
 
     private static GraphDatabaseAPI db;
     private static Graph graph;

@@ -32,7 +32,7 @@ public class TriangleStreamTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLES = 10;
+    public static final long TRIANGLES = 1000;
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -81,7 +81,7 @@ public class TriangleStreamTest {
                 .resultStream()
                 .forEach(r -> mock.consume(r.nodeA, r.nodeB, r.nodeC));
 
-        verify(mock, times(10)).consume(eq(centerId), anyLong(), anyLong());
+        verify(mock, times((int)TRIANGLES)).consume(eq(centerId), anyLong(), anyLong());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class TriangleStreamTest {
                 .resultStream()
                 .forEach(r -> mock.consume(r.nodeA, r.nodeB, r.nodeC));
 
-        verify(mock, times(10)).consume(eq(centerId), anyLong(), anyLong());
+        verify(mock, times((int)TRIANGLES)).consume(eq(centerId), anyLong(), anyLong());
     }
 
     interface TripleConsumer {
