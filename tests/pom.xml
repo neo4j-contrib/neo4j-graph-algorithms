@@ -148,11 +148,12 @@
                 <!-- Defaults for all tests (ITs and Unit). -->
                 <configuration>
                     <heartbeat>10</heartbeat>
-                    <!--argLine>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</argLine-->
                     <jvmOutputAction>pipe,ignore</jvmOutputAction>
-                    <jvmArgs><param>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</param></jvmArgs>
                     <leaveTemporary>true</leaveTemporary>
                     <ifNoTests>warn</ifNoTests>
+                    <maxMemory>1g</maxMemory>
+                    <parallelism>1</parallelism>
+                    <printSummary>true</printSummary>
 
                     <listeners>
                         <report-text showThrowable="true" showStackTraces="true" showOutput="always" showStatusOk="true"
