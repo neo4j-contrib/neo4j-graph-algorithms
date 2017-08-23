@@ -4,12 +4,12 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -150,6 +150,7 @@ public class LightGraph implements Graph {
             final RelationshipConsumer consumer) {
         IntArray.Cursor cursor = cursor(node, inOffsets, inAdjacency);
         consumeNodes(node, cursor, RawValues.INCOMING, consumer);
+        inAdjacency.returnCursor(cursor);
     }
 
     public void forEachOutgoing(
@@ -157,6 +158,7 @@ public class LightGraph implements Graph {
             final RelationshipConsumer consumer) {
         IntArray.Cursor cursor = cursor(node, outOffsets, outAdjacency);
         consumeNodes(node, cursor, RawValues.OUTGOING, consumer);
+        outAdjacency.returnCursor(cursor);
     }
 
     private void forEachIncoming(
@@ -164,6 +166,7 @@ public class LightGraph implements Graph {
             final WeightedRelationshipConsumer consumer) {
         IntArray.Cursor cursor = cursor(node, inOffsets, inAdjacency);
         consumeNodes(node, cursor, RawValues.INCOMING, consumer);
+        inAdjacency.returnCursor(cursor);
     }
 
     private void forEachOutgoing(
@@ -171,12 +174,13 @@ public class LightGraph implements Graph {
             final WeightedRelationshipConsumer consumer) {
         IntArray.Cursor cursor = cursor(node, outOffsets, outAdjacency);
         consumeNodes(node, cursor, RawValues.OUTGOING, consumer);
+        outAdjacency.returnCursor(cursor);
     }
 
-     private IntArray.Cursor cursor(int node, long[] offsets, IntArray array) {
-         final long offset = offsets[node];
-         final long length = offsets[node + 1] - offset;
-         return array.cursor(offset, length);
+    private IntArray.Cursor cursor(int node, long[] offsets, IntArray array) {
+        final long offset = offsets[node];
+        final long length = offsets[node + 1] - offset;
+        return (IntArray.Cursor) array.cursorFor(offset, length);
     }
 
     private void consumeNodes(
@@ -222,9 +226,17 @@ public class LightGraph implements Graph {
 
     @Override
     public void release() {
+        if (inAdjacency != null) {
+            inAdjacency.release();
+            inAdjacency = null;
+        }
+
+        if (outAdjacency != null) {
+            outAdjacency.release();
+            outAdjacency = null;
+        }
+
         weightMapping = null;
-        inAdjacency = null;
-        outAdjacency = null;
         inOffsets = null;
         outOffsets = null;
     }

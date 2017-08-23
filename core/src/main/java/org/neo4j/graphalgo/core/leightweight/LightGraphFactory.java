@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -68,13 +69,13 @@ public final class LightGraphFactory extends GraphFactory {
         if (loadIncoming) {
             inOffsets = new long[nodeCount + 1];
             inAdjacency = IntArray.newArray(nodeCount);
-            inAdder = inAdjacency.bulkAdder();
+            inAdder = inAdjacency.newBulkAdder();
         }
         if (loadOutgoing) {
             outOffsets = new long[nodeCount + 1];
             outOffsets[nodeCount] = nodeCount;
             outAdjacency = IntArray.newArray(nodeCount);
-            outAdder = outAdjacency.bulkAdder();
+            outAdder = outAdjacency.newBulkAdder();
         }
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(setup.relationDefaultWeight)
@@ -132,7 +133,6 @@ public final class LightGraphFactory extends GraphFactory {
                     Direction.OUTGOING,
                     RawValues.OUTGOING,
                     outOffsets,
-                    outAdjacency,
                     outAdder,
                     outAdjacencyIdx
             );
@@ -144,7 +144,6 @@ public final class LightGraphFactory extends GraphFactory {
                     Direction.INCOMING,
                     RawValues.INCOMING,
                     inOffsets,
-                    inAdjacency,
                     inAdder,
                     inAdjacencyIdx
             );
@@ -157,7 +156,6 @@ public final class LightGraphFactory extends GraphFactory {
             Direction direction,
             IdCombiner idCombiner,
             long[] offsets,
-            IntArray adjacency,
             IntArray.BulkAdder bulkAdder,
             long adjacencyIdx) {
 
@@ -167,7 +165,7 @@ public final class LightGraphFactory extends GraphFactory {
                 : node.degree(direction, relationId[0]);
 
         if (degree > 0) {
-            adjacency.bulkAdder(adjacencyIdx, degree, bulkAdder);
+            bulkAdder.init(adjacencyIdx, degree);
             try (Cursor<RelationshipItem> rels = relationId == null
                     ? node.relationships(direction)
                     : node.relationships(direction, relationId)) {
