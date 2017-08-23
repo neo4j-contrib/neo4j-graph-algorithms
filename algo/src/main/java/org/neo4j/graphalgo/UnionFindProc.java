@@ -100,7 +100,7 @@ public class UnionFindProc {
     }
 
     private Graph load(ProcedureConfiguration config) {
-        return new GraphLoader(api)
+        return new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
@@ -108,7 +108,6 @@ public class UnionFindProc {
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }
 

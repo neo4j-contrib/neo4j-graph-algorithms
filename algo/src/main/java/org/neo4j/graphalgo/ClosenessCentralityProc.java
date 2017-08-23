@@ -46,7 +46,7 @@ public class ClosenessCentralityProc {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
@@ -76,8 +76,7 @@ public class ClosenessCentralityProc {
 
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
-                    .withExecutorService(Pools.DEFAULT)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)

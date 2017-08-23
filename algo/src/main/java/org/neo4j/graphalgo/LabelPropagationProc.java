@@ -102,7 +102,7 @@ public final class LabelPropagationProc {
             LabelPropagationStats.Builder stats) {
 
         try (ProgressTimer timer = stats.timeLoad()) {
-            return (HeavyGraph) new GraphLoader(dbAPI)
+            return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationshipType)
@@ -110,7 +110,6 @@ public final class LabelPropagationProc {
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
                     .withDirection(direction)
-                    .withExecutorService(Pools.DEFAULT)
                     .load(HeavyGraphFactory.class);
         }
     }

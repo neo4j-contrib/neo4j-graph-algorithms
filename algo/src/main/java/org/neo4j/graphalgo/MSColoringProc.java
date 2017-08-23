@@ -90,14 +90,13 @@ public class MSColoringProc {
     }
 
     private Graph load(ProcedureConfiguration config) {
-        return new GraphLoader(api)
+        return new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }
 
