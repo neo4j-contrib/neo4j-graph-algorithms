@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 
 /**
@@ -201,7 +201,7 @@ public class PageRank extends Algorithm<PageRank> {
             List<Partition> partitions,
             ExecutorService pool) {
         if (concurrency <= 0) {
-            concurrency = partitions.size();
+            concurrency = Pools.DEFAULT_QUEUE_SIZE;
         }
         final int expectedParallelism = Math.min(
                 concurrency,
@@ -242,9 +242,7 @@ public class PageRank extends Algorithm<PageRank> {
         for (ComputeStep computeStep : computeSteps) {
             computeStep.setStarts(startArray, lengthArray);
         }
-
-        ComputeStep last = computeSteps.remove(computeSteps.size() - 1);
-        return new ComputeSteps(computeSteps, last, pool);
+        return new ComputeSteps(concurrency, computeSteps, pool);
     }
 
     private static int idx(int id, int ids[]) {
@@ -310,61 +308,49 @@ public class PageRank extends Algorithm<PageRank> {
     }
 
     private final class ComputeSteps {
+        private final int concurrency;
         private final List<ComputeStep> steps;
-        private final List<Future<?>> futures;
         private final ExecutorService pool;
-        private final ComputeStep last;
         private final int[][][] scores;
 
         private ComputeSteps(
+                int concurrency,
                 List<ComputeStep> steps,
-                ComputeStep last,
                 ExecutorService pool) {
-            this.last = last;
+            assert !steps.isEmpty();
+            this.concurrency = concurrency;
             this.steps = steps;
-            this.futures = new ArrayList<>(steps.size());
             this.pool = pool;
-            int stepSize = steps.size() + 1;
+            int stepSize = steps.size();
             scores = new int[stepSize][][];
             Arrays.setAll(scores, i -> new int[stepSize][]);
         }
 
         double[] getPageRank() {
-            if (steps.size() > 0) {
-                int nodeCount = 0;
-                for (ComputeStep computeStep : steps) {
-                    nodeCount += computeStep.nodeCount;
-                }
-                nodeCount += last.nodeCount;
-                double[] ranks = new double[nodeCount];
-                for (ComputeStep computeStep : steps) {
-                    double[] scores = computeStep.pageRank;
-                    System.arraycopy(
-                            scores,
-                            0,
-                            ranks,
-                            computeStep.startNode,
-                            computeStep.nodeCount);
-                }
+            int nodeCount = 0;
+            for (ComputeStep computeStep : steps) {
+                nodeCount += computeStep.nodeCount;
+            }
+            double[] ranks = new double[nodeCount];
+            for (ComputeStep computeStep : steps) {
+                double[] scores = computeStep.pageRank;
                 System.arraycopy(
-                        last.pageRank,
+                        scores,
                         0,
                         ranks,
-                        last.startNode,
-                        last.nodeCount);
-                return ranks;
-            } else {
-                return last.pageRank;
+                        computeStep.startNode,
+                        computeStep.nodeCount);
             }
+            return ranks;
         }
 
         private void run(int iterations) {
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
-                ParallelUtil.run(steps, last, pool, futures);
+                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
                 synchronizeScores();
                 // sync scores
-                ParallelUtil.run(steps, last, pool, futures);
+                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             }
         }
 
@@ -375,7 +361,6 @@ public class PageRank extends Algorithm<PageRank> {
             for (i = 0; i < stepSize; i++) {
                 synchronizeScores(steps.get(i), i, scores);
             }
-            synchronizeScores(last, i, scores);
         }
 
         private void synchronizeScores(
