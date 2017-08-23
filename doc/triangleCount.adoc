@@ -1,0 +1,14 @@
+= Triangle Counting
+
+_algo.triangle.stream(..)_ returns a Stream of Triples with nodeIds for each triangle.
+
+_algo.triangleCount(..)_ counts the number of triangles a node is member of and writes it back.
+It also counts the triangle in the whole graph and returns it in the Stats
+
+_algo.triangleCount.stream(..)_ counts number of triangles a node is member of and returns
+a stream with nodeId and triangleCount
+
+*Note*
+
+
+*sum(triangleCount) == triangleCount * 3* because every triangle adds 1 to each of its 3 nodes.
