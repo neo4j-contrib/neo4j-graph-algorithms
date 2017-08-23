@@ -47,14 +47,13 @@ public class TriangleProc {
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withLog(log)
                 .withDirection(TriangleCount.D)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency())
@@ -76,14 +75,13 @@ public class TriangleProc {
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withLog(log)
                 .withDirection(TriangleCount.D)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final TriangleCount triangleCount = new TriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
@@ -111,14 +109,13 @@ public class TriangleProc {
         final TriangleCountResultBuilder builder = new TriangleCountResultBuilder();
 
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
                     .withLog(log)
                     .withDirection(TriangleCount.D)
-                    .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         };
 

@@ -92,13 +92,12 @@ public final class PageRankProc {
             Class<? extends GraphFactory> graphFactory,
             PageRankScore.Stats.Builder statsBuilder) {
 
-        GraphLoader graphLoader = new GraphLoader(api)
+        GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withDirection(Direction.OUTGOING)
-                .withoutRelationshipWeights()
-                .withExecutorService(Pools.DEFAULT);
+                .withoutRelationshipWeights();
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
             Graph graph = graphLoader.load(graphFactory);

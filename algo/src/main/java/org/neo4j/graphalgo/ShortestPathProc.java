@@ -50,7 +50,7 @@ public class ShortestPathProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
@@ -58,7 +58,6 @@ public class ShortestPathProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDijkstra(graph)
@@ -87,7 +86,7 @@ public class ShortestPathProc {
         final ShortestPathDijkstra dijkstra;
 
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
@@ -95,7 +94,6 @@ public class ShortestPathProc {
                             propertyName,
                             configuration.getPropertyDefaultValue(1.0))
                     .withDirection(Direction.OUTGOING)
-                    .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
         }
 

@@ -45,11 +45,10 @@ public class AllShortestPathsProc {
         // use MSBFS ASP if no weightProperty is set
         if (null == propertyName || propertyName.isEmpty()) {
 
-            final Graph graph = new GraphLoader(api)
+            final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withDirection(Direction.OUTGOING)
-                    .withExecutorService(Pools.DEFAULT)
                     .load(configuration.getGraphImpl());
 
             return new MSBFSAllShortestPaths(graph, configuration.getConcurrency(), Pools.DEFAULT)
@@ -59,14 +58,13 @@ public class AllShortestPathsProc {
         }
 
         // weighted ASP otherwise
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         return new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
