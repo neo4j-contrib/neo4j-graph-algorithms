@@ -1,15 +1,12 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,17 +80,14 @@ public class TriangleStream extends Algorithm<TriangleStream> {
                 0), false);
     }
 
-    private List<Future<?>> submitTasks() {
+    private void submitTasks() {
         runningThreads.set(0);
-        // list of runnables
-        final ArrayList<Future<?>> futures = new ArrayList<>();
         final int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, 1);
         for (int i = 0; i < nodeCount; i += batchSize) {
             // partition
             final int end = Math.min(i + batchSize, nodeCount);
-            futures.add(executorService.submit(new Task(i, end)));
+            executorService.execute(new Task(i, end));
         }
-        return futures;
     }
 
     private class Task implements Runnable {
@@ -102,6 +96,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         private final int endIndex;
 
         private Task(int startIndex, int endIndex) {
+            runningThreads.incrementAndGet();
             this.startIndex = startIndex;
             this.endIndex = endIndex;
         }
@@ -110,7 +105,6 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         public void run() {
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
-            runningThreads.incrementAndGet();
             for (int i = startIndex; i < endIndex; i++) {
                 // (u, v, w)
                 graph.forEachRelationship(i, D, (u, v, relationId) -> {
