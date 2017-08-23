@@ -284,8 +284,9 @@ public final class ParallelUtilTest extends RandomizedTest {
                             simulateRunning.get(index).await();
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
+                        } finally {
+                            running.decrementAndGet();
                         }
-                        running.decrementAndGet();
                         if (index >= concurrency) {
                             waitingForStart.get(index + concurrency).countDown();
                         }
