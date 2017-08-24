@@ -26,7 +26,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     private int[] distance; // distance to start node
     private IntStack stack;
     private IntArrayDeque queue;
-    private Path[] paths; // TODO find a better container impl
+    private Path[] paths;
     private int nodeCount;
 
     public BetweennessCentrality(Graph graph) {
