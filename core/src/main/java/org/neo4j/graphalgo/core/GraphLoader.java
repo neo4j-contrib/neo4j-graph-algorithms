@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -45,11 +46,11 @@ public class GraphLoader {
 
     private final GraphDatabaseAPI api;
     private ExecutorService executorService;
-    private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
     private double nodePropDefault = 0.0;
-    private int batchSize;
+    private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
+    private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private boolean accumulateWeights;
     private Log log = NullLog.getInstance();
 

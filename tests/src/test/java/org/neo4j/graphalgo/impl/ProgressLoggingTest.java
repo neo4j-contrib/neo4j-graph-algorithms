@@ -3,6 +3,8 @@ package org.neo4j.graphalgo.impl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.function.Supplier;
@@ -31,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author mknblch
  */
+@RunWith(Parameterized.class)
 public class ProgressLoggingTest {
 
     private static final String PROPERTY = "property";
@@ -38,7 +42,19 @@ public class ProgressLoggingTest {
     private static final String RELATIONSHIP = "REL";
 
     private static GraphDatabaseAPI db;
-    private static Graph graph;
+
+    @Parameterized.Parameters(name = "{1}")
+    public static Collection<Object[]> data() {
+        return Arrays.<Object[]>asList(
+                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"}
+//                new Object[]{LightGraphFactory.class, "LightGraphFactory"}, // doesn't log yet
+//                new Object[]{GraphViewFactory.class, "GraphViewFactory"}, // doesn't log yet
+//                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"} // not yet implemented
+        );
+    }
+
+    private Class<? extends GraphFactory> graphImpl;
+    private Graph graph;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -58,18 +74,21 @@ public class ProgressLoggingTest {
                         rel.setProperty(PROPERTY, Math.random() * 5); // (0-5)
                     });
         }
-
-        graph = new GraphLoader(db)
-                .withExecutorService(Pools.DEFAULT)
-                .withLabel(LABEL)
-                .withRelationshipType(RELATIONSHIP)
-                .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
-                .load(HeavyGraphFactory.class);
     }
 
     @AfterClass
     public static void tearDown() {
         db.shutdown();
+    }
+
+    public ProgressLoggingTest(Class<? extends GraphFactory> graphImpl, String nameIgnored) {
+        this.graphImpl = graphImpl;
+        graph = new GraphLoader(db)
+                .withExecutorService(Pools.DEFAULT)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATIONSHIP)
+                .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
+                .load(graphImpl);
     }
 
     @Test
@@ -84,7 +103,7 @@ public class ProgressLoggingTest {
                     .withLabel(LABEL)
                     .withRelationshipType(RELATIONSHIP)
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
-                    .load(HeavyGraphFactory.class);
+                    .load(graphImpl);
         }
 
         System.out.println(buffer);

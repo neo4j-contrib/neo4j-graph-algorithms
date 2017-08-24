@@ -107,7 +107,7 @@ public class LabelPropagationProcIntegrationTest {
     @Test
     public void shouldRunLabelPropagation() throws Exception {
         String query = parallel
-                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {batchSize:1})"
+                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {batchSize:1,concurrency:1})"
                 : "CALL algo.labelPropagation(null, 'X')";
         String check = "MATCH (n) WHERE n.id IN [0,1] RETURN n.partition AS partition";
 
@@ -132,7 +132,7 @@ public class LabelPropagationProcIntegrationTest {
     @Test
     public void shouldFallbackToNodeIdsForNonExistingPartitionKey() throws Exception {
         String query = parallel
-                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar', batchSize:1})"
+                ? "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar', batchSize:1,concurrency:1})"
                 : "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty: 'foobar'})";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.foobar as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.foobar as partition";
@@ -148,7 +148,7 @@ public class LabelPropagationProcIntegrationTest {
     @Test
     public void shouldFilterByLabel() throws Exception {
         String query = parallel
-                ? "CALL algo.labelPropagation('A', 'X', 'OUTGOING', {batchSize:1})"
+                ? "CALL algo.labelPropagation('A', 'X', 'OUTGOING', {batchSize:1,concurrency:1})"
                 : "CALL algo.labelPropagation('A', 'X')";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.partition as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.partition as partition";
@@ -163,7 +163,7 @@ public class LabelPropagationProcIntegrationTest {
     @Test
     public void shouldPropagateIncoming() throws Exception {
         String query = parallel
-                ? "CALL algo.labelPropagation('A', 'X', 'INCOMING', {batchSize:1})"
+                ? "CALL algo.labelPropagation('A', 'X', 'INCOMING', {batchSize:1,concurrency:1})"
                 : "CALL algo.labelPropagation('A', 'X', 'INCOMING')";
         String check = "MATCH (n:A) WHERE n.id <> 0 RETURN n.partition as partition";
 
