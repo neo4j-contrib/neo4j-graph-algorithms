@@ -80,6 +80,7 @@ public final class ParallelUtil {
      * and executor.
      */
     public static <T extends Runnable> Collection<T> readParallel(
+            int concurrency,
             int batchSize,
             BatchNodeIterable idMapping,
             ParallelGraphImporter<T> importer,
@@ -107,7 +108,7 @@ public final class ParallelUtil {
                 tasks.add(importer.newImporter(nodeOffset, iterator));
                 nodeOffset += batchSize;
             }
-            run(tasks, executor);
+            runWithConcurrency(concurrency, tasks, executor);
             return tasks;
         }
     }
@@ -117,6 +118,7 @@ public final class ParallelUtil {
      * and executor.
      */
     public static <T extends Runnable> Collection<T> readParallel(
+            int concurrency,
             int batchSize,
             HugeBatchNodeIterable idMapping,
             HugeParallelGraphImporter<T> importer,
@@ -144,7 +146,7 @@ public final class ParallelUtil {
                 tasks.add(importer.newImporter(nodeOffset, iterator));
                 nodeOffset += batchSize;
             }
-            run(tasks, executor);
+            runWithConcurrency(concurrency, tasks, executor);
             return tasks;
         }
     }

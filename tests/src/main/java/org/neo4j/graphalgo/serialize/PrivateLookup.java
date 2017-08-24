@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.serialize;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 
 public final class PrivateLookup {
@@ -28,6 +29,17 @@ public final class PrivateLookup {
                     name,
                     fieldClass);
         } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
+
+    public static <T> MethodHandle method(
+            Class<T> cls,
+            String name,
+            MethodType mt) {
+        try {
+            return LOOKUP.findVirtual(cls, name, mt);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new Error(e);
         }
     }

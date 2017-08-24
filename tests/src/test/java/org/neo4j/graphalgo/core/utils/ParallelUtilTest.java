@@ -99,6 +99,7 @@ public final class ParallelUtilTest extends RandomizedTest {
         when(importer.newImporter(anyInt(), any())).thenReturn(task);
 
         final Collection tasks = ParallelUtil.readParallel(
+                100,
                 10,
                 batches,
                 importer,

@@ -97,8 +97,8 @@ public class LabelPropagationBenchmarkLdbc {
 
     @Benchmark
     public Object _03_direct() {
-        return new org.neo4j.graphalgo.impl.LabelPropagation(graph, Pools.DEFAULT)
-                .compute(Direction.OUTGOING, iterations, batchSize);
+        return new org.neo4j.graphalgo.impl.LabelPropagation(graph, batchSize, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+                .compute(Direction.OUTGOING, iterations);
     }
 
     private static Object runPrintQuery(GraphDatabaseAPI db, String query) {
