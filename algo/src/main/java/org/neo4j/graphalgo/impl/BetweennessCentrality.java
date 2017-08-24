@@ -188,20 +188,4 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             this.centrality = centrality;
         }
     }
-
-    public static String format(int[] array) {
-        final StringBuilder builder = new StringBuilder();
-        for (int i : array) {
-            builder.append(i).append(", ");
-        }
-        return builder.toString();
-    }
-
-    public static String format(double[] array) {
-        final StringBuilder builder = new StringBuilder();
-        for (double i : array) {
-            builder.append(String.format("%.2f", i)).append(", ");
-        }
-        return builder.toString();
-    }
 }
