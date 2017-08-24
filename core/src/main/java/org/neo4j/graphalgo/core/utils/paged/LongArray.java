@@ -13,14 +13,14 @@ public final class LongArray extends PagedDataStructure<long[]> {
     }
 
     public long get(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage];
     }
 
     public long set(long index, long value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final long[] page = pages[pageIndex];
@@ -34,8 +34,8 @@ public final class LongArray extends PagedDataStructure<long[]> {
             final long toIndex,
             final LongSupplier value) {
         assert fromIndex <= toIndex : "can only fill positive slice";
-        assert fromIndex < capacity;
-        assert toIndex < capacity;
+        assert fromIndex < capacity();
+        assert toIndex < capacity();
         final int fromPage = pageIndex(fromIndex);
         final int toPage = pageIndex(toIndex - 1);
         if (fromPage == toPage) {

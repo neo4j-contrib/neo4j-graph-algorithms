@@ -13,14 +13,14 @@ public final class DoubleArray extends PagedDataStructure<double[]> {
     }
 
     public double get(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage];
     }
 
     public double set(long index, double value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final double[] page = pages[pageIndex];

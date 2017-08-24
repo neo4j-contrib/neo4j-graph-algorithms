@@ -20,20 +20,20 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
     }
 
     public long getOrDefault(long index, long defaultValue) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         return pages[pageIndex].getOrDefault(index, defaultValue);
     }
 
     public long put(long index, long value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
         return page.put(index, value);
     }
 
     public boolean containsKey(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
         return page.containsKey(index);

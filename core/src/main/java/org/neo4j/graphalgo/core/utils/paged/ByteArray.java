@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ByteArray extends PagedDataStructure<byte[]> {
 
-    private final AtomicLong allocIdx = new AtomicLong();
+    private final AtomicLong allocIdx = new PaddedAtomicLong();
     private final MarshlandPool<DeltaCursor> cursors = new MarshlandPool<>(this::newCursor);
 
     public static ByteArray newArray(long size) {
@@ -18,14 +18,14 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
     }
 
     public byte get(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage];
     }
 
     public int getInt(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         byte[] page = pages[pageIndex];
@@ -69,13 +69,17 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
     }
 
     public byte set(long index, byte value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final byte[] page = pages[pageIndex];
         final byte ret = page[indexInPage];
         page[indexInPage] = value;
         return ret;
+    }
+
+    public LocalAllocator newAllocator() {
+        return new LocalAllocator(this);
     }
 
     /**
@@ -121,6 +125,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
      */
     public final long allocate(long numberOfElements, BulkAdder into) {
         long intoIndex = allocIdx.getAndAdd(numberOfElements);
+        grow(intoIndex + numberOfElements);
         into.init(intoIndex, numberOfElements);
         return intoIndex;
     }
@@ -175,49 +180,71 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         }
 
         public final boolean next() {
-            if (!setNext(++currentPage, fromPage, toPage)) {
-                array = null;
-                return false;
+            int current = ++currentPage;
+            if (current == fromPage) {
+                array = pages[current];
+                offset = indexInPage(from);
+                int length = (int) Math.min(pageSize - offset, size);
+                limit = offset + length;
+                return true;
             }
-            return true;
-        }
-
-        private boolean setNext(int current, int from, int to) {
-            if (current > to) {
-                return false;
+            if (current < toPage) {
+                array = pages[current];
+                offset = 0;
+                limit = offset + pageSize;
+                return true;
             }
-            setNextInRange(current, from, to);
-            return true;
+            if (current == toPage) {
+                array = pages[current];
+                offset = 0;
+                int length = indexInPage(to - 1) + 1;
+                limit = offset + length;
+                return true;
+            }
+            array = null;
+            return false;
         }
 
-        private void setNextInRange(int current, int from, int to) {
-            if (current == from) {
-                loadFirst(current);
-            } else if (current < to) {
-                loadMiddle(current);
-            } else if (current == to) {
-                loadLast(current);
+        final void tryNext() {
+            if (offset >= limit) {
+                next();
             }
         }
+    }
 
-        private void loadFirst(int current) {
-            array = pages[current];
-            offset = indexInPage(from);
-            int length = (int) Math.min(pageSize - offset, size);
-            limit = offset + length;
+    public static final class LocalAllocator {
+        private static final int PREFETCH_PAGES = 16;
+
+        private final ByteArray array;
+        private final long prefetchSize;
+
+        public final BulkAdder adder;
+
+        private long top;
+        private long limit;
+
+        LocalAllocator(final ByteArray array) {
+            this.array = array;
+            this.adder = array.newBulkAdder();
+            this.prefetchSize = (long) array.pageSize * PREFETCH_PAGES;
         }
 
-        private void loadMiddle(int current) {
-            array = pages[current];
-            offset = 0;
-            limit = offset + pageSize;
+        public long allocate(long size) {
+            long address = top;
+            if (address + size <= limit) {
+                top += size;
+                adder.tryNext();
+                return address;
+            }
+            return majorAllocate(size);
         }
 
-        private void loadLast(int current) {
-            array = pages[current];
-            offset = 0;
-            int length = indexInPage(to - 1) + 1;
-            limit = offset + length;
+        private long majorAllocate(long size) {
+            long allocate = Math.max(size, prefetchSize);
+            long address = top = array.allocate(allocate, adder);
+            limit = top + prefetchSize;
+            top += size;
+            return address;
         }
     }
 
@@ -225,7 +252,6 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
 
         @Override
         public final void init(long fromIndex, long length) {
-            grow(fromIndex + length);
             super.init(fromIndex, length);
             next();
         }
@@ -354,7 +380,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private long delta;
 
         DeltaCursor init(long fromIndex) {
-            super.init(fromIndex, capacity);
+            super.init(fromIndex, capacity());
             next();
 
             currentTarget = 0;

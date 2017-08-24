@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
-@Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g"})
+@Fork(value = 3, jvmArgs = {"-Xms4g", "-Xmx4g"})
 @Warmup(iterations = 5)
 @Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class PageRankBenchmarkLdbc {
 
-    @Param({"LIGHT", "HEAVY", "VIEW"})
+    @Param({"LIGHT", "HEAVY", "HUGE"})
     GraphImpl graph;
 
     @Param({"5", "20"})

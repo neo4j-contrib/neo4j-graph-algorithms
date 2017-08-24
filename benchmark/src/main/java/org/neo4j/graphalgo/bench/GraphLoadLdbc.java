@@ -24,15 +24,15 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
-@Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g"})
+@Fork(value = 3, jvmArgs = {"-Xms4g", "-Xmx4g"})
 @Warmup(iterations = 3)
-@Measurement(iterations = 3)
+@Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class GraphLoadLdbc {
 
-    @Param({"LIGHT", "HEAVY"})
+    @Param({"LIGHT", "HEAVY", "HUGE", "VIEW"})
     GraphImpl graph;
 
     @Param({"true", "false"})

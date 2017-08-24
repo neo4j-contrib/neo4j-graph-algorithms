@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
@@ -242,6 +243,8 @@ public class ProcedureConfiguration {
                 return LightGraphFactory.class;
             case "kernel":
                 return GraphViewFactory.class;
+            case "huge":
+                return HugeGraphFactory.class;
             default:
                 throw new IllegalArgumentException("Unknown impl: " + graphImpl);
         }

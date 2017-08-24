@@ -11,6 +11,9 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -45,11 +48,11 @@ public class ProgressLoggingTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return Arrays.<Object[]>asList(
-                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"}
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
 //                new Object[]{LightGraphFactory.class, "LightGraphFactory"}, // doesn't log yet
 //                new Object[]{GraphViewFactory.class, "GraphViewFactory"}, // doesn't log yet
-//                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"} // not yet implemented
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
     }
 
