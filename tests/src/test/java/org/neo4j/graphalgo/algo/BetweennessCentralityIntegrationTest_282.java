@@ -98,16 +98,6 @@ public class BetweennessCentralityIntegrationTest_282 {
         if (db != null) db.shutdown();
     }
 
-    @Test
-    public void testDirect() throws Exception {
-
-        final Graph graph = new GraphLoader(db, Pools.DEFAULT)
-                .withoutNodeWeights()
-                .withoutRelationshipWeights()
-                .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
-    }
-
     /**
      * test org.neo4j.graphalgo.impl.BetweennessCentrality
      *
