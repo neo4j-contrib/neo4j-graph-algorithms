@@ -7,6 +7,7 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Spliterators;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,17 +68,21 @@ public class TriangleStream extends Algorithm<TriangleStream> {
 
             @Override
             public Result next() {
+                Result result = null;
                 try {
-                    return resultQueue.take();
+                    while (hasNext() && result == null) {
+                        result = resultQueue.poll(1, TimeUnit.SECONDS);
+                    }
+                    return result;
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         };
 
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                it,
-                0), false);
+        return StreamSupport
+                .stream(Spliterators.spliteratorUnknownSize(it, 0), false)
+                .filter(Objects::nonNull);
     }
 
     private void submitTasks() {
@@ -133,10 +138,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
                                 }
                                 return false;
                             }
-                            if (!flag.running()) {
-                                return false;
-                            }
-                            return true;
+                            return flag.running();
                         });
                         return true;
                     });
