@@ -152,7 +152,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);
                 while (!queue.isEmpty()) {
-                    int node = queue.removeLast();
+                    int node = queue.removeFirst();
                     stack.push(node);
                     graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
                         if (distance[target] < 0) {
@@ -171,11 +171,11 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                     int node = stack.pop();
                     paths.forEach(node, v -> {
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
-                        if (node != startNodeId) {
-                            centrality.add(node, delta[node]);
-                        }
                         return true;
                     });
+                    if (node != startNodeId) {
+                        centrality.add(node, delta[node]);
+                    }
                 }
             }
         }
