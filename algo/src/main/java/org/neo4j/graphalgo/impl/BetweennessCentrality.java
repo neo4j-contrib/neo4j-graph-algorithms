@@ -21,9 +21,9 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     private Graph graph;
 
     private double[] centrality;
-    private double[] delta;
-    private int[] sigma;
-    private int[] distance;
+    private double[] delta; // auxiliary array
+    private int[] sigma; // number of shortest paths
+    private int[] distance; // distance to start node
     private IntStack stack;
     private IntArrayDeque queue;
     private Path[] paths; // TODO find a better container impl
@@ -89,7 +89,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         distance[startNode] = 0;
         queue.addLast(startNode);
         while (!queue.isEmpty() && running()) {
-            int node = queue.removeLast();
+            int node = queue.removeFirst();
             stack.push(node);
             graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
                 if (distance[target] < 0) {
@@ -110,11 +110,11 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             }
             paths[node].forEach(v -> {
                 delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
-                if (node != startNode) {
-                    centrality[node] += delta[node];
-                }
                 return true;
             });
+            if (node != startNode) {
+                centrality[node] += delta[node];
+            }
         }
         getProgressLogger().logProgress((double) startNode / (nodeCount - 1));
         return true;
@@ -187,5 +187,21 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             this.nodeId = nodeId;
             this.centrality = centrality;
         }
+    }
+
+    public static String format(int[] array) {
+        final StringBuilder builder = new StringBuilder();
+        for (int i : array) {
+            builder.append(i).append(", ");
+        }
+        return builder.toString();
+    }
+
+    public static String format(double[] array) {
+        final StringBuilder builder = new StringBuilder();
+        for (double i : array) {
+            builder.append(String.format("%.2f", i)).append(", ");
+        }
+        return builder.toString();
     }
 }
