@@ -218,7 +218,6 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
                 } catch (Throwable throwable) {
                     throw new RuntimeException(throwable);
                 }
-                future.run();
             }
         }
     }
