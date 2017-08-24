@@ -126,11 +126,14 @@ public class HeavyGraphFactory extends GraphFactory {
             idMap.buildMappedIds();
         });
 
+        int concurrency = setup.concurrency();
+        int actualBatchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, batchSize);
         Collection<ImportTask> tasks = ParallelUtil.readParallel(
-                batchSize,
+                concurrency,
+                actualBatchSize,
                 idMap,
                 (offset, nodeIds) -> new ImportTask(
-                        batchSize,
+                        actualBatchSize,
                         offset,
                         nodeCount,
                         idMap,

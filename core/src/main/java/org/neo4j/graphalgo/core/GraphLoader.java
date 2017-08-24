@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
@@ -44,6 +45,7 @@ public class GraphLoader {
 
     private final GraphDatabaseAPI api;
     private ExecutorService executorService;
+    private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
     private double nodePropDefault = 0.0;
@@ -92,6 +94,30 @@ public class GraphLoader {
      */
     public GraphLoader withoutExecutorService() {
         this.executorService = null;
+        return this;
+    }
+
+    /**
+     * change the concurrency level. Negative and zero values are not supported.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withConcurrency(int newConcurrency) {
+        if (newConcurrency <= 0) {
+            throw new IllegalArgumentException("concurrency: " + newConcurrency);
+        }
+        this.concurrency = newConcurrency;
+        return this;
+    }
+
+    /**
+     * change the concurrency level to the default concurrency, which is based
+     * on the numbers of detected processors.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDefaultConcurrency() {
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
         return this;
     }
 
@@ -390,6 +416,7 @@ public class GraphLoader {
                 nodeProp,
                 nodePropDefault,
                 executorService,
+                concurrency,
                 batchSize,
                 accumulateWeights,
                 log);

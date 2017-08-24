@@ -8,12 +8,15 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.RandomGraphTestCase;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.serialize.PrivateLookup;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Iterables;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -22,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -182,6 +186,10 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
     }
 
     private static class ThrowingThreadPool extends ThreadPoolExecutor {
+        private static final MethodHandle setException = PrivateLookup.method(
+                FutureTask.class,
+                "setException",
+                MethodType.methodType(void.class, Throwable.class));
         private final String message;
 
         private ThrowingThreadPool(int numberOfThreads, String message) {
@@ -199,6 +207,18 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
             final CompletableFuture<Object> future = new CompletableFuture<>();
             future.completeExceptionally(new RuntimeException(message));
             return future;
+        }
+
+        @Override
+        public void execute(final Runnable command) {
+            if (command instanceof FutureTask) {
+                FutureTask<?> future = (FutureTask<?>) command;
+                try {
+                    setException.invoke(future, new RuntimeException(message));
+                } catch (Throwable throwable) {
+                    throw new RuntimeException(throwable);
+                }
+            }
         }
     }
 }

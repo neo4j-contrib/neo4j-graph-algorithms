@@ -21,35 +21,41 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
     private static final int[] EMPTY_INTS = new int[0];
 
     private HeavyGraph graph;
+    private final int batchSize;
+    private final int concurrency;
     private final ExecutorService executor;
     private final int nodeCount;
     private Direction direction;
 
     public LabelPropagation(
             HeavyGraph graph,
+            int batchSize,
+            int concurrency,
             ExecutorService executor) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
+        this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, batchSize);
+        this.concurrency = concurrency;
         this.executor = executor;
     }
 
     public IntDoubleMap compute(
             Direction direction,
-            long times,
-            int batchSize) {
+            long times) {
         if (times <= 0) {
             throw new IllegalArgumentException("Must iterate at least 1 time");
         }
         this.direction = direction;
 
         final Collection<ComputeStep> computeSteps = ParallelUtil.readParallel(
+                concurrency,
                 batchSize,
                 graph,
                 (offset, nodes) -> new ComputeStep(batchSize, nodes),
                 executor);
 
         for (long i = 1; i < times; i++) {
-            ParallelUtil.run(computeSteps, executor);
+            ParallelUtil.runWithConcurrency(concurrency, computeSteps, executor);
         }
         final IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
         for (ComputeStep computeStep : computeSteps) {
