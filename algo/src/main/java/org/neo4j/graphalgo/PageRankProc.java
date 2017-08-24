@@ -2,6 +2,7 @@ package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -25,6 +26,7 @@ import org.neo4j.procedure.Procedure;
 
 import java.util.Map;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 public final class PageRankProc {
@@ -78,6 +80,15 @@ public final class PageRankProc {
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
         PageRankResult scores = evaluate(graph, configuration, statsBuilder);
+
+        if (graph instanceof HugeGraph) {
+            HugeGraph hugeGraph = (HugeGraph) graph;
+            return LongStream.range(0, hugeGraph.hugeNodeCount())
+                    .mapToObj(i -> new PageRankScore(
+                            api.getNodeById(hugeGraph.toOriginalNodeId(i)),
+                            scores.score(i)
+                    ));
+        }
 
         return IntStream.range(0, graph.nodeCount())
                 .mapToObj(i -> new PageRankScore(
