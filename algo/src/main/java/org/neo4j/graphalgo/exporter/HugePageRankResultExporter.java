@@ -13,9 +13,9 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author mknblch
  */
-public class HugePageRankgeResultExporter extends HugeParallelExporter<PageRankResult> {
+public class HugePageRankResultExporter extends HugeParallelExporter<PageRankResult> {
 
-    public HugePageRankgeResultExporter(
+    public HugePageRankResultExporter(
             GraphDatabaseAPI db,
             HugeIdMapping idMapping,
             Log log,
@@ -23,7 +23,7 @@ public class HugePageRankgeResultExporter extends HugeParallelExporter<PageRankR
         super(db, idMapping, log, writeProperty);
     }
 
-    public HugePageRankgeResultExporter(
+    public HugePageRankResultExporter(
             GraphDatabaseAPI db,
             HugeIdMapping idMapping,
             Log log,

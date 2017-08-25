@@ -11,7 +11,7 @@ import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
-import org.neo4j.graphalgo.exporter.HugePageRankgeResultExporter;
+import org.neo4j.graphalgo.exporter.HugePageRankResultExporter;
 import org.neo4j.graphalgo.exporter.PageRankResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -551,7 +551,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 final String writeProperty,
                 final ExecutorService executorService,
                 final int concurrency) {
-            return new HugePageRankgeResultExporter(
+            return new HugePageRankResultExporter(
                     db,
                     idMapping,
                     log,

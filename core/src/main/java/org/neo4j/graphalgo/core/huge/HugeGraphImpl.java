@@ -38,7 +38,7 @@ import java.util.function.LongPredicate;
  * <p>
  * <p>
  * The graph encoding (sans delta+vlong) is similar to that of the
- * {@link org.neo4j.graphalgo.core.leightweight.LightGraph} but stores degree
+ * {@link org.neo4j.graphalgo.core.lightweight.LightGraph} but stores degree
  * explicitly into the target adjacency array where the LightGraph would subtract
  * offsets of two consecutive nodes. While that doesn't use up memory to store the
  * degree, it makes it practically impossible to build the array out-of-order,

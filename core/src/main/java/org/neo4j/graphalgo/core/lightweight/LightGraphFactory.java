@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.leightweight;
+package org.neo4j.graphalgo.core.lightweight;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
