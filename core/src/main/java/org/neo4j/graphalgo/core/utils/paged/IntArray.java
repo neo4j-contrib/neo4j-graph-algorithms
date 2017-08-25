@@ -30,7 +30,7 @@ public final class IntArray extends PagedDataStructure<int[]> {
      * Get an element given its index.
      */
     public int get(long index) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage];
@@ -41,7 +41,7 @@ public final class IntArray extends PagedDataStructure<int[]> {
      * This method does not advance the {@link #size()} or {@link #grow(long)}s the array.
      */
     public int set(long index, int value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final int[] page = pages[pageIndex];
@@ -55,7 +55,7 @@ public final class IntArray extends PagedDataStructure<int[]> {
      * This method does not advance the {@link #size()} or {@link #grow(long)}s the array.
      */
     public int addTo(long index, int value) {
-        assert index < capacity;
+        assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         final int[] page = pages[pageIndex];
@@ -71,8 +71,8 @@ public final class IntArray extends PagedDataStructure<int[]> {
             final long toIndex,
             final IntSupplier value) {
         assert fromIndex <= toIndex : "can only fill positive slice";
-        assert fromIndex < capacity;
-        assert toIndex < capacity;
+        assert fromIndex < capacity();
+        assert toIndex < capacity();
         final int fromPage = pageIndex(fromIndex);
         final int toPage = pageIndex(toIndex - 1);
         if (fromPage == toPage) {
@@ -110,7 +110,7 @@ public final class IntArray extends PagedDataStructure<int[]> {
      * iterate over all elements.
      */
     public Cursor cursorForAll() {
-        return initCursor(0, size, cursors.acquire());
+        return initCursor(0, size(), cursors.acquire());
     }
 
     /**

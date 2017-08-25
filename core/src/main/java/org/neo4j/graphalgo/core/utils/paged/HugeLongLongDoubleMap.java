@@ -18,13 +18,13 @@ public final class HugeLongLongDoubleMap extends PagedDataStructure<LongLongDoub
     }
 
     public double getOrDefault(long index1, long index2, double defaultValue) {
-        assert index1 < capacity;
+        assert index1 < capacity();
         final int pageIndex = pageIndex(index1);
         return pages[pageIndex].getOrDefault(index1, index2, defaultValue);
     }
 
     public double put(long index1, long index2, double value) {
-        assert index1 < capacity;
+        assert index1 < capacity();
         final int pageIndex = pageIndex(index1);
         return pages[pageIndex].put(index1, index2, value);
     }

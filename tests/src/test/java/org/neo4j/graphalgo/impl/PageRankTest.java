@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
@@ -37,6 +38,7 @@ public final class PageRankTest {
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
                 new Object[]{HeavyCypherGraphFactory.class, "HeavyCypherGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }

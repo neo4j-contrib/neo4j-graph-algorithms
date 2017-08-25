@@ -1,11 +1,13 @@
 package org.neo4j.graphalgo.core.utils;
 
+import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.helpers.Exceptions;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -117,7 +119,7 @@ public final class ParallelUtil {
      * Executes read operations in parallel, based on the given batch size
      * and executor.
      */
-    public static <T extends Runnable> Collection<T> readParallel(
+    public static <T extends Runnable> void readParallel(
             int concurrency,
             int batchSize,
             HugeBatchNodeIterable idMapping,
@@ -131,23 +133,17 @@ public final class ParallelUtil {
 
         if (!canRunInParallel(executor) || threads == 1) {
             long nodeOffset = 0;
-            Collection<T> tasks = new ArrayList<>(threads);
             for (PrimitiveLongIterable iterator : iterators) {
                 final T task = importer.newImporter(nodeOffset, iterator);
-                tasks.add(task);
                 task.run();
                 nodeOffset += batchSize;
             }
-            return tasks;
         } else {
-            List<T> tasks = new ArrayList<>(threads);
-            long nodeOffset = 0;
-            for (PrimitiveLongIterable iterator : iterators) {
-                tasks.add(importer.newImporter(nodeOffset, iterator));
-                nodeOffset += batchSize;
-            }
+            LazyHugeBatchImporters<T> tasks = new LazyHugeBatchImporters<>(
+                    iterators,
+                    importer,
+                    batchSize);
             runWithConcurrency(concurrency, tasks, executor);
-            return tasks;
         }
     }
 
@@ -231,10 +227,14 @@ public final class ParallelUtil {
     }
 
     public static void runWithConcurrency(
-        int concurrency,
-        Collection<? extends Runnable> tasks,
-        ExecutorService executor) {
-        runWithConcurrency(concurrency, tasks, TerminationFlag.RUNNING_TRUE, executor);
+            int concurrency,
+            Collection<? extends Runnable> tasks,
+            ExecutorService executor) {
+        runWithConcurrency(
+                concurrency,
+                tasks,
+                TerminationFlag.RUNNING_TRUE,
+                executor);
     }
 
     public static void runWithConcurrency(
@@ -404,7 +404,8 @@ public final class ParallelUtil {
 
         CompletionService(ExecutorService executor) {
             if (!canRunInParallel(executor)) {
-                throw new IllegalArgumentException("executor already terminated or not usable");
+                throw new IllegalArgumentException(
+                        "executor already terminated or not usable");
             }
             this.executor = executor;
             this.completionQueue = new LinkedBlockingQueue<>();
@@ -435,6 +436,47 @@ public final class ParallelUtil {
                 future.cancel(true);
             }
             futures.clear();
+        }
+    }
+
+    private static final class LazyHugeBatchImporters<T extends Runnable> extends AbstractCollection<T> {
+        private final Collection<PrimitiveLongIterable> batches;
+        private final HugeParallelGraphImporter<T> importer;
+        private final long batchSize;
+
+        private LazyHugeBatchImporters(
+                Collection<PrimitiveLongIterable> batches,
+                HugeParallelGraphImporter<T> importer,
+                long batchSize) {
+            this.batches = batches;
+            this.importer = importer;
+            this.batchSize = batchSize;
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return new AbstractIterator<T>() {
+                private final Iterator<PrimitiveLongIterable> it = batches.iterator();
+                private long nodeOffset = 0;
+
+                @Override
+                protected T fetch() {
+                    if (it.hasNext()) {
+                        try {
+                            PrimitiveLongIterable next = it.next();
+                            return importer.newImporter(nodeOffset, next);
+                        } finally {
+                            nodeOffset += batchSize;
+                        }
+                    }
+                    return done();
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return batches.size();
         }
     }
 }

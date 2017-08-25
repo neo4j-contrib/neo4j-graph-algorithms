@@ -5,6 +5,8 @@ import org.apache.lucene.util.RamUsageEstimator;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class PagedDataStructure<T> {
 
@@ -16,9 +18,11 @@ public abstract class PagedDataStructure<T> {
     private final int pageMask;
     private final long maxSupportedSize;
 
-    protected long capacity;
-    protected long size;
-    T[] pages;
+    volatile T[] pages;
+
+    private final AtomicLong size = new PaddedAtomicLong();
+    private final AtomicLong capacity = new PaddedAtomicLong();
+    private final ReentrantLock growLock = new ReentrantLock(true);
 
     PagedDataStructure(
             long size,
@@ -32,10 +36,9 @@ public abstract class PagedDataStructure<T> {
         final int maxIndexShift = Integer.SIZE - 1 + pageShift;
         maxSupportedSize = 1L << maxIndexShift;
         assert size <= maxSupportedSize;
-
-        this.size = size;
+        this.size.set(size);
         int numPages = numPages(size);
-        this.capacity = capacityFor(numPages);
+        capacity.set(capacityFor(numPages));
         pages = (T[]) Array.newInstance(cls, numPages);
         for (int i = 0; i < pages.length; ++i) {
             pages[i] = newPage();
@@ -47,7 +50,7 @@ public abstract class PagedDataStructure<T> {
      * have been filled with data.
      */
     public final long size() {
-        return size;
+        return size.get();
     }
 
     /**
@@ -55,7 +58,7 @@ public abstract class PagedDataStructure<T> {
      * sensible data, but it can be safely written up to this index (exclusive).
      */
     public final long capacity() {
-        return capacity;
+        return capacity.get();
     }
 
     private int numPages(long capacity) {
@@ -82,25 +85,44 @@ public abstract class PagedDataStructure<T> {
      * Grows the page structure to the new size. The existing content will be preserved.
      * If the current size is large enough, this is no-op and no downsizing is happening.
      */
-    final synchronized void grow(final long newSize) {
-        if (capacity < newSize) {
-            assert newSize <= maxSupportedSize;
-            final int currentNumPages = pages.length;
-            int numPages = numPages(newSize);
-            if (numPages > currentNumPages) {
-                numPages = ArrayUtil.oversize(
-                        numPages,
-                        RamUsageEstimator.NUM_BYTES_OBJECT_REF);
-                pages = Arrays.copyOf(pages, numPages);
-                for (int i = currentNumPages; i < numPages; i++) {
-                    pages[i] = newPage();
-                }
-                this.capacity = capacityFor(numPages);
+    final void grow(final long newSize) {
+        assert newSize <= maxSupportedSize;
+        long cap = capacity.get();
+        if (cap >= newSize) {
+            growSize(newSize);
+            return;
+        }
+        growLock.lock();
+        try {
+            cap = capacity.get();
+            if (cap >= newSize) {
+                growSize(newSize);
+                return;
             }
+            doGrow(newSize, this.pages.length);
+            growSize(newSize);
+        } finally {
+            growLock.unlock();
         }
-        if (size < newSize) {
-            size = newSize;
+    }
+
+    private void growSize(final long newSize) {
+        long size;
+        do {
+            size = this.size.get();
+        } while (size < newSize && !this.size.compareAndSet(size, newSize));
+    }
+
+    private void doGrow(long newSize, int currentNumPages) {
+        int numPages = ArrayUtil.oversize(
+                numPages(newSize),
+                RamUsageEstimator.NUM_BYTES_OBJECT_REF);
+        T[] pages = Arrays.copyOf(this.pages, numPages);
+        for (int i = currentNumPages; i < numPages; i++) {
+            pages[i] = newPage();
         }
+        this.pages = pages;
+        this.capacity.set(capacityFor(numPages));
     }
 
     private static boolean isPowerOfTwo(final int value) {

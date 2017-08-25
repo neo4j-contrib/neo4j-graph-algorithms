@@ -91,7 +91,7 @@ public class HeavyGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
-        return build(ParallelUtil.DEFAULT_BATCH_SIZE);
+        return build(setup.batchSize);
     }
 
     /* test-private */ Graph build(int batchSize) {

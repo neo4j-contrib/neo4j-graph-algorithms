@@ -1,12 +1,13 @@
-package org.neo4j.graphalgo.core.heavyweight;
+package org.neo4j.graphalgo.core;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.core.RandomGraphTestCase;
+import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.serialize.PrivateLookup;
 import org.neo4j.graphdb.Direction;
@@ -38,32 +39,32 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
-public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
+public class ParallelGraphLoadingTest extends RandomGraphTestCase {
     private static final int NODE_COUNT = 100;
     private final int batchSize;
+    private final Class<? extends GraphFactory> graphImpl;
 
-    @Parameters
+    @Parameters(name = "{2}")
     public static Collection<Object[]> data() {
-        return parameters(
-                30,
-                1000
+        return Arrays.asList(
+                new Object[]{30, HeavyGraphFactory.class, "Heavy, parallel"},
+                new Object[]{1000, HeavyGraphFactory.class, "Heavy, sequential"},
+                new Object[]{30, HugeGraphFactory.class, "Huge, parallel"},
+                new Object[]{1000, HugeGraphFactory.class, "Huge, sequential"}
         );
-    }
-
-    private static Collection<Object[]> parameters(int... batchSizes) {
-        return Arrays.stream(batchSizes)
-                .mapToObj(b -> new Object[]{b})
-                .collect(Collectors.toList());
     }
 
     private Graph graph;
 
-    public HeavyGraphParallelLoadingTest(int batchSize) {
+    public ParallelGraphLoadingTest(
+            int batchSize,
+            Class<? extends GraphFactory> graphImpl,
+            String ignoredNameForNiceTestDisplay) {
         this.batchSize = batchSize;
+        this.graphImpl = graphImpl;
         final ExecutorService pool = Executors.newFixedThreadPool(3);
         try {
-            graph = new HeavyGraphFactory(db, new GraphSetup(pool))
-                    .build(batchSize);
+            graph = new GraphLoader(db, pool).withBatchSize(batchSize).load(graphImpl);
         } catch (Exception e) {
             markFailure();
             throw e;
@@ -119,11 +120,9 @@ public class HeavyGraphParallelLoadingTest extends RandomGraphTestCase {
     public void shouldCollectErrors() throws Exception {
         if (batchSize < NODE_COUNT) {
             String message = "oh noes";
+            ThrowingThreadPool pool = new ThrowingThreadPool(3, message);
             try {
-                new HeavyGraphFactory(
-                        db,
-                        new GraphSetup(new ThrowingThreadPool(3, message))
-                ).build(batchSize);
+                new GraphLoader(db, pool).withBatchSize(batchSize).load(graphImpl);
                 fail("Should have thrown an Exception.");
             } catch (Exception e) {
                 assertEquals(message, e.getMessage());

@@ -113,7 +113,8 @@ public class PageRankProcIntegrationTest {
         return Arrays.asList(
                 new Object[]{"Heavy"},
                 new Object[]{"Light"},
-                new Object[]{"Kernel"}
+                new Object[]{"Kernel"},
+                new Object[]{"Huge"}
         );
     }
 

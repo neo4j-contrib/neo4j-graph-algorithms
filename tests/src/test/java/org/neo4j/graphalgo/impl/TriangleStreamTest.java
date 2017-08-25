@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -47,7 +48,8 @@ public class TriangleStreamTest {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
-                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
     }
 
