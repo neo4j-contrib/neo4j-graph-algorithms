@@ -4,9 +4,9 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFileLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFileWriter;
-import org.neo4j.graphalgo.core.leightweight.LightGraph;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFileLoader;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFileWriter;
+import org.neo4j.graphalgo.core.lightweight.LightGraph;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFileLoader;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFileWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;

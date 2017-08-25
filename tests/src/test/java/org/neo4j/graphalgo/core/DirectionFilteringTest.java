@@ -8,7 +8,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
