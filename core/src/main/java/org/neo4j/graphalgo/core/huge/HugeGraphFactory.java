@@ -86,7 +86,7 @@ public final class HugeGraphFactory extends GraphFactory {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
                     : readOp.nodesGetForLabel(labelId);
-            int nodes = 0;
+            long nodes = 0;
             while (nodeIds.hasNext()) {
                 mapping.add(nodeIds.next());
                 if ((++nodes & mod) == 0) {
