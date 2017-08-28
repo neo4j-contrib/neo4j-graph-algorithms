@@ -1,5 +1,201 @@
 = Triangle Counting
 
+Triangle counting is a community detection graph algorithm which is used to determine the number of triangles passing through each node in the graph. A node is part of a triangle when it has two linked nodes with an relationship between. 
+The triangle is a three-node subgraph, where every two nodes are connected.[1] 
+
+
+== History, Explanation
+
+Counting the number of triangles in a graph is a fundamental problem with various applications. 
+The problem has been studied before from a theoretic point of view. 
+It can be seen as a special case of counting given length cycles. 
+On the other hand, counting triangles is a basic issue in network analysis. 
+Due to the increasing interest in analyzing large networks like the Internet, the WWW or social networks, the computation of network indices based on counting triangles has become an often used tool in network analysis. 
+For example, the so-called clustering coefficient is frequently quoted as an important index for measuring the concentration of clusters in graphs respectively its tendency to decompose into communities. 
+The local clustering coefficient of a node v is defined as the likeliness that two neighbors u and w of v are also connected, while the clustering coefficient of a graph is just the normalized sum of the clustering coefficient of its nodes. 
+Accordingly, its computation involves counting the number of triangles. 
+Similarly the transitivity coefficient of a graph, which is just three times the number of triangles divided by the number of triples (paths of length two) in the graph is sometimes considered.[2] 
+
+== When to use it / use-cases
+
+Finding patterns in large scale graphs, with millions and billions of edges is attracting increasing interest, with numerous applications in computer network security (intrusion detection, spamming), in web applications (community detection, blog analysis) in social networks (facebook, linkedin, for link prediction), and many more. 
+One of the operations of interest in such a setting is the estimation of the clustering coefficient and the transitivity ratio, which effectively translates to the number of triangles in the graph, or the number of triangles that a node participates in.
+It is known that in social networks there is a higher than-random number of triangles. 
+The reason is that friends of friends are typically friends themselves.
+Thus, the number of triangles can help us spot abnormal graphs and abnormal nodes.
+More-than-expected number of triangles also appear in biological networks,such as protein-protein interaction networks.
+A very recent work shows that the distribution of the local number of triangles can be used to create successful spam filters and also provide useful features to assess content quality in social networks. 
+In the distribution of triangles is used to uncover hidden thematic structure in the World Wide Web. 
+Therefore, counting triangles is a significant problem in graph mining, with several important applications.[3]
+
+== Constraints / when not to use it
+
+== Algorithm explanation on simple sample graph
+
+image::{img}/triangle_count.png[]
+
+
+.Create sample graph
+[source,cypher]
+----
+CREATE (alice:Person{id:"Alice"}),
+       (michael:Person{id:"Michael"}),
+       (karin:Person{id:"Karin"}),
+       (chris:Person{id:"Chris"}),
+       (will:Person{id:"Will"}),
+       (mark:Person{id:"Mark"})
+CREATE (michael)-[:KNOWS]->(karin),
+       (michael)-[:KNOWS]->(chris),
+       (will)-[:KNOWS]->(michael),
+       (mark)-[:KNOWS]->(michael),
+       (mark)-[:KNOWS]->(will),
+       (alice)-[:KNOWS]->(michael),
+       (will)-[:KNOWS]->(chris),
+       (chris)-[:KNOWS]->(karin)
+----
+
+.returns a stream of triples with nodeIds for each triangle.
+[source,cypher]
+----
+CALL algo.triangle.stream('Person','KNOWS') 
+yield nodeA,nodeB,nodeC
+----
+
+
+.counts the number of triangles a node is member of and writes it back.
+[source,cypher]
+----
+CALL algo.triangleCount('Person', 'KNOWS',
+{concurrency:4, write:true, writeProperty:'triangles'}) 
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
+----
+
+.counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
+[source,cypher]
+----
+CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4}) 
+YIELD nodeId, triangles
+----
+
+
+== Example Usage
+
+== Syntax
+
+.returns a stream of triples with nodeIds for each triangle.
+[source,cypher]
+----
+CALL algo.triangle.stream(label:String, relationship:String, {concurrency:8})
+YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeA | int | id of node in the given triangle
+| nodeB | int | id of node in the given triangle
+| nodeC | int | id of node in the given triangle
+|===
+
+.counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
+[source,cypher]
+----
+CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:8})
+YIELD nodeId, triangles - yield nodeId, number of triangles
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeId | int | id of node
+| triangles | int | number of triangles a node is member of
+|===
+
+.counts the number of triangles a node is member of and writes it back.
+[source,cypher]
+----
+CALL algo.triangleCount(label:String, relationship:String, 
+{concurrency:8, write:true, writeProperty:'triangles'}) 
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'triangles' | yes | property name results are written back to
+|===
+
+
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeCount | int | number of nodes considered
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+| triangleCount | int | number of triangles in the given graph. 
+
+
+|===
+
+
+== References
+
+* [1] https://www.infoq.com/articles/apache-spark-graphx
+
+* [2] http://i11www.iti.kit.edu/extra/publications/sw-fclt-05_t.pdf
+
+* [3] http://www.math.cmu.edu/~ctsourak/tsourICDM08.pdf
+
+
+ifdef::implementation[]
+
+== Implementation Details
+
+
+- [ ] single threaded implementation
+- [ ] tests
+- [ ] edge case tests
+- [ ] implement procedure
+- [ ] simple benchmark 
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+- [ ] documentation
+
+== Details
+
 _algo.triangle.stream(..)_ returns a Stream of Triples with nodeIds for each triangle.
 
 _algo.triangleCount(..)_ counts the number of triangles a node is member of and writes it back.
@@ -12,3 +208,6 @@ a stream with nodeId and triangleCount
 
 
 *sum(triangleCount) == triangleCount * 3* because every triangle adds 1 to each of its 3 nodes.
+
+
+endif::implementation[]
