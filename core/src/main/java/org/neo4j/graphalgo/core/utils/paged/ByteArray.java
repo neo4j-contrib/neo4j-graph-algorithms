@@ -244,8 +244,8 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private long majorAllocate(long size) {
             long allocate = Math.max(size, prefetchSize);
             long address = top = array.allocate(allocate, adder);
-            limit = top + prefetchSize;
-            top += allocate;
+            limit = top + allocate;
+            top += size;
             return address;
         }
     }
