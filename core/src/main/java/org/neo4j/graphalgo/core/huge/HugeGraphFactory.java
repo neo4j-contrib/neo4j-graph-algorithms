@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.BitUtil;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.GraphFactory;
@@ -28,6 +29,11 @@ public final class HugeGraphFactory extends GraphFactory {
 
     private final ExecutorService threadPool;
     private long nodeCount;
+
+    private long approxOperations;
+    private long progressMask;
+    private int relationProgressShift;
+
     private int labelId;
     private int[] relationId;
     private int weightId;
@@ -52,6 +58,16 @@ public final class HugeGraphFactory extends GraphFactory {
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
             nodeCount = readOp.countsForNode(labelId);
+
+            long maxRelCount = Math.max(
+                    readOp.countsForRelationshipWithoutTxState(labelId, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], ReadOperations.ANY_LABEL),
+                    readOp.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], labelId)
+            );
+            long relOperations = (setup.loadIncoming ? maxRelCount : 0) + (setup.loadOutgoing ? maxRelCount : 0);
+            long relFactor = nearbyPowerOfTwo(relOperations / nodeCount);
+            relationProgressShift = Long.numberOfTrailingZeros(relFactor);
+            approxOperations = nodeCount + (nodeCount << relationProgressShift);
+            progressMask = (nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
         });
     }
 
@@ -77,11 +93,7 @@ public final class HugeGraphFactory extends GraphFactory {
         final HugeWeightMapping weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new HugeNullWeightMap(setup.relationDefaultWeight)
                 : new HugeWeightMap(nodeCount, setup.relationDefaultWeight);
-
-        long factor = ((nodeCount / 10) + 1);
-        long fp2 = 1L << (64 - Long.numberOfLeadingZeros(factor - 1) - 1);
-        long mod = fp2 - 1;
-
+        long mod = progressMask;
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
@@ -90,7 +102,7 @@ public final class HugeGraphFactory extends GraphFactory {
             while (nodeIds.hasNext()) {
                 mapping.add(nodeIds.next());
                 if ((++nodes & mod) == 0) {
-                    progressLogger.logProgress(nodes, nodeCount);
+                    progressLogger.logProgress(nodes, approxOperations);
                 }
             }
             mapping.buildMappedIds();
@@ -109,8 +121,6 @@ public final class HugeGraphFactory extends GraphFactory {
                 mapping,
                 (offset, nodeIds) -> new BatchImportTask(
                         offset,
-                        nodeCount,
-                        mod,
                         nodeIds,
                         mapping,
                         finalInOffsets,
@@ -136,9 +146,8 @@ public final class HugeGraphFactory extends GraphFactory {
     }
 
     private final class BatchImportTask implements Runnable, Consumer<ReadOperations> {
+        private final long allNodeCount;
         private final long nodeOffset;
-        private final long maxNodeId;
-        private final long progressMod;
         private final PrimitiveLongIterable nodes;
         private final HugeIdMap idMap;
         private final LongArray inOffsets;
@@ -154,8 +163,6 @@ public final class HugeGraphFactory extends GraphFactory {
 
         BatchImportTask(
                 long nodeOffset,
-                long nodeCount,
-                long progressMod,
                 PrimitiveLongIterable nodes,
                 HugeIdMap idMap,
                 LongArray inOffsets,
@@ -165,9 +172,8 @@ public final class HugeGraphFactory extends GraphFactory {
                 int[] relationId,
                 int weightId,
                 HugeWeightMapping weights) {
+            this.allNodeCount = idMap.hugeNodeCount();
             this.nodeOffset = nodeOffset;
-            this.maxNodeId = nodeCount - 1;
-            this.progressMod = progressMod;
             this.nodes = nodes;
             this.idMap = idMap;
             this.inOffsets = inOffsets;
@@ -189,7 +195,7 @@ public final class HugeGraphFactory extends GraphFactory {
             PrimitiveLongIterator iterator = nodes.iterator();
             boolean loadIncoming = inAllocator != null;
             boolean loadOutgoing = outAllocator != null;
-            long nodes = 0;
+            long nodes = nodeOffset;
 
             if (loadIncoming) {
                 inImporter = newImporter(
@@ -220,11 +226,13 @@ public final class HugeGraphFactory extends GraphFactory {
                     // TODO: ignore?
                     throw new RuntimeException(e);
                 }
-                if ((++nodes & progressMod) == 0) {
-                    progressLogger.logProgress(
-                            nodes + nodeOffset,
-                            maxNodeId);
-                }
+                logProgress(++nodes);
+            }
+        }
+
+        private void logProgress(long nodes) {
+            if ((nodes & progressMask) == 0) {
+                progressLogger.logProgress((nodes << relationProgressShift) + allNodeCount, approxOperations);
             }
         }
 
@@ -458,5 +466,11 @@ public final class HugeGraphFactory extends GraphFactory {
             }
             return targetGraphId;
         }
+    }
+
+    private static long nearbyPowerOfTwo(long x) {
+        long next = BitUtil.nextHighestPowerOfTwo(x);
+        long prev = next >>> 1;
+        return (next - x) <= (x - prev) ? next : prev;
     }
 }
