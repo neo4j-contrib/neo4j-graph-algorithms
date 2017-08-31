@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.leightweight;
+package org.neo4j.graphalgo.core.lightweight;
 
 import org.junit.BeforeClass;
 import org.neo4j.graphalgo.SimpleGraphSetup;

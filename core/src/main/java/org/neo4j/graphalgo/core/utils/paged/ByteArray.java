@@ -48,6 +48,8 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
 
     private int getInt(byte[] page, byte[] nextPage, int offset) {
         switch (page.length - offset) {
+            case 0:
+                return getInt(nextPage, 0);
             case 1:
                 return ((page[offset] & 0xFF) << 24) |
                         ((nextPage[0] & 0xFF) << 16) |
@@ -242,7 +244,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private long majorAllocate(long size) {
             long allocate = Math.max(size, prefetchSize);
             long address = top = array.allocate(allocate, adder);
-            limit = top + prefetchSize;
+            limit = top + allocate;
             top += size;
             return address;
         }

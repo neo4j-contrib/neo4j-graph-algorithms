@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.helpers.NamedThreadFactory;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +27,7 @@ public class Pools {
                 30L,
                 TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(DEFAULT_QUEUE_SIZE),
+                NamedThreadFactory.daemon("algo"),
                 new CallerBlocksPolicy());
     }
 

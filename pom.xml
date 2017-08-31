@@ -31,6 +31,43 @@
         <javac.target>1.8</javac.target>
     </properties>
 
+    <organization>
+        <name>Neo Technology, Inc.</name>
+        <url>https://neo4j.com</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>neo-technology</id>
+            <organization>Neo Technology, Incl.</organization>
+            <url>https://neo4j.com</url>
+        </developer>
+        <developer>
+            <id>avgl</id>
+            <organization>Avantgarde Labs GmbH</organization>
+            <url>https://avantgarde-labs.de</url>
+        </developer>
+    </developers>
+
+    <url>https://github.com/neo4j-contrib/neo4j-graph-algorithms</url>
+
+    <scm>
+        <url>https://github.com/neo4j-contrib/neo4j-graph-algorithms</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</name>
+            <url>https://www.gnu.org/licenses/gpl.txt</url>
+            <comments>
+                Note that this license is for the project itself, and not for its dependencies.
+                See the included NOTICE.txt file for further details.
+            </comments>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+
     <dependencyManagement>
 
         <dependencies>
