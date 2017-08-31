@@ -126,7 +126,7 @@ RETURN sourceNodeId, targetNodeId, distance LIMIT 20
 ----
 CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
 {nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'})
-YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
+YIELD nodeCount, totalCost, loadMillis, computeMillis, writeMillis
 
 ----
 
@@ -151,7 +151,7 @@ YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
 | nodeCount | int | number of nodes considered
 | totalCost | float | sum of all weights along the path
 | loadMillis | int | milliseconds for loading data
-| evalMillis | int | milliseconds for running the algorithm
+| computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 |===
 

@@ -105,13 +105,13 @@ public class ShortestPathIntegrationTest {
         db.execute(
                 "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
                         "CALL algo.shortestPath(start, end, 'cost',{graph:'" + graphImpl + "', write:true, writeProperty:'step'}) " +
-                        "YIELD loadMillis, evalMillis, writeMillis, nodeCount, totalCost\n" +
-                        "RETURN loadMillis, evalMillis, writeMillis, nodeCount, totalCost")
+                        "YIELD loadMillis, computeMillis, writeMillis, nodeCount, totalCost\n" +
+                        "RETURN loadMillis, computeMillis, writeMillis, nodeCount, totalCost")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(3.0, (Double) row.getNumber("totalCost"), 10E2);
                     assertEquals(4L, row.getNumber("nodeCount"));
                     assertNotEquals(-1L, row.getNumber("loadMillis"));
-                    assertNotEquals(-1L, row.getNumber("evalMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     return false;
                 });

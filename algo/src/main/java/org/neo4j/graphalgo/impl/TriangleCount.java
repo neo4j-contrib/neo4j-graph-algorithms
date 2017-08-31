@@ -81,16 +81,22 @@ public class TriangleCount extends Algorithm<TriangleCount> {
         return this;
     }
 
-    private class Task implements Runnable {
+    protected void exportTriangle(int u, int v, int w) {
+        triangleCount.incrementAndGet();
+        triangles.incrementAndGet(u);
+        triangles.incrementAndGet(v);
+        triangles.incrementAndGet(w);
+    }
 
+    private class Task implements Runnable {
         private final int startIndex;
+
         private final int endIndex;
 
         private Task(int startIndex, int endIndex) {
             this.startIndex = startIndex;
             this.endIndex = endIndex;
         }
-
         @Override
         public void run() {
             final TerminationFlag flag = getTerminationFlag();
@@ -112,10 +118,7 @@ public class TriangleCount extends Algorithm<TriangleCount> {
                         }
                         graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
                             if (t == u) {
-                                triangleCount.incrementAndGet();
-                                triangles.incrementAndGet(u);
-                                triangles.incrementAndGet(v);
-                                triangles.incrementAndGet(w);
+                                exportTriangle(u, v, w);
                                 return false;
                             }
                             if (!flag.running()) {
@@ -129,6 +132,7 @@ public class TriangleCount extends Algorithm<TriangleCount> {
                 });
             }
         }
+
     }
 
     public static class Result {
