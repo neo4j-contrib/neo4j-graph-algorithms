@@ -129,7 +129,7 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 | name | type | description
 | nodes | int | number of nodes considered
 | loadMillis | int | milliseconds for loading data
-| evalMillis | int | milliseconds for running the algorithm
+| computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 
 
