@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.results;
 /**
  * @author mknblch
  */
-public class TriangleCoefficientResult {
+public class ClusteringCoefficientResult {
 
     public final long loadMillis;
     public final long computeMillis;
@@ -11,7 +11,7 @@ public class TriangleCoefficientResult {
     public final long nodeCount;
     public final double coefficient;
 
-    public TriangleCoefficientResult(long loadMillis, long computeMillis, long writeMillis, long nodeCount, double coefficient) {
+    public ClusteringCoefficientResult(long loadMillis, long computeMillis, long writeMillis, long nodeCount, double coefficient) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.writeMillis = writeMillis;
@@ -19,7 +19,7 @@ public class TriangleCoefficientResult {
         this.coefficient = coefficient;
     }
 
-    public static class Builder extends AbstractResultBuilder<TriangleCoefficientResult> {
+    public static class Builder extends AbstractResultBuilder<ClusteringCoefficientResult> {
 
         private long nodeCount;
         private double averageClusteringCoefficient;
@@ -35,8 +35,8 @@ public class TriangleCoefficientResult {
         }
 
         @Override
-        public TriangleCoefficientResult build() {
-            return new TriangleCoefficientResult(loadDuration, evalDuration, writeDuration, nodeCount, averageClusteringCoefficient);
+        public ClusteringCoefficientResult build() {
+            return new ClusteringCoefficientResult(loadDuration, evalDuration, writeDuration, nodeCount, averageClusteringCoefficient);
         }
 
     }

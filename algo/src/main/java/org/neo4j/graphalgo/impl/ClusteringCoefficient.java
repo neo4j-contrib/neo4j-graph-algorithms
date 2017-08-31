@@ -12,7 +12,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class TriangleCoefficient extends Algorithm<TriangleCoefficient> {
+public class ClusteringCoefficient extends Algorithm<ClusteringCoefficient> {
 
     private final TriangleCount triangleCountAlgorithm;
 
@@ -20,13 +20,13 @@ public class TriangleCoefficient extends Algorithm<TriangleCoefficient> {
     private final int nodeCount;
     private double averageClusteringCoefficient = -1d;
 
-    public TriangleCoefficient(Graph graph, ExecutorService executorService, int concurrency) {
+    public ClusteringCoefficient(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
         triangleCountAlgorithm = new TriangleCount(graph, executorService, concurrency);
     }
 
-    public TriangleCoefficient compute() {
+    public ClusteringCoefficient compute() {
         triangleCountAlgorithm.compute();
         return this;
     }
@@ -66,12 +66,12 @@ public class TriangleCoefficient extends Algorithm<TriangleCoefficient> {
     }
 
     @Override
-    public TriangleCoefficient me() {
+    public ClusteringCoefficient me() {
         return this;
     }
 
     @Override
-    public TriangleCoefficient release() {
+    public ClusteringCoefficient release() {
         return this;
     }
 

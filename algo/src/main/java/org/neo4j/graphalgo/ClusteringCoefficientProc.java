@@ -8,9 +8,9 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
-import org.neo4j.graphalgo.impl.TriangleCoefficient;
+import org.neo4j.graphalgo.impl.ClusteringCoefficient;
 import org.neo4j.graphalgo.impl.TriangleCount;
-import org.neo4j.graphalgo.results.TriangleCoefficientResult;
+import org.neo4j.graphalgo.results.ClusteringCoefficientResult;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 /**
  * @author mknblch
  */
-public class TriangleCoefficientProc {
+public class ClusteringCoefficientProc {
 
 
     public static final String DEFAULT_WRITE_PROPERTY_VALUE = "clusterCoefficient";
@@ -39,7 +39,7 @@ public class TriangleCoefficientProc {
     @Procedure("algo.clusteringCoefficient.stream")
     @Description("CALL algo.clusteringCoefficient.stream(label, relationship, {concurrency:8}) " +
             "YIELD node, clusteringCoefficient")
-    public Stream<TriangleCoefficient.Result> triangleStream(
+    public Stream<ClusteringCoefficient.Result> triangleStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -57,12 +57,12 @@ public class TriangleCoefficientProc {
                 .withDirection(TriangleCount.D)
                 .load(configuration.getGraphImpl());
 
-        final TriangleCoefficient triangleCoefficient =
-                new TriangleCoefficient(graph, Pools.DEFAULT, configuration.getConcurrency())
+        final ClusteringCoefficient clusteringCoefficient =
+                new ClusteringCoefficient(graph, Pools.DEFAULT, configuration.getConcurrency())
                         .withProgressLogger(ProgressLogger.wrap(log, "triangleCoefficient"))
                         .withTerminationFlag(TerminationFlag.wrap(transaction));
 
-        return triangleCoefficient
+        return clusteringCoefficient
                 .compute()
                 .resultStream();
     }
@@ -71,18 +71,18 @@ public class TriangleCoefficientProc {
     @Description("CALL algo.clusteringCoefficient(label, relationship, " +
             "{concurrency:8, write:true, writeProperty:'triangleCoefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, coefficient")
-    public Stream<TriangleCoefficientResult> triangleCount(
+    public Stream<ClusteringCoefficientResult> triangleCount(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCoefficient triangleCount;
+        final ClusteringCoefficient triangleCount;
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        final TriangleCoefficientResult.Builder builder = new TriangleCoefficientResult.Builder();
+        final ClusteringCoefficientResult.Builder builder = new ClusteringCoefficientResult.Builder();
 
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
@@ -96,7 +96,7 @@ public class TriangleCoefficientProc {
         };
 
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCoefficient(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = new ClusteringCoefficient(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();

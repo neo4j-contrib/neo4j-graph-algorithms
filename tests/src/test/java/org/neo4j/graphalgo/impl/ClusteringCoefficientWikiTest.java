@@ -6,7 +6,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.verify;
  *
  * @author mknblch
  */
-public class TriangleCoefficientWikiTest {
+public class ClusteringCoefficientWikiTest {
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -73,8 +72,8 @@ public class TriangleCoefficientWikiTest {
 
     @Test
     public void test() throws Exception {
-        final TriangleCoefficient algo =
-                new TriangleCoefficient(graph, Pools.DEFAULT, 4)
+        final ClusteringCoefficient algo =
+                new ClusteringCoefficient(graph, Pools.DEFAULT, 4)
                         .compute();
         assertArrayEquals(EXPECTED, algo.getClusteringCoefficients(), 0.1);
         assertEquals(0.583, algo.getAverageClusteringCoefficient(), 0.01);

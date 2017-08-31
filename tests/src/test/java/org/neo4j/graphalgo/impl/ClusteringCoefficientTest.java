@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author mknblch
  */
-public class TriangleCoefficientTest {
+public class ClusteringCoefficientTest {
 
     private static final double[] EXPECTED = {
         1.0, 1.0, 3.0/10, 1.0, 1.0, 2.0/3
@@ -91,8 +91,8 @@ public class TriangleCoefficientTest {
     @Test
     public void test() throws Exception {
 
-        final TriangleCoefficient algo =
-                new TriangleCoefficient(graph, Pools.DEFAULT, 4)
+        final ClusteringCoefficient algo =
+                new ClusteringCoefficient(graph, Pools.DEFAULT, 4)
                         .compute();
 
         assertArrayEquals(EXPECTED, algo.getClusteringCoefficients(), 0.01);

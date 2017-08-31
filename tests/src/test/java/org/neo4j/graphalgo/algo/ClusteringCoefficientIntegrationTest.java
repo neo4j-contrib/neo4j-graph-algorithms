@@ -4,9 +4,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
-import org.neo4j.graphalgo.TriangleCoefficientProc;
-import org.neo4j.graphalgo.TriangleProc;
-import org.neo4j.graphalgo.impl.TriangleCoefficient;
+import org.neo4j.graphalgo.ClusteringCoefficientProc;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -29,7 +27,7 @@ import static org.mockito.Mockito.*;
  *
  * @author mknblch
  */
-public class TriangleCoefficientIntegrationTest {
+public class ClusteringCoefficientIntegrationTest {
 
     private static GraphDatabaseAPI api;
 
@@ -67,7 +65,7 @@ public class TriangleCoefficientIntegrationTest {
 
         api.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(TriangleCoefficientProc.class);
+                .registerProcedure(ClusteringCoefficientProc.class);
 
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
