@@ -21,17 +21,6 @@ public class GraphMath {
         }
     }
 
-    public static double test(long n) {
-        int b = 1;
-
-        for (long i = 2; i <= 2; i++) {
-            b *= i;
-        }
-
-        return b;
-    }
-
-
     // iterative binomial coefficient nC2 (n choose 2)
     public static double binomial2(long n) {
         if (n < 2) {
