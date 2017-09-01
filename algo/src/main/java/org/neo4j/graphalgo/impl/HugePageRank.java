@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphalgo.exporter.HugePageRankResultExporter;
@@ -547,12 +548,14 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         @Override
         public final AbstractExporter<PageRankResult> exporter(
                 final GraphDatabaseAPI db,
+                TerminationFlag terminationFlag,
                 final Log log,
                 final String writeProperty,
                 final ExecutorService executorService,
                 final int concurrency) {
             return new HugePageRankResultExporter(
                     db,
+                    terminationFlag,
                     idMapping,
                     log,
                     writeProperty,

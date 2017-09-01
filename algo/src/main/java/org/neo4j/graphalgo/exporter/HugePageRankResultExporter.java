@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.core.utils.HugeParallelExporter;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
@@ -17,19 +18,22 @@ public class HugePageRankResultExporter extends HugeParallelExporter<PageRankRes
 
     public HugePageRankResultExporter(
             GraphDatabaseAPI db,
+            TerminationFlag terminationFlag,
             HugeIdMapping idMapping,
             Log log,
             String writeProperty) {
-        super(db, idMapping, log, writeProperty);
+        super(db, terminationFlag, idMapping, log, writeProperty);
     }
 
     public HugePageRankResultExporter(
             GraphDatabaseAPI db,
+            TerminationFlag terminationFlag,
             HugeIdMapping idMapping,
             Log log,
             String writeProperty,
             ExecutorService executorService) {
-        super(db, idMapping, log, writeProperty, executorService);
+        super(db, idMapping, log, writeProperty, executorService,
+                terminationFlag);
     }
 
     @Override

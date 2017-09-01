@@ -60,8 +60,9 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
-        PageRankResult scores = evaluate(graph, configuration, statsBuilder);
-        write(graph, scores, configuration, statsBuilder);
+        TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+        PageRankResult scores = evaluate(graph, terminationFlag, configuration, statsBuilder);
+        write(graph, terminationFlag, scores, configuration, statsBuilder);
 
         return Stream.of(statsBuilder.build());
     }
@@ -79,7 +80,9 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
-        PageRankResult scores = evaluate(graph, configuration, statsBuilder);
+
+        TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+        PageRankResult scores = evaluate(graph, terminationFlag, configuration, statsBuilder);
 
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
@@ -119,6 +122,7 @@ public final class PageRankProc {
 
     private PageRankResult evaluate(
             Graph graph,
+            TerminationFlag terminationFlag,
             ProcedureConfiguration configuration,
             PageRankScore.Stats.Builder statsBuilder) {
 
@@ -137,7 +141,7 @@ public final class PageRankProc {
         Algorithm<?> algo = prAlgo
                 .algorithm()
                 .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+                .withTerminationFlag(terminationFlag);
 
         statsBuilder.timeEval(() -> prAlgo.compute(iterations));
 
@@ -153,6 +157,7 @@ public final class PageRankProc {
 
     private void write(
             Graph graph,
+            TerminationFlag terminationFlag,
             PageRankResult result,
             ProcedureConfiguration configuration,
             final PageRankScore.Stats.Builder statsBuilder) {
@@ -172,6 +177,7 @@ public final class PageRankProc {
                 } else {
                     result.exporter(
                             api,
+                            terminationFlag,
                             log,
                             propertyName,
                             Pools.DEFAULT,

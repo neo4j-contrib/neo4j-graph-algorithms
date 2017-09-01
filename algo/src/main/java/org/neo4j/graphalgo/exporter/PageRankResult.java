@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.exporter;
 
 import org.neo4j.graphalgo.core.utils.AbstractExporter;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
@@ -16,6 +17,7 @@ public interface PageRankResult {
 
     AbstractExporter<PageRankResult> exporter(
             GraphDatabaseAPI db,
+            TerminationFlag terminationFlag,
             Log log,
             String writeProperty,
             ExecutorService executorService,
