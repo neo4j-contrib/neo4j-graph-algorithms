@@ -8,7 +8,7 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,16 +30,18 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
     private AtomicInteger progress = new AtomicInteger(0);
 
     private final ProgressLogger progressLogger;
+    private final TerminationFlag terminationFlag;
 
     protected long nodeCount;
 
-    protected final HugeIdMapping idMapping;
+    protected HugeIdMapping idMapping;
 
     protected final int writePropertyId;
 
 
     public HugeParallelExporter(
             GraphDatabaseAPI db,
+            TerminationFlag terminationFlag,
             HugeIdMapping idMapping,
             Log log,
             String writeProperty) {
@@ -47,6 +49,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
         this.idMapping = Objects.requireNonNull(idMapping);
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(
                 log), TASK_EXPORT);
+        this.terminationFlag = terminationFlag;
         this.executorService = null;
         nodeCount = idMapping.hugeNodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
@@ -57,7 +60,8 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
             HugeIdMapping idMapping,
             Log log,
             String writeProperty,
-            ExecutorService executorService) {
+            ExecutorService executorService,
+            TerminationFlag terminationFlag) {
         super(Objects.requireNonNull(db));
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(
                 log), TASK_EXPORT);
@@ -65,6 +69,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
         this.executorService = Objects.requireNonNull(executorService);
         nodeCount = idMapping.hugeNodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
+        this.terminationFlag = terminationFlag;
     }
 
     public HugeParallelExporter<T> withConcurrency(int concurrency) {
@@ -74,10 +79,14 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
 
     public void write(T data) {
         progress.set(0);
-        if (ParallelUtil.canRunInParallel(executorService)) {
-            writeParallel(data);
-        } else {
-            writeSequential(data);
+        try {
+            if (ParallelUtil.canRunInParallel(executorService)) {
+                writeParallel(data);
+            } else {
+                writeSequential(data);
+            }
+        } finally {
+            idMapping = null;
         }
     }
 
@@ -87,7 +96,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
              Statement statement = bridge.get()) {
             DataWriteOperations ops = statement.dataWriteOperations();
             double denominator = nodeCount - 1;
-            for (long i = 0; i < nodeCount; i++) {
+            for (long i = 0; i < nodeCount && terminationFlag.running(); i++) {
                 doWrite(ops, data, i);
                 progressLogger.logProgress(i, denominator);
             }
@@ -101,33 +110,36 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
         verify();
         final int batchSize = Math.min(
                 MAX_BATCH_SIZE,
-                ParallelUtil.adjustBatchSize(nodeCount,
+                ParallelUtil.adjustBatchSize(
+                        nodeCount,
                         concurrency,
                         MIN_BATCH_SIZE));
-        final ArrayList<Runnable> runnables = new ArrayList<>();
-        for (long i = 0; i < nodeCount; i += batchSize) {
-            final long start = i;
-            final long end = Math.min(i + batchSize, nodeCount);
-            // create exporter runnables
-            runnables.add(() -> {
-                try (Transaction tx = api.beginTx();
-                     Statement statement = bridge.get()) {
-                    DataWriteOperations ops = statement.dataWriteOperations();
-                    double denominator = nodeCount - 1;
-                    for (long j = start; j < end; j++) {
-                        doWrite(ops, data, j);
-                        progressLogger.logProgress(
-                                progress.getAndIncrement(),
-                                denominator);
+        Collection<Runnable> runnables = LazyBatchCollection.of(
+                nodeCount,
+                batchSize,
+                (start, length) -> () -> {
+                    try (Transaction tx = api.beginTx();
+                         Statement statement = bridge.get()) {
+                        DataWriteOperations ops = statement.dataWriteOperations();
+                        double denominator = nodeCount - 1;
+                        long end = start + length;
+                        for (long j = start; j < end; j++) {
+                            doWrite(ops, data, j);
+                            progressLogger.logProgress(
+                                    progress.getAndIncrement(),
+                                    denominator);
+                        }
+                        tx.success();
+                    } catch (KernelException e) {
+                        throw new RuntimeException(e);
                     }
-                    tx.success();
-                } catch (KernelException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
+                });
 
-        ParallelUtil.run(runnables, executorService);
+        ParallelUtil.runWithConcurrency(
+                concurrency,
+                runnables,
+                terminationFlag,
+                executorService);
     }
 
     private void verify() {
@@ -140,5 +152,4 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
             DataWriteOperations writeOperations,
             T data,
             long offset) throws KernelException;
-
 }

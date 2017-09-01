@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 
 public final class ParallelUtil {
@@ -139,10 +140,10 @@ public final class ParallelUtil {
                 nodeOffset += batchSize;
             }
         } else {
-            LazyHugeBatchImporters<T> tasks = new LazyHugeBatchImporters<>(
+            AtomicLong nodeOffset = new AtomicLong();
+            Collection<T> tasks = LazyMappingCollection.of(
                     iterators,
-                    importer,
-                    batchSize);
+                    it -> importer.newImporter(nodeOffset.getAndAdd(batchSize), it));
             runWithConcurrency(concurrency, tasks, executor);
         }
     }
@@ -436,47 +437,6 @@ public final class ParallelUtil {
                 future.cancel(true);
             }
             futures.clear();
-        }
-    }
-
-    private static final class LazyHugeBatchImporters<T extends Runnable> extends AbstractCollection<T> {
-        private final Collection<PrimitiveLongIterable> batches;
-        private final HugeParallelGraphImporter<T> importer;
-        private final long batchSize;
-
-        private LazyHugeBatchImporters(
-                Collection<PrimitiveLongIterable> batches,
-                HugeParallelGraphImporter<T> importer,
-                long batchSize) {
-            this.batches = batches;
-            this.importer = importer;
-            this.batchSize = batchSize;
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return new AbstractIterator<T>() {
-                private final Iterator<PrimitiveLongIterable> it = batches.iterator();
-                private long nodeOffset = 0;
-
-                @Override
-                protected T fetch() {
-                    if (it.hasNext()) {
-                        try {
-                            PrimitiveLongIterable next = it.next();
-                            return importer.newImporter(nodeOffset, next);
-                        } finally {
-                            nodeOffset += batchSize;
-                        }
-                    }
-                    return done();
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            return batches.size();
         }
     }
 }

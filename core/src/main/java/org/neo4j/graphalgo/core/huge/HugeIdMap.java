@@ -1,20 +1,16 @@
 package org.neo4j.graphalgo.core.huge;
 
-import com.carrotsearch.hppc.AbstractIterator;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.api.HugeNodeIterator;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 
-import java.util.AbstractCollection;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.function.LongPredicate;
 
 /**
@@ -96,12 +92,10 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
 
     @Override
     public Collection<PrimitiveLongIterable> hugeBatchIterables(int batchSize) {
-        long nodeCount = hugeNodeCount();
-        int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
-        if (numberOfBatches == 1) {
-            return Collections.singleton(() -> new IdIterator(nodeCount));
-        }
-        return new LazyBatches(numberOfBatches, batchSize, nodeCount);
+        return LazyBatchCollection.of(
+                hugeNodeCount(),
+                batchSize,
+                IdIterable::new);
     }
 
     private static final class IdIterable implements PrimitiveLongIterable {
@@ -142,44 +136,6 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
         @Override
         public long next() {
             return current++;
-        }
-    }
-
-    private static final class LazyBatches extends AbstractCollection<PrimitiveLongIterable> {
-        private final long numberOfBatches;
-        private final long batchSize;
-        private final long nodeCount;
-
-        private LazyBatches(
-                int numberOfBatches,
-                int batchSize,
-                long nodeCount) {
-            this.numberOfBatches = numberOfBatches;
-            this.batchSize = batchSize;
-            this.nodeCount = nodeCount;
-        }
-
-        @Override
-        public Iterator<PrimitiveLongIterable> iterator() {
-            return new AbstractIterator<PrimitiveLongIterable>() {
-                private long i;
-
-                @Override
-                protected PrimitiveLongIterable fetch() {
-                    long i = this.i++;
-                    if (i >= numberOfBatches) {
-                        return done();
-                    }
-                    long start = i * batchSize;
-                    long length = Math.min(batchSize, nodeCount - start);
-                    return new IdIterable(start, length);
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            return (int) numberOfBatches;
         }
     }
 }

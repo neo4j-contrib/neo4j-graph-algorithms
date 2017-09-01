@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.exporter.PageRankResult;
 import org.neo4j.graphalgo.exporter.PageRankResultExporter;
 import org.neo4j.graphdb.Direction;
@@ -536,6 +537,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         @Override
         public final AbstractExporter<PageRankResult> exporter(
                 final GraphDatabaseAPI db,
+                TerminationFlag terminationFlag,
                 final Log log,
                 final String writeProperty,
                 final ExecutorService executorService,
