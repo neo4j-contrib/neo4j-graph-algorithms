@@ -66,6 +66,19 @@ public class ProcedureConfiguration {
     }
 
     /**
+     *
+     */
+    public ProcedureConfiguration overrideDirection(String direction) {
+        config.put(ProcedureConstants.DIRECTION, direction);
+        return this;
+    }
+
+    public ProcedureConfiguration overrideDirection(Direction direction) {
+        config.put(ProcedureConstants.DIRECTION, direction.name());
+        return this;
+    }
+
+    /**
      * override property param
      *
      * @return self
