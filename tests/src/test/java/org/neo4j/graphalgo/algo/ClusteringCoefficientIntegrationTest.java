@@ -4,7 +4,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
-import org.neo4j.graphalgo.ClusteringCoefficientProc;
+import org.neo4j.graphalgo.TriangleProc;
+import org.neo4j.graphalgo.impl.TriangleCount;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -65,7 +66,7 @@ public class ClusteringCoefficientIntegrationTest {
 
         api.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(ClusteringCoefficientProc.class);
+                .registerProcedure(TriangleProc.class);
 
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
@@ -80,23 +81,26 @@ public class ClusteringCoefficientIntegrationTest {
 
     @Test
     public void testTriangleCountWriteCypher() throws Exception {
-        final String cypher = "CALL algo.clusteringCoefficient('Node', '', {concurrency:4, write:true}) " +
-                "YIELD loadMillis, computeMillis, writeMillis, nodeCount, coefficient";
+        final String cypher = "CALL algo.triangleCount('Node', '', {concurrency:4, write:true, clusterCoefficientProperty:'c'}) " +
+                "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient";
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
             final long computeMillis = row.getNumber("computeMillis").longValue();
             final long writeMillis = row.getNumber("writeMillis").longValue();
             final long nodeCount = row.getNumber("nodeCount").longValue();
-            final double triangleCount = row.getNumber("coefficient").doubleValue();
+            final long triangles = row.getNumber("triangleCount").longValue();
+            final double coefficient = row.getNumber("averageClusteringCoefficient").doubleValue();
             assertNotEquals(-1, loadMillis);
             assertNotEquals(-1, computeMillis);
             assertNotEquals(-1, writeMillis);
-            assertEquals(0.851, triangleCount, 0.1);
+            assertEquals(9, nodeCount);
+            assertEquals(3, triangles);
+            assertEquals(0.851, coefficient, 0.1);
             assertEquals(9, nodeCount);
             return true;
         });
 
-        final String request = "MATCH (n) WHERE exists(n.clusterCoefficient) RETURN n.clusterCoefficient as c";
+        final String request = "MATCH (n) WHERE exists(n.clusteringCoefficient) RETURN n.clusteringCoefficient as c";
         api.execute(request).accept(row -> {
             final double triangles = row.getNumber("c").doubleValue();
             System.out.println("triangles = " + triangles);
@@ -107,20 +111,20 @@ public class ClusteringCoefficientIntegrationTest {
     @Test
     public void testTriangleCountStream() throws Exception {
         final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
-        final String cypher = "CALL algo.clusteringCoefficient.stream('Node', '', {concurrency:4}) YIELD nodeId, clusteringCoefficient";
+        final String cypher = "CALL algo.triangleCount.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles, coefficient";
         api.execute(cypher).accept(row -> {
             final long nodeId = row.getNumber("nodeId").longValue();
-            final double triangles = row.getNumber("clusteringCoefficient").doubleValue();
-            System.out.println(nodeId + ":" + triangles);
-            mock.consume(nodeId, triangles);
+            final long triangles = row.getNumber("triangles").longValue();
+            final double coefficient = row.getNumber("coefficient").doubleValue();
+            mock.consume(nodeId, triangles, coefficient);
             return true;
         });
-        verify(mock, times(7)).consume(anyLong(), AdditionalMatchers.eq(1.0, 0.1));
-        verify(mock, times(2)).consume(anyLong(), AdditionalMatchers.eq(0.333, 0.1));
+        verify(mock, times(7)).consume(anyLong(), eq(1L), AdditionalMatchers.eq(1.0, 0.1));
+        verify(mock, times(2)).consume(anyLong(), eq(1L), AdditionalMatchers.eq(0.333, 0.1));
     }
 
     interface TriangleCountConsumer {
-        void consume(long nodeId, double value);
+        void consume(long nodeId, long triangles, double value);
     }
 
 }

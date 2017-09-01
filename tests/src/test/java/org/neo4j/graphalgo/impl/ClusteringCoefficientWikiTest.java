@@ -72,8 +72,8 @@ public class ClusteringCoefficientWikiTest {
 
     @Test
     public void test() throws Exception {
-        final ClusteringCoefficient algo =
-                new ClusteringCoefficient(graph, Pools.DEFAULT, 4)
+        final TriangleCount algo =
+                new TriangleCount(graph, Pools.DEFAULT, 4)
                         .compute();
         assertArrayEquals(EXPECTED, algo.getClusteringCoefficients(), 0.1);
         assertEquals(0.583, algo.getAverageClusteringCoefficient(), 0.01);

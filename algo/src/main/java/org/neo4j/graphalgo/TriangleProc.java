@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.exporter.AtomicIntArrayExporter;
+import org.neo4j.graphalgo.exporter.TriangleExporter;
 import org.neo4j.graphalgo.impl.TriangleCount;
 import org.neo4j.graphalgo.impl.TriangleStream;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
@@ -17,6 +18,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 public class TriangleProc {
 
     public static final String DEFAULT_WRITE_PROPERTY_VALUE = "triangles";
+    public static final String COEFFICIENT_WRITE_PROPERTY_VALUE = "clusteringCoefficientProperty";
 
     @Context
     public GraphDatabaseAPI api;
@@ -94,8 +97,8 @@ public class TriangleProc {
 
     @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
     @Description("CALL algo.triangleCount(label, relationship, " +
-            "{concurrency:8, write:true, writeProperty:'triangles'}) " +
-            "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount")
+            "{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
+            "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, clusteringCoefficient")
     public Stream<Result> triangleCount(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -103,6 +106,8 @@ public class TriangleProc {
 
         final Graph graph;
         final TriangleCount triangleCount;
+        final double[] clusteringCoefficients;
+
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
@@ -124,17 +129,27 @@ public class TriangleProc {
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
+            clusteringCoefficients = triangleCount.getClusteringCoefficients();
         };
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
-                new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
-                        .write(triangleCount.getTriangles());
+                final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
+                if (coefficientProperty.isPresent()) {
+                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                            .setCoefficientWriteProperty(coefficientProperty.get())
+                            .write(triangleCount.getTriangles(), clusteringCoefficients);
+                } else {
+                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                            .write(triangleCount.getTriangles());
+                }
+
             }
         }
 
         builder.withNodeCount(graph.nodeCount())
-                .withTriangleCount(triangleCount.getTriangleCount());
+                .withTriangleCount(triangleCount.getTriangleCount())
+                .withAverageClusteringCoefficient(triangleCount.getAverageClusteringCoefficient());
 
         return Stream.of(builder.build());
     }
@@ -149,13 +164,15 @@ public class TriangleProc {
         public final long writeMillis;
         public final long nodeCount;
         public final long triangleCount;
+        public final double averageClusteringCoefficient;
 
-        public Result(long loadMillis, long computeMillis, long writeMillis, long nodeCount, long triangleCount) {
+        public Result(long loadMillis, long computeMillis, long writeMillis, long nodeCount, long triangleCount, double averageClusteringCoefficient) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.writeMillis = writeMillis;
             this.nodeCount = nodeCount;
             this.triangleCount = triangleCount;
+            this.averageClusteringCoefficient = averageClusteringCoefficient;
         }
     }
 
@@ -163,6 +180,12 @@ public class TriangleProc {
 
         private long nodeCount = -1L;
         private long triangleCount = -1L;
+        private double averageClusteringCoefficient = -1d;
+
+        public TriangleCountResultBuilder withAverageClusteringCoefficient(double averageClusteringCoefficient) {
+            this.averageClusteringCoefficient = averageClusteringCoefficient;
+            return this;
+        }
 
         public TriangleCountResultBuilder withNodeCount(long nodeCount) {
             this.nodeCount = nodeCount;
@@ -180,7 +203,8 @@ public class TriangleProc {
                     evalDuration,
                     writeDuration,
                     nodeCount,
-                    triangleCount);
+                    triangleCount,
+                    averageClusteringCoefficient);
         }
     }
 

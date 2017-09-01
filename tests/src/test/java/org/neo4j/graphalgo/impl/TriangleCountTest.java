@@ -27,7 +27,8 @@ public class TriangleCountTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLES = 1000L;
+    public static final long TRIANGLE_COUNT = 1000L;
+    public static final double EXPECTED_COEFFICIENT = 0.666;
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -41,7 +42,7 @@ public class TriangleCountTest {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLES + " nodes"))) {
+        try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLE_COUNT + " nodes"))) {
 
             final RelationshipType type = RelationshipType.withName(RELATIONSHIP);
             final DefaultBuilder builder = GraphBuilder.create(db)
@@ -50,7 +51,7 @@ public class TriangleCountTest {
                     .newDefaultBuilder();
             final Node center = builder.createNode();
             builder.newRingBuilder()
-                    .createRing((int)TRIANGLES)
+                    .createRing((int) TRIANGLE_COUNT)
                     .forEachNodeInTx(node -> {
                         center.createRelationshipTo(node, type);
                     });
@@ -73,28 +74,42 @@ public class TriangleCountTest {
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
             algo.compute();
         }
-        assertEquals(TRIANGLES, (long) algo.getTriangleCount());
         assertTriangles(algo.getTriangles());
+        assertClusteringCoefficient(algo.getClusteringCoefficients());
+        assertEquals(TRIANGLE_COUNT, (long) algo.getTriangleCount());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
     }
 
     @Test
     public void testParallel() throws Exception {
         final TriangleCount algo = new TriangleCount(graph, Pools.DEFAULT, 4);
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel count took " + l + "ms"))) {
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel eval took " + l + "ms"))) {
             algo.compute();
         }
-        assertEquals(TRIANGLES, (long) algo.getTriangleCount());
+        assertClusteringCoefficient(algo.getClusteringCoefficients());
+        assertEquals(TRIANGLE_COUNT, (long) algo.getTriangleCount());
         assertTriangles(algo.getTriangles());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
     }
 
     private void assertTriangles(AtomicIntegerArray triangles) {
         final int centerMapped = graph.toMappedNodeId(centerId);
-        assertEquals(TRIANGLES, triangles.get(centerMapped));
+        assertEquals(TRIANGLE_COUNT, triangles.get(centerMapped));
         for (int i = 0; i < triangles.length(); i++) {
             if (i == centerMapped) {
                 continue;
             }
             assertEquals(2, triangles.get(i));
+        }
+    }
+
+    private void assertClusteringCoefficient(double[] coefficients) {
+        final int centerMapped = graph.toMappedNodeId(centerId);
+        for (int i = 0; i < coefficients.length; i++) {
+            if (i == centerMapped) {
+                continue;
+            }
+            assertEquals(EXPECTED_COEFFICIENT, coefficients[i], 0.01);
         }
     }
 }
