@@ -53,15 +53,18 @@ public class Directions {
 
             case "outgoing":
             case "out":
+            case "o":
             case ">" :
                 return Direction.OUTGOING;
 
             case "incoming":
             case "in":
+            case "i":
             case "<":
                 return Direction.INCOMING;
 
             case "both":
+            case "b":
             case "<>":
                 return Direction.BOTH;
 
