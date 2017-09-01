@@ -44,6 +44,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
     private MultiQueue successors;
     private MultiQueue phaseQueue;
     private ArrayList<Future<?>> futures = new ArrayList<>();
+    private Direction direction = Direction.OUTGOING;
 
     /**
      * constructs a parallel centrality solver
@@ -75,6 +76,11 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
         return this;
     }
 
+    public BetweennessCentralitySuccessorBrandes withDirection(Direction direction) {
+        this.direction = direction;
+        return this;
+    }
+
     private boolean compute(int startNodeId) {
 
         // initialization
@@ -101,7 +107,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
                 successors.clear(v);
                 graph.forEachRelationship(
                         v,
-                        Direction.OUTGOING,
+                        direction,
                         (sourceNodeId, w, relationId) -> {
                             int dw = d.get(w);
                             d.compareAndSet(w, -1, phase + 1);
