@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Wrapper around configuration options map
@@ -79,7 +80,7 @@ public class ProcedureConfiguration {
      * @return the label or query
      */
     public String getNodeLabelOrQuery() {
-        return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
+        return getString(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
     }
 
     /**
@@ -90,11 +91,11 @@ public class ProcedureConfiguration {
      * @return the label or query
      */
     public String getNodeLabelOrQuery(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
+        return getString(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
     }
 
     public String getRelationshipOrQuery() {
-        return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
+        return getString(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
     }
 
     /**
@@ -113,7 +114,7 @@ public class ProcedureConfiguration {
      * @return the property name
      */
     public String getWriteProperty(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, defaultValue);
+        return getString(ProcedureConstants.WRITE_PROPERTY, defaultValue);
     }
 
     /**
@@ -124,7 +125,7 @@ public class ProcedureConfiguration {
      * @return the relationship name or query
      */
     public String getRelationshipOrQuery(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
+        return getString(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
     }
 
     /**
@@ -178,7 +179,7 @@ public class ProcedureConfiguration {
      * @return
      */
     public String getProperty() {
-        return getStringOrNull(ProcedureConstants.PROPERTY_PARAM, null);
+        return getString(ProcedureConstants.PROPERTY_PARAM, null);
     }
 
     public double getPropertyDefaultValue(double defaultValue) {
@@ -231,7 +232,7 @@ public class ProcedureConfiguration {
      * @return
      */
     public Class<? extends GraphFactory> getGraphImpl() {
-        final String graphImpl = getStringOrNull(
+        final String graphImpl = getString(
                 ProcedureConstants.GRAPH_IMPL_PARAM,
                 ProcedureConstants.DEFAULT_GRAPH_IMPL);
         switch (graphImpl.toLowerCase(Locale.ROOT)) {
@@ -259,9 +260,16 @@ public class ProcedureConfiguration {
      * @param defaultValue the default value if key is not found
      * @return the configuration value
      */
-    public String getStringOrNull(String key, String defaultValue) {
+    public String getString(String key, String defaultValue) {
         String value = (String) config.getOrDefault(key, defaultValue);
         return (null == value || "".equals(value)) ? defaultValue : value;
+    }
+
+    public Optional<String> getString(String key) {
+        if (config.containsKey(key)) {
+            return Optional.of((String) get(key));
+        }
+        return Optional.empty();
     }
 
     public Object get(String key) {

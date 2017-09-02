@@ -1,0 +1,101 @@
+package org.neo4j.graphalgo.impl;
+
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.TestGraphDatabaseFactory;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+/**
+ *
+ * Example: <a href="http://cs.stanford.edu/~rishig/courses/ref/l1.pdf">http://cs.stanford.edu/~rishig/courses/ref/l1.pdf</a>
+ *
+ * <pre>
+ *
+ * (a)    (d)
+ *  | \  /   \
+ *  | (c)----(f)
+ *  | /  \   /
+ * (b)    (e)
+ *
+ *  N |T |D |L |C
+ *  --+--+--+--+---
+ *  a |1 |2 |2 |1.0
+ *  b |1 |2 |2 |1.0
+ *  c |3 |5 |20|3/10
+ *  d |1 |2 |2 |1.0
+ *  e |1 |2 |2 |1.0
+ *  f |2 |3 |6 |2/3
+ * </pre>
+ *
+ * @author mknblch
+ */
+public class ClusteringCoefficientTest {
+
+    private static final double[] EXPECTED = {
+        1.0, 1.0, 3.0/10, 1.0, 1.0, 2.0/3
+    };
+
+    private static final String LABEL = "Node";
+
+    private static GraphDatabaseAPI db;
+    private static Graph graph;
+
+    @BeforeClass
+    public static void setup() throws Exception {
+
+        final String setupCypher =
+                "CREATE (a:Node {name:'a'})\n" +
+                        "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" +
+                        "CREATE (d:Node {name:'d'})\n" +
+                        "CREATE (e:Node {name:'e'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
+
+                        "CREATE" +
+                        " (a)-[:TYPE]->(b),\n" +
+                        " (a)-[:TYPE]->(c),\n" +
+                        " (b)-[:TYPE]->(c),\n" +
+
+                        " (c)-[:TYPE]->(e),\n" +
+                        " (e)-[:TYPE]->(f),\n" +
+
+                        " (c)-[:TYPE]->(d),\n" +
+                        " (c)-[:TYPE]->(f),\n" +
+                        " (d)-[:TYPE]->(f)";
+
+        db = (GraphDatabaseAPI)
+                new TestGraphDatabaseFactory()
+                        .newImpermanentDatabaseBuilder()
+                        .newGraphDatabase();
+
+        try (Transaction tx = db.beginTx()) {
+            db.execute(setupCypher);
+            tx.success();
+        }
+
+        graph = new GraphLoader(db)
+                .withLabel(LABEL)
+                .withoutRelationshipWeights()
+                .withoutNodeWeights()
+                .load(HeavyGraphFactory.class);
+    }
+
+    @Test
+    public void test() throws Exception {
+
+        final TriangleCount algo =
+                new TriangleCount(graph, Pools.DEFAULT, 4)
+                        .compute();
+
+        assertArrayEquals(EXPECTED, algo.getClusteringCoefficients(), 0.01);
+        assertEquals(0.827, algo.getAverageClusteringCoefficient(), 0.01);
+    }
+}
