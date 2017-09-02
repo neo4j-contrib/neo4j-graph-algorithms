@@ -6,8 +6,10 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Direction;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -61,6 +63,19 @@ public class ProcedureConfiguration {
      */
     public ProcedureConfiguration overrideRelationshipTypeOrQuery(String relationshipTypeOrQuery) {
         config.put(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, relationshipTypeOrQuery);
+        return this;
+    }
+
+    /**
+     *
+     */
+    public ProcedureConfiguration overrideDirection(String direction) {
+        config.put(ProcedureConstants.DIRECTION, direction);
+        return this;
+    }
+
+    public ProcedureConfiguration overrideDirection(Direction direction) {
+        config.put(ProcedureConstants.DIRECTION, direction.name());
         return this;
     }
 
@@ -223,7 +238,15 @@ public class ProcedureConfiguration {
     }
 
     public String getDirectionName() {
-        return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
+        return getDirectionName(ProcedureConstants.DIRECTION_DEFAULT);
+    }
+
+    public String getDirectionName(String defaultDirection) {
+        return get(ProcedureConstants.DIRECTION, defaultDirection);
+    }
+
+    public Direction getDirection(Direction defaultDirection) {
+        return Directions.fromString(getDirectionName(defaultDirection.name()));
     }
 
     /**

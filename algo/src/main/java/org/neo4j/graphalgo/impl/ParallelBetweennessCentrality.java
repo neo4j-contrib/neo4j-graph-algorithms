@@ -37,6 +37,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
+    private Direction direction = Direction.OUTGOING;
 
     /**
      * constructs a parallel centrality solver
@@ -52,6 +53,11 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
+    }
+
+    public ParallelBetweennessCentrality withDirection(Direction direction) {
+        this.direction = direction;
+        return this;
     }
 
     /**
@@ -154,7 +160,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                 while (!queue.isEmpty()) {
                     int node = queue.removeFirst();
                     stack.push(node);
-                    graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
+                    graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                         if (distance[target] < 0) {
                             queue.addLast(target);
                             distance[target] = distance[node] + 1;

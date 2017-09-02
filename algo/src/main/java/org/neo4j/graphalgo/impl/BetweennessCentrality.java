@@ -28,6 +28,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     private IntArrayDeque queue;
     private Path[] paths;
     private int nodeCount;
+    private Direction direction = Direction.OUTGOING;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
@@ -39,6 +40,11 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         queue = new IntArrayDeque();
         paths = new Path[nodeCount];
         delta = new double[nodeCount];
+    }
+
+    public BetweennessCentrality withDirection(Direction direction) {
+        this.direction = direction;
+        return this;
     }
 
     /**
@@ -91,7 +97,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         while (!queue.isEmpty() && running()) {
             int node = queue.removeFirst();
             stack.push(node);
-            graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
+            graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                 if (distance[target] < 0) {
                     queue.addLast(target);
                     distance[target] = distance[node] + 1;
