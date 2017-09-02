@@ -36,7 +36,7 @@ public class BetweennessCentralityProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.betweenness.exp1.stream")
-    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {scaleFactor:1000000}) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {direction:'out', scaleFactor:1000000}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessSuccessorBrandesStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -160,7 +160,7 @@ public class BetweennessCentralityProc {
 
 
     @Procedure(value = "algo.betweenness", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD " +
+    @Description("CALL algo.betweenness(label:String, relationship:String, {direction:'out',write:true, writeProperty:'centrality', stats:true}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweenness(
             @Name(value = "label", defaultValue = "") String label,
