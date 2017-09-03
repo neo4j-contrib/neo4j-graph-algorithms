@@ -151,7 +151,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | write | boolean | true | yes | if result should be written back as node property
-| writeProperty | string | 'triangles' | yes | property name number of triangles the node is member of is written to
+| writeProperty | string | 'triangles' | yes | property name the number of triangles a node is member of is written to
 | clusteringCoefficientProperty | string | 'coefficient' | yes | property name clustering coefficient of the node is written to
 |===
 
