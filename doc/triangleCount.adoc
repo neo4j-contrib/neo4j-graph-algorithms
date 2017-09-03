@@ -62,7 +62,7 @@ yield nodeA,nodeB,nodeC
 ----
 
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and global clustering coefficient of the given graph. 
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
 ----
 CALL algo.triangleCount('Person', 'KNOWS',
@@ -135,7 +135,7 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 | triangles | int | number of triangles a node is member of
 |===
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and global clustering coefficient of the given graph. 
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
 ----
 CALL algo.triangleCount(label:String, relationship:String, 
@@ -166,7 +166,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 | evalMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 | triangleCount | int | number of triangles in the given graph. 
-| averageClusteringCoefficient | float | global clustering coefficient of the given graph
+| averageClusteringCoefficient | float | average clustering coefficient of the given graph
 
 
 
