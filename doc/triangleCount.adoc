@@ -185,7 +185,11 @@ CALL algo.triangleCount('MATCH (p:Person) RETURN id(p) as id',
 {concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'}) 
 yield loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 ----
+== Versions 
 
+We support the following versions of the triangle count algorithms:
+
+* [x] undirected, unweighted
 
 == References
 
