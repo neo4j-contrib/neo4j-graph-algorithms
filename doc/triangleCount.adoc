@@ -62,12 +62,12 @@ yield nodeA,nodeB,nodeC
 ----
 
 
-.counts the number of triangles a node is member of and writes it back.
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
 ----
 CALL algo.triangleCount('Person', 'KNOWS',
-{concurrency:4, write:true, writeProperty:'triangles'}) 
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
+{concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 ----
 
 .counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
@@ -135,12 +135,12 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 | triangles | int | number of triangles a node is member of
 |===
 
-.counts the number of triangles a node is member of and writes it back.
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
 ----
 CALL algo.triangleCount(label:String, relationship:String, 
-{concurrency:8, write:true, writeProperty:'triangles'}) 
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
+{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) 
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 ----
 
 .Parameters
@@ -151,7 +151,8 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | write | boolean | true | yes | if result should be written back as node property
-| writeProperty | string | 'triangles' | yes | property name results are written back to
+| writeProperty | string | 'triangles' | yes | property name the number of triangles a node is member of is written to
+| clusteringCoefficientProperty | string | 'coefficient' | yes | property name clustering coefficient of the node is written to
 |===
 
 
@@ -165,10 +166,30 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount
 | evalMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 | triangleCount | int | number of triangles in the given graph. 
+| averageClusteringCoefficient | float | average clustering coefficient of the given graph
+
 
 
 |===
 
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+CALL algo.triangleCount('MATCH (p:Person) RETURN id(p) as id',
+'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source,id(p2) as target',
+{concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'}) 
+yield loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+----
+== Versions 
+
+We support the following versions of the triangle count algorithms:
+
+* [x] undirected, unweighted
 
 == References
 
