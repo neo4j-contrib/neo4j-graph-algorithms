@@ -201,9 +201,12 @@ We support the following versions of the triangle count algorithms:
 
 
 ifdef::implementation[]
+// tag::implementation[]
+
 
 == Implementation Details
 
+:leveloffset: +1
 
 - [ ] single threaded implementation
 - [ ] tests
@@ -230,5 +233,5 @@ a stream with nodeId and triangleCount
 
 *sum(triangleCount) == triangleCount * 3* because every triangle adds 1 to each of its 3 nodes.
 
-
+// end::implementation[]
 endif::implementation[]
