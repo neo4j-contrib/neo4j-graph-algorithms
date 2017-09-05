@@ -40,14 +40,16 @@ public class BetweennessCentralityTest_349 {
     private static GraphDatabaseAPI db;
     private static Graph graph;
 
-    private static final String PATH = "repository/neo4j-graph-algorithms/tests/src/test/resources/facebook_combined.txt";
+    private static final String PATH = "file:///Users/mknobloch/repository/neo4j-graph-algorithms/tests/src/test/resources/facebook_combined.txt";
 
-    public static final String GRAPH_DIRECTORY = "/tmp/graph.db";
+    public static final String GRAPH_DIRECTORY = "/tmp/facebook_graph.db";
 
     private static File storeDir = new File(GRAPH_DIRECTORY);
 
     @BeforeClass
     public static void setup() throws Exception {
+
+        final boolean exists = storeDir.exists();
 
         if (null != db) {
             db.shutdown();
@@ -62,7 +64,7 @@ public class BetweennessCentralityTest_349 {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(BetweennessCentralityProc.class);
 
-        if (!storeDir.exists()) {
+        if (!exists) {
             try (ProgressTimer timer = ProgressTimer.start(l -> System.out.println("creating test graph took " + l + " ms"))) {
                 db.execute(String.format("LOAD CSV FROM '%s' as row fieldterminator ' '\n", PATH) +
                         "MERGE (u:User{id:row[0]})\n" +
@@ -109,12 +111,11 @@ public class BetweennessCentralityTest_349 {
             return true;
         });
 
-        final String checkCypher = "MATCH (n:User) RETURN id(n) as id, n.centrality as c ORDER by n.centrality asc limit 20";
+        final String checkCypher = "MATCH (n:User) RETURN id(n) as id, n.centrality as c";
 
         db.execute(checkCypher).accept(row -> {
             final long id = row.getNumber("id").longValue();
             final double c = row.getNumber("c").doubleValue();
-            System.out.println(id + ": " + c);
             assertTrue(c >= 0.0);
             return true;
         });
@@ -132,6 +133,8 @@ public class BetweennessCentralityTest_349 {
         final double[] centrality = new BetweennessCentrality(graph)
                 .compute()
                 .getCentrality();
+
+        assertEquals(graph.nodeCount(), centrality.length);
 
         for (int i = 0; i < centrality.length; i++) {
 //            System.out.printf("%4d : %9.2f%n", i, centrality[i]);

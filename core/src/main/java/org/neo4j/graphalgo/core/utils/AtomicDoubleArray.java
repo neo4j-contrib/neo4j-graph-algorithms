@@ -51,6 +51,18 @@ public class AtomicDoubleArray {
         } while (!data.compareAndSet(index, expected, result));
     }
 
+    public void addCapped(int index, double value) {
+        final int newValue = (int) (value * scaleFactor);
+        int result, expected;
+        do {
+            expected = data.get(index);
+            result = expected + newValue;
+            if (result < expected) {
+                result = Integer.MAX_VALUE;
+            }
+        } while (!data.compareAndSet(index, expected, result));
+    }
+
     public int length() {
         return data.length();
     }
