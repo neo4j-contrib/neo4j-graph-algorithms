@@ -1,9 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -37,12 +34,13 @@ import static org.mockito.Mockito.*;
  *
  * @author mknblch
  */
+//@Ignore("depends on local data")
 public class BetweennessCentralityTest_349 {
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
 
-    private static final String PATH = "file:///Users/mknobloch/repository/neo4j-graph-algorithms/tests/src/test/resources/facebook_combined.txt";
+    private static final String PATH = "repository/neo4j-graph-algorithms/tests/src/test/resources/facebook_combined.txt";
 
     public static final String GRAPH_DIRECTORY = "/tmp/graph.db";
 
@@ -151,13 +149,15 @@ public class BetweennessCentralityTest_349 {
                 .withRelationshipType("FRIEND")
                 .load(HeavyGraphFactory.class);
 
-        new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
-//        new BetweennessCentrality(graph)
+        final Optional<BetweennessCentrality.Result> any = new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
                 .withDirection(Direction.BOTH)
                 .compute()
                 .resultStream()
                 .filter(r -> r.centrality < 0)
-                .forEach(System.out::println);
+                .findAny();
 
+        if (any.isPresent()) {
+            fail("negative values");
+        }
     }
 }
