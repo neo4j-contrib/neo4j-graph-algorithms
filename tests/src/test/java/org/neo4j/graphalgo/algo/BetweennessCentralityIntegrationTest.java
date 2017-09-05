@@ -246,9 +246,9 @@ public class BetweennessCentralityIntegrationTest {
         db.execute("CALL algo.betweenness('','', {direction:'both', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
-                    assertEquals(70.0, (double) row.getNumber("sumCentrality"), 0.01);
-                    assertEquals(60.0, (double) row.getNumber("maxCentrality"), 0.01);
-                    assertEquals(1.0, (double) row.getNumber("minCentrality"), 0.01);
+                    assertEquals(35.0, (double) row.getNumber("sumCentrality"), 0.01);
+                    assertEquals(30.0, (double) row.getNumber("maxCentrality"), 0.01);
+                    assertEquals(0.5, (double) row.getNumber("minCentrality"), 0.01);
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     assertNotEquals(-1L, row.getNumber("computeMillis"));
                     assertNotEquals(-1L, row.getNumber("nodes"));
@@ -272,19 +272,5 @@ public class BetweennessCentralityIntegrationTest {
                 });
     }
 
-    @Test
-    public void testSucessorBetweennessWriteWithDirection() throws Exception {
 
-        db.execute("CALL algo.betweenness.exp1('','', {direction:'both', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
-                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
-                .accept((Result.ResultVisitor<Exception>) row -> {
-                    assertEquals(70.0, (double) row.getNumber("sumCentrality"), 0.01);
-                    assertEquals(60.0, (double) row.getNumber("maxCentrality"), 0.01);
-                    assertEquals(1.0, (double) row.getNumber("minCentrality"), 0.01);
-                    assertNotEquals(-1L, row.getNumber("writeMillis"));
-                    assertNotEquals(-1L, row.getNumber("computeMillis"));
-                    assertNotEquals(-1L, row.getNumber("nodes"));
-                    return true;
-                });
-    }
 }
