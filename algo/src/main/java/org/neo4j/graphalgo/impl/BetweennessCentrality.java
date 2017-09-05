@@ -185,13 +185,20 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      */
     public static final class Result {
 
-        public final Long nodeId;
-
-        public final Double centrality;
+        public final long nodeId;
+        public final double centrality;
 
         public Result(Long nodeId, Double centrality) {
             this.nodeId = nodeId;
             this.centrality = centrality;
+        }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "nodeId=" + nodeId +
+                    ", centrality=" + centrality +
+                    '}';
         }
     }
 }

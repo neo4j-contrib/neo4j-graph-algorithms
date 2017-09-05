@@ -4,6 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.exporter.AtomicBigDoubleArrayExporter;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
@@ -169,7 +170,7 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        if (configuration.getConcurrency(-1) > 0) {
+        if (configuration.getConcurrency(-1) > 1) {
             return computeBetweennessParallel(label, relationship, configuration);
         } else {
             return computeBetweenness(label, relationship, configuration);
@@ -262,10 +263,10 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                final AtomicDoubleArray centrality = bc.getCentrality();
+                final AtomicBigDoubleArray centrality = bc.getCentrality();
                 bc.release();
                 graph.release();
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                new AtomicBigDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
                         .write(centrality);
             });
@@ -280,6 +281,25 @@ public class BetweennessCentralityProc {
         double sum = 0.0;
         for (int i = centrality.length - 1; i >= 0; i--) {
             final double c = centrality[i];
+            if (c < min) {
+                min = c;
+            }
+            if (c > max) {
+                max = c;
+            }
+            sum += c;
+        }
+        builder.withCentralityMax(max)
+                .withCentralityMin(min)
+                .withCentralitySum(sum);
+    }
+
+    private void computeStats(BetweennessCentralityProcResult.Builder builder, AtomicBigDoubleArray centrality) {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        double sum = 0.0;
+        for (int i = centrality.length() - 1; i >= 0; i--) {
+            final double c = centrality.get(i);
             if (c < min) {
                 min = c;
             }

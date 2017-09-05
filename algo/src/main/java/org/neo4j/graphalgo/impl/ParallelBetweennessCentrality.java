@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.AtomicBigDoubleArray;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.Paths;
@@ -30,7 +31,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
     // atomic double array which supports only atomic-add
-    private AtomicDoubleArray centrality;
+    private AtomicBigDoubleArray centrality;
     // the node count
     private final int nodeCount;
     // global executor service
@@ -52,7 +53,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
         this.nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
+        this.centrality = new AtomicBigDoubleArray(graph.nodeCount(), scaleFactor);
     }
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
@@ -80,7 +81,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      *
      * @return array with centrality
      */
-    public AtomicDoubleArray getCentrality() {
+    public AtomicBigDoubleArray getCentrality() {
         return centrality;
     }
 
@@ -179,8 +180,9 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                         return true;
                     });
+
                     if (node != startNodeId) {
-                        centrality.add(node, delta[node]);
+                        centrality.addExact(node, delta[node]);
                     }
                 }
             }
