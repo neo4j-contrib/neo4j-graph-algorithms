@@ -297,25 +297,6 @@ public class BetweennessCentralityProc {
                 .withCentralitySum(sum);
     }
 
-    private void computeStats(BetweennessCentralityProcResult.Builder builder, AtomicBigDoubleArray centrality) {
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-        double sum = 0.0;
-        for (int i = centrality.length() - 1; i >= 0; i--) {
-            final double c = centrality.get(i);
-            if (c < min) {
-                min = c;
-            }
-            if (c > max) {
-                max = c;
-            }
-            sum += c;
-        }
-        builder.withCentralityMax(max)
-                .withCentralityMin(min)
-                .withCentralitySum(sum);
-    }
-
     private void computeStats(BetweennessCentralityProcResult.Builder builder, AtomicDoubleArray centrality) {
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
