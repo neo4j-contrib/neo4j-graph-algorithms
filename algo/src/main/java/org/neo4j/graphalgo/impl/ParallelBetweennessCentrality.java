@@ -3,8 +3,10 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.AtomicBigDoubleArray;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
@@ -72,6 +74,11 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
             futures.add(executorService.submit(new BCTask()));
         }
         ParallelUtil.awaitTermination(futures);
+        if (direction == Direction.BOTH) {
+            ParallelUtil.iterateParallel(executorService, nodeCount, Pools.DEFAULT_CONCURRENCY, i -> {
+                centrality.set(i, centrality.get(i) / 2.0);
+            });
+        }
         return this;
     }
 
@@ -179,8 +186,9 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                         return true;
                     });
+
                     if (node != startNodeId) {
-                        centrality.add(node, delta[node]);
+                        centrality.addCapped(node, delta[node]);
                     }
                 }
             }

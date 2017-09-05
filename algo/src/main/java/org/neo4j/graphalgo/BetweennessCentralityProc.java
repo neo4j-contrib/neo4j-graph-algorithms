@@ -4,6 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.exporter.AtomicBigDoubleArrayExporter;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
@@ -172,7 +173,7 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        if (configuration.getConcurrency(-1) > 0) {
+        if (configuration.getConcurrency(-1) > 1) {
             return computeBetweennessParallel(label, relationship, configuration);
         } else {
             return computeBetweenness(label, relationship, configuration);
