@@ -44,10 +44,11 @@ public class AtomicBigDoubleArray {
     }
 
     public void addExact(int index, double value) {
+        final long newValue = (long) (value * scaleFactor);
         long result, expected;
         do {
             expected = data.get(index);
-            result = Math.addExact(expected, (long) (value * scaleFactor));
+            result = Math.addExact(expected, newValue);
         } while (!data.compareAndSet(index, expected, result));
     }
 
