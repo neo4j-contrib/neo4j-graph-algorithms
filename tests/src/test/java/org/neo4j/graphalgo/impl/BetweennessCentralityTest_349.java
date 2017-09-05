@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
  *
  * @author mknblch
  */
-//@Ignore("depends on local data")
+@Ignore("depends on local data")
 public class BetweennessCentralityTest_349 {
 
     private static GraphDatabaseAPI db;
