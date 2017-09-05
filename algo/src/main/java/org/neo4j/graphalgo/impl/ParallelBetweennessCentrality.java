@@ -32,7 +32,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
     // atomic double array which supports only atomic-add
-    private AtomicBigDoubleArray centrality;
+    private AtomicDoubleArray centrality;
     // the node count
     private final int nodeCount;
     // global executor service
@@ -54,7 +54,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
         this.nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.centrality = new AtomicBigDoubleArray(graph.nodeCount(), scaleFactor);
+        this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
     }
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
@@ -87,7 +87,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      *
      * @return array with centrality
      */
-    public AtomicBigDoubleArray getCentrality() {
+    public AtomicDoubleArray getCentrality() {
         return centrality;
     }
 
