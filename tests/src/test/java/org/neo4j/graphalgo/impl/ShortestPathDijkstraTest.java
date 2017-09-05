@@ -132,13 +132,16 @@ public final class ShortestPathDijkstraTest {
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final long[] path = new ShortestPathDijkstra(graph).compute(
+        final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+
+        final long[] path = shortestPathDijkstra.compute(
                 expected[0],
                 expected[expected.length - 1])
                 .resultStream()
                 .mapToLong(result -> result.nodeId)
                 .toArray();
 
+        assertEquals(16d, shortestPathDijkstra.getTotalCost(), 0.1);
         assertArrayEquals(
                 expected,
                 path
@@ -165,13 +168,16 @@ public final class ShortestPathDijkstraTest {
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        final long[] path = new ShortestPathDijkstra(graph).compute(
+        final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+
+        final long[] path = shortestPathDijkstra.compute(
                 expected[0],
                 expected[expected.length - 1])
                 .resultStream()
                 .mapToLong(result -> result.nodeId)
                 .toArray();
 
+        assertEquals(12d, shortestPathDijkstra.getTotalCost(), 0.1d);
         assertArrayEquals(
                 expected,
                 path
@@ -198,10 +204,12 @@ public final class ShortestPathDijkstraTest {
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(graphImpl);
 
-        Stream<ShortestPathDijkstra.Result> resultStream = new ShortestPathDijkstra(graph)
+        final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+        Stream<ShortestPathDijkstra.Result> resultStream = shortestPathDijkstra
                 .compute(head.getId(), tail.getId())
                 .resultStream();
 
+        assertEquals(16d, shortestPathDijkstra.getTotalCost(), 0.1);
         assertEquals(5, resultStream.count());
     }
 }
