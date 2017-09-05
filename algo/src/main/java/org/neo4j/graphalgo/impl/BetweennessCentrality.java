@@ -55,6 +55,12 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     public BetweennessCentrality compute() {
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
+        if (direction == Direction.BOTH) {
+            graph.forEachNode(n -> {
+                centrality[n] /= 2.0;
+                return true;
+            });
+        }
         return this;
     }
 
@@ -185,11 +191,11 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      */
     public static final class Result {
 
-        public final Long nodeId;
+        public final long nodeId;
 
-        public final Double centrality;
+        public final double centrality;
 
-        public Result(Long nodeId, Double centrality) {
+        public Result(long nodeId, double centrality) {
             this.nodeId = nodeId;
             this.centrality = centrality;
         }

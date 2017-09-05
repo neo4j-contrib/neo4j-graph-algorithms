@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphdb.Direction;
 
@@ -73,6 +74,11 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      */
     public BetweennessCentralitySuccessorBrandes compute() {
         graph.forEachNode(this::compute);
+        if (direction == Direction.BOTH) {
+            ParallelUtil.iterateParallel(executorService, nodeCount, Pools.DEFAULT_CONCURRENCY, i -> {
+                centrality.set(i, centrality.get(i) / 2.0);
+            });
+        }
         return this;
     }
 
