@@ -266,10 +266,10 @@ public class BetweennessCentralityProc {
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                final AtomicDoubleArray centrality = bc.getCentrality();
+                final double[] centrality = bc.getCentrality();
                 bc.release();
                 graph.release();
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
+                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
                         .withConcurrency(configuration.getConcurrency())
                         .write(centrality);
             });
