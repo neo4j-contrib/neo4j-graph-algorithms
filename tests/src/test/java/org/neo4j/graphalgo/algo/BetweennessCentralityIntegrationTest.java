@@ -127,7 +127,9 @@ public class BetweennessCentralityIntegrationTest {
     public void testParallelBCDirect() throws Exception {
         new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
                 .compute()
-                .forEach(consumer);
+                .resultStream()
+                .forEach(r -> consumer.consume(r.nodeId, r.centrality));
+
         verify(consumer, times(10)).consume(anyLong(), eq(6.0));
         verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
     }

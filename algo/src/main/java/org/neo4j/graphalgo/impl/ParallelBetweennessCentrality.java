@@ -3,10 +3,8 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.AtomicBigDoubleArray;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
@@ -40,6 +38,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     // number of threads to spawn
     private final int concurrency;
     private Direction direction = Direction.OUTGOING;
+    private double divisor = 1.0;
 
     /**
      * constructs a parallel centrality solver
@@ -59,6 +58,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
+        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
     }
 
@@ -74,11 +74,6 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
             futures.add(executorService.submit(new BCTask()));
         }
         ParallelUtil.awaitTermination(futures);
-        if (direction == Direction.BOTH) {
-            ParallelUtil.iterateParallel(executorService, nodeCount, Pools.DEFAULT_CONCURRENCY, i -> {
-                centrality.set(i, centrality.get(i) / 2.0);
-            });
-        }
         return this;
     }
 
@@ -89,20 +84,6 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      */
     public AtomicDoubleArray getCentrality() {
         return centrality;
-    }
-
-    /**
-     * iterate over each result until every node has
-     * been visited or the consumer returns false
-     *
-     * @param consumer the result consumer
-     */
-    public void forEach(BetweennessCentrality.ResultConsumer consumer) {
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
-            if (!consumer.consume(graph.toOriginalNodeId(i), centrality.get(i))) {
-                return;
-            }
-        }
     }
 
     /**
@@ -186,9 +167,8 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                         return true;
                     });
-
                     if (node != startNodeId) {
-                        centrality.addCapped(node, delta[node]);
+                        centrality.addCapped(node, delta[node] / divisor);
                     }
                 }
             }
