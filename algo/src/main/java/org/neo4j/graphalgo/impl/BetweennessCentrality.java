@@ -29,6 +29,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     private Path[] paths;
     private int nodeCount;
     private Direction direction = Direction.OUTGOING;
+    private double divisor = 1.0;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
@@ -44,6 +45,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     public BetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
+        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
     }
 
@@ -55,12 +57,6 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     public BetweennessCentrality compute() {
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
-        if (direction == Direction.BOTH) {
-            graph.forEachNode(n -> {
-                centrality[n] /= 2.0;
-                return true;
-            });
-        }
         return this;
     }
 
@@ -125,7 +121,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
             if (node != startNode) {
-                centrality[node] += delta[node];
+                centrality[node] += (delta[node] / divisor);
             }
         }
         getProgressLogger().logProgress((double) startNode / (nodeCount - 1));

@@ -58,9 +58,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
-        if (direction == Direction.BOTH) {
-            divisor = 2.0;
-        }
+        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
     }
 
