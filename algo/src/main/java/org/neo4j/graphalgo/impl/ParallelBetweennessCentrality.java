@@ -5,7 +5,6 @@ import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
@@ -39,6 +38,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     // number of threads to spawn
     private final int concurrency;
     private Direction direction = Direction.OUTGOING;
+    private double divisor = 1.0;
 
     /**
      * constructs a parallel centrality solver
@@ -58,6 +58,9 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
+        if (direction == Direction.BOTH) {
+            divisor = 2.0;
+        }
         return this;
     }
 
@@ -81,14 +84,8 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      *
      * @return array with centrality
      */
-    public double[] getCentrality() {
-        final double[] c = new double[nodeCount];
-        if (direction == Direction.BOTH) {
-            Arrays.parallelSetAll(c, i -> centrality.get(i) / 2.0);
-        } else {
-            Arrays.parallelSetAll(c, i -> centrality.get(i));
-        }
-        return c;
+    public AtomicDoubleArray getCentrality() {
+        return centrality;
     }
 
     /**
@@ -173,7 +170,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                         return true;
                     });
                     if (node != startNodeId) {
-                        centrality.addCapped(node, delta[node]);
+                        centrality.addCapped(node, delta[node] / divisor);
                     }
                 }
             }
