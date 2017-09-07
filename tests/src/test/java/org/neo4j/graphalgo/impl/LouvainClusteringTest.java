@@ -43,20 +43,20 @@ public class LouvainClusteringTest {
                         
                         "CREATE" +
                         
-                        " (a)-[:TYPE]->(b),\n" +
-                        " (a)-[:TYPE]->(c),\n" +
-                        " (a)-[:TYPE]->(d),\n" +
-                        " (c)-[:TYPE]->(d),\n" +
-                        " (b)-[:TYPE]->(c),\n" +
-                        " (b)-[:TYPE]->(d),\n" +
+                        " (a)-[:TYPE  {w:0.5}]->(b),\n" +
+                        " (a)-[:TYPE  {w:0.5}]->(c),\n" +
+                        " (a)-[:TYPE  {w:0.5}]->(d),\n" +
+                        " (c)-[:TYPE  {w:0.5}]->(d),\n" +
+                        " (b)-[:TYPE  {w:0.5}]->(c),\n" +
+                        " (b)-[:TYPE  {w:0.5}]->(d),\n" +
                         
-                        " (e)-[:TYPE]->(f),\n" +
-                        " (e)-[:TYPE]->(g),\n" +
-                        " (e)-[:TYPE]->(h),\n" +
-                        " (f)-[:TYPE]->(h),\n" +
-                        " (f)-[:TYPE]->(g),\n" +
+                        " (e)-[:TYPE  {w:0.5}]->(f),\n" +
+                        " (e)-[:TYPE  {w:0.5}]->(g),\n" +
+                        " (e)-[:TYPE  {w:0.5}]->(h),\n" +
+                        " (f)-[:TYPE  {w:0.5}]->(h),\n" +
+                        " (f)-[:TYPE  {w:0.5}]->(g),\n" +
                         
-                        " (b)-[:TYPE]->(e)";
+                        " (b)-[:TYPE {w:0.5}]->(e)";
 
 
         db = (GraphDatabaseAPI)
@@ -73,7 +73,7 @@ public class LouvainClusteringTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("none", 1.0)
+                .withRelationshipWeightsFromProperty("w", 1.0)
                 .load(HeavyGraphFactory.class);
 
     }
@@ -81,8 +81,12 @@ public class LouvainClusteringTest {
     @Test
     public void test() throws Exception {
 
-        new Louvain(graph, Pools.DEFAULT, 1, 10_000)
+        final int[] communities = new Louvain(graph, Pools.DEFAULT, 1, 10_000)
                 .compute()
-                .print();
+                .getCommunities();
+
+        for (int i = 0; i < communities.length; i++) {
+            System.out.println(i + " : " + communities[i]);
+        }
     }
 }
