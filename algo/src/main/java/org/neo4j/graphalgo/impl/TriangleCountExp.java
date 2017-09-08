@@ -5,7 +5,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.utils.container.FlipStack;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
     private AtomicIntegerArray triangles;
     private double averageClusteringCoefficient;
 
-    private final AtomicInteger blockQueue;
+    private final AtomicInteger queue;
 
     public TriangleCountExp(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
@@ -44,7 +43,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
         triangles = new AtomicIntegerArray(nodeCount);
         triangleCount = new AtomicInteger();
         visitedNodes = new AtomicInteger();
-        blockQueue = new AtomicInteger();
+        queue = new AtomicInteger();
     }
 
     public Stream<Result> resultStream() {
@@ -77,7 +76,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
     }
 
     public TriangleCountExp compute() {
-        blockQueue.set(0);
+        queue.set(0);
         // list of runnables
         visitedNodes.set(0);
         triangleCount.set(0);
@@ -125,21 +124,21 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
 
     private class Task implements Runnable {
 
-        private final IntStack level0, level1, level2;
-
-        private Task() {
-            level0 = new IntStack();
-            level1 = new IntStack();
-            level2 = new IntStack();
-        }
-
+//        private final IntStack level0, level1, level2;
+//
+//        private Task() {
+//            level0 = new IntStack();
+//            level1 = new IntStack();
+//            level2 = new IntStack();
+//        }
+//
 //        @Override
 //        public void run() {
 //            final TerminationFlag flag = getTerminationFlag();
 //            final ProgressLogger progressLogger = getProgressLogger();
 //            final int[] triangle = {-1, -1, -1}; // (u, v, w)
 //            // process triangles (u, v, w) at node u
-//            while ((triangle[0] = blockQueue.getAndIncrement()) < nodeCount) {
+//            while ((triangle[0] = queue.getAndIncrement()) < nodeCount) {
 //                // fill level0 stack with v's
 //                graph.forEachRelationship(triangle[0], D, (sourceNodeId, targetNodeId, relationId) -> {
 //                    if (sourceNodeId >= targetNodeId) {
@@ -187,7 +186,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
             final int[] triangle = {-1, -1, -1}; // (u, v, w)
-            while ((triangle[0] = blockQueue.getAndIncrement()) < nodeCount) {
+            while ((triangle[0] = queue.getAndIncrement()) < nodeCount) {
                 // (u, v, w)
                 graph.forEachRelationship(triangle[0], D, (u, v, relationId) -> {
                     if (u >= v) {
