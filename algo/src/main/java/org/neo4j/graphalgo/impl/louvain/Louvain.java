@@ -144,7 +144,7 @@ public class Louvain extends Algorithm<Louvain> {
             communityIds[i] = i;
         }
         final DoubleAdder adder = new DoubleAdder();
-        ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
+        ParallelUtil.iterateParallel(executorService, nodeCount, 2 /* TODO */, node -> {
             relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                 adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
                 return true;
