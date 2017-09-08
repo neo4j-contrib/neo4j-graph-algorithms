@@ -113,11 +113,11 @@ public class LouvainClusteringIntegrationTest {
             System.out.println("nodes = " + nodes);
             System.out.println("communityCount = " + communityCount);
             System.out.println("iterations = " + iterations);
-            assertEquals(9, nodes);
-            assertEquals(3, communityCount);
-            assertTrue(loadMillis > 0);
-            assertTrue(writeMillis > 0);
-            assertTrue(computeMillis > 0);
+            assertEquals("invalid node count",9, nodes);
+            assertEquals("wrong community cound", 3, communityCount);
+            assertTrue("invalid loadTime", loadMillis > 0);
+            assertTrue("invalid writeTime", writeMillis > 0);
+            assertTrue("invalid computeTime", computeMillis > 0);
             return false;
         });
     }
