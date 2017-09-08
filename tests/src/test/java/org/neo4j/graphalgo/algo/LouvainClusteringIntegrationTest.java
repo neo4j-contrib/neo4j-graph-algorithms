@@ -100,7 +100,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() throws Exception {
-        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'cluster'}) " +
+        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'cluster', concurrency:2}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
