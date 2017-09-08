@@ -9,6 +9,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,7 +54,7 @@ public final class LdbcDownloader {
         }
         Path zippedDb = graphDir.resolve(location.fileName);
         if (Files.isReadable(zippedDb)) {
-            unzipFile(zippedDb);
+            unzipFile(zippedDb, location);
             return openDb(location);
         }
         downloadFile(zippedDb, location.url);
@@ -72,9 +73,9 @@ public final class LdbcDownloader {
         System.out.println("FILES.get(\"L01\").finalName = " + FILES.get("L01").fileName);
     }
 
-    private static void unzipFile(Path zippedDb)
+    private static void unzipFile(Path zippedDb, S3Location location)
     throws IOException {
-        Path tarFile = unGzip(zippedDb);
+        Path tarFile = unGzip(zippedDb, location);
         unTar(tarFile, zippedDb.getParent());
         Files.deleteIfExists(tarFile);
     }
@@ -160,7 +161,7 @@ public final class LdbcDownloader {
         }
     }
 
-    private static Path unGzip(Path inputFile) throws IOException {
+    private static Path unGzip(Path inputFile, S3Location location) throws IOException {
         String fileName = inputFile.getFileName().toString();
         assert fileName.endsWith(".tgz");
         Path targetFile = inputFile
@@ -171,6 +172,10 @@ public final class LdbcDownloader {
              GZIPInputStream gzipIn = new GZIPInputStream(in);
              OutputStream out = Files.newOutputStream(targetFile)) {
             IOUtils.copy(gzipIn, out);
+        } catch (EOFException e) {
+            Files.deleteIfExists(inputFile);
+            downloadFile(inputFile, location.url);
+            return unGzip(inputFile, location);
         }
 
         return targetFile;

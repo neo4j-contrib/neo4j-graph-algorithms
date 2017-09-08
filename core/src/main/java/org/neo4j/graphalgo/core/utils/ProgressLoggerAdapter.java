@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.logging.Log;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * @author mknblch
@@ -13,7 +14,7 @@ public class ProgressLoggerAdapter implements ProgressLogger {
 
     private final String task;
 
-    private int logInterval = 10_000; // 10s log interval by default
+    private int logIntervalMillis = 10_000; // 10s log interval by default
 
     private AtomicLong lastLog = new AtomicLong(0L);
 
@@ -23,11 +24,16 @@ public class ProgressLoggerAdapter implements ProgressLogger {
     }
 
     @Override
-    public void logProgress(double percentDone) {
+    public void logProgress(double percentDone, Supplier<String> msgFactory) {
         final long currentTime = System.currentTimeMillis();
         final long lastLogTime = lastLog.get();
-        if (currentTime > lastLogTime + logInterval && lastLog.compareAndSet(lastLogTime, currentTime)) {
-            log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, (int) (percentDone * 100));
+        if (currentTime > lastLogTime + logIntervalMillis && lastLog.compareAndSet(lastLogTime, currentTime)) {
+            String message = msgFactory != ProgressLogger.NO_MESSAGE ? msgFactory.get() : null;
+            if (message == null || message.isEmpty()) {
+                log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, (int) (percentDone * 100));
+            } else {
+                log.info("[%s] %s %d%% %s", Thread.currentThread().getName(), task, (int) (percentDone * 100), message);
+            }
         }
     }
 
@@ -36,7 +42,7 @@ public class ProgressLoggerAdapter implements ProgressLogger {
         log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, 100);
     }
 
-    public void withLogInterval(int logInterval) {
-        this.logInterval = logInterval;
+    public void withLogIntervalMillis(int logIntervalMillis) {
+        this.logIntervalMillis = logIntervalMillis;
     }
 }

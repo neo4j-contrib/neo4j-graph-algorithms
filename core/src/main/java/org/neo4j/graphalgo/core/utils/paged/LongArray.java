@@ -4,12 +4,19 @@ import java.util.function.LongSupplier;
 
 public final class LongArray extends PagedDataStructure<long[]> {
 
-    public static LongArray newArray(long size) {
-        return new LongArray(size);
+    private static final PageAllocator.Factory<long[]> ALLOCATOR_FACTORY =
+            PageAllocator.ofArray(long[].class);
+
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, LongArray.class);
     }
 
-    private LongArray(long size) {
-        super(size, Long.BYTES, long[].class);
+    public static LongArray newArray(long size, AllocationTracker tracker) {
+        return new LongArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    private LongArray(long size, PageAllocator<long[]> allocator) {
+        super(size, allocator);
     }
 
     public long get(long index) {
@@ -51,11 +58,6 @@ public final class LongArray extends PagedDataStructure<long[]> {
             }
             fill(pages[toPage], 0, indexInPage(toIndex - 1) + 1, value);
         }
-    }
-
-    @Override
-    protected long[] newPage() {
-        return new long[pageSize];
     }
 
     private static void fill(long[] array, LongSupplier value) {

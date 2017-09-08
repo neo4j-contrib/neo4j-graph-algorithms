@@ -4,17 +4,25 @@ import org.neo4j.collection.pool.MarshlandPool;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+
 public final class ByteArray extends PagedDataStructure<byte[]> {
 
     private final AtomicLong allocIdx = new PaddedAtomicLong();
     private final MarshlandPool<DeltaCursor> cursors = new MarshlandPool<>(this::newCursor);
 
-    public static ByteArray newArray(long size) {
-        return new ByteArray(size);
+    private static final PageAllocator.Factory<byte[]> ALLOCATOR_FACTORY =
+            PageAllocator.ofArray(byte[].class);
+
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, ByteArray.class);
     }
 
-    private ByteArray(long size) {
-        super(size, Byte.BYTES, byte[].class);
+    public static ByteArray newArray(long size, AllocationTracker tracker) {
+        return new ByteArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    private ByteArray(long size, PageAllocator<byte[]> allocator) {
+        super(size, allocator);
     }
 
     public byte get(long index) {
@@ -87,7 +95,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
     /**
      * {@inheritDoc}
      */
-    public BulkAdder newBulkAdder() {
+    BulkAdder newBulkAdder() {
         return new BulkAdder();
     }
 
@@ -98,34 +106,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         return new DeltaCursor();
     }
 
-        /**
-     * Return a new initCursor that can iterate over this data structure.
-     * The initCursor will be positioned to the index {@code offset} and will
-     * iterate over {@code length} elements.
-     */
-    public final DeltaCursor cursorFor(long offset, long length) {
-        return initCursor(offset, length, cursors.acquire());
-    }
-
-    /**
-     * Reposition an existing initCursor and return it.
-     * The initCursor will be positioned to the index {@code offset} and will
-     * iterate over {@code length} elements.
-     * The return value is always {@code == reuse}.
-     */
-    public final DeltaCursor initCursor(long offset, long length, DeltaCursor reuse) {
-        reuse.init(offset, length);
-        return reuse;
-    }
-
-    /**
-     * Allocated a certain amount of memory in the internal pages,
-     * repositions the provided {@link BulkAdder} {@code into} to point to this region
-     * and return the start offset where the allocation did happen.
-     * this method is thread-safe and can be used to allocate something like
-     * thread-local slabs of memory. Allocated slabs must be used fully without fragmentation.
-     */
-    public final long allocate(long numberOfElements, BulkAdder into) {
+    private long allocate(long numberOfElements, BulkAdder into) {
         long intoIndex = allocIdx.getAndAdd(numberOfElements);
         grow(intoIndex + numberOfElements);
         into.init(intoIndex, numberOfElements);
@@ -139,9 +120,9 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         allocIdx.addAndGet(numberOfElements);
     }
 
-    public final void release() {
+    public final long release() {
         cursors.close();
-        pages = null;
+        return super.release();
     }
 
     public DeltaCursor deltaCursor(long offset) {
@@ -151,11 +132,6 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
 
     public void returnCursor(DeltaCursor cursor) {
         cursors.release(cursor);
-    }
-
-    @Override
-    protected byte[] newPage() {
-        return new byte[pageSize];
     }
 
     private abstract class BaseCursor {

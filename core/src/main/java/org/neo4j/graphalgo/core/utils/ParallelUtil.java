@@ -1,13 +1,11 @@
 package org.neo4j.graphalgo.core.utils;
 
-import com.carrotsearch.hppc.AbstractIterator;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.helpers.Exceptions;
 
-import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
