@@ -535,11 +535,12 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             for (int i = 1; i < length; i++) {
                 IntArray scores = prevScores[i];
                 IntArray.Cursor cursor = scores.cursorForAll();
+                long localId = 0;
                 while (cursor.next()) {
                     int[] array = cursor.array;
                     int end = cursor.limit;
                     for (int j = cursor.offset; i < end; i++) {
-                        allScores.addTo(j, array[j]);
+                        allScores.addTo(localId++, array[j]);
                         array[j] = 0;
                     }
                 }
@@ -554,13 +555,14 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             double dampingFactor = this.dampingFactor;
             DoubleArray pageRank = this.pageRank;
 
+            long localId = 0;
             IntArray.Cursor cursor = allScores.cursorForAll();
             while (cursor.next()) {
                 int[] array = cursor.array;
                 int end = cursor.limit;
                 for (int i = cursor.offset; i < end; i++) {
                     int sum = array[i];
-                    pageRank.set(i, alpha + dampingFactor * (sum / 100_000.0));
+                    pageRank.set(localId++, alpha + dampingFactor * (sum / 100_000.0));
                     array[i] = 0;
                 }
             }
