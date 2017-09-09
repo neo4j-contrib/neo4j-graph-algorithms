@@ -13,17 +13,24 @@ public final class IntArray extends PagedDataStructure<int[]> {
 
     private final MarshlandPool<Cursor> cursors = new MarshlandPool<>(this::newCursor);
 
+    private static final PageAllocator.Factory<int[]> ALLOCATOR_FACTORY =
+            PageAllocator.ofArray(int[].class);
+
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, IntArray.class);
+    }
+
     /**
      * Allocate a new {@link IntArray}.
      *
      * @param size the initial length of the array
      */
-    public static IntArray newArray(long size) {
-        return new IntArray(size);
+    public static IntArray newArray(long size, AllocationTracker tracker) {
+        return new IntArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
-    private IntArray(long size) {
-        super(size, Integer.BYTES, int[].class);
+    private IntArray(long size, PageAllocator<int[]> allocator) {
+        super(size, allocator);
     }
 
     /**
@@ -133,18 +140,13 @@ public final class IntArray extends PagedDataStructure<int[]> {
         return reuse;
     }
 
-    public final void release() {
+    public final long release() {
         cursors.close();
-        pages = null;
+        return super.release();
     }
 
     public void returnCursor(Cursor cursor) {
         cursors.release(cursor);
-    }
-
-    @Override
-    protected int[] newPage() {
-        return new int[pageSize];
     }
 
     private static void fill(int[] array, IntSupplier value) {

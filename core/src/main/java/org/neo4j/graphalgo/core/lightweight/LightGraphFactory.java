@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
@@ -68,13 +69,13 @@ public final class LightGraphFactory extends GraphFactory {
         // check for the last element during degree access
         if (loadIncoming) {
             inOffsets = new long[nodeCount + 1];
-            inAdjacency = IntArray.newArray(nodeCount);
+            inAdjacency = IntArray.newArray(nodeCount, AllocationTracker.EMPTY);
             inAdder = inAdjacency.newBulkAdder();
         }
         if (loadOutgoing) {
             outOffsets = new long[nodeCount + 1];
             outOffsets[nodeCount] = nodeCount;
-            outAdjacency = IntArray.newArray(nodeCount);
+            outAdjacency = IntArray.newArray(nodeCount, AllocationTracker.EMPTY);
             outAdder = outAdjacency.newBulkAdder();
         }
         weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY

@@ -2,16 +2,17 @@ package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongDoubleMap;
 
 public final class HugeWeightMap implements HugeWeightMapping {
 
-    private final HugeLongLongDoubleMap weights;
+    private HugeLongLongDoubleMap weights;
     private final double defaultValue;
 
-    public HugeWeightMap(long capacity, double defaultValue) {
+    public HugeWeightMap(long capacity, double defaultValue, AllocationTracker tracker) {
         this.defaultValue = defaultValue;
-        this.weights = HugeLongLongDoubleMap.newMap(capacity);
+        this.weights = HugeLongLongDoubleMap.newMap(capacity, tracker);
     }
 
     @Override
@@ -37,5 +38,15 @@ public final class HugeWeightMap implements HugeWeightMapping {
 
     private void put(long key1, long key2, double value) {
         weights.put(key1, key2, value);
+    }
+
+    @Override
+    public long release() {
+        if (weights != null) {
+            long freed = weights.release();
+            weights = null;
+            return freed;
+        }
+        return 0L;
     }
 }

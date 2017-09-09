@@ -4,6 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMappingSerialization;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphalgo.serialize.ByteBufferDataInput;
 import org.neo4j.graphalgo.serialize.IdMapSerialization;
@@ -32,7 +33,7 @@ public class LightGraphFileLoader {
             final ByteBufferDataInput in = new ByteBufferDataInput(mbb);
 
             final long adjacencyLength = in.readVLong();
-            final IntArray adjacency = IntArray.newArray(adjacencyLength);
+            final IntArray adjacency = IntArray.newArray(adjacencyLength, AllocationTracker.EMPTY);
             adjacency.fill(0, adjacencyLength, () -> {
                 try {
                     return in.readVInt();

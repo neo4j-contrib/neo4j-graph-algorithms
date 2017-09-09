@@ -9,6 +9,8 @@ import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
@@ -79,14 +81,25 @@ import java.util.concurrent.ExecutorService;
  */
 public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlgorithm {
 
-    private final ComputeSteps computeSteps;
-    private HugeIdMapping idMapping;
+    private final ExecutorService executor;
+    private final int concurrency;
+    private final int batchSize;
+    private final AllocationTracker tracker;
+    private final HugeIdMapping idMapping;
+    private final HugeNodeIterator nodeIterator;
+    private final HugeRelationshipIterator relationshipIterator;
+    private final HugeDegrees degrees;
+    private final double dampingFactor;
+
+    private Log log;
+    private ComputeSteps computeSteps;
 
     /**
      * Forces sequential use. If you want parallelism, prefer
-     * {@link #HugePageRank(ExecutorService, int, int, HugeIdMapping, HugeNodeIterator, HugeRelationshipIterator, HugeDegrees, double)}
+     * {@link #HugePageRank(ExecutorService, int, int, AllocationTracker, HugeIdMapping, HugeNodeIterator, HugeRelationshipIterator, HugeDegrees, double)}
      */
     HugePageRank(
+            AllocationTracker tracker,
             HugeIdMapping idMapping,
             HugeNodeIterator nodeIterator,
             HugeRelationshipIterator relationshipIterator,
@@ -96,6 +109,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 null,
                 -1,
                 ParallelUtil.DEFAULT_BATCH_SIZE,
+                tracker,
                 idMapping,
                 nodeIterator,
                 relationshipIterator,
@@ -112,14 +126,59 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             ExecutorService executor,
             int concurrency,
             int batchSize,
+            AllocationTracker tracker,
             HugeIdMapping idMapping,
             HugeNodeIterator nodeIterator,
             HugeRelationshipIterator relationshipIterator,
             HugeDegrees degrees,
             double dampingFactor) {
-
+        this.executor = executor;
+        this.concurrency = concurrency;
+        this.batchSize = batchSize;
+        this.tracker = tracker;
         this.idMapping = idMapping;
+        this.nodeIterator = nodeIterator;
+        this.relationshipIterator = relationshipIterator;
+        this.degrees = degrees;
+        this.dampingFactor = dampingFactor;
+    }
+
+    /**
+     * compute pageRank for n iterations
+     */
+    @Override
+    public HugePageRank compute(int iterations) {
+        assert iterations >= 1;
+        initializeSteps();
+        computeSteps.run(iterations);
+        return this;
+    }
+
+    @Override
+    public PageRankResult result() {
+        return computeSteps.getPageRank();
+    }
+
+    @Override
+    public Algorithm<?> algorithm() {
+        return this;
+    }
+
+    @Override
+    public HugePageRank withLog(final Log log) {
+        super.withLog(log);
+        this.log = log;
+        return this;
+    }
+
+    // we cannot do this in the constructor anymore since
+    // we want to allow the user to provide a log instance
+    private void initializeSteps() {
+        if (computeSteps != null) {
+            return;
+        }
         List<Partition> partitions;
+        ExecutorService executor = this.executor;
         if (ParallelUtil.canRunInParallel(executor)) {
             partitions = partitionGraph(
                     adjustBatchSize(batchSize),
@@ -139,26 +198,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 degrees,
                 partitions,
                 executor);
-    }
-
-    /**
-     * compute pageRank for n iterations
-     */
-    @Override
-    public HugePageRank compute(int iterations) {
-        assert iterations >= 1;
-        computeSteps.run(iterations);
-        return this;
-    }
-
-    @Override
-    public PageRankResult result() {
-        return computeSteps.getPageRank();
-    }
-
-    @Override
-    public Algorithm<?> algorithm() {
-        return this;
     }
 
     private int adjustBatchSize(int batchSize) {
@@ -236,7 +275,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 partitionCount += partition.nodeCount;
             }
 
-            DoubleArray partitionRank = DoubleArray.newArray(partitionCount);
+            DoubleArray partitionRank = DoubleArray.newArray(partitionCount, tracker);
             partitionRank.fill(1.0 / nodeCount);
             starts.add(start);
             lengths.add(partitionCount);
@@ -245,6 +284,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     dampingFactor,
                     relationshipIterator,
                     degrees,
+                    tracker,
                     partitionRank,
                     start
             ));
@@ -286,7 +326,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
     @Override
     public HugePageRank release() {
-
         return this;
     }
 
@@ -360,6 +399,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                getProgressLogger().logProgress(i + 1, iterations, () -> tracker.getUsageString("memory usage: "));
                 synchronizeScores();
                 // sync scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
@@ -397,6 +437,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private long[] starts;
         private final HugeRelationshipIterator relationshipIterator;
         private final HugeDegrees degrees;
+        private final AllocationTracker tracker;
 
         private final double alpha;
         private final double dampingFactor;
@@ -407,7 +448,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         private final long startNode;
         private final long endNode;
-        private final long nodeCount;
 
         private int[] srcRank = new int[1];
         private Behavior behavior;
@@ -419,14 +459,15 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 double dampingFactor,
                 HugeRelationshipIterator relationshipIterator,
                 HugeDegrees degrees,
+                AllocationTracker tracker,
                 DoubleArray pageRank,
                 long startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
             this.relationshipIterator = relationshipIterator;
             this.degrees = degrees;
+            this.tracker = tracker;
             this.startNode = startNode;
-            this.nodeCount = pageRank.size();
             this.endNode = startNode + pageRank.size();
             this.pageRank = pageRank;
             this.behavior = runs;
@@ -435,7 +476,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         void setStarts(long[] starts, long[] lengths) {
             this.starts = starts;
             this.nextScores = new IntArray[starts.length];
-            Arrays.setAll(nextScores, i -> IntArray.newArray(lengths[i]));
+            Arrays.setAll(nextScores, i -> IntArray.newArray(lengths[i], tracker));
         }
 
         @Override

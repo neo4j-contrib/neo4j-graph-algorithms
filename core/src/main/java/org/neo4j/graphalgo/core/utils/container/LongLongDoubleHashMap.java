@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.core.utils.container;
 import com.carrotsearch.hppc.BitMixer;
 import com.carrotsearch.hppc.HashOrderMixing;
 import com.carrotsearch.hppc.HashOrderMixingStrategy;
-import org.apache.lucene.util.BitUtil;
+import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 
 public final class LongLongDoubleHashMap {
 

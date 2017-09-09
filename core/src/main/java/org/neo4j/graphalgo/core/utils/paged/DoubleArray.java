@@ -4,12 +4,19 @@ import java.util.Arrays;
 
 public final class DoubleArray extends PagedDataStructure<double[]> {
 
-    public static DoubleArray newArray(long size) {
-        return new DoubleArray(size);
+    private static final PageAllocator.Factory<double[]> ALLOCATOR_FACTORY =
+            PageAllocator.ofArray(double[].class);
+
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, DoubleArray.class);
     }
 
-    private DoubleArray(long size) {
-        super(size, Double.BYTES, double[].class);
+    public static DoubleArray newArray(long size, AllocationTracker tracker) {
+        return new DoubleArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    private DoubleArray(long size, PageAllocator<double[]> allocator) {
+        super(size, allocator);
     }
 
     public double get(long index) {
@@ -27,11 +34,6 @@ public final class DoubleArray extends PagedDataStructure<double[]> {
         final double ret = page[indexInPage];
         page[indexInPage] = value;
         return ret;
-    }
-
-    @Override
-    protected double[] newPage() {
-        return new double[pageSize];
     }
 
     public void fill(double value) {

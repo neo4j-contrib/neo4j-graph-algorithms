@@ -5,6 +5,7 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphdb.Direction;
@@ -57,6 +58,7 @@ import java.util.function.LongPredicate;
 public class HugeGraphImpl implements HugeGraph {
 
     private final HugeIdMap idMapping;
+    private final AllocationTracker tracker;
 
     private HugeWeightMapping weights;
     private ByteArray inAdjacency;
@@ -66,6 +68,7 @@ public class HugeGraphImpl implements HugeGraph {
     private ByteArray.DeltaCursor empty;
 
     HugeGraphImpl(
+            final AllocationTracker tracker,
             final HugeIdMap idMapping,
             final HugeWeightMapping weights,
             final ByteArray inAdjacency,
@@ -73,6 +76,7 @@ public class HugeGraphImpl implements HugeGraph {
             final LongArray inOffsets,
             final LongArray outOffsets) {
         this.idMapping = idMapping;
+        this.tracker = tracker;
         this.weights = weights;
         this.inAdjacency = inAdjacency;
         this.outAdjacency = outAdjacency;
@@ -235,16 +239,19 @@ public class HugeGraphImpl implements HugeGraph {
     @Override
     public void release() {
         if (inAdjacency != null) {
-            inAdjacency.release();
+            tracker.remove(inAdjacency.release());
+            tracker.remove(inOffsets.release());
             inAdjacency = null;
+            inOffsets = null;
         }
         if (outAdjacency != null) {
-            outAdjacency.release();
+            tracker.remove(outAdjacency.release());
+            tracker.remove(outOffsets.release());
             outAdjacency = null;
+            outOffsets = null;
         }
+        tracker.remove(weights.release());
         empty = null;
         weights = null;
-        inOffsets = null;
-        outOffsets = null;
     }
 }

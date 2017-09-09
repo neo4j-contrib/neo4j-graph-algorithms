@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
@@ -53,6 +54,7 @@ public class GraphLoader {
     private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private boolean accumulateWeights;
     private Log log = NullLog.getInstance();
+    private AllocationTracker tracker = AllocationTracker.EMPTY;
 
     /**
      * Creates a new serial GraphLoader.
@@ -64,6 +66,11 @@ public class GraphLoader {
 
     public GraphLoader withLog(Log log) {
         this.log = log;
+        return this;
+    }
+
+    public GraphLoader withAllocationTracker(AllocationTracker tracker) {
+        this.tracker = tracker;
         return this;
     }
 
@@ -420,7 +427,8 @@ public class GraphLoader {
                 concurrency,
                 batchSize,
                 accumulateWeights,
-                log);
+                log,
+                tracker);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);

@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.BitUtil;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.GraphFactory;
@@ -11,6 +10,8 @@ import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.HugeNullWeightMap;
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphdb.Direction;
@@ -64,10 +65,10 @@ public final class HugeGraphFactory extends GraphFactory {
                     readOp.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], labelId)
             );
             long relOperations = (setup.loadIncoming ? maxRelCount : 0) + (setup.loadOutgoing ? maxRelCount : 0);
-            long relFactor = nearbyPowerOfTwo(relOperations / nodeCount);
+            long relFactor = BitUtil.nearbyPowerOfTwo(relOperations / nodeCount);
             relationProgressShift = Long.numberOfTrailingZeros(relFactor);
             approxOperations = nodeCount + (nodeCount << relationProgressShift);
-            progressMask = (nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
+            progressMask = (BitUtil.nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
         });
     }
 
@@ -78,21 +79,23 @@ public final class HugeGraphFactory extends GraphFactory {
         ByteArray inAdjacency = null;
         ByteArray outAdjacency = null;
 
+        AllocationTracker tracker = setup.tracker;
+
         if (setup.loadIncoming) {
-            inOffsets = LongArray.newArray(nodeCount);
-            inAdjacency = ByteArray.newArray(nodeCount);
+            inOffsets = LongArray.newArray(nodeCount, tracker);
+            inAdjacency = ByteArray.newArray(0, tracker);
             inAdjacency.skipAllocationRegion(1);
         }
         if (setup.loadOutgoing) {
-            outOffsets = LongArray.newArray(nodeCount);
-            outAdjacency = ByteArray.newArray(nodeCount);
+            outOffsets = LongArray.newArray(nodeCount, tracker);
+            outAdjacency = ByteArray.newArray(nodeCount, tracker);
             outAdjacency.skipAllocationRegion(1);
         }
 
-        final HugeIdMap mapping = new HugeIdMap(nodeCount);
+        final HugeIdMap mapping = new HugeIdMap(nodeCount, tracker);
         final HugeWeightMapping weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new HugeNullWeightMap(setup.relationDefaultWeight)
-                : new HugeWeightMap(nodeCount, setup.relationDefaultWeight);
+                : new HugeWeightMap(nodeCount, setup.relationDefaultWeight, tracker);
         long mod = progressMask;
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
@@ -102,11 +105,15 @@ public final class HugeGraphFactory extends GraphFactory {
             while (nodeIds.hasNext()) {
                 mapping.add(nodeIds.next());
                 if ((++nodes & mod) == 0) {
-                    progressLogger.logProgress(nodes, approxOperations);
+                    progressLogger.logProgress(
+                            nodes,
+                            approxOperations,
+                            () -> tracker.getUsageString("memory usage: "));
                 }
             }
             mapping.buildMappedIds();
         });
+        log.info("[%s] Node import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
 
         int concurrency = setup.concurrency();
         int batchSize = setup.batchSize;
@@ -122,6 +129,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 (offset, nodeIds) -> new BatchImportTask(
                         offset,
                         nodeIds,
+                        tracker,
                         mapping,
                         finalInOffsets,
                         finalOutOffsets,
@@ -134,8 +142,10 @@ public final class HugeGraphFactory extends GraphFactory {
                 threadPool);
 
         progressLogger.logDone();
+        log.info("[%s] Full import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
 
         return new HugeGraphImpl(
+                tracker,
                 mapping,
                 weights,
                 inAdjacency,
@@ -146,6 +156,7 @@ public final class HugeGraphFactory extends GraphFactory {
     }
 
     private final class BatchImportTask implements Runnable, Consumer<ReadOperations> {
+        private final AllocationTracker tracker;
         private final long allNodeCount;
         private final long nodeOffset;
         private final PrimitiveLongIterable nodes;
@@ -164,6 +175,7 @@ public final class HugeGraphFactory extends GraphFactory {
         BatchImportTask(
                 long nodeOffset,
                 PrimitiveLongIterable nodes,
+                AllocationTracker tracker,
                 HugeIdMap idMap,
                 LongArray inOffsets,
                 LongArray outOffsets,
@@ -172,6 +184,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 int[] relationId,
                 int weightId,
                 HugeWeightMapping weights) {
+            this.tracker = tracker;
             this.allNodeCount = idMap.hugeNodeCount();
             this.nodeOffset = nodeOffset;
             this.nodes = nodes;
@@ -232,7 +245,10 @@ public final class HugeGraphFactory extends GraphFactory {
 
         private void logProgress(long nodes) {
             if ((nodes & progressMask) == 0) {
-                progressLogger.logProgress((nodes << relationProgressShift) + allNodeCount, approxOperations);
+                progressLogger.logProgress(
+                        (nodes << relationProgressShift) + allNodeCount,
+                        approxOperations,
+                        () -> tracker.getUsageString("memory usage: "));
             }
         }
 
@@ -466,11 +482,5 @@ public final class HugeGraphFactory extends GraphFactory {
             }
             return targetGraphId;
         }
-    }
-
-    private static long nearbyPowerOfTwo(long x) {
-        long next = BitUtil.nextHighestPowerOfTwo(x);
-        long prev = next >>> 1;
-        return (next - x) <= (x - prev) ? next : prev;
     }
 }

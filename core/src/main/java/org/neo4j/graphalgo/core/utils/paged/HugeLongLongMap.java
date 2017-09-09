@@ -9,14 +9,41 @@ import org.apache.lucene.util.RamUsageEstimator;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_LONG;
+import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
+
 public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> implements Iterable<LongLongCursor> {
 
-    public static HugeLongLongMap newMap(long size) {
-        return new HugeLongLongMap(size);
+    private static final PageAllocator.Factory<LongLongMap> ALLOCATOR_FACTORY;
+
+    static {
+        int pageSize = PageUtil.pageSizeFor(RamUsageEstimator.NUM_BYTES_OBJECT_REF);
+        long bufferLength = (long) Math.ceil(pageSize / 0.75f);
+        bufferLength = BitUtil.nextHighestPowerOfTwo(bufferLength);
+        long bufferUsage = alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + (long) NUM_BYTES_LONG * bufferLength);
+
+        long pageUsage = RamUsageEstimator.shallowSizeOfInstance(LongLongHashMap.class);
+        pageUsage += bufferUsage; // keys
+        pageUsage += bufferUsage; // values
+
+        ALLOCATOR_FACTORY = PageAllocator.of(
+                pageSize,
+                pageUsage,
+                () -> new LongLongHashMap(pageSize),
+                new LongLongHashMap[0]);
     }
 
-    private HugeLongLongMap(long size) {
-        super(size, RamUsageEstimator.NUM_BYTES_OBJECT_REF, LongLongMap.class);
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, HugeLongLongMap.class);
+    }
+
+    public static HugeLongLongMap newMap(long size, AllocationTracker tracker) {
+        return new HugeLongLongMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    private HugeLongLongMap(long size, PageAllocator<LongLongMap> allocator) {
+        super(size, allocator);
     }
 
     public long getOrDefault(long index, long defaultValue) {
@@ -37,11 +64,6 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
         return page.containsKey(index);
-    }
-
-    @Override
-    protected LongLongMap newPage() {
-        return new LongLongHashMap(pageSize);
     }
 
     @Override

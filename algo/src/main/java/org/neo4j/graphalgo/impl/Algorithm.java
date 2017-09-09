@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.logging.Log;
 
 /**
  * @author mknblch
@@ -15,6 +16,10 @@ public abstract class Algorithm<ME extends Algorithm<ME>> implements Termination
     public abstract ME me();
 
     public abstract ME release();
+
+    public ME withLog(Log log) {
+        return withProgressLogger(ProgressLogger.wrap(log, getClass().getSimpleName()));
+    }
 
     public ME withProgressLogger(ProgressLogger progressLogger) {
         this.progressLogger = progressLogger;

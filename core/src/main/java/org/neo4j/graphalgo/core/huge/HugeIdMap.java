@@ -7,6 +7,8 @@ import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.api.HugeNodeIterator;
 import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 
@@ -22,12 +24,14 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     private long nextGraphId;
     private LongArray graphIds;
     private HugeLongLongMap nodeToGraphIds;
+    private final AllocationTracker tracker;
 
     /**
      * initialize the map with maximum node capacity
      */
-    public HugeIdMap(final long capacity) {
-        nodeToGraphIds = HugeLongLongMap.newMap(capacity);
+    public HugeIdMap(long capacity, AllocationTracker tracker) {
+        nodeToGraphIds = HugeLongLongMap.newMap(capacity, tracker);
+        this.tracker = tracker;
     }
 
     public long mapOrGet(long externalId) {
@@ -49,7 +53,7 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     }
 
     public void buildMappedIds() {
-        graphIds = LongArray.newArray(hugeNodeCount());
+        graphIds = LongArray.newArray(hugeNodeCount(), tracker);
         for (final LongLongCursor cursor : nodeToGraphIds) {
             graphIds.set(cursor.value, cursor.key);
         }

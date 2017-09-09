@@ -12,4 +12,11 @@ public interface HugeWeightMapping {
      * or the default value if no such weight exists
      */
     double weight(long source, long target, double defaultValue);
+
+    /**
+     * release internal data structures and return an estimate how many
+     * bytes were freed.
+     * The mapping is not usable afterwards.
+     */
+    long release();
 }
