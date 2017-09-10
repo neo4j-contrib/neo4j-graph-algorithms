@@ -13,7 +13,6 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
-import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphalgo.exporter.HugePageRankResultExporter;
 import org.neo4j.graphalgo.exporter.PageRankResult;
 import org.neo4j.graphdb.Direction;
@@ -25,6 +24,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
 
 
 /**
@@ -344,7 +346,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     private final class ComputeSteps {
         private final List<ComputeStep> steps;
         private final ExecutorService pool;
-        private final IntArray[][] scores;
+        private final int[][][] scores;
         private final int concurrency;
 
         private ComputeSteps(
@@ -356,8 +358,8 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.steps = steps;
             this.pool = pool;
             int stepSize = steps.size();
-            scores = new IntArray[stepSize][];
-            Arrays.setAll(scores, i -> new IntArray[stepSize]);
+            scores = new int[stepSize][][];
+            Arrays.setAll(scores, i -> new int[stepSize][]);
         }
 
         PageRankResult getPageRank() {
@@ -390,7 +392,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         private void synchronizeScores() {
             int stepSize = steps.size();
-            IntArray[][] scores = this.scores;
+            int[][][] scores = this.scores;
             int i;
             for (i = 0; i < stepSize; i++) {
                 synchronizeScores(steps.get(i), i, scores);
@@ -400,9 +402,9 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private void synchronizeScores(
                 ComputeStep step,
                 int idx,
-                IntArray[][] scores) {
+                int[][][] scores) {
             step.prepareNextIteration(scores[idx]);
-            IntArray[] nextScores = step.nextScores;
+            int[][] nextScores = step.nextScores;
             for (int j = 0, len = nextScores.length; j < len; j++) {
                 scores[j][idx] = nextScores[j];
             }
@@ -425,8 +427,8 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private final double dampingFactor;
 
         private final DoubleArray pageRank;
-        private IntArray[] nextScores;
-        private IntArray[] prevScores;
+        private int[][] nextScores;
+        private int[][] prevScores;
 
         private final long startNode;
         private final long endNode;
@@ -457,8 +459,12 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         void setStarts(long[] starts, int[] lengths) {
             this.starts = starts;
-            this.nextScores = new IntArray[starts.length];
-            Arrays.setAll(nextScores, i -> IntArray.newArray(lengths[i], tracker));
+            this.nextScores = new int[starts.length][];
+            Arrays.setAll(nextScores, i -> {
+                int size = lengths[i];
+                tracker.add(alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + ((long) size << 2)));
+                return new int[size];
+            });
         }
 
         @Override
@@ -492,63 +498,37 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             int rank = srcRank[0];
             if (rank != 0) {
                 int idx = HugePageRank.idx(targetNodeId, starts);
-                nextScores[idx].addTo(targetNodeId - starts[idx], rank);
+                nextScores[idx][(int) (targetNodeId - starts[idx])] += rank;
             }
             return true;
         }
 
-        void prepareNextIteration(IntArray[] prevScores) {
+        void prepareNextIteration(int[][] prevScores) {
             this.prevScores = prevScores;
         }
 
         private void subsequentSync() {
-            synchronizeScores(combineScores());
+            combineScores();
             this.behavior = runs;
         }
 
-        private IntArray combineScores() {
+        private void combineScores() {
             assert prevScores != null;
             assert prevScores.length >= 1;
-            IntArray[] prevScores = this.prevScores;
 
-            int length = prevScores.length;
-            IntArray allScores = prevScores[0];
+            int scoreDim = prevScores.length;
+            int[][] prevScores = this.prevScores;
 
-            for (int i = 1; i < length; i++) {
-                IntArray scores = prevScores[i];
-                IntArray.Cursor cursor = scores.cursorForAll();
-                int localId = 0;
-                while (cursor.next()) {
-                    int[] array = cursor.array;
-                    int end = cursor.limit;
-                    for (int j = cursor.offset; j < end; j++) {
-                        allScores.addTo(localId++, array[j]);
-                        array[j] = 0;
-                    }
+            int length = prevScores[0].length;
+            for (int i = 0; i < length; i++) {
+                int sum = 0;
+                for (int j = 0; j < scoreDim; j++) {
+                    int[] scores = prevScores[j];
+                    sum += scores[i];
+                    scores[i] = 0;
                 }
-                scores.returnCursor(cursor);
+                pageRank.set(i, alpha + dampingFactor * (sum / 100_000.0));
             }
-
-            return allScores;
-        }
-
-        private void synchronizeScores(IntArray allScores) {
-            double alpha = this.alpha;
-            double dampingFactor = this.dampingFactor;
-            DoubleArray pageRank = this.pageRank;
-
-            int localId = 0;
-            IntArray.Cursor cursor = allScores.cursorForAll();
-            while (cursor.next()) {
-                int[] array = cursor.array;
-                int end = cursor.limit;
-                for (int i = cursor.offset; i < end; i++) {
-                    int sum = array[i];
-                    pageRank.set(localId++, alpha + dampingFactor * (sum / 100_000.0));
-                    array[i] = 0;
-                }
-            }
-            allScores.returnCursor(cursor);
         }
 
         private int calculateRank(long nodeId, long startNode) {
