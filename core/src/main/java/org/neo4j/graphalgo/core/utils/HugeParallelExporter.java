@@ -108,7 +108,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
 
     private void writeParallel(T data) {
         verify();
-        final int batchSize = Math.min(
+        final int batchSize = (int) Math.min(
                 MAX_BATCH_SIZE,
                 ParallelUtil.adjustBatchSize(
                         nodeCount,
