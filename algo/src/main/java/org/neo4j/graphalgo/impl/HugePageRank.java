@@ -12,7 +12,6 @@ import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.exporter.HugePageRankResultExporter;
 import org.neo4j.graphalgo.exporter.PageRankResult;
 import org.neo4j.graphdb.Direction;
@@ -258,8 +257,9 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 ++i;
             }
 
-            DoubleArray partitionRank = DoubleArray.newArray(partitionCount, tracker);
-            partitionRank.fill(1.0 / nodeCount);
+            tracker.add(alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + ((long) partitionCount << 3)));
+            double[] partitionRank = new double[partitionCount];
+            Arrays.fill(partitionRank, 1.0 / nodeCount);
             starts.add(start);
             lengths.add(partitionCount);
 
@@ -365,7 +365,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         PageRankResult getPageRank() {
             ComputeStep firstStep = steps.get(0);
             if (steps.size() > 1) {
-                DoubleArray[] results = new DoubleArray[steps.size()];
+                double[][] results = new double[steps.size()][];
                 int i = 0;
                 for (ComputeStep step : steps) {
                     results[i++] = step.pageRank;
@@ -426,7 +426,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private final double alpha;
         private final double dampingFactor;
 
-        private final DoubleArray pageRank;
+        private final double[] pageRank;
         private int[][] nextScores;
         private int[][] prevScores;
 
@@ -444,7 +444,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 HugeRelationshipIterator relationshipIterator,
                 HugeDegrees degrees,
                 AllocationTracker tracker,
-                DoubleArray pageRank,
+                double[] pageRank,
                 long startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
@@ -452,7 +452,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.degrees = degrees;
             this.tracker = tracker;
             this.startNode = startNode;
-            this.endNode = startNode + pageRank.size();
+            this.endNode = startNode + pageRank.length;
             this.pageRank = pageRank;
             this.behavior = runs;
         }
@@ -527,13 +527,13 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     sum += scores[i];
                     scores[i] = 0;
                 }
-                pageRank.set(i, alpha + dampingFactor * (sum / 100_000.0));
+                pageRank[i] = alpha + dampingFactor * (sum / 100_000.0);
             }
         }
 
         private int calculateRank(long nodeId, long startNode) {
             int degree = degrees.degree(nodeId, Direction.OUTGOING);
-            double rank = degree == 0 ? 0 : pageRank.get(nodeId - startNode) / degree;
+            double rank = degree == 0 ? 0 : pageRank[(int) (nodeId - startNode)] / degree;
             return (int) (100_000 * rank);
         }
     }
@@ -546,7 +546,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         }
 
         @Override
-        public final double score(final int nodeId) {
+        public double score(final int nodeId) {
             return score((long) nodeId);
         }
 
@@ -570,12 +570,12 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     }
 
     private static final class PartitionedDoubleArrayResult extends HugeResult {
-        private final DoubleArray[] partitions;
+        private final double[][] partitions;
         private final long[] starts;
 
         private PartitionedDoubleArrayResult(
                 HugeIdMapping idMapping,
-                DoubleArray[] partitions,
+                double[][] partitions,
                 long[] starts) {
             super(idMapping);
             this.partitions = partitions;
@@ -585,37 +585,52 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         @Override
         public double score(final long nodeId) {
             int idx = HugePageRank.idx(nodeId, starts);
-            return partitions[idx].get(nodeId - starts[idx]);
+            return partitions[idx][(int) (nodeId - starts[idx])];
         }
 
         @Override
         public long size() {
             long size = 0;
-            for (DoubleArray partition : partitions) {
-                size += partition.size();
+            for (double[] partition : partitions) {
+                size += partition.length;
             }
             return size;
         }
     }
 
     private static final class DoubleArrayResult extends HugeResult {
-        private final DoubleArray result;
+        private final double[] result;
 
         private DoubleArrayResult(
                 HugeIdMapping idMapping,
-                DoubleArray result) {
+                double[] result) {
             super(idMapping);
             this.result = result;
         }
 
         @Override
         public final double score(final long nodeId) {
-            return result.get(nodeId);
+            return result[(int) nodeId];
+        }
+
+        @Override
+        public double score(final int nodeId) {
+            return result[nodeId];
         }
 
         @Override
         public long size() {
-            return result.size();
+            return result.length;
+        }
+
+        @Override
+        public boolean hasFastToDoubleArray() {
+            return true;
+        }
+
+        @Override
+        public double[] toDoubleArray() {
+            return result;
         }
     }
 }
