@@ -40,14 +40,14 @@ public final class ParallelUtil {
         return (int) Math.ceil(elementCount / (double) batchSize);
     }
 
-    public static int threadSize(int batchSize, long elementCount) {
+    public static long threadSize(int batchSize, long elementCount) {
         if (batchSize <= 0) {
             throw new IllegalArgumentException("Invalid batch size: " + batchSize);
         }
         if (batchSize >= elementCount) {
             return 1;
         }
-        return (int) Math.ceil(elementCount / (double) batchSize);
+        return (long) Math.ceil(elementCount / (double) batchSize);
     }
 
     public static int adjustBatchSize(
@@ -61,14 +61,14 @@ public final class ParallelUtil {
         return Math.max(minBatchSize, targetBatchSize);
     }
 
-    public static int adjustBatchSize(
+    public static long adjustBatchSize(
             long nodeCount,
             int concurrency,
-            int minBatchSize) {
+            long minBatchSize) {
         if (concurrency <= 0) {
             concurrency = (int) Math.min(nodeCount, (long) Integer.MAX_VALUE);
         }
-        int targetBatchSize = threadSize(concurrency, nodeCount);
+        long targetBatchSize = threadSize(concurrency, nodeCount);
         return Math.max(minBatchSize, targetBatchSize);
     }
 
