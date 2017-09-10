@@ -24,8 +24,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import static org.neo4j.graphalgo.core.utils.paged.AllocationTracker.humanReadable;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 
 /**
@@ -229,9 +233,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             HugeDegrees degrees,
             List<Partition> partitions,
             ExecutorService pool) {
-        if (concurrency <= 0) {
-            concurrency = partitions.size();
-        }
+        concurrency = findIdealConcurrency(nodeCount, partitions, concurrency, log);
         final int expectedParallelism = Math.min(
                 concurrency,
                 partitions.size());
@@ -279,6 +281,118 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             computeStep.setStarts(startArray, lengthArray);
         }
         return new ComputeSteps(computeSteps, concurrency, pool);
+    }
+
+    private static int findIdealConcurrency(
+            long nodeCount,
+            List<Partition> partitions,
+            int concurrency,
+            Log log) {
+        if (concurrency <= 0) {
+            concurrency = partitions.size();
+        }
+
+        if (log != null && log.isDebugEnabled()) {
+            log.debug(
+                    "PageRank: nodes=%d, concurrency=%d, available memory=%s, estimated memory usage: %s",
+                    nodeCount,
+                    concurrency,
+                    humanReadable(availableMemory()),
+                    humanReadable(memoryUsageFor(concurrency, partitions))
+            );
+        }
+
+        int maxConcurrency = maxConcurrencyByMemory(
+                nodeCount,
+                concurrency,
+                availableMemory(),
+                partitions);
+        if (concurrency > maxConcurrency) {
+            if (log != null) {
+                long required = memoryUsageFor(concurrency, partitions);
+                long newRequired = memoryUsageFor(maxConcurrency, partitions);
+                long available = availableMemory();
+                log.warn("Requested concurrency of %d would require %s Heap but only %s are available, PageRank will be throttled to a concurrency of %d to use only %s Heap.",
+                        concurrency,
+                        humanReadable(required),
+                        humanReadable(available),
+                        maxConcurrency,
+                        humanReadable(newRequired)
+                );
+            }
+            concurrency = maxConcurrency;
+        }
+        return concurrency;
+    }
+
+    private static int maxConcurrencyByMemory(
+            long nodeCount,
+            int concurrency,
+            long availableBytes,
+            List<Partition> partitions) {
+        int newConcurrency = concurrency;
+
+        long memoryUsage = memoryUsageFor(newConcurrency, partitions);
+        while (memoryUsage > availableBytes) {
+            long perThread = estimateMemoryUsagePerThread(nodeCount, concurrency);
+            long overflow = memoryUsage - availableBytes;
+            newConcurrency -= (int) Math.ceil(overflow / (double) perThread);
+
+            memoryUsage = memoryUsageFor(newConcurrency, partitions);
+        }
+        return newConcurrency;
+    }
+
+    private static long availableMemory() {
+        // TODO: run gc first to free up memory?
+        Runtime rt = Runtime.getRuntime();
+
+        long max = rt.maxMemory(); // max allocated
+        long total = rt.totalMemory(); // currently allocated
+        long free = rt.freeMemory(); // unused portion of currently allocated
+
+        return max - total + free;
+    }
+
+    private static long estimateMemoryUsagePerThread(long nodeCount, int concurrency) {
+        int nodesPerThread = (int) Math.ceil(nodeCount / (double) concurrency);
+        long partitions = sizeOfIntArray(nodesPerThread) * (long) concurrency;
+        return shallowSizeOfInstance(ComputeStep.class) + partitions;
+    }
+
+    private static long memoryUsageFor(
+            int concurrency,
+            List<Partition> partitions) {
+        long perThreadUsage = 0;
+        long sharedUsage = 0;
+        int stepSize = 0;
+        int partitionsPerThread = ParallelUtil.threadSize(concurrency + 1, partitions.size());
+        Iterator<Partition> parts = partitions.iterator();
+
+        while (parts.hasNext()) {
+            Partition partition = parts.next();
+            int partitionCount = partition.nodeCount;
+            int i = 1;
+            while (parts.hasNext()
+                    && i < partitionsPerThread
+                    && partition.fits(partitionCount)) {
+                partition = parts.next();
+                partitionCount += partition.nodeCount;
+                ++i;
+            }
+            stepSize++;
+            sharedUsage += sizeOfDoubleArray(partitionCount);
+            perThreadUsage += sizeOfIntArray(partitionCount);
+        }
+
+        perThreadUsage *= stepSize;
+        perThreadUsage += shallowSizeOfInstance(ComputeStep.class);
+        perThreadUsage += sizeOfObjectArray(stepSize);
+
+        sharedUsage += shallowSizeOfInstance(ComputeSteps.class);
+        sharedUsage += sizeOfLongArray(stepSize) << 1;
+
+        return sharedUsage + perThreadUsage;
     }
 
     private static int idx(long id, long[] ids) {
