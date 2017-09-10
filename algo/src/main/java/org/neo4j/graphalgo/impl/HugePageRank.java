@@ -24,8 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
 
 
 /**
@@ -257,7 +257,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 ++i;
             }
 
-            tracker.add(alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + ((long) partitionCount << 3)));
+            tracker.add(sizeOfDoubleArray(partitionCount));
             double[] partitionRank = new double[partitionCount];
             Arrays.fill(partitionRank, 1.0 / nodeCount);
             starts.add(start);
@@ -462,7 +462,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.nextScores = new int[starts.length][];
             Arrays.setAll(nextScores, i -> {
                 int size = lengths[i];
-                tracker.add(alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + ((long) size << 2)));
+                tracker.add(sizeOfIntArray(size));
                 return new int[size];
             });
         }

@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,7 +95,7 @@ public class PagedDataStructure<T> {
             }
             int numPages = ArrayUtil.oversize(
                 numPages(newSize),
-                RamUsageEstimator.NUM_BYTES_OBJECT_REF);
+                MemoryUsage.BYTES_OBJECT_REF);
             setPages(numPages, this.pages.length);
             growSize(newSize);
         } finally {
