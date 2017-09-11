@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.huge;
 
+import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -7,10 +8,10 @@ import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.api.HugeNodeIterator;
 import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.PageUtil;
 
 import java.util.Collection;
 import java.util.function.LongPredicate;
@@ -20,6 +21,9 @@ import java.util.function.LongPredicate;
  * guaranteed that there is no ID greater then nextGraphId / capacity
  */
 public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBatchNodeIterable {
+
+    // page size to use when loading nodes in parallel
+    static final int PAGE_SIZE = PageUtil.pageSizeFor(Long.BYTES);
 
     private long nextGraphId;
     private LongArray graphIds;
@@ -32,6 +36,17 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     public HugeIdMap(long capacity, AllocationTracker tracker) {
         nodeToGraphIds = HugeLongLongMap.newMap(capacity, tracker);
         this.tracker = tracker;
+    }
+
+    HugeIdMap(
+            long capacity,
+            LongLongMap[] originalMap,
+            long[][] mappedIds,
+            AllocationTracker tracker) {
+        this.tracker = tracker;
+        nextGraphId = capacity;
+        nodeToGraphIds = HugeLongLongMap.fromPages(capacity, originalMap, tracker);
+        graphIds = LongArray.fromPages(capacity, mappedIds, tracker);
     }
 
     public long mapOrGet(long externalId) {

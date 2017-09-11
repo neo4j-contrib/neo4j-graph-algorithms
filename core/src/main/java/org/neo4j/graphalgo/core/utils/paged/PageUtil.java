@@ -5,7 +5,7 @@ public final class PageUtil {
     // 32 KB page size
     private static final int PAGE_SIZE_IN_BYTES = 1 << 15;
 
-    static int pageSizeFor(int sizeOfElement) {
+    public static int pageSizeFor(int sizeOfElement) {
         assert BitUtil.isPowerOfTwo(sizeOfElement);
         return PAGE_SIZE_IN_BYTES >> Integer.numberOfTrailingZeros(sizeOfElement);
     }
