@@ -37,9 +37,21 @@ public class ShortestPathProc {
     @Context
     public KernelTransaction transaction;
 
+    /**
+     * single threaded dijkstra impl.
+     * takes a startNode and endNode id and tries to find the best path
+     * supports direction flag in configuration ( see {@link org.neo4j.graphalgo.core.utils.Directions})
+     * default is: BOTH
+     *
+     * @param startNode
+     * @param endNode
+     * @param propertyName
+     * @param config
+     * @return
+     */
     @Procedure("algo.shortestPath.stream")
     @Description("CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
             "YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathDijkstra.Result> dijkstraStream(
             @Name("startNode") Node startNode,
@@ -71,7 +83,7 @@ public class ShortestPathProc {
 
     @Procedure(value = "algo.shortestPath", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', dirction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) " +
             "YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis")
     public Stream<DijkstraResult> dijkstra(
             @Name("startNode") Node startNode,
