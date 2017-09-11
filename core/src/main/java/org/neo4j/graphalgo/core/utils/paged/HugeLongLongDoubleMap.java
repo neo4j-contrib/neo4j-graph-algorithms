@@ -2,12 +2,10 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import org.neo4j.graphalgo.core.utils.container.LongLongDoubleHashMap;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_DOUBLE;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_LONG;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
-import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
-import static org.apache.lucene.util.RamUsageEstimator.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
 
 public final class HugeLongLongDoubleMap extends PagedDataStructure<LongLongDoubleHashMap> {
@@ -16,10 +14,10 @@ public final class HugeLongLongDoubleMap extends PagedDataStructure<LongLongDoub
     private static final PageAllocator.Factory<LongLongDoubleHashMap> ALLOCATOR_FACTORY;
 
     static {
-        int pageSize = PageUtil.pageSizeFor(NUM_BYTES_OBJECT_REF);
-        long bufferLength = (long) BitUtil.nextHighestPowerOfTwo(pageSize) << 1;
-        long keyUsage = alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + (long) NUM_BYTES_LONG * bufferLength);
-        long valueUsage = alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + (long) NUM_BYTES_DOUBLE * bufferLength);
+        int pageSize = PageUtil.pageSizeFor(BYTES_OBJECT_REF);
+        int bufferLength = BitUtil.nextHighestPowerOfTwo(pageSize) << 1;
+        long keyUsage = sizeOfLongArray(bufferLength);
+        long valueUsage = sizeOfDoubleArray(bufferLength);
 
         long pageUsage = shallowSizeOfInstance(LongLongDoubleHashMap.class);
         pageUsage += keyUsage; // keys1

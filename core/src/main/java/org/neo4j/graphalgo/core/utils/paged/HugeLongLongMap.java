@@ -4,26 +4,25 @@ import com.carrotsearch.hppc.AbstractIterator;
 import com.carrotsearch.hppc.LongLongHashMap;
 import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
-import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_LONG;
-import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
 public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> implements Iterable<LongLongCursor> {
 
     private static final PageAllocator.Factory<LongLongMap> ALLOCATOR_FACTORY;
 
     static {
-        int pageSize = PageUtil.pageSizeFor(RamUsageEstimator.NUM_BYTES_OBJECT_REF);
-        long bufferLength = (long) Math.ceil(pageSize / 0.75f);
+        int pageSize = PageUtil.pageSizeFor(BYTES_OBJECT_REF);
+        int bufferLength = (int) Math.ceil(pageSize / 0.75f);
         bufferLength = BitUtil.nextHighestPowerOfTwo(bufferLength);
-        long bufferUsage = alignObjectSize((long) NUM_BYTES_ARRAY_HEADER + (long) NUM_BYTES_LONG * bufferLength);
+        long bufferUsage = sizeOfLongArray(bufferLength);
 
-        long pageUsage = RamUsageEstimator.shallowSizeOfInstance(LongLongHashMap.class);
+        long pageUsage = shallowSizeOfInstance(LongLongHashMap.class);
         pageUsage += bufferUsage; // keys
         pageUsage += bufferUsage; // values
 

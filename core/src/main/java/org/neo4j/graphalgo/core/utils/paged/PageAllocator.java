@@ -3,9 +3,8 @@ package org.neo4j.graphalgo.core.utils.paged;
 import java.lang.reflect.Array;
 import java.util.function.Supplier;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.alignObjectSize;
-import static org.apache.lucene.util.RamUsageEstimator.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfArray;
 
 public abstract class PageAllocator<T> {
 
@@ -41,7 +40,7 @@ public abstract class PageAllocator<T> {
         T[] emptyPages = (T[]) Array.newInstance(componentType, 0, 0);
         Supplier<T> newPage = () -> (T) Array.newInstance(componentType, pageSize);
 
-        long bytesPerPage = alignObjectSize(NUM_BYTES_ARRAY_HEADER + pageSize * bytesPerElement);
+        long bytesPerPage = sizeOfArray(pageSize, bytesPerElement);
         return of(pageSize, bytesPerPage, newPage, emptyPages);
     }
 
