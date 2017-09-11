@@ -58,7 +58,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         visited = new SimpleBitSet(nodeCount);
-        finalPath = new IntArrayDeque(nodeCount);
+        finalPath = new IntArrayDeque();
         progressLogger = getProgressLogger();
     }
 
