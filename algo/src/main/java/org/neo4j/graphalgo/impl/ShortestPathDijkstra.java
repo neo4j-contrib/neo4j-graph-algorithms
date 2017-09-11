@@ -56,7 +56,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         visited = new SimpleBitSet(nodeCount);
-        finalPath = new IntArrayDeque();
+        finalPath = new IntArrayDeque(nodeCount);
         progressLogger = getProgressLogger();
     }
 
@@ -66,20 +66,24 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
+        return compute(startNode, goalNode, Direction.OUTGOING);
+    }
+
+    public ShortestPathDijkstra compute(long startNode, long goalNode, Direction direction) {
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
         goal = graph.toMappedNodeId(goalNode);
         costs.put(node, 0);
         queue.add(node, 0);
-        run(goal);
+        run(goal, direction);
         int last = goal;
         finalPath.clear();
         totalCost = 0.0;
         while (last != -1) {
             finalPath.addFirst(last);
-            last = path.getOrDefault(last, -1);
-            totalCost += costs.getOrDefault(last, 0.0);
+            last = path.get(last); //OrDefault(last, 0);
+            totalCost += costs.get(last); //OrDefault(last, 0.0);
         }
         return this;
     }
@@ -116,7 +120,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         return finalPath.size();
     }
 
-    private void run(int goal) {
+    private void run(int goal, Direction direction) {
         while (!queue.isEmpty() && running()) {
             int node = queue.pop();
             if (node == goal) {
@@ -127,7 +131,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
-                    Direction.OUTGOING, (source, target, relId, weight) -> {
+                    direction, (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
