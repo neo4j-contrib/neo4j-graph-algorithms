@@ -3,14 +3,16 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.CypherTest;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *     2    2   2
@@ -23,28 +25,20 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 public class DirectedDijkstraSPTest {
 
     public static final String cypher =
-            "CREATE (a:Node {name:\"a\"})\n" +
-            "CREATE (b:Node {name:\"b\"})\n" +
-            "CREATE (c:Node {name:\"c\"})\n" +
-            "CREATE (d:Node {name:\"d\"})\n" +
-            "CREATE (e:Node {name:\"e\"})\n" +
-            "CREATE (f:Node {name:\"f\"})\n" +
-            "CREATE\n" +
+        "CREATE (d:Node {name:'d'})\n" +
+        "CREATE (a:Node {name:'a'})\n" +
+        "CREATE (c:Node {name:'c'})\n" +
+        "CREATE (b:Node {name:'b'})\n" +
+        "CREATE (f:Node {name:'f'})\n" +
+        "CREATE (e:Node {name:'e'})\n" +
+
+        "CREATE\n" +
             "  (a)-[:REL {cost:2}]->(b),\n" +
             "  (b)-[:REL {cost:2}]->(c),\n" +
             "  (c)-[:REL {cost:2}]->(f),\n" +
             "  (f)-[:REL {cost:1}]->(e),\n" +
             "  (e)-[:REL {cost:1}]->(d),\n" +
             "  (d)-[:REL {cost:1}]->(a)\n";
-
-
-    private static final CypherTest cypherGraph = new CypherTest(cypher)
-            .withLoader(loader -> {
-                loader.withoutNodeProperties()
-                        .withoutRelationshipWeights()
-                        .withoutNodeWeights()
-                        .withoutExecutorService();
-            });
 
     private static GraphDatabaseAPI api;
     private static Graph graph;
@@ -68,20 +62,60 @@ public class DirectedDijkstraSPTest {
                 .load(HeavyGraphFactory.class);
     }
 
+    private static long id(String name) {
+        try (Transaction transaction = api.beginTx()) {
+            return api.findNode(Label.label("Node"), "name", name).getId();
+        }
+    }
+
+    private static String name(long id) {
+        final String[] name = {""};
+        api.execute(String.format("MATCH (n:Node) WHERE id(n)=%d RETURN n.name as name", id)).accept(row -> {
+            name[0] = row.getString("name");
+            return false;
+        });
+        return name[0];
+    }
 
     @Test
     public void testOutgoing() throws Exception {
 
-//        new ShortestPathDijkstra(cypherGraph.build())
-//                .compute(cypherGraph.findNode("Node", "name", "a").getId(), cypherGraph.findNode("Node", "name", "b").getId())
-//                .getFinalPath()
-//                .forEach((IntProcedure) System.out::println);
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("f"), Direction.OUTGOING);
 
-        new ShortestPathDijkstra(graph)
-                .compute(0, 5)
-                .getFinalPath()
-                .forEach((IntProcedure) System.out::println);
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        System.out.println("path(OUTGOING) = " + path);
+        assertEquals("abcf", path.toString());
+        assertEquals(6.0, dijkstra.getTotalCost(), 0.1);
+        assertEquals(4, dijkstra.getPathLength());
+    }
 
+    @Test
+    public void testIncoming() throws Exception {
 
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("f"), Direction.INCOMING);
+
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        System.out.println("path(OUTGOING) = " + path);
+        assertEquals("adef", path.toString());
+        assertEquals(3.0, dijkstra.getTotalCost(), 0.1);
+        assertEquals(4, dijkstra.getPathLength());
+    }
+
+    @Test
+    public void testBoth() throws Exception {
+
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("f")); // default is both
+
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        System.out.println("path(OUTGOING) = " + path);
+        assertEquals("adef", path.toString());
+        assertEquals(3.0, dijkstra.getTotalCost(), 0.1);
+        assertEquals(4, dijkstra.getPathLength());
     }
 }

@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -130,13 +131,14 @@ public final class ShortestPathDijkstraTest {
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withDirection(Direction.OUTGOING)
                 .load(graphImpl);
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
 
         final long[] path = shortestPathDijkstra.compute(
                 expected[0],
-                expected[expected.length - 1])
+                expected[expected.length - 1], Direction.OUTGOING)
                 .resultStream()
                 .mapToLong(result -> result.nodeId)
                 .toArray();
@@ -166,13 +168,14 @@ public final class ShortestPathDijkstraTest {
                 .withLabel(label)
                 .withRelationshipType("TYPE2")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withDirection(Direction.OUTGOING)
                 .load(graphImpl);
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
 
         final long[] path = shortestPathDijkstra.compute(
                 expected[0],
-                expected[expected.length - 1])
+                expected[expected.length - 1], Direction.OUTGOING)
                 .resultStream()
                 .mapToLong(result -> result.nodeId)
                 .toArray();
@@ -202,11 +205,12 @@ public final class ShortestPathDijkstraTest {
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withDirection(Direction.OUTGOING)
                 .load(graphImpl);
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
         Stream<ShortestPathDijkstra.Result> resultStream = shortestPathDijkstra
-                .compute(head.getId(), tail.getId())
+                .compute(head.getId(), tail.getId(), Direction.OUTGOING)
                 .resultStream();
 
         assertEquals(16d, shortestPathDijkstra.getTotalCost(), 0.1);
