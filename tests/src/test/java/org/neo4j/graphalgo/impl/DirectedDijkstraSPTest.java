@@ -15,9 +15,14 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import static org.junit.Assert.assertEquals;
 
 /**
+ * expected path OUTGOING:  abcf
+ *               INCOMING:  adef
+ *               BOTH:      adef
+ *
+ * x should be unreachable
  *     2    2   2
  *   ,->(b)->(c)->(f)
- *  |  1    1    1 |
+ *  |  1    1    1 |   (x) // unreachable
  * (a)<-(d)<-(e)<-´
  *
  * @author mknblch
@@ -31,6 +36,7 @@ public class DirectedDijkstraSPTest {
         "CREATE (b:Node {name:'b'})\n" +
         "CREATE (f:Node {name:'f'})\n" +
         "CREATE (e:Node {name:'e'})\n" +
+        "CREATE (x:Node {name:'x'})\n" +
 
         "CREATE\n" +
             "  (a)-[:REL {cost:2}]->(b),\n" +
@@ -99,7 +105,7 @@ public class DirectedDijkstraSPTest {
                 .compute(id("a"), id("f"), Direction.INCOMING);
 
         dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
-        System.out.println("path(OUTGOING) = " + path);
+        System.out.println("path(INCOMING) = " + path);
         assertEquals("adef", path.toString());
         assertEquals(3.0, dijkstra.getTotalCost(), 0.1);
         assertEquals(4, dijkstra.getPathLength());
@@ -113,9 +119,48 @@ public class DirectedDijkstraSPTest {
                 .compute(id("a"), id("f")); // default is both
 
         dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
-        System.out.println("path(OUTGOING) = " + path);
+        System.out.println("path(BOTH) = " + path);
         assertEquals("adef", path.toString());
         assertEquals(3.0, dijkstra.getTotalCost(), 0.1);
         assertEquals(4, dijkstra.getPathLength());
+    }
+
+    @Test
+    public void testUnreachableOutgoing() throws Exception {
+
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("x"), Direction.OUTGOING); // default is both
+
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        assertEquals(0, path.length());
+        assertEquals(0, dijkstra.getPathLength());
+        assertEquals(ShortestPathDijkstra.NO_PATH_FOUND, dijkstra.getTotalCost(), 0.1);
+    }
+
+    @Test
+    public void testUnreachableIncoming() throws Exception {
+
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("x"), Direction.INCOMING); // default is both
+
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        assertEquals(0, path.length());
+        assertEquals(0, dijkstra.getPathLength());
+        assertEquals(ShortestPathDijkstra.NO_PATH_FOUND, dijkstra.getTotalCost(), 0.1);
+    }
+
+    @Test
+    public void testUnreachableBoth() throws Exception {
+
+        final StringBuilder path = new StringBuilder();
+        final ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
+                .compute(id("a"), id("x"), Direction.BOTH); // default is both
+
+        dijkstra.getFinalPath().forEach((IntProcedure) n -> path.append(name(n)));
+        assertEquals(0, path.length());
+        assertEquals(0, dijkstra.getPathLength());
+        assertEquals(ShortestPathDijkstra.NO_PATH_FOUND, dijkstra.getTotalCost(), 0.1);
     }
 }

@@ -28,6 +28,7 @@ import java.util.stream.StreamSupport;
 public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     private static final int PATH_END = -1;
+    public static final double NO_PATH_FOUND = -1.0;
 
     private Graph graph;
 
@@ -76,11 +77,15 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
         goal = graph.toMappedNodeId(goalNode);
-        costs.put(node, 0);
-        queue.add(node, 0);
+        costs.put(node, 0.0);
+        queue.add(node, 0.0);
         run(goal, direction);
-        int last = goal;
         finalPath.clear();
+        totalCost = NO_PATH_FOUND;
+        if (!path.containsKey(goal)) {
+            return this;
+        }
+        int last = goal;
         totalCost = 0.0;
         while (last != PATH_END) {
             finalPath.addFirst(last);
