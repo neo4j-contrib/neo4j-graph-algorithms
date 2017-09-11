@@ -3,9 +3,34 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.graphdb.Direction;
 
 /**
- * Utility class for converting neo4j kernel api
- * Direction to user space Direction and back
+ * Utility class for converting string representation used in cypher queries
+ * to neo4j kernel api Direction type.
+ *
+ *
  * <p>
+ *      String parsing is case insensitive!
+ * </p>
+ *     <strong>OUTGOING</strong>
+ *     <ul>
+ *         <li>></li>
+ *         <li>o</li>
+ *         <li>out</li>
+ *         <li>outgoing</li>
+ *     </ul>
+ *     <strong>INCOMING</strong>
+ *     <ul>
+ *         <li><</li>
+ *         <li>i</li>
+ *         <li>in</li>
+ *         <li>incoming</li>
+ *     </ul>
+ *     <strong>BOTH</strong>
+ *     <ul>
+ *         <li><></li>
+ *         <li>b</li>
+ *         <li>both</li>
+ *     </ul>
+ * </p>
  *
  * @author mknblch
  */
