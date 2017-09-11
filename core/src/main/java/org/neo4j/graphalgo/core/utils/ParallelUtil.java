@@ -50,6 +50,16 @@ public final class ParallelUtil {
         return (long) Math.ceil(elementCount / (double) batchSize);
     }
 
+    public static long threadSize(long batchSize, long elementCount) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Invalid batch size: " + batchSize);
+        }
+        if (batchSize >= elementCount) {
+            return 1;
+        }
+        return (long) Math.ceil(elementCount / (double) batchSize);
+    }
+
     public static int adjustBatchSize(
             int nodeCount,
             int concurrency,
