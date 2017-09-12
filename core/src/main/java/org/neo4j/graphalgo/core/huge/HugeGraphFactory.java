@@ -74,28 +74,26 @@ public final class HugeGraphFactory extends GraphFactory {
 
     @Override
     public HugeGraph build() {
-        LongArray inOffsets = null;
-        LongArray outOffsets = null;
-        ByteArray inAdjacency = null;
-        ByteArray outAdjacency = null;
-
+        int concurrency = setup.concurrency();
+        int batchSize = setup.batchSize;
         AllocationTracker tracker = setup.tracker;
+        HugeWeightMapping weights = weightMapping(tracker);
+        HugeIdMap mapping = loadNodes(concurrency, batchSize, tracker);
+        log.info("[%s] Node import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
+        HugeGraph graph = loadRelationships(mapping, weights, concurrency, batchSize, tracker);
+        log.info("[%s] Relationship import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
+        progressLogger.logDone();
+        return graph;
+    }
 
-        if (setup.loadIncoming) {
-            inOffsets = LongArray.newArray(nodeCount, tracker);
-            inAdjacency = ByteArray.newArray(0, tracker);
-            inAdjacency.skipAllocationRegion(1);
-        }
-        if (setup.loadOutgoing) {
-            outOffsets = LongArray.newArray(nodeCount, tracker);
-            outAdjacency = ByteArray.newArray(nodeCount, tracker);
-            outAdjacency.skipAllocationRegion(1);
-        }
+    private HugeWeightMapping weightMapping(AllocationTracker tracker) {
+        return weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
+                    ? new HugeNullWeightMap(setup.relationDefaultWeight)
+                    : new HugeWeightMap(nodeCount, setup.relationDefaultWeight, tracker);
+    }
 
+    private HugeIdMap loadNodes(int concurrency, int batchSize, AllocationTracker tracker) {
         final HugeIdMap mapping = new HugeIdMap(nodeCount, tracker);
-        final HugeWeightMapping weights = weightId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                ? new HugeNullWeightMap(setup.relationDefaultWeight)
-                : new HugeWeightMap(nodeCount, setup.relationDefaultWeight, tracker);
         long mod = progressMask;
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
@@ -113,36 +111,57 @@ public final class HugeGraphFactory extends GraphFactory {
             }
             mapping.buildMappedIds();
         });
-        log.info("[%s] Node import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
+        return mapping;
+    }
 
-        int concurrency = setup.concurrency();
-        int batchSize = setup.batchSize;
-
-        final LongArray finalInOffsets = inOffsets;
-        final LongArray finalOutOffsets = outOffsets;
-        final ByteArray finalInAdjacency = inAdjacency;
-        final ByteArray finalOutAdjacency = outAdjacency;
-        ParallelUtil.readParallel(
-                concurrency,
-                batchSize,
-                mapping,
-                (offset, nodeIds) -> new BatchImportTask(
-                        offset,
-                        nodeIds,
-                        tracker,
-                        mapping,
-                        finalInOffsets,
-                        finalOutOffsets,
-                        finalInAdjacency,
-                        finalOutAdjacency,
-                        relationId,
-                        weightId,
-                        weights
-                ),
-                threadPool);
-
-        progressLogger.logDone();
-        log.info("[%s] Full import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
+    private HugeGraph loadRelationships(
+            HugeIdMap mapping,
+            HugeWeightMapping weights,
+            int concurrency,
+            int batchSize,
+            AllocationTracker tracker) {
+        boolean loadsAnything = false;
+        LongArray inOffsets = null;
+        LongArray outOffsets = null;
+        ByteArray inAdjacency = null;
+        ByteArray outAdjacency = null;
+        if (setup.loadIncoming) {
+            inOffsets = LongArray.newArray(nodeCount, tracker);
+            inAdjacency = ByteArray.newArray(0, tracker);
+            inAdjacency.skipAllocationRegion(1);
+            loadsAnything = true;
+        }
+        if (setup.loadOutgoing) {
+            outOffsets = LongArray.newArray(nodeCount, tracker);
+            outAdjacency = ByteArray.newArray(nodeCount, tracker);
+            outAdjacency.skipAllocationRegion(1);
+            loadsAnything = true;
+        }
+        if (loadsAnything) {
+            // needs final b/c of reference from lambda
+            final LongArray finalInOffsets = inOffsets;
+            final LongArray finalOutOffsets = outOffsets;
+            final ByteArray finalInAdjacency = inAdjacency;
+            final ByteArray finalOutAdjacency = outAdjacency;
+            ParallelUtil.readParallel(
+                    concurrency,
+                    batchSize,
+                    mapping,
+                    (offset, nodeIds) -> new BatchImportTask(
+                            offset,
+                            nodeIds,
+                            tracker,
+                            mapping,
+                            finalInOffsets,
+                            finalOutOffsets,
+                            finalInAdjacency,
+                            finalOutAdjacency,
+                            relationId,
+                            weightId,
+                            weights
+                    ),
+                    threadPool);
+        }
 
         return new HugeGraphImpl(
                 tracker,
