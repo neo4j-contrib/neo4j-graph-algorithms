@@ -36,6 +36,20 @@ public class PagedDataStructure<T> {
         setPages(numPages(size), 0);
     }
 
+    PagedDataStructure(long size, T[] pages, PageAllocator<T> allocator) {
+        pageSize = allocator.pageSize();
+        pageShift = Integer.numberOfTrailingZeros(pageSize);
+        pageMask = pageSize - 1;
+
+        final int maxIndexShift = Integer.SIZE - 1 + pageShift;
+        maxSupportedSize = 1L << maxIndexShift;
+
+        this.allocator = allocator;
+        this.pages = pages;
+        this.capacity.set(capacityFor(pages.length));
+        this.size.set(size);
+    }
+
     /**
      * Return the size of this data structure. Indices up to {@code size}
      * have been filled with data.

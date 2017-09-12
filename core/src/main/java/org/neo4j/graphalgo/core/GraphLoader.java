@@ -64,16 +64,6 @@ public class GraphLoader {
         this.executorService = null;
     }
 
-    public GraphLoader withLog(Log log) {
-        this.log = log;
-        return this;
-    }
-
-    public GraphLoader withAllocationTracker(AllocationTracker tracker) {
-        this.tracker = tracker;
-        return this;
-    }
-
     /**
      * Creates a new parallel GraphLoader.
      * What exactly parallel means depends on the {@link GraphFactory}
@@ -82,6 +72,16 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api, ExecutorService executorService) {
         this.api = Objects.requireNonNull(api);
         this.executorService = Objects.requireNonNull(executorService);
+    }
+
+    public GraphLoader withLog(Log log) {
+        this.log = log;
+        return this;
+    }
+
+    public GraphLoader withAllocationTracker(AllocationTracker tracker) {
+        this.tracker = tracker;
+        return this;
     }
 
     /**

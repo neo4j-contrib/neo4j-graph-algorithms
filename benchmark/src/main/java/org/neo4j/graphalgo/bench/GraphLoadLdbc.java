@@ -38,18 +38,27 @@ public class GraphLoadLdbc {
     @Param({"true", "false"})
     boolean parallel;
 
+    @Param({"8", "64"})
+    int concurrency;
+
+    @Param({"IN", "OUT", "NONE", "BOTH"})
+    DirectionParam dir;
+
+    @Param({"", "length"})
+    String weightProp;
+
     private GraphDatabaseAPI db;
     private GraphLoader loader;
 
     @Setup
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb();
+        loader = new GraphLoader(db)
+                .withOptionalRelationshipWeightsFromProperty(weightProp.isEmpty() ? null : weightProp, 1.0)
+                .withConcurrency(concurrency)
+                .withDirection(dir.direction);
         if (parallel) {
-            loader = new GraphLoader(db, Pools.DEFAULT)
-                    .withDirection(Direction.OUTGOING);
-        } else {
-            loader = new GraphLoader(db)
-                    .withDirection(Direction.OUTGOING);
+            loader.withExecutorService(Pools.DEFAULT);
         }
     }
 
@@ -60,7 +69,7 @@ public class GraphLoadLdbc {
     }
 
     @Benchmark
-    public Graph run() throws Exception {
+    public Graph load() throws Exception {
         return loader.load(this.graph.impl);
     }
 }

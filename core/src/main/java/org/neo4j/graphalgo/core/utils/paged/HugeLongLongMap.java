@@ -8,7 +8,6 @@ import com.carrotsearch.hppc.cursors.LongLongCursor;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
@@ -17,7 +16,8 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
     private static final PageAllocator.Factory<LongLongMap> ALLOCATOR_FACTORY;
 
     static {
-        int pageSize = PageUtil.pageSizeFor(BYTES_OBJECT_REF);
+        // we must use same page size as long[] pages in order to load in parallel
+        int pageSize = PageUtil.pageSizeFor(Long.BYTES);
         int bufferLength = (int) Math.ceil(pageSize / 0.75f);
         bufferLength = BitUtil.nextHighestPowerOfTwo(bufferLength);
         long bufferUsage = sizeOfLongArray(bufferLength);
@@ -41,8 +41,19 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         return new HugeLongLongMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
+    public static HugeLongLongMap fromPages(
+            long size,
+            LongLongMap[] pages,
+            AllocationTracker tracker) {
+        return new HugeLongLongMap(size, pages, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
     private HugeLongLongMap(long size, PageAllocator<LongLongMap> allocator) {
         super(size, allocator);
+    }
+
+    private HugeLongLongMap(long size, LongLongMap[] pages, PageAllocator<LongLongMap> allocator) {
+        super(size, pages, allocator);
     }
 
     public long getOrDefault(long index, long defaultValue) {

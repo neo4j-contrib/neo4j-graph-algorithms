@@ -15,8 +15,19 @@ public final class LongArray extends PagedDataStructure<long[]> {
         return new LongArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
+    public static LongArray fromPages(
+            long capacity,
+            long[][] pages,
+            AllocationTracker tracker) {
+        return new LongArray(capacity, pages, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
     private LongArray(long size, PageAllocator<long[]> allocator) {
         super(size, allocator);
+    }
+
+    private LongArray(long capacity, long[][] pages, PageAllocator<long[]> pageAllocator) {
+            super(capacity, pages, pageAllocator);
     }
 
     public long get(long index) {
