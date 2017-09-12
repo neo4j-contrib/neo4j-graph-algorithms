@@ -1,0 +1,10 @@
+sudo: false
+language: java
+
+install: true
+script: "true"
+
+# block benchmark results from building in travis
+branches:
+  except:
+  - benchmark-results
