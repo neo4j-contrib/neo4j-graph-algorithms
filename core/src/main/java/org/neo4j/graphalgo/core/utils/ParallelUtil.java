@@ -371,17 +371,8 @@ public final class ParallelUtil {
             int size,
             int concurrency,
             IntConsumer consumer) {
-        iterateParallel(executorService, size, concurrency, 1, consumer);
-    }
-
-    public static void iterateParallel(
-            ExecutorService executorService,
-            int size,
-            int concurrency,
-            int minBatchSize,
-            IntConsumer consumer) {
         final List<Future<?>> futures = new ArrayList<>();
-        final int batchSize = Math.max(size / concurrency, minBatchSize);
+        final int batchSize = threadSize(concurrency, size); // Math.max(size / concurrency, minBatchSize);
         for (int i = 0; i < size; i += batchSize) {
             final int start = i;
             final int end = Math.min(size, start + batchSize);
