@@ -1,7 +1,6 @@
 package org.neo4j.prof;
 
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.ExternalProfiler;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.Aggregator;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -37,15 +35,10 @@ public final class JFR implements ExternalProfiler {
     @Override
     public Collection<String> addJVMOptions(final BenchmarkParams params) {
         final String fileName = getFileName(params);
-        final IterationParams warmup = params.getWarmup();
-        final long warmupSeconds = warmup
-                .getTime()
-                .convertTo(TimeUnit.SECONDS) * warmup.getCount();
-
         return Arrays.asList(
                 "-XX:+UnlockCommercialFeatures",
                 "-XX:+FlightRecorder",
-                "-XX:StartFlightRecording=duration=0s,delay=" + warmupSeconds + "s,dumponexit=true,filename=" + fileName
+                "-XX:StartFlightRecording=duration=0s,delay=0s,dumponexit=true,filename=" + fileName
         );
     }
 
@@ -81,7 +74,7 @@ public final class JFR implements ExternalProfiler {
     }
 
     private String getFileName(final BenchmarkParams params) {
-        return params.id() + ".jfr";
+        return params.id().replaceAll("['\"]", "-") + ".jfr";
     }
 
     private static final class NoResult extends Result<NoResult> {
