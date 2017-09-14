@@ -14,7 +14,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-final class NodeLoader implements Runnable, TerminationFlag {
+final class NodesStoreLoader implements Runnable, TerminationFlag {
 
     private static final NodeBatch SENTINEL = new NodeBatch(new long[0], -1);
 
@@ -28,7 +28,7 @@ final class NodeLoader implements Runnable, TerminationFlag {
     private final Queue<NodeBatch> queue;
     private final int capacity;
 
-    NodeLoader(
+    NodesStoreLoader(
             GraphDatabaseAPI api,
             int nodeLabelId,
             int concurrency,

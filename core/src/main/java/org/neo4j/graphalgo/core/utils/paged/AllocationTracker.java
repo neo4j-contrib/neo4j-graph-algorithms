@@ -5,12 +5,26 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AllocationTracker {
     public static final AllocationTracker EMPTY = new AllocationTracker() {
         @Override
-        public void add(final long delta) {
+        public void add(long delta) {
+        }
+
+        @Override
+        public void remove(long delta) {
         }
 
         @Override
         public long get() {
             return 0L;
+        }
+
+        @Override
+        public String getUsageString() {
+            return "";
+        }
+
+        @Override
+        public String getUsageString(String label) {
+            return "";
         }
     };
 

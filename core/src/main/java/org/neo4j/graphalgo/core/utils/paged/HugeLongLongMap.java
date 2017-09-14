@@ -37,6 +37,10 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         return ALLOCATOR_FACTORY.estimateMemoryUsage(size, HugeLongLongMap.class);
     }
 
+    public static long estimateMemoryUsageOfPages(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size);
+    }
+
     public static HugeLongLongMap newMap(long size, AllocationTracker tracker) {
         return new HugeLongLongMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
