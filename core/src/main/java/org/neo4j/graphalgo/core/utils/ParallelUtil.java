@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 
@@ -263,32 +265,35 @@ public final class ParallelUtil {
         }
 
         CompletionService completionService =
-                new CompletionService(executor);
+                new CompletionService(executor, concurrency);
 
-        Iterator<? extends Runnable> ts = tasks.iterator();
+        PushbackIterator<Runnable> ts =
+                new PushbackIterator<>(tasks.iterator());
 
         Throwable error = null;
         // generally assumes that tasks.size is notably larger than concurrency
         try {
-            // add first concurrency tasks
-            while (concurrency > 0 && ts.hasNext() && terminationFlag.running()) {
-                Runnable next = ts.next();
-                completionService.submit(next);
-                concurrency--;
+            //noinspection StatementWithEmptyBody - add first concurrency tasks
+            while (concurrency-- > 0
+                    && terminationFlag.running()
+                    && completionService.trySubmit(ts));
+
+            if (!terminationFlag.running()) {
+                return;
             }
 
             // submit all remaining tasks
-            while (ts.hasNext() && terminationFlag.running()) {
+            while (ts.hasNext()) {
                 try {
                     completionService.awaitNext();
                 } catch (ExecutionException e) {
                     error = Exceptions.chain(error, e.getCause());
                 } catch (CancellationException ignore) {
                 }
-                if (terminationFlag.running()) {
-                    Runnable next = ts.next();
-                    completionService.submit(next);
+                if (!terminationFlag.running()) {
+                    return;
                 }
+                completionService.trySubmit(ts);
             }
 
             // wait for all tasks to finish
@@ -303,10 +308,16 @@ public final class ParallelUtil {
         } catch (InterruptedException e) {
             error = Exceptions.chain(e, error);
         } finally {
-            // cancel all regardless of done flag because we could have aborted
-            // from the termination flag
-            completionService.cancelAll();
+            finishRunWithConcurrency(completionService, error);
         }
+    }
+
+    private static void finishRunWithConcurrency(
+            CompletionService completionService,
+            Throwable error) {
+        // cancel all regardless of done flag because we could have aborted
+        // from the termination flag
+        completionService.cancelAll();
         if (error != null) {
             throw Exceptions.launderedException(error);
         }
@@ -393,6 +404,8 @@ public final class ParallelUtil {
      */
     private static final class CompletionService {
         private final Executor executor;
+        private final ThreadPoolExecutor pool;
+        private final int availableConcurrency;
         private final Set<Future<Void>> running;
         private final BlockingQueue<Future<Void>> completionQueue;
 
@@ -406,25 +419,52 @@ public final class ParallelUtil {
             protected void done() {
                 running.remove(this);
                 if (!isCancelled()) {
-                    completionQueue.add(this);
+                    //noinspection StatementWithEmptyBody - spin-wait on free slot
+                    while (!completionQueue.offer(this));
                 }
             }
         }
 
-        CompletionService(ExecutorService executor) {
+        CompletionService(ExecutorService executor, int targetConcurrency) {
             if (!canRunInParallel(executor)) {
                 throw new IllegalArgumentException(
                         "executor already terminated or not usable");
             }
+            if (executor instanceof ThreadPoolExecutor) {
+                pool = (ThreadPoolExecutor) executor;
+                availableConcurrency = pool.getCorePoolSize();
+                int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
+                completionQueue = new ArrayBlockingQueue<>(capacity);
+            } else {
+                pool = null;
+                availableConcurrency = Integer.MAX_VALUE;
+                completionQueue = new LinkedBlockingQueue<>();
+            }
+
             this.executor = executor;
-            this.completionQueue = new LinkedBlockingQueue<>();
             this.running = Collections.newSetFromMap(new ConcurrentHashMap<>());
         }
 
-        void submit(Runnable task) {
+        boolean trySubmit(PushbackIterator<Runnable> tasks) {
+            if (tasks.hasNext()) {
+                Runnable next = tasks.next();
+                if (!submit(next)) {
+                    tasks.pushBack(next);
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        boolean submit(Runnable task) {
             Objects.requireNonNull(task);
-            QueueingFuture future = new QueueingFuture(task);
-            executor.execute(future);
+            if (canSubmit()) {
+                QueueingFuture future = new QueueingFuture(task);
+                executor.execute(future);
+                return true;
+            }
+            return false;
         }
 
         boolean hasTasks() {
@@ -436,15 +476,66 @@ public final class ParallelUtil {
         }
 
         void cancelAll() {
-            stopFutures(running);
+            stopFuturesAndStopScheduling(running);
             stopFutures(completionQueue);
         }
 
-        private void stopFutures(final Collection<Future<Void>> futures) {
+        private boolean canSubmit() {
+            return pool == null || pool.getActiveCount() < availableConcurrency;
+        }
+
+        private void stopFutures(Collection<Future<Void>> futures) {
             for (Future<Void> future : futures) {
                 future.cancel(true);
             }
             futures.clear();
+        }
+
+        private void stopFuturesAndStopScheduling(Collection<Future<Void>> futures) {
+            if (pool == null) {
+                stopFutures(futures);
+                return;
+            }
+            for (Future<Void> future : futures) {
+                if (future instanceof Runnable) {
+                    pool.remove((Runnable) future);
+                }
+                future.cancel(true);
+            }
+            futures.clear();
+            pool.purge();
+        }
+    }
+
+    private static final class PushbackIterator<T> implements Iterator<T> {
+        private final Iterator<? extends T> delegate;
+        private T pushedElement;
+
+        private PushbackIterator(final Iterator<? extends T> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return pushedElement != null || delegate.hasNext();
+        }
+
+        @Override
+        public T next() {
+            T el;
+            if ((el = pushedElement) != null) {
+                pushedElement = null;
+            } else {
+                el = delegate.next();
+            }
+            return el;
+        }
+
+        void pushBack(T element) {
+            if (pushedElement != null) {
+                throw new IllegalArgumentException("Cannot push back twice");
+            }
+            pushedElement = element;
         }
     }
 }
