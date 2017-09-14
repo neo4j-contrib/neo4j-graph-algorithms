@@ -265,7 +265,7 @@ public final class ParallelUtil {
         }
 
         CompletionService completionService =
-                new CompletionService(executor);
+                new CompletionService(executor, concurrency);
 
         PushbackIterator<Runnable> ts =
                 new PushbackIterator<>(tasks.iterator());
@@ -419,12 +419,13 @@ public final class ParallelUtil {
             protected void done() {
                 running.remove(this);
                 if (!isCancelled()) {
-                    completionQueue.add(this);
+                    //noinspection StatementWithEmptyBody - spin-wait on free slot
+                    while (!completionQueue.offer(this));
                 }
             }
         }
 
-        CompletionService(ExecutorService executor) {
+        CompletionService(ExecutorService executor, int targetConcurrency) {
             if (!canRunInParallel(executor)) {
                 throw new IllegalArgumentException(
                         "executor already terminated or not usable");
@@ -432,7 +433,8 @@ public final class ParallelUtil {
             if (executor instanceof ThreadPoolExecutor) {
                 pool = (ThreadPoolExecutor) executor;
                 availableConcurrency = pool.getCorePoolSize();
-                completionQueue = new ArrayBlockingQueue<>(availableConcurrency);
+                int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
+                completionQueue = new ArrayBlockingQueue<>(capacity);
             } else {
                 pool = null;
                 availableConcurrency = Integer.MAX_VALUE;
