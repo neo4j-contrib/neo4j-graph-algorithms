@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.huge;
 
+import com.carrotsearch.hppc.LongLongMap;
 import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -9,6 +10,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.HugeNullWeightMap;
 import org.neo4j.graphalgo.core.HugeWeightMap;
+import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
@@ -23,7 +25,10 @@ import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public final class HugeGraphFactory extends GraphFactory {
@@ -92,7 +97,70 @@ public final class HugeGraphFactory extends GraphFactory {
                     : new HugeWeightMap(nodeCount, setup.relationDefaultWeight, tracker);
     }
 
+    // TODO: progress, tracking
     private HugeIdMap loadNodes(int concurrency, int batchSize, AllocationTracker tracker) {
+        if (!ParallelUtil.canRunInParallel(threadPool)) {
+            return loadSequential(tracker);
+        }
+
+        // start loading ids early in a single producer
+        NodeLoader queue = new NodeLoader(
+                api,
+                labelId,
+                concurrency,
+                HugeIdMap.PAGE_SIZE);
+        Future<?> queueThread = threadPool.submit(queue);
+
+
+        // larger batch size so that only `concurrency` tasks are created
+        // as tasks are working a queue, we don't run in mis-sized threads
+        long newBatchSize = ParallelUtil.adjustBatchSize(
+                nodeCount,
+                concurrency,
+                batchSize);
+
+        // the number of final pages that need to be created
+        int expectedPages = Math.toIntExact(ParallelUtil.threadSize(
+                HugeIdMap.PAGE_SIZE,
+                nodeCount));
+
+        // try to guess the number of pages that every thread should allocate
+        // if all tasks were scheduled completely fair.
+        // since we start an additional thread for reading the nodes and
+        // the default concurrency is the number of threads in the default pool
+        // we could actually starve one thread for scheduling resources
+        int expectedPagesPerThread = ParallelUtil.threadSize(concurrency, expectedPages);
+
+        long[][] algoToNeoPages = new long[expectedPages][];
+        LongLongMap[] neoToAlgoPages = new LongLongMap[expectedPages];
+        Collection<NodeImporter> tasks = LazyBatchCollection.ofCached(
+                nodeCount,
+                newBatchSize,
+                (start, len) -> new NodeImporter(
+                        start,
+                        queue.queue(),
+                        algoToNeoPages,
+                        neoToAlgoPages
+                ));
+        ParallelUtil.runWithConcurrency(concurrency, tasks, queue, threadPool);
+        try {
+            queueThread.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new HugeIdMap(nodeCount, neoToAlgoPages, algoToNeoPages, tracker);
+
+        //         long mod = progressMask;
+//         if ((++nodes & mod) == 0) {
+//                    progressLogger.logProgress(
+//                            nodes,
+//                            approxOperations,
+//                            () -> tracker.getUsageString("memory usage: "));
+//                }
+    }
+
+    private HugeIdMap loadSequential(AllocationTracker tracker) {
         final HugeIdMap mapping = new HugeIdMap(nodeCount, tracker);
         long mod = progressMask;
         withReadOps(readOp -> {
