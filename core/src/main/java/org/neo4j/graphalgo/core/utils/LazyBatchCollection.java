@@ -2,11 +2,11 @@ package org.neo4j.graphalgo.core.utils;
 
 import com.carrotsearch.hppc.AbstractIterator;
 
-import java.lang.reflect.Array;
 import java.util.AbstractCollection;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public final class LazyBatchCollection<T> extends AbstractCollection<T> {
 
@@ -18,34 +18,30 @@ public final class LazyBatchCollection<T> extends AbstractCollection<T> {
             long nodeCount,
             long batchSize,
             BatchSupplier<T> supplier) {
-        return new LazyBatchCollection<>(batchSize, nodeCount, false, null, supplier);
+        return new LazyBatchCollection<>(batchSize, nodeCount, false, supplier);
     }
 
     public static <T> Collection<T> ofCached(
             long nodeCount,
             long batchSize,
-            Class<? extends T> kls,
             BatchSupplier<T> supplier) {
-        return new LazyBatchCollection<>(batchSize, nodeCount, true, kls, supplier);
+        return new LazyBatchCollection<>(batchSize, nodeCount, true, supplier);
     }
 
     private final boolean saveResults;
-    private final Class<? extends T> kls;
     private final BatchSupplier<T> supplier;
     private final long nodeCount;
     private final long batchSize;
     private final int numberOfBatches;
 
-    private T[] batches;
+    private List<T> batches;
 
     private LazyBatchCollection(
             long batchSize,
             long nodeCount,
             boolean saveResults,
-            Class<? extends T> kls,
             BatchSupplier<T> supplier) {
         this.saveResults = saveResults;
-        this.kls = kls;
         this.supplier = supplier;
         this.nodeCount = nodeCount;
         this.batchSize = batchSize;
@@ -55,11 +51,11 @@ public final class LazyBatchCollection<T> extends AbstractCollection<T> {
     @Override
     public final Iterator<T> iterator() {
         if (batches != null) {
-            return Arrays.asList(batches).iterator();
+            return batches.iterator();
         }
         if (saveResults) {
             //noinspection unchecked
-            batches = (T[]) Array.newInstance(kls, numberOfBatches);
+            batches = new ArrayList<>(numberOfBatches);
         }
         return new AbstractIterator<T>() {
             private int i;
@@ -76,7 +72,7 @@ public final class LazyBatchCollection<T> extends AbstractCollection<T> {
                 long length = Math.min(batchSize, nodeCount - start);
                 T t = supplier.newBatch(start, length);
                 if (batches != null) {
-                    batches[i] = t;
+                    batches.add(t);
                 }
                 return t;
             }
@@ -85,14 +81,9 @@ public final class LazyBatchCollection<T> extends AbstractCollection<T> {
 
     @Override
     public final int size() {
-        return numberOfBatches;
-    }
-
-    @Override
-    public Object[] toArray() {
         if (batches != null) {
-            return batches;
+            return batches.size();
         }
-        return super.toArray();
+        return numberOfBatches;
     }
 }
