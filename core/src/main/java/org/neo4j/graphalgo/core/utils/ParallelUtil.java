@@ -372,7 +372,7 @@ public final class ParallelUtil {
             int concurrency,
             IntConsumer consumer) {
         final List<Future<?>> futures = new ArrayList<>();
-        final int batchSize = size / concurrency;
+        final int batchSize = threadSize(concurrency, size);
         for (int i = 0; i < size; i += batchSize) {
             final int start = i;
             final int end = Math.min(size, start + batchSize);
