@@ -154,10 +154,11 @@ public class ParallelGraphLoadingTest extends RandomGraphTestCase {
                 direction,
                 (sourceId, targetId, relationId) -> {
                     assertEquals(nodeId, sourceId);
-                    final Relationship relationship = relationships.remove(
-                            relationId);
+                    final Relationship relationship = relationships.remove(relationId);
                     assertNotNull(
-                            "Relation that does not exist in the graph",
+                            String.format(
+                                    "Relationship (%d)-[%d]->(%d) that does not exist in the graph",
+                                    sourceId, relationId, targetId),
                             relationship);
 
                     if (direction == Direction.OUTGOING) {

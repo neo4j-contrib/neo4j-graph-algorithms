@@ -18,22 +18,21 @@ final class NodeIdMapImporter implements Runnable {
     private final ImportProgress progress;
     private final long[][] algoToNeo;
     private final LongLongMap[] neoToAlgo;
-
-    private long nodeId;
+    private final int pageShift;
 
     NodeIdMapImporter(
-            long nodeStart,
+            int pageSize,
             Queue<NodeBatch> queue,
             long[][] algoToNeo,
             LongLongMap[] neoToAlgo,
             AllocationTracker tracker,
             ImportProgress progress) {
-        this.nodeId = nodeStart;
         this.queue = queue;
         this.neoToAlgo = neoToAlgo;
         this.algoToNeo = algoToNeo;
         this.tracker = tracker;
         this.progress = progress;
+        this.pageShift = Integer.numberOfTrailingZeros(pageSize);
     }
 
     @Override
@@ -59,7 +58,7 @@ final class NodeIdMapImporter implements Runnable {
         long[] algoToNeoBatch = batch.batch;
         LongLongHashMap neoToAlgoBatch = new LongLongHashMap(length);
 
-        long nodeId = this.nodeId;
+        long nodeId = batch.index << pageShift;
         for (int i = 0; i < length; i++) {
             long neoId = algoToNeoBatch[i];
             long algoId = nodeId++;
@@ -67,7 +66,6 @@ final class NodeIdMapImporter implements Runnable {
         }
 
         progress.nodeProgress(length);
-        this.nodeId = nodeId;
         algoToNeo[batch.index] = algoToNeoBatch;
         neoToAlgo[batch.index] = neoToAlgoBatch;
     }

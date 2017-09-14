@@ -129,7 +129,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 nodeCount,
                 newBatchSize,
                 (start, len) -> new NodeIdMapImporter(
-                        start,
+                        HugeIdMap.PAGE_SIZE,
                         queue.queue(),
                         algoToNeoPages,
                         neoToAlgoPages,
