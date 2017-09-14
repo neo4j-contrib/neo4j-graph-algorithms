@@ -121,13 +121,6 @@ public final class HugeGraphFactory extends GraphFactory {
                 HugeIdMap.PAGE_SIZE,
                 nodeCount));
 
-        // try to guess the number of pages that every thread should allocate
-        // if all tasks were scheduled completely fair.
-        // since we start an additional thread for reading the nodes and
-        // the default concurrency is the number of threads in the default pool
-        // we could actually starve one thread for scheduling resources
-        int expectedPagesPerThread = ParallelUtil.threadSize(concurrency, expectedPages);
-
         long[][] algoToNeoPages = new long[expectedPages][];
         LongLongMap[] neoToAlgoPages = new LongLongMap[expectedPages];
         tracker.add(sizeOfObjectArray(expectedPages) * 2);
@@ -143,7 +136,7 @@ public final class HugeGraphFactory extends GraphFactory {
                         tracker,
                         progress
                 ));
-        ParallelUtil.runWithConcurrency(concurrency, tasks, queue, threadPool);
+        ParallelUtil.runWithConcurrency(concurrency, tasks, threadPool);
         try {
             queueThread.get();
         } catch (InterruptedException | ExecutionException e) {

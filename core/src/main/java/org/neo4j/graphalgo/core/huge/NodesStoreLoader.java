@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -14,17 +13,15 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-final class NodesStoreLoader implements Runnable, TerminationFlag {
+final class NodesStoreLoader implements Runnable {
 
-    private static final NodeBatch SENTINEL = new NodeBatch(new long[0], -1);
+    private static final NodeBatch SENTINEL = new NodeBatch(null, -1, 0);
 
     private final GraphDatabaseAPI api;
     private final ThreadToStatementContextBridge contextBridge;
     private final int nodeLabelId;
     private final int batchSize;
 
-    // nodes are all read
-    private final AtomicBoolean complete;
     private final Queue<NodeBatch> queue;
     private final int capacity;
 
@@ -39,7 +36,6 @@ final class NodesStoreLoader implements Runnable, TerminationFlag {
                 .resolveDependency(ThreadToStatementContextBridge.class);
         this.nodeLabelId = nodeLabelId;
         this.batchSize = batchSize;
-        complete = new AtomicBoolean(false);
         capacity = concurrency;
         queue = new ArrayBlockingQueue<>(BitUtil.nextHighestPowerOfTwo(concurrency));
     }
@@ -54,7 +50,6 @@ final class NodesStoreLoader implements Runnable, TerminationFlag {
     }
 
     private void run(ReadOperations readOp) {
-        complete.set(false);
         PrimitiveLongIterator nodeIds = nodeLabelId == ReadOperations.ANY_LABEL
                 ? readOp.nodesGetAll()
                 : readOp.nodesGetForLabel(nodeLabelId);
@@ -68,11 +63,10 @@ final class NodesStoreLoader implements Runnable, TerminationFlag {
             while (i < batchSize && nodeIds.hasNext()) {
                 batch[i++] = nodeIds.next();
             }
+            NodeBatch nodeBatch = new NodeBatch(batch, index, i);
             //noinspection StatementWithEmptyBody -- spin-wait on free queue slot
-            while (!queue.offer(new NodeBatch(batch, index)));
+            while (!queue.offer(nodeBatch));
         }
-
-        complete.set(true);
 
         int cap = capacity;
         //noinspection StatementWithEmptyBody - flood the queue with sentinels
@@ -83,18 +77,15 @@ final class NodesStoreLoader implements Runnable, TerminationFlag {
         return queue;
     }
 
-    @Override
-    public boolean running() {
-        return !complete.get();
-    }
-
     static final class NodeBatch {
         final long[] batch;
         final int index;
+        final int length;
 
-        private NodeBatch(final long[] batch, final int index) {
+        private NodeBatch(long[] batch, int index, int length) {
             this.batch = batch;
             this.index = index;
+            this.length = length;
         }
     }
 }

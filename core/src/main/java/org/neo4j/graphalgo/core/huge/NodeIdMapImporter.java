@@ -18,9 +18,8 @@ final class NodeIdMapImporter implements Runnable {
     private final ImportProgress progress;
     private final long[][] algoToNeo;
     private final LongLongMap[] neoToAlgo;
-    private final long nodeStart;
 
-    private long imported;
+    private long nodeId;
 
     NodeIdMapImporter(
             long nodeStart,
@@ -29,7 +28,7 @@ final class NodeIdMapImporter implements Runnable {
             LongLongMap[] neoToAlgo,
             AllocationTracker tracker,
             ImportProgress progress) {
-        this.nodeStart = nodeStart;
+        this.nodeId = nodeStart;
         this.queue = queue;
         this.neoToAlgo = neoToAlgo;
         this.algoToNeo = algoToNeo;
@@ -56,25 +55,28 @@ final class NodeIdMapImporter implements Runnable {
     private void accept(NodeBatch batch) {
         trackBatch(batch);
 
+        int length = batch.length;
         long[] algoToNeoBatch = batch.batch;
-        LongLongHashMap neoToAlgoBatch = new LongLongHashMap(algoToNeoBatch.length);
-        long nodeStart = this.nodeStart;
-        long imported = this.imported;
-        for (long neoId : algoToNeoBatch) {
-            long algoId = nodeStart + imported++;
+        LongLongHashMap neoToAlgoBatch = new LongLongHashMap(length);
+
+        long nodeId = this.nodeId;
+        for (int i = 0; i < length; i++) {
+            long neoId = algoToNeoBatch[i];
+            long algoId = nodeId++;
             neoToAlgoBatch.put(neoId, algoId);
         }
-        progress.nodeProgress(imported);
-        this.imported = imported;
+
+        progress.nodeProgress(length);
+        this.nodeId = nodeId;
         algoToNeo[batch.index] = algoToNeoBatch;
         neoToAlgo[batch.index] = neoToAlgoBatch;
     }
 
     private void trackBatch(NodeBatch batch) {
         if (AllocationTracker.isTracking(tracker)) {
-            int length = batch.batch.length;
-            tracker.add(sizeOfLongArray(length));
-            tracker.add(HugeLongLongMap.estimateMemoryUsageOfPages(length));
+            // the array is always over-allocated to the full page size
+            tracker.add(sizeOfLongArray(batch.batch.length));
+            tracker.add(HugeLongLongMap.estimateMemoryUsageOfPages(batch.length));
         }
     }
 }
