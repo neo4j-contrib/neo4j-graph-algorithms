@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.io.EOFException;
@@ -32,10 +33,11 @@ public final class LdbcDownloader {
     static {
         FILES = new HashMap<>();
         FILES.put("L01", new S3Location("http://example-data.neo4j.org.s3.amazonaws.com/files/ldbc_sf001_p006_neo4j31.tgz"));
+        FILES.put("L10", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.1-datasets/ldbc_sf010_p006.tgz"));
     }
 
     static synchronized GraphDatabaseAPI openDb() throws IOException {
-        return openDb(FILES.get("L01"));
+        return openDb("L01");
     }
 
     static synchronized GraphDatabaseAPI openDb(String graphId) throws IOException {
@@ -43,11 +45,11 @@ public final class LdbcDownloader {
         if (location == null) {
             throw new IllegalArgumentException("Unknown graph: " + graphId);
         }
-        return openDb(location);
+        return openDb(graphId, location);
     }
 
-    private static GraphDatabaseAPI openDb(S3Location location) throws IOException {
-        Path graphDir = tempDirFor("org.neo4j", "ldbc");
+    private static GraphDatabaseAPI openDb(String id, S3Location location) throws IOException {
+        Path graphDir = tempDirFor("org.neo4j", "ldbc", id);
         Path graphDbDir = graphDir.resolve("graph.db");
         if (Files.isDirectory(graphDbDir)) {
             return openDb(graphDbDir);
@@ -55,22 +57,18 @@ public final class LdbcDownloader {
         Path zippedDb = graphDir.resolve(location.fileName);
         if (Files.isReadable(zippedDb)) {
             unzipFile(zippedDb, location);
-            return openDb(location);
+            return openDb(id, location);
         }
         downloadFile(zippedDb, location.url);
-        return openDb(location);
+        return openDb(id, location);
     }
 
     private static GraphDatabaseAPI openDb(Path dbLocation) {
         GraphDatabaseService db = new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder(dbLocation.toFile())
+                .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
                 .newGraphDatabase();
         return (GraphDatabaseAPI) db;
-    }
-
-    public static void main(String... args) throws Exception {
-        System.out.println("FILES.get(\"L01\").url = " + FILES.get("L01").url);
-        System.out.println("FILES.get(\"L01\").finalName = " + FILES.get("L01").fileName);
     }
 
     private static void unzipFile(Path zippedDb, S3Location location)
