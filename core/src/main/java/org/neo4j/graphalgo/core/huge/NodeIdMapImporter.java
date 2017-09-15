@@ -6,14 +6,13 @@ import org.neo4j.graphalgo.core.huge.NodesStoreLoader.NodeBatch;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 
-import java.util.Queue;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.BlockingQueue;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
 final class NodeIdMapImporter implements Runnable {
 
-    private final Queue<NodeBatch> queue;
+    private final BlockingQueue<NodeBatch> queue;
     private final AllocationTracker tracker;
     private final ImportProgress progress;
     private final long[][] algoToNeo;
@@ -22,7 +21,7 @@ final class NodeIdMapImporter implements Runnable {
 
     NodeIdMapImporter(
             int pageSize,
-            Queue<NodeBatch> queue,
+            BlockingQueue<NodeBatch> queue,
             long[][] algoToNeo,
             LongLongMap[] neoToAlgo,
             AllocationTracker tracker,
@@ -37,17 +36,16 @@ final class NodeIdMapImporter implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
-            NodeBatch batch = queue.poll();
-            while (batch == null) {
-                // wait 1ms before repolling
-                LockSupport.parkNanos(1_000_000L);
-                batch = queue.poll();
+        try {
+            while (true) {
+                NodeBatch batch = queue.take();
+                if (batch.index == -1) {
+                    return;
+                }
+                accept(batch);
             }
-            if (batch.index == -1) {
-                return;
-            }
-            accept(batch);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

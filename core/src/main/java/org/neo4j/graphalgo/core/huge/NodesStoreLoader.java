@@ -8,9 +8,8 @@ import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.BlockingQueue;
 
 
 final class NodesStoreLoader implements Runnable {
@@ -22,7 +21,7 @@ final class NodesStoreLoader implements Runnable {
     private final int nodeLabelId;
     private final int batchSize;
 
-    private final Queue<NodeBatch> queue;
+    private final BlockingQueue<NodeBatch> queue;
     private final int capacity;
 
     NodesStoreLoader(
@@ -37,7 +36,7 @@ final class NodesStoreLoader implements Runnable {
         this.nodeLabelId = nodeLabelId;
         this.batchSize = batchSize;
         capacity = concurrency;
-        queue = new ArrayBlockingQueue<>(BitUtil.nextHighestPowerOfTwo(concurrency));
+        queue = new ArrayBlockingQueue<>(BitUtil.nextHighestPowerOfTwo(concurrency), true);
     }
 
     @Override
@@ -46,10 +45,12 @@ final class NodesStoreLoader implements Runnable {
              Statement statement = contextBridge.get()) {
             run(statement.readOperations());
             tx.success();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
-    private void run(ReadOperations readOp) {
+    private void run(ReadOperations readOp) throws InterruptedException {
         PrimitiveLongIterator nodeIds = nodeLabelId == ReadOperations.ANY_LABEL
                 ? readOp.nodesGetAll()
                 : readOp.nodesGetForLabel(nodeLabelId);
@@ -64,16 +65,17 @@ final class NodesStoreLoader implements Runnable {
                 batch[i++] = nodeIds.next();
             }
             NodeBatch nodeBatch = new NodeBatch(batch, index, i);
-            //noinspection StatementWithEmptyBody -- spin-wait on free queue slot
-            while (!queue.offer(nodeBatch));
+            queue.put(nodeBatch);
         }
 
         int cap = capacity;
-        //noinspection StatementWithEmptyBody - flood the queue with sentinels
-        while (cap --> 0 && queue.offer(SENTINEL));
+        // flood the queue with sentinels
+        while (cap --> 0) {
+            queue.put(SENTINEL);
+        }
     }
 
-    Queue<NodeBatch> queue() {
+    BlockingQueue<NodeBatch> queue() {
         return queue;
     }
 
