@@ -4,6 +4,8 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 final class ImportProgress {
 
     private final ProgressLogger progressLogger;
@@ -12,6 +14,8 @@ final class ImportProgress {
     private final long approxOperations;
     private final long progressMask;
     private final int relationProgressShift;
+
+    private final AtomicLong nodeProgress;
 
     ImportProgress(
             ProgressLogger progressLogger,
@@ -28,23 +32,30 @@ final class ImportProgress {
         relationProgressShift = Long.numberOfTrailingZeros(relFactor);
         approxOperations = nodeCount + (nodeCount << relationProgressShift);
         progressMask = (BitUtil.nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
+        nodeProgress = new AtomicLong();
     }
 
-    void nodeProgress(long nodes) {
+    void nodeProgress(long delta) {
+        long nodes = nodeProgress.addAndGet(delta);
         if ((nodes & progressMask) == 0) {
             progressLogger.logProgress(
                     nodes,
                     approxOperations,
-                    () -> tracker.getUsageString("memory usage: "));
+                    tracker);
         }
     }
 
-    void relProgress(long nodes) {
+    void relProgress(long delta) {
+        long nodes = nodeProgress.addAndGet(delta);
         if ((nodes & progressMask) == 0) {
             progressLogger.logProgress(
                     (nodes << relationProgressShift) + nodeCount,
                     approxOperations,
-                    () -> tracker.getUsageString("memory usage: "));
+                    tracker);
         }
+    }
+
+    void resetForRelationships() {
+        nodeProgress.set(0);
     }
 }

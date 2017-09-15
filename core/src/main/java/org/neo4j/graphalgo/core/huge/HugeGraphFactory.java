@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
@@ -38,7 +39,6 @@ public final class HugeGraphFactory extends GraphFactory {
             GraphDatabaseAPI api,
             GraphSetup setup) {
         super(api, setup);
-        setLog(setup.log);
         this.threadPool = setup.executor;
         withReadOps(readOp -> {
             labelId = setup.loadAnyLabel()
@@ -78,10 +78,8 @@ public final class HugeGraphFactory extends GraphFactory {
 
         HugeWeightMapping weights = weightMapping(tracker);
         HugeIdMap mapping = loadNodes(concurrency, batchSize, tracker, progress);
-        log.info("[%s] Node import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
         HugeGraph graph = loadRelationships(mapping, weights, concurrency, batchSize, tracker, progress);
-        log.info("[%s] Relationship import memory usage: %s", Thread.currentThread().getName(), tracker.getUsageString());
-        progressLogger.logDone();
+        progressLogger.logDone(tracker);
         return graph;
     }
 
@@ -192,6 +190,7 @@ public final class HugeGraphFactory extends GraphFactory {
             final LongArray finalOutOffsets = outOffsets;
             final ByteArray finalInAdjacency = inAdjacency;
             final ByteArray finalOutAdjacency = outAdjacency;
+            progress.resetForRelationships();
             ParallelUtil.readParallel(
                     concurrency,
                     batchSize,

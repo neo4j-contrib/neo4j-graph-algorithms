@@ -497,7 +497,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
-                getProgressLogger().logProgress(i + 1, iterations, () -> tracker.getUsageString("memory usage: "));
+                getProgressLogger().logProgress(i + 1, iterations, tracker);
                 synchronizeScores();
                 // sync scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);

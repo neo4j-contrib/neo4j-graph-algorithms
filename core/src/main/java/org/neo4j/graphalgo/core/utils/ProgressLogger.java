@@ -19,7 +19,7 @@ public interface ProgressLogger {
 
     void logProgress(double percentDone, Supplier<String> msg);
 
-    void logDone();
+    void logDone(Supplier<String> msg);
 
     default void logProgress(double numerator, double denominator, Supplier<String> msg) {
         logProgress(numerator / denominator, msg);
@@ -29,5 +29,9 @@ public interface ProgressLogger {
     }
     default void logProgress(double percentDone) {
         logProgress(percentDone, NO_MESSAGE);
+    }
+
+    default void logDone() {
+        logDone(NO_MESSAGE);
     }
 }

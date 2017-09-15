@@ -115,7 +115,7 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
                 // TODO: ignore?
                 throw new RuntimeException(e);
             }
-            progress.relProgress(++nodes);
+            progress.relProgress(1);
         }
     }
 
