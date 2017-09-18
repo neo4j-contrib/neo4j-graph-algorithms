@@ -8,9 +8,9 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.HugeNullWeightMap;
 import org.neo4j.graphalgo.core.HugeWeightMap;
-import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
@@ -19,10 +19,7 @@ import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
@@ -96,9 +93,13 @@ public final class HugeGraphFactory extends GraphFactory {
             int batchSize,
             AllocationTracker tracker,
             ImportProgress progress) {
-        if (!ParallelUtil.canRunInParallel(threadPool)) {
+        if (!ParallelUtil.canRunInParallel(threadPool) || nodeCount <= batchSize) {
             return loadSequential(tracker, progress);
         }
+
+        // We need to dispatch to target threads based on bit-&
+        // so we need concurrency to be a power of two
+        concurrency = BitUtil.nearbyPowerOfTwo(concurrency);
 
         // start loading ids early in a single producer
         NodesStoreLoader queue = new NodesStoreLoader(
@@ -106,15 +107,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 labelId,
                 concurrency,
                 HugeIdMap.PAGE_SIZE);
-        Future<?> queueThread = threadPool.submit(queue);
-
-
-        // larger batch size so that only `concurrency` tasks are created
-        // as tasks are working a queue, we don't run in mis-sized threads
-        long newBatchSize = ParallelUtil.adjustBatchSize(
-                nodeCount,
-                concurrency,
-                batchSize);
+        threadPool.submit(queue);
 
         // the number of final pages that need to be created
         int expectedPages = Math.toIntExact(ParallelUtil.threadSize(
@@ -133,38 +126,29 @@ public final class HugeGraphFactory extends GraphFactory {
         tracker.add(sizeOfObjectArray(expectedPages));
         tracker.add(sizeOfObjectArray(allExpectedPages));
 
-        Collection<NodeIdMapImporter> tasks = LazyBatchCollection.ofCached(
-                nodeCount,
-                newBatchSize,
-                (start, len) -> new NodeIdMapImporter(
-                        HugeIdMap.PAGE_SIZE,
-                        queue.queue(),
-                        algoToNeoPages,
-                        neoToAlgoPages,
-                        tracker,
-                        progress
-                ));
+        Collection<Runnable> tasks = NodeIdMapImporter.createImporterTasks(
+                concurrency,
+                queue.queue(),
+                algoToNeoPages,
+                neoToAlgoPages,
+                tracker,
+                progress
+        );
         ParallelUtil.runWithConcurrency(concurrency, tasks, threadPool);
-        try {
-            queueThread.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
 
         HugeLongLongMap idMap = HugeLongLongMap.fromPages(allNodesCount, neoToAlgoPages, tracker);
         return new HugeIdMap(nodeCount, idMap, algoToNeoPages, tracker);
     }
 
     private HugeIdMap loadSequential(AllocationTracker tracker, ImportProgress progress) {
-        final HugeIdMap mapping = new HugeIdMap(nodeCount, tracker);
+        final HugeIdMap mapping = new HugeIdMap(allNodesCount, tracker);
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
                     : readOp.nodesGetForLabel(labelId);
-            long nodes = 0;
             while (nodeIds.hasNext()) {
                 mapping.add(nodeIds.next());
-                progress.nodeProgress(++nodes);
+                progress.nodeProgress(1);
             }
             mapping.buildMappedIds();
         });
@@ -217,8 +201,7 @@ public final class HugeGraphFactory extends GraphFactory {
                             finalInAdjacency,
                             finalOutAdjacency,
                             relationId,
-                            weightId,
-                            offset
+                            weightId
                     ),
                     threadPool);
         }

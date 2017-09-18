@@ -50,8 +50,7 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
             ByteArray inAdjacency,
             ByteArray outAdjacency,
             int[] relationId,
-            int weightId,
-            long nodeOffset) {
+            int weightId) {
         this.api = api;
         this.progress = progress;
         this.idMap = idMap;
