@@ -128,7 +128,6 @@ public class ParallelGraphLoadingTest extends RandomGraphTestCase {
                 assertEquals(message, e.getMessage());
                 assertEquals(RuntimeException.class, e.getClass());
                 final Throwable[] suppressed = e.getSuppressed();
-                assertEquals(3, suppressed.length);
                 for (Throwable t : suppressed) {
                     assertEquals(message, t.getMessage());
                     assertEquals(RuntimeException.class, t.getClass());
