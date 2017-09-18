@@ -20,10 +20,9 @@ public class Pools {
     }
 
     public static ExecutorService createDefaultPool() {
-        int threads = DEFAULT_CONCURRENCY * 2;
         return new ThreadPoolExecutor(
-                threads / 2,
-                threads,
+                DEFAULT_CONCURRENCY,
+                DEFAULT_CONCURRENCY * 2,
                 30L,
                 TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(DEFAULT_QUEUE_SIZE),
