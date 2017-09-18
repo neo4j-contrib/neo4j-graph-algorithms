@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.core.huge;
 
-import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -20,7 +19,9 @@ import java.util.function.LongPredicate;
  * This is basically a long to int mapper. It sorts the id's in ascending order so its
  * guaranteed that there is no ID greater then nextGraphId / capacity
  */
-public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBatchNodeIterable {
+final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBatchNodeIterable {
+
+    static final long NOT_FOUND = -1L;
 
     // page size to use when loading nodes in parallel
     static final int PAGE_SIZE = PageUtil.pageSizeFor(Long.BYTES);
@@ -33,41 +34,28 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     /**
      * initialize the map with maximum node capacity
      */
-    public HugeIdMap(long capacity, AllocationTracker tracker) {
+    HugeIdMap(long capacity, AllocationTracker tracker) {
         nodeToGraphIds = HugeLongLongMap.newMap(capacity, tracker);
         this.tracker = tracker;
     }
 
     HugeIdMap(
             long capacity,
-            LongLongMap[] originalMap,
+            HugeLongLongMap originalMap,
             long[][] mappedIds,
             AllocationTracker tracker) {
         this.tracker = tracker;
         nextGraphId = capacity;
-        nodeToGraphIds = HugeLongLongMap.fromPages(capacity, originalMap, tracker);
+        nodeToGraphIds = originalMap;
         graphIds = LongArray.fromPages(capacity, mappedIds, tracker);
     }
 
-    public long mapOrGet(long externalId) {
-        long internalId = nodeToGraphIds.getOrDefault(externalId, -1L);
-        if (internalId == -1L) {
-            internalId = nextGraphId++;
-            nodeToGraphIds.put(externalId, internalId);
-        }
-        return internalId;
-    }
-
-    public void add(long longValue) {
+    void add(long longValue) {
         long internalId = nextGraphId++;
         nodeToGraphIds.put(longValue, internalId);
     }
 
-    public long get(long longValue) {
-        return nodeToGraphIds.getOrDefault(longValue, -1);
-    }
-
-    public void buildMappedIds() {
+    void buildMappedIds() {
         graphIds = LongArray.newArray(hugeNodeCount(), tracker);
         for (final LongLongCursor cursor : nodeToGraphIds) {
             graphIds.set(cursor.value, cursor.key);
@@ -76,7 +64,7 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
 
     @Override
     public long toHugeMappedNodeId(long nodeId) {
-        return mapOrGet(nodeId);
+        return nodeToGraphIds.getOrDefault(nodeId, NOT_FOUND);
     }
 
     @Override

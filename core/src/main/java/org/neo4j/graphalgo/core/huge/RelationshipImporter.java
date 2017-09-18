@@ -35,7 +35,6 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
 
     private final int[] relationId;
     private final int weightId;
-    private final long nodeOffset;
 
     private DeltaEncodingVisitor inImporter;
     private DeltaEncodingVisitor outImporter;
@@ -62,7 +61,6 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
         this.outOffsets = outOffsets;
         this.relationId = relationId;
         this.weightId = weightId;
-        this.nodeOffset = nodeOffset;
         this.inAllocator = inAdjacency != null ? inAdjacency.newAllocator() : null;
         this.outAllocator = outAdjacency != null ? outAdjacency.newAllocator() : null;
         this.contextBridge = api
@@ -84,7 +82,6 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
         PrimitiveLongIterator iterator = nodes.iterator();
         boolean loadIncoming = inAllocator != null;
         boolean loadOutgoing = outAllocator != null;
-        long nodes = nodeOffset;
 
         if (loadIncoming) {
             inImporter = newImporter(
@@ -274,9 +271,9 @@ final class RelationshipImporter implements Runnable, Consumer<ReadOperations> {
         long maybeVisit(
                 final long relationshipId,
                 final long endNodeId) throws EntityNotFoundException {
-            long targetId = idMap.get(endNodeId);
-            if (targetId == -1L) {
-                return -1L;
+            long targetId = idMap.toHugeMappedNodeId(endNodeId);
+            if (targetId == HugeIdMap.NOT_FOUND) {
+                return HugeIdMap.NOT_FOUND;
             }
 
             if (isSorted && targetId < prevTarget) {

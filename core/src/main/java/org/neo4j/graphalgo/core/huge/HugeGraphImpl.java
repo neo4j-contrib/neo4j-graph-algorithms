@@ -170,7 +170,7 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public long toHugeMappedNodeId(long nodeId) {
-        return idMapping.get(nodeId);
+        return idMapping.toHugeMappedNodeId(nodeId);
     }
 
     @Override

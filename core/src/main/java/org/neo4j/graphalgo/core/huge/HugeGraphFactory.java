@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongLongMap;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.StatementConstants;
@@ -29,6 +30,7 @@ public final class HugeGraphFactory extends GraphFactory {
 
     private final ExecutorService threadPool;
     private long nodeCount;
+    private long allNodesCount;
     private long maxRelCount;
 
     private int labelId;
@@ -53,8 +55,8 @@ public final class HugeGraphFactory extends GraphFactory {
             weightId = setup.loadDefaultRelationshipWeight()
                     ? StatementConstants.NO_SUCH_PROPERTY_KEY
                     : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
-
             nodeCount = readOp.countsForNode(labelId);
+            allNodesCount = readOp.nodesGetCount();
             maxRelCount = Math.max(
                     readOp.countsForRelationshipWithoutTxState(labelId, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], ReadOperations.ANY_LABEL),
                     readOp.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], labelId)
@@ -119,9 +121,17 @@ public final class HugeGraphFactory extends GraphFactory {
                 HugeIdMap.PAGE_SIZE,
                 nodeCount));
 
+        // the number of final pages that need to be created for all nodes
+        // since we could map sparse nodes to the highest id, we have to
+        // create pages that could hold _all_ nodes
+        int allExpectedPages = Math.toIntExact(ParallelUtil.threadSize(
+                HugeIdMap.PAGE_SIZE,
+                allNodesCount));
+
         long[][] algoToNeoPages = new long[expectedPages][];
-        LongLongMap[] neoToAlgoPages = new LongLongMap[expectedPages];
-        tracker.add(sizeOfObjectArray(expectedPages) * 2);
+        LongLongMap[] neoToAlgoPages = new LongLongMap[allExpectedPages];
+        tracker.add(sizeOfObjectArray(expectedPages));
+        tracker.add(sizeOfObjectArray(allExpectedPages));
 
         Collection<NodeIdMapImporter> tasks = LazyBatchCollection.ofCached(
                 nodeCount,
@@ -141,7 +151,8 @@ public final class HugeGraphFactory extends GraphFactory {
             throw new RuntimeException(e);
         }
 
-        return new HugeIdMap(nodeCount, neoToAlgoPages, algoToNeoPages, tracker);
+        HugeLongLongMap idMap = HugeLongLongMap.fromPages(allNodesCount, neoToAlgoPages, tracker);
+        return new HugeIdMap(nodeCount, idMap, algoToNeoPages, tracker);
     }
 
     private HugeIdMap loadSequential(AllocationTracker tracker, ImportProgress progress) {
