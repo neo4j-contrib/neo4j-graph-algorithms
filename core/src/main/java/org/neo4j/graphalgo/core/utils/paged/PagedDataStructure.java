@@ -37,14 +37,6 @@ public class PagedDataStructure<T> {
     }
 
     PagedDataStructure(long size, T[] pages, PageAllocator<T> allocator) {
-        if (pages == null) {
-            throw new IllegalArgumentException("provided pages are null");
-        }
-        for (int i = 0, len = pages.length; i < len; i++) {
-            if (pages[i] == null) {
-                throw new IllegalArgumentException("page " + i + " is null");
-            }
-        }
         pageSize = allocator.pageSize();
         pageShift = Integer.numberOfTrailingZeros(pageSize);
         pageMask = pageSize - 1;

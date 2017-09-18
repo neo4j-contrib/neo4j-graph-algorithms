@@ -22,6 +22,14 @@ public final class PageUtil {
         return (int) numPages;
     }
 
+    public static int pageIndex(long index, int pageShift) {
+        return (int) (index >>> pageShift);
+    }
+
+    public static int indexInPage(long index, int pageMask) {
+        return (int) (index & pageMask);
+    }
+
     private PageUtil() {
         throw new UnsupportedOperationException("No instances");
     }
