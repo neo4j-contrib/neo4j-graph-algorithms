@@ -89,7 +89,7 @@ public final class HugeGraphFactory extends GraphFactory {
     }
 
     private HugeIdMap loadNodes(AllocationTracker tracker, ImportProgress progress) {
-        final HugeIdMap mapping = new HugeIdMap(allNodesCount, tracker);
+        final HugeIdMap mapping = new HugeIdMap(nodeCount, allNodesCount, tracker);
         withReadOps(readOp -> {
             final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL
                     ? readOp.nodesGetAll()
@@ -98,7 +98,6 @@ public final class HugeGraphFactory extends GraphFactory {
                 mapping.add(nodeIds.next());
                 progress.nodeProgress(1);
             }
-            mapping.buildMappedIds();
         });
         return mapping;
     }
