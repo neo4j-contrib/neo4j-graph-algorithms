@@ -5,6 +5,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -19,6 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The GraphLoader provides a fluent interface and default values to configure
@@ -54,6 +56,7 @@ public class GraphLoader {
     private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private boolean accumulateWeights;
     private Log log = NullLog.getInstance();
+    private long logMillis = -1;
     private AllocationTracker tracker = AllocationTracker.EMPTY;
 
     /**
@@ -74,11 +77,39 @@ public class GraphLoader {
         this.executorService = Objects.requireNonNull(executorService);
     }
 
+    /**
+     * Use the given {@link Log}instance to log the progress during loading.
+     */
     public GraphLoader withLog(Log log) {
         this.log = log;
         return this;
     }
 
+    /**
+     * Log progress every {@code interval} time units.
+     * At most 1 message will be logged within this interval, but it is not
+     * guaranteed that a message will be logged at all.
+     * @see #withDefaultLogInterval()
+     */
+    public GraphLoader withLogInterval(long value, TimeUnit unit) {
+        this.logMillis = unit.toMillis(value);
+        return this;
+    }
+
+    /**
+     * Log progress in the default interval specified by {@link ProgressLoggerAdapter}.
+     * @see #withLogInterval(long, TimeUnit)
+     */
+    public GraphLoader withDefaultLogInterval() {
+        this.logMillis = -1;
+        return this;
+    }
+
+    /**
+     * Use the given {@link AllocationTracker} to track memory allocations during loading.
+     * Can be null, in which case no tracking happens. The same effect can be
+     * achieved by using {@link AllocationTracker#EMPTY}.
+     */
     public GraphLoader withAllocationTracker(AllocationTracker tracker) {
         this.tracker = tracker;
         return this;
@@ -431,7 +462,13 @@ public class GraphLoader {
                 tracker);
 
         try {
-            return (GraphFactory) constructor.invoke(api, setup);
+            GraphFactory factory = (GraphFactory) constructor.invoke(api, setup);
+            if (logMillis == -1) {
+                factory.setLog(log);
+            } else {
+                factory.setLog(log, logMillis, TimeUnit.MILLISECONDS);
+            }
+            return factory;
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(
                     throwable.getMessage(),

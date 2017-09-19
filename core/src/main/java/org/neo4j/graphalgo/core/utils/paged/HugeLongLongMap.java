@@ -4,10 +4,12 @@ import com.carrotsearch.hppc.AbstractIterator;
 import com.carrotsearch.hppc.LongLongHashMap;
 import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
+import org.neo4j.graphalgo.core.utils.container.TrackingLongLongHashMap;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static com.carrotsearch.hppc.HashContainers.DEFAULT_LOAD_FACTOR;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
@@ -18,7 +20,7 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
     static {
         // we must use same page size as long[] pages in order to load in parallel
         int pageSize = PageUtil.pageSizeFor(Long.BYTES);
-        int bufferLength = (int) Math.ceil(pageSize / 0.75f);
+        int bufferLength = (int) Math.ceil(pageSize / DEFAULT_LOAD_FACTOR);
         bufferLength = BitUtil.nextHighestPowerOfTwo(bufferLength);
         long bufferUsage = sizeOfLongArray(bufferLength);
 
@@ -29,12 +31,16 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         ALLOCATOR_FACTORY = PageAllocator.of(
                 pageSize,
                 pageUsage,
-                () -> new LongLongHashMap(pageSize),
+                TrackingLongLongHashMap::new,
                 new LongLongHashMap[0]);
     }
 
     public static long estimateMemoryUsage(long size) {
         return ALLOCATOR_FACTORY.estimateMemoryUsage(size, HugeLongLongMap.class);
+    }
+
+    public static long estimateMemoryUsageOfPages(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size);
     }
 
     public static HugeLongLongMap newMap(long size, AllocationTracker tracker) {
@@ -59,13 +65,17 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
     public long getOrDefault(long index, long defaultValue) {
         assert index < capacity();
         final int pageIndex = pageIndex(index);
-        return pages[pageIndex].getOrDefault(index, defaultValue);
+        LongLongMap page = pages[pageIndex];
+        return page != null
+                ? page.getOrDefault(index, defaultValue)
+                : defaultValue;
     }
 
     public long put(long index, long value) {
         assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
+        assert page != null : "add should only be used with pre-allocated pages";
         return page.put(index, value);
     }
 
@@ -73,7 +83,7 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
-        return page.containsKey(index);
+        return page != null && page.containsKey(index);
     }
 
     @Override

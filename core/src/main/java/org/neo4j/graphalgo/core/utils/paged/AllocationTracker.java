@@ -1,16 +1,36 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
-public class AllocationTracker {
+public class AllocationTracker implements Supplier<String> {
     public static final AllocationTracker EMPTY = new AllocationTracker() {
         @Override
-        public void add(final long delta) {
+        public void add(long delta) {
         }
 
         @Override
-        public long get() {
+        public void remove(long delta) {
+        }
+
+        @Override
+        public long tracked() {
             return 0L;
+        }
+
+        @Override
+        public String get() {
+            return "";
+        }
+
+        @Override
+        public String getUsageString() {
+            return "";
+        }
+
+        @Override
+        public String getUsageString(String label) {
+            return "";
         }
     };
 
@@ -26,16 +46,21 @@ public class AllocationTracker {
         count.addAndGet(-delta);
     }
 
-    public long get() {
+    public long tracked() {
         return count.get();
     }
 
     public String getUsageString() {
-        return humanReadable(get());
+        return humanReadable(tracked());
     }
 
     public String getUsageString(String label) {
-        return label + humanReadable(get());
+        return label + humanReadable(tracked());
+    }
+
+    @Override
+    public String get() {
+        return getUsageString("Memory usage: ");
     }
 
     public static AllocationTracker create() {

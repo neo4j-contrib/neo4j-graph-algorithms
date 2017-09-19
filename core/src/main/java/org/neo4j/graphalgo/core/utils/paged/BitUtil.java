@@ -6,6 +6,12 @@ public final class BitUtil {
         return value > 0 && ((value & (~value + 1)) == value);
     }
 
+    public static int nearbyPowerOfTwo(int x) {
+        int next = nextHighestPowerOfTwo(x);
+        int prev = next >>> 1;
+        return (next - x) <= (x - prev) ? next : prev;
+    }
+
     public static long nearbyPowerOfTwo(long x) {
         long next = nextHighestPowerOfTwo(x);
         long prev = next >>> 1;

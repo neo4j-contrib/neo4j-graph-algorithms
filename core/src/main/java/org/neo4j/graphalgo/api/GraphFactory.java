@@ -10,6 +10,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -40,6 +41,15 @@ public abstract class GraphFactory {
     public void setLog(Log log) {
         this.log = log;
         this.progressLogger = new ProgressLoggerAdapter(log, TASK_LOADING);
+    }
+
+    public void setLog(Log log, long time, TimeUnit unit) {
+        this.log = log;
+        ProgressLoggerAdapter logger = new ProgressLoggerAdapter(
+                log,
+                TASK_LOADING);
+        logger.withLogIntervalMillis((int) Math.min(unit.toMillis(time), Integer.MAX_VALUE));
+        this.progressLogger = logger;
     }
 
     public abstract Graph build();

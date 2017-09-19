@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 import static org.neo4j.graphalgo.core.utils.paged.AllocationTracker.humanReadable;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
@@ -395,27 +396,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         return sharedUsage + perThreadUsage;
     }
 
-    private static int idx(long id, long[] ids) {
-        int length = ids.length;
-
-        int low = 0;
-        int high = length - 1;
-
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            long midVal = ids[mid];
-
-            if (midVal < id) {
-                low = mid + 1;
-            } else if (midVal > id) {
-                high = mid - 1;
-            } else {
-                return mid;
-            }
-        }
-        return low - 1;
-    }
-
     @Override
     public HugePageRank me() {
         return this;
@@ -497,7 +477,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
-                getProgressLogger().logProgress(i + 1, iterations, () -> tracker.getUsageString("memory usage: "));
+                getProgressLogger().logProgress(i + 1, iterations, tracker);
                 synchronizeScores();
                 // sync scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
@@ -611,7 +591,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 long targetNodeId) {
             int rank = srcRank[0];
             if (rank != 0) {
-                int idx = HugePageRank.idx(targetNodeId, starts);
+                int idx = binaryLookup(targetNodeId, starts);
                 nextScores[idx][(int) (targetNodeId - starts[idx])] += rank;
             }
             return true;
@@ -698,7 +678,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         @Override
         public double score(final long nodeId) {
-            int idx = HugePageRank.idx(nodeId, starts);
+            int idx = binaryLookup(nodeId, starts);
             return partitions[idx][(int) (nodeId - starts[idx])];
         }
 

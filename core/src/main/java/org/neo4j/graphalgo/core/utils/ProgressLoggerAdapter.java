@@ -28,21 +28,25 @@ public class ProgressLoggerAdapter implements ProgressLogger {
         final long currentTime = System.currentTimeMillis();
         final long lastLogTime = lastLog.get();
         if (currentTime > lastLogTime + logIntervalMillis && lastLog.compareAndSet(lastLogTime, currentTime)) {
-            String message = msgFactory != ProgressLogger.NO_MESSAGE ? msgFactory.get() : null;
-            if (message == null || message.isEmpty()) {
-                log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, (int) (percentDone * 100));
-            } else {
-                log.info("[%s] %s %d%% %s", Thread.currentThread().getName(), task, (int) (percentDone * 100), message);
-            }
+            doLog((int) (percentDone * 100), msgFactory);
         }
     }
 
     @Override
-    public void logDone() {
-        log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, 100);
+    public void logDone(Supplier<String> msgFactory) {
+        doLog(100, msgFactory);
     }
 
     public void withLogIntervalMillis(int logIntervalMillis) {
         this.logIntervalMillis = logIntervalMillis;
+    }
+
+    private void doLog(int percent, Supplier<String> msgFactory) {
+        String message = msgFactory != ProgressLogger.NO_MESSAGE ? msgFactory.get() : null;
+        if (message == null || message.isEmpty()) {
+            log.info("[%s] %s %d%%", Thread.currentThread().getName(), task, percent);
+        } else {
+            log.info("[%s] %s %d%% %s", Thread.currentThread().getName(), task, percent, message);
+        }
     }
 }
