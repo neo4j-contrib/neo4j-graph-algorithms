@@ -153,39 +153,35 @@ final class NodeIdMapImporter implements Runnable {
                         mapOffset,
                         i,
                         mapAlgoId);
-                int mapQueueIndex = indexInPage(mapPage, mapMask);
-                BlockingQueue<NodeMapBatch> mapQueue = mapQueues[mapQueueIndex];
-                if (mapQueue == this.mapQueue) {
-                    accept(mapBatch);
-                } else {
-                    mapQueue.put(mapBatch);
-                }
-
+                sendMapBatch(mapBatch, mapPage, mapMask);
                 mapOffset = i;
                 mapPage = nextMapPage;
                 mapAlgoId = nodeId + i;
             }
-
         }
 
-        if (mapOffset == 0) {
-            // got complete batch, no need to cross thread boundaries
-            mapIds(mapPage, algoToNeoBatch, 0, length, mapAlgoId);
-        } else {
-            // always has at least one element
-            NodeMapBatch lastBatch = new NodeMapBatch(
-                    mapPage,
-                    algoToNeoBatch,
-                    mapOffset,
-                    length,
-                    mapAlgoId
-            );
-            int mapQueueIndex = indexInPage(mapPage, mapMask);
-            mapQueues[mapQueueIndex].put(lastBatch);
-        }
-
+        // always has at least one element
+        NodeMapBatch lastBatch = new NodeMapBatch(
+                mapPage,
+                algoToNeoBatch,
+                mapOffset,
+                length,
+                mapAlgoId
+        );
+        sendMapBatch(lastBatch, mapPage, mapMask);
         progress.nodeProgress(length);
         algoToNeo[batch.index] = batch.batch;
+    }
+
+    private void sendMapBatch(NodeMapBatch mapBatch, int mapPage, int mapMask)
+    throws InterruptedException {
+        int mapQueueIndex = indexInPage(mapPage, mapMask);
+        BlockingQueue<NodeMapBatch> mapQueue = mapQueues[mapQueueIndex];
+        if (mapQueue == this.mapQueue) {
+            accept(mapBatch);
+        } else {
+            mapQueue.put(mapBatch);
+        }
     }
 
     private void accept(NodeMapBatch batch) {
