@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
-import static org.neo4j.graphalgo.core.utils.paged.PageUtil.indexInPage;
 import static org.neo4j.graphalgo.core.utils.paged.PageUtil.pageIndex;
 
 final class NodeIdMapImporter implements Runnable {
@@ -30,6 +29,7 @@ final class NodeIdMapImporter implements Runnable {
 
     private final int pageShift;
     private final int mapMask;
+    private final int localIndex;
 
     static Collection<Runnable> createImporterTasks(
             int mapQueuesLen,
@@ -43,12 +43,12 @@ final class NodeIdMapImporter implements Runnable {
         BlockingQueue<NodeMapBatch>[] queues = new BlockingQueue[mapQueuesLen];
         Collection<Runnable> tasks = new ArrayList<>();
         for (int i = 0; i < mapQueuesLen; i++) {
-            BlockingQueue<NodeMapBatch> mapQueue = new ArrayBlockingQueue<>(mapQueuesLen << 2);
+            BlockingQueue<NodeMapBatch> mapQueue = new ArrayBlockingQueue<>(mapQueuesLen << 4);
             queues[i] = mapQueue;
             NodeIdMapImporter mapImporter = new NodeIdMapImporter(
                     HugeIdMap.PAGE_SIZE,
+                    i,
                     queue,
-                    mapQueue,
                     queues,
                     livingSiblings,
                     algoToNeo,
@@ -63,25 +63,26 @@ final class NodeIdMapImporter implements Runnable {
 
     private NodeIdMapImporter(
             int pageSize,
+            int localIndex,
             BlockingQueue<NodeBatch> queue,
-            BlockingQueue<NodeMapBatch> mapQueue,
             BlockingQueue<NodeMapBatch>[] mapQueues,
             AtomicInteger livingSiblings,
             long[][] algoToNeo,
             final LongLongMap[] neoToAlgo,
             AllocationTracker tracker,
             ImportProgress progress) {
-        this.livingSiblings = livingSiblings;
         assert BitUtil.isPowerOfTwo(mapQueues.length);
         this.queue = queue;
-        this.mapQueue = mapQueue;
         this.mapQueues = mapQueues;
+        this.mapQueue = mapQueues[localIndex];
+        this.livingSiblings = livingSiblings;
         this.algoToNeo = algoToNeo;
         this.neoToAlgo = neoToAlgo;
         this.tracker = tracker;
         this.progress = progress;
         this.pageShift = Integer.numberOfTrailingZeros(pageSize);
         this.mapMask = mapQueues.length - 1;
+        this.localIndex = localIndex;
     }
 
     @Override
@@ -90,10 +91,7 @@ final class NodeIdMapImporter implements Runnable {
         boolean markedDead = false;
         try {
             while (true) {
-                NodeMapBatch mapBatch = mapQueue.poll();
-                if (mapBatch != null) {
-                    accept(mapBatch);
-                }
+                drainMapQueue(mapQueue, mapMask);
                 NodeBatch batch = queue.poll();
                 if (batch != null) {
                     if (batch.index == -1) {
@@ -124,8 +122,14 @@ final class NodeIdMapImporter implements Runnable {
                 accept(mapBatch);
             }
         }
-        while ((mapBatch = mapQueue.poll()) != null) {
-            accept(mapBatch);
+        drainMapQueue(mapQueue, mapMask);
+    }
+
+    private void drainMapQueue(BlockingQueue<NodeMapBatch> batches, int mapMask)
+    throws InterruptedException {
+        NodeMapBatch mapBatch;
+        while ((mapBatch = batches.poll()) != null) {
+            sendMapBatch(mapBatch, mapBatch.index, mapMask);
         }
     }
 
@@ -153,39 +157,34 @@ final class NodeIdMapImporter implements Runnable {
                         mapOffset,
                         i,
                         mapAlgoId);
-                int mapQueueIndex = indexInPage(mapPage, mapMask);
-                BlockingQueue<NodeMapBatch> mapQueue = mapQueues[mapQueueIndex];
-                if (mapQueue == this.mapQueue) {
-                    accept(mapBatch);
-                } else {
-                    mapQueue.put(mapBatch);
-                }
-
+                sendMapBatch(mapBatch, mapPage, mapMask);
                 mapOffset = i;
                 mapPage = nextMapPage;
                 mapAlgoId = nodeId + i;
             }
-
         }
 
-        if (mapOffset == 0) {
-            // got complete batch, no need to cross thread boundaries
-            mapIds(mapPage, algoToNeoBatch, 0, length, mapAlgoId);
-        } else {
-            // always has at least one element
-            NodeMapBatch lastBatch = new NodeMapBatch(
-                    mapPage,
-                    algoToNeoBatch,
-                    mapOffset,
-                    length,
-                    mapAlgoId
-            );
-            int mapQueueIndex = indexInPage(mapPage, mapMask);
-            mapQueues[mapQueueIndex].put(lastBatch);
-        }
-
+        // always has at least one element
+        NodeMapBatch lastBatch = new NodeMapBatch(
+                mapPage,
+                algoToNeoBatch,
+                mapOffset,
+                length,
+                mapAlgoId
+        );
+        sendMapBatch(lastBatch, mapPage, mapMask);
         progress.nodeProgress(length);
         algoToNeo[batch.index] = batch.batch;
+    }
+
+    private void sendMapBatch(NodeMapBatch mapBatch, int mapPage, int mapMask)
+    throws InterruptedException {
+        int mapQueueIndex = mapPage & mapMask;
+        if (mapQueueIndex == localIndex) {
+            accept(mapBatch);
+        } else {
+            mapQueues[mapQueueIndex].put(mapBatch);
+        }
     }
 
     private void accept(NodeMapBatch batch) {

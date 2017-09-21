@@ -93,13 +93,21 @@ public final class HugeGraphFactory extends GraphFactory {
             int batchSize,
             AllocationTracker tracker,
             ImportProgress progress) {
-        if (!ParallelUtil.canRunInParallel(threadPool) || nodeCount <= batchSize) {
+        // cap concurrency by the number of currently available threads.
+        // we do this to try to make sure that every thread we are submitting
+        // is actually running and does not end up in a waiting queue.
+        // Since threads are working a queue, having one thread to wait would
+        // mean that its queue would fill and block other threads
+        // which could lead to a livelock.
+        concurrency = ParallelUtil.availableThreads(threadPool, concurrency);
+
+        if (concurrency == 0 || nodeCount <= batchSize) {
             return loadSequential(tracker, progress);
         }
 
-        // We need to dispatch to target threads based on bit-&
-        // so we need concurrency to be a power of two
-        concurrency = BitUtil.nearbyPowerOfTwo(concurrency);
+        // We dispatch to target threads based on bit-& so concurrency need to
+        // be a power of two and we remove one thread for the store loader
+        concurrency = Math.max(1, BitUtil.previousPowerOfTwo(concurrency - 1));
 
         // start loading ids early in a single producer
         NodesStoreLoader queue = new NodesStoreLoader(
@@ -134,7 +142,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 tracker,
                 progress
         );
-        ParallelUtil.runWithConcurrency(concurrency, tasks, threadPool);
+        ParallelUtil.run(tasks, threadPool);
 
         HugeLongLongMap idMap = HugeLongLongMap.fromPages(allNodesCount, neoToAlgoPages, tracker);
         return new HugeIdMap(nodeCount, idMap, algoToNeoPages, tracker);
