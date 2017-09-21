@@ -37,14 +37,14 @@ public class GraphLoadLdbc {
     @Param({"true", "false"})
     boolean parallel;
 
-    @Param({"8", "64"})
-    int concurrency;
-
     @Param({"IN", "OUT", "NONE", "BOTH"})
     DirectionParam dir;
 
     @Param({"", "length"})
     String weightProp;
+
+    @Param({"", "Person"})
+    String label;
 
     @Param({"L01", "L10"})
     String graphId;
@@ -57,7 +57,7 @@ public class GraphLoadLdbc {
         db = LdbcDownloader.openDb(graphId);
         loader = new GraphLoader(db)
                 .withOptionalRelationshipWeightsFromProperty(weightProp.isEmpty() ? null : weightProp, 1.0)
-                .withConcurrency(concurrency)
+                .withOptionalLabel(label.isEmpty() ? null : label)
                 .withDirection(dir.direction);
         if (parallel) {
             loader.withExecutorService(Pools.DEFAULT);
