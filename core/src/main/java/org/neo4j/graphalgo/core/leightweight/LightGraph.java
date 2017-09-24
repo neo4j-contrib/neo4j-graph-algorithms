@@ -20,12 +20,12 @@ import java.util.function.IntPredicate;
  */
 public class LightGraph implements Graph {
 
-    private final IdMap idMapping;
-    private WeightMapping weightMapping;
-    private IntArray inAdjacency;
-    private IntArray outAdjacency;
-    private long[] inOffsets;
-    private long[] outOffsets;
+    protected final IdMap idMapping;
+    protected WeightMapping weightMapping;
+    protected IntArray inAdjacency;
+    protected IntArray outAdjacency;
+    protected long[] inOffsets;
+    protected long[] outOffsets;
 
     LightGraph(
             final IdMap idMapping,
@@ -40,6 +40,11 @@ public class LightGraph implements Graph {
         this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
+    }
+
+    @Override
+    public Graph singleThreaded() {
+        return new LightGraphSingleThreaded(idMapping, weightMapping, inAdjacency, outAdjacency, inOffsets, outOffsets);
     }
 
     @Override
@@ -203,7 +208,7 @@ public class LightGraph implements Graph {
         }
     }
 
-    private void consumeNodes(
+    protected void consumeNodes(
             int startNode,
             IntArray.Cursor cursor,
             IdCombiner relId,
