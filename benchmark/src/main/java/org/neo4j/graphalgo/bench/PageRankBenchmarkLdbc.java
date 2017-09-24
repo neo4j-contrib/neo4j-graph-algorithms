@@ -65,9 +65,6 @@ public class PageRankBenchmarkLdbc {
                 Pools.getNoThreadsInDefaultPool(),
                 parallelBatchSize,
                 graph,
-                graph,
-                graph,
-                graph,
                 0.85)
                 .compute(iterations)
                 .getPageRank();

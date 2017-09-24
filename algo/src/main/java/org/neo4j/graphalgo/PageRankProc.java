@@ -121,9 +121,6 @@ public final class PageRankProc {
                 concurrency,
                 batchSize,
                 graph,
-                graph,
-                graph,
-                graph,
                 dampingFactor)
                 .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));

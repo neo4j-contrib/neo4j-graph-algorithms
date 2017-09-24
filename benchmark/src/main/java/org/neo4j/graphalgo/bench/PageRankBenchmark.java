@@ -95,9 +95,6 @@ public class PageRankBenchmark {
         try {
             PageRank pageRank = new PageRank(
                     graph,
-                    graph,
-                    graph,
-                    graph,
                     0.85);
             return pageRank.compute(iterations).getPageRank();
         } finally {

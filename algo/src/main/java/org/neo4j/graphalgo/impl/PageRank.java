@@ -2,11 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayList;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.Degrees;
-import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.NodeIterator;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
@@ -76,22 +72,16 @@ public class PageRank extends Algorithm<PageRank> {
 
     /**
      * Forces sequential use. If you want parallelism, prefer
-     * {@link #PageRank(ExecutorService, int, int, IdMapping, NodeIterator, RelationshipIterator, Degrees, double)}
+     * {@link #PageRank(ExecutorService, int, int, Graph, double)}
      */
     public PageRank(
-            IdMapping idMapping,
-            NodeIterator nodeIterator,
-            RelationshipIterator relationshipIterator,
-            Degrees degrees,
+            Graph graph,
             double dampingFactor) {
         this(
                 null,
                 -1,
                 ParallelUtil.DEFAULT_BATCH_SIZE,
-                idMapping,
-                nodeIterator,
-                relationshipIterator,
-                degrees,
+                graph,
                 dampingFactor);
     }
 
@@ -104,30 +94,26 @@ public class PageRank extends Algorithm<PageRank> {
             ExecutorService executor,
             int concurrency,
             int batchSize,
-            IdMapping idMapping,
-            NodeIterator nodeIterator,
-            RelationshipIterator relationshipIterator,
-            Degrees degrees,
+            Graph graph,
             double dampingFactor) {
 
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
             partitions = partitionGraph(
                     adjustBatchSize(batchSize),
-                    idMapping,
-                    nodeIterator,
-                    degrees);
+                    graph,
+                    graph,
+                    graph);
         } else {
             executor = null;
-            partitions = createSinglePartition(idMapping, degrees);
+            partitions = createSinglePartition(graph, graph);
         }
 
         computeSteps = createComputeSteps(
                 concurrency,
-                idMapping.nodeCount(),
+                graph.nodeCount(),
                 dampingFactor,
-                relationshipIterator,
-                degrees,
+                graph,
                 partitions,
                 executor);
     }
@@ -196,8 +182,7 @@ public class PageRank extends Algorithm<PageRank> {
             int concurrency,
             int nodeCount,
             double dampingFactor,
-            RelationshipIterator relationshipIterator,
-            Degrees degrees,
+            Graph graph,
             List<Partition> partitions,
             ExecutorService pool) {
         if (concurrency <= 0) {
@@ -230,8 +215,8 @@ public class PageRank extends Algorithm<PageRank> {
 
             computeSteps.add(new ComputeStep(
                     dampingFactor,
-                    relationshipIterator,
-                    degrees,
+                    graph.singleThreaded(),
+                    graph.singleThreaded(),
                     partitionRank,
                     start
             ));
