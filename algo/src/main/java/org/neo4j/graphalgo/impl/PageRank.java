@@ -412,7 +412,7 @@ public class PageRank extends Algorithm<PageRank> {
         private final int endNode;
         private final int nodeCount;
 
-        private int[] srcRank = new int[1];
+        private int srcRank = 0;
         private Behavior behavior;
 
         private Behavior runs = this::runsIteration;
@@ -454,12 +454,11 @@ public class PageRank extends Algorithm<PageRank> {
         private void singleIteration() {
             int startNode = this.startNode;
             int endNode = this.endNode;
-            int[] srcRank = this.srcRank;
             RelationshipIterator rels = this.relationshipIterator;
             for (int nodeId = startNode; nodeId < endNode; ++nodeId) {
                 int rank = calculateRank(nodeId, startNode);
                 if (rank != 0) {
-                    srcRank[0] = rank;
+                    srcRank = rank;
                     rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
                 }
             }
@@ -470,10 +469,9 @@ public class PageRank extends Algorithm<PageRank> {
                 int sourceNodeId,
                 int targetNodeId,
                 long relationId) {
-            int rank = srcRank[0];
-            if (rank != 0) {
+            if (srcRank != 0) {
                 int idx = PageRank.idx(targetNodeId, starts);
-                nextScores[idx][targetNodeId - starts[idx]] += rank;
+                nextScores[idx][targetNodeId - starts[idx]] += srcRank;
             }
             return true;
         }
