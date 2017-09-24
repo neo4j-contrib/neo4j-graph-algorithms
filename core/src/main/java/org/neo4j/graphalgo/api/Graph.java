@@ -15,4 +15,12 @@ public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterab
     default void release() {
 
     }
+
+    /**
+     * Returns a view of this graph that is only guaranteed to be safe when accessed by at most one concurrent thread.
+     */
+    default Graph singleThreaded() {
+        return this;
+    }
+
 }
