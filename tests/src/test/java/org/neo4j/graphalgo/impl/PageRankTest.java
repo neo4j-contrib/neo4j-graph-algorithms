@@ -151,7 +151,7 @@ public final class PageRankTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    1e-3
+                    1e-2
             );
         });
     }

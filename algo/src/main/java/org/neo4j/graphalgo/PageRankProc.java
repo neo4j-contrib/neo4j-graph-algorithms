@@ -28,8 +28,10 @@ import java.util.stream.Stream;
 public final class PageRankProc {
 
     public static final String CONFIG_DAMPING = "dampingFactor";
+    public static final String CONFIG_THRESHOLD = "deltaThreshold";
 
     public static final Double DEFAULT_DAMPING = 0.85;
+    public static final Double DEFAULT_THRESHOLD = 0.001;
     public static final Integer DEFAULT_ITERATIONS = 20;
     public static final String DEFAULT_SCORE_PROPERTY = "pagerank";
 
@@ -111,6 +113,7 @@ public final class PageRankProc {
             PageRankScore.Stats.Builder statsBuilder) {
 
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
+        double deltaThreshold = configuration.get(CONFIG_THRESHOLD, DEFAULT_THRESHOLD);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
         final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
@@ -121,7 +124,8 @@ public final class PageRankProc {
                 concurrency,
                 batchSize,
                 graph,
-                dampingFactor)
+                dampingFactor,
+                deltaThreshold)
                 .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 

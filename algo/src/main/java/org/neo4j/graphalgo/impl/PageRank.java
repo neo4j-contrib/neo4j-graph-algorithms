@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayList;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
@@ -72,7 +73,7 @@ public class PageRank extends Algorithm<PageRank> {
 
     /**
      * Forces sequential use. If you want parallelism, prefer
-     * {@link #PageRank(ExecutorService, int, int, Graph, double)}
+     * {@link #PageRank(ExecutorService, int, int, Graph, double, double)}
      */
     public PageRank(
             Graph graph,
@@ -82,7 +83,8 @@ public class PageRank extends Algorithm<PageRank> {
                 -1,
                 ParallelUtil.DEFAULT_BATCH_SIZE,
                 graph,
-                dampingFactor);
+                dampingFactor,
+                PageRankProc.DEFAULT_THRESHOLD);
     }
 
     /**
@@ -95,7 +97,8 @@ public class PageRank extends Algorithm<PageRank> {
             int concurrency,
             int batchSize,
             Graph graph,
-            double dampingFactor) {
+            double dampingFactor,
+            double deltaThreshold) {
 
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
@@ -114,7 +117,8 @@ public class PageRank extends Algorithm<PageRank> {
                 dampingFactor,
                 graph,
                 partitions,
-                executor);
+                executor,
+                deltaThreshold);
     }
 
     /**
@@ -182,7 +186,8 @@ public class PageRank extends Algorithm<PageRank> {
             double dampingFactor,
             Graph graph,
             List<Partition> partitions,
-            ExecutorService pool) {
+            ExecutorService pool,
+            double deltaThreshold) {
         if (concurrency <= 0) {
             concurrency = partitions.size();
         }
@@ -216,7 +221,8 @@ public class PageRank extends Algorithm<PageRank> {
                     graph.singleThreaded(),
                     graph.singleThreaded(),
                     partitionRank,
-                    start
+                    start,
+                    deltaThreshold
             ));
         }
 
@@ -227,7 +233,7 @@ public class PageRank extends Algorithm<PageRank> {
         }
 
         ComputeStep last = computeSteps.remove(computeSteps.size() - 1);
-        return new ComputeSteps(computeSteps, last, pool);
+        return new ComputeSteps(computeSteps, last, pool, deltaThreshold);
     }
 
     private static int idx(int id, int ids[]) {
@@ -302,7 +308,8 @@ public class PageRank extends Algorithm<PageRank> {
         private ComputeSteps(
                 List<ComputeStep> steps,
                 ComputeStep last,
-                ExecutorService pool) {
+                ExecutorService pool,
+                double deltaThreshold) {
             this.last = last;
             this.steps = steps;
             this.futures = new ArrayList<>(steps.size());
@@ -389,6 +396,7 @@ public class PageRank extends Algorithm<PageRank> {
 
         private final double[] pageRank;
         private final double[] deltas;
+        private final double deltaThreshold;
 
         private int[][] nextScores;
         private int[][] prevScores;
@@ -408,7 +416,8 @@ public class PageRank extends Algorithm<PageRank> {
                 RelationshipIterator relationshipIterator,
                 Degrees degrees,
                 double[] pageRank,
-                int startNode) {
+                int startNode,
+                double deltaThreshold) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
             this.relationshipIterator = relationshipIterator;
@@ -419,6 +428,7 @@ public class PageRank extends Algorithm<PageRank> {
             this.pageRank = pageRank;
             this.deltas = new double[pageRank.length];
             Arrays.fill(deltas, alpha);
+            this.deltaThreshold = deltaThreshold;
             this.behavior = runs;
         }
 
@@ -444,7 +454,7 @@ public class PageRank extends Algorithm<PageRank> {
             RelationshipIterator rels = this.relationshipIterator;
             for (int nodeId = startNode; nodeId < endNode; ++nodeId) {
                 double delta = deltas[nodeId - startNode];
-                if (delta > 0) {
+                if (delta > deltaThreshold) {
                     int degree = degrees.degree(nodeId, Direction.OUTGOING);
                     if (degree > 0) {
                         srcRankDelta = (int) (100_000 * (delta / degree));

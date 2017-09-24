@@ -191,7 +191,7 @@ public final class LargeishPageRanker {
                 pool,
                 Pools.getNoThreadsInDefaultPool(),
                 ParallelUtil.DEFAULT_BATCH_SIZE,
-                graph, 0.85);
+                graph, PageRankProc.DEFAULT_DAMPING, PageRankProc.DEFAULT_THRESHOLD);
         long t2 = System.nanoTime();
         double[] ranks = pageRankAlgo.compute(iterations).getPageRank();
         long t3 = System.nanoTime();

@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.bench;
 
+import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -65,7 +66,8 @@ public class PageRankBenchmarkLdbc {
                 Pools.getNoThreadsInDefaultPool(),
                 parallelBatchSize,
                 graph,
-                0.85)
+                PageRankProc.DEFAULT_DAMPING,
+                PageRankProc.DEFAULT_THRESHOLD)
                 .compute(iterations)
                 .getPageRank();
     }

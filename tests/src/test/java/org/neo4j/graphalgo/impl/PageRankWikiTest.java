@@ -138,7 +138,7 @@ public final class PageRankWikiTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    0.001
+                    0.01
             );
         });
     }
