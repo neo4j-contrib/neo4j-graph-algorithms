@@ -111,7 +111,6 @@ public class PageRank extends Algorithm<PageRank> {
 
         computeSteps = createComputeSteps(
                 concurrency,
-                graph.nodeCount(),
                 dampingFactor,
                 graph,
                 partitions,
@@ -180,7 +179,6 @@ public class PageRank extends Algorithm<PageRank> {
 
     private ComputeSteps createComputeSteps(
             int concurrency,
-            int nodeCount,
             double dampingFactor,
             Graph graph,
             List<Partition> partitions,
@@ -209,7 +207,7 @@ public class PageRank extends Algorithm<PageRank> {
             }
 
             double[] partitionRank = new double[partitionCount];
-            Arrays.fill(partitionRank, 1.0 / nodeCount);
+            Arrays.fill(partitionRank, 1.0 - dampingFactor);
             starts.add(start);
             lengths.add(partitionCount);
 
@@ -390,6 +388,8 @@ public class PageRank extends Algorithm<PageRank> {
         private final double dampingFactor;
 
         private final double[] pageRank;
+        private final double[] deltas;
+
         private int[][] nextScores;
         private int[][] prevScores;
 
@@ -397,7 +397,7 @@ public class PageRank extends Algorithm<PageRank> {
         private final int endNode;
         private final int nodeCount;
 
-        private int srcRank = 0;
+        private int srcRankDelta = 0;
         private Behavior behavior;
 
         private Behavior runs = this::runsIteration;
@@ -417,6 +417,8 @@ public class PageRank extends Algorithm<PageRank> {
             this.nodeCount = pageRank.length;
             this.endNode = startNode + pageRank.length;
             this.pageRank = pageRank;
+            this.deltas = new double[pageRank.length];
+            Arrays.fill(deltas, alpha);
             this.behavior = runs;
         }
 
@@ -441,10 +443,13 @@ public class PageRank extends Algorithm<PageRank> {
             int endNode = this.endNode;
             RelationshipIterator rels = this.relationshipIterator;
             for (int nodeId = startNode; nodeId < endNode; ++nodeId) {
-                int rank = calculateRank(nodeId, startNode);
-                if (rank != 0) {
-                    srcRank = rank;
-                    rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
+                double delta = deltas[nodeId - startNode];
+                if (delta > 0) {
+                    int degree = degrees.degree(nodeId, Direction.OUTGOING);
+                    if (degree > 0) {
+                        srcRankDelta = (int) (100_000 * (delta / degree));
+                        rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
+                    }
                 }
             }
         }
@@ -454,9 +459,9 @@ public class PageRank extends Algorithm<PageRank> {
                 int sourceNodeId,
                 int targetNodeId,
                 long relationId) {
-            if (srcRank != 0) {
+            if (srcRankDelta != 0) {
                 int idx = PageRank.idx(targetNodeId, starts);
-                nextScores[idx][targetNodeId - starts[idx]] += srcRank;
+                nextScores[idx][targetNodeId - starts[idx]] += srcRankDelta;
             }
             return true;
         }
@@ -489,22 +494,18 @@ public class PageRank extends Algorithm<PageRank> {
         }
 
         private void synchronizeScores(int[] allScores) {
-            double alpha = this.alpha;
             double dampingFactor = this.dampingFactor;
             double[] pageRank = this.pageRank;
 
             int length = allScores.length;
             for (int i = 0; i < length; i++) {
                 int sum = allScores[i];
-                pageRank[i] = alpha + dampingFactor * (sum / 100_000.0);
+                double delta = dampingFactor * (sum / 100_000.0);
+                pageRank[i] += delta;
+                deltas[i] = delta;
                 allScores[i] = 0;
             }
         }
 
-        private int calculateRank(int nodeId, int startNode) {
-            int degree = degrees.degree(nodeId, Direction.OUTGOING);
-            double rank = degree == 0 ? 0 : pageRank[nodeId - startNode] / degree;
-            return (int) (100_000 * rank);
-        }
     }
 }
