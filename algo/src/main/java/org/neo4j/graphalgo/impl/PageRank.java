@@ -131,7 +131,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         computeSteps = createComputeSteps(
                 concurrency,
-                idMapping.nodeCount(),
                 dampingFactor,
                 relationshipIterator,
                 degrees,
@@ -205,7 +204,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     private ComputeSteps createComputeSteps(
             int concurrency,
-            int nodeCount,
             double dampingFactor,
             RelationshipIterator relationshipIterator,
             Degrees degrees,
@@ -235,7 +233,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             }
 
             double[] partitionRank = new double[partitionCount];
-            Arrays.fill(partitionRank, 1.0 / nodeCount);
+            Arrays.fill(partitionRank, 1.0 - dampingFactor);
             starts.add(start);
             lengths.add(partitionCount);
 
@@ -401,14 +399,16 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private final double dampingFactor;
 
         private final double[] pageRank;
+        private final double[] deltas;
+
         private int[][] nextScores;
         private int[][] prevScores;
 
         private final int startNode;
         private final int endNode;
-        private final int nodeCount;
 
-        private int[] srcRank = new int[1];
+        private int srcRankDelta = 0;
+
         private Behavior behavior;
 
         private Behavior runs = this::runsIteration;
@@ -425,9 +425,10 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             this.relationshipIterator = relationshipIterator;
             this.degrees = degrees;
             this.startNode = startNode;
-            this.nodeCount = pageRank.length;
             this.endNode = startNode + pageRank.length;
             this.pageRank = pageRank;
+            this.deltas = new double[pageRank.length];
+            Arrays.fill(deltas, alpha);
             this.behavior = runs;
         }
 
@@ -450,13 +451,15 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private void singleIteration() {
             int startNode = this.startNode;
             int endNode = this.endNode;
-            int[] srcRank = this.srcRank;
             RelationshipIterator rels = this.relationshipIterator;
             for (int nodeId = startNode; nodeId < endNode; ++nodeId) {
-                int rank = calculateRank(nodeId, startNode);
-                if (rank != 0) {
-                    srcRank[0] = rank;
-                    rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
+                double delta = deltas[nodeId - startNode];
+                if (delta > 0) {
+                    int degree = degrees.degree(nodeId, Direction.OUTGOING);
+                    if (degree > 0) {
+                        srcRankDelta = (int) (100_000 * (delta / degree));
+                        rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
+                    }
                 }
             }
         }
@@ -466,10 +469,9 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 int sourceNodeId,
                 int targetNodeId,
                 long relationId) {
-            int rank = srcRank[0];
-            if (rank != 0) {
+            if (srcRankDelta != 0) {
                 int idx = PageRank.idx(targetNodeId, starts);
-                nextScores[idx][targetNodeId - starts[idx]] += rank;
+                nextScores[idx][targetNodeId - starts[idx]] += srcRankDelta;
             }
             return true;
         }
@@ -502,23 +504,19 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         }
 
         private void synchronizeScores(int[] allScores) {
-            double alpha = this.alpha;
             double dampingFactor = this.dampingFactor;
             double[] pageRank = this.pageRank;
 
             int length = allScores.length;
             for (int i = 0; i < length; i++) {
                 int sum = allScores[i];
-                pageRank[i] = alpha + dampingFactor * (sum / 100_000.0);
+                double delta = dampingFactor * (sum / 100_000.0);
+                pageRank[i] += delta;
+                deltas[i] = delta;
                 allScores[i] = 0;
             }
         }
 
-        private int calculateRank(int nodeId, int startNode) {
-            int degree = degrees.degree(nodeId, Direction.OUTGOING);
-            double rank = degree == 0 ? 0 : pageRank[nodeId - startNode] / degree;
-            return (int) (100_000 * rank);
-        }
     }
 
     private static abstract class DoubleArrayResult implements PageRankResult {
