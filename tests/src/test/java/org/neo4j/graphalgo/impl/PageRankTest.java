@@ -115,16 +115,16 @@ public final class PageRankTest {
         final Map<Long, Double> expected = new HashMap<>();
 
         try (Transaction tx = db.beginTx()) {
-            expected.put(db.findNode(label, "name", "a").getId(), 0.243);
-            expected.put(db.findNode(label, "name", "b").getId(), 1.915);
-            expected.put(db.findNode(label, "name", "c").getId(), 1.777);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.218);
-            expected.put(db.findNode(label, "name", "e").getId(), 0.243);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.218);
-            expected.put(db.findNode(label, "name", "g").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "h").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "i").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "j").getId(), 0.150);
+            expected.put(db.findNode(label, "name", "a").getId(), 0.243007);
+            expected.put(db.findNode(label, "name", "b").getId(), 1.9183995);
+            expected.put(db.findNode(label, "name", "c").getId(), 1.7806315);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.21885);
+            expected.put(db.findNode(label, "name", "e").getId(), 0.243007);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.21885);
+            expected.put(db.findNode(label, "name", "g").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "h").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "i").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "j").getId(), 0.15);
             tx.close();
         }
 
@@ -156,7 +156,7 @@ public final class PageRankTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    1e-3
+                    1e-2
             );
         });
     }
