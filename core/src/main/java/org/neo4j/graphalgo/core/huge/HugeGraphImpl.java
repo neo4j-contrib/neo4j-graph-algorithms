@@ -2,9 +2,8 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
-import org.neo4j.graphalgo.api.HugeWeightMapping;
+import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.lightweight.LightGraphSingleThreaded;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
@@ -57,15 +56,15 @@ import java.util.function.LongPredicate;
  */
 public class HugeGraphImpl implements HugeGraph {
 
-    private final HugeIdMap idMapping;
-    private final AllocationTracker tracker;
+    protected final HugeIdMap idMapping;
+    protected final AllocationTracker tracker;
 
-    private HugeWeightMapping weights;
-    private ByteArray inAdjacency;
-    private ByteArray outAdjacency;
-    private LongArray inOffsets;
-    private LongArray outOffsets;
-    private ByteArray.DeltaCursor empty;
+    protected HugeWeightMapping weights;
+    protected ByteArray inAdjacency;
+    protected ByteArray outAdjacency;
+    protected LongArray inOffsets;
+    protected LongArray outOffsets;
+    protected ByteArray.DeltaCursor empty;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
@@ -87,6 +86,15 @@ public class HugeGraphImpl implements HugeGraph {
                 : outAdjacency != null
                 ? outAdjacency.newCursor()
                 : null;
+    }
+
+    @Override
+    public HugeGraphImpl hugeSingleThreaded() {
+        return new HugeGraphSingleThreaded(this, tracker, idMapping, weights, inAdjacency, outAdjacency, inOffsets, outOffsets);
+    }
+
+    public HugeGraphImpl singleThreaded() {
+        return hugeSingleThreaded();
     }
 
     @Override
@@ -226,7 +234,7 @@ public class HugeGraphImpl implements HugeGraph {
         return array.deltaCursor(offset);
     }
 
-    private void consumeNodes(
+    protected void consumeNodes(
             long startNode,
             ByteArray.DeltaCursor cursor,
             HugeRelationshipConsumer consumer) {

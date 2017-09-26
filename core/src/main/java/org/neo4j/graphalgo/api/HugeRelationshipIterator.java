@@ -23,4 +23,12 @@ public interface HugeRelationshipIterator {
             HugeRelationshipConsumer consumer) {
         forEachRelationship(nodeId, Direction.OUTGOING, consumer);
     }
+
+    /**
+     * Returns a view that can only be accessed by a single thread.
+     */
+    default HugeRelationshipIterator hugeSingleThreaded() {
+        return this;
+    }
+
 }

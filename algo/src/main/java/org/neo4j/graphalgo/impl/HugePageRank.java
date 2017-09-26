@@ -540,7 +540,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 long startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
-            this.relationshipIterator = relationshipIterator;
+            this.relationshipIterator = relationshipIterator.hugeSingleThreaded();
             this.degrees = degrees;
             this.tracker = tracker;
             this.startNode = startNode;
@@ -585,7 +585,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     int degree = degrees.degree(nodeId, Direction.OUTGOING);
                     if (degree > 0) {
                         srcRankDelta = (int) (100_000 * (delta / degree));
-                        rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
+                        rels.forEachOutgoing(nodeId,this);
                     }
                 }
             }

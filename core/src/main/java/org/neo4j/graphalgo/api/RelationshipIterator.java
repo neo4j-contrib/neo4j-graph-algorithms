@@ -18,4 +18,12 @@ public interface RelationshipIterator extends IncomingRelationshipIterator, Outg
     default void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
         forEachRelationship(nodeId, Direction.OUTGOING, consumer);
     }
+
+    /**
+     * Returns a view that can only be accessed by a single thread.
+     */
+    default RelationshipIterator singleThreaded() {
+        return this;
+    }
+
 }

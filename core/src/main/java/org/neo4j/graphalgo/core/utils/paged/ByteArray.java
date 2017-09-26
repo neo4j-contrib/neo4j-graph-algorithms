@@ -357,7 +357,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private int maxTargets;
         private long delta;
 
-        DeltaCursor init(long fromIndex) {
+        public DeltaCursor init(long fromIndex) {
             super.init(fromIndex, capacity());
             next();
 
