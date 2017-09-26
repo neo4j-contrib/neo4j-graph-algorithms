@@ -6,6 +6,22 @@ public final class BitUtil {
         return value > 0 && ((value & (~value + 1)) == value);
     }
 
+    /**
+     * returns the previous highest power of two, or the current value if it's already a power of two or zero
+     */
+    public static int previousPowerOfTwo(int v) {
+        int i = nextHighestPowerOfTwo(v);
+        return (i == v) ? v : i >>> 1;
+    }
+
+    /**
+     * returns the previous highest power of two, or the current value if it's already a power of two or zero
+     */
+    public static long previousPowerOfTwo(long v) {
+        long i = nextHighestPowerOfTwo(v);
+        return (i == v) ? v : i >>> 1;
+    }
+
     public static int nearbyPowerOfTwo(int x) {
         int next = nextHighestPowerOfTwo(x);
         int prev = next >>> 1;

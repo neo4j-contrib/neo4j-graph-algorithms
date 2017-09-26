@@ -88,6 +88,18 @@ public final class ParallelUtil {
         return executor != null && !(executor.isShutdown() || executor.isTerminated());
     }
 
+    public static int availableThreads(ExecutorService executor, int desiredConcurrency) {
+        if (!canRunInParallel(executor)) {
+            return 0;
+        }
+        if (executor instanceof ThreadPoolExecutor) {
+            ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
+            int availableConcurrency = pool.getCorePoolSize() - pool.getActiveCount();
+            return Math.min(availableConcurrency, desiredConcurrency);
+        }
+        return desiredConcurrency;
+    }
+
     /**
      * Executes read operations in parallel, based on the given batch size
      * and executor.
