@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.core;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -30,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -46,6 +48,9 @@ import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class ParallelGraphLoadingTest extends RandomGraphTestCase {
+
+    @Rule
+    public Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
 
     private final int batchSize;
     private final Class<? extends GraphFactory> graphImpl;
@@ -238,7 +243,7 @@ public class ParallelGraphLoadingTest extends RandomGraphTestCase {
                     numberOfThreads,
                     1,
                     TimeUnit.MINUTES,
-                    new LinkedBlockingDeque<>());
+                    new LinkedBlockingQueue<>());
             this.message = message;
         }
 

@@ -4,7 +4,9 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntStack;
+import org.neo4j.function.ThrowingConsumer;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
+import org.neo4j.helpers.Exceptions;
 
 import java.util.AbstractCollection;
 import java.util.Arrays;
@@ -14,9 +16,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -249,6 +253,129 @@ public final class ParallelUtilTest extends RandomizedTest {
         }
     }
 
+    @Test
+    public void shouldRunSequentially() throws Exception {
+        withPool(4, pool -> {
+            ExecutorService deadPool = Executors.newFixedThreadPool(4);
+            deadPool.shutdown();
+            List<Consumer<Tasks>> runs = Arrays.asList(
+                    // null pool
+                    t -> ParallelUtil.runWithConcurrency(8, t, null),
+                    // terminated pool
+                    t -> ParallelUtil.runWithConcurrency(8, t, deadPool),
+                    // single task
+                    t -> ParallelUtil.runWithConcurrency(8, t.sized(1), pool),
+                    // concurrency = 1
+                    t -> ParallelUtil.runWithConcurrency(1, t, pool),
+                    // concurrency = 0
+                    t -> ParallelUtil.runWithConcurrency(0, t, pool)
+            );
+
+            for (Consumer<Tasks> run : runs) {
+                Tasks tasks = new Tasks(5, 10);
+                tasks.run(run);
+                assertEquals(tasks.size(), tasks.started());
+                assertEquals(1, tasks.maxRunning());
+                assertEquals(tasks.size(), tasks.requested());
+            }
+        });
+    }
+
+    @Test
+    public void shouldSubmitAtMostConcurrencyTasksRunSequentially() throws Exception {
+        withPool(4, pool -> {
+            Tasks tasks = new Tasks(4, 10);
+            tasks.run(t -> ParallelUtil.runWithConcurrency(2, t, pool));
+            assertEquals(4, tasks.started());
+            assertTrue(tasks.maxRunning() <= 2);
+            assertEquals(4, tasks.requested());
+        });
+    }
+
+    @Test
+    public void shouldBailOnFullThreadpool() throws Exception {
+        ThreadPoolExecutor pool = mock(ThreadPoolExecutor.class);
+        when(pool.getActiveCount()).thenReturn(Integer.MAX_VALUE);
+        Tasks tasks = new Tasks(5, 10);
+        tasks.run(t -> ParallelUtil.runWithConcurrency(4, t, pool));
+        assertEquals(0, tasks.started());
+        assertEquals(0, tasks.maxRunning());
+        assertEquals(1, tasks.requested());
+    }
+
+    @Test
+    public void shouldBailOnThreadInterrupt() throws Exception {
+        withPool(4, pool -> {
+            Tasks tasks = new Tasks(6, 10);
+            final Thread thread = new Thread(() -> tasks.run(t ->
+                    ParallelUtil.runWithConcurrency(2, t, pool)));
+            thread.setUncaughtExceptionHandler((t, e) -> {
+                assertEquals("Unexpected Exception", e.getMessage());
+                assertEquals(
+                        InterruptedException.class,
+                        e.getCause().getClass());
+            });
+
+            thread.start();
+            thread.interrupt();
+            thread.join();
+
+            assertTrue(tasks.started() <= 2);
+            assertTrue(tasks.maxRunning() <= 2);
+            assertTrue(tasks.requested() <= 2);
+        });
+    }
+
+    @Test
+    public void shouldBailOnTermination() throws Exception {
+        withPool(4, pool -> {
+            Tasks tasks = new Tasks(6, 10);
+            AtomicBoolean running = new AtomicBoolean(true);
+            TerminationFlag isRunning = running::get;
+            final Thread thread = new Thread(() -> tasks.run(t ->
+                    ParallelUtil.runWithConcurrency(2, t, isRunning, pool)));
+
+            thread.start();
+            running.set(false);
+            thread.join();
+
+            assertTrue(tasks.started() <= 2);
+            assertTrue(tasks.maxRunning() <= 2);
+            assertTrue(tasks.requested() <= 2);
+        });
+    }
+
+    @Test
+    public void shouldWaitOnFullThreadpool() throws Exception {
+        ThreadPoolExecutor pool = mock(ThreadPoolExecutor.class);
+        when(pool.getActiveCount()).thenReturn(Integer.MAX_VALUE);
+        Tasks tasks = new Tasks(5, 10);
+        tasks.run(t -> ParallelUtil.runWithConcurrency(
+                4,
+                t,
+                10,
+                5,
+                TimeUnit.MILLISECONDS,
+                pool));
+        assertEquals(0, tasks.started());
+        assertEquals(0, tasks.maxRunning());
+        assertEquals(1, tasks.requested());
+        verify(pool, times(11)).getActiveCount();
+    }
+
+    private static void withPool(
+            int nThreads,
+            ThrowingConsumer<ExecutorService, ? extends Throwable> block) {
+        ExecutorService pool = Executors.newFixedThreadPool(nThreads);
+        try {
+            block.accept(pool);
+        } catch (Throwable throwable) {
+            throw Exceptions.launderedException(throwable);
+        } finally {
+            assertTrue(pool.shutdownNow().isEmpty());
+        }
+    }
+
     private PrimitiveIntIterable ints(int from, int size) {
         final PrimitiveIntStack stack = new PrimitiveIntStack(size);
         for (int i = 0; i < size; i++) {
@@ -289,7 +416,9 @@ public final class ParallelUtilTest extends RandomizedTest {
                             running.decrementAndGet();
                         }
                         if (index >= concurrency) {
-                            waitingForStart.get(index + concurrency).countDown();
+                            waitingForStart
+                                    .get(index + concurrency)
+                                    .countDown();
                         }
                     })
                     .collect(Collectors.toList());
