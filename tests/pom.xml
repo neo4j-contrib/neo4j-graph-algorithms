@@ -19,7 +19,6 @@
         <logback.version>1.0.13</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <junit.version>4.12</junit.version>
-        <neo4j.version>3.1.1</neo4j.version>
         <rr.version>2.5.0</rr.version>
         <mockito.version>1.10.19</mockito.version>
     </properties>
@@ -62,13 +61,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>3.1.1</version>
+            <version>${neo4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>3.1.1</version>
+            <version>${neo4j.version}</version>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>

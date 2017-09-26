@@ -83,6 +83,10 @@ public abstract class PageAllocator<T> {
             return shallowSizeOfInstance(container) + estimateMemoryUsage(size);
         }
 
+        int pageSize() {
+            return pageSize;
+        }
+
         PageAllocator<T> newAllocator(AllocationTracker tracker) {
             if (AllocationTracker.isTracking(tracker)) {
                 return new TrackingAllocator<>(

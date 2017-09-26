@@ -93,7 +93,7 @@ public class ParallelGraphLoadingTest extends RandomGraphTestCase {
                 int graphId = sparseGraph.toMappedNodeId(n.getId());
                 assertNotEquals(n + " not mapped", -1, graphId);
                 long neoId = sparseGraph.toOriginalNodeId(graphId);
-                assertEquals(n + " mappen wrongly", n.getId(), neoId);
+                assertEquals(n + " mapped wrongly", n.getId(), neoId);
             });
             tx.success();
         }

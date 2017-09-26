@@ -34,7 +34,7 @@ public class AllocationTracker implements Supplier<String> {
         }
     };
 
-    private static final String[] UNITS = new String[]{" Bytes", " KiB", " MiB", " GiB", " TiB", " PiB", "EiB", "ZiB", "YiB"};
+    private static final String[] UNITS = new String[]{" Bytes", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB", " ZiB", " YiB"};
 
     private final AtomicLong count = new AtomicLong();
 
@@ -78,13 +78,13 @@ public class AllocationTracker implements Supplier<String> {
         for (String unit : UNITS) {
             // allow for a bit of overflow before going to the next unit to
             // show a diff between, say, 1.1 and 1.2 MiB as 1150 KiB vs 1250 KiB
-            if (bytes >> 13 == 0) {
+            if (bytes >> 14 == 0) {
                 return Long.toString(bytes) + unit;
             }
             bytes = bytes >> 10;
         }
         // we can never arrive here, longs are not large enough to
-        // represent > 8192 yobibytes
+        // represent > 16384 yobibytes
         return null;
     }
 }

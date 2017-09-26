@@ -41,6 +41,14 @@ public class PagedDataStructure<T> {
         pageShift = Integer.numberOfTrailingZeros(pageSize);
         pageMask = pageSize - 1;
 
+        if (numPages(size) != pages.length) {
+            throw new IllegalArgumentException(String.format(
+                    "The capacity of [%d] would require [%d] pages, but [%d] were provided",
+                    size,
+                    numPages(size),
+                    pages.length));
+        }
+
         final int maxIndexShift = Integer.SIZE - 1 + pageShift;
         maxSupportedSize = 1L << maxIndexShift;
 
@@ -127,9 +135,13 @@ public class PagedDataStructure<T> {
     private void setPages(int numPages, int currentNumPages) {
         T[] pages = Arrays.copyOf(this.pages, numPages);
         for (int i = currentNumPages; i < numPages; i++) {
-            pages[i] = allocator.newPage();
+            pages[i] = allocateNewPage();
         }
         this.pages = pages;
         this.capacity.set(capacityFor(numPages));
+    }
+
+    T allocateNewPage() {
+        return allocator.newPage();
     }
 }
