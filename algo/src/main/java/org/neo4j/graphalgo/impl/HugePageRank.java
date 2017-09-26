@@ -260,9 +260,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 ++i;
             }
 
-            tracker.add(sizeOfDoubleArray(partitionCount));
-            double[] partitionRank = new double[partitionCount];
-            Arrays.fill(partitionRank, 1.0 - dampingFactor);
             starts.add(start);
             lengths.add(partitionCount);
 
@@ -271,7 +268,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     relationshipIterator,
                     degrees,
                     tracker,
-                    partitionRank,
+                    partitionCount,
                     start
             ));
         }
@@ -382,7 +379,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 ++i;
             }
             stepSize++;
-            sharedUsage += sizeOfDoubleArray(partitionCount);
+            sharedUsage += (sizeOfDoubleArray(partitionCount) << 1);
             perThreadUsage += sizeOfIntArray(partitionCount);
         }
 
@@ -539,7 +536,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 HugeRelationshipIterator relationshipIterator,
                 HugeDegrees degrees,
                 AllocationTracker tracker,
-                double[] pageRank,
+                int partitionSize,
                 long startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
@@ -547,11 +544,15 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.degrees = degrees;
             this.tracker = tracker;
             this.startNode = startNode;
-            this.endNode = startNode + pageRank.length;
-            this.pageRank = pageRank;
-            this.deltas = new double[pageRank.length];
-            Arrays.fill(deltas, alpha);
+            this.endNode = startNode + partitionSize;
             this.behavior = runs;
+
+            tracker.add(sizeOfDoubleArray(partitionSize) << 1);
+            double[] partitionRank = new double[partitionSize];
+            Arrays.fill(partitionRank, alpha);
+
+            this.pageRank = partitionRank;
+            this.deltas = Arrays.copyOf(partitionRank, partitionSize);
         }
 
         void setStarts(long[] starts, int[] lengths) {
