@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
+
 
 /**
  * Partition based parallel PageRank based on
@@ -256,27 +258,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         return new ComputeSteps(concurrency, computeSteps, pool);
     }
 
-    private static int idx(int id, int ids[]) {
-        int length = ids.length;
-
-        int low = 0;
-        int high = length - 1;
-
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            int midVal = ids[mid];
-
-            if (midVal < id) {
-                low = mid + 1;
-            } else if (midVal > id) {
-                high = mid - 1;
-            } else {
-                return mid;
-            }
-        }
-        return low - 1;
-    }
-
     @Override
     public PageRank me() {
         return this;
@@ -468,7 +449,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 long relationId) {
             int rank = srcRank[0];
             if (rank != 0) {
-                int idx = PageRank.idx(targetNodeId, starts);
+                int idx = binaryLookup(targetNodeId, starts);
                 nextScores[idx][targetNodeId - starts[idx]] += rank;
             }
             return true;
@@ -567,7 +548,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         @Override
         public double score(final int nodeId) {
-            int idx = PageRank.idx(nodeId, starts);
+            int idx = binaryLookup(nodeId, starts);
             return partitions[idx][nodeId - starts[idx]];
         }
 
