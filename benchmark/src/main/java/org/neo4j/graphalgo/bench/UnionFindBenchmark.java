@@ -96,6 +96,12 @@ public class UnionFindBenchmark {
 
     @TearDown
     public static void tearDown() throws Exception {
+        if (heavyGraph != null) {
+            heavyGraph.release();
+        }
+        if (lightGraph != null) {
+            lightGraph.release();
+        }
         if (db != null) db.shutdown();
         Pools.DEFAULT.shutdownNow();
     }

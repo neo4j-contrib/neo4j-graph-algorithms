@@ -75,6 +75,7 @@ public class AllShortestPathsComparisionBenchmark {
 
     @TearDown
     public void shutdown() {
+        graph.release();
         Pools.DEFAULT.shutdown();
     }
 
