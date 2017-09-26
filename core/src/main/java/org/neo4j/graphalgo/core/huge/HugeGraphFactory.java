@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.HugeNullWeightMap;
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.RenamingRunnable;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
@@ -23,6 +24,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public final class HugeGraphFactory extends GraphFactory {
@@ -133,11 +135,13 @@ public final class HugeGraphFactory extends GraphFactory {
             final ByteArray finalInAdjacency = inAdjacency;
             final ByteArray finalOutAdjacency = outAdjacency;
             progress.resetForRelationships();
+            final AtomicInteger batchIndex = new AtomicInteger();
             ParallelUtil.readParallel(
                     concurrency,
                     batchSize,
                     mapping,
                     (offset, nodeIds) -> new BatchImportTask(
+                            batchIndex.getAndIncrement(),
                             nodeIds,
                             progress,
                             mapping,
@@ -163,7 +167,8 @@ public final class HugeGraphFactory extends GraphFactory {
         );
     }
 
-    private final class BatchImportTask implements Runnable, Consumer<ReadOperations> {
+    private final class BatchImportTask implements RenamingRunnable, Consumer<ReadOperations> {
+        private final int batchIndex;
         private final ImportProgress progress;
         private final PrimitiveLongIterable nodes;
         private final HugeIdMap idMap;
@@ -179,6 +184,7 @@ public final class HugeGraphFactory extends GraphFactory {
         private DeltaEncodingVisitor outImporter;
 
         BatchImportTask(
+                int batchIndex,
                 PrimitiveLongIterable nodes,
                 ImportProgress progress,
                 HugeIdMap idMap,
@@ -189,6 +195,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 int[] relationId,
                 int weightId,
                 HugeWeightMapping weights) {
+            this.batchIndex = batchIndex;
             this.progress = progress;
             this.nodes = nodes;
             this.idMap = idMap;
@@ -202,7 +209,12 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         @Override
-        public void run() {
+        public String threadName() {
+            return "HugeRelationshipImport-" + batchIndex;
+        }
+
+        @Override
+        public void doRun() {
             withReadOps(this);
         }
 
