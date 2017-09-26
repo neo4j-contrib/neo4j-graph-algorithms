@@ -76,6 +76,7 @@ public class LabelPropagationBenchmarkLdbc {
 
     @TearDown
     public void shutdown() {
+        graph.release();
         db.shutdown();
         Pools.DEFAULT.shutdownNow();
     }

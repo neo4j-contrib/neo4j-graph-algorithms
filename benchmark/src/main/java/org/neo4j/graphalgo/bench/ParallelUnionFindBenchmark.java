@@ -90,6 +90,7 @@ public class ParallelUnionFindBenchmark {
 
     @TearDown
     public void shutdown() throws IOException {
+        graph.release();
         db.shutdown();
         Pools.DEFAULT.shutdownNow();
 
