@@ -44,6 +44,8 @@ public class PageRankBenchmark {
 
     private GraphDatabaseAPI db;
 
+    private Graph graph;
+
     @Setup
     public void setup() {
         String createGraph = "CREATE (nA)\n" +
@@ -83,25 +85,22 @@ public class PageRankBenchmark {
             db.execute(createGraph).close();
             tx.success();
         }
+        graph = new GraphLoader(db)
+                .withDirection(Direction.OUTGOING)
+                .load(impl.impl);
     }
 
     @TearDown
     public void tearDown() {
         db.shutdown();
+        graph.release();
     }
 
     @Benchmark
     public PageRankResult run() throws Exception {
-        final Graph graph = new GraphLoader(db)
-                .withDirection(Direction.OUTGOING)
-                .load(impl.impl);
-        try {
-            return PageRankAlgorithm
-                    .of(graph, 0.85)
-                    .compute(iterations)
-                    .result();
-        } finally {
-            graph.release();
-        }
+        return PageRankAlgorithm
+                .of(graph, 0.85)
+                .compute(iterations)
+                .result();
     }
 }
