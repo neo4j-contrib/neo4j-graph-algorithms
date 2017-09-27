@@ -304,7 +304,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
     private WeightMapping newWeightMapping(boolean needWeights, double defaultValue, int capacity) {
         return needWeights ?
-                new WeightMap(capacity, defaultValue) :
+                new WeightMap(capacity, defaultValue, -2) :
                 new NullWeightMap(defaultValue);
     }
 

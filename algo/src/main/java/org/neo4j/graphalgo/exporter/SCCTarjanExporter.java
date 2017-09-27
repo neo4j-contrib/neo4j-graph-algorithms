@@ -6,11 +6,7 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.utils.AbstractExporter;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
-import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
-import org.neo4j.kernel.api.exceptions.schema.IllegalTokenNameException;
+import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -36,13 +32,7 @@ public class SCCTarjanExporter extends AbstractExporter<ObjectArrayList<IntSet>>
     }
 
     public SCCTarjanExporter withWriteProperty(String writeProperty) {
-        writeInTransaction(write -> {
-            try {
-                this.writePropertyId = write.propertyKeyGetOrCreateForName(writeProperty);
-            } catch (IllegalTokenNameException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        this.writePropertyId = getOrCreatePropertyId(writeProperty);
         return this;
     }
 
@@ -56,10 +46,7 @@ public class SCCTarjanExporter extends AbstractExporter<ObjectArrayList<IntSet>>
                     try {
                         write.nodeSetProperty(idMapping.toOriginalNodeId(iCursor.value),
                                 property);
-                    } catch (EntityNotFoundException
-                            | ConstraintValidationKernelException
-                            | InvalidTransactionTypeKernelException
-                            | AutoIndexingKernelException e) {
+                    } catch (KernelException e) {
                         throw new RuntimeException(e);
                     }
                 });

@@ -1,12 +1,11 @@
-package org.neo4j.graphalgo.core.huge;
+package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-final class ImportProgress {
+public final class ImportProgress {
 
     private final ProgressLogger progressLogger;
     private final AllocationTracker tracker;
@@ -17,7 +16,7 @@ final class ImportProgress {
 
     private final AtomicLong nodeProgress;
 
-    ImportProgress(
+    public ImportProgress(
             ProgressLogger progressLogger,
             AllocationTracker tracker,
             long nodeCount,
@@ -35,8 +34,8 @@ final class ImportProgress {
         nodeProgress = new AtomicLong();
     }
 
-    void nodeProgress(long delta) {
-        long nodes = nodeProgress.addAndGet(delta);
+    public void nodeProgress() {
+        long nodes = nodeProgress.incrementAndGet();
         if ((nodes & progressMask) == 0) {
             progressLogger.logProgress(
                     nodes,
@@ -45,8 +44,8 @@ final class ImportProgress {
         }
     }
 
-    void relProgress(long delta) {
-        long nodes = nodeProgress.addAndGet(delta);
+    public void relProgress() {
+        long nodes = nodeProgress.incrementAndGet();
         if ((nodes & progressMask) == 0) {
             progressLogger.logProgress(
                     (nodes << relationProgressShift) + nodeCount,
@@ -55,7 +54,7 @@ final class ImportProgress {
         }
     }
 
-    void resetForRelationships() {
+    public void resetForRelationships() {
         nodeProgress.set(0);
     }
 }

@@ -40,6 +40,7 @@ public class GraphSetup {
     public final double nodeDefaultPropertyValue;
 
     public final Log log;
+    public final long logMillis;
     public final AllocationTracker tracker;
 
     // the executor service for parallel execution. null means single threaded evaluation.
@@ -87,6 +88,7 @@ public class GraphSetup {
             int batchSize,
             boolean accumulateWeights,
             Log log,
+            long logMillis,
             AllocationTracker tracker) {
 
         this.startLabel = startLabel;
@@ -105,6 +107,7 @@ public class GraphSetup {
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
         this.log = log;
+        this.logMillis = logMillis;
         this.tracker = tracker;
     }
 
@@ -127,6 +130,7 @@ public class GraphSetup {
         this.batchSize = -1;
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
+        this.logMillis = -1;
         this.tracker = AllocationTracker.EMPTY;
     }
 
@@ -152,6 +156,7 @@ public class GraphSetup {
         this.batchSize = -1;
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
+        this.logMillis = -1;
         this.tracker = AllocationTracker.EMPTY;
     }
 

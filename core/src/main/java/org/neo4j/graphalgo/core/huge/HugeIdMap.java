@@ -18,7 +18,7 @@ import java.util.function.LongPredicate;
  * This is basically a long to int mapper. It sorts the id's in ascending order so its
  * guaranteed that there is no ID greater then nextGraphId / capacity
  */
-final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBatchNodeIterable {
+public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBatchNodeIterable {
 
     static final long NOT_FOUND = -1L;
 

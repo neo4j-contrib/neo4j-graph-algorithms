@@ -459,16 +459,11 @@ public class GraphLoader {
                 batchSize,
                 accumulateWeights,
                 log,
+                logMillis,
                 tracker);
 
         try {
-            GraphFactory factory = (GraphFactory) constructor.invoke(api, setup);
-            if (logMillis == -1) {
-                factory.setLog(log);
-            } else {
-                factory.setLog(log, logMillis, TimeUnit.MILLISECONDS);
-            }
-            return factory;
+            return (GraphFactory) constructor.invoke(api, setup);
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(
                     throwable.getMessage(),
