@@ -70,7 +70,7 @@ public class LouvainProc {
 
         // evaluation
         try (ProgressTimer timer = builder.timeEval()) {
-            louvain.compute();
+            louvain.compute(configuration.getIterations(10));
             builder.withIterations(louvain.getIterations())
                     .withCommunityCount(louvain.getCommunityCount());
         }
@@ -104,7 +104,7 @@ public class LouvainProc {
         return new Louvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute()
+                .compute(configuration.getIterations(10))
                 .resultStream();
 
     }

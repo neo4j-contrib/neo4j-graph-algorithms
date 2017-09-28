@@ -73,12 +73,13 @@ public class Louvain extends Algorithm<Louvain> {
         communities = new IntObjectScatterMap<>();
     }
 
-    public Louvain compute() {
+    public Louvain compute(int iterations) {
         reset();
-        iterations = 0;
-        do {
-            iterations++;
-        } while (arrange());
+        for (int i = 0; i < iterations; i++) {
+            if (!arrange()) {
+                return this; // convergence
+            }
+        }
         return this;
     }
 
