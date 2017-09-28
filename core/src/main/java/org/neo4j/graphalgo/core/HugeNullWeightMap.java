@@ -28,4 +28,9 @@ public class HugeNullWeightMap implements HugeWeightMapping {
             final double defaultValue) {
         return defaultValue;
     }
+
+    @Override
+    public long release() {
+        return 0L;
+    }
 }

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Multi Source Breadth First Search implemented as described in [1].
@@ -139,6 +140,9 @@ public final class MultiSourceBFS implements Runnable {
         ParallelUtil.runWithConcurrency(
                 concurrency,
                 bfss,
+                threads << 2,
+                100L,
+                TimeUnit.MICROSECONDS,
                 executor);
     }
 

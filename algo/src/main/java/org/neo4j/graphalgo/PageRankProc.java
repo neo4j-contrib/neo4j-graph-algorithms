@@ -6,9 +6,9 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.exporter.PageRankResult;
 import org.neo4j.graphalgo.impl.Algorithm;
@@ -59,9 +59,13 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
+        AllocationTracker tracker = AllocationTracker.create();
+        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder);
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        PageRankResult scores = evaluate(graph, terminationFlag, configuration, statsBuilder);
+        PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
+
+        log.info("PageRank: overall memory usage: %s", tracker.getUsageString());
+
         write(graph, terminationFlag, scores, configuration, statsBuilder);
 
         return Stream.of(statsBuilder.build());
@@ -79,10 +83,13 @@ public final class PageRankProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
-        final Graph graph = load(label, relationship, configuration.getGraphImpl(), statsBuilder);
+        AllocationTracker tracker = AllocationTracker.create();
+        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder);
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        PageRankResult scores = evaluate(graph, terminationFlag, configuration, statsBuilder);
+        PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
+
+        log.info("PageRank: overall memory usage: %s", tracker.getUsageString());
 
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
@@ -103,11 +110,13 @@ public final class PageRankProc {
     private Graph load(
             String label,
             String relationship,
+            AllocationTracker tracker,
             Class<? extends GraphFactory> graphFactory,
             PageRankScore.Stats.Builder statsBuilder) {
 
         GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
+                .withAllocationTracker(tracker)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withDirection(Direction.OUTGOING)
@@ -122,6 +131,7 @@ public final class PageRankProc {
 
     private PageRankResult evaluate(
             Graph graph,
+            AllocationTracker tracker,
             TerminationFlag terminationFlag,
             ProcedureConfiguration configuration,
             PageRankScore.Stats.Builder statsBuilder) {
@@ -133,6 +143,7 @@ public final class PageRankProc {
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
         PageRankAlgorithm prAlgo = PageRankAlgorithm.of(
+                tracker,
                 graph,
                 dampingFactor,
                 Pools.DEFAULT,
@@ -140,7 +151,7 @@ public final class PageRankProc {
                 batchSize);
         Algorithm<?> algo = prAlgo
                 .algorithm()
-                .withProgressLogger(ProgressLogger.wrap(log, "PageRank"))
+                .withLog(log)
                 .withTerminationFlag(terminationFlag);
 
         statsBuilder.timeEval(() -> prAlgo.compute(iterations));

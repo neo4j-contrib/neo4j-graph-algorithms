@@ -60,7 +60,6 @@ public class HeavyGraphFactory extends GraphFactory {
             GraphDatabaseAPI api,
             GraphSetup setup) {
         super(api, setup);
-        setLog(setup.log);
         this.threadPool = setup.executor;
         withReadOps(readOp -> {
             labelId = setup.loadAnyLabel()

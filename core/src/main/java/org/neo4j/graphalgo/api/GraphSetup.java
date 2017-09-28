@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
@@ -39,6 +40,7 @@ public class GraphSetup {
     public final double nodeDefaultPropertyValue;
 
     public final Log log;
+    public final AllocationTracker tracker;
 
     // the executor service for parallel execution. null means single threaded evaluation.
     public final ExecutorService executor;
@@ -84,7 +86,8 @@ public class GraphSetup {
             int concurrency,
             int batchSize,
             boolean accumulateWeights,
-            Log log) {
+            Log log,
+            AllocationTracker tracker) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -102,6 +105,7 @@ public class GraphSetup {
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
         this.log = log;
+        this.tracker = tracker;
     }
 
     /**
@@ -123,6 +127,7 @@ public class GraphSetup {
         this.batchSize = -1;
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
+        this.tracker = AllocationTracker.EMPTY;
     }
 
     /**
@@ -146,7 +151,8 @@ public class GraphSetup {
         this.concurrency = Pools.DEFAULT_CONCURRENCY;
         this.batchSize = -1;
         this.accumulateWeights = false;
-        log = NullLog.getInstance();
+        this.log = NullLog.getInstance();
+        this.tracker = AllocationTracker.EMPTY;
     }
 
     public boolean loadConcurrent() {

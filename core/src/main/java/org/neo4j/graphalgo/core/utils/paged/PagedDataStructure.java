@@ -1,17 +1,12 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.RamUsageEstimator;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class PagedDataStructure<T> {
-
-    // 32 KB page size
-    private static final int PAGE_SIZE_IN_BYTES = 1 << 15;
+public class PagedDataStructure<T> {
 
     final int pageSize;
     private final int pageShift;
@@ -24,12 +19,10 @@ public abstract class PagedDataStructure<T> {
     private final AtomicLong capacity = new PaddedAtomicLong();
     private final ReentrantLock growLock = new ReentrantLock(true);
 
-    PagedDataStructure(
-            long size,
-            int sizeOf,
-            Class<T> cls) {
-        assert isPowerOfTwo(sizeOf);
-        pageSize = PAGE_SIZE_IN_BYTES / sizeOf;
+    private final PageAllocator<T> allocator;
+
+    PagedDataStructure(long size, PageAllocator<T> allocator) {
+        pageSize = allocator.pageSize();
         pageShift = Integer.numberOfTrailingZeros(pageSize);
         pageMask = pageSize - 1;
 
@@ -37,12 +30,32 @@ public abstract class PagedDataStructure<T> {
         maxSupportedSize = 1L << maxIndexShift;
         assert size <= maxSupportedSize;
         this.size.set(size);
-        int numPages = numPages(size);
-        capacity.set(capacityFor(numPages));
-        pages = (T[]) Array.newInstance(cls, numPages);
-        for (int i = 0; i < pages.length; ++i) {
-            pages[i] = newPage();
+
+        this.allocator = allocator;
+        pages = allocator.emptyPages();
+        setPages(numPages(size), 0);
+    }
+
+    PagedDataStructure(long size, T[] pages, PageAllocator<T> allocator) {
+        pageSize = allocator.pageSize();
+        pageShift = Integer.numberOfTrailingZeros(pageSize);
+        pageMask = pageSize - 1;
+
+        if (numPages(size) != pages.length) {
+            throw new IllegalArgumentException(String.format(
+                    "The capacity of [%d] would require [%d] pages, but [%d] were provided",
+                    size,
+                    numPages(size),
+                    pages.length));
         }
+
+        final int maxIndexShift = Integer.SIZE - 1 + pageShift;
+        maxSupportedSize = 1L << maxIndexShift;
+
+        this.allocator = allocator;
+        this.pages = pages;
+        this.capacity.set(capacityFor(pages.length));
+        this.size.set(size);
     }
 
     /**
@@ -61,10 +74,15 @@ public abstract class PagedDataStructure<T> {
         return capacity.get();
     }
 
+    public long release() {
+        size.set(0);
+        long freed = allocator.estimateMemoryUsage(capacity.getAndSet(0));
+        pages = null;
+        return freed;
+    }
+
     private int numPages(long capacity) {
-        final long numPages = (capacity + pageMask) >>> pageShift;
-        assert numPages <= Integer.MAX_VALUE : "pageSize=" + (pageMask + 1) + " is too small for such as capacity: " + capacity;
-        return (int) numPages;
+        return PageUtil.numPagesFor(capacity, pageShift, pageMask);
     }
 
     private long capacityFor(int numPages) {
@@ -78,8 +96,6 @@ public abstract class PagedDataStructure<T> {
     final int indexInPage(long index) {
         return (int) (index & pageMask);
     }
-
-    protected abstract T newPage();
 
     /**
      * Grows the page structure to the new size. The existing content will be preserved.
@@ -99,7 +115,10 @@ public abstract class PagedDataStructure<T> {
                 growSize(newSize);
                 return;
             }
-            doGrow(newSize, this.pages.length);
+            int numPages = ArrayUtil.oversize(
+                numPages(newSize),
+                MemoryUsage.BYTES_OBJECT_REF);
+            setPages(numPages, this.pages.length);
             growSize(newSize);
         } finally {
             growLock.unlock();
@@ -113,19 +132,16 @@ public abstract class PagedDataStructure<T> {
         } while (size < newSize && !this.size.compareAndSet(size, newSize));
     }
 
-    private void doGrow(long newSize, int currentNumPages) {
-        int numPages = ArrayUtil.oversize(
-                numPages(newSize),
-                RamUsageEstimator.NUM_BYTES_OBJECT_REF);
+    private void setPages(int numPages, int currentNumPages) {
         T[] pages = Arrays.copyOf(this.pages, numPages);
         for (int i = currentNumPages; i < numPages; i++) {
-            pages[i] = newPage();
+            pages[i] = allocateNewPage();
         }
         this.pages = pages;
         this.capacity.set(capacityFor(numPages));
     }
 
-    private static boolean isPowerOfTwo(final int value) {
-        return value > 0 && ((value & (~value + 1)) == value);
+    T allocateNewPage() {
+        return allocator.newPage();
     }
 }

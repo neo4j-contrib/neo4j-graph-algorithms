@@ -8,7 +8,9 @@ import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
+import org.neo4j.logging.NullLog;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -25,6 +27,7 @@ public abstract class GraphFactory {
     protected final GraphDatabaseAPI api;
     protected final GraphSetup setup;
 
+    protected Log log = NullLog.getInstance();
     protected ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
     public GraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
@@ -36,7 +39,17 @@ public abstract class GraphFactory {
     }
 
     public void setLog(Log log) {
+        this.log = log;
         this.progressLogger = new ProgressLoggerAdapter(log, TASK_LOADING);
+    }
+
+    public void setLog(Log log, long time, TimeUnit unit) {
+        this.log = log;
+        ProgressLoggerAdapter logger = new ProgressLoggerAdapter(
+                log,
+                TASK_LOADING);
+        logger.withLogIntervalMillis((int) Math.min(unit.toMillis(time), Integer.MAX_VALUE));
+        this.progressLogger = logger;
     }
 
     public abstract Graph build();

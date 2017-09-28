@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -24,9 +23,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
-@Fork(value = 3, jvmArgs = {"-Xms4g", "-Xmx4g"})
-@Warmup(iterations = 3)
-@Measurement(iterations = 5)
+@Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
+@Warmup(iterations = 5)
+@Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -38,18 +37,30 @@ public class GraphLoadLdbc {
     @Param({"true", "false"})
     boolean parallel;
 
+    @Param({"IN", "OUT", "NONE", "BOTH"})
+    DirectionParam dir;
+
+    @Param({"", "length"})
+    String weightProp;
+
+    @Param({"", "Person"})
+    String label;
+
+    @Param({"L01", "L10"})
+    String graphId;
+
     private GraphDatabaseAPI db;
     private GraphLoader loader;
 
     @Setup
     public void setup() throws KernelException, IOException {
-        db = LdbcDownloader.openDb();
+        db = LdbcDownloader.openDb(graphId);
+        loader = new GraphLoader(db)
+                .withOptionalRelationshipWeightsFromProperty(weightProp.isEmpty() ? null : weightProp, 1.0)
+                .withOptionalLabel(label.isEmpty() ? null : label)
+                .withDirection(dir.direction);
         if (parallel) {
-            loader = new GraphLoader(db, Pools.DEFAULT)
-                    .withDirection(Direction.OUTGOING);
-        } else {
-            loader = new GraphLoader(db)
-                    .withDirection(Direction.OUTGOING);
+            loader.withExecutorService(Pools.DEFAULT);
         }
     }
 
@@ -60,7 +71,7 @@ public class GraphLoadLdbc {
     }
 
     @Benchmark
-    public Graph run() throws Exception {
+    public Graph load() throws Exception {
         return loader.load(this.graph.impl);
     }
 }

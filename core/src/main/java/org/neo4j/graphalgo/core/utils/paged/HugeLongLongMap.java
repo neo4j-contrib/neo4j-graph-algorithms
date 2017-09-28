@@ -4,31 +4,78 @@ import com.carrotsearch.hppc.AbstractIterator;
 import com.carrotsearch.hppc.LongLongHashMap;
 import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.cursors.LongLongCursor;
-import org.apache.lucene.util.RamUsageEstimator;
+import org.neo4j.graphalgo.core.utils.container.TrackingLongLongHashMap;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static com.carrotsearch.hppc.HashContainers.DEFAULT_LOAD_FACTOR;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
+
 public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> implements Iterable<LongLongCursor> {
 
-    public static HugeLongLongMap newMap(long size) {
-        return new HugeLongLongMap(size);
+    private static final PageAllocator.Factory<LongLongMap> ALLOCATOR_FACTORY;
+
+    static {
+        // we must use same page size as long[] pages in order to load in parallel
+        int pageSize = PageUtil.pageSizeFor(Long.BYTES);
+        int bufferLength = (int) Math.ceil(pageSize / DEFAULT_LOAD_FACTOR);
+        bufferLength = BitUtil.nextHighestPowerOfTwo(bufferLength);
+        long bufferUsage = sizeOfLongArray(bufferLength);
+
+        long pageUsage = shallowSizeOfInstance(LongLongHashMap.class);
+        pageUsage += bufferUsage; // keys
+        pageUsage += bufferUsage; // values
+
+        ALLOCATOR_FACTORY = PageAllocator.of(
+                pageSize,
+                pageUsage,
+                TrackingLongLongHashMap::new,
+                new LongLongHashMap[0]);
     }
 
-    private HugeLongLongMap(long size) {
-        super(size, RamUsageEstimator.NUM_BYTES_OBJECT_REF, LongLongMap.class);
+    public static long estimateMemoryUsage(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, HugeLongLongMap.class);
+    }
+
+    public static long estimateMemoryUsageOfPages(long size) {
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size);
+    }
+
+    public static HugeLongLongMap newMap(long size, AllocationTracker tracker) {
+        return new HugeLongLongMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    public static HugeLongLongMap fromPages(
+            long size,
+            LongLongMap[] pages,
+            AllocationTracker tracker) {
+        return new HugeLongLongMap(size, pages, ALLOCATOR_FACTORY.newAllocator(tracker));
+    }
+
+    private HugeLongLongMap(long size, PageAllocator<LongLongMap> allocator) {
+        super(size, allocator);
+    }
+
+    private HugeLongLongMap(long size, LongLongMap[] pages, PageAllocator<LongLongMap> allocator) {
+        super(size, pages, allocator);
     }
 
     public long getOrDefault(long index, long defaultValue) {
         assert index < capacity();
         final int pageIndex = pageIndex(index);
-        return pages[pageIndex].getOrDefault(index, defaultValue);
+        LongLongMap page = pages[pageIndex];
+        return page != null
+                ? page.getOrDefault(index, defaultValue)
+                : defaultValue;
     }
 
     public long put(long index, long value) {
         assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
+        assert page != null : "add should only be used with pre-allocated pages";
         return page.put(index, value);
     }
 
@@ -36,12 +83,7 @@ public final class HugeLongLongMap extends PagedDataStructure<LongLongMap> imple
         assert index < capacity();
         final int pageIndex = pageIndex(index);
         final LongLongMap page = pages[pageIndex];
-        return page.containsKey(index);
-    }
-
-    @Override
-    protected LongLongMap newPage() {
-        return new LongLongHashMap(pageSize);
+        return page != null && page.containsKey(index);
     }
 
     @Override

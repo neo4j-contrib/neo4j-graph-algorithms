@@ -101,9 +101,7 @@ public class PageRankBenchmark {
                     .compute(iterations)
                     .result();
         } finally {
-            if (graph instanceof AutoCloseable) {
-                ((AutoCloseable) graph).close();
-            }
+            graph.release();
         }
     }
 }

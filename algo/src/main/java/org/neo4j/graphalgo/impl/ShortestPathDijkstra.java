@@ -27,6 +27,9 @@ import java.util.stream.StreamSupport;
  */
 public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
+    private static final int PATH_END = -1;
+    public static final double NO_PATH_FOUND = -1.0;
+
     private Graph graph;
 
     // node to cost map
@@ -66,20 +69,28 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
+        return compute(startNode, goalNode, Direction.BOTH);
+    }
+
+    public ShortestPathDijkstra compute(long startNode, long goalNode, Direction direction) {
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
         goal = graph.toMappedNodeId(goalNode);
-        costs.put(node, 0);
-        queue.add(node, 0);
-        run(goal);
-        int last = goal;
+        costs.put(node, 0.0);
+        queue.add(node, 0.0);
+        run(goal, direction);
         finalPath.clear();
+        totalCost = NO_PATH_FOUND;
+        if (!path.containsKey(goal)) {
+            return this;
+        }
+        int last = goal;
         totalCost = 0.0;
-        while (last != -1) {
+        while (last != PATH_END) {
             finalPath.addFirst(last);
-            last = path.getOrDefault(last, -1);
-            totalCost += costs.getOrDefault(last, 0.0);
+            last = path.getOrDefault(last, PATH_END);
+            totalCost += costs.get(last);
         }
         return this;
     }
@@ -116,7 +127,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         return finalPath.size();
     }
 
-    private void run(int goal) {
+    private void run(int goal, Direction direction) {
         while (!queue.isEmpty() && running()) {
             int node = queue.pop();
             if (node == goal) {
@@ -127,7 +138,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
-                    Direction.OUTGOING, (source, target, relId, weight) -> {
+                    direction, (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
