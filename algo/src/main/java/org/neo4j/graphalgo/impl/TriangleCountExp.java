@@ -124,63 +124,6 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
 
     private class Task implements Runnable {
 
-//        private final IntStack level0, level1, level2;
-//
-//        private Task() {
-//            level0 = new IntStack();
-//            level1 = new IntStack();
-//            level2 = new IntStack();
-//        }
-//
-//        @Override
-//        public void run() {
-//            final TerminationFlag flag = getTerminationFlag();
-//            final ProgressLogger progressLogger = getProgressLogger();
-//            final int[] triangle = {-1, -1, -1}; // (u, v, w)
-//            // process triangles (u, v, w) at node u
-//            while ((triangle[0] = queue.getAndIncrement()) < nodeCount) {
-//                // fill level0 stack with v's
-//                graph.forEachRelationship(triangle[0], D, (sourceNodeId, targetNodeId, relationId) -> {
-//                    if (sourceNodeId >= targetNodeId) {
-//                        return true;
-//                    }
-//                    if (!flag.running()) {
-//                        return false;
-//                    }
-//                    level0.push(targetNodeId);
-//                    return true;
-//                });
-//                // Level1 - for each v of (u, v, w)
-//                while (!level0.isEmpty()) {
-//                    triangle[1] = level0.pop();
-//
-//                    graph.forEachRelationship(triangle[1], D, (sourceNodeId, targetNodeId, relationId2) -> {
-//                        if (sourceNodeId >= targetNodeId) {
-//                            return true;
-//                        }
-//                        if (!flag.running()) {
-//                            return false;
-//                        }
-//                        level1.push(targetNodeId);
-//                        return true;
-//                    });
-//
-//                    while (!level1.isEmpty()) {
-//                        triangle[2] = level1.pop();
-//                        if (!flag.running()) {
-//                            return false;
-//                        }
-//                        if (triangle[2] == triangle[0]) {
-//                            exportTriangle(triangle);
-//                        }
-//                    }
-//                }
-//                // Level w
-//
-//                progressLogger.logProgress(triangle[0], nodeCount - 1);
-//            }
-//        }
-
         @Override
         public void run() {
             final TerminationFlag flag = getTerminationFlag();
