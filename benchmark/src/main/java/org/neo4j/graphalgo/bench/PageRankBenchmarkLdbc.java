@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
-@Fork(value = 3, jvmArgs = {"-Xms4g", "-Xmx4g"})
+@Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
 @Warmup(iterations = 5)
 @Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
@@ -37,11 +37,14 @@ public class PageRankBenchmarkLdbc {
     @Param({"LIGHT", "HEAVY", "HUGE"})
     GraphImpl graph;
 
-    @Param({"5", "20"})
-    int iterations;
-
     @Param({"true", "false"})
     boolean parallel;
+
+    @Param({"L01", "L10"})
+    String graphId;;
+
+    @Param({"5", "20"})
+    int iterations;
 
     private GraphDatabaseAPI db;
     private Graph grph;
@@ -49,7 +52,7 @@ public class PageRankBenchmarkLdbc {
 
     @Setup
     public void setup() throws KernelException, IOException {
-        db = LdbcDownloader.openDb();
+        db = LdbcDownloader.openDb(graphId);
         grph = new GraphLoader(db, Pools.DEFAULT)
                 .withDirection(Direction.OUTGOING)
                 .withoutRelationshipWeights()
