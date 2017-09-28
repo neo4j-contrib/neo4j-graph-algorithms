@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.graphbuilder;
+package org.neo4j.graphalgo.helper.graphbuilder;
 
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;

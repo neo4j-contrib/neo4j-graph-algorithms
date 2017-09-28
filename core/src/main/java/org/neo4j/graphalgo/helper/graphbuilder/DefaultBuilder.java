@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.core.graphbuilder;
+package org.neo4j.graphalgo.helper.graphbuilder;
 
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -7,7 +7,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 /**
- * default builder which makes methods
+ * default builder makes methods
  * from abstract graphBuilder accessible
  *
  * @author mknblch

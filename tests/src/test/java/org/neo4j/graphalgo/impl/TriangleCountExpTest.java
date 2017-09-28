@@ -17,13 +17,12 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 /**
  *
  * @author mknblch
  */
-public class TriangleCountTest {
+public class TriangleCountExpTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
@@ -70,7 +69,7 @@ public class TriangleCountTest {
 
     @Test
     public void testSequential() throws Exception {
-        final TriangleCount algo = new TriangleCount(graph, Pools.DEFAULT, 1);
+        final TriangleCountExp algo = new TriangleCountExp(graph, Pools.DEFAULT, 1);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
             algo.compute();
         }
@@ -82,7 +81,7 @@ public class TriangleCountTest {
 
     @Test
     public void testParallel() throws Exception {
-        final TriangleCount algo = new TriangleCount(graph, Pools.DEFAULT, 4);
+        final TriangleCountExp algo = new TriangleCountExp(graph, Pools.DEFAULT, 4);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("parallel eval took " + l + "ms"))) {
             algo.compute();
         }

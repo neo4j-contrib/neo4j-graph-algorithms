@@ -19,13 +19,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**        _______
- *        /       \
- *      (0)--(1) (3)--(4)
- *        \  /     \ /
- *        (2)  (6) (5)
- *             / \
- *           (7)-(8)
+/**
+ *      (a)--(b)-(d)--(e)
+ *        \T1/ \   \T2/
+ *        (c)  (g)-(f)
+ *          \  /T3\
+ *           (h)-(i)
  *
  * @author mknblch
  */
@@ -50,11 +49,13 @@ public class TriangleProcTest {
                         " (b)-[:TYPE]->(c),\n" +
                         " (c)-[:TYPE]->(a),\n" +
 
+                        " (c)-[:TYPE]->(h),\n" +
+
                         " (d)-[:TYPE]->(e),\n" +
                         " (e)-[:TYPE]->(f),\n" +
                         " (f)-[:TYPE]->(d),\n" +
 
-                        " (a)-[:TYPE]->(d),\n" +
+                        " (b)-[:TYPE]->(d),\n" +
 
                         " (g)-[:TYPE]->(h),\n" +
                         " (h)-[:TYPE]->(i),\n" +
@@ -106,10 +107,50 @@ public class TriangleProcTest {
         });
     }
 
+
+    @Test
+    public void testTriangleCountExp1WriteCypher() throws Exception {
+        final String cypher = "CALL algo.triangleCount.exp1('Node', '', {concurrency:4, write:true}) " +
+                "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount";
+        api.execute(cypher).accept(row -> {
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            final long nodeCount = row.getNumber("nodeCount").longValue();
+            final long triangleCount = row.getNumber("triangleCount").longValue();
+            assertNotEquals(-1, loadMillis);
+            assertNotEquals(-1, computeMillis);
+            assertNotEquals(-1, writeMillis);
+            assertEquals(3, triangleCount);
+            assertEquals(9, nodeCount);
+            return true;
+        });
+
+        final String request = "MATCH (n) WHERE exists(n.triangles) RETURN n.triangles as t";
+        api.execute(request).accept(row -> {
+            final int triangles = row.getNumber("t").intValue();
+            assertEquals(1, triangles);
+            return true;
+        });
+    }
+
     @Test
     public void testTriangleCountStream() throws Exception {
         final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
         final String cypher = "CALL algo.triangleCount.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
+        api.execute(cypher).accept(row -> {
+            final long nodeId = row.getNumber("nodeId").longValue();
+            final long triangles = row.getNumber("triangles").longValue();
+            mock.consume(nodeId, triangles);
+            return true;
+        });
+        verify(mock, times(9)).consume(anyLong(), eq(1L));
+    }
+
+    @Test
+    public void testTriangleCountExp1Stream() throws Exception {
+        final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
+        final String cypher = "CALL algo.triangleCount.exp1.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
         api.execute(cypher).accept(row -> {
             final long nodeId = row.getNumber("nodeId").longValue();
             final long triangles = row.getNumber("triangles").longValue();
