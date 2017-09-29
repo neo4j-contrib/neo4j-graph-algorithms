@@ -5,6 +5,9 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
@@ -147,6 +150,48 @@ public class HugeGraphImpl implements HugeGraph {
     }
 
     @Override
+    public void forEachRelationship(
+            int nodeId,
+            Direction direction,
+            RelationshipConsumer consumer) {
+        switch (direction) {
+            case INCOMING:
+                forEachIncoming(nodeId, consumer);
+                return;
+
+            case OUTGOING:
+                forEachOutgoing(nodeId, consumer);
+                return;
+
+            case BOTH:
+                forEachIncoming(nodeId, consumer);
+                forEachOutgoing(nodeId, consumer);
+                return;
+
+            default:
+                throw new IllegalArgumentException(direction + "");
+        }
+    }
+
+    @Override
+    public void forEachRelationship(
+            int nodeId,
+            Direction direction,
+            WeightedRelationshipConsumer consumer) {
+        RelationshipConsumer nonWeighted = (s, t, relId) -> {
+            double weight = direction == Direction.OUTGOING
+                    ? weightOf((long) s, (long) t)
+                    : weightOf((long) t, (long) s);
+            return consumer.accept(
+                    s,
+                    t,
+                    RawValues.combineIntInt(direction, s, t),
+                    weight);
+        };
+        forEachRelationship(nodeId, direction, nonWeighted);
+    }
+
+    @Override
     public int degree(
             final long node,
             final Direction direction) {
@@ -196,6 +241,20 @@ public class HugeGraphImpl implements HugeGraph {
     }
 
     @Override
+    public void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
+        final long node = (long) nodeId;
+        ByteArray.DeltaCursor cursor = cursor(
+                node,
+                inAdjacency.newCursor(),
+                inOffsets,
+                inAdjacency);
+        consumeNodes(node, cursor, (s, t) -> consumer.accept(
+                (int) s,
+                (int) t,
+                RawValues.combineIntInt((int) t, (int) s)));
+    }
+
+    @Override
     public void forEachOutgoing(
             final long node,
             final HugeRelationshipConsumer consumer) {
@@ -205,6 +264,20 @@ public class HugeGraphImpl implements HugeGraph {
                 outOffsets,
                 outAdjacency);
         consumeNodes(node, cursor, consumer);
+    }
+
+    @Override
+    public void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
+        final long node = (long) nodeId;
+        ByteArray.DeltaCursor cursor = cursor(
+                node,
+                outAdjacency.newCursor(),
+                outOffsets,
+                outAdjacency);
+        consumeNodes(node, cursor, (s, t) -> consumer.accept(
+                (int) s,
+                (int) t,
+                RawValues.combineIntInt((int) s, (int) t)));
     }
 
     @Override
