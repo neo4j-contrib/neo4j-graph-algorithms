@@ -66,6 +66,8 @@ public class HugeGraphImpl implements HugeGraph {
     private LongArray inOffsets;
     private LongArray outOffsets;
     private ByteArray.DeltaCursor empty;
+    private ByteArray.DeltaCursor inCache;
+    private ByteArray.DeltaCursor outCache;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
@@ -82,11 +84,9 @@ public class HugeGraphImpl implements HugeGraph {
         this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
-        empty = inAdjacency != null
-                ? inAdjacency.newCursor()
-                : outAdjacency != null
-                ? outAdjacency.newCursor()
-                : null;
+        inCache = newCursor(this.inAdjacency);
+        outCache = newCursor(this.outAdjacency);
+        empty = inCache == null ? newCursor(this.outAdjacency) : newCursor(this.inAdjacency);
     }
 
     @Override
@@ -189,10 +189,10 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeRelationshipConsumer consumer) {
         ByteArray.DeltaCursor cursor = cursor(
                 node,
+                inCache,
                 inOffsets,
                 inAdjacency);
         consumeNodes(node, cursor, consumer);
-        inAdjacency.returnCursor(cursor);
     }
 
     @Override
@@ -201,15 +201,32 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeRelationshipConsumer consumer) {
         ByteArray.DeltaCursor cursor = cursor(
                 node,
+                outCache,
                 outOffsets,
                 outAdjacency);
         consumeNodes(node, cursor, consumer);
-        outAdjacency.returnCursor(cursor);
+    }
+
+    @Override
+    public HugeGraph concurrentCopy() {
+        return new HugeGraphImpl(
+                tracker,
+                idMapping,
+                weights,
+                inAdjacency,
+                outAdjacency,
+                inOffsets,
+                outOffsets
+        );
+    }
+
+    private ByteArray.DeltaCursor newCursor(final ByteArray adjacency) {
+        return adjacency != null ? adjacency.newCursor() : null;
     }
 
     private int degree(long node, LongArray offsets, ByteArray array) {
         long offset = offsets.get(node);
-        if (offset == 0) {
+        if (offset == 0L) {
             return 0;
         }
         return array.getInt(offset);
@@ -217,13 +234,14 @@ public class HugeGraphImpl implements HugeGraph {
 
     private ByteArray.DeltaCursor cursor(
             long node,
+            ByteArray.DeltaCursor reuse,
             LongArray offsets,
             ByteArray array) {
         final long offset = offsets.get(node);
-        if (offset == 0) {
+        if (offset == 0L) {
             return empty;
         }
-        return array.deltaCursor(offset);
+        return array.deltaCursor(reuse, offset);
     }
 
     private void consumeNodes(
@@ -252,6 +270,8 @@ public class HugeGraphImpl implements HugeGraph {
         }
         tracker.remove(weights.release());
         empty = null;
+        inCache = null;
+        outCache = null;
         weights = null;
     }
 }

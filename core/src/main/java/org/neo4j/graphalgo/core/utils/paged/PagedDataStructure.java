@@ -85,7 +85,7 @@ public class PagedDataStructure<T> {
         return PageUtil.numPagesFor(capacity, pageShift, pageMask);
     }
 
-    private long capacityFor(int numPages) {
+    final long capacityFor(int numPages) {
         return ((long) numPages) << pageShift;
     }
 

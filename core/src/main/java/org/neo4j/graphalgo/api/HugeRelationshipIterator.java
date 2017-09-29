@@ -23,4 +23,12 @@ public interface HugeRelationshipIterator {
             HugeRelationshipConsumer consumer) {
         forEachRelationship(nodeId, Direction.OUTGOING, consumer);
     }
+
+    /**
+     * Returns a copy of this iterator that reuses new cursors internally,
+     * so that iterations happen independent from other iterations.
+     */
+    default HugeRelationshipIterator concurrentCopy() {
+        return this;
+    }
 }
