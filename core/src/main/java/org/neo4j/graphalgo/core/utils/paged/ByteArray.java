@@ -93,19 +93,20 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
      * {@inheritDoc}
      */
     BulkAdder newBulkAdder() {
-        return new BulkAdder();
+        return new BulkAdder(pages, pageSize, pageShift, pageMask);
     }
 
     /**
      * {@inheritDoc}
      */
     public DeltaCursor newCursor() {
-        return new DeltaCursor();
+        return new DeltaCursor(pages, pageSize, pageShift, pageMask);
     }
 
     private long allocate(long numberOfElements, BulkAdder into) {
         long intoIndex = allocIdx.getAndAdd(numberOfElements);
         grow(intoIndex + numberOfElements);
+        into.grow(pages);
         into.init(intoIndex, numberOfElements);
         return intoIndex;
     }
@@ -125,7 +126,13 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         return reuse.init(offset);
     }
 
-    private abstract class BaseCursor {
+    private static abstract class BaseCursor {
+
+        private byte[][] pages;
+        private int numPages;
+        private final int pageSize;
+        private final int pageShift;
+        private final int pageMask;
 
         public byte[] array;
         public int offset;
@@ -138,31 +145,51 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private int toPage;
         private int currentPage;
 
+        BaseCursor(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            this.pages = pages;
+            this.pageSize = pageSize;
+            this.pageShift = pageShift;
+            this.pageMask = pageMask;
+            this.numPages = pages.length;
+        }
+
+        void grow(byte[][] pages) {
+            this.pages = pages;
+            this.numPages = pages.length;
+        }
+
         void init(long fromIndex, long length) {
             array = null;
             from = fromIndex;
             to = fromIndex + length;
             size = length;
-            fromPage = pageIndex(fromIndex);
-            toPage = pageIndex(to - 1L);
+            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
+            toPage = PageUtil.pageIndex(to - 1L, pageShift);
             currentPage = fromPage - 1;
         }
 
         void initAll(long fromIndex) {
             array = null;
             from = fromIndex;
-            fromPage = pageIndex(fromIndex);
-            toPage = pages.length - 1;
-            to = capacityFor(pages.length);
+            to = PageUtil.capacityFor(numPages, pageShift);
             size = to - fromIndex;
+            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
+            toPage = numPages - 1;
             currentPage = fromPage - 1;
         }
 
         public final boolean next() {
             int current = ++currentPage;
+            if (current >= pages.length) {
+                System.out.println("current = " + current);
+            }
             if (current == fromPage) {
                 array = pages[current];
-                offset = indexInPage(from);
+                offset = PageUtil.indexInPage(from, pageMask);
                 int length = (int) Math.min((long) (pageSize - offset), size);
                 limit = offset + length;
                 return true;
@@ -176,7 +203,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             if (current == toPage) {
                 array = pages[current];
                 offset = 0;
-                int length = indexInPage(to - 1L) + 1;
+                int length = PageUtil.indexInPage(to - 1L, pageMask) + 1;
                 limit = offset + length;
                 return true;
             }
@@ -227,7 +254,15 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         }
     }
 
-    public final class BulkAdder extends BaseCursor {
+    public static final class BulkAdder extends BaseCursor {
+
+        private BulkAdder(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            super(pages, pageSize, pageShift, pageMask);
+        }
 
         @Override
         public final void init(long fromIndex, long length) {
@@ -353,10 +388,18 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         }
     }
 
-    public final class DeltaCursor extends BaseCursor {
+    public static final class DeltaCursor extends BaseCursor {
         private int currentTarget;
         private int maxTargets;
         private long delta;
+
+        private DeltaCursor(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            super(pages, pageSize, pageShift, pageMask);
+        }
 
         DeltaCursor init(long fromIndex) {
             super.initAll(fromIndex);

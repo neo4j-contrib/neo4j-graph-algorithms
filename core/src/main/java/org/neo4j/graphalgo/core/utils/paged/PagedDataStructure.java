@@ -9,8 +9,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class PagedDataStructure<T> {
 
     final int pageSize;
-    private final int pageShift;
-    private final int pageMask;
+    final int pageShift;
+    final int pageMask;
     private final long maxSupportedSize;
 
     volatile T[] pages;
