@@ -59,7 +59,7 @@ public class LouvainProc {
             graph = load(configuration);
         }
 
-        builder.withNodeCount(graph.nodeCount());
+        builder.withNodeCount(graph.hugeNodeCount());
 
         final Louvain louvain = new Louvain(
                 graph, graph, graph,

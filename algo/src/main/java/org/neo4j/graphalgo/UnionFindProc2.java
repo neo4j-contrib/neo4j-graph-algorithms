@@ -74,7 +74,7 @@ public class UnionFindProc2 {
         }
 
         return Stream.of(builder
-                .withNodeCount(graph.nodeCount())
+                .withNodeCount(graph.hugeNodeCount())
                 .withSetCount(struct.getSetCount())
                 .build());
     }

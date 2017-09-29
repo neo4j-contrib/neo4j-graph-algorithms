@@ -131,7 +131,7 @@ public class ShortestPathDeltaSteppingProc {
         }
 
         return Stream.of(builder
-                .withNodeCount(graph.nodeCount())
+                .withNodeCount(graph.hugeNodeCount())
                 .build());
     }
 }

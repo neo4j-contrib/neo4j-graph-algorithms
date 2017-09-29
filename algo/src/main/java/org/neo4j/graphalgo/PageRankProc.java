@@ -124,7 +124,7 @@ public final class PageRankProc {
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
             Graph graph = graphLoader.load(graphFactory);
-            statsBuilder.withNodes(graph.nodeCount());
+            statsBuilder.withNodes(graph.hugeNodeCount());
             return graph;
         }
     }
