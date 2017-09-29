@@ -82,13 +82,9 @@ public class BufferedAllRelationshipIterator implements AllRelationshipIterator 
         @Override
         protected BufferedAllRelationshipIterator buildT() {
             final Builder builder = BufferedAllRelationshipIterator.builder();
-            withinTransaction(readOp -> {
-                readOp.relationshipCursorGetAll().forAll(relationshipItem -> {
-                    final long nodeId = relationshipItem.startNode();
-                    builder.add(idMapping.toMappedNodeId(nodeId),
-                            idMapping.toMappedNodeId(relationshipItem.otherNode(nodeId)));
-                });
-            });
+            withinTransaction(readOp ->
+                    SingleRunAllRelationIterator.forAll(readOp, (relationshipId, typeId, startNodeId, endNodeId) ->
+                            builder.add(idMapping.toMappedNodeId(startNodeId), idMapping.toMappedNodeId(endNodeId))));
             return builder.build();
         }
     }

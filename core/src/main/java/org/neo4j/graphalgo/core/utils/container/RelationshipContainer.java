@@ -2,11 +2,14 @@ package org.neo4j.graphalgo.core.utils.container;
 
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.Importer;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.helpers.Exceptions;
+import org.neo4j.kernel.api.ReadOperations;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.Direction;
-import org.neo4j.storageengine.api.NodeItem;
 
 /**
  * Preallocated Container for a single relationship type.
@@ -121,8 +124,8 @@ public class RelationshipContainer {
         /**
          * set the direction to use
          */
-        public RCImporter withDirection(org.neo4j.graphdb.Direction direction) {
-            this.direction = Directions.mediate(direction);
+        public RCImporter withDirection(Direction direction) {
+            this.direction = direction;
             return this;
         }
 
@@ -138,26 +141,57 @@ public class RelationshipContainer {
                 throw new IllegalArgumentException("No Direction given");
             }
             final Builder builder = RelationshipContainer.builder(nodeCount);
-            forEachNodeItem(nodeItem -> importNode(builder, nodeItem));
+            final RelVisitor visitor = new RelVisitor(builder, idMapping);
+            forEachNodeItem((read, nodeId) -> {
+                try {
+                    importNode(builder, nodeId, read, visitor);
+                } catch (EntityNotFoundException e) {
+                    throw Exceptions.launderedException(e);
+                }
+            });
             return builder.build();
         }
 
-        private void importNode(Builder builder, NodeItem nodeItem) {
-            final long neo4jId = nodeItem.id();
+        private void importNode(Builder builder, long neo4jId, ReadOperations read, RelVisitor visitor)
+        throws EntityNotFoundException {
             final int nodeId = idMapping.toMappedNodeId(neo4jId);
+            final RelationshipIterator rels;
             if (null == relationId) {
-                builder.aim(nodeId, nodeItem.degree(direction));
+                builder.aim(nodeId, read.nodeGetDegree(neo4jId, direction));
+                rels = read.nodeGetRelationships(neo4jId, direction);
             } else {
-                builder.aim(nodeId, nodeItem.degree(direction, relationId[0]));
+                builder.aim(nodeId, read.nodeGetDegree(neo4jId, direction, relationId[0]));
+                rels = read.nodeGetRelationships(neo4jId, direction, relationId);
             }
-            nodeItem.relationships(direction, relationId).forAll(ri -> {
-                builder.add(idMapping.toMappedNodeId(ri.otherNode(neo4jId)));
-            });
+
+            visitor.neoId = neo4jId;
+            while (rels.hasNext()) {
+                final long relId = rels.next();
+                rels.relationshipVisit(relId, visitor);
+            }
         }
 
         @Override
         protected RCImporter me() {
             return this;
+        }
+    }
+
+    private static final class RelVisitor implements RelationshipVisitor<RuntimeException> {
+        private final Builder builder;
+        private final IdMapping idMapping;
+
+        private long neoId;
+
+        private RelVisitor(Builder builder, IdMapping idMapping) {
+            this.builder = builder;
+            this.idMapping = idMapping;
+        }
+
+        @Override
+        public void visit(long relationshipId, int typeId, long startNodeId, long endNodeId) throws RuntimeException {
+            long otherId = startNodeId == neoId ? endNodeId : startNodeId;
+            builder.add(idMapping.toMappedNodeId(otherId));
         }
     }
 }

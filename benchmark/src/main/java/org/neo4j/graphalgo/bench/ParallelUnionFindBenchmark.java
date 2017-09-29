@@ -105,8 +105,9 @@ public class ParallelUnionFindBenchmark {
         final int rIdx;
         try (Transaction tx = db.beginTx();
              Statement stm = bridge.get()) {
-            DataWriteOperations op = stm.dataWriteOperations();
-            rIdx = op.relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
+            rIdx = stm
+                    .tokenWriteOperations()
+                    .relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
             tx.success();
         }
 

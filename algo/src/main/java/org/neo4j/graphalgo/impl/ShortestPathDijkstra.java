@@ -8,10 +8,7 @@ import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
-import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationKernelException;
+import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -213,7 +210,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                     try {
                         writeOp.nodeSetProperty(idMapping.toOriginalNodeId(node),
                                 DefinedProperty.numberProperty(propertyId, distance++));
-                    } catch (EntityNotFoundException | ConstraintValidationKernelException | InvalidTransactionTypeKernelException | AutoIndexingKernelException e) {
+                    } catch (KernelException e) {
                         throw new RuntimeException(e);
                     }
                 }

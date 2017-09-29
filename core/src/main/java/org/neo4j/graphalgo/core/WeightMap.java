@@ -13,17 +13,27 @@ public final class WeightMap implements WeightMapping {
     private final int capacity;
     private LongDoubleMap weights;
     private final double defaultValue;
+    private final int propertyId;
 
-    public WeightMap(final int capacity, double defaultValue) {
+    public WeightMap(
+            int capacity,
+            double defaultValue,
+            int propertyId) {
         this.capacity = capacity;
         this.defaultValue = defaultValue;
-        this.weights = new LongDoubleHashMap(capacity);
+        this.weights = new LongDoubleHashMap();
+        this.propertyId = propertyId;
     }
 
-    public WeightMap(final int capacity, LongDoubleMap weights, double defaultValue) {
+    public WeightMap(
+            int capacity,
+            LongDoubleMap weights,
+            double defaultValue,
+            int propertyId) {
         this.capacity = capacity;
         this.weights = weights;
         this.defaultValue = defaultValue;
+        this.propertyId = propertyId;
     }
 
     /**
@@ -62,8 +72,12 @@ public final class WeightMap implements WeightMapping {
     /**
      * return primitive map for the weights
      */
-    LongDoubleMap weights() {
+    public LongDoubleMap weights() {
         return weights;
+    }
+
+    public int propertyId() {
+        return propertyId;
     }
 
     @Override

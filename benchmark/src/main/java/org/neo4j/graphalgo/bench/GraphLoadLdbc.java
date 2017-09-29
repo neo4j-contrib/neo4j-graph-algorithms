@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class GraphLoadLdbc {
 
-    @Param({"LIGHT", "HEAVY", "HUGE", "VIEW"})
+    @Param({"LIGHT", "HEAVY", "HUGE"})
     GraphImpl graph;
 
     @Param({"true", "false"})

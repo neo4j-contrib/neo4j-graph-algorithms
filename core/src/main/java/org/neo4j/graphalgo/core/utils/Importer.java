@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -13,7 +14,9 @@ import org.neo4j.storageengine.api.NodeItem;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.ObjLongConsumer;
 
 /**
  * The class intends to ease the import of data sources
@@ -252,14 +255,18 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      *
      * @param consumer nodeItem consumer
      */
-    protected void forEachNodeItem(Consumer<NodeItem> consumer) {
+    protected void forEachNodeItem(ObjLongConsumer<ReadOperations> consumer) {
         try (Transaction tx = api.beginTx();
              Statement statement = bridge.get()) {
             final ReadOperations readOp = statement.readOperations();
+            final PrimitiveLongIterator nodes;
             if (labelId == ReadOperations.ANY_LABEL) {
-                readOp.nodeCursorGetAll().forAll(consumer);
+                nodes = readOp.nodesGetAll();
             } else {
-                readOp.nodeCursorGetForLabel(labelId).forAll(consumer);
+                nodes = readOp.nodesGetForLabel(labelId);
+            }
+            while (nodes.hasNext()) {
+                consumer.accept(readOp, nodes.next());
             }
             tx.success();
         }
