@@ -57,4 +57,13 @@ public class LightGraphSingleThreaded extends LightGraph {
         consumeNodes(node, cursor, RawValues.OUTGOING, consumer);
     }
 
+    @Override
+    public void release() {
+        inAdjacency = null;
+        outAdjacency = null;
+        weightMapping = null;
+        inOffsets = null;
+        outOffsets = null;
+    }
+
 }

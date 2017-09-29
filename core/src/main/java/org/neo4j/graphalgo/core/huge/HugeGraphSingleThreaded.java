@@ -51,15 +51,23 @@ public class HugeGraphSingleThreaded extends HugeGraphImpl {
             final long node,
             final HugeRelationshipConsumer consumer) {
         final long offset = outOffsets.get(node);
+        if (offset == 0) {
+            return;
+        }
         reusedOutCursor.init(offset);
         consumeNodes(node, reusedOutCursor, consumer);
     }
 
     @Override
     public void release() {
-        super.release();
-        inAdjacency.returnCursor(reusedInCursor);
-        outAdjacency.returnCursor(reusedOutCursor);
+        this.views = null;
+        this.inAdjacency = null;
+        this.inOffsets = null;
+        this.outAdjacency = null;
+        this.outOffsets = null;
+        this.weights = null;
+        this.empty = null;
+        this.weights = null;
     }
 
 }

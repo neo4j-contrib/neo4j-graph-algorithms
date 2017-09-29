@@ -7,12 +7,15 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.huge.HugeGraphSingleThreaded;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.IntPredicate;
 
 /**
@@ -26,6 +29,8 @@ public class LightGraph implements Graph {
     protected IntArray outAdjacency;
     protected long[] inOffsets;
     protected long[] outOffsets;
+
+    protected List<LightGraphSingleThreaded> views = new LinkedList<>();
 
     LightGraph(
             final IdMap idMapping,
@@ -44,7 +49,9 @@ public class LightGraph implements Graph {
 
     @Override
     public Graph singleThreaded() {
-        return new LightGraphSingleThreaded(this, idMapping, weightMapping, inAdjacency, outAdjacency, inOffsets, outOffsets);
+        LightGraphSingleThreaded view = new LightGraphSingleThreaded(this, idMapping, weightMapping, inAdjacency, outAdjacency, inOffsets, outOffsets);
+        views.add(view);
+        return view;
     }
 
     @Override
@@ -231,6 +238,8 @@ public class LightGraph implements Graph {
 
     @Override
     public void release() {
+        views.forEach(v -> v.release());
+        views = null;
         if (inAdjacency != null) {
             inAdjacency.release();
             inAdjacency = null;
@@ -240,7 +249,6 @@ public class LightGraph implements Graph {
             outAdjacency.release();
             outAdjacency = null;
         }
-
         weightMapping = null;
         inOffsets = null;
         outOffsets = null;

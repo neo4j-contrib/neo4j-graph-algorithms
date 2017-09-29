@@ -10,6 +10,8 @@ import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.LongPredicate;
 
 /**
@@ -66,6 +68,8 @@ public class HugeGraphImpl implements HugeGraph {
     protected LongArray outOffsets;
     protected ByteArray.DeltaCursor empty;
 
+    protected List<HugeGraphSingleThreaded> views = new LinkedList<>();
+
     HugeGraphImpl(
             final AllocationTracker tracker,
             final HugeIdMap idMapping,
@@ -90,7 +94,9 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public HugeGraphImpl hugeSingleThreaded() {
-        return new HugeGraphSingleThreaded(this, tracker, idMapping, weights, inAdjacency, outAdjacency, inOffsets, outOffsets);
+        HugeGraphSingleThreaded view = new HugeGraphSingleThreaded(this, tracker, idMapping, weights, inAdjacency, outAdjacency, inOffsets, outOffsets);
+        views.add(view);
+        return view;
     }
 
     public HugeGraphImpl singleThreaded() {
@@ -246,20 +252,30 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public void release() {
-        if (inAdjacency != null) {
+        this.views.forEach(v -> v.release());
+        this.views = null;
+        if (this.inAdjacency != null) {
             tracker.remove(inAdjacency.release());
+            this.inAdjacency = null;
+        }
+        if (this.inOffsets != null) {
             tracker.remove(inOffsets.release());
-            inAdjacency = null;
-            inOffsets = null;
+            this.inOffsets = null;
         }
-        if (outAdjacency != null) {
+        if (this.outAdjacency != null) {
             tracker.remove(outAdjacency.release());
-            tracker.remove(outOffsets.release());
-            outAdjacency = null;
-            outOffsets = null;
+            this.outAdjacency = null;
         }
-        tracker.remove(weights.release());
-        empty = null;
-        weights = null;
+        if (this.outOffsets != null) {
+            tracker.remove(outOffsets.release());
+            this.outOffsets = null;
+        }
+        if (this.weights != null) {
+            tracker.remove(weights.release());
+            this.weights = null;
+        }
+        this.empty = null;
+        this.weights = null;
     }
+
 }
