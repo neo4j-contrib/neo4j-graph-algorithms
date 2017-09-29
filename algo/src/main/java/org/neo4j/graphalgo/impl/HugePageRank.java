@@ -540,7 +540,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 long startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
-            this.relationshipIterator = relationshipIterator;
+            this.relationshipIterator = relationshipIterator.concurrentCopy();
             this.degrees = degrees;
             this.tracker = tracker;
             this.startNode = startNode;

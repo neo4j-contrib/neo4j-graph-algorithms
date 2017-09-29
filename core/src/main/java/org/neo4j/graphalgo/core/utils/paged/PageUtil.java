@@ -22,6 +22,10 @@ public final class PageUtil {
         return (int) numPages;
     }
 
+    static long capacityFor(int numPages, int pageShift) {
+        return ((long) numPages) << pageShift;
+    }
+
     public static int pageIndex(long index, int pageShift) {
         return (int) (index >>> pageShift);
     }

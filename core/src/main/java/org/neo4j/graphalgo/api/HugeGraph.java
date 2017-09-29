@@ -64,61 +64,6 @@ public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator,
         return new LongToIntIterator(hugeNodeIterator());
     }
 
-    @Override
-    default void forEachRelationship(
-            int nodeId,
-            Direction direction,
-            RelationshipConsumer consumer) {
-        forEachRelationship((long) nodeId, direction,
-                (s, t) -> consumer.accept(
-                        (int) s,
-                        (int) t,
-                        RawValues.combineIntInt(
-                                direction,
-                                (int) s,
-                                (int) t)));
-    }
-
-    @Override
-    default void forEachRelationship(
-            int nodeId,
-            Direction direction,
-            WeightedRelationshipConsumer consumer) {
-        forEachRelationship((long) nodeId, direction,
-                (s, t) -> {
-                    double weight = direction == Direction.OUTGOING
-                            ? HugeGraph.this.weightOf(s, t)
-                            : HugeGraph.this.weightOf(t, s);
-                    return consumer.accept(
-                            (int) s,
-                            (int) t,
-                            RawValues.combineIntInt(
-                                    direction,
-                                    (int) s,
-                                    (int) t
-                            ),
-                            weight);
-                });
-    }
-
-    @Override
-    default void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
-        forEachOutgoing(
-                (long) nodeId,
-                (s, t) -> consumer.accept((int) s,
-                        (int) t,
-                        RawValues.combineIntInt((int) s, (int) t)));
-    }
-
-    @Override
-    default void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
-        forEachIncoming(
-                (long) nodeId,
-                (s, t) -> consumer.accept((int) s,
-                        (int) t,
-                        RawValues.combineIntInt((int) t, (int) s)));
-    }
-
     final class LongToIntIterator implements PrimitiveIntIterator {
         private final PrimitiveLongIterator iter;
 

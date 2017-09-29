@@ -5,6 +5,9 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
@@ -66,6 +69,8 @@ public class HugeGraphImpl implements HugeGraph {
     private LongArray inOffsets;
     private LongArray outOffsets;
     private ByteArray.DeltaCursor empty;
+    private ByteArray.DeltaCursor inCache;
+    private ByteArray.DeltaCursor outCache;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
@@ -82,11 +87,9 @@ public class HugeGraphImpl implements HugeGraph {
         this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
         this.outOffsets = outOffsets;
-        empty = inAdjacency != null
-                ? inAdjacency.newCursor()
-                : outAdjacency != null
-                ? outAdjacency.newCursor()
-                : null;
+        inCache = newCursor(this.inAdjacency);
+        outCache = newCursor(this.outAdjacency);
+        empty = inCache == null ? newCursor(this.outAdjacency) : newCursor(this.inAdjacency);
     }
 
     @Override
@@ -147,6 +150,48 @@ public class HugeGraphImpl implements HugeGraph {
     }
 
     @Override
+    public void forEachRelationship(
+            int nodeId,
+            Direction direction,
+            RelationshipConsumer consumer) {
+        switch (direction) {
+            case INCOMING:
+                forEachIncoming(nodeId, consumer);
+                return;
+
+            case OUTGOING:
+                forEachOutgoing(nodeId, consumer);
+                return;
+
+            case BOTH:
+                forEachIncoming(nodeId, consumer);
+                forEachOutgoing(nodeId, consumer);
+                return;
+
+            default:
+                throw new IllegalArgumentException(direction + "");
+        }
+    }
+
+    @Override
+    public void forEachRelationship(
+            int nodeId,
+            Direction direction,
+            WeightedRelationshipConsumer consumer) {
+        RelationshipConsumer nonWeighted = (s, t, relId) -> {
+            double weight = direction == Direction.OUTGOING
+                    ? weightOf((long) s, (long) t)
+                    : weightOf((long) t, (long) s);
+            return consumer.accept(
+                    s,
+                    t,
+                    RawValues.combineIntInt(direction, s, t),
+                    weight);
+        };
+        forEachRelationship(nodeId, direction, nonWeighted);
+    }
+
+    @Override
     public int degree(
             final long node,
             final Direction direction) {
@@ -189,10 +234,24 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeRelationshipConsumer consumer) {
         ByteArray.DeltaCursor cursor = cursor(
                 node,
+                inCache,
                 inOffsets,
                 inAdjacency);
         consumeNodes(node, cursor, consumer);
-        inAdjacency.returnCursor(cursor);
+    }
+
+    @Override
+    public void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
+        final long node = (long) nodeId;
+        ByteArray.DeltaCursor cursor = cursor(
+                node,
+                inAdjacency.newCursor(),
+                inOffsets,
+                inAdjacency);
+        consumeNodes(node, cursor, (s, t) -> consumer.accept(
+                (int) s,
+                (int) t,
+                RawValues.combineIntInt((int) t, (int) s)));
     }
 
     @Override
@@ -201,15 +260,46 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeRelationshipConsumer consumer) {
         ByteArray.DeltaCursor cursor = cursor(
                 node,
+                outCache,
                 outOffsets,
                 outAdjacency);
         consumeNodes(node, cursor, consumer);
-        outAdjacency.returnCursor(cursor);
+    }
+
+    @Override
+    public void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
+        final long node = (long) nodeId;
+        ByteArray.DeltaCursor cursor = cursor(
+                node,
+                outAdjacency.newCursor(),
+                outOffsets,
+                outAdjacency);
+        consumeNodes(node, cursor, (s, t) -> consumer.accept(
+                (int) s,
+                (int) t,
+                RawValues.combineIntInt((int) s, (int) t)));
+    }
+
+    @Override
+    public HugeGraph concurrentCopy() {
+        return new HugeGraphImpl(
+                tracker,
+                idMapping,
+                weights,
+                inAdjacency,
+                outAdjacency,
+                inOffsets,
+                outOffsets
+        );
+    }
+
+    private ByteArray.DeltaCursor newCursor(final ByteArray adjacency) {
+        return adjacency != null ? adjacency.newCursor() : null;
     }
 
     private int degree(long node, LongArray offsets, ByteArray array) {
         long offset = offsets.get(node);
-        if (offset == 0) {
+        if (offset == 0L) {
             return 0;
         }
         return array.getInt(offset);
@@ -217,13 +307,14 @@ public class HugeGraphImpl implements HugeGraph {
 
     private ByteArray.DeltaCursor cursor(
             long node,
+            ByteArray.DeltaCursor reuse,
             LongArray offsets,
             ByteArray array) {
         final long offset = offsets.get(node);
-        if (offset == 0) {
+        if (offset == 0L) {
             return empty;
         }
-        return array.deltaCursor(offset);
+        return array.deltaCursor(reuse, offset);
     }
 
     private void consumeNodes(
@@ -252,6 +343,8 @@ public class HugeGraphImpl implements HugeGraph {
         }
         tracker.remove(weights.release());
         empty = null;
+        inCache = null;
+        outCache = null;
         weights = null;
     }
 }

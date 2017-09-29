@@ -1,14 +1,11 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
-import org.neo4j.collection.pool.MarshlandPool;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 
 public final class ByteArray extends PagedDataStructure<byte[]> {
 
     private final AtomicLong allocIdx = new PaddedAtomicLong();
-    private final MarshlandPool<DeltaCursor> cursors = new MarshlandPool<>(this::newCursor);
 
     private static final PageAllocator.Factory<byte[]> ALLOCATOR_FACTORY =
             PageAllocator.ofArray(byte[].class);
@@ -96,19 +93,20 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
      * {@inheritDoc}
      */
     BulkAdder newBulkAdder() {
-        return new BulkAdder();
+        return new BulkAdder(pages, pageSize, pageShift, pageMask);
     }
 
     /**
      * {@inheritDoc}
      */
     public DeltaCursor newCursor() {
-        return new DeltaCursor();
+        return new DeltaCursor(pages, pageSize, pageShift, pageMask);
     }
 
     private long allocate(long numberOfElements, BulkAdder into) {
         long intoIndex = allocIdx.getAndAdd(numberOfElements);
         grow(intoIndex + numberOfElements);
+        into.grow(pages);
         into.init(intoIndex, numberOfElements);
         return intoIndex;
     }
@@ -121,20 +119,20 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
     }
 
     public final long release() {
-        cursors.close();
         return super.release();
     }
 
-    public DeltaCursor deltaCursor(long offset) {
-        DeltaCursor cursor = cursors.acquire();
-        return cursor.init(offset);
+    public DeltaCursor deltaCursor(DeltaCursor reuse, long offset) {
+        return reuse.init(offset);
     }
 
-    public void returnCursor(DeltaCursor cursor) {
-        cursors.release(cursor);
-    }
+    private static abstract class BaseCursor {
 
-    private abstract class BaseCursor {
+        private byte[][] pages;
+        private int numPages;
+        private final int pageSize;
+        private final int pageShift;
+        private final int pageMask;
 
         public byte[] array;
         public int offset;
@@ -147,22 +145,52 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         private int toPage;
         private int currentPage;
 
+        BaseCursor(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            this.pages = pages;
+            this.pageSize = pageSize;
+            this.pageShift = pageShift;
+            this.pageMask = pageMask;
+            this.numPages = pages.length;
+        }
+
+        void grow(byte[][] pages) {
+            this.pages = pages;
+            this.numPages = pages.length;
+        }
+
         void init(long fromIndex, long length) {
             array = null;
             from = fromIndex;
             to = fromIndex + length;
             size = length;
-            fromPage = pageIndex(fromIndex);
-            toPage = pageIndex(to - 1);
+            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
+            toPage = PageUtil.pageIndex(to - 1L, pageShift);
+            currentPage = fromPage - 1;
+        }
+
+        void initAll(long fromIndex) {
+            array = null;
+            from = fromIndex;
+            to = PageUtil.capacityFor(numPages, pageShift);
+            size = to - fromIndex;
+            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
+            toPage = numPages - 1;
             currentPage = fromPage - 1;
         }
 
         public final boolean next() {
             int current = ++currentPage;
+            if (current >= pages.length) {
+                System.out.println("current = " + current);
+            }
             if (current == fromPage) {
                 array = pages[current];
-                offset = indexInPage(from);
-                int length = (int) Math.min(pageSize - offset, size);
+                offset = PageUtil.indexInPage(from, pageMask);
+                int length = (int) Math.min((long) (pageSize - offset), size);
                 limit = offset + length;
                 return true;
             }
@@ -175,7 +203,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             if (current == toPage) {
                 array = pages[current];
                 offset = 0;
-                int length = indexInPage(to - 1) + 1;
+                int length = PageUtil.indexInPage(to - 1L, pageMask) + 1;
                 limit = offset + length;
                 return true;
             }
@@ -191,7 +219,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
     }
 
     public static final class LocalAllocator {
-        private static final int PREFETCH_PAGES = 16;
+        private static final long PREFETCH_PAGES = 16L;
 
         private final ByteArray array;
         private final long prefetchSize;
@@ -226,7 +254,15 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         }
     }
 
-    public final class BulkAdder extends BaseCursor {
+    public static final class BulkAdder extends BaseCursor {
+
+        private BulkAdder(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            super(pages, pageSize, pageShift, pageMask);
+        }
 
         @Override
         public final void init(long fromIndex, long length) {
@@ -315,7 +351,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
 
             while ((i & ~0x7FL) != 0L) {
                 array[offset++] = (byte) ((i & 0x7FL) | 0x80L);
-                i >>>= 7;
+                i >>>= 7L;
             }
             array[offset++] = (byte) i;
 
@@ -327,7 +363,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             int limit = this.limit;
             byte[] array = this.array;
 
-            while ((i & ~0x7FL) != 0) {
+            while ((i & ~0x7FL) != 0L) {
                 if (offset >= limit) {
                     if (!next()) {
                         return;
@@ -337,7 +373,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
                     limit = this.limit;
                 } else {
                     array[offset++] = (byte) ((i & 0x7FL) | 0x80L);
-                    i >>>= 7;
+                    i >>>= 7L;
                 }
             }
 
@@ -352,17 +388,25 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         }
     }
 
-    public final class DeltaCursor extends BaseCursor {
+    public static final class DeltaCursor extends BaseCursor {
         private int currentTarget;
         private int maxTargets;
         private long delta;
 
+        private DeltaCursor(
+                byte[][] pages,
+                int pageSize,
+                int pageShift,
+                int pageMask) {
+            super(pages, pageSize, pageShift, pageMask);
+        }
+
         DeltaCursor init(long fromIndex) {
-            super.init(fromIndex, capacity());
+            super.initAll(fromIndex);
             next();
 
             currentTarget = 0;
-            delta = 0;
+            delta = 0L;
             if (limit - offset >= 4) {
                 initLength(array, offset);
             } else {
@@ -441,10 +485,10 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
 
         private long getVLong(byte[] page, int offset) {
             byte b = page[offset++];
-            long i = b & 0x7F;
-            for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+            long i = (long) ((int) b & 0x7F);
+            for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
                 b = page[offset++];
-                i |= (b & 0x7FL) << shift;
+                i |= ((long) b & 0x7FL) << shift;
             }
             this.offset = offset;
             return i + delta;
@@ -463,17 +507,17 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             int offset = this.offset;
 
             byte b = array[offset++];
-            long i = b & 0x7F;
-            for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+            long i = (long) ((int) b & 0x7F);
+            for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
                 if (--diff == 0) {
                     if (!next()) {
-                        return -1;
+                        return -1L;
                     }
                     array = this.array;
                     offset = this.offset;
                 }
                 b = array[offset++];
-                i |= (b & 0x7FL) << shift;
+                i |= ((long) b & 0x7FL) << shift;
             }
             this.offset = offset;
             return i + delta;
