@@ -7,14 +7,14 @@ import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 
-public class LightGraphSingleThreaded extends LightGraph {
+public class LightGraphConcurrentCopy extends LightGraph {
 
     private LightGraph underlying;
 
     private IntArray.Cursor reusedInCursor;
     private IntArray.Cursor reusedOutCursor;
 
-    LightGraphSingleThreaded(
+    LightGraphConcurrentCopy(
             final LightGraph underlying,
             final IdMap idMapping,
             final WeightMapping weightMapping,

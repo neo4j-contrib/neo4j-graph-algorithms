@@ -7,7 +7,6 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.huge.HugeGraphSingleThreaded;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
@@ -30,7 +29,7 @@ public class LightGraph implements Graph {
     protected long[] inOffsets;
     protected long[] outOffsets;
 
-    protected List<LightGraphSingleThreaded> views = new LinkedList<>();
+    protected List<LightGraphConcurrentCopy> views = new LinkedList<>();
 
     LightGraph(
             final IdMap idMapping,
@@ -49,7 +48,7 @@ public class LightGraph implements Graph {
 
     @Override
     public Graph singleThreaded() {
-        LightGraphSingleThreaded view = new LightGraphSingleThreaded(this, idMapping, weightMapping, inAdjacency, outAdjacency, inOffsets, outOffsets);
+        LightGraphConcurrentCopy view = new LightGraphConcurrentCopy(this, idMapping, weightMapping, inAdjacency, outAdjacency, inOffsets, outOffsets);
         views.add(view);
         return view;
     }
