@@ -106,7 +106,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() throws Exception {
-        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'cluster', concurrency:2}) " +
+        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'community', concurrency:2}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -143,7 +143,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testWithLabelRel() throws Exception {
-        final String cypher = "CALL algo.clustering.louvain('Node', 'TYPE', {write:true, writeProperty:'cluster', concurrency:2}) " +
+        final String cypher = "CALL algo.clustering.louvain('Node', 'TYPE', {write:true, writeProperty:'community', concurrency:2}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {

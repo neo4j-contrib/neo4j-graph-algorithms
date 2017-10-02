@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 public class LouvainProc {
 
     public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
-    public static final String DEFAULT_CLUSTER_PROPERTY = "cluster";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "community";
     public static final int DEFAULT_ITERATIONS = 10;
 
     @Context
@@ -57,7 +57,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.clustering.louvain", mode = Mode.WRITE)
     @Description("CALL algo.clustering.louvain(label:String, relationship:String, " +
-            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'partition', concurrency:4}) " +
+            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) " +
             "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
     public Stream<LouvainResult> louvain(
             @Name(value = "label", defaultValue = "") String label,
