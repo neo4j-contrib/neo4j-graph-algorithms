@@ -84,7 +84,8 @@ Results show us, that we have two distinct group of users that have no link betw
 [source,cypher]
 ----
 MATCH (u:User)
-RETURN distinct(u.partition) as partition,count(*) as size_of_partition ORDER by size_of_partition DESC 
+RETURN u.partition as partition,count(*) as size_of_partition 
+ORDER by size_of_partition DESC LIMIT 20 
 ----
 === Weighted version:
 
@@ -125,7 +126,7 @@ We can observe, that because the weight of the relationship betwen Bridget and A
 [source,cypher]
 ----
 CALL algo.unionFind(label:String, relationship:String, {threshold:0.42,
-defaultValue:1.0, write: true, partitionProperty:'partition',weightProperty:'weight',graph:'heavy'}) 
+defaultValue:1.0, write: true, partitionProperty:'partition',weightProperty:'weight',graph:'heavy',concurrency:4}) 
 YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 - finds connected partitions and potentially writes back to the node as a property partition. 
 
@@ -142,6 +143,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 | partitionProperty | string | 'partition' | yes | property name written back the id of the partition particular node belongs to
 | threshold | float | null | yes | value of the weight above which the relationship is not thrown away
 | defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
@@ -160,7 +162,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0}) 
+CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4}) 
 YIELD nodeId, setId - yields a setId to each node id
 ----
 
@@ -170,6 +172,7 @@ YIELD nodeId, setId - yields a setId to each node id
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
 | threshold | float | null | yes | value of the weight above which the relationship is not thrown away
 | defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
@@ -218,6 +221,10 @@ the calculation of the DSS is done by the ExecutorService.
 `algo.unionFind.exp3`
 
 - calculation and merge using forkJoinPool
+
+`algo.unionFind.mscoloring`
+
+- coloring based parallel algorithm
 
 
 == References

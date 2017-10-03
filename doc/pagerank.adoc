@@ -129,7 +129,7 @@ CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score order by score de
 [source,cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String, {iterations:20, dampingFactor:0.85, 
-write: true,writeProperty:'pagerank'}) 
+write: true,writeProperty:'pagerank', concurrency:4}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
 - calculates page rank and potentially writes back
 ----
@@ -141,6 +141,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | iterations | int | 20 | yes | how many iterations of page-rank to run
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'pagerank' | yes | property name written back to
@@ -166,7 +167,8 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 .running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.pageRank.stream(label:String, relationship:String, {iterations:20, dampingFactor:0.85})
+CALL algo.pageRank.stream(label:String, relationship:String, 
+{iterations:20, dampingFactor:0.85, concurrency:4})
 YIELD node, score - calculates page rank and streams results
 ----
 
@@ -177,6 +179,7 @@ YIELD node, score - calculates page rank and streams results
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | iterations | int | 20 | yes | how many iterations of page-rank to run
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
 |===
 

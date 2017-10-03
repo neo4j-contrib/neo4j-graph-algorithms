@@ -52,7 +52,7 @@ public class ShortestPathDeltaSteppingProc {
 
     @Procedure("algo.shortestPath.deltaStepping.stream")
     @Description("CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta:Double" +
-            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0}) " +
+            "{label:'labelName', relationship:'relationshipName', defaultValue:1.0, concurrency:4}) " +
             "YIELD nodeId, distance - yields a stream of {nodeId, distance} from start to end (inclusive)")
     public Stream<ShortestPathDeltaStepping.DeltaSteppingResult> deltaSteppingStream(
             @Name("startNode") Node startNode,
@@ -77,7 +77,7 @@ public class ShortestPathDeltaSteppingProc {
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Executors.newFixedThreadPool(
-                        configuration.getInt("concurrency", 4)
+                        configuration.getConcurrency()
                 )).compute(startNode.getId());
 
         graph.release();
