@@ -100,9 +100,9 @@ public final class PageRankProc {
                     ));
         }
 
-        return LongStream.range(0, graph.nodeCount())
+        return IntStream.range(0, Math.toIntExact(graph.nodeCount()))
                 .mapToObj(i -> new PageRankScore(
-                        api.getNodeById(graph.toOriginalNodeId((int) i)),
+                        api.getNodeById(graph.toOriginalNodeId(i)),
                         scores.score(i)
                 ));
     }
