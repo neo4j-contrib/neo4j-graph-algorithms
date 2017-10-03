@@ -27,7 +27,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
         farness = new AtomicIntegerArray(nodeCount);
@@ -68,7 +68,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
 
     public Stream<Result> resultStream() {
         final double k = nodeCount - 1;
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
                         new Result(
                                 graph.toOriginalNodeId(nodeId),

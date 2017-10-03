@@ -93,8 +93,8 @@ public class HugeGraphImpl implements HugeGraph {
     }
 
     @Override
-    public long hugeNodeCount() {
-        return idMapping.hugeNodeCount();
+    public long nodeCount() {
+        return idMapping.nodeCount();
     }
 
     @Override

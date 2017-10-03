@@ -43,7 +43,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return idMapping.size();
     }
 

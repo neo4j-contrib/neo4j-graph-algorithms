@@ -41,8 +41,9 @@ public class MSTPrim extends Algorithm<MSTPrim> {
      */
     public MSTPrim compute(int startNode) {
         final LongMinPriorityQueue queue = new LongMinPriorityQueue();
-        final BitSet visited = new BitSet(idMapping.nodeCount());
-        minimumSpanningTree = new MinimumSpanningTree(idMapping.nodeCount(), startNode, weights);
+        final int nodeCount = Math.toIntExact(idMapping.nodeCount());
+        final BitSet visited = new BitSet(nodeCount);
+        minimumSpanningTree = new MinimumSpanningTree(nodeCount, startNode, weights);
         // initially add all relations from startNode to the priority queue
         visited.set(startNode);
         iterator.forEachRelationship(startNode, (sourceNodeId, targetNodeId, relationId) -> {

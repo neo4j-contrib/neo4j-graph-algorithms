@@ -120,7 +120,7 @@ public class ProgressLoggingTest {
 
         final StringBuffer buffer = new StringBuffer();
 
-        final int[] ints = new int[graph.nodeCount()];
+        final int[] ints = new int[(int) graph.nodeCount()];
         Arrays.fill(ints, -1);
 
         new IntArrayExporter(db, graph, new TestLogger(buffer), "test", Pools.DEFAULT)

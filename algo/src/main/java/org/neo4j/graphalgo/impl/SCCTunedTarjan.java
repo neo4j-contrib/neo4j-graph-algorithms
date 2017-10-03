@@ -31,7 +31,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
 
     public SCCTunedTarjan(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         connectedComponents = new int[nodeCount];
         edgeStack = new IntStack();
         open = new IntStack();

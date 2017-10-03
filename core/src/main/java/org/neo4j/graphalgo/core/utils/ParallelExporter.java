@@ -43,7 +43,7 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
         this.idMapping = Objects.requireNonNull(idMapping);
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.executorService = null;
-        nodeCount = idMapping.nodeCount();
+        nodeCount = Math.toIntExact(idMapping.nodeCount());
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
 
@@ -52,7 +52,7 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.idMapping = Objects.requireNonNull(idMapping);
         this.executorService = Objects.requireNonNull(executorService);
-        nodeCount = idMapping.nodeCount();
+        nodeCount = Math.toIntExact(idMapping.nodeCount());
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
 

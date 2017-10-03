@@ -56,9 +56,9 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      */
     public BetweennessCentralitySuccessorBrandes(Graph graph, double scaleFactor, ExecutorService executorService) {
         this.graph = graph;
-        this.nodeCount = graph.nodeCount();
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
-        this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
+        this.centrality = new AtomicDoubleArray(nodeCount, scaleFactor);
         sigma = new AtomicIntegerArray(nodeCount);
         delta = new double[nodeCount];
         d = new AtomicIntegerArray(nodeCount);
@@ -168,7 +168,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * @param consumer the result consumer
      */
     public void forEach(BetweennessCentrality.ResultConsumer consumer) {
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+        for (int i = nodeCount - 1; i >= 0; i--) {
             if (!consumer.consume(
                     graph.toOriginalNodeId(i),
                     centrality.get(i))) {
@@ -183,7 +183,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * @return stream if Results
      */
     public Stream<BetweennessCentrality.Result> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
                         new BetweennessCentrality.Result(
                                 graph.toOriginalNodeId(nodeId),

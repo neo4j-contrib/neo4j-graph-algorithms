@@ -41,7 +41,7 @@ public class MSBitSetBenchmark {
 
     @Setup
     public void setup() {
-        int nodeCount = source.nodes.nodeCount();
+        int nodeCount = (int) source.nodes.nodeCount();
         this.startNode = nodeCount / 2;
         if (source.sources != null) {
             startNode = source.sources.length / 2;

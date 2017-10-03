@@ -93,14 +93,14 @@ public final class PageRankProc {
 
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-            return LongStream.range(0, hugeGraph.hugeNodeCount())
+            return LongStream.range(0, hugeGraph.nodeCount())
                     .mapToObj(i -> new PageRankScore(
                             api.getNodeById(hugeGraph.toOriginalNodeId(i)),
                             scores.score(i)
                     ));
         }
 
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, Math.toIntExact(graph.nodeCount()))
                 .mapToObj(i -> new PageRankScore(
                         api.getNodeById(graph.toOriginalNodeId(i)),
                         scores.score(i)
