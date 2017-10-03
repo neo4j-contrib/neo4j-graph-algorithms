@@ -278,7 +278,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         for (ComputeStep computeStep : computeSteps) {
             computeStep.setStarts(startArray, lengthArray);
         }
-        return new ComputeSteps(computeSteps, concurrency, pool);
+        return new ComputeSteps(tracker, computeSteps, concurrency, pool);
     }
 
     private static int findIdealConcurrency(
@@ -400,6 +400,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
     @Override
     public HugePageRank release() {
+        computeSteps.release();
         return this;
     }
 
@@ -435,12 +436,13 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     }
 
     private final class ComputeSteps {
-        private final List<ComputeStep> steps;
+        private List<ComputeStep> steps;
         private final ExecutorService pool;
-        private final int[][][] scores;
+        private int[][][] scores;
         private final int concurrency;
 
         private ComputeSteps(
+                AllocationTracker tracker,
                 List<ComputeStep> steps,
                 int concurrency,
                 ExecutorService pool) {
@@ -449,8 +451,10 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.steps = steps;
             this.pool = pool;
             int stepSize = steps.size();
-            scores = new int[stepSize][][];
-            Arrays.setAll(scores, i -> new int[stepSize][]);
+            scores = new int[stepSize][stepSize][];
+            if (AllocationTracker.isTracking(tracker)) {
+                tracker.add((stepSize + 1) * sizeOfObjectArray(stepSize));
+            }
         }
 
         PageRankResult getPageRank() {
@@ -471,13 +475,16 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         }
 
         private void run(int iterations) {
+            final int operations = iterations << 1;
+            int op = 0;
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
-                getProgressLogger().logProgress(i + 1, iterations, tracker);
+                getProgressLogger().logProgress(++op, operations, tracker);
                 synchronizeScores();
                 // sync scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                getProgressLogger().logProgress(++op, operations, tracker);
             }
         }
 
@@ -499,6 +506,15 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             for (int j = 0, len = nextScores.length; j < len; j++) {
                 scores[j][idx] = nextScores[j];
             }
+        }
+
+        private void release() {
+             if (AllocationTracker.isTracking(tracker)) {
+                tracker.remove((scores.length + 1) * sizeOfObjectArray(scores.length));
+            }
+            steps.clear();
+            steps = null;
+            scores = null;
         }
     }
 
