@@ -81,7 +81,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 [source,cypher]
 ----
 CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
-weightProperty:'weight', partitionProperty:'partition', write:true}) 
+weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4}) 
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty,
 partitionProperty - simple label propagation kernel
 ----
@@ -93,6 +93,7 @@ partitionProperty - simple label propagation kernel
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | iterations | int | 1 | yes | number of iterations
 | weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
 | partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside

@@ -285,7 +285,7 @@ public class StronglyConnectedComponentsProc {
         loadTimer.stop();
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
-                configuration.getNumber("concurrency", 1).intValue(),
+                configuration.getConcurrency(),
                 configuration.getNumber("cutoff", 100_000).intValue())
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
@@ -330,7 +330,7 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
-                configuration.getNumber("concurrency", 1).intValue(),
+                configuration.getConcurrency(),
                 configuration.getNumber("cutoff", 100_000).intValue())
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
@@ -360,7 +360,7 @@ public class StronglyConnectedComponentsProc {
                 .load(configuration.getGraphImpl());
 
         final ForwardBackwardScc algo = new ForwardBackwardScc(graph, Pools.DEFAULT,
-                configuration.getConcurrency(1))
+                configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(ForwardBackward)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(graph.toMappedNodeId(startNodeId));

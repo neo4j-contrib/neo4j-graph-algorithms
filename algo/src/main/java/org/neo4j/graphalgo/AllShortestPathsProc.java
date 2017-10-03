@@ -33,7 +33,7 @@ public class AllShortestPathsProc {
 
     @Procedure("algo.allShortestPaths.stream")
     @Description("CALL algo.allShortestPaths.stream(weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, concurrency:4}) " +
             "YIELD sourceNodeId, targetNodeId, distance - yields a stream of {sourceNodeId, targetNodeId, distance}")
     public Stream<AllShortestPaths.Result> allShortestPathsStream(
             @Name(value = "propertyName") String propertyName,

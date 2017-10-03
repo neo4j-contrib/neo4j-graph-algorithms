@@ -92,7 +92,8 @@ We can see that Alice is the main broker in this network and Charles is a minor 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.betweenness(label:String, relationship:String, {direction:'out',write:true, stats:true, writeProperty:'centrality',concurrency: 1}) 
+CALL algo.betweenness(label:String, relationship:String, 
+{direction:'out',write:true, stats:true, writeProperty:'centrality',concurrency:1}) 
 YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis 
 - calculates betweenness centrality and potentially writes back
 ----
@@ -132,7 +133,9 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.betweenness.stream(label:String, relationship:String,{direction:'out',concurrency:1}) YIELD nodeId, centrality - yields centrality for each node
+CALL algo.betweenness.stream(label:String, relationship:String,
+{direction:'out',concurrency:1}) 
+YIELD nodeId, centrality - yields centrality for each node
 ----
 
 .Parameters
@@ -198,6 +201,7 @@ We support the following versions of the betweenness centrality algorithm:
 - brandes-like algorithm which uses successor sets instead of predecessor sets
 - The algorithm is based on Brandes definition but with some changes
  regarding the dependency-accumulation step.
+- Does not support undirected graph 
 
 == References
 

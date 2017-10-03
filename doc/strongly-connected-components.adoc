@@ -81,7 +81,8 @@ RETURN distinct(u.partition) as partition,count(*) as size_of_partition ORDER by
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.scc(label:String, relationship:String, {write:true,partitionProperty:'partition',graph:'heavy'}) 
+CALL algo.scc(label:String, relationship:String, 
+{write:true,partitionProperty:'partition',concurrency:4, graph:'heavy'}) 
 YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 
 - finds strongly connected partitions and potentially writes back to the node as a property partition. 
@@ -95,6 +96,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
 | partitionProperty | string | 'partition' | yes | property name written back to
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 
 |===
