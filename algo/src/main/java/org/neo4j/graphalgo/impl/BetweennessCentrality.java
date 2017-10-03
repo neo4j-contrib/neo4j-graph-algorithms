@@ -33,7 +33,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.centrality = new double[nodeCount];
         this.stack = new IntStack();
         this.sigma = new int[nodeCount];
@@ -79,7 +79,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     }
 
     public Stream<Result> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
                         new Result(
                                 graph.toOriginalNodeId(nodeId),

@@ -93,16 +93,16 @@ public final class PageRankProc {
 
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-            return LongStream.range(0, hugeGraph.hugeNodeCount())
+            return LongStream.range(0, hugeGraph.nodeCount())
                     .mapToObj(i -> new PageRankScore(
                             api.getNodeById(hugeGraph.toOriginalNodeId(i)),
                             scores.score(i)
                     ));
         }
 
-        return IntStream.range(0, graph.nodeCount())
+        return LongStream.range(0, graph.nodeCount())
                 .mapToObj(i -> new PageRankScore(
-                        api.getNodeById(graph.toOriginalNodeId(i)),
+                        api.getNodeById(graph.toOriginalNodeId((int) i)),
                         scores.score(i)
                 ));
     }
@@ -124,7 +124,7 @@ public final class PageRankProc {
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
             Graph graph = graphLoader.load(graphFactory);
-            statsBuilder.withNodes(graph.hugeNodeCount());
+            statsBuilder.withNodes(graph.nodeCount());
             return graph;
         }
     }

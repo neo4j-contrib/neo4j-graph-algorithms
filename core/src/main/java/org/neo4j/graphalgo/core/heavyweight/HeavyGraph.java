@@ -36,7 +36,7 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return nodeIdMap.size();
     }
 

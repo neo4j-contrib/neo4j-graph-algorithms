@@ -51,7 +51,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
                 log), TASK_EXPORT);
         this.terminationFlag = terminationFlag;
         this.executorService = null;
-        nodeCount = idMapping.hugeNodeCount();
+        nodeCount = idMapping.nodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
 
@@ -67,7 +67,7 @@ public abstract class HugeParallelExporter<T> extends AbstractExporter<T> {
                 log), TASK_EXPORT);
         this.idMapping = Objects.requireNonNull(idMapping);
         this.executorService = Objects.requireNonNull(executorService);
-        nodeCount = idMapping.hugeNodeCount();
+        nodeCount = idMapping.nodeCount();
         writePropertyId = getOrCreatePropertyId(writeProperty);
         this.terminationFlag = terminationFlag;
     }

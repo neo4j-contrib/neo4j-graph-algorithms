@@ -136,7 +136,7 @@ public class GraphView implements Graph {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return nodeCount;
     }
 

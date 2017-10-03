@@ -31,16 +31,7 @@ public interface IdMapping {
     boolean contains(long nodeId);
 
     /**
-     * Count of nodes. Subject to overflow if the number of nodes exceed
-     * {@link Integer#MAX_VALUE}.
+     * Count of nodes.
      */
-    int nodeCount();
-
-    /**
-     * Count of nodes as long. The same as {@link #nodeCount()} if the number
-     * of nodes is less than {@link Integer#MAX_VALUE}.
-     */
-    default long hugeNodeCount() {
-        return (long) nodeCount();
-    }
+    long nodeCount();
 }

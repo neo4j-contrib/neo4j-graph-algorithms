@@ -129,7 +129,7 @@ public class BetweennessCentralityProc {
                     .load(configuration.getGraphImpl());
         }
 
-        builder.withNodeCount(graph.hugeNodeCount());
+        builder.withNodeCount(graph.nodeCount());
 
         final BetweennessCentralitySuccessorBrandes bc = new BetweennessCentralitySuccessorBrandes(
                 graph,
@@ -199,7 +199,7 @@ public class BetweennessCentralityProc {
                     .load(configuration.getGraphImpl());
         }
 
-        builder.withNodeCount(graph.hugeNodeCount());
+        builder.withNodeCount(graph.nodeCount());
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(sequential)"))
@@ -246,7 +246,7 @@ public class BetweennessCentralityProc {
                     .load(configuration.getGraphImpl());
         }
 
-        builder.withNodeCount(graph.hugeNodeCount());
+        builder.withNodeCount(graph.nodeCount());
 
         final ParallelBetweennessCentrality bc = new ParallelBetweennessCentrality(
                 graph,

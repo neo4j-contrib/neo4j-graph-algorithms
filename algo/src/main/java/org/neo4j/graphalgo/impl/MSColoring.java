@@ -27,11 +27,16 @@ public class MSColoring {
     private final AtomicIntegerArray colors;
 
     private final int concurrency;
+    private int nodeCount;
 
-    public MSColoring(Graph graph, ExecutorService executorService, int concurrency) {
+    public MSColoring(
+            Graph graph,
+            ExecutorService executorService,
+            int concurrency) {
         this.graph = graph;
         this.executorService = executorService;
-        colors = new AtomicIntegerArray(graph.nodeCount());
+        nodeCount = Math.toIntExact(graph.nodeCount());
+        colors = new AtomicIntegerArray(nodeCount);
         this.concurrency = concurrency;
     }
 
@@ -50,7 +55,7 @@ public class MSColoring {
 
     public int getSetCount() {
         final IntIntMap map = new IntIntScatterMap();
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
+        for (int i = nodeCount; i >= 0; i--) {
             int color = colors.get(i);
             map.addTo(color, 1);
         }
@@ -58,13 +63,13 @@ public class MSColoring {
     }
 
     public Stream<Result> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(i -> new Result(graph.toOriginalNodeId(i), colors.get(i)));
     }
 
     private void reset() {
         ParallelUtil.iterateParallel(executorService,
-                graph.nodeCount(),
+                nodeCount,
                 Runtime.getRuntime().availableProcessors() * 2, // TODO constant/getter anywhere!?
                 offset -> colors.set(offset, offset));
     }

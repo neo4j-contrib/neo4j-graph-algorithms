@@ -38,8 +38,8 @@ public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
     public ParallelUnionFindQueue(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
         this.graph = graph;
         this.executor = executor;
-        nodeCount = graph.nodeCount();
-        this.batchSize = ParallelUtil.adjustBatchSize(graph.nodeCount(), concurrency, minBatchSize);
+        nodeCount = Math.toIntExact(graph.nodeCount());
+        this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, minBatchSize);
         queue = new LinkedBlockingQueue<>();
         futures = new ArrayList<>();
     }

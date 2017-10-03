@@ -173,7 +173,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             IdMapping idMapping,
             NodeIterator nodeIterator,
             Degrees degrees) {
-        int nodeCount = idMapping.nodeCount();
+        int nodeCount = Math.toIntExact(idMapping.nodeCount());
         PrimitiveIntIterator nodes = nodeIterator.nodeIterator();
         List<Partition> partitions = new ArrayList<>();
         int start = 0;
@@ -195,7 +195,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             Degrees degrees) {
         return Collections.singletonList(
                 new Partition(
-                        idMapping.nodeCount(),
+                        Math.toIntExact(idMapping.nodeCount()),
                         null,
                         degrees,
                         0,

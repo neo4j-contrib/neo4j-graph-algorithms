@@ -77,7 +77,7 @@ public class MultistepSCC extends Algorithm<MultistepSCC> {
                 MultistepSCC.this.processSCC(root, connected);
             }
         };
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         connectedComponents = new int[nodeCount];
     }
 

@@ -46,7 +46,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     public SCCIterativeTarjan(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         index = new int[nodeCount];
         stack = new IntStack();
         boundaries = new IntStack();

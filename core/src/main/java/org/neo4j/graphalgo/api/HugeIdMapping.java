@@ -33,6 +33,5 @@ public interface HugeIdMapping {
     /**
      * count of nodes
      */
-    long hugeNodeCount();
-
+    long nodeCount();
 }

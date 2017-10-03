@@ -85,7 +85,7 @@ public class ClosenessCentralityProc {
                     .load(configuration.getGraphImpl());
         }
 
-        builder.withNodeCount(graph.hugeNodeCount());
+        builder.withNodeCount(graph.nodeCount());
 
         final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
