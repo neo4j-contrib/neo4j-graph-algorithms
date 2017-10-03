@@ -47,7 +47,7 @@ public class MultiStepColoring {
 
     public MultiStepColoring(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        this.nodeCount = graph.nodeCount();
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
         colors = new AtomicIntegerArray(nodeCount);

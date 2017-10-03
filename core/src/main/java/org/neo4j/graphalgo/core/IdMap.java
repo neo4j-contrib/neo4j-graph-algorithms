@@ -112,13 +112,13 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return graphIds.length;
     }
 
     @Override
     public void forEachNode(IntPredicate consumer) {
-        final int count = nodeCount();
+        final int count = graphIds.length;
         for (int i = 0; i < count; i++) {
             if (!consumer.test(i)) {
                 return;
@@ -128,12 +128,12 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        return new IdIterator().reset(nodeCount());
+        return new IdIterator().reset(graphIds.length);
     }
 
     @Override
     public Collection<PrimitiveIntIterable> batchIterables(int batchSize) {
-        int nodeCount = nodeCount();
+        int nodeCount = graphIds.length;
         int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
         if (numberOfBatches == 1) {
             return Collections.singleton(this::nodeIterator);

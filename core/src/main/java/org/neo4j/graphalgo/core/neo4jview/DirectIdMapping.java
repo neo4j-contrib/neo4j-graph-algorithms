@@ -7,9 +7,9 @@ import org.neo4j.graphalgo.api.IdMapping;
  * @since 10.07.17
  */
 public class DirectIdMapping implements IdMapping {
-    private final int nodeCount;
+    private final long nodeCount;
 
-    public DirectIdMapping(int nodeCount) {
+    public DirectIdMapping(long nodeCount) {
         this.nodeCount = nodeCount;
     }
 
@@ -29,7 +29,7 @@ public class DirectIdMapping implements IdMapping {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return nodeCount;
     }
 }

@@ -191,7 +191,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         computeSteps = createComputeSteps(
                 concurrency,
-                idMapping.hugeNodeCount(),
+                idMapping.nodeCount(),
                 dampingFactor,
                 relationshipIterator,
                 degrees,

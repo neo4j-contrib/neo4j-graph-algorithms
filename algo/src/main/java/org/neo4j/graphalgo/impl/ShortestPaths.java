@@ -28,7 +28,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
 
     public ShortestPaths(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         costs = new IntDoubleScatterMap(nodeCount);
         queue = new IntMinPriorityQueue();
         progressLogger = getProgressLogger();

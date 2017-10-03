@@ -63,7 +63,7 @@ public class LazyIdMapper implements IdMapping {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return nodeCount == -1 ? forward.size() : nodeCount;
     }
 

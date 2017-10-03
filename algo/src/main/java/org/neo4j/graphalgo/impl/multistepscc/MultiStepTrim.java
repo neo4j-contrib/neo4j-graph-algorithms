@@ -45,7 +45,7 @@ public class MultiStepTrim {
 
     public MultiStepTrim(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         nodes = new IntHashSet();
         inDegree = new int[nodeCount];
         outDegree = new int[nodeCount];

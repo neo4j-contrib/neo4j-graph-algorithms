@@ -95,7 +95,7 @@ public class ClosenessCentralityTest {
     @Test
     public void testStream() throws Exception {
 
-        final double[] centrality = new double[graph.nodeCount()];
+        final double[] centrality = new double[(int) graph.nodeCount()];
 
         new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()

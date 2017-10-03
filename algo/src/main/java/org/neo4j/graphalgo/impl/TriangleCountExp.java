@@ -39,7 +39,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
         this.graph = graph;
         this.executorService = executorService;
         this.concurrency = concurrency;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         triangles = new AtomicIntegerArray(nodeCount);
         triangleCount = new AtomicInteger();
         visitedNodes = new AtomicInteger();
@@ -93,7 +93,7 @@ public class TriangleCountExp extends Algorithm<TriangleCountExp> {
 
 
     public double[] getClusteringCoefficients() {
-        final double[] coefficient = new double[graph.nodeCount()];
+        final double[] coefficient = new double[nodeCount];
         double sum = 0;
         for (int i = 0; i < nodeCount; i++) {
             final double c = calculateCoefficient(triangles.get(i), graph.degree(i, TriangleCountExp.D));

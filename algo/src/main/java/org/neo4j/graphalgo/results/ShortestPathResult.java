@@ -14,7 +14,7 @@ public class ShortestPathResult {
     public ShortestPathResult(long loadDuration,
                               long evalDuration,
                               long writeDuration,
-                              int nodeCount,
+                              long nodeCount,
                               String targetProperty) {
         this.loadDuration = loadDuration;
         this.evalDuration = evalDuration;
@@ -29,10 +29,10 @@ public class ShortestPathResult {
 
     public static class Builder extends AbstractResultBuilder<ShortestPathResult> {
 
-        private int nodeCount = 0;
+        private long nodeCount = 0;
         private String targetProperty = "";
 
-        public Builder withNodeCount(int nodeCount) {
+        public Builder withNodeCount(long nodeCount) {
             this.nodeCount = nodeCount;
             return this;
         }

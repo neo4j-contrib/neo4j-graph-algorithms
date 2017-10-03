@@ -56,7 +56,7 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
         this.graph = graph;
         this.delta = delta;
         this.iDelta = (int) (multiplier * delta);
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         distance = new AtomicIntegerArray(nodeCount);
         buckets = new Buckets(nodeCount);
         heavy = new ArrayDeque<>(1024);

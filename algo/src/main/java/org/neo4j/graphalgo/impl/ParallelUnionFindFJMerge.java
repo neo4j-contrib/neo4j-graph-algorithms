@@ -41,8 +41,8 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
     public ParallelUnionFindFJMerge(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
         this.graph = graph;
         this.executor = executor;
-        nodeCount = graph.nodeCount();
-        this.batchSize = ParallelUtil.adjustBatchSize(graph.nodeCount(), concurrency, minBatchSize);
+        nodeCount = Math.toIntExact(graph.nodeCount());
+        this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, minBatchSize);
     }
 
     public ParallelUnionFindFJMerge compute() {
@@ -102,7 +102,7 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
         public UFProcess(int offset, int length) {
             this.offset = offset;
             this.end = offset + length;
-            struct = new DisjointSetStruct(graph.nodeCount()).reset();
+            struct = new DisjointSetStruct(nodeCount).reset();
         }
 
         @Override

@@ -64,7 +64,7 @@ public class Louvain extends Algorithm<Louvain> {
                    int concurrency) {
 
         this.idMapping = idMapping;
-        nodeCount = idMapping.nodeCount();
+        nodeCount = Math.toIntExact(idMapping.nodeCount());
         this.relationshipIterator = relationshipIterator;
         this.relationshipWeights = relationshipWeights;
         this.executorService = executorService;
