@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
 import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
@@ -96,7 +96,13 @@ public class UnionFindBenchmark {
 
     @TearDown
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (heavyGraph != null) {
+            heavyGraph.release();
+        }
+        if (lightGraph != null) {
+            lightGraph.release();
+        }
+        if (db != null) db.shutdown();
         Pools.DEFAULT.shutdownNow();
     }
 

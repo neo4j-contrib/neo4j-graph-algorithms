@@ -26,9 +26,7 @@ public enum MSBFSSource {
     _16384_1024(16384, 1024),
     _16384_8192(16384, 8192),
     _16384_16384(16384, 16384),
-    _16384(16384)
-
-    ;
+    _16384(16384);
 
     final IdMapping nodes;
     final RelationshipIterator rels;

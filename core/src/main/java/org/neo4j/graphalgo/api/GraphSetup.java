@@ -1,5 +1,7 @@
 package org.neo4j.graphalgo.api;
 
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
@@ -38,10 +40,13 @@ public class GraphSetup {
     public final double nodeDefaultPropertyValue;
 
     public final Log log;
+    public final long logMillis;
+    public final AllocationTracker tracker;
 
     // the executor service for parallel execution. null means single threaded evaluation.
-    @Deprecated
     public final ExecutorService executor;
+    // concurrency level
+    public final int concurrency;
     /**
      * batchSize for parallel compuation
      */
@@ -79,9 +84,12 @@ public class GraphSetup {
             String nodePropertyName,
             double nodeDefaultPropertyValue,
             ExecutorService executor,
+            int concurrency,
             int batchSize,
             boolean accumulateWeights,
-            Log log) {
+            Log log,
+            long logMillis,
+            AllocationTracker tracker) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -95,9 +103,12 @@ public class GraphSetup {
         this.nodePropertyName = nodePropertyName;
         this.nodeDefaultPropertyValue = nodeDefaultPropertyValue;
         this.executor = executor;
+        this.concurrency = concurrency;
         this.batchSize = batchSize;
         this.accumulateWeights = accumulateWeights;
         this.log = log;
+        this.logMillis = logMillis;
+        this.tracker = tracker;
     }
 
     /**
@@ -115,9 +126,12 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = null;
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
         this.batchSize = -1;
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
+        this.logMillis = -1;
+        this.tracker = AllocationTracker.EMPTY;
     }
 
     /**
@@ -138,9 +152,12 @@ public class GraphSetup {
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
         this.executor = executor;
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
         this.batchSize = -1;
         this.accumulateWeights = false;
-        log = NullLog.getInstance();
+        this.log = NullLog.getInstance();
+        this.logMillis = -1;
+        this.tracker = AllocationTracker.EMPTY;
     }
 
     public boolean loadConcurrent() {
@@ -148,10 +165,10 @@ public class GraphSetup {
     }
 
     public int concurrency() {
-        if (!loadConcurrent()) return 1;
-// todo make configurable
-        return Runtime.getRuntime().availableProcessors();
-//        return ForkJoinPool.getCommonPoolParallelism();
+        if (!loadConcurrent()) {
+            return 1;
+        }
+        return concurrency;
     }
 
     public boolean loadDefaultRelationshipWeight() {

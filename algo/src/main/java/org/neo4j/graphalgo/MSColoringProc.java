@@ -50,13 +50,13 @@ public class MSColoringProc {
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = load(configuration);
-        };
+        }
 
         // evaluation
         final AtomicIntegerArray struct;
         try (ProgressTimer timer = builder.timeEval()) {
             struct = evaluate(graph, configuration);
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             // write back
@@ -90,14 +90,13 @@ public class MSColoringProc {
     }
 
     private Graph load(ProcedureConfiguration config) {
-        return new GraphLoader(api)
+        return new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }
 

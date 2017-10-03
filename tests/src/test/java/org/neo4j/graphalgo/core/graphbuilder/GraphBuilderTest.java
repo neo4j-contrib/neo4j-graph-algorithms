@@ -2,8 +2,8 @@ package org.neo4j.graphalgo.core.graphbuilder;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.Neo4JTestCase;
+import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author mknblch
  */
-public class GraphBuilderTest extends Neo4JTestCase{
+public class GraphBuilderTest extends Neo4JTestCase {
 
     @Test
     public void testRingBuilder() throws Exception {

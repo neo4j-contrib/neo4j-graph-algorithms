@@ -10,8 +10,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
-import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
 import org.neo4j.graphdb.Node;
@@ -97,7 +97,7 @@ public class ParallelBetweennessCentralityIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         graph = null;
     }
 

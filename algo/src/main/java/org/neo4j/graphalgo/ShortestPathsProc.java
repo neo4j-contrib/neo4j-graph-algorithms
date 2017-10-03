@@ -8,8 +8,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
+import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -50,7 +50,7 @@ public class ShortestPathsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
@@ -58,7 +58,6 @@ public class ShortestPathsProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final ShortestPaths algo = new ShortestPaths(graph)
@@ -84,7 +83,7 @@ public class ShortestPathsProc {
         ShortestPathResult.Builder builder = ShortestPathResult.builder();
 
         ProgressTimer load = builder.timeLoad();
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
@@ -92,7 +91,6 @@ public class ShortestPathsProc {
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         load.stop();
 

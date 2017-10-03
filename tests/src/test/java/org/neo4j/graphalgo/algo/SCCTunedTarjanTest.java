@@ -1,13 +1,10 @@
 package org.neo4j.graphalgo.algo;
 
 import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -123,7 +120,7 @@ public class SCCTunedTarjanTest {
     @Test
     public void testCypher() throws Exception {
 
-        String cypher = "CALL algo.scc.tunedTarjan('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
+        String cypher = "CALL algo.scc.recursive.tunedTarjan('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
 
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
@@ -155,7 +152,7 @@ public class SCCTunedTarjanTest {
 
         final IntIntScatterMap testMap = new IntIntScatterMap();
 
-        String cypher = "CALL algo.scc.tunedTarjan.stream() YIELD nodeId, partition";
+        String cypher = "CALL algo.scc.recursive.tunedTarjan.stream() YIELD nodeId, partition";
 
         api.execute(cypher).accept(row -> {
             testMap.addTo(row.getNumber("partition").intValue(), 1);

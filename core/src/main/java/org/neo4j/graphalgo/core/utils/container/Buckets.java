@@ -6,6 +6,7 @@ import java.util.function.IntPredicate;
 
 /**
  * container for assigning nodeIds to arbitrary buckets
+ *
  * @author mknblch
  */
 public class Buckets {
@@ -26,6 +27,7 @@ public class Buckets {
 
     /**
      * check if any bucket has nodes left
+     *
      * @return if the no nodes left, false otherwise
      */
     public boolean isEmpty() {
@@ -39,6 +41,7 @@ public class Buckets {
 
     /**
      * assign bucket to nodeId
+     *
      * @param nodeId the node id
      * @param bucket the bucket index
      */
@@ -48,6 +51,7 @@ public class Buckets {
 
     /**
      * find smallest non empty bucket index
+     *
      * @return the index
      */
     public int nextNonEmptyBucket() {
@@ -67,7 +71,8 @@ public class Buckets {
     /**
      * iterate over each node in bucket and call consumer.
      * also clears the bucket before executing the consumer.
-     * @param bucket the bucket index
+     *
+     * @param bucket   the bucket index
      * @param consumer the nodeConsumer
      */
     public void forEachInBucket(int bucket, IntPredicate consumer) {

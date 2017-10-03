@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.impl;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.container.Path;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -28,13 +27,15 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     private Graph graph;
 
     private double[] centrality;
-    private double[] delta;
-    private int[] sigma;
-    private int[] distance;
+    private double[] delta; // auxiliary array
+    private int[] sigma; // number of shortest paths
+    private int[] distance; // distance to start node
     private IntStack stack;
     private IntArrayDeque queue;
-    private Path[] paths; // TODO find a better container impl
+    private Path[] paths;
     private int nodeCount;
+    private Direction direction = Direction.OUTGOING;
+    private double divisor = 1.0;
 
     public BetweennessCentrality(Graph graph) {
         this.graph = graph;
@@ -48,8 +49,15 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         delta = new double[nodeCount];
     }
 
+    public BetweennessCentrality withDirection(Direction direction) {
+        this.direction = direction;
+        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
+        return this;
+    }
+
     /**
      * compute centrality
+     *
      * @return itself for method chaining
      */
     public BetweennessCentrality compute() {
@@ -95,9 +103,9 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         distance[startNode] = 0;
         queue.addLast(startNode);
         while (!queue.isEmpty() && running()) {
-            int node = queue.removeLast();
+            int node = queue.removeFirst();
             stack.push(node);
-            graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
+            graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                 if (distance[target] < 0) {
                     queue.addLast(target);
                     distance[target] = distance[node] + 1;
@@ -116,11 +124,11 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
             }
             paths[node].forEach(v -> {
                 delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
-                if (node != startNode) {
-                    centrality[node] += delta[node];
-                }
                 return true;
             });
+            if (node != startNode) {
+                centrality[node] += (delta[node] / divisor);
+            }
         }
         getProgressLogger().logProgress((double) startNode / (nodeCount - 1));
         return true;
@@ -129,7 +137,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
     /**
      * append nodeId to path
      *
-     * @param path the selected path
+     * @param path   the selected path
      * @param nodeId the node id
      */
     private void append(int path, int nodeId) {
@@ -174,7 +182,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
          * consume nodeId and centrality value as long as the consumer returns true
          *
          * @param originalNodeId the neo4j node id
-         * @param value centrality value
+         * @param value          centrality value
          * @return a bool indicating if the loop should continue(true) or stop(false)
          */
         boolean consume(long originalNodeId, double value);
@@ -185,13 +193,20 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      */
     public static final class Result {
 
-        public final Long nodeId;
+        public final long nodeId;
+        public final double centrality;
 
-        public final Double centrality;
-
-        public Result(Long nodeId, Double centrality) {
+        public Result(long nodeId, double centrality) {
             this.nodeId = nodeId;
             this.centrality = centrality;
+        }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "nodeId=" + nodeId +
+                    ", centrality=" + centrality +
+                    '}';
         }
     }
 }

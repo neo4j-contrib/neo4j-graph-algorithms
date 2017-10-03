@@ -13,17 +13,17 @@ import java.util.Iterator;
  * MultiStep SCC trimming algorithm. Removes trivial non-strongly connected
  * components. Its result is a set of nodes without trivial weakly connected nodes
  * as well as dangling nodes without relationships to others.
- *
+ * <p>
  * In simple mode only one iteration over all nodeIds is made. During the computation
  * all nodes with either zero incoming or outgoing connections are removed because such
  * nodes can never build a SCC.
- *
+ * <p>
  * Using complete mode the logic tries to reduce all nodes until no more changes can be
  * made. It also removes self referencing nodes (which build an SCC only with itself).
- *
+ * <p>
  * MultistepSCC basically uses simple-trimming but there may be circumstances where
  * complete trimming results in a better overall performance.
- *
+ * <p>
  * Since we cannot alter the Graph I decided to build the reduction using auxiliary degree-arrays.
  * Once initialized with all degrees I do update only it's in- and out- degrees to determine
  * if a node got decoupled in the previous iteration.
@@ -53,6 +53,7 @@ public class MultiStepTrim {
 
     /**
      * compute the resulting nodeSet after trimming
+     *
      * @param complete determine if complete or simple trimming should be made
      * @return set of nodes without trivial weakly connected components
      */
@@ -86,7 +87,7 @@ public class MultiStepTrim {
         final boolean[] filter = {false};
         do {
             changes = false;
-            for(Iterator<IntCursor> it = nodes.iterator(); it.hasNext(); ) {
+            for (Iterator<IntCursor> it = nodes.iterator(); it.hasNext(); ) {
                 final int node = it.next().value;
                 filter[0] = false;
                 // rm nodes without incoming arcs and update target degrees

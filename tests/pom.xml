@@ -19,7 +19,6 @@
         <logback.version>1.0.13</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <junit.version>4.12</junit.version>
-        <neo4j.version>3.2.2</neo4j.version>
         <rr.version>2.5.0</rr.version>
         <mockito.version>1.10.19</mockito.version>
     </properties>
@@ -62,13 +61,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>3.2.1</version>
+            <version>${neo4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>3.2.1</version>
+            <version>${neo4j.version}</version>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>
@@ -148,11 +147,12 @@
                 <!-- Defaults for all tests (ITs and Unit). -->
                 <configuration>
                     <heartbeat>10</heartbeat>
-                    <!--argLine>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</argLine-->
                     <jvmOutputAction>pipe,ignore</jvmOutputAction>
-                    <jvmArgs><param>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</param></jvmArgs>
                     <leaveTemporary>true</leaveTemporary>
                     <ifNoTests>warn</ifNoTests>
+                    <maxMemory>1g</maxMemory>
+                    <parallelism>1</parallelism>
+                    <printSummary>true</printSummary>
 
                     <listeners>
                         <report-text showThrowable="true" showStackTraces="true" showOutput="always" showStatusOk="true"
@@ -200,43 +200,6 @@
                             <excludes>
                                 <exclude>**/*$*</exclude>
                             </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.4.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>test-assembly</finalName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.neo4j.graphalgo.LargeishPageRanker</mainClass>
-                                </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <!--
-                                        Shading signed JARs will fail without this.
-                                        http://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar
-                                    -->
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
                         </configuration>
                     </execution>
                 </executions>

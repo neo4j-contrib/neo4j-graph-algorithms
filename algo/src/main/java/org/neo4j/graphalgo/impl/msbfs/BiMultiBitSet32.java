@@ -130,7 +130,7 @@ final class BiMultiBitSet32 {
      * In terms of the algorithm, it first removes all BFSs from {@code visitNext}
      * that have already been visited ({@code visitNext &= ~seen}) and then adds
      * all BFSs that visit the node to the seen list ({@code seen |= visitNext}).
-     *
+     * <p>
      * Returns the new default bit.
      */
     int unionDifference(int nodeId) {

@@ -2,18 +2,17 @@ package org.neo4j.graphalgo.core.sources;
 
 import com.carrotsearch.hppc.LongDoubleMap;
 import com.carrotsearch.hppc.LongDoubleScatterMap;
-import org.neo4j.cursor.Cursor;
-import org.neo4j.cursor.RawCursor;
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipWeights;
-import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.utils.Importer;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.ReadOperations;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.Direction;
-import org.neo4j.storageengine.api.NodeItem;
-import org.neo4j.storageengine.api.PropertyItem;
 
 /**
  * @author mknblch
@@ -104,30 +103,84 @@ public class BufferedWeightMap implements RelationshipWeights {
                     .withAnyDirection(anyDirection);
 
             withinTransaction(readOp -> {
-
-                final RawCursor<Kernel.NodeItem,RuntimeException> nodeItemCursor;
-                if (labelId == ReadOperations.ANY_LABEL) {
-                    nodeItemCursor = readOp.nodeCursorGetAll();
+                final RelationshipVisitor<RuntimeException> visitor;
+                if (relationId == null) {
+                    visitor = (relationshipId, typeId, startNodeId, endNodeId) -> {
+                        try {
+                            final Object value = readOp.relationshipGetProperty(
+                                    relationshipId,
+                                    propertyId);
+                            if (value != null) {
+                                builder.withWeight(
+                                        idMapping.toMappedNodeId(startNodeId),
+                                        idMapping.toMappedNodeId(endNodeId),
+                                        RawValues.extractValue(value, propertyDefaultValue));
+                            }
+                        } catch (EntityNotFoundException ignored) {
+                        }
+                    };
                 } else {
-                    nodeItemCursor = readOp.nodeCursorGetForLabel(labelId);
+                    final int targetType = relationId[0];
+                    visitor = (relationshipId, typeId, startNodeId, endNodeId) -> {
+                        if (typeId == targetType) {
+                            try {
+                                final Object value = readOp.relationshipGetProperty(
+                                        relationshipId,
+                                        propertyId);
+                                if (value != null) {
+                                    builder.withWeight(
+                                            idMapping.toMappedNodeId(startNodeId),
+                                            idMapping.toMappedNodeId(endNodeId),
+                                            RawValues.extractValue(value, propertyDefaultValue));
+                                }
+                            } catch (EntityNotFoundException ignored) {
+                            }
+                        }
+
+                    };
                 }
 
-                nodeItemCursor.forAll(node -> {
-                    node.relationships(Direction.BOTH, relationId).forAll(relationshipItem -> {
-                        final Cursor<PropertyItem> propertyItemCursor = relationshipItem.property(propertyId);
-                        if (propertyItemCursor.next()) {
-                            final PropertyItem propertyItem = propertyItemCursor.get();
-                            final long startNode = relationshipItem.startNode();
-                            builder.withWeight(
-                                    idMapping.toMappedNodeId(startNode),
-                                    idMapping.toMappedNodeId(relationshipItem.otherNode(startNode)),
-                                    RawValues.extractValue(propertyItem.value(), propertyDefaultValue));
-                        }
-                    });
-                });
+                if (labelId == ReadOperations.ANY_LABEL) {
+                    readAllWeights(readOp, visitor);
+                } else {
+                    readLabelWeights(readOp, visitor, relationId);
+                }
             });
 
             return builder.build();
+        }
+
+        private void readAllWeights(
+                ReadOperations readOp,
+                RelationshipVisitor<RuntimeException> visitor) {
+            SingleRunAllRelationIterator.forAll(readOp, visitor);
+        }
+
+        private void readLabelWeights(
+                ReadOperations readOp,
+                RelationshipVisitor<RuntimeException> visitor,
+                int[] relationId) {
+            try {
+                final PrimitiveLongIterator nodes = readOp.nodesGetForLabel(labelId);
+                while (nodes.hasNext()) {
+                    final long nodeId = nodes.next();
+                    final RelationshipIterator rels;
+                    if (relationId != null) {
+                        rels = readOp.nodeGetRelationships(
+                                nodeId,
+                                org.neo4j.graphdb.Direction.BOTH,
+                                relationId);
+                    } else {
+                        rels = readOp.nodeGetRelationships(nodeId, org.neo4j.graphdb.Direction.BOTH);
+                    }
+                    while (rels.hasNext()) {
+                        final long relId = rels.next();
+                        rels.relationshipVisit(relId, visitor);
+                    }
+                }
+            } catch (EntityNotFoundException e) {
+                throw Exceptions.launderedException(e);
+            }
         }
     }
 }

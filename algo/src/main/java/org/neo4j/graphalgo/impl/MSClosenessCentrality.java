@@ -12,7 +12,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- *
  * Normalized Closeness Centrality
  *
  * @author mknblch
@@ -58,7 +57,11 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
         final int k = nodeCount - 1;
         final double[] centrality = new double[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            centrality[i] = k / (double) farness.get(i);
+            final int far = farness.get(i);
+            if (far == 0) {
+                continue;
+            }
+            centrality[i] = k / (double) far;
         }
         return centrality;
     }
@@ -69,7 +72,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
                 .mapToObj(nodeId ->
                         new Result(
                                 graph.toOriginalNodeId(nodeId),
-                                k / farness.get(nodeId)));
+                                farness.get(nodeId) > 0 ? k / (double) farness.get(nodeId) : 0));
     }
 
     @Override

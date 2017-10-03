@@ -47,6 +47,7 @@ public class ParallelLocalQueueBFS implements BFS {
 
     /**
      * reset underlying container
+     *
      * @return itself
      */
     public ParallelLocalQueueBFS reset() {
@@ -59,6 +60,7 @@ public class ParallelLocalQueueBFS implements BFS {
 
     /**
      * wait for all started futures to complete
+     *
      * @return itself
      */
     public ParallelLocalQueueBFS awaitTermination() {
@@ -113,6 +115,7 @@ public class ParallelLocalQueueBFS implements BFS {
 
     /**
      * tell whether a new thread was added or not
+     *
      * @return true if there is room for another thread, false otherwise
      */
     private boolean addThread(Runnable runnable) {

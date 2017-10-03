@@ -4,7 +4,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -65,7 +65,7 @@ public class AllShortestPathsTest {
                     .forEachRelInTx(rel -> {
                         rel.setProperty(PROPERTY, 1.0);
                     });
-        };
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
@@ -73,7 +73,7 @@ public class AllShortestPathsTest {
                     .withRelationshipType(RELATIONSHIP)
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
-        };
+        }
     }
 
     @Test

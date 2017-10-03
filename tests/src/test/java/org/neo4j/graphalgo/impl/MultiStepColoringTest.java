@@ -100,8 +100,9 @@ public class MultiStepColoringTest {
         final int rIdx;
         try (Transaction tx = db.beginTx();
              Statement stm = bridge.get()) {
-            TokenWriteOperations op = stm.tokenWriteOperations();
-            rIdx = op.relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
+            rIdx = stm
+                    .tokenWriteOperations()
+                    .relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
             tx.success();
         }
 
@@ -112,7 +113,7 @@ public class MultiStepColoringTest {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createRing(int size, int rIdx) throws Exception{
+    private static Runnable createRing(int size, int rIdx) throws Exception {
         return () -> {
             try (Transaction tx = db.beginTx();
                  Statement stm = bridge.get()) {

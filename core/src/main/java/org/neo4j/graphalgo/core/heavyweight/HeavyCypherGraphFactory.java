@@ -35,7 +35,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
     public HeavyCypherGraphFactory(
             GraphDatabaseAPI api,
             GraphSetup setup) {
-        super(api,setup);
+        super(api, setup);
     }
 
     static class Nodes {
@@ -68,6 +68,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
             this.relWeights = relWeights;
         }
     }
+
     @SuppressWarnings("WeakerAccess")
     public Graph build() {
         int batchSize = setup.batchSize;
@@ -142,7 +143,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
             }
         } while (working);
 
-        return new Relationships(0, total, matrix,relWeights);
+        return new Relationships(0, total, matrix, relWeights);
     }
 
     private Nodes batchLoadNodes(int batchSize) {
@@ -206,9 +207,9 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         try {
             return future.get();
         } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted: " + message,e);
+            throw new RuntimeException("Interrupted: " + message, e);
         } catch (ExecutionException e) {
-            throw new RuntimeException(message,e);
+            throw new RuntimeException(message, e);
         }
     }
 
@@ -233,7 +234,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         class RelationshipRowVisitor implements Result.ResultVisitor<RuntimeException> {
             private long lastSourceId = -1, lastTargetId = -1;
             private int source = -1, target = -1;
-            private long rows=0;
+            private long rows = 0;
 
             @Override
             public boolean visit(Result.ResultRow row) throws RuntimeException {
@@ -279,6 +280,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         class NodeRowVisitor implements Result.ResultVisitor<RuntimeException> {
             private long rows;
+
             @Override
             public boolean visit(Result.ResultRow row) throws RuntimeException {
                 rows++;
@@ -302,7 +304,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
     private WeightMapping newWeightMapping(boolean needWeights, double defaultValue, int capacity) {
         return needWeights ?
-                new WeightMap(capacity, defaultValue) :
+                new WeightMap(capacity, defaultValue, -2) :
                 new NullWeightMap(defaultValue);
     }
 

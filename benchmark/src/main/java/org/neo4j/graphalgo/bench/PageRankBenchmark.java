@@ -2,7 +2,8 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.impl.PageRank;
+import org.neo4j.graphalgo.exporter.PageRankResult;
+import org.neo4j.graphalgo.impl.PageRankAlgorithm;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -38,7 +39,7 @@ public class PageRankBenchmark {
     @Param({"5", "20", "100"})
     int iterations;
 
-    @Param({"LIGHT", "HEAVY", "VIEW"})
+    @Param({"LIGHT", "HEAVY", "VIEW", "HUGE"})
     GraphImpl impl;
 
     private GraphDatabaseAPI db;
@@ -90,20 +91,17 @@ public class PageRankBenchmark {
     }
 
     @Benchmark
-    public double[] run() throws Exception {
-        final Graph graph = new GraphLoader(db).withDirection(Direction.OUTGOING).load(impl.impl);
+    public PageRankResult run() throws Exception {
+        final Graph graph = new GraphLoader(db)
+                .withDirection(Direction.OUTGOING)
+                .load(impl.impl);
         try {
-            PageRank pageRank = new PageRank(
-                    graph,
-                    graph,
-                    graph,
-                    graph,
-                    0.85);
-            return pageRank.compute(iterations).getPageRank();
+            return PageRankAlgorithm
+                    .of(graph, 0.85)
+                    .compute(iterations)
+                    .result();
         } finally {
-            if (graph instanceof AutoCloseable) {
-                ((AutoCloseable) graph).close();
-            }
+            graph.release();
         }
     }
 }

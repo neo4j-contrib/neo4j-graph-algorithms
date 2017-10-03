@@ -31,6 +31,10 @@ include::implementers.adoc[leveloffset=2]
 
 :implementation:
 
+=== Triangle Count
+
+include::triangleCount.adoc[leveloffset=2,tags=implementation]
+
 === PageRank
 
 include::pagerank.adoc[leveloffset=2,tags=implementation]

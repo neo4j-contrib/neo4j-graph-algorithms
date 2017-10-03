@@ -52,7 +52,7 @@ public class StronglyConnectedComponentsProcIntegrationTest {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        try(Transaction tx = db.beginTx()) {
+        try (Transaction tx = db.beginTx()) {
             db.execute(cypher);
             tx.success();
         }
@@ -61,9 +61,10 @@ public class StronglyConnectedComponentsProcIntegrationTest {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(StronglyConnectedComponentsProc.class);
     }
+
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @Parameterized.Parameters(name = "{0}")

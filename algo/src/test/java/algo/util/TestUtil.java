@@ -54,7 +54,7 @@ public class TestUtil {
                     System.err.println(padding + element.toString());
                 }
             }
-            e=e.getCause();
+            e = e.getCause();
             padding += "    ";
         }
     }

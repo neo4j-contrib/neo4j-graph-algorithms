@@ -17,9 +17,9 @@ import java.util.stream.Stream;
 /**
  * disjoint-set-struct is a data structure that keeps track of a set
  * of elements partitioned into a number of disjoint (non-overlapping) subsets.
- *
+ * <p>
  * More info:
- *
+ * <p>
  * <a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure">Wiki</a>
  *
  * @author mknblch
@@ -33,6 +33,7 @@ public final class DisjointSetStruct {
     /**
      * Initialize the struct with the given capacity.
      * Note: the struct must be {@link DisjointSetStruct#reset()} prior use!
+     *
      * @param capacity the capacity (maximum node id)
      */
     public DisjointSetStruct(int capacity) {
@@ -67,6 +68,7 @@ public final class DisjointSetStruct {
 
     /**
      * iterate each node and find its setId
+     *
      * @param consumer the consumer
      */
     public void forEach(Consumer consumer) {
@@ -85,7 +87,7 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * @param start startNodeId
+     * @param start  startNodeId
      * @param length number of nodes to process
      * @return return an Iterator over each nodeIt-setId combination within its bounds
      */
@@ -104,6 +106,7 @@ public final class DisjointSetStruct {
 
     /**
      * element count
+     *
      * @return the element count
      */
     public int count() {
@@ -113,6 +116,7 @@ public final class DisjointSetStruct {
 
     /**
      * find setId of element p.
+     *
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to
      */
@@ -135,8 +139,9 @@ public final class DisjointSetStruct {
 
     /**
      * find setId of element p.
-     *
+     * <p>
      * Non-recursive implementation using path-halving optimization and tree balancing
+     *
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to
      */
@@ -149,8 +154,9 @@ public final class DisjointSetStruct {
 
     /**
      * find setId of element p.
-     *
+     * <p>
      * find-impl using a recursive path compression logic
+     *
      * @param p the element in the set we are looking for
      * @return an id of the set it belongs to
      */
@@ -243,7 +249,7 @@ public final class DisjointSetStruct {
     public interface Consumer {
         /**
          * @param nodeId the mapped node id
-         * @param setId the set id where the node belongs to
+         * @param setId  the set id where the node belongs to
          * @return true to continue the iteration, false to stop
          */
         boolean consume(int nodeId, int setId);

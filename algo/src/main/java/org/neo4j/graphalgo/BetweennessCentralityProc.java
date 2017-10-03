@@ -4,6 +4,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.exporter.AtomicBigDoubleArrayExporter;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
 import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
@@ -24,6 +25,7 @@ public class BetweennessCentralityProc {
 
 
     public static final String DEFAULT_TARGET_PROPERTY = "centrality";
+    public static final Direction DEFAULT_DIRECTION = Direction.OUTGOING;
 
 
     @Context
@@ -36,7 +38,7 @@ public class BetweennessCentralityProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.betweenness.exp1.stream")
-    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {scaleFactor:1000000}) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {direction:'out', scaleFactor:100000}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessSuccessorBrandesStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -44,7 +46,7 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
@@ -57,6 +59,7 @@ public class BetweennessCentralityProc {
                 Pools.DEFAULT)
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                .withDirection(Direction.OUTGOING)
                 .compute();
 
         graph.release();
@@ -64,8 +67,11 @@ public class BetweennessCentralityProc {
         return algo.resultStream();
     }
 
+    /**
+     * Procedure accepts {in, incoming, <, out, outgoing, >, both, <>} as direction
+     */
     @Procedure(value = "algo.betweenness.stream")
-    @Description("CALL algo.betweenness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -73,11 +79,11 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
-                .withDirection(Direction.OUTGOING)
+                .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                 .load(configuration.getGraphImpl());
 
         if (configuration.getConcurrency(-1) > 0) {
@@ -87,19 +93,21 @@ public class BetweennessCentralityProc {
                     configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                     .compute();
             graph.release();
             return algo.resultStream();
         }
 
         final BetweennessCentrality compute = new BetweennessCentrality(graph)
+                .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                 .compute();
         graph.release();
         return compute.resultStream();
     }
 
     @Procedure(value = "algo.betweenness.exp1", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness.exp1(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true, scaleFactor:100000}) YIELD " +
+    @Description("CALL algo.betweenness.exp1(label:String, relationship:String, {direction:'out', write:true, writeProperty:'centrality', stats:true, scaleFactor:100000}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality] - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessSucessorBrandes(
             @Name(value = "label", defaultValue = "") String label,
@@ -112,7 +120,7 @@ public class BetweennessCentralityProc {
 
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
@@ -127,6 +135,7 @@ public class BetweennessCentralityProc {
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT)
+                .withDirection(Direction.OUTGOING)
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
@@ -155,7 +164,7 @@ public class BetweennessCentralityProc {
 
 
     @Procedure(value = "algo.betweenness", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness(label:String, relationship:String, {write:true, writeProperty:'centrality', stats:true}) YIELD " +
+    @Description("CALL algo.betweenness(label:String, relationship:String, {direction:'out',write:true, writeProperty:'centrality', stats:true}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweenness(
             @Name(value = "label", defaultValue = "") String label,
@@ -164,7 +173,7 @@ public class BetweennessCentralityProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        if (configuration.getConcurrency(-1) > 0) {
+        if (configuration.getConcurrency(-1) > 1) {
             return computeBetweennessParallel(label, relationship, configuration);
         } else {
             return computeBetweenness(label, relationship, configuration);
@@ -181,19 +190,20 @@ public class BetweennessCentralityProc {
 
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
-                    .withDirection(Direction.OUTGOING)
+                    .withDirection(configuration.getDirection(Direction.OUTGOING))
                     .load(configuration.getGraphImpl());
         }
 
         builder.withNodeCount(graph.nodeCount());
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(sequential)"));
+                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(sequential)"))
+                .withDirection(configuration.getDirection(Direction.OUTGOING));
 
         builder.timeEval(() -> {
             bc.compute();
@@ -227,12 +237,12 @@ public class BetweennessCentralityProc {
 
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
-                    .withDirection(Direction.OUTGOING)
+                    .withDirection(configuration.getDirection(Direction.OUTGOING))
                     .load(configuration.getGraphImpl());
         }
 
@@ -244,7 +254,8 @@ public class BetweennessCentralityProc {
                 Pools.DEFAULT,
                 configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withDirection(configuration.getDirection(Direction.OUTGOING));
 
         builder.timeEval(() -> {
             bc.compute();

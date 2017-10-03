@@ -7,8 +7,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.core.graphbuilder.GridBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -58,7 +58,7 @@ public class ParallelTraverseTest {
                     .setRelationship(RELATIONSHIP)
                     .newGridBuilder()
                     .createGrid(10, 10, 1);
-        };
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
@@ -73,7 +73,7 @@ public class ParallelTraverseTest {
                     .get(0)
                     .get(0)
                     .getId());
-        };
+        }
     }
 
     @Test
