@@ -9,7 +9,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.IntArrayExporter;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.results.LouvainResult;
 import org.neo4j.graphdb.Direction;
@@ -122,12 +123,14 @@ public class LouvainProc {
 
     private void write(Graph graph, int[] communities, ProcedureConfiguration configuration) {
         log.debug("Writing results");
-        new IntArrayExporter(
-                api,
-                graph,
-                log,
-                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
-                Pools.DEFAULT
-        ).write(communities);
+        Exporter.of(api, graph)
+                .withLog(log)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(), TerminationFlag.wrap(transaction))
+                .build()
+                .write(
+                        configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                        communities,
+                        IntArrayTranslator.INSTANCE
+                );
     }
 }

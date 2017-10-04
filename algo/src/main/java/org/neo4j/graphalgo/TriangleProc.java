@@ -7,8 +7,9 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.AtomicIntArrayExporter;
-import org.neo4j.graphalgo.exporter.TriangleExporter;
+import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.TriangleCount;
 import org.neo4j.graphalgo.impl.TriangleCountExp;
 import org.neo4j.graphalgo.impl.TriangleStream;
@@ -154,10 +155,11 @@ public class TriangleProc {
                     .load(configuration.getGraphImpl());
         };
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
             triangleCount = new TriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .withTerminationFlag(terminationFlag)
                     .compute();
             clusteringCoefficients = triangleCount.getClusteringCoefficients();
         };
@@ -165,15 +167,26 @@ public class TriangleProc {
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
+                final Exporter exporter = Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build();
                 if (coefficientProperty.isPresent()) {
-                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
-                            .setCoefficientWriteProperty(coefficientProperty.get())
-                            .write(triangleCount.getTriangles(), clusteringCoefficients);
+                    exporter.write(
+                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                            triangleCount.getTriangles(),
+                            AtomicIntArrayTranslator.INSTANCE,
+                            coefficientProperty.get(),
+                            clusteringCoefficients,
+                            DoubleArrayTranslator.INSTANCE
+                    );
                 } else {
-                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
-                            .write(triangleCount.getTriangles());
+                    exporter.write(
+                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                            triangleCount.getTriangles(),
+                            AtomicIntArrayTranslator.INSTANCE
+                    );
                 }
-
             }
         }
 
@@ -213,10 +226,11 @@ public class TriangleProc {
                     .load(configuration.getGraphImpl());
         };
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
             triangleCount = new TriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .withTerminationFlag(terminationFlag)
                     .compute();
             clusteringCoefficients = triangleCount.getClusteringCoefficients();
         };
@@ -224,15 +238,26 @@ public class TriangleProc {
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
+                final Exporter exporter = Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build();
                 if (coefficientProperty.isPresent()) {
-                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
-                            .setCoefficientWriteProperty(coefficientProperty.get())
-                            .write(triangleCount.getTriangles(), clusteringCoefficients);
+                    exporter.write(
+                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                            triangleCount.getTriangles(),
+                            AtomicIntArrayTranslator.INSTANCE,
+                            coefficientProperty.get(),
+                            clusteringCoefficients,
+                            DoubleArrayTranslator.INSTANCE
+                    );
                 } else {
-                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
-                            .write(triangleCount.getTriangles());
+                    exporter.write(
+                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                            triangleCount.getTriangles(),
+                            AtomicIntArrayTranslator.INSTANCE
+                    );
                 }
-
             }
         }
 

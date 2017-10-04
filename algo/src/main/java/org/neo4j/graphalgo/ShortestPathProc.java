@@ -2,12 +2,15 @@ package org.neo4j.graphalgo;
 
 import com.carrotsearch.hppc.IntArrayDeque;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
 import org.neo4j.graphdb.Direction;
@@ -125,12 +128,61 @@ public class ShortestPathProc {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final IntArrayDeque finalPath = dijkstra.getFinalPath();
                 dijkstra.release();
-                new ShortestPathDijkstra.SPExporter(graph, api, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY))
-                        .write(finalPath);
+
+                final DequeMapping mapping = new DequeMapping(graph, finalPath);
+                Exporter.of(mapping, api)
+                        .withLog(log)
+                        .build()
+                        .write(
+                                configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY),
+                                finalPath,
+                                (PropertyTranslator.OfInt<IntArrayDeque>) (data, nodeId) -> (int) nodeId
+                        );
             }
         }
 
         return Stream.of(builder.build());
+    }
+
+    private static final class DequeMapping implements IdMapping {
+        private final IdMapping mapping;
+        private final int[] data;
+        private final int offset;
+        private final int length;
+
+        private DequeMapping(IdMapping mapping, IntArrayDeque data) {
+            this.mapping = mapping;
+            if (data.head <= data.tail) {
+                this.data = data.buffer;
+                this.offset = data.head;
+                this.length = data.tail - data.head;
+            } else {
+                this.data = data.toArray();
+                this.offset = 0;
+                this.length = this.data.length;
+            }
+        }
+
+        @Override
+        public int toMappedNodeId(final long nodeId) {
+            return mapping.toMappedNodeId(nodeId);
+        }
+
+        @Override
+        public long toOriginalNodeId(final int nodeId) {
+            assert nodeId < length;
+            return mapping.toOriginalNodeId(data[offset + nodeId]);
+        }
+
+        @Override
+        public boolean contains(final long nodeId) {
+            return true;
+        }
+
+        @Override
+        public long nodeCount() {
+            return length;
+        }
     }
 
 }

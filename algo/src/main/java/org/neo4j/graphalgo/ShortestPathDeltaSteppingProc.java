@@ -7,7 +7,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Direction;
@@ -111,9 +112,10 @@ public class ShortestPathDeltaSteppingProc {
                     .load(configuration.getGraphImpl());
         }
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withTerminationFlag(terminationFlag)
                 .withExecutorService(Pools.DEFAULT);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
@@ -122,12 +124,16 @@ public class ShortestPathDeltaSteppingProc {
             final double[] shortestPaths = algorithm.getShortestPaths();
             algorithm.release();
             graph.release();
-            builder.timeWrite(() -> {
-                new DoubleArrayExporter(api, graph, log,
-                        configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(shortestPaths);
-            });
+            builder.timeWrite(() -> Exporter
+                    .of(api, graph)
+                    .withLog(log)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .build()
+                    .write(
+                            configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
+                            shortestPaths,
+                            DoubleArrayTranslator.INSTANCE
+                    ));
         }
 
         return Stream.of(builder

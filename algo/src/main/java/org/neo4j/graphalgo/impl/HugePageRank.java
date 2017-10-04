@@ -8,14 +8,12 @@ import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.api.HugeNodeIterator;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
-import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.HugePageRankResultExporter;
-import org.neo4j.graphalgo.exporter.PageRankResult;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
 import java.util.ArrayList;
@@ -465,12 +463,9 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 for (ComputeStep step : steps) {
                     results[i++] = step.pageRank;
                 }
-                return new PartitionedDoubleArrayResult(
-                        idMapping,
-                        results,
-                        firstStep.starts);
+                return new PartitionedDoubleArrayResult(results, firstStep.starts);
             } else {
-                return new DoubleArrayResult(idMapping, firstStep.pageRank);
+                return new DoubleArrayResult(firstStep.pageRank);
             }
         }
 
@@ -654,74 +649,53 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
     }
 
-    private static abstract class HugeResult implements PageRankResult {
-        private final HugeIdMapping idMapping;
+    private static final class PartitionedDoubleArrayResult implements PageRankResult, PropertyTranslator.OfDouble<double[][]> {
+        private final double[][] partitions;
+        private final long[] starts;
 
-        protected HugeResult(HugeIdMapping idMapping) {
-            this.idMapping = idMapping;
+        private PartitionedDoubleArrayResult(
+                double[][] partitions,
+                long[] starts) {
+            this.partitions = partitions;
+            this.starts = starts;
+        }
+
+        @Override
+        public void export(final String propertyName, final Exporter exporter) {
+            exporter.write(propertyName, partitions, this);
+        }
+
+        @Override
+        public double toDouble(final double[][] data, final long nodeId) {
+            int idx = binaryLookup(nodeId, starts);
+            return data[idx][(int) (nodeId - starts[idx])];
+        }
+
+        @Override
+        public double score(final long nodeId) {
+            return toDouble(partitions, nodeId);
         }
 
         @Override
         public double score(final int nodeId) {
             return score((long) nodeId);
         }
-
-        @Override
-        public final AbstractExporter<PageRankResult> exporter(
-                final GraphDatabaseAPI db,
-                TerminationFlag terminationFlag,
-                final Log log,
-                final String writeProperty,
-                final ExecutorService executorService,
-                final int concurrency) {
-            return new HugePageRankResultExporter(
-                    db,
-                    terminationFlag,
-                    idMapping,
-                    log,
-                    writeProperty,
-                    executorService)
-                    .withConcurrency(concurrency);
-        }
     }
 
-    private static final class PartitionedDoubleArrayResult extends HugeResult {
-        private final double[][] partitions;
-        private final long[] starts;
-
-        private PartitionedDoubleArrayResult(
-                HugeIdMapping idMapping,
-                double[][] partitions,
-                long[] starts) {
-            super(idMapping);
-            this.partitions = partitions;
-            this.starts = starts;
-        }
-
-        @Override
-        public double score(final long nodeId) {
-            int idx = binaryLookup(nodeId, starts);
-            return partitions[idx][(int) (nodeId - starts[idx])];
-        }
-
-        @Override
-        public long size() {
-            long size = 0;
-            for (double[] partition : partitions) {
-                size += partition.length;
-            }
-            return size;
-        }
-    }
-
-    private static final class DoubleArrayResult extends HugeResult {
+    private static final class DoubleArrayResult implements PageRankResult {
         private final double[] result;
 
-        private DoubleArrayResult(
-                HugeIdMapping idMapping,
-                double[] result) {
-            super(idMapping);
+        private DoubleArrayResult(double[] result) {
             this.result = result;
+        }
+
+        @Override
+        public void export(
+                final String propertyName, final Exporter exporter) {
+            exporter.write(
+                    propertyName,
+                    result,
+                    DoubleArrayTranslator.INSTANCE);
         }
 
         @Override
@@ -732,21 +706,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         @Override
         public double score(final int nodeId) {
             return result[nodeId];
-        }
-
-        @Override
-        public long size() {
-            return result.length;
-        }
-
-        @Override
-        public boolean hasFastToDoubleArray() {
-            return true;
-        }
-
-        @Override
-        public double[] toDoubleArray() {
-            return result;
         }
     }
 }

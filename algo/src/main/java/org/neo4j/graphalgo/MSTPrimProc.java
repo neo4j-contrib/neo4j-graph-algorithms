@@ -1,6 +1,9 @@
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.neo4jview.DirectIdMapping;
 import org.neo4j.graphalgo.core.sources.BothRelationshipAdapter;
 import org.neo4j.graphalgo.core.sources.BufferedWeightMap;
 import org.neo4j.graphalgo.core.sources.LazyIdMapper;
@@ -8,12 +11,15 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
-import org.neo4j.graphalgo.exporter.MSTPrimExporter;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.graphalgo.results.MSTPrimResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.helpers.Exceptions;
+import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -103,13 +109,31 @@ public class MSTPrimProc {
             weightMap = null;
             relationshipContainer = null;
             builder.timeWrite(() -> {
-                new MSTPrimExporter(api)
-                        .withIdMapping(idMapper)
-                        .withWriteRelationship(configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT))
-                        .write(minimumSpanningTree);
+                Exporter.of(new DirectIdMapping(1), api)
+                        .withLog(log)
+                        .build()
+                        .writeRelationships(
+                                configuration.get(CONFIG_WRITE_RELATIONSHIP, CONFIG_WRITE_RELATIONSHIP_DEFAULT),
+                                (ops, typeId) -> minimumSpanningTree.forEachBFS(writeBack((int) typeId, idMapper, ops))
+                        );
             });
         }
 
         return Stream.of(builder.build());
+    }
+
+    private static RelationshipConsumer writeBack(int typeId, IdMapping mapping, DataWriteOperations ops) {
+        return (source, target, rid) -> {
+            try {
+                ops.relationshipCreate(
+                        typeId,
+                        mapping.toOriginalNodeId(source),
+                        mapping.toOriginalNodeId(target)
+                );
+            } catch (KernelException e) {
+                throw Exceptions.launderedException(e);
+            }
+            return true;
+        };
     }
 }

@@ -7,15 +7,12 @@ import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
-import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.PageRankResult;
-import org.neo4j.graphalgo.exporter.PageRankResultExporter;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +78,6 @@ import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     private final ComputeSteps computeSteps;
-    private final IdMapping idMapping;
 
     /**
      * Forces sequential use. If you want parallelism, prefer
@@ -118,7 +114,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             RelationshipIterator relationshipIterator,
             Degrees degrees,
             double dampingFactor) {
-        this.idMapping = idMapping;
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
             partitions = partitionGraph(
@@ -317,7 +312,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         PageRankResult getPageRank() {
             ComputeStep firstStep = steps.get(0);
             if (steps.size() == 1) {
-                return new PrimitiveDoubleArrayResult(idMapping, firstStep.pageRank);
+                return new PrimitiveDoubleArrayResult(firstStep.pageRank);
             }
             double[][] results = new double[steps.size()][];
             Iterator<ComputeStep> iterator = steps.iterator();
@@ -325,11 +320,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             while (iterator.hasNext()) {
                 results[i++] = iterator.next().pageRank;
             }
-            return new PartitionedPrimitiveDoubleArrayResult(
-                    idMapping,
-                    results,
-                    firstStep.starts
-            );
+            return new PartitionedPrimitiveDoubleArrayResult(results, firstStep.starts);
         }
 
         private void run(int iterations) {
@@ -509,48 +500,32 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     }
 
-    private static abstract class DoubleArrayResult implements PageRankResult {
-
-        private final IdMapping idMapping;
-
-        protected DoubleArrayResult(IdMapping idMapping) {
-            this.idMapping = idMapping;
-        }
-
-        @Override
-        public final double score(final long nodeId) {
-            return score((int) nodeId);
-        }
-
-        @Override
-        public final AbstractExporter<PageRankResult> exporter(
-                final GraphDatabaseAPI db,
-                TerminationFlag terminationFlag,
-                final Log log,
-                final String writeProperty,
-                final ExecutorService executorService,
-                final int concurrency) {
-            return new PageRankResultExporter(
-                    db,
-                    idMapping,
-                    log,
-                    writeProperty,
-                    executorService)
-                    .withConcurrency(concurrency);
-        }
-    }
-
-    private static final class PartitionedPrimitiveDoubleArrayResult extends DoubleArrayResult {
+    private static final class PartitionedPrimitiveDoubleArrayResult implements PageRankResult, PropertyTranslator.OfDouble<double[][]> {
         private final double[][] partitions;
         private final int[] starts;
 
         private PartitionedPrimitiveDoubleArrayResult(
-                IdMapping idMapping,
                 double[][] partitions,
                 int[] starts) {
-            super(idMapping);
             this.partitions = partitions;
             this.starts = starts;
+        }
+
+        @Override
+        public void export(
+                final String propertyName,
+                final Exporter exporter) {
+            exporter.write(
+                    propertyName,
+                    partitions,
+                    this
+            );
+        }
+
+        @Override
+        public double toDouble(final double[][] data, final long nodeId) {
+            int idx = binaryLookup((int) nodeId, starts);
+            return data[idx][(int) (nodeId - starts[idx])];
         }
 
         @Override
@@ -560,22 +535,16 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         }
 
         @Override
-        public long size() {
-            long size = 0;
-            for (double[] partition : partitions) {
-                size += partition.length;
-            }
-            return size;
+        public double score(final long nodeId) {
+            return toDouble(partitions, nodeId);
         }
     }
 
-    private static final class PrimitiveDoubleArrayResult extends DoubleArrayResult {
+    private static final class PrimitiveDoubleArrayResult implements PageRankResult {
         private final double[] result;
 
-        private PrimitiveDoubleArrayResult(
-                IdMapping idMapping,
-                double[] result) {
-            super(idMapping);
+        private PrimitiveDoubleArrayResult(double[] result) {
+            super();
             this.result = result;
         }
 
@@ -585,18 +554,15 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         }
 
         @Override
-        public long size() {
-            return result.length;
+        public double score(final long nodeId) {
+            return score((int) nodeId);
         }
 
         @Override
-        public boolean hasFastToDoubleArray() {
-            return true;
-        }
-
-        @Override
-        public double[] toDoubleArray() {
-            return result;
+        public void export(
+                final String propertyName,
+                final Exporter exporter) {
+            exporter.write(propertyName, result, DoubleArrayTranslator.INSTANCE);
         }
     }
 }

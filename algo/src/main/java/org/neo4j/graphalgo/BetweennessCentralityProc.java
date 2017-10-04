@@ -4,10 +4,10 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
-import org.neo4j.graphalgo.exporter.AtomicBigDoubleArrayExporter;
+import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.*;
-import org.neo4j.graphalgo.exporter.AtomicDoubleArrayExporter;
-import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -133,13 +133,14 @@ public class BetweennessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final BetweennessCentralitySuccessorBrandes bc = new BetweennessCentralitySuccessorBrandes(
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT)
                 .withDirection(Direction.OUTGOING)
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+                .withTerminationFlag(terminationFlag);
 
         builder.timeEval(() -> {
             bc.compute();
@@ -153,12 +154,17 @@ public class BetweennessCentralityProc {
         graph.release();
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> {
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(centrality);
-
-            });
+            final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
+            builder.timeWrite(() -> Exporter.of(api, graph)
+                    .withLog(log)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .build()
+                    .write(
+                            writeProperty,
+                            centrality,
+                            AtomicDoubleArrayTranslator.INSTANCE
+                    )
+            );
         }
 
         return Stream.of(builder.build());
@@ -202,8 +208,9 @@ public class BetweennessCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withTerminationFlag(terminationFlag)
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(sequential)"))
                 .withDirection(configuration.getDirection(Direction.OUTGOING));
 
@@ -219,11 +226,17 @@ public class BetweennessCentralityProc {
         graph.release();
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> {
-                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(centrality);
-            });
+            final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
+            builder.timeWrite(() -> Exporter.of(api, graph)
+                    .withLog(log)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .build()
+                    .write(
+                            writeProperty,
+                            centrality,
+                            DoubleArrayTranslator.INSTANCE
+                    )
+            );
         }
 
         return Stream.of(builder.build());
@@ -250,13 +263,14 @@ public class BetweennessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final ParallelBetweennessCentrality bc = new ParallelBetweennessCentrality(
                 graph,
                 configuration.getNumber("scaleFactor", 100_000).doubleValue(),
                 Pools.DEFAULT,
                 configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .withTerminationFlag(terminationFlag)
                 .withDirection(configuration.getDirection(Direction.OUTGOING));
 
         builder.timeEval(() -> {
@@ -266,16 +280,19 @@ public class BetweennessCentralityProc {
             }
         });
 
+        graph.release();
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
                 final AtomicDoubleArray centrality = bc.getCentrality();
-                bc.release();
-                graph.release();
-                new AtomicDoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(centrality);
+                final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
+                Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build()
+                        .write(writeProperty, centrality, AtomicDoubleArrayTranslator.INSTANCE);
             });
         }
+        bc.release();
 
         return Stream.of(builder.build());
     }

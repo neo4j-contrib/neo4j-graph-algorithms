@@ -68,7 +68,7 @@ public final class GraphDimensions extends StatementTask<GraphDimensions, Runtim
     }
 
     @Override
-    protected GraphDimensions runWithStatement(final Statement statement) throws RuntimeException {
+    public GraphDimensions apply(final Statement statement) throws RuntimeException {
         final ReadOperations readOp = statement.readOperations();
         labelId = setup.loadAnyLabel()
                 ? ReadOperations.ANY_LABEL

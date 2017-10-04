@@ -26,7 +26,7 @@ public final class NodeImporter extends StatementTask<IdMap, EntityNotFoundExcep
     }
 
     @Override
-    protected IdMap runWithStatement(final Statement statement) throws
+    public IdMap apply(final Statement statement) throws
             EntityNotFoundException {
         final IdMap mapping = new IdMap(nodeCount);
         final ReadOperations readOp = statement.readOperations();

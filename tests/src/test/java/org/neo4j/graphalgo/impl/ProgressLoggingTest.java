@@ -8,27 +8,24 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.exporter.IntArrayExporter;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.FormattedLog;
 import org.neo4j.logging.Level;
+import org.neo4j.logging.Log;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.function.Supplier;
 
 import static org.junit.Assert.assertTrue;
 
@@ -95,11 +92,11 @@ public class ProgressLoggingTest {
     @Test
     public void testLoad() throws Exception {
 
-        final StringBuffer buffer = new StringBuffer();
+        final StringWriter buffer = new StringWriter();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
             graph = new GraphLoader(db)
-                    .withLog(new TestLogger(buffer))
+                    .withLog(testLogger(buffer))
                     .withExecutorService(Pools.DEFAULT)
                     .withLabel(LABEL)
                     .withRelationshipType(RELATIONSHIP)
@@ -118,54 +115,32 @@ public class ProgressLoggingTest {
     @Test
     public void testWrite() throws Exception {
 
-        final StringBuffer buffer = new StringBuffer();
+        final StringWriter buffer = new StringWriter();
 
         final int[] ints = new int[(int) graph.nodeCount()];
         Arrays.fill(ints, -1);
 
-        new IntArrayExporter(db, graph, new TestLogger(buffer), "test", Pools.DEFAULT)
-                .write(ints);
+        Exporter.of(db, graph)
+                .withLog(testLogger(buffer))
+                .build()
+                .write(
+                        "test",
+                        ints,
+                        IntArrayTranslator.INSTANCE
+                );
 
         System.out.println(buffer);
 
         final String output = buffer.toString();
 
         assertTrue(output.length() > 0);
-        assertTrue(output.contains(ParallelExporter.TASK_EXPORT));
+        assertTrue(output.contains(Exporter.TASK_EXPORT));
     }
 
-
-    public static class TestLogger extends FormattedLog {
-
-        private static class StreamBuffer extends OutputStream {
-
-            private final StringBuffer buffer;
-
-            private StreamBuffer(StringBuffer buffer) {
-                this.buffer = buffer;
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-                buffer.append((char) b);
-            }
-        }
-
-        public TestLogger(StringBuffer buffer) {
-            this(
-                    Date::new,
-                    () -> new PrintWriter(new StreamBuffer(buffer)),
-                    TimeZone.getDefault(),
-                    new Object(),
-                    "Test",
-                    Level.DEBUG,
-                    true
-            );
-        }
-
-        protected TestLogger(Supplier<Date> currentDateSupplier, Supplier<PrintWriter> writerSupplier, TimeZone timezone, Object maybeLock, String category, Level level, boolean autoFlush) {
-            super(currentDateSupplier, writerSupplier, timezone, maybeLock, category, level, autoFlush);
-        }
+    public static Log testLogger(StringWriter writer) {
+        return FormattedLog
+                .withLogLevel(Level.DEBUG)
+                .withCategory("Test")
+                .toPrintWriter(new PrintWriter(writer));
     }
-
 }

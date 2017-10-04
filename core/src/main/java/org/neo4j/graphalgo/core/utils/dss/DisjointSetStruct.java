@@ -5,9 +5,6 @@ import com.carrotsearch.hppc.IntIntScatterMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.core.utils.AbstractExporter;
-import org.neo4j.kernel.api.properties.DefinedProperty;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -325,34 +322,6 @@ public final class DisjointSetStruct {
             cursor.nodeId = offset;
             cursor.setId = struct.findNoOpt(offset);
             return cursor;
-        }
-    }
-
-    public static class DSSExporter extends AbstractExporter<DisjointSetStruct> {
-
-        private final IdMapping idMapping;
-        private int propertyId;
-
-        public DSSExporter(GraphDatabaseAPI api, IdMapping idMapping, String targetProperty) {
-            super(api);
-            this.idMapping = idMapping;
-            propertyId = getOrCreatePropertyId(targetProperty);
-        }
-
-        @Override
-        public void write(DisjointSetStruct struct) {
-            writeInTransaction(writeOp -> {
-                struct.forEach((nodeId, setId) -> {
-                    try {
-                        writeOp.nodeSetProperty(
-                                idMapping.toOriginalNodeId(nodeId),
-                                DefinedProperty.numberProperty(propertyId, setId));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    return true;
-                });
-            });
         }
     }
 

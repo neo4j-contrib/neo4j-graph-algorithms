@@ -114,7 +114,7 @@ public class GraphView implements Graph {
                 if (relationTypeId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
                     rels = read.nodeGetRelationships(originalNodeId, direction);
                 } else {
-                    rels = read.nodeGetRelationships(originalNodeId, direction, new int[]{relationTypeId});
+                    rels = read.nodeGetRelationships(originalNodeId, direction, new int[] {relationTypeId});
                 }
                 while (rels.hasNext()) {
                     final long relId = rels.next();

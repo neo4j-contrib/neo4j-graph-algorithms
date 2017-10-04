@@ -162,6 +162,6 @@ The new approach allows us to separate different data sets from importing and th
 
 === Data Export
 
-- export is mostly done using the `org.neo4j.graphalgo.core.utils.ParallelExporter`
+- export is mostly done using the `org.neo4j.graphalgo.core.write.Exporter`
 - exports data in batches
 

@@ -2,15 +2,11 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
-import org.neo4j.graphalgo.core.utils.AbstractExporter;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.properties.DefinedProperty;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -189,33 +185,4 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             this.cost = cost;
         }
     }
-
-    public static class SPExporter extends AbstractExporter<IntArrayDeque> {
-
-        private final IdMapping idMapping;
-        private final int propertyId;
-
-        public SPExporter(IdMapping idMapping, GraphDatabaseAPI api, String propertyName) {
-            super(api);
-            this.idMapping = idMapping;
-            propertyId = getOrCreatePropertyId(propertyName);
-        }
-
-        @Override
-        public void write(IntArrayDeque data) {
-            writeInTransaction(writeOp -> {
-                int distance = 0;
-                while (!data.isEmpty()) {
-                    final int node = data.removeFirst();
-                    try {
-                        writeOp.nodeSetProperty(idMapping.toOriginalNodeId(node),
-                                DefinedProperty.numberProperty(propertyId, distance++));
-                    } catch (KernelException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        }
-    }
-
 }

@@ -9,8 +9,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
-import org.neo4j.graphalgo.exporter.PageRankResult;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.impl.PageRankResult;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.PageRankAlgorithm;
 import org.neo4j.graphalgo.results.PageRankScore;
@@ -176,25 +176,12 @@ public final class PageRankProc {
             log.debug("Writing results");
             String propertyName = configuration.getWriteProperty(DEFAULT_SCORE_PROPERTY);
             try (ProgressTimer timer = statsBuilder.timeWrite()) {
-                if (result.hasFastToDoubleArray()) {
-                    new DoubleArrayExporter(
-                            api,
-                            graph,
-                            log,
-                            propertyName,
-                            Pools.DEFAULT)
-                            .withConcurrency(configuration.getConcurrency())
-                            .write(result.toDoubleArray());
-                } else {
-                    result.exporter(
-                            api,
-                            terminationFlag,
-                            log,
-                            propertyName,
-                            Pools.DEFAULT,
-                            configuration.getConcurrency()
-                    ).write(result);
-                }
+                Exporter exporter = Exporter
+                        .of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build();
+                result.export(propertyName, exporter);
             }
             statsBuilder
                     .withWrite(true)
