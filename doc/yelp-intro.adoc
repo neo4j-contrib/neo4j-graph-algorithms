@@ -14,15 +14,24 @@ Check out also https://www.yelp.com/dataset/challenge/winners[past winners and t
 You can   https://www.yelp.com/dataset/download[get the dataset] by filling out their form.
 Download the data in JSON format. 
 We will use https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases[APOC plugin] to help us with importing and batching data in Neo4j.
+
+You will need to add/enable this line in your `$NEO4J_HOME/conf/neo4j.conf`
+----
+apoc.import.file.use_neo4j_config=true
+
+// if you have 3.2.x version you also need to add
+dbms.security.procedures.unrestricted=algo.*,apoc.*
+----
+
 There are 6 JSON files available (https://www.yelp.com/dataset/documentation/json[detailed documentation]). 
 Photos and checkins are not the topic of our analysis, so they will not be imported.
 From the other files we will import a knowledge graph of Yelp's world, that contains data about:
 
  - 156639 businesses
- - 1005693 tips from users about businesses 
- - 4736897 reviews of businesses by users 
- - 9489337 users total 
- - 35444850 friend relationships
+ - 1005693 tips  
+ - 4736897 reviews  
+ - 9489337 users 
+ - 35444850 friendship relations
  
 Depending on your setup import might take some time as _user.json_ contains data about a 10 million person social network of friends.
 While _review.json_ is even bigger in size, it is mostly made up of text representing the actual review, so the import will be faster.
@@ -105,11 +114,9 @@ Nodes in largest WCC : 8938630
 
 Edges in largest WCC : 35420520
 
-Triangle count : 
+Triangle count : 82573393
 
-Average clustering coefficient : 
-
-Graph diameter (longest shortest path): 
+Average clustering coefficient :  0.0523
 
 ==== Local graph statistics:
 
@@ -176,7 +183,7 @@ Most community detection algorithms perform poorly in a complete graph.
 Cosine similarity between pairs of users is saved as a property of relationship and can be used as a weight in graph algorithms.
 Projected graph is modeled _undirected_ as the direction of the relationship have no semantic value.
 
-Projecting a review similarity graph is often used in recommendations. We calculate who are similar users based on review ratings, so we can recommend to a user what similar users liked.
+Projecting a review similarity graph can be used for recommendations. We calculate similar pairs of users based on review ratings, so we can recommend to a user what similar users liked.
 
 .Create a review similarity graph
 [source,cypher]

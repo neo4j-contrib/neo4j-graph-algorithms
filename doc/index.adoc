@@ -64,7 +64,9 @@ include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
 
 include::label-propagation.adoc[leveloffset=2,tags=implementation]
 
-// include::louvain.adoc[leveloffset=2,tags=implementation]
+=== Louvain
+
+include::louvain.adoc[leveloffset=2,tags=implementation]
 
 === Weakly Connected Components
 

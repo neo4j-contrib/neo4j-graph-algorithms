@@ -29,7 +29,7 @@ include::single-shortest-path.adoc[leveloffset=2]
 
 include::label-propagation.adoc[leveloffset=2]
 
-// include::louvain.adoc[leveloffset=2]
+include::louvain.adoc[leveloffset=2]
 
 include::connected-components.adoc[leveloffset=2]
 
