@@ -1,4 +1,4 @@
-= Graph Partitioning: Label Propagation
+= Community detection: Label Propagation
 
 The main idea behind _Label Propagation_  ( LPA ) is to propagate the labels of node throughout the network using some technique and form communities through the process of label propagation itself. 
 The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005). 
