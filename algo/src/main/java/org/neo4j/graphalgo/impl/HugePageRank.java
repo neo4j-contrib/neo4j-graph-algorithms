@@ -213,15 +213,15 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             HugeDegrees degrees) {
         PrimitiveLongIterator nodes = nodeIterator.hugeNodeIterator();
         List<Partition> partitions = new ArrayList<>();
-        long start = 0;
+        long start = 0L;
         while (nodes.hasNext()) {
             Partition partition = new Partition(
                     nodes,
                     degrees,
                     start,
-                    batchSize);
+                    (long) batchSize);
             partitions.add(partition);
-            start += partition.nodeCount;
+            start += ((long) partition.nodeCount);
         }
         return partitions;
     }
@@ -334,7 +334,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         while (memoryUsage > availableBytes) {
             long perThread = estimateMemoryUsagePerThread(nodeCount, concurrency);
             long overflow = memoryUsage - availableBytes;
-            newConcurrency -= (int) Math.ceil(overflow / (double) perThread);
+            newConcurrency -= (int) Math.ceil((double) overflow / (double) perThread);
 
             memoryUsage = memoryUsageFor(newConcurrency, partitions);
         }
@@ -353,7 +353,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     }
 
     private static long estimateMemoryUsagePerThread(long nodeCount, int concurrency) {
-        int nodesPerThread = (int) Math.ceil(nodeCount / (double) concurrency);
+        int nodesPerThread = (int) Math.ceil((double) nodeCount / (double) concurrency);
         long partitions = sizeOfIntArray(nodesPerThread) * (long) concurrency;
         return shallowSizeOfInstance(ComputeStep.class) + partitions;
     }
@@ -361,8 +361,8 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     private static long memoryUsageFor(
             int concurrency,
             List<Partition> partitions) {
-        long perThreadUsage = 0;
-        long sharedUsage = 0;
+        long perThreadUsage = 0L;
+        long sharedUsage = 0L;
         int stepSize = 0;
         int partitionsPerThread = ParallelUtil.threadSize(concurrency + 1, partitions.size());
         Iterator<Partition> parts = partitions.iterator();
@@ -417,14 +417,14 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 PrimitiveLongIterator nodes,
                 HugeDegrees degrees,
                 long startNode,
-                int batchSize) {
-            assert batchSize > 0;
+                long batchSize) {
+            assert batchSize > 0L;
             int nodeCount = 0;
-            long partitionSize = 0;
+            long partitionSize = 0L;
             while (nodes.hasNext() && partitionSize < batchSize && nodeCount < MAX_NODE_COUNT) {
                 long nodeId = nodes.next();
                 ++nodeCount;
-                partitionSize += degrees.degree(nodeId, Direction.OUTGOING);
+                partitionSize += ((long) degrees.degree(nodeId, Direction.OUTGOING));
             }
             this.startNode = startNode;
             this.nodeCount = nodeCount;
@@ -475,8 +475,10 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         }
 
         private void run(int iterations) {
-            final int operations = iterations << 1;
+            final int operations = (iterations << 1) + 1;
             int op = 0;
+            ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+            getProgressLogger().logProgress(++op, operations, tracker);
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
@@ -518,14 +520,15 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         }
     }
 
-    private interface Behavior {
-        void run();
-    }
-
-
     private static final class ComputeStep implements Runnable, HugeRelationshipConsumer {
+        private static final int S_INIT = 0;
+        private static final int S_CALC = 1;
+        private static final int S_SYNC = 2;
+
+        private int state;
 
         private long[] starts;
+        private int[] lengths;
         private final HugeRelationshipIterator relationshipIterator;
         private final HugeDegrees degrees;
         private final AllocationTracker tracker;
@@ -533,19 +536,16 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private final double alpha;
         private final double dampingFactor;
 
-        private final double[] pageRank;
-        private final double[] deltas;
+        private double[] pageRank;
+        private double[] deltas;
         private int[][] nextScores;
         private int[][] prevScores;
 
         private final long startNode;
         private final long endNode;
+        private final int partitionSize;
 
         private int srcRankDelta = 0;
-        private Behavior behavior;
-
-        private Behavior runs = this::runsIteration;
-        private Behavior syncs = this::subsequentSync;
 
         ComputeStep(
                 double dampingFactor,
@@ -559,9 +559,38 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.relationshipIterator = relationshipIterator.concurrentCopy();
             this.degrees = degrees;
             this.tracker = tracker;
+            this.partitionSize = partitionSize;
             this.startNode = startNode;
-            this.endNode = startNode + partitionSize;
-            this.behavior = runs;
+            this.endNode = startNode + (long) partitionSize;
+            state = S_INIT;
+        }
+
+        void setStarts(long[] starts, int[] lengths) {
+            this.starts = starts;
+            this.lengths = lengths;
+        }
+
+        @Override
+        public void run() {
+            if (state == S_CALC) {
+                singleIteration();
+                state = S_SYNC;
+            } else if (state == S_SYNC) {
+                combineScores();
+                state = S_CALC;
+            } else if (state == S_INIT) {
+                initialize();
+                state = S_CALC;
+            }
+        }
+
+        private void initialize() {
+            this.nextScores = new int[starts.length][];
+            Arrays.setAll(nextScores, i -> {
+                int size = lengths[i];
+                tracker.add(sizeOfIntArray(size));
+                return new int[size];
+            });
 
             tracker.add(sizeOfDoubleArray(partitionSize) << 1);
             double[] partitionRank = new double[partitionSize];
@@ -569,26 +598,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
             this.pageRank = partitionRank;
             this.deltas = Arrays.copyOf(partitionRank, partitionSize);
-        }
-
-        void setStarts(long[] starts, int[] lengths) {
-            this.starts = starts;
-            this.nextScores = new int[starts.length][];
-            Arrays.setAll(nextScores, i -> {
-                int size = lengths[i];
-                tracker.add(sizeOfIntArray(size));
-                return new int[size];
-            });
-        }
-
-        @Override
-        public void run() {
-            behavior.run();
-        }
-
-        private void runsIteration() {
-            singleIteration();
-            behavior = syncs;
         }
 
         private void singleIteration() {
@@ -620,11 +629,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         void prepareNextIteration(int[][] prevScores) {
             this.prevScores = prevScores;
-        }
-
-        private void subsequentSync() {
-            combineScores();
-            this.behavior = runs;
         }
 
         private void combineScores() {

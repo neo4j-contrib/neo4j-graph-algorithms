@@ -234,8 +234,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 partitionCount += partition.nodeCount;
             }
 
-            double[] partitionRank = new double[partitionCount];
-            Arrays.fill(partitionRank, 1.0 - dampingFactor);
             starts.add(start);
             lengths.add(partitionCount);
 
@@ -243,7 +241,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                     dampingFactor,
                     relationshipIterator,
                     degrees,
-                    partitionRank,
+                    partitionCount,
                     start
             ));
         }
@@ -335,6 +333,8 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         }
 
         private void run(int iterations) {
+            // initialize data structures
+            ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
@@ -371,68 +371,76 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         }
     }
 
-    private interface Behavior {
-        void run();
-    }
-
-
     private static final class ComputeStep implements Runnable, RelationshipConsumer {
+        private static final int S_INIT = 0;
+        private static final int S_CALC = 1;
+        private static final int S_SYNC = 2;
+
+        private int state;
 
         private int[] starts;
+        private int[] lengths;
         private final RelationshipIterator relationshipIterator;
         private final Degrees degrees;
 
         private final double alpha;
         private final double dampingFactor;
 
-        private final double[] pageRank;
-        private final double[] deltas;
-
+        private double[] pageRank;
+        private double[] deltas;
         private int[][] nextScores;
         private int[][] prevScores;
 
+        private final int partitionSize;
         private final int startNode;
         private final int endNode;
 
         private int srcRankDelta = 0;
 
-        private Behavior behavior;
-
-        private Behavior runs = this::runsIteration;
-        private Behavior syncs = this::subsequentSync;
-
         ComputeStep(
                 double dampingFactor,
                 RelationshipIterator relationshipIterator,
                 Degrees degrees,
-                double[] pageRank,
+                int partitionSize,
                 int startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
             this.relationshipIterator = relationshipIterator;
             this.degrees = degrees;
+            this.partitionSize = partitionSize;
             this.startNode = startNode;
-            this.endNode = startNode + pageRank.length;
-            this.pageRank = pageRank;
-            this.deltas = new double[pageRank.length];
-            Arrays.fill(deltas, alpha);
-            this.behavior = runs;
+            this.endNode = startNode + partitionSize;
+            state = S_INIT;
         }
 
         void setStarts(int starts[], int[] lengths) {
             this.starts = starts;
-            this.nextScores = new int[starts.length][];
-            Arrays.setAll(nextScores, i -> new int[lengths[i]]);
+            this.lengths = lengths;
         }
 
         @Override
         public void run() {
-            behavior.run();
+            if (state == S_CALC) {
+                singleIteration();
+                state = S_SYNC;
+            } else if (state == S_SYNC) {
+                synchronizeScores(combineScores());
+                state = S_CALC;
+            } else if (state == S_INIT) {
+                initialize();
+                state = S_CALC;
+            }
         }
 
-        private void runsIteration() {
-            singleIteration();
-            behavior = syncs;
+        private void initialize() {
+            this.nextScores = new int[starts.length][];
+            Arrays.setAll(nextScores, i -> new int[lengths[i]]);
+
+            double[] partitionRank = new double[partitionSize];
+            Arrays.fill(partitionRank, alpha);
+
+            this.pageRank = partitionRank;
+            this.deltas = Arrays.copyOf(partitionRank, partitionSize);
         }
 
         private void singleIteration() {
@@ -465,11 +473,6 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         void prepareNextIteration(int[][] prevScores) {
             this.prevScores = prevScores;
-        }
-
-        private void subsequentSync() {
-            synchronizeScores(combineScores());
-            this.behavior = runs;
         }
 
         private int[] combineScores() {
