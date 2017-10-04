@@ -18,10 +18,6 @@ public class TriangleExporter extends ParallelExporter<TriangleExporter.Data> {
 
     private int coefficientPropertyId;
 
-    public TriangleExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
-        super(db, idMapping, log, writeProperty);
-    }
-
     public TriangleExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
         super(db, idMapping, log, writeProperty, executorService);
     }
@@ -36,10 +32,17 @@ public class TriangleExporter extends ParallelExporter<TriangleExporter.Data> {
         final long nodeId = idMapping.toOriginalNodeId(offset);
         writeOperations.nodeSetProperty(
                 nodeId,
-                DefinedProperty.longProperty(writePropertyId, data.triangles.get(offset)));
+                DefinedProperty.intProperty(
+                        writePropertyId,
+                        data.triangles.get(offset)
+                ));
         writeOperations.nodeSetProperty(
                 nodeId,
-                DefinedProperty.doubleProperty(coefficientPropertyId, data.clusteringCoefficients[offset]));
+                DefinedProperty.doubleProperty(
+                        coefficientPropertyId,
+                        data.clusteringCoefficients[offset]
+                )
+        );
     }
 
     public void write(AtomicIntegerArray triangles, double[] clusteringCoefficients) {

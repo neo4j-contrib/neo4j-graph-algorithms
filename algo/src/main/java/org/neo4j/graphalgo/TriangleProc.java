@@ -166,11 +166,11 @@ public class TriangleProc {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
                 if (coefficientProperty.isPresent()) {
-                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE), Pools.DEFAULT)
                             .setCoefficientWriteProperty(coefficientProperty.get())
                             .write(triangleCount.getTriangles(), clusteringCoefficients);
                 } else {
-                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE), Pools.DEFAULT)
                             .write(triangleCount.getTriangles());
                 }
 
@@ -225,11 +225,11 @@ public class TriangleProc {
             try (ProgressTimer timer = builder.timeWrite()) {
                 final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
                 if (coefficientProperty.isPresent()) {
-                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                    new TriangleExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE), Pools.DEFAULT)
                             .setCoefficientWriteProperty(coefficientProperty.get())
                             .write(triangleCount.getTriangles(), clusteringCoefficients);
                 } else {
-                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE))
+                    new AtomicIntArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE), Pools.DEFAULT)
                             .write(triangleCount.getTriangles());
                 }
 

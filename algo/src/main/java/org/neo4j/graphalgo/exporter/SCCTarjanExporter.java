@@ -11,7 +11,6 @@ import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 /**
  * @author mknblch
@@ -40,16 +39,19 @@ public class SCCTarjanExporter extends AbstractExporter<ObjectArrayList<IntSet>>
     public void write(ObjectArrayList<IntSet> data) {
         writeInTransaction(write -> {
             for (ObjectCursor<IntSet> oCursor : data) {
-                final DefinedProperty property =
-                        DefinedProperty.intProperty(writePropertyId, set.incrementAndGet());
-                oCursor.value.forEach((Consumer<IntCursor>) iCursor -> {
-                    try {
-                        write.nodeSetProperty(idMapping.toOriginalNodeId(iCursor.value),
+                final DefinedProperty property = DefinedProperty.intProperty(
+                        writePropertyId,
+                        set.incrementAndGet()
+                );
+                try {
+                    for (final IntCursor iCursor : oCursor.value) {
+                        write.nodeSetProperty(
+                                idMapping.toOriginalNodeId(iCursor.value),
                                 property);
-                    } catch (KernelException e) {
-                        throw new RuntimeException(e);
                     }
-                });
+                } catch (KernelException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }

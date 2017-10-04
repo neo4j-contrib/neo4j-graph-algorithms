@@ -45,7 +45,9 @@ public class HugePageRankResultExporter extends HugeParallelExporter<PageRankRes
                 idMapping.toOriginalNodeId(offset),
                 DefinedProperty.doubleProperty(
                         writePropertyId,
-                        data.score(offset)));
+                        data.score(offset)
+                )
+        );
     }
 }
 

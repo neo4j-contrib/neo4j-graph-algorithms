@@ -208,8 +208,13 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                 while (!data.isEmpty()) {
                     final int node = data.removeFirst();
                     try {
-                        writeOp.nodeSetProperty(idMapping.toOriginalNodeId(node),
-                                DefinedProperty.numberProperty(propertyId, distance++));
+                        writeOp.nodeSetProperty(
+                                idMapping.toOriginalNodeId(node),
+                                DefinedProperty.intProperty(
+                                        propertyId,
+                                        distance++
+                                )
+                        );
                     } catch (KernelException e) {
                         throw new RuntimeException(e);
                     }

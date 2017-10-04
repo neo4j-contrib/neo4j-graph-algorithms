@@ -8,7 +8,7 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,20 +38,11 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
     protected final int writePropertyId;
 
 
-    public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty) {
-        super(Objects.requireNonNull(db));
-        this.idMapping = Objects.requireNonNull(idMapping);
-        this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
-        this.executorService = null;
-        nodeCount = Math.toIntExact(idMapping.nodeCount());
-        writePropertyId = getOrCreatePropertyId(writeProperty);
-    }
-
     public ParallelExporter(GraphDatabaseAPI db, IdMapping idMapping, Log log, String writeProperty, ExecutorService executorService) {
         super(Objects.requireNonNull(db));
         this.progressLogger = new ProgressLoggerAdapter(Objects.requireNonNull(log), TASK_EXPORT);
         this.idMapping = Objects.requireNonNull(idMapping);
-        this.executorService = Objects.requireNonNull(executorService);
+        this.executorService = executorService;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
         writePropertyId = getOrCreatePropertyId(writeProperty);
     }
@@ -88,25 +79,26 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
     private void writeParallel(T data) {
         verify();
         final int batchSize = Math.min(MAX_BATCH_SIZE, ParallelUtil.adjustBatchSize(nodeCount, concurrency, MIN_BATCH_SIZE));
-        final ArrayList<Runnable> runnables = new ArrayList<>();
-        for (int i = 0; i < nodeCount; i += batchSize) {
-            final int start = i;
-            final int end = Math.min(i + batchSize, nodeCount);
-            // create exporter runnables
-            runnables.add(() -> {
-                try (Transaction tx = api.beginTx();
-                     Statement statement = bridge.get()) {
-                    DataWriteOperations ops = statement.dataWriteOperations();
-                    for (int j = start; j < end; j++) {
-                        doWrite(ops, data, j);
-                        progressLogger.logProgress(progress.getAndIncrement(), nodeCount - 1);
+        final Collection<Runnable> runnables = LazyBatchCollection.of(
+                nodeCount,
+                batchSize,
+                (start, length) -> () -> {
+                    int s = (int) start;
+                    int end = s + (int) length;
+                    try (Transaction tx = api.beginTx();
+                         Statement statement = bridge.get()) {
+                        DataWriteOperations ops = statement.dataWriteOperations();
+                        for (int j = s; j < end; j++) {
+                            doWrite(ops, data, j);
+                            progressLogger.logProgress(
+                                    progress.getAndIncrement(),
+                                    nodeCount - 1);
+                        }
+                        tx.success();
+                    } catch (KernelException e) {
+                        throw new RuntimeException(e);
                     }
-                    tx.success();
-                } catch (KernelException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
+                });
 
         ParallelUtil.run(runnables, executorService);
     }
@@ -118,5 +110,4 @@ public abstract class ParallelExporter<T> extends AbstractExporter<T> {
     }
 
     protected abstract void doWrite(DataWriteOperations writeOperations, T data, int offset) throws KernelException;
-
 }
