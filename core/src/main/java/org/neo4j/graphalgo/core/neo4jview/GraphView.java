@@ -3,22 +3,20 @@ package org.neo4j.graphalgo.core.neo4jview;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.Kernel;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.NodeItem;
-import org.neo4j.storageengine.api.PropertyItem;
-import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,70 +71,59 @@ public class GraphView implements Graph {
 
     @Override
     public void forEachRelationship(int nodeId, Direction direction, RelationshipConsumer consumer) {
-        final long originalNodeId = toOriginalNodeId(nodeId);
-        forAllRelationships(nodeId, direction, item -> {
-            long relId = RawValues.combineIntInt(
-                    (int) item.startNode(),
-                    (int) item.endNode());
-            consumer.accept(
-                    nodeId,
-                    toMappedNodeId(item.otherNode(originalNodeId)),
-                    relId);
-        });
+        final WeightedRelationshipConsumer asWeighted =
+                (sourceNodeId, targetNodeId, relationId, weight) ->
+                        consumer.accept(sourceNodeId, targetNodeId, relationId);
+        forAllRelationships(nodeId, direction, false, asWeighted);
     }
 
     @Override
     public void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer) {
-        final long originalNodeId = toOriginalNodeId(nodeId);
-        forAllRelationships(nodeId, direction, item -> {
-            long relId = RawValues.combineIntInt(
-                    (int) item.startNode(),
-                    (int) item.endNode());
-            double weight = propertyDefaultWeight;
-            Object value = item.propertyValue(propertyKey);
-            if (value instanceof Number) {
-                weight = ((Number) value).doubleValue();
-            }
-
-            consumer.accept(
-                    nodeId,
-                    toMappedNodeId(item.otherNode(originalNodeId)),
-                    relId,
-                    weight
-            );
-        });
+        forAllRelationships(nodeId, direction, true, consumer);
     }
 
     private void forAllRelationships(
             int nodeId,
             Direction direction,
-            Consumer<Kernel.RelationshipItem> action) {
+            boolean readWeights,
+            WeightedRelationshipConsumer action) {
         final long originalNodeId = toOriginalNodeId(nodeId);
-        org.neo4j.storageengine.api.Direction d = mediate(direction);
-        withinTransaction(read -> {
-            try (Cursor<Kernel.NodeItem> nodes = read.nodeCursor(originalNodeId)) {
-                while (nodes.next()) {
-                    Kernel.NodeItem nodeItem = nodes.get();
-                    try (Cursor<Kernel.RelationshipItem> rels = relationships(d, nodeItem)) {
-                        while (rels.next()) {
-                            Kernel.RelationshipItem item = rels.get();
-                            if (idMapping.contains(item.otherNode(originalNodeId))) {
-                                action.accept(item);
-                            }
+        try {
+            withinTransaction(read -> {
+                final double defaultWeight = this.propertyDefaultWeight;
+                RelationshipVisitor<EntityNotFoundException> visitor = (relationshipId, typeId, startNodeId, endNodeId) -> {
+                    long otherNodeId = startNodeId == originalNodeId ? endNodeId : startNodeId;
+                    if (idMapping.contains(otherNodeId)) {
+                        double weight = defaultWeight;
+                        if (readWeights && read.relationshipHasProperty(relationshipId, propertyKey)) {
+                            Object value = read.relationshipGetProperty(
+                                    relationshipId,
+                                    propertyKey);
+                            weight = RawValues.extractValue(
+                                    value,
+                                    defaultWeight);
                         }
-                    }
-                }
-            }
-        });
-    }
+                        final int otherId = toMappedNodeId(otherNodeId);
 
-    private Cursor<Kernel.RelationshipItem> relationships(
-            final org.neo4j.storageengine.api.Direction d,
-            final Kernel.NodeItem nodeItem) {
-        if (relationTypeId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
-            return nodeItem.relationships(d);
+                        long relId = RawValues.combineIntInt((int) startNodeId, (int) endNodeId);
+                        action.accept(nodeId, otherId, relId, weight);
+                    }
+                };
+
+                final RelationshipIterator rels;
+                if (relationTypeId == StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
+                    rels = read.nodeGetRelationships(originalNodeId, direction);
+                } else {
+                    rels = read.nodeGetRelationships(originalNodeId, direction, new int[]{relationTypeId});
+                }
+                while (rels.hasNext()) {
+                    final long relId = rels.next();
+                    rels.relationshipVisit(relId, visitor);
+                }
+            });
+        } catch (EntityNotFoundException e) {
+            throw Exceptions.launderedException(e);
         }
-        return nodeItem.relationships(d, relationTypeId);
     }
 
     @Override
@@ -147,21 +134,13 @@ public class GraphView implements Graph {
     @Override
     public void forEachNode(IntPredicate consumer) {
         withinTransaction(read -> {
-            if (labelId == StatementConstants.NO_SUCH_LABEL) {
-                try (Cursor<Kernel.NodeItem> nodeItemCursor = read.nodeCursorGetAll()) {
-                    while (nodeItemCursor.next()) {
-                        if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
-                            break;
-                        }
-                    }
-                }
-            } else {
-                try (Cursor<Kernel.NodeItem> nodeItemCursor = read.nodeCursorGetForLabel(labelId)) {
-                    while (nodeItemCursor.next()) {
-                        if (!consumer.test(toMappedNodeId(nodeItemCursor.get().id()))) {
-                            break;
-                        }
-                    }
+            PrimitiveLongIterator nodes = labelId == StatementConstants.NO_SUCH_LABEL
+                    ? read.nodesGetAll()
+                    : read.nodesGetForLabel(labelId);
+            while (nodes.hasNext()) {
+                final long nodeId = nodes.next();
+                if (!consumer.test(toMappedNodeId(nodeId))) {
+                    break;
                 }
             }
         });
@@ -232,33 +211,26 @@ public class GraphView implements Graph {
         }
     }
 
-    private <T> T withinTransactionTyped(Function<Kernel, T> block) {
+    private <T> T withinTransactionTyped(Function<ReadOperations, T> block) {
         try (final Transaction tx = db.beginTx();
              Statement statement = contextBridge.get()) {
-            final T result = block.apply(new Kernel(statement));
+            final T result = block.apply(statement.readOperations());
             tx.success();
             return result;
         }
     }
 
-    private void withinTransaction(Consumer<Kernel> block) {
+    private <E extends Exception> void withinTransaction(CheckedConsumer<ReadOperations, E> block)
+    throws E {
         try (final Transaction tx = db.beginTx();
              Statement statement = contextBridge.get()) {
-            block.accept(new Kernel(statement));
+            block.accept(statement.readOperations());
             tx.success();
         }
     }
 
-    private static org.neo4j.storageengine.api.Direction mediate(Direction direction) {
-        switch (direction) {
-            case INCOMING:
-                return org.neo4j.storageengine.api.Direction.INCOMING;
-            case OUTGOING:
-                return org.neo4j.storageengine.api.Direction.OUTGOING;
-            case BOTH:
-                return org.neo4j.storageengine.api.Direction.BOTH;
-        }
-        throw new IllegalArgumentException("Direction " + direction + " is unknown");
+    private interface CheckedConsumer<T, E extends Exception> {
+        void accept(T t) throws E;
     }
 
 

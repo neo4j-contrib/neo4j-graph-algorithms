@@ -91,6 +91,7 @@ public class ParallelUnionFindBenchmark {
 
     @TearDown
     public void shutdown() throws IOException {
+        graph.release();
         db.shutdown();
         Pools.DEFAULT.shutdownNow();
 
@@ -105,8 +106,9 @@ public class ParallelUnionFindBenchmark {
         final int rIdx;
         try (Transaction tx = db.beginTx();
              Statement stm = bridge.get()) {
-            DataWriteOperations op = stm.dataWriteOperations();
-            rIdx = op.relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
+            rIdx = stm
+                    .tokenWriteOperations()
+                    .relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
             tx.success();
         }
 
@@ -117,7 +119,7 @@ public class ParallelUnionFindBenchmark {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createLine(int size, int rIdx) throws Exception{
+    private static Runnable createLine(int size, int rIdx) throws Exception {
         return () -> {
             try (Transaction tx = db.beginTx();
                  Statement stm = bridge.get()) {

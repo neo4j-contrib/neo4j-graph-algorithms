@@ -16,12 +16,17 @@ public class RawValues {
     /**
      * shifts head into the most significant 4 bytes of the long
      * and places the tail in the least significant bytes
+     *
      * @param head an arbitrary int value
      * @param tail an arbitrary int value
      * @return combination of head and tail
      */
     public static long combineIntInt(int head, int tail) {
-        return ((long) head << 32) | tail & 0xFFFFFFFFL ;
+        return ((long) head << 32) | tail & 0xFFFFFFFFL;
+    }
+
+    public static long combineIntInt(Direction direction, int head, int tail) {
+        return direction == Direction.OUTGOING ? combineIntInt(head, tail) : combineIntInt(tail, head);
     }
 
     public static IdCombiner combiner(Direction direction) {
@@ -30,6 +35,7 @@ public class RawValues {
 
     /**
      * get the head value
+     *
      * @param combinedValue a value built of 2 ints
      * @return the most significant 4 bytes as int
      */
@@ -39,6 +45,7 @@ public class RawValues {
 
     /**
      * get the tail value
+     *
      * @param combinedValue a value built of 2 ints
      * @return the least significant 4 bytes as int
      */
@@ -49,7 +56,7 @@ public class RawValues {
     /**
      * convert property value to double
      *
-     * @param value the value object
+     * @param value                the value object
      * @param propertyDefaultValue default value if property cant be converted
      * @return double representation of value
      */

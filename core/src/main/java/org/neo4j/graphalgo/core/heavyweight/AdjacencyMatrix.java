@@ -1,8 +1,8 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
-import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
@@ -116,8 +116,8 @@ class AdjacencyMatrix {
     public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
         final int degree = outOffsets[sourceNodeId];
         int[] rels = outgoing[sourceNodeId];
-        for (int offset = degree-1; offset >= 0; offset--) {
-            if (rels[offset]==targetNodeId) {
+        for (int offset = degree - 1; offset >= 0; offset--) {
+            if (rels[offset] == targetNodeId) {
                 return true;
             }
         }
@@ -143,8 +143,8 @@ class AdjacencyMatrix {
     public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
         final int degree = inOffsets[sourceNodeId];
         int[] rels = incoming[sourceNodeId];
-        for (int offset = degree-1; offset >= 0; offset--) {
-            if (rels[offset]==targetNodeId) {
+        for (int offset = degree - 1; offset >= 0; offset--) {
+            if (rels[offset] == targetNodeId) {
                 return true;
             }
         }
@@ -153,6 +153,7 @@ class AdjacencyMatrix {
 
     /**
      * get the degree for node / direction
+     *
      * @throws NullPointerException if the direction hasn't been loaded.
      */
     public int degree(int nodeId, Direction direction) {

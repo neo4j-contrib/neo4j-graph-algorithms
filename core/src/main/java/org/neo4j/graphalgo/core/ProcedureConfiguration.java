@@ -3,14 +3,18 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Direction;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Wrapper around configuration options map
@@ -27,6 +31,7 @@ public class ProcedureConfiguration {
 
     /**
      * check if all given keys exist
+     *
      * @param keys one or many keys
      * @return true if key is known, false otherwise
      */
@@ -41,6 +46,7 @@ public class ProcedureConfiguration {
 
     /**
      * override the nodeOrLabelQuery param
+     *
      * @param nodeLabelOrQuery the query or identifier
      * @return self
      */
@@ -51,6 +57,7 @@ public class ProcedureConfiguration {
 
     /**
      * override relationshipOrQuery param
+     *
      * @param relationshipTypeOrQuery the relationshipQuery or Identifier
      * @return self
      */
@@ -60,7 +67,21 @@ public class ProcedureConfiguration {
     }
 
     /**
+     *
+     */
+    public ProcedureConfiguration overrideDirection(String direction) {
+        config.put(ProcedureConstants.DIRECTION, direction);
+        return this;
+    }
+
+    public ProcedureConfiguration overrideDirection(Direction direction) {
+        config.put(ProcedureConstants.DIRECTION, direction.name());
+        return this;
+    }
+
+    /**
      * override property param
+     *
      * @return self
      */
     public ProcedureConfiguration overrideProperty(String weightProperty) {
@@ -70,28 +91,31 @@ public class ProcedureConfiguration {
 
     /**
      * return either the Label or the cypher query for node request
+     *
      * @return the label or query
      */
     public String getNodeLabelOrQuery() {
-        return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
+        return getString(ProcedureConstants.NODE_LABEL_QUERY_PARAM, null);
     }
 
     /**
      * return either the Label or the cypher query for node request
+     *
      * @param defaultValue default value if {@link ProcedureConstants#NODE_LABEL_QUERY_PARAM}
      *                     is not set
      * @return the label or query
      */
     public String getNodeLabelOrQuery(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
+        return getString(ProcedureConstants.NODE_LABEL_QUERY_PARAM, defaultValue);
     }
 
     public String getRelationshipOrQuery() {
-        return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
+        return getString(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, null);
     }
 
     /**
      * return the name of the property to write to
+     *
      * @return property name
      */
     public String getWriteProperty() {
@@ -100,25 +124,28 @@ public class ProcedureConfiguration {
 
     /**
      * return either the name of the property to write to if given or defaultValue
+     *
      * @param defaultValue a default value
      * @return the property name
      */
     public String getWriteProperty(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.WRITE_PROPERTY, defaultValue);
+        return getString(ProcedureConstants.WRITE_PROPERTY, defaultValue);
     }
 
     /**
      * return either the relationship name or a cypher query for requesting the relationships
      * TODO: @mh pls. validate
+     *
      * @param defaultValue a default value
      * @return the relationship name or query
      */
     public String getRelationshipOrQuery(String defaultValue) {
-        return getStringOrNull(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
+        return getString(ProcedureConstants.RELATIONSHIP_QUERY_PARAM, defaultValue);
     }
 
     /**
      * return whether the write-back option has been set
+     *
      * @return true if write is activated, false otherwise
      */
     public boolean isWriteFlag() {
@@ -127,6 +154,7 @@ public class ProcedureConfiguration {
 
     /**
      * TODO
+     *
      * @return
      */
     public boolean isCypherFlag() {
@@ -135,6 +163,7 @@ public class ProcedureConfiguration {
 
     /**
      * flag for requesting additional result stats
+     *
      * @return true if stat flag is activated, false otherwise
      */
     public boolean isStatsFlag() {
@@ -143,6 +172,7 @@ public class ProcedureConfiguration {
 
     /**
      * return whether the write-back option has been set
+     *
      * @param defaultValue a default value
      * @return true if write is activated, false otherwise
      */
@@ -164,7 +194,7 @@ public class ProcedureConfiguration {
      * @return
      */
     public String getProperty() {
-        return getStringOrNull(ProcedureConstants.PROPERTY_PARAM, null);
+        return getString(ProcedureConstants.PROPERTY_PARAM, null);
     }
 
     public double getPropertyDefaultValue(double defaultValue) {
@@ -173,6 +203,7 @@ public class ProcedureConfiguration {
 
     /**
      * return the number of iterations a algorithm has to compute
+     *
      * @param defaultValue a default value
      * @return
      */
@@ -182,6 +213,7 @@ public class ProcedureConfiguration {
 
     /**
      * get the batchSize for parallel evaluation
+     *
      * @return batch size
      */
     public int getBatchSize() {
@@ -194,6 +226,7 @@ public class ProcedureConfiguration {
 
     /**
      * TODO
+     *
      * @return
      */
     public int getConcurrency(int defaultValue) {
@@ -205,15 +238,24 @@ public class ProcedureConfiguration {
     }
 
     public String getDirectionName() {
-        return get(ProcedureConstants.DIRECTION, ProcedureConstants.DIRECTION_DEFAULT);
+        return getDirectionName(ProcedureConstants.DIRECTION_DEFAULT);
+    }
+
+    public String getDirectionName(String defaultDirection) {
+        return get(ProcedureConstants.DIRECTION, defaultDirection);
+    }
+
+    public Direction getDirection(Direction defaultDirection) {
+        return Directions.fromString(getDirectionName(defaultDirection.name()));
     }
 
     /**
      * return the Graph-Implementation Factory class
+     *
      * @return
      */
     public Class<? extends GraphFactory> getGraphImpl() {
-        final String graphImpl = getStringOrNull(
+        final String graphImpl = getString(
                 ProcedureConstants.GRAPH_IMPL_PARAM,
                 ProcedureConstants.DEFAULT_GRAPH_IMPL);
         switch (graphImpl.toLowerCase(Locale.ROOT)) {
@@ -225,6 +267,8 @@ public class ProcedureConfiguration {
                 return LightGraphFactory.class;
             case "kernel":
                 return GraphViewFactory.class;
+            case "huge":
+                return HugeGraphFactory.class;
             default:
                 throw new IllegalArgumentException("Unknown impl: " + graphImpl);
         }
@@ -235,13 +279,20 @@ public class ProcedureConfiguration {
      * if found, the defaultValue if the key is not found or null if
      * the key is found but its value is empty.
      *
-     * @param key configuration key
+     * @param key          configuration key
      * @param defaultValue the default value if key is not found
      * @return the configuration value
      */
-    public String getStringOrNull(String key, String defaultValue) {
+    public String getString(String key, String defaultValue) {
         String value = (String) config.getOrDefault(key, defaultValue);
         return (null == value || "".equals(value)) ? defaultValue : value;
+    }
+
+    public Optional<String> getString(String key) {
+        if (config.containsKey(key)) {
+            return Optional.of((String) get(key));
+        }
+        return Optional.empty();
     }
 
     public Object get(String key) {

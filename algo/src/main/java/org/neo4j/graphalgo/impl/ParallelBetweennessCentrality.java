@@ -37,6 +37,8 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
+    private Direction direction = Direction.OUTGOING;
+    private double divisor = 1.0;
 
     /**
      * constructs a parallel centrality solver
@@ -54,8 +56,15 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
         this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
     }
 
+    public ParallelBetweennessCentrality withDirection(Direction direction) {
+        this.direction = direction;
+        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
+        return this;
+    }
+
     /**
      * compute centrality
+     *
      * @return itself for method chaining
      */
     public ParallelBetweennessCentrality compute() {
@@ -70,6 +79,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
 
     /**
      * get the centrality array
+     *
      * @return array with centrality
      */
     public AtomicDoubleArray getCentrality() {
@@ -77,21 +87,8 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     }
 
     /**
-     * iterate over each result until every node has
-     * been visited or the consumer returns false
-     *
-     * @param consumer the result consumer
-     */
-    public void forEach(BetweennessCentrality.ResultConsumer consumer) {
-        for (int i = graph.nodeCount() - 1; i >= 0; i--) {
-            if (!consumer.consume(graph.toOriginalNodeId(i), centrality.get(i))) {
-                return;
-            }
-        }
-    }
-
-    /**
      * emit the result stream
+     *
      * @return stream if Results
      */
     public Stream<BetweennessCentrality.Result> resultStream() {
@@ -149,9 +146,9 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);
                 while (!queue.isEmpty()) {
-                    int node = queue.removeLast();
+                    int node = queue.removeFirst();
                     stack.push(node);
-                    graph.forEachRelationship(node, Direction.OUTGOING, (source, target, relationId) -> {
+                    graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                         if (distance[target] < 0) {
                             queue.addLast(target);
                             distance[target] = distance[node] + 1;
@@ -168,11 +165,11 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                     int node = stack.pop();
                     paths.forEach(node, v -> {
                         delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
-                        if (node != startNodeId) {
-                            centrality.add(node, delta[node]);
-                        }
                         return true;
                     });
+                    if (node != startNodeId) {
+                        centrality.addCapped(node, delta[node] / divisor);
+                    }
                 }
             }
         }

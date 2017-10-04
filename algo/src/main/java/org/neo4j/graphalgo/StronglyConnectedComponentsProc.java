@@ -13,8 +13,8 @@ import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.exporter.SCCIntArrayExporter;
 import org.neo4j.graphalgo.exporter.SCCTarjanExporter;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
-import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphalgo.results.SCCResult;
+import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -41,7 +41,7 @@ public class StronglyConnectedComponentsProc {
     @Context
     public KernelTransaction transaction;
 
-    // default algo.scc -> tarjan
+    // default algo.scc -> iterative tarjan
     @Procedure(value = "algo.scc", mode = Mode.WRITE)
     @Description("CALL algo.scc(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
@@ -50,11 +50,23 @@ public class StronglyConnectedComponentsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        return sccTarjan(label, relationship, config);
+        return sccIterativeTarjan(label, relationship, config);
+    }
+
+    // default algo.scc -> iter tarjan
+    @Procedure(value = "algo.scc.stream")
+    @Description("CALL algo.scc.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+            "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
+    public Stream<SCCStreamResult> sccDefaultMethodStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        return sccIterativeTarjanStream(label, relationship, config);
     }
 
     // algo.scc.tarjan
-    @Procedure(value = "algo.scc.tarjan", mode = Mode.WRITE)
+    @Procedure(value = "algo.scc.recursive.tarjan", mode = Mode.WRITE)
     @Description("CALL algo.scc.tarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTarjan(
@@ -67,13 +79,12 @@ public class StronglyConnectedComponentsProc {
         SCCResult.Builder builder = SCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
@@ -103,8 +114,8 @@ public class StronglyConnectedComponentsProc {
     }
 
     // algo.scc.tunedTarjan
-    @Procedure(value = "algo.scc.tunedTarjan", mode = Mode.WRITE)
-    @Description("CALL algo.scc.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    @Procedure(value = "algo.scc.recursive.tunedTarjan", mode = Mode.WRITE)
+    @Description("CALL algo.scc.recursive.tunedTarjan(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize")
     public Stream<SCCResult> sccTunedTarjan(
             @Name(value = "label", defaultValue = "") String label,
@@ -116,13 +127,12 @@ public class StronglyConnectedComponentsProc {
         SCCResult.Builder builder = SCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
@@ -149,8 +159,8 @@ public class StronglyConnectedComponentsProc {
     }
 
     // algo.scc.tunedTarjan.stream
-    @Procedure(value = "algo.scc.tunedTarjan.stream", mode = Mode.WRITE)
-    @Description("CALL algo.scc.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
+    @Procedure(value = "algo.scc.recursive.tunedTarjan.stream", mode = Mode.WRITE)
+    @Description("CALL algo.scc.recursive.tunedTarjan.stream(label:String, relationship:String, config:Map<String, Object>) YIELD " +
             "nodeId, partition")
     public Stream<SCCStreamResult> sccTunedTarjanStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -159,13 +169,12 @@ public class StronglyConnectedComponentsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         return new SCCTunedTarjan(graph)
@@ -189,13 +198,12 @@ public class StronglyConnectedComponentsProc {
         SCCResult.Builder builder = SCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
@@ -235,13 +243,12 @@ public class StronglyConnectedComponentsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final SCCIterativeTarjan compute = new SCCIterativeTarjan(graph)
@@ -269,12 +276,11 @@ public class StronglyConnectedComponentsProc {
         SCCResult.Builder builder = SCCResult.builder();
 
         ProgressTimer loadTimer = builder.timeLoad();
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
 
@@ -316,12 +322,11 @@ public class StronglyConnectedComponentsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
@@ -347,12 +352,11 @@ public class StronglyConnectedComponentsProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        Graph graph = new GraphLoader(api)
+        Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
-                .withExecutorService(Pools.DEFAULT)
                 .load(configuration.getGraphImpl());
 
         final ForwardBackwardScc algo = new ForwardBackwardScc(graph, Pools.DEFAULT,

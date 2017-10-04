@@ -10,8 +10,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.graphbuilder.DefaultBuilder;
-import org.neo4j.graphalgo.core.graphbuilder.GraphBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
+import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.BetweennessCentrality;
@@ -101,7 +101,7 @@ public class BetweennessCentralityIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
         graph = null;
     }
 
@@ -127,7 +127,9 @@ public class BetweennessCentralityIntegrationTest {
     public void testParallelBCDirect() throws Exception {
         new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
                 .compute()
-                .forEach(consumer);
+                .resultStream()
+                .forEach(r -> consumer.consume(r.nodeId, r.centrality));
+
         verify(consumer, times(10)).consume(anyLong(), eq(6.0));
         verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
     }
@@ -209,6 +211,22 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
+    public void testParallelBetweennessWriteWithDirection() throws Exception {
+
+        db.execute("CALL algo.betweenness('','', {direction:'<>', concurrency:4, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(35.0, (double) row.getNumber("sumCentrality"), 0.01);
+                    assertEquals(30.0, (double) row.getNumber("maxCentrality"), 0.01);
+                    assertEquals(0.5, (double) row.getNumber("minCentrality"), 0.01);
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
+                    return true;
+                });
+    }
+
+    @Test
     public void testBetweennessWrite() throws Exception {
 
         db.execute("CALL algo.betweenness('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
@@ -217,6 +235,22 @@ public class BetweennessCentralityIntegrationTest {
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.01);
                     assertEquals(25.0, (double) row.getNumber("maxCentrality"), 0.01);
                     assertEquals(6.0, (double) row.getNumber("minCentrality"), 0.01);
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("computeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
+                    return true;
+                });
+    }
+
+    @Test
+    public void testBetweennessWriteWithDirection() throws Exception {
+
+        db.execute("CALL algo.betweenness('','', {direction:'both', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(35.0, (double) row.getNumber("sumCentrality"), 0.01);
+                    assertEquals(30.0, (double) row.getNumber("maxCentrality"), 0.01);
+                    assertEquals(0.5, (double) row.getNumber("minCentrality"), 0.01);
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     assertNotEquals(-1L, row.getNumber("computeMillis"));
                     assertNotEquals(-1L, row.getNumber("nodes"));
@@ -239,4 +273,6 @@ public class BetweennessCentralityIntegrationTest {
                     return true;
                 });
     }
+
+
 }

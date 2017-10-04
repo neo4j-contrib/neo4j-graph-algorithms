@@ -37,9 +37,21 @@ public class ShortestPathProc {
     @Context
     public KernelTransaction transaction;
 
+    /**
+     * single threaded dijkstra impl.
+     * takes a startNode and endNode id and tries to find the best path
+     * supports direction flag in configuration ( see {@link org.neo4j.graphalgo.core.utils.Directions})
+     * default is: BOTH
+     *
+     * @param startNode
+     * @param endNode
+     * @param propertyName
+     * @param config
+     * @return
+     */
     @Procedure("algo.shortestPath.stream")
     @Description("CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
             "YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathDijkstra.Result> dijkstraStream(
             @Name("startNode") Node startNode,
@@ -50,27 +62,28 @@ public class ShortestPathProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Graph graph = new GraphLoader(api)
+        final Direction direction = configuration.getDirection(Direction.BOTH);
+
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getPropertyDefaultValue(1.0))
-                .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
+                .withDirection(direction)
                 .load(configuration.getGraphImpl());
 
         return new ShortestPathDijkstra(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(Dijkstra)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(startNode.getId(), endNode.getId())
+                .compute(startNode.getId(), endNode.getId(), direction)
                 .resultStream();
     }
 
     @Procedure(value = "algo.shortestPath", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp'}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', dirction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) " +
             "YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis")
     public Stream<DijkstraResult> dijkstra(
             @Name("startNode") Node startNode,
@@ -86,27 +99,27 @@ public class ShortestPathProc {
         final Graph graph;
         final ShortestPathDijkstra dijkstra;
 
+        final Direction direction = configuration.getDirection(Direction.BOTH);
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api)
+            graph = new GraphLoader(api, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withOptionalRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getPropertyDefaultValue(1.0))
-                    .withDirection(Direction.OUTGOING)
-                    .withExecutorService(Pools.DEFAULT)
+                    .withDirection(direction)
                     .load(configuration.getGraphImpl());
-        };
+        }
 
         try (ProgressTimer timer = builder.timeEval()) {
             dijkstra = new ShortestPathDijkstra(graph)
                     .withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(Dijkstra)"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .compute(startNode.getId(), endNode.getId());
+                    .compute(startNode.getId(), endNode.getId(), direction);
             builder.withNodeCount(dijkstra.getPathLength())
                     .withTotalCosts(dijkstra.getTotalCost());
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {

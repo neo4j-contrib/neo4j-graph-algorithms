@@ -43,6 +43,7 @@ public class HeavyCypherGraphParallelFactoryTest {
 
         loadAndTestGraph(nodeStatement, relStatement, false);
     }
+
     @Test
     public void testLoadNodesParallelCypher() throws Exception {
         String nodeStatement = "MATCH (n) WITH n SKIP {skip} LIMIT {limit} RETURN id(n) as id";
@@ -100,6 +101,6 @@ public class HeavyCypherGraphParallelFactoryTest {
             });
             return true;
         });
-        assertEquals(9*COUNT/2,total.get());
+        assertEquals(9 * COUNT / 2, total.get());
     }
 }

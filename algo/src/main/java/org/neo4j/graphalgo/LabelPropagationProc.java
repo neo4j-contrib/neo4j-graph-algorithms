@@ -9,8 +9,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.exporter.LabelPropagationExporter;
+import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -66,8 +66,9 @@ public final class LabelPropagationProc {
         final Direction direction = parseDirection(directionName);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final String partitionProperty = configuration.getStringOrNull(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
-        final String weightProperty = configuration.getStringOrNull(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
+        final int concurrency = configuration.getConcurrency();
+        final String partitionProperty = configuration.getString(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
+        final String weightProperty = configuration.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
                 .iterations(iterations)
@@ -80,14 +81,16 @@ public final class LabelPropagationProc {
                 direction,
                 partitionProperty,
                 weightProperty,
+                batchSize,
+                concurrency,
                 stats);
 
-        IntDoubleMap labels = compute(direction, iterations, batchSize, graph, configuration, stats);
+        IntDoubleMap labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
 
         stats.nodes(labels.size());
 
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
-            write(batchSize, partitionProperty, graph, labels, stats, configuration);
+            write(concurrency, partitionProperty, graph, labels, stats);
         }
 
         return Stream.of(stats.build());
@@ -99,10 +102,12 @@ public final class LabelPropagationProc {
             Direction direction,
             String partitionKey,
             String weightKey,
+            int batchSize,
+            int concurrency,
             LabelPropagationStats.Builder stats) {
 
         try (ProgressTimer timer = stats.timeLoad()) {
-            return (HeavyGraph) new GraphLoader(dbAPI)
+            return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
                     .withLog(log)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationshipType)
@@ -110,7 +115,8 @@ public final class LabelPropagationProc {
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
                     .withDirection(direction)
-                    .withExecutorService(Pools.DEFAULT)
+                    .withBatchSize(batchSize)
+                    .withConcurrency(concurrency)
                     .load(HeavyGraphFactory.class);
         }
     }
@@ -119,20 +125,17 @@ public final class LabelPropagationProc {
             Direction direction,
             int iterations,
             int batchSize,
+            int concurrency,
             HeavyGraph graph,
-            ProcedureConfiguration configuration,
             LabelPropagationStats.Builder stats) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
-            final LabelPropagation labelPropagation = new LabelPropagation(graph, pool);
+            batchSize = Math.max(1, batchSize);
+            final LabelPropagation labelPropagation = new LabelPropagation(graph, batchSize, concurrency, pool);
             final IntDoubleMap result = labelPropagation
                     .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .compute(
-                            direction,
-                            iterations,
-                            Math.max(1, batchSize)
-                    );
+                    .compute(direction, iterations);
             labelPropagation.release();
             graph.release();
             return result;
@@ -140,15 +143,15 @@ public final class LabelPropagationProc {
     }
 
     private void write(
-            int batchSize,
+            int concurrency,
             String partitionKey,
             HeavyGraph graph,
             IntDoubleMap labels,
-            LabelPropagationStats.Builder stats, ProcedureConfiguration configuration) {
+            LabelPropagationStats.Builder stats) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
             new LabelPropagationExporter(dbAPI, graph, log, partitionKey, Pools.DEFAULT)
-                    .withConcurrency(configuration.getConcurrency())
+                    .withConcurrency(concurrency)
                     .write(labels);
         }
     }

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core;
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import com.carrotsearch.hppc.LongDoubleMap;
 import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.core.utils.RawValues;
 
 /**
  * single weight cache
@@ -12,17 +13,27 @@ public final class WeightMap implements WeightMapping {
     private final int capacity;
     private LongDoubleMap weights;
     private final double defaultValue;
+    private final int propertyId;
 
-    public WeightMap(final int capacity, double defaultValue) {
+    public WeightMap(
+            int capacity,
+            double defaultValue,
+            int propertyId) {
         this.capacity = capacity;
         this.defaultValue = defaultValue;
-        this.weights = new LongDoubleHashMap(capacity);
+        this.weights = new LongDoubleHashMap();
+        this.propertyId = propertyId;
     }
 
-    public WeightMap(final int capacity, LongDoubleMap weights, double defaultValue) {
+    public WeightMap(
+            int capacity,
+            LongDoubleMap weights,
+            double defaultValue,
+            int propertyId) {
         this.capacity = capacity;
         this.weights = weights;
         this.defaultValue = defaultValue;
+        this.propertyId = propertyId;
     }
 
     /**
@@ -40,32 +51,11 @@ public final class WeightMap implements WeightMapping {
 
     @Override
     public void set(long id, Object value) {
-        final double doubleVal = extractValue(value);
+        final double doubleVal = RawValues.extractValue(value, defaultValue);
         if (doubleVal == defaultValue) {
             return;
         }
         put(id, doubleVal);
-    }
-
-    private double extractValue(Object value) {
-        if (value instanceof Number) {
-            Number number = (Number) value;
-            return number.doubleValue();
-        }
-        if (value instanceof String) {
-            String s = (String) value;
-            if (!s.isEmpty()) {
-                return Double.parseDouble(s);
-            }
-        }
-        if (value instanceof Boolean) {
-            if ((Boolean) value) {
-                return 1d;
-            }
-        }
-        // TODO: arrays
-
-        return defaultValue;
     }
 
     private void put(long key, double value) {
@@ -82,8 +72,12 @@ public final class WeightMap implements WeightMapping {
     /**
      * return primitive map for the weights
      */
-    LongDoubleMap weights() {
+    public LongDoubleMap weights() {
         return weights;
+    }
+
+    public int propertyId() {
+        return propertyId;
     }
 
     @Override

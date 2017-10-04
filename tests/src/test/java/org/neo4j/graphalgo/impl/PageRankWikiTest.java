@@ -9,7 +9,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.leightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
@@ -34,7 +35,8 @@ public final class PageRankWikiTest {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
-                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
     }
 
@@ -111,17 +113,17 @@ public final class PageRankWikiTest {
         final Map<Long, Double> expected = new HashMap<>();
 
         try (Transaction tx = db.beginTx()) {
-            expected.put(db.findNode(label, "name", "a").getId(), 0.304);
-            expected.put(db.findNode(label, "name", "b").getId(), 3.560);
-            expected.put(db.findNode(label, "name", "c").getId(), 3.175);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.362);
-            expected.put(db.findNode(label, "name", "e").getId(), 0.750);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.362);
-            expected.put(db.findNode(label, "name", "g").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "h").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "i").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "j").getId(), 0.150);
-            expected.put(db.findNode(label, "name", "k").getId(), 0.150);
+            expected.put(db.findNode(label, "name", "a").getId(), 0.3040965);
+            expected.put(db.findNode(label, "name", "b").getId(), 3.5658695);
+            expected.put(db.findNode(label, "name", "c").getId(), 3.180981);
+            expected.put(db.findNode(label, "name", "d").getId(), 0.3625935);
+            expected.put(db.findNode(label, "name", "e").getId(), 0.7503465);
+            expected.put(db.findNode(label, "name", "f").getId(), 0.3625935);
+            expected.put(db.findNode(label, "name", "g").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "h").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "i").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "j").getId(), 0.15);
+            expected.put(db.findNode(label, "name", "k").getId(), 0.15);
             tx.close();
         }
 
@@ -130,7 +132,11 @@ public final class PageRankWikiTest {
                 .withRelationshipType("TYPE")
                 .load(graphImpl);
 
-        final double[] ranks = new PageRank(graph, graph, graph, graph, 0.85).compute(40).getPageRank();
+        final double[] ranks = PageRankAlgorithm
+                .of(graph, 0.85)
+                .compute(40)
+                .result()
+                .toDoubleArray();
         System.out.println("ranks = " + Arrays.toString(ranks));
         IntStream.range(0, ranks.length).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
@@ -138,7 +144,7 @@ public final class PageRankWikiTest {
                     "Node#" + nodeId,
                     expected.get(nodeId),
                     ranks[i],
-                    0.001
+                    1e-2
             );
         });
     }

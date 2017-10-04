@@ -8,10 +8,7 @@ import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.legacyindex.AutoIndexingKernelException;
-import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationException;
+import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -20,13 +17,15 @@ import java.util.stream.StreamSupport;
 
 /**
  * Dijkstra single source - single target shortest path algorithm
- *
+ * <p>
  * The algorithm computes a (there might be more then one) shortest path
  * between a given start and target-NodeId. It returns result tuples of
  * [nodeId, distance] of each node in the path.
- *
  */
 public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
+
+    private static final int PATH_END = -1;
+    public static final double NO_PATH_FOUND = -1.0;
 
     private Graph graph;
 
@@ -63,29 +62,39 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * compute shortest path between startNode and goalNode
+     *
      * @return itself
      */
     public ShortestPathDijkstra compute(long startNode, long goalNode) {
+        return compute(startNode, goalNode, Direction.BOTH);
+    }
+
+    public ShortestPathDijkstra compute(long startNode, long goalNode, Direction direction) {
         visited.clear();
         queue.clear();
         int node = graph.toMappedNodeId(startNode);
         goal = graph.toMappedNodeId(goalNode);
-        costs.put(node, 0);
-        queue.add(node, 0);
-        run(goal);
-        int last = goal;
+        costs.put(node, 0.0);
+        queue.add(node, 0.0);
+        run(goal, direction);
         finalPath.clear();
+        totalCost = NO_PATH_FOUND;
+        if (!path.containsKey(goal)) {
+            return this;
+        }
+        int last = goal;
         totalCost = 0.0;
-        while (last != -1) {
+        while (last != PATH_END) {
             finalPath.addFirst(last);
-            last = path.getOrDefault(last, -1);
-            totalCost += costs.getOrDefault(last, 0.0);
+            last = path.getOrDefault(last, PATH_END);
+            totalCost += costs.get(last);
         }
         return this;
     }
 
     /**
      * return the result stream
+     *
      * @return stream of result DTOs
      */
     public Stream<Result> resultStream() {
@@ -99,6 +108,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * get the distance sum of the path
+     *
      * @return sum of distances between start and goal
      */
     public double getTotalCost() {
@@ -107,13 +117,14 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     /**
      * return the number of nodes the path consists of
+     *
      * @return number of nodes in the path
      */
     public int getPathLength() {
         return finalPath.size();
     }
 
-    private void run(int goal) {
+    private void run(int goal, Direction direction) {
         while (!queue.isEmpty() && running()) {
             int node = queue.pop();
             if (node == goal) {
@@ -124,7 +135,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
-                    Direction.OUTGOING, (source, target, relId, weight) -> {
+                    direction, (source, target, relId, weight) -> {
                         updateCosts(source, target, weight + costs);
                         if (!visited.contains(target)) {
                             queue.add(target, 0);
@@ -199,7 +210,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                     try {
                         writeOp.nodeSetProperty(idMapping.toOriginalNodeId(node),
                                 DefinedProperty.numberProperty(propertyId, distance++));
-                    } catch (EntityNotFoundException | ConstraintValidationException | InvalidTransactionTypeKernelException | AutoIndexingKernelException e) {
+                    } catch (KernelException e) {
                         throw new RuntimeException(e);
                     }
                 }

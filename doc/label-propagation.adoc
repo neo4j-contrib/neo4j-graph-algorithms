@@ -1,24 +1,43 @@
 = Graph Partitioning: Label Propagation
 
-_Label Propagation_ algorithm (LPA) is an extremely fast graph partitioning method and is widely used in large scale networks. 
-Graph partitioning ( community detection ) is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
+The main idea behind _Label Propagation_  ( LPA ) is to propagate the labels of node throughout the network using some technique and form communities through the process of label propagation itself. 
+The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005). 
+The intuition of label flooding is that a single label can quickly become dominant in a densely connected group of nodes whereas it has trouble crossing a sparsely connected region. 
+The labels are expected to be trapped inside a densely connected group of nodes.
+Based on the idea of local trapping of labels, the author proposed a local community detection method where a node is initialized with a label and propagates step by step through the neighbours until the end of the community is reached. 
+The end of the community indicates the number of edges proceeding outward from the community and drops below a threshold value. 
+LPA is a method which is effective, simple and near-linear time algorithm. 
+Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
 
 == History, Explanation
 
-Community structure is considered one of the most interesting features in complex networks. 
-Many real-world complex systems exhibit community structure, where individuals with similar properties form a partition (community). 
-The identification of partitions in a network is important for understanding the structure of said network, in a specific perspective. 
-Thus, graph partitioning in complex networks gained immense interest over the last decade. 
-A lot of graph partitioning methods were proposed, and one of them is the label propagation algorithm (LPA).
-The simplicity and time efficiency of the LPA make it a popular graph partitioning method. 
 
+Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in the community detection research. 
+_Label Propagation_ which was first proposed by Raghavan et al. (2007) uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes and each node selects a label from its neighbourhood to adopt it as its label. 
+LPA works as follows: Node x has neighbours and each neighbour carries a label denoting the community to which they belong to. 
+Each node in the network chooses to join the community to which the maximum number of its neighbours belongs to, with ties broken uniformly and randomly. 
+At the beginning, every node is initialized with unique label (called as identifier) and the labels propagate through the network. 
+At every iteration of propagation, each node updates its label based on the labels of its neighbours. 
+As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label. 
+At end of the propagation, most labels disappear and only few labels exist in the network. 
+Label propagation algorithm reaches convergence when each node has the majority label of its neighbours. 
+At the end of the convergence, nodes connected with the same label form a community. 
+According to LPA, communities are defined as nodes having identical labels at convergence. 
+The agreement between the nodes to spread the labels forms the basis for _Label Propagation_ algorithms. 
 
 == When to use it / use-cases
 
-Label propagation is an algorithm for finding communities ( partitions ).
-It is one of the state-of-the-art methods, which estimates labels by propagating label information through a graph.
-Label propagation assumes that nodes connected in a graph should have similar labels.
-Consequently, the label estimation heavily depends on relationships in a graph which represent similarity of each node pair.
+
+Community structure is considered one of the most interesting features in complex networks. 
+Many real-world complex systems exhibit community structure, where individuals with similar properties form a community (partition). 
+The identification of partitions in a network is important for understanding the structure of said network, in a specific perspective. 
+There exist various algorithms that identify community structures in large-scale real-world networks. 
+Many of those algorithms require prior information about the number and size of communities.
+The size of the community is often not predictable beforehand in many complex networks. Particularly, in social networks where the size of the network is huge and heterogeneous in nature, it is impossible to predict about the number of communities initially. 
+Moreover, it is computationally expensive to determine the community size. 
+Hence, algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential. 
+_Label Propagation_ algorithms (LPA) are such type of algorithms that detects community structure that uses network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities. 
+
 
 == Constraints / when not to use it
 
@@ -111,6 +130,10 @@ We support the following versions of the label propagation algorithms:
 * [ ] undirected, weighted 
 
 == References
+
+* http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
+
+* http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf
 
 ifdef::implementation[]
 // tag::implementation[]

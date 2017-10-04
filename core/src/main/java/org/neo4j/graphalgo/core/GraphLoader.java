@@ -3,6 +3,10 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
@@ -16,6 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The GraphLoader provides a fluent interface and default values to configure
@@ -47,9 +52,12 @@ public class GraphLoader {
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
     private double nodePropDefault = 0.0;
-    private int batchSize;
+    private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
+    private int concurrency = Pools.DEFAULT_CONCURRENCY;
     private boolean accumulateWeights;
     private Log log = NullLog.getInstance();
+    private long logMillis = -1;
+    private AllocationTracker tracker = AllocationTracker.EMPTY;
 
     /**
      * Creates a new serial GraphLoader.
@@ -57,11 +65,6 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api) {
         this.api = Objects.requireNonNull(api);
         this.executorService = null;
-    }
-
-    public GraphLoader withLog(Log log) {
-        this.log = log;
-        return this;
     }
 
     /**
@@ -75,7 +78,46 @@ public class GraphLoader {
     }
 
     /**
+     * Use the given {@link Log}instance to log the progress during loading.
+     */
+    public GraphLoader withLog(Log log) {
+        this.log = log;
+        return this;
+    }
+
+    /**
+     * Log progress every {@code interval} time units.
+     * At most 1 message will be logged within this interval, but it is not
+     * guaranteed that a message will be logged at all.
+     * @see #withDefaultLogInterval()
+     */
+    public GraphLoader withLogInterval(long value, TimeUnit unit) {
+        this.logMillis = unit.toMillis(value);
+        return this;
+    }
+
+    /**
+     * Log progress in the default interval specified by {@link ProgressLoggerAdapter}.
+     * @see #withLogInterval(long, TimeUnit)
+     */
+    public GraphLoader withDefaultLogInterval() {
+        this.logMillis = -1;
+        return this;
+    }
+
+    /**
+     * Use the given {@link AllocationTracker} to track memory allocations during loading.
+     * Can be null, in which case no tracking happens. The same effect can be
+     * achieved by using {@link AllocationTracker#EMPTY}.
+     */
+    public GraphLoader withAllocationTracker(AllocationTracker tracker) {
+        this.tracker = tracker;
+        return this;
+    }
+
+    /**
      * set an executor service
+     *
      * @param executorService the executor service
      * @return itself to enable fluent interface
      */
@@ -86,10 +128,35 @@ public class GraphLoader {
 
     /**
      * disable use of executor service
+     *
      * @return itself to enable fluent interface
      */
     public GraphLoader withoutExecutorService() {
         this.executorService = null;
+        return this;
+    }
+
+    /**
+     * change the concurrency level. Negative and zero values are not supported.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withConcurrency(int newConcurrency) {
+        if (newConcurrency <= 0) {
+            throw new IllegalArgumentException("concurrency: " + newConcurrency);
+        }
+        this.concurrency = newConcurrency;
+        return this;
+    }
+
+    /**
+     * change the concurrency level to the default concurrency, which is based
+     * on the numbers of detected processors.
+     *
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDefaultConcurrency() {
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
         return this;
     }
 
@@ -388,9 +455,12 @@ public class GraphLoader {
                 nodeProp,
                 nodePropDefault,
                 executorService,
+                concurrency,
                 batchSize,
                 accumulateWeights,
-                log);
+                log,
+                logMillis,
+                tracker);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -403,6 +473,7 @@ public class GraphLoader {
 
     /**
      * provide statement to load nodes, has to return "id" and optionally "weight" or "value"
+     *
      * @param nodeStatement
      * @return itself to enable fluent interface
      */
@@ -413,6 +484,7 @@ public class GraphLoader {
 
     /**
      * provide statement to load unique relationships, has to return ids of start "source" and end-node "target" and optionally "weight"
+     *
      * @param relationshipStatement
      * @return itself to enable fluent interface
      */
@@ -423,6 +495,7 @@ public class GraphLoader {
 
     /**
      * provide batch size for parallel loading
+     *
      * @param batchSize
      * @return itself to enable fluent interface
      */
@@ -430,6 +503,7 @@ public class GraphLoader {
         this.batchSize = batchSize;
         return this;
     }
+
     /**
      * @param accumulateWeights true if relationship-weights should be accumulated in the loader
      * @return itself to enable fluent interface

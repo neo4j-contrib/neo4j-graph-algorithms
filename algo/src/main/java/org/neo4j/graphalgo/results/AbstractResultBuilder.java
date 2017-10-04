@@ -39,22 +39,22 @@ public abstract class AbstractResultBuilder<R> {
     }
 
     public void timeLoad(Runnable runnable) {
-        try(ProgressTimer timer = timeLoad()) {
+        try (ProgressTimer timer = timeLoad()) {
             runnable.run();
         }
     }
 
     public void timeEval(Runnable runnable) {
-        try(ProgressTimer timer = timeEval()) {
+        try (ProgressTimer timer = timeEval()) {
             runnable.run();
         }
     }
 
     public void timeWrite(Runnable runnable) {
-        try(ProgressTimer timer = timeWrite()) {
+        try (ProgressTimer timer = timeWrite()) {
             runnable.run();
         }
     }
 
-    public abstract R build() ;
+    public abstract R build();
 }

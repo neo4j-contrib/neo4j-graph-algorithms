@@ -14,6 +14,8 @@ Whenever possible we tried to apply these optimizations.
 // todo introduction to graph algorithms, also say something about pregel & parallelization
 // todo sensible ordering
 
+include::triangleCount.adoc[leveloffset=2]
+
 include::pagerank.adoc[leveloffset=2]
 
 include::betweenness-centrality.adoc[leveloffset=2]

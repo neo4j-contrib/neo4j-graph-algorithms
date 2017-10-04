@@ -8,8 +8,8 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
-import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.graphalgo.exporter.MSTPrimExporter;
+import org.neo4j.graphalgo.impl.MSTPrim;
 import org.neo4j.graphalgo.results.MSTPrimResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -62,7 +62,7 @@ public class MSTPrimProc {
 
         int startNodeId = idMapper.toMappedNodeId(startNode.getId());
 
-        try(ProgressTimer timer = builder.timeLoad()) {
+        try (ProgressTimer timer = builder.timeLoad()) {
             weightMap = BufferedWeightMap.importer(api)
                     .withIdMapping(idMapper)
                     .withAnyDirection(true)

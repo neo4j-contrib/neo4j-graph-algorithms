@@ -8,10 +8,10 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
-import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
+import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
+import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -58,13 +58,13 @@ public class UnionFindProc {
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = load(configuration);
-        };
+        }
 
         // evaluation
         final DisjointSetStruct struct;
         try (ProgressTimer timer = builder.timeEval()) {
             struct = evaluate(graph, configuration);
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             // write back
@@ -100,7 +100,7 @@ public class UnionFindProc {
     }
 
     private Graph load(ProcedureConfiguration config) {
-        return new GraphLoader(api)
+        return new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
@@ -108,7 +108,6 @@ public class UnionFindProc {
                         config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
-                .withExecutorService(Pools.DEFAULT)
                 .load(config.getGraphImpl());
     }
 

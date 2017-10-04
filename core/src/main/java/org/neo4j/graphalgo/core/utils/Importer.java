@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphalgo.core.Kernel;
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -14,7 +14,9 @@ import org.neo4j.storageengine.api.NodeItem;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.ObjLongConsumer;
 
 /**
  * The class intends to ease the import of data sources
@@ -47,7 +49,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      */
     protected int labelId = ReadOperations.ANY_LABEL;
     protected int endLabelId = ReadOperations.ANY_LABEL;
-    protected int relationId = -1;
+    protected int[] relationId = null;
     protected int propertyId = StatementConstants.NO_SUCH_PROPERTY_KEY;
 
     /**
@@ -73,7 +75,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
             if (!loadAnyRelationship()) {
                 int relId = readOp.relationshipTypeGetForName(relationship);
                 if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
-                    relationId = relId;
+                    relationId = new int[]{relId};
                 }
             }
             propertyId = loadAnyProperty()
@@ -240,10 +242,10 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      *
      * @param block the consumer
      */
-    protected final void withinTransaction(Consumer<Kernel> block) {
+    protected final void withinTransaction(Consumer<ReadOperations> block) {
         try (Transaction tx = api.beginTx();
              Statement statement = bridge.get()) {
-            block.accept(new Kernel(statement));
+            block.accept(statement.readOperations());
             tx.success();
         }
     }
@@ -253,14 +255,18 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
      *
      * @param consumer nodeItem consumer
      */
-    protected void forEachNodeItem(Consumer<Kernel.NodeItem> consumer) {
+    protected void forEachNodeItem(ObjLongConsumer<ReadOperations> consumer) {
         try (Transaction tx = api.beginTx();
              Statement statement = bridge.get()) {
-            Kernel kernel = new Kernel(statement);
+            final ReadOperations readOp = statement.readOperations();
+            final PrimitiveLongIterator nodes;
             if (labelId == ReadOperations.ANY_LABEL) {
-                kernel.nodeCursorGetAll().forAll(consumer);
+                nodes = readOp.nodesGetAll();
             } else {
-                kernel.nodeCursorGetForLabel(labelId).forAll(consumer);
+                nodes = readOp.nodesGetForLabel(labelId);
+            }
+            while (nodes.hasNext()) {
+                consumer.accept(readOp, nodes.next());
             }
             tx.success();
         }
@@ -289,6 +295,7 @@ public abstract class Importer<T, ME extends Importer<T, ME>> {
 
     /**
      * getThis-trick for method chaining in child classes
+     *
      * @return return self
      */
     protected abstract ME me();

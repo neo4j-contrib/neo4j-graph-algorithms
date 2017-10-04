@@ -41,7 +41,7 @@ public class MSTPrimTest extends Neo4JTestCase {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!=null) db.shutdown();
+        if (db != null) db.shutdown();
     }
 
     @BeforeClass
@@ -151,6 +151,7 @@ public class MSTPrimTest extends Neo4JTestCase {
                 return result;
             }
         }
+
         private ArrayList<Pair> pairs = new ArrayList<>();
 
         @Override
