@@ -11,6 +11,11 @@
 
 include::../readme.adoc[tags=readme,leveloffset=1]
 
+
+== Yelp
+
+include::yelp-intro.adoc[leveloffset=1]
+
 == Overview of Algorithm Procedures
 
 [[table-all]]
