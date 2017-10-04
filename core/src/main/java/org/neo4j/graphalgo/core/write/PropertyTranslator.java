@@ -1,23 +1,21 @@
 package org.neo4j.graphalgo.core.write;
 
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.values.storable.Value;
+import org.neo4j.values.storable.Values;
 
 public interface PropertyTranslator<T> {
 
-    DefinedProperty toProperty(int propertyId, T data, long nodeId);
+    Value toProperty(int propertyId, T data, long nodeId);
 
     interface OfDouble<T> extends PropertyTranslator<T> {
         double toDouble(final T data, final long nodeId);
 
         @Override
-        default DefinedProperty toProperty(
+        default Value toProperty(
                 int propertyId,
                 T data,
                 long nodeId) {
-            return DefinedProperty.doubleProperty(
-                    propertyId,
-                    toDouble(data, nodeId)
-            );
+            return Values.doubleValue(toDouble(data, nodeId));
         }
     }
 
@@ -25,16 +23,13 @@ public interface PropertyTranslator<T> {
         double toDouble(final T data, final long nodeId);
 
         @Override
-        default DefinedProperty toProperty(
+        default Value toProperty(
                 int propertyId,
                 T data,
                 long nodeId) {
             final double value = toDouble(data, nodeId);
             if (value >= 0D) {
-                return DefinedProperty.doubleProperty(
-                        propertyId,
-                        value
-                );
+                return Values.doubleValue(value);
             }
             return null;
         }
@@ -44,15 +39,12 @@ public interface PropertyTranslator<T> {
         int toInt(final T data, final long nodeId);
 
         @Override
-        default DefinedProperty toProperty(
+        default Value toProperty(
                 int propertyId,
                 T data,
                 long nodeId) {
             final int value = toInt(data, nodeId);
-            return DefinedProperty.intProperty(
-                    propertyId,
-                    value
-            );
+            return Values.intValue(value);
         }
     }
 
@@ -60,16 +52,13 @@ public interface PropertyTranslator<T> {
         int toInt(final T data, final long nodeId);
 
         @Override
-        default DefinedProperty toProperty(
+        default Value toProperty(
                 int propertyId,
                 T data,
                 long nodeId) {
             final int value = toInt(data, nodeId);
             if (value >= 0) {
-                return DefinedProperty.intProperty(
-                        propertyId,
-                        value
-                );
+                return Values.intValue(value);
             }
             return null;
         }

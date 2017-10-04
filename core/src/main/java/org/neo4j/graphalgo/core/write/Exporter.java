@@ -14,9 +14,9 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
+import org.neo4j.values.storable.Value;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -287,10 +287,11 @@ public final class Exporter extends StatementApi {
             PropertyTranslator<T> trans,
             DataWriteOperations ops,
             long nodeId) throws KernelException {
-        DefinedProperty prop = trans.toProperty(propertyId, data, nodeId);
+        final Value prop = trans.toProperty(propertyId, data, nodeId);
         if (prop != null) {
             ops.nodeSetProperty(
                     toOriginalId.applyAsLong(nodeId),
+                    propertyId,
                     prop
             );
         }
@@ -306,13 +307,13 @@ public final class Exporter extends StatementApi {
             DataWriteOperations ops,
             long nodeId) throws KernelException {
         final long originalNodeId = toOriginalId.applyAsLong(nodeId);
-        DefinedProperty prop1 = translator1.toProperty(propertyId1, data1, nodeId);
+        Value prop1 = translator1.toProperty(propertyId1, data1, nodeId);
         if (prop1 != null) {
-            ops.nodeSetProperty(originalNodeId, prop1);
+            ops.nodeSetProperty(originalNodeId, propertyId1, prop1);
         }
-        DefinedProperty prop2 = translator2.toProperty(propertyId2, data2, nodeId);
+        Value prop2 = translator2.toProperty(propertyId2, data2, nodeId);
         if (prop2 != null) {
-            ops.nodeSetProperty(originalNodeId, prop2);
+            ops.nodeSetProperty(originalNodeId, propertyId2, prop2);
         }
     }
 

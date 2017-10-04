@@ -19,10 +19,11 @@ import org.neo4j.graphalgo.results.SCCResult;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
-import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
+import org.neo4j.values.storable.IntValue;
+import org.neo4j.values.storable.Values;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -115,10 +116,11 @@ public class StronglyConnectedComponentsProc {
                                 configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                                 propertyId -> (ops, id) -> {
                                     final int setId = (int) (id);
-                                    DefinedProperty property = DefinedProperty.intProperty(propertyId, setId + 1);
+                                    IntValue property = Values.intValue(setId + 1);
                                     for (final IntCursor iCursor : connectedComponents.get(setId)) {
                                         ops.nodeSetProperty(
                                                 graph.toOriginalNodeId(iCursor.value),
+                                                propertyId,
                                                 property);
                                     }
                                 }
