@@ -9,7 +9,8 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.exporter.DisjointSetStructExporter;
+import org.neo4j.graphalgo.core.write.DisjointSetStructTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.GraphUnionFind;
 import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
 import org.neo4j.graphalgo.results.UnionFindResult;
@@ -160,9 +161,14 @@ public class UnionFindProc3 {
 
     private void write(Graph graph, DisjointSetStruct struct, ProcedureConfiguration configuration) {
         log.debug("Writing results");
-        new DisjointSetStructExporter(api, graph, log,
-                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY), Pools.DEFAULT)
-                .withConcurrency(configuration.getConcurrency())
-                .write(struct);
+        Exporter.of(api, graph)
+                .withLog(log)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(), TerminationFlag.wrap(transaction))
+                .build()
+                .write(
+                        configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                        struct,
+                        DisjointSetStructTranslator.INSTANCE
+                );
     }
 }

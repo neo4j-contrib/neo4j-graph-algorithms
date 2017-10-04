@@ -8,14 +8,14 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.utils.ParallelExporter;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.exporter.IntArrayExporter;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.FormattedLog;
 import org.neo4j.logging.Level;
@@ -120,15 +120,21 @@ public class ProgressLoggingTest {
         final int[] ints = new int[(int) graph.nodeCount()];
         Arrays.fill(ints, -1);
 
-        new IntArrayExporter(db, graph, testLogger(buffer), "test", Pools.DEFAULT)
-                .write(ints);
+        Exporter.of(db, graph)
+                .withLog(testLogger(buffer))
+                .build()
+                .write(
+                        "test",
+                        ints,
+                        IntArrayTranslator.INSTANCE
+                );
 
         System.out.println(buffer);
 
         final String output = buffer.toString();
 
         assertTrue(output.length() > 0);
-        assertTrue(output.contains(ParallelExporter.TASK_EXPORT));
+        assertTrue(output.contains(Exporter.TASK_EXPORT));
     }
 
     public static Log testLogger(StringWriter writer) {

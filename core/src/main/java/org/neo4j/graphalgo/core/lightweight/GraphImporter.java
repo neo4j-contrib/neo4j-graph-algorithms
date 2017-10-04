@@ -37,7 +37,7 @@ final class GraphImporter extends StatementTask<LightGraph, EntityNotFoundExcept
     }
 
     @Override
-    protected LightGraph runWithStatement(final Statement statement) throws EntityNotFoundException {
+    public LightGraph apply(final Statement statement) throws EntityNotFoundException {
         long[] inOffsets = null;
         long[] outOffsets = null;
         IntArray inAdjacency = null;

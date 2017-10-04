@@ -79,7 +79,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
     }
 
     @Override
-    protected Void runWithStatement(final Statement statement) throws EntityNotFoundException {
+    public Void apply(final Statement statement) throws EntityNotFoundException {
         final ReadOperations readOp = statement.readOperations();
         final boolean loadIncoming = this.loadIncoming;
         final boolean loadOutgoing = this.loadOutgoing;

@@ -7,8 +7,9 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.*;
-import org.neo4j.graphalgo.exporter.DoubleArrayExporter;
 import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -87,9 +88,10 @@ public class ClosenessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+                .withTerminationFlag(terminationFlag);
 
         builder.timeEval(centrality::compute);
 
@@ -98,11 +100,16 @@ public class ClosenessCentralityProc {
             final double[] centralityResult = centrality.getCentrality();
             centrality.release();
             graph.release();
-            builder.timeWrite(() -> {
-                new DoubleArrayExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .withConcurrency(configuration.getConcurrency())
-                        .write(centralityResult);
-            });
+            final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
+            builder.timeWrite(() -> Exporter.of(api, graph)
+                    .withLog(log)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .build()
+                    .write(
+                            writeProperty,
+                            centralityResult,
+                            DoubleArrayTranslator.INSTANCE)
+            );
         }
 
         return Stream.of(builder.build());

@@ -143,19 +143,17 @@ public final class PageRankTest {
                     .load(graphImpl);
         }
 
-        double[] ranks = PageRankAlgorithm
+        final PageRankResult rankResult = PageRankAlgorithm
                 .of(graph, 0.85)
                 .compute(40)
-                .result()
-                .toDoubleArray();
+                .result();
 
-        System.out.println("ranks = " + Arrays.toString(ranks));
-        IntStream.range(0, ranks.length).forEach(i -> {
+        IntStream.range(0, expected.size()).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
             assertEquals(
                     "Node#" + nodeId,
                     expected.get(nodeId),
-                    ranks[i],
+                    rankResult.score(i),
                     1e-2
             );
         });

@@ -9,7 +9,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.LabelPropagationExporter;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.OptionalIntDoubleMapTranslator;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
@@ -150,9 +151,15 @@ public final class LabelPropagationProc {
             LabelPropagationStats.Builder stats) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
-            new LabelPropagationExporter(dbAPI, graph, log, partitionKey, Pools.DEFAULT)
-                    .withConcurrency(concurrency)
-                    .write(labels);
+            Exporter.of(dbAPI, graph)
+                    .withLog(log)
+                    .parallel(Pools.DEFAULT, concurrency, TerminationFlag.wrap(transaction))
+                    .build()
+                    .write(
+                            partitionKey,
+                            labels,
+                            OptionalIntDoubleMapTranslator.INSTANCE
+                );
         }
     }
 

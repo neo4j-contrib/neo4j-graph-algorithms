@@ -32,7 +32,7 @@ public final class HugeNodeImporter extends StatementTask<HugeIdMap, EntityNotFo
     }
 
     @Override
-    protected HugeIdMap runWithStatement(final Statement statement) throws EntityNotFoundException {
+    public HugeIdMap apply(final Statement statement) throws EntityNotFoundException {
         final HugeIdMap mapping = new HugeIdMap(nodeCount, allNodesCount, tracker);
         final ReadOperations readOp = statement.readOperations();
         final PrimitiveLongIterator nodeIds = labelId == ReadOperations.ANY_LABEL

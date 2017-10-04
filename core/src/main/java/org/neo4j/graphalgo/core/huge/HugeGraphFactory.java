@@ -172,7 +172,7 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         @Override
-        protected Void runWithStatement(final Statement statement) throws EntityNotFoundException {
+        public Void apply(final Statement statement) throws EntityNotFoundException {
             ReadOperations readOp = statement.readOperations();
 
             PrimitiveLongIterator iterator = nodes.iterator();

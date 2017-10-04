@@ -8,7 +8,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.exporter.IntDoubleMapExporter;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.IntDoubleMapTranslator;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
@@ -94,9 +95,10 @@ public class ShortestPathsProc {
                 .load(configuration.getGraphImpl());
         load.stop();
 
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final ShortestPaths algorithm = new ShortestPaths(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+                .withTerminationFlag(terminationFlag);
 
         builder.timeEval(() -> algorithm.compute(startNode.getId()));
 
@@ -105,8 +107,15 @@ public class ShortestPathsProc {
                 final IntDoubleMap shortestPaths = algorithm.getShortestPaths();
                 algorithm.release();
                 graph.release();
-                new IntDoubleMapExporter(api, graph, log, configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY), Pools.DEFAULT)
-                        .write(shortestPaths);
+                Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build()
+                        .write(
+                                configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY),
+                                shortestPaths,
+                                IntDoubleMapTranslator.INSTANCE
+                        );
             });
         }
 

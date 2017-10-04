@@ -3,7 +3,6 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.exporter.PageRankResult;
 
 import java.util.concurrent.ExecutorService;
 
