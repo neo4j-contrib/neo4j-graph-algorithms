@@ -67,7 +67,7 @@ public class ParallelTraverseTest {
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
 
-            nodeCount = graph.nodeCount();
+            nodeCount = (int) graph.nodeCount();
 
             rootNodeId = graph.toMappedNodeId(gridBuilder.getLineNodes()
                     .get(0)

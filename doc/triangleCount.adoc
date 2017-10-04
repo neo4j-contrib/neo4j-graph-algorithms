@@ -85,7 +85,7 @@ YIELD nodeId, triangles
 .returns a stream of triples with nodeIds for each triangle.
 [source,cypher]
 ----
-CALL algo.triangle.stream(label:String, relationship:String, {concurrency:8})
+CALL algo.triangle.stream(label:String, relationship:String, {concurrency:4})
 YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
 ----
 
@@ -112,7 +112,7 @@ YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
 .counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
 [source,cypher]
 ----
-CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:8})
+CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:4})
 YIELD nodeId, triangles - yield nodeId, number of triangles
 ----
 
@@ -139,7 +139,7 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 [source,cypher]
 ----
 CALL algo.triangleCount(label:String, relationship:String, 
-{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) 
+{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) 
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 ----
 

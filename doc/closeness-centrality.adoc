@@ -107,7 +107,8 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality',graph:'heavy'}) 
+CALL algo.closeness(label:String, relationship:String, 
+{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4}) 
 YIELD nodes,loadMillis, computeMillis, writeMillis 
 - calculates closeness centrality and potentially writes back
 ----
@@ -119,6 +120,7 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | write | boolean | true | yes | if result should be written back as node property
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | writeProperty | string | 'centrality' | yes | property name written back to
 | graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
@@ -139,7 +141,8 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node
+CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4}) 
+YIELD nodeId, centrality - yields centrality for each node
 ----
 
 .Parameters
@@ -148,6 +151,7 @@ CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, cent
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
 |===
 
 .Results

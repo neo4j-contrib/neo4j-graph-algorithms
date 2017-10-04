@@ -69,6 +69,7 @@ public final class MultiSourceBFS implements Runnable {
     private final BfsConsumer perNodeAction;
     private final int[] startNodes;
     private int nodeOffset, sourceNodeCount;
+    private int nodeCount;
 
     public MultiSourceBFS(
             IdMapping nodeIds,
@@ -84,8 +85,9 @@ public final class MultiSourceBFS implements Runnable {
         if (this.startNodes != null) {
             Arrays.sort(this.startNodes);
         }
-        this.visits = new VisitLocal(nodeIds.nodeCount());
-        this.nextAndSeens = new NextAndSeenLocal(nodeIds.nodeCount());
+        nodeCount = Math.toIntExact(nodeIds.nodeCount());
+        this.visits = new VisitLocal(nodeCount);
+        this.nextAndSeens = new NextAndSeenLocal(nodeCount);
     }
 
     private MultiSourceBFS(
@@ -212,7 +214,7 @@ public final class MultiSourceBFS implements Runnable {
             return startNodes.length;
         }
         if (sourceNodeCount == 0) {
-            return nodeIds.nodeCount();
+            return nodeCount;
         }
         return sourceNodeCount;
     }
@@ -220,7 +222,7 @@ public final class MultiSourceBFS implements Runnable {
     // lazily creates MS-BFS instances for OMEGA sized source chunks
     private Collection<MultiSourceBFS> allSourceBfss(int threads) {
         if (startNodes == null) {
-            int sourceLength = nodeIds.nodeCount();
+            int sourceLength = nodeCount;
             return new ParallelMultiSources(threads, sourceLength) {
                 @Override
                 MultiSourceBFS next(final int from, final int length) {

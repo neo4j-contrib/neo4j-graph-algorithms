@@ -31,7 +31,7 @@ public class UnionFind extends Algorithm<UnionFind> {
      */
     public UnionFind(IdMapping idMapping, AllRelationshipIterator iterator) {
         this.iterator = iterator;
-        this.nodeCount = idMapping.nodeCount();
+        this.nodeCount = Math.toIntExact(idMapping.nodeCount());
     }
 
     /**

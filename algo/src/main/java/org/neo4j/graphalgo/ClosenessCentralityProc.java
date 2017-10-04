@@ -38,7 +38,7 @@ public class ClosenessCentralityProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.closeness.stream")
-    @Description("CALL algo.closeness.stream(label:String, relationship:String) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.closeness.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<MSClosenessCentrality.Result> closenessStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -63,7 +63,7 @@ public class ClosenessCentralityProc {
     }
 
     @Procedure(value = "algo.closeness", mode = Mode.WRITE)
-    @Description("CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality'}) YIELD " +
+    @Description("CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
     public Stream<ClosenessCentralityProcResult> closeness(
             @Name(value = "label", defaultValue = "") String label,

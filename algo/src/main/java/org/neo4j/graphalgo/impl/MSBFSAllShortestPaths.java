@@ -34,7 +34,7 @@ public class MSBFSAllShortestPaths extends Algorithm<MSBFSAllShortestPaths> {
 
     public MSBFSAllShortestPaths(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?

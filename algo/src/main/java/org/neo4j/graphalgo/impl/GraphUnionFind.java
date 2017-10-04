@@ -29,7 +29,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
 
     public GraphUnionFind(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.dss = new DisjointSetStruct(nodeCount);
     }
 

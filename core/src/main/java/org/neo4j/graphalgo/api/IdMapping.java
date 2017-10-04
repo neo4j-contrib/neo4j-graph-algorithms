@@ -31,8 +31,7 @@ public interface IdMapping {
     boolean contains(long nodeId);
 
     /**
-     * count of nodes
+     * Count of nodes.
      */
-    int nodeCount();
-
+    long nodeCount();
 }

@@ -68,14 +68,14 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     }
 
     @Override
-    public long hugeNodeCount() {
+    public long nodeCount() {
         return nextGraphId;
     }
 
     @Override
     public void forEachNode(LongPredicate consumer) {
-        final long count = hugeNodeCount();
-        for (long i = 0; i < count; i++) {
+        final long count = nodeCount();
+        for (long i = 0L; i < count; i++) {
             if (!consumer.test(i)) {
                 return;
             }
@@ -84,13 +84,13 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
 
     @Override
     public PrimitiveLongIterator hugeNodeIterator() {
-        return new IdIterator(hugeNodeCount());
+        return new IdIterator(nodeCount());
     }
 
     @Override
     public Collection<PrimitiveLongIterable> hugeBatchIterables(int batchSize) {
         return LazyBatchCollection.of(
-                hugeNodeCount(),
+                nodeCount(),
                 batchSize,
                 IdIterable::new);
     }

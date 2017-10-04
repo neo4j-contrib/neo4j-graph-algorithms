@@ -33,7 +33,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             int concurrency,
             ExecutorService executor) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, batchSize);
         this.concurrency = concurrency;
         this.executor = executor;
@@ -57,7 +57,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         for (long i = 1; i < times; i++) {
             ParallelUtil.runWithConcurrency(concurrency, computeSteps, executor);
         }
-        final IntDoubleMap labels = new IntDoubleHashMap(graph.nodeCount());
+        final IntDoubleMap labels = new IntDoubleHashMap(nodeCount);
         for (ComputeStep computeStep : computeSteps) {
             labels.putAll(computeStep.labels);
             computeStep.release();

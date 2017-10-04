@@ -48,7 +48,7 @@ public final class PageRankProc {
 
     @Procedure(value = "algo.pageRank", mode = Mode.WRITE)
     @Description("CALL algo.pageRank(label:String, relationship:String, " +
-            "{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'}) " +
+            "{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank', concurrency:4}) " +
             "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
             " - calculates page rank and potentially writes back")
     public Stream<PageRankScore.Stats> pageRank(
@@ -73,7 +73,7 @@ public final class PageRankProc {
 
     @Procedure(value = "algo.pageRank.stream", mode = Mode.READ)
     @Description("CALL algo.pageRank.stream(label:String, relationship:String, " +
-            "{iterations:20, dampingFactor:0.85}) " +
+            "{iterations:20, dampingFactor:0.85, concurrency:4}) " +
             "YIELD node, score - calculates page rank and streams results")
     public Stream<PageRankScore> pageRankStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -93,14 +93,14 @@ public final class PageRankProc {
 
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-            return LongStream.range(0, hugeGraph.hugeNodeCount())
+            return LongStream.range(0, hugeGraph.nodeCount())
                     .mapToObj(i -> new PageRankScore(
                             api.getNodeById(hugeGraph.toOriginalNodeId(i)),
                             scores.score(i)
                     ));
         }
 
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, Math.toIntExact(graph.nodeCount()))
                 .mapToObj(i -> new PageRankScore(
                         api.getNodeById(graph.toOriginalNodeId(i)),
                         scores.score(i)
