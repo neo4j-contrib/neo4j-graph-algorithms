@@ -1,22 +1,224 @@
-= Graph Partitioning: Louvain
+= Community detection: Louvain
 
-_Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity. 
+Communities are groups of nodes within a network that are more densely connected to one another than to other nodes. 
+Modularity is a metric that quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are compared to how connected they would be, on average, in a suitably defined random network. 
+The _Louvain_ method of community detection is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity. 
+
+The method consists of repeated application of two steps. 
+The first step is a "greedy" assignment of nodes to communities, favoring local optimizations of modularity. 
+The second step is the definition of a new coarse-grained network in terms of the communities found in the first step. 
+These two steps are repeated until no further modularity-increasing reassignments of communities are possible. The _Louvain_ method achieves modularities comparable to pre-existing algorithms, typically in less time, so it enables the study of much larger networks. 
+It also generally reveals a hierarchy of communities at different scales, and this hierarchical perspective can be useful for understanding the global functioning of a network. 
+Meanwhile, there are certain pitfalls to interpreting the community structure uncovered by the Louvain Method; these difficulties are actually shared by all modularity optimization algorithms.[2] 
+
+Link to the https://arxiv.org/pdf/0803.0476.pdf[original paper][1]
 
 == History, Explanation
 
+A fairly common feature of complex networks is that they consist of sets of nodes that interact more with one another than with nodes outside the set. 
+Social networks, for instance, might consist of tightly knit communities of friends with rarer friendship ties between different communities. 
+In protein interaction networks, certain groups of proteins interact with one another more frequently than they do with proteins in other groups. 
+If you map out a network of projects going on in a large company, certain projects will likely have more conceptual overlap and mutual dependency than others.
+
+In 1962, H.A. Simon proposed that this type of community structure might be a defining characteristic of complex systems, or at least those like the protein interaction network, in which many interacting constituent elements adaptively organize to achieve some higher-order function (e.g., the functioning of an organism). 
+His reasoning was that individual actors have a much higher chance of collectively achieving a higher-order function if that function can be iteratively achieved by constructing intermediate stable forms (also called communities or modules) that achieve simpler functions. 
+The first-order intermediate forms would be communities in terms of the original nodes, but then interactions between these first-order communities could generate second-order communities that accomplish somewhat more complicated functions, and so on. 
+In this way, a hierarchical structure can emerge in complex adaptive systems. 
+However, even when there isn't necessarily adaptive pressure towards achieving some higher-order function (as in the case of some social networks), community structure is a common observed feature of complex networks.
+
+At the beginning of the _Louvain Method_, we assign each node to its own community.
+
+In the first stage of the Louvain Method, we iterate through each of the nodes in the network. 
+For each node, we consider the change in modularity if we remove the node from its current community and place it in the community of one of its neighbors. 
+We compute the modularity change for each of the node's neighbors. 
+If none of these modularity changes are positive, we keep the node in its current community. 
+If some of the modularity changes are positive, we move the node into the community for which the modularity change is most positive. Ties can be resolved arbitrarily. 
+We repeat this process for each node until one pass through all nodes yields no community assignment changes.
+
+The second stage in the Louvain Method is to use the communities that were discovered in the community reassignment stage to define a new, coarse-grained network. 
+In this network, the newly discovered communities are the nodes. 
+The edge weight between the nodes representing two communities is just the sum of the edge weights between the constituent, lower-level nodes of each community. 
+The links within each community generate self-loops in the new, coarse-grained network.
+
+
+The rest of the Louvain Method consists of repeated application of stages 1 and 2. 
+By applying stage 1 (the community reassignment phase) to the coarse-grained graph, you find a second tier of communities of communities of nodes. 
+Then, in the next application of stage 2, you define a new coarse-grained graph at this higher-level of the hierarchy. 
+You keep going like this until an application of stage 1 yields no reassignments. 
+At that point, repeated application of stages 1 and 2 will never yield any more modularity-optimizing changes, so the process is complete.[2]
+
 == When to use it / use-cases
+
+One of the applications reported in the original Louvain Method paper was a study of a large Belgian phone call network in which nodes represented customers and weighted links represented the number of phone calls between two customers over a six-month period. 
+The Louvain Method revealed a hierarchy of six levels of communities. 
+At the top level of this hierarchy, the communities representing more than 10,000 customers were strongly segregated by primary language. 
+All except one of these communities had an 85% or greater majority of either French or Dutch speakers. 
+The sole community with a more equitable distribution was positioned at the interface between French and Dutch clusters in the top-level coarse-grained network. 
+
+Since 2008, the Louvain Method has found a wide range of applications in analyzing real-world networks. 
+Several of these can be found on  https://perso.uclouvain.be/vincent.blondel/research/louvain.html[the website of the method]:
+
+- analysis of online social networks like Twitter, LinkedIn, Flickr, Youtube, and LiveJournal
+- analysis of collaboration communities in citation networks
+- analysis of a network of retail transactions
+- study of https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[brain networks] using the Louvain Method [4]
 
 == Constraints / when not to use it
 
+The _Louvain_ Method, and modularity optimization algorithms more generally, have found wide application across many domains. 
+However, fundamental problems with these algorithms have also been identified. 
+
+The _resolution_ limit: 
+
+For larger networks, the Louvain Method doesn't stop with the "intuitive" communities. Instead, there's a second pass through the community modification and coarse-graining stages, in which several of the intuitive communities are merged together. 
+This is unfortunately a general problem with modularity optimization algorithms. 
+They have trouble detecting small communities in large networks. 
+It's a virtue of the Louvain Method that something close to the intuitive community structure is available as an intermediate step in the process.
+
+The _degeneracy_ problem:
+
+Here are typically an exponentially large (in network size) number of community assignments with modularities close to the maximum. 
+This can be a severe problem because, in the presence of a large number of high modularity solutions, it's hard to find the global maximum and difficult to determine if the global maximum is truly more scientifically important than local maxima that achieve similar modularity.
+Good https://arxiv.org/abs/0910.0165[research] showed that the different locally optimal community assignments can have quite different structural properties.[3]
+
 == Algorithm explanation on simple sample graph
 
+image::{img}/louvain.png[]
+
+.Create sample graph
 [source,cypher]
 ----
+CREATE (nAlice:User {id:'Alice'})
+,(nBridget:User {id:'Bridget'})
+,(nCharles:User {id:'Charles'})
+,(nDoug:User {id:'Doug'})
+,(nMark:User {id:'Mark'})
+,(nMichael:User {id:'Michael'})
+CREATE (nAlice)-[:FRIEND]->(nBridget)
+,(nAlice)-[:FRIEND]->(nCharles)
+,(nMark)-[:FRIEND]->(nDoug)
+,(nBridget)-[:FRIEND]->(nMichael)
+,(nCharles)-[:FRIEND]->(nMark)
+,(nAlice)-[:FRIEND]->(nMichael)
+,(nCharles)-[:FRIEND]->(nDoug)
 ----
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.clustering.louvain.stream('User', 'FRIEND', 
+{}) 
+YIELD nodeId, setId
+RETURN nodeId, setId LIMIT 20
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.clustering.louvain('User', 'FRIEND', 
+{write:true, writeProperty:'community'}) 
+YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis 
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | community
+| Alice | 5
+| Bridget | 5
+| Michael | 5
+| Charles | 4
+| Doug | 4
+| Mark | 4 
+|===
 
 == Example Usage
 
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.clustering.louvain(label:String, relationship:String,
+{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) 
+YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'community' | yes | property name written back the id of the community particular node belongs to
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| communityCount | int | number of communities found
+| iterations | int | number of iterations run
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.clustering.louvain.stream(label:String, relationship:String, 
+{weightProperty:'propertyName', defaultValue:1.0, concurrency:4}) 
+YIELD nodeId, setId - yields a setId to each node id
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| defaultValue | float | 1.0 | yes | default value of the weight in case it is missing or invalid
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| setId | int | community id
+|===
+
+== Versions 
+
+* [x] undirected, unweighted
+
+- weightProperty: null
+
+* [x] undirected, weighted 
+
+- weightProperty : 'weight'
+
 == References
+
+* [1] https://arxiv.org/pdf/0803.0476.pdf
+
+* [2] https://www.quora.com/Is-there-a-simple-explanation-of-the-Louvain-Method-of-community-detection 
+
+* [3] https://arxiv.org/abs/0910.0165
+
+* [4] https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/
+
+
+
 
 ifdef::implementation[]
 
