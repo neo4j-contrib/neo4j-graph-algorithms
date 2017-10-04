@@ -97,7 +97,7 @@ public final class DisjointSetStruct {
 
     public Stream<Result> resultStream(IdMapping idMapping) {
 
-        return IntStream.range(IdMapping.START_NODE_ID, idMapping.nodeCount())
+        return IntStream.range(IdMapping.START_NODE_ID, (int) idMapping.nodeCount())
                 .mapToObj(mappedId ->
                         new Result(
                                 idMapping.toOriginalNodeId(mappedId),

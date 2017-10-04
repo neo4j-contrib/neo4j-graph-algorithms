@@ -35,7 +35,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         this.graph = graph;
         this.executorService = executorService;
         this.concurrency = concurrency;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.resultQueue = new LinkedBlockingQueue<>();
         runningThreads = new AtomicInteger();
         visitedNodes = new AtomicInteger();

@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.bench;
 
+import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;

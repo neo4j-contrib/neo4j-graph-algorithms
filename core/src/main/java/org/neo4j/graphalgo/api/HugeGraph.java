@@ -50,11 +50,6 @@ public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator,
     }
 
     @Override
-    default int nodeCount() {
-        return (int) hugeNodeCount();
-    }
-
-    @Override
     default void forEachNode(IntPredicate consumer) {
         forEachNode((LongPredicate) l -> consumer.test((int) l));
     }

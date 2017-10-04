@@ -40,7 +40,7 @@ public class TriangleProc {
     public KernelTransaction transaction;
 
     @Procedure("algo.triangle.stream")
-    @Description("CALL algo.triangle.stream(label, relationship, {concurrency:8}) " +
+    @Description("CALL algo.triangle.stream(label, relationship, {concurrency:4}) " +
             "YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle")
     public Stream<TriangleStream.Result> triangleStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -68,7 +68,7 @@ public class TriangleProc {
     }
 
     @Procedure("algo.triangleCount.stream")
-    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
+    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:4}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCount.Result> triangleCountStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -127,7 +127,7 @@ public class TriangleProc {
 
     @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
     @Description("CALL algo.triangleCount(label, relationship, " +
-            "{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
+            "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCount(
             @Name(value = "label", defaultValue = "") String label,

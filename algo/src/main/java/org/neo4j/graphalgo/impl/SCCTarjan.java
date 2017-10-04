@@ -28,7 +28,7 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
 
     public SCCTarjan(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        nodeCount = Math.toIntExact(graph.nodeCount());
 
         aggregator = new Aggregator(graph,
                 new int[nodeCount],

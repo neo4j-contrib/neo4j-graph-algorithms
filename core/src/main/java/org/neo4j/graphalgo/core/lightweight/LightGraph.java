@@ -43,7 +43,7 @@ public class LightGraph implements Graph {
     }
 
     @Override
-    public int nodeCount() {
+    public long nodeCount() {
         return idMapping.size();
     }
 
@@ -237,6 +237,8 @@ public class LightGraph implements Graph {
         }
 
         weightMapping = null;
+        inAdjacency = null;
+        outAdjacency = null;
         inOffsets = null;
         outOffsets = null;
     }

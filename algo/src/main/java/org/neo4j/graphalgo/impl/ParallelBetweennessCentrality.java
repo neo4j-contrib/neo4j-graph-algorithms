@@ -50,10 +50,10 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      */
     public ParallelBetweennessCentrality(Graph graph, double scaleFactor, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        this.nodeCount = graph.nodeCount();
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.centrality = new AtomicDoubleArray(graph.nodeCount(), scaleFactor);
+        this.centrality = new AtomicDoubleArray(nodeCount, scaleFactor);
     }
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {
@@ -92,7 +92,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      * @return stream if Results
      */
     public Stream<BetweennessCentrality.Result> resultStream() {
-        return IntStream.range(0, graph.nodeCount())
+        return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
                         new BetweennessCentrality.Result(
                                 graph.toOriginalNodeId(nodeId),

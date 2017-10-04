@@ -51,7 +51,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
 
     public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        this.nodeCount = graph.nodeCount();
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         if (concurrency < 1) {
             throw new IllegalArgumentException("concurrency must be >0");

@@ -38,7 +38,7 @@ public class ParallelLocalQueueBFS implements BFS {
 
     public ParallelLocalQueueBFS(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
-        visited = new AtomicBitSet(graph.nodeCount());
+        visited = new AtomicBitSet(Math.toIntExact(graph.nodeCount()));
         this.executorService = executorService;
         this.concurrency = concurrency;
         threads = new AtomicInteger(0);

@@ -173,7 +173,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             IdMapping idMapping,
             NodeIterator nodeIterator,
             Degrees degrees) {
-        int nodeCount = idMapping.nodeCount();
+        int nodeCount = Math.toIntExact(idMapping.nodeCount());
         PrimitiveIntIterator nodes = nodeIterator.nodeIterator();
         List<Partition> partitions = new ArrayList<>();
         int start = 0;
@@ -195,7 +195,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             Degrees degrees) {
         return Collections.singletonList(
                 new Partition(
-                        idMapping.nodeCount(),
+                        Math.toIntExact(idMapping.nodeCount()),
                         null,
                         degrees,
                         0,
@@ -261,7 +261,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     @Override
     public PageRank release() {
-
+        computeSteps.release();
         return this;
     }
 
@@ -297,9 +297,9 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     private final class ComputeSteps {
         private final int concurrency;
-        private final List<ComputeStep> steps;
+        private List<ComputeStep> steps;
         private final ExecutorService pool;
-        private final int[][][] scores;
+        private int[][][] scores;
 
         private ComputeSteps(
                 int concurrency,
@@ -362,6 +362,12 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             for (int j = 0, len = nextScores.length; j < len; j++) {
                 scores[j][idx] = nextScores[j];
             }
+        }
+
+        void release() {
+            steps.clear();
+            steps = null;
+            scores = null;
         }
     }
 
