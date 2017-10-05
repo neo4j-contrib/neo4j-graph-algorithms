@@ -87,16 +87,20 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 
 // tag::coocurence-graph[]
 
-CALL apoc.periodic.iterate("
-MATCH (b1:Business) WHERE size((b1)<-[:REVIEWS]->()) > 10 RETURN b1
-","
-MATCH (b1)<--()<-[:WROTE]-(:User)-[:WROTE]->()-->(b2:Business)
-WHERE id(b1) < id(b2) AND size((b2)<-[:REVIEWS]-()) > 10
+CALL apoc.periodic.iterate('
+MATCH (b1:Business) 
+WHERE size((b1)<-[:REVIEWS]->()) > 10 AND b1.city="Las Vegas" 
+RETURN b1
+','
+MATCH (b1)<-[:REVIEWS]-(r1)
+MATCH (r1)<-[:WROTE]-(u)
+MATCH (u)-[:WROTE]->(r2)
+MATCH (r2)-[:REVIEWS]->(b2)
+WHERE id(b1) < id(b2) AND b2.city="Las Vegas"
 WITH b1, b2, COUNT(*) AS weight where weight > 5
-MERGE (b1)-[cr:COOCURENT_REVIEWS]-(b2)
-SET cr.weight = weight
-",{batchSize: 100, iterateList: true});
-
+MERGE (b1)-[cr:CO_OCCURENT_REVIEWS]-(b2)
+ON CREATE SET cr.weight = weight
+',{batchSize: 1});
 
 // end::coocurence-graph[]
 
