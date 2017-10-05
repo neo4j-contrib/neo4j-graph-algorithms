@@ -69,6 +69,14 @@ public final class IntArray extends PagedDataStructure<int[]> {
         return page[indexInPage] += value;
     }
 
+
+    public void or(long index, int value) {
+        assert index < capacity();
+        final int pageIndex = pageIndex(index);
+        final int indexInPage = indexInPage(index);
+        pages[pageIndex][indexInPage] |= value;
+    }
+
     /**
      * Fill slots between {@code fromIndex} (inclusive) to {@code toIndex} (exclusive) with the value provided by {@code value}.
      * This method does not advance the {@link #size()} or {@link #grow(long)}s the array.
