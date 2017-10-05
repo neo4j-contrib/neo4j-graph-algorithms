@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
+import java.util.Arrays;
 import java.util.function.LongSupplier;
 
 public final class LongArray extends PagedDataStructure<long[]> {
@@ -47,6 +48,19 @@ public final class LongArray extends PagedDataStructure<long[]> {
         return ret;
     }
 
+    public void or(long index, final long value) {
+        assert index < capacity();
+        final int pageIndex = pageIndex(index);
+        final int indexInPage = indexInPage(index);
+        pages[pageIndex][indexInPage] |= value;
+    }
+
+    public void fill(long value) {
+        for (long[] page : pages) {
+            Arrays.fill(page, value);
+        }
+    }
+
     public void fill(
             final long fromIndex,
             final long toIndex,
@@ -71,6 +85,15 @@ public final class LongArray extends PagedDataStructure<long[]> {
         }
     }
 
+    public Cursor newCursor() {
+        return new Cursor(size());
+    }
+
+    public Cursor cursor(long from, Cursor cursor) {
+        cursor.init(from);
+        return cursor;
+    }
+
     private static void fill(long[] array, LongSupplier value) {
         fill(array, 0, array.length, value);
     }
@@ -82,6 +105,56 @@ public final class LongArray extends PagedDataStructure<long[]> {
             LongSupplier value) {
         for (int i = from; i < to; i++) {
             array[i] = value.getAsLong();
+        }
+    }
+
+    public final class Cursor {
+
+        public long[] array;
+        public int offset;
+        public int limit;
+
+        private final long to;
+        private long from;
+        private long size;
+        private int fromPage;
+        private int toPage;
+        private int currentPage;
+
+        private Cursor(final long to) {
+            this.to = to;
+        }
+
+        private void init(long fromIndex) {
+            array = null;
+            from = fromIndex;
+            size = to - fromIndex;
+            fromPage = pageIndex(fromIndex);
+            toPage = pages.length - 1;
+            currentPage = fromPage - 1;
+        }
+
+        public final boolean next() {
+            int current = ++currentPage;
+            if (current == fromPage) {
+                array = pages[current];
+                offset = indexInPage(from);
+                int length = (int) Math.min(pageSize - offset, size);
+                limit = offset + length;
+            } else if (current < toPage) {
+                array = pages[current];
+                offset = 0;
+                limit = offset + pageSize;
+            } else if (current == toPage) {
+                array = pages[current];
+                offset = 0;
+                int length = indexInPage(to - 1) + 1;
+                limit = offset + length;
+            } else {
+                array = null;
+                return false;
+            }
+            return true;
         }
     }
 }
