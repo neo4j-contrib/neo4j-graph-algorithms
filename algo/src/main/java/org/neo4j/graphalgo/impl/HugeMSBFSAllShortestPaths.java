@@ -27,7 +27,7 @@ import java.util.stream.StreamSupport;
  * a blocking queue. The result stream takes elements from the queue while the workers
  * add elements to it.
  */
-public class HugeMSBFSAllShortestPaths extends Algorithm<HugeMSBFSAllShortestPaths> {
+public class HugeMSBFSAllShortestPaths extends MSBFSASPAlgorithm<HugeMSBFSAllShortestPaths> {
 
     private HugeGraph graph;
     private BlockingQueue<Result> resultQueue;
@@ -55,6 +55,7 @@ public class HugeMSBFSAllShortestPaths extends Algorithm<HugeMSBFSAllShortestPat
      *
      * @return the result stream
      */
+    @Override
     public Stream<Result> resultStream() {
         executorService.submit(new ShortestPathTask(concurrency, executorService));
         Iterator<Result> iterator = new AbstractIterator<Result>() {
