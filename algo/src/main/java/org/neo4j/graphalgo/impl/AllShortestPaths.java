@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  * add elements to it. The result stream is limited by N^2. If the stream gets closed
  * prematurely the workers get closed too.
  */
-public class AllShortestPaths extends Algorithm<AllShortestPaths> {
+public class AllShortestPaths extends MSBFSASPAlgorithm<AllShortestPaths> {
 
     private Graph graph;
     private final int nodeCount;
@@ -67,6 +67,7 @@ public class AllShortestPaths extends Algorithm<AllShortestPaths> {
      *
      * @return the result stream
      */
+    @Override
     public Stream<Result> resultStream() {
 
         counter.set(0);
