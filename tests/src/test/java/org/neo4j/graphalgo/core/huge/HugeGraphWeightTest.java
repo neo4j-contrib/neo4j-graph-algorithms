@@ -12,9 +12,9 @@ import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.TokenWriteOperations;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
+import org.neo4j.values.storable.Values;
 
 import static org.junit.Assert.assertEquals;
 
@@ -106,7 +106,7 @@ public final class HugeGraphWeightTest {
         return (source, target) -> {
             int fakeId = ((int) source << 16) | (int) target & 0xFFFF;
             long rel = write.relationshipCreate(type, source, target);
-            write.relationshipSetProperty(rel, DefinedProperty.intProperty(key, fakeId));
+            write.relationshipSetProperty(rel, key, Values.intValue(fakeId));
         };
     }
 }
