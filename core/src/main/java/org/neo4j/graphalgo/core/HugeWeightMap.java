@@ -33,11 +33,7 @@ public final class HugeWeightMap implements HugeWeightMapping {
         if (doubleVal == defaultValue) {
             return;
         }
-        put(key1, key2, doubleVal);
-    }
-
-    private void put(long key1, long key2, double value) {
-        weights.put(key1, key2, value);
+        weights.put(key1, key2, doubleVal);
     }
 
     @Override
