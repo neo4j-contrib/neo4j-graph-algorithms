@@ -2,11 +2,14 @@ package org.neo4j.graphalgo.impl.msbfs;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.neo4jview.DirectIdMapping;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Pair;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -208,6 +211,49 @@ public final class MultiSourceBFSTest {
                     // run sequentially to guarantee order
                     msbfs.run(1, null);
                 });
+    }
+
+    @Test
+    public void testLarger() throws Exception {
+        final int nodeCount = 65536;
+        final int sourceCount = 1024;
+
+        RelationshipIterator iter = (nodeId, direction, consumer) -> {
+            for (int i = 0; i < nodeCount; i++) {
+                if (i != nodeId) {
+                    consumer.accept(nodeId, i, -1L);
+                }
+            }
+        };
+
+        final int[] sources = new int[sourceCount];
+        Arrays.setAll(sources, i -> i);
+        final int[][] seen = new int[nodeCount][sourceCount];
+        MultiSourceBFS msbfs = new MultiSourceBFS(
+                new DirectIdMapping(nodeCount),
+                iter,
+                Direction.OUTGOING,
+                (nodeId, depth, sourceNodeIds) -> {
+                    assertEquals(1, depth);
+                    synchronized (seen) {
+                        final int[] nodeSeen = seen[nodeId];
+                        while (sourceNodeIds.hasNext()) {
+                            nodeSeen[sourceNodeIds.next()] += 1;
+                        }
+                    }
+                },
+                sources);
+        msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+
+        for (int i = 0; i < seen.length; i++) {
+            final int[] nodeSeen = seen[i];
+            final int[] expected = new int[sourceCount];
+            Arrays.fill(expected, 1);
+            if (i < sourceCount) {
+                expected[i] = 0;
+            }
+            assertArrayEquals(expected, nodeSeen);
+        }
     }
 
     private static void withGraph(

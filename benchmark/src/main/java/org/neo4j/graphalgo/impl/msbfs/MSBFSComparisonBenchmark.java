@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -24,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class MSBFSBenchmark {
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+public class MSBFSComparisonBenchmark {
 
     @Param({
             "_1024_32",
@@ -34,9 +35,9 @@ public class MSBFSBenchmark {
             "_1024",
             "_8192_32",
             "_8192_128",
-            "_8192_1024",
-            "_8192_8192",
-            "_8192",
+//            "_8192_1024",
+//            "_8192_8192",
+//            "_8192",
 //            "_16384_32",
 //            "_16384_128",
 //            "_16384_1024",
@@ -52,13 +53,29 @@ public class MSBFSBenchmark {
     }
 
     @Benchmark
-    public MultiSourceBFS measure(Blackhole bh) throws Throwable {
+    public MsBFSAlgo _01_normal(Blackhole bh) throws Throwable {
         MultiSourceBFS msbfs = new MultiSourceBFS(
                 source.nodes,
                 source.rels,
                 Direction.OUTGOING,
                 consume(bh),
                 source.sources);
+        return measure(msbfs);
+    }
+
+    @Benchmark
+    public MsBFSAlgo _02_huge(Blackhole bh) throws Throwable {
+        HugeMultiSourceBFS msbfs = new HugeMultiSourceBFS(
+                source.hugeNodes,
+                source.hugeRels,
+                Direction.OUTGOING,
+                hugeConsume(bh),
+                AllocationTracker.EMPTY,
+                source.hugeSources);
+        return measure(msbfs);
+    }
+
+    private MsBFSAlgo measure(MsBFSAlgo msbfs) throws Throwable {
         try {
             msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
         } catch (StackOverflowError e) {
@@ -76,6 +93,10 @@ public class MSBFSBenchmark {
     }
 
     private static BfsConsumer consume(Blackhole bh) {
+        return (i, d, s) -> bh.consume(i);
+    }
+
+    private static HugeBfsConsumer hugeConsume(Blackhole bh) {
         return (i, d, s) -> bh.consume(i);
     }
 }

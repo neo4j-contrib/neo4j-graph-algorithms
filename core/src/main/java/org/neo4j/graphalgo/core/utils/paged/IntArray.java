@@ -192,6 +192,9 @@ public final class IntArray extends PagedDataStructure<int[]> {
             fromPage = pageIndex(fromIndex);
             toPage = pageIndex(to - 1);
             currentPage = fromPage - 1;
+            if (fromPage > toPage) {
+                fromPage = -1;
+            }
         }
 
         public final boolean next() {

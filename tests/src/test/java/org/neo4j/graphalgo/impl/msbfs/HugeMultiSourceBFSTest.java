@@ -2,12 +2,15 @@ package org.neo4j.graphalgo.impl.msbfs;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.huge.HugeDirectIdMapping;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Pair;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -213,6 +216,50 @@ public final class HugeMultiSourceBFSTest {
                     // run sequentially to guarantee order
                     msbfs.run(1, null);
                 });
+    }
+
+    @Test
+    public void testLarger() throws Exception {
+        final int nodeCount = 65536;
+        final int sourceCount = 1024;
+
+        HugeRelationshipIterator iter = (nodeId, direction, consumer) -> {
+            for (long i = 0; i < nodeCount; i++) {
+                if (i != nodeId) {
+                    consumer.accept(nodeId, i);
+                }
+            }
+        };
+
+        final long[] sources = new long[sourceCount];
+        Arrays.setAll(sources, i -> i);
+        final int[][] seen = new int[nodeCount][sourceCount];
+        HugeMultiSourceBFS msbfs = new HugeMultiSourceBFS(
+                new HugeDirectIdMapping(nodeCount),
+                iter,
+                Direction.OUTGOING,
+                (nodeId, depth, sourceNodeIds) -> {
+                    assertEquals(1, depth);
+                    synchronized (seen) {
+                        final int[] nodeSeen = seen[(int) nodeId];
+                        while (sourceNodeIds.hasNext()) {
+                            nodeSeen[(int) sourceNodeIds.next()] += 1;
+                        }
+                    }
+                },
+                AllocationTracker.EMPTY,
+                sources);
+        msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+
+        for (int i = 0; i < seen.length; i++) {
+            final int[] nodeSeen = seen[i];
+            final int[] expected = new int[sourceCount];
+            Arrays.fill(expected, 1);
+            if (i < sourceCount) {
+                expected[i] = 0;
+            }
+            assertArrayEquals(expected, nodeSeen);
+        }
     }
 
     private static void withGraph(

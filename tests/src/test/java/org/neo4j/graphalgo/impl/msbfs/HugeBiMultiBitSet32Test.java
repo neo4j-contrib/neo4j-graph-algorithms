@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
