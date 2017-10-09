@@ -3,10 +3,14 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
 import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.AllShortestPaths;
+import org.neo4j.graphalgo.impl.HugeMSBFSAllShortestPaths;
 import org.neo4j.graphalgo.impl.MSBFSAllShortestPaths;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -49,10 +53,10 @@ public class AllShortestPathsComparisionBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
-    private static GraphDatabaseAPI db;
-    private static List<Node> lines = new ArrayList<>();
+    private GraphDatabaseAPI db;
+    private List<Node> lines = new ArrayList<>();
 
-    private static final Map<String, Object> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
     private Graph graph;
 
     @Setup
@@ -61,16 +65,13 @@ public class AllShortestPathsComparisionBenchmark {
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
-        final Procedures procedures = db.getDependencyResolver()
-                .resolveDependency(Procedures.class);
-        procedures.registerProcedure(ShortestPathDeltaSteppingProc.class);
-        procedures.registerProcedure(ShortestPathsProc.class);
 
         createNet(50); // 10000 nodes; 1000000 edges
         params.put("head", lines.get(0).getId());
         params.put("delta", 2.5);
 
-        graph = new GraphLoader(db).withRelationshipWeightsFromProperty("cost", 1.0).load(HeavyGraphFactory.class);
+//        graph = new GraphLoader(db).withRelationshipWeightsFromProperty("cost", 1.0).load(HeavyGraphFactory.class);
+        graph = new GraphLoader(db).withRelationshipWeightsFromProperty("cost", 1.0).load(HugeGraphFactory.class);
     }
 
     @TearDown
@@ -79,7 +80,7 @@ public class AllShortestPathsComparisionBenchmark {
         Pools.DEFAULT.shutdown();
     }
 
-    private static void createNet(int size) {
+    private void createNet(int size) {
         try (Transaction tx = db.beginTx()) {
             List<Node> temp = null;
             for (int i = 0; i < size; i++) {
@@ -100,7 +101,7 @@ public class AllShortestPathsComparisionBenchmark {
         }
     }
 
-    private static List<Node> createLine(int length) {
+    private List<Node> createLine(int length) {
         ArrayList<Node> nodes = new ArrayList<>();
         Node temp = db.createNode();
         nodes.add(temp);
@@ -131,6 +132,12 @@ public class AllShortestPathsComparisionBenchmark {
     @Benchmark
     public long _03_benchmark_MS_ASP() {
         return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+                .resultStream().count();
+    }
+
+    @Benchmark
+    public long _04_benchmark_Huge_MS_ASP() {
+        return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .resultStream().count();
     }
 }
