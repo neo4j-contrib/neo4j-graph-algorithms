@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * [1]: <a href="http://www.vldb.org/pvldb/vol8/p449-then.pdf">The More the Merrier: Efficient Multi-Source Graph Traversal</a>
  */
-public final class MultiSourceBFS implements Runnable {
+public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
 
     // how many sources can be traversed simultaneously
     static final int OMEGA = 32;
@@ -131,6 +131,7 @@ public final class MultiSourceBFS implements Runnable {
     /**
      * Runs MS-BFS, possibly in parallel.
      */
+    @Override
     public void run(int concurrency, ExecutorService executor) {
         int sourceLength = sourceLength();
         int threads = ParallelUtil.threadSize(OMEGA, sourceLength);

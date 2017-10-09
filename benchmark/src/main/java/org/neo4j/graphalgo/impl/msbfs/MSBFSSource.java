@@ -1,8 +1,12 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
+import org.neo4j.graphalgo.api.HugeIdMapping;
+import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
+import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.core.huge.HugeDirectIdMapping;
 import org.neo4j.graphalgo.core.neo4jview.DirectIdMapping;
 import org.neo4j.graphdb.Direction;
 
@@ -29,20 +33,30 @@ public enum MSBFSSource {
     _16384(16384);
 
     final IdMapping nodes;
+    final HugeIdMapping hugeNodes;
     final RelationshipIterator rels;
+    final HugeRelationshipIterator hugeRels;
     final int[] sources;
+    final long[] hugeSources;
 
     MSBFSSource(int nodeCount, int sourceCount) {
         this.nodes = new DirectIdMapping(nodeCount);
+        this.hugeNodes = new HugeDirectIdMapping(nodeCount);
         this.rels = new AllNodes(nodeCount);
+        this.hugeRels = new HugeAllNodes(nodeCount);
         this.sources = new int[sourceCount];
+        this.hugeSources = new long[sourceCount];
         Arrays.setAll(sources, i -> i);
+        Arrays.setAll(hugeSources, i -> i);
     }
 
     MSBFSSource(int nodeCount) {
         this.nodes = new DirectIdMapping(nodeCount);
+        this.hugeNodes = new HugeDirectIdMapping(nodeCount);
         this.rels = new AllNodes(nodeCount);
+        this.hugeRels = new HugeAllNodes(nodeCount);
         this.sources = null;
+        this.hugeSources = null;
     }
 
     private static final class AllNodes implements RelationshipIterator {
@@ -61,6 +75,27 @@ public enum MSBFSSource {
             for (int i = 0; i < nodeCount; i++) {
                 if (i != nodeId) {
                     consumer.accept(nodeId, i, -1L);
+                }
+            }
+        }
+    }
+
+    private static final class HugeAllNodes implements HugeRelationshipIterator {
+
+        private final long nodeCount;
+
+        private HugeAllNodes(final long nodeCount) {
+            this.nodeCount = nodeCount;
+        }
+
+        @Override
+        public void forEachRelationship(
+                long nodeId,
+                Direction direction,
+                HugeRelationshipConsumer consumer) {
+            for (long i = 0; i < nodeCount; i++) {
+                if (i != nodeId) {
+                    consumer.accept(nodeId, i);
                 }
             }
         }

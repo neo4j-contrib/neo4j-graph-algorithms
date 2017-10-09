@@ -6,7 +6,7 @@ import org.neo4j.graphalgo.core.utils.paged.LongArray;
 
 import java.util.Arrays;
 
-public final class HugeBiMultiBitSet32 {
+final class HugeBiMultiBitSet32 {
 
     private static final long AUX_MASK = 0xFFFFFFFF00000000L;
     private static final long DEF_MASK = 0x00000000FFFFFFFFL;
@@ -105,7 +105,12 @@ public final class HugeBiMultiBitSet32 {
      * {@code this.bits[nodeId][def] ∪ bits}.
      */
     void union(long nodeId, int bits) {
-        this.bits.or(nodeId, ((long) bits) & DEF_MASK);
+        int index = this.bits.read(nodeId, this.cursor);
+        final long[] page = this.cursor.array;
+        final long bit = page[index];
+        final int aux = (int) (bit >>> 32);
+        bits &= ~aux;
+        page[index] |= (((long) bits) & DEF_MASK);
     }
 
 
@@ -158,7 +163,7 @@ public final class HugeBiMultiBitSet32 {
             final int offset = cursor.offset;
             final int limit = cursor.limit;
             for (int i = offset; i < limit; ++i) {
-                int bit = (int) array[i];
+                int bit = (int) (array[i] & DEF_MASK);
                 didCopy = didCopy || bit != 0;
                 bulkAdder.add(bit);
                 array[i] &= AUX_MASK;
