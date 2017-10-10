@@ -126,7 +126,7 @@ public final class HugeMultiSourceBFSTest {
         withGrid(
                 gb -> gb.newGridBuilder().createGrid(8, 4),
                 graph -> {
-                    Set<Pair<Long, Long>> seen = new HashSet<>();
+                    Set<Pair<Long, Integer>> seen = new HashSet<>();
                     HugeMultiSourceBFS msbfs = new HugeMultiSourceBFS(
                             graph,
                             graph,

@@ -1,13 +1,11 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.AbstractIterator;
-import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.AllShortestPaths.Result;
 import org.neo4j.graphalgo.impl.msbfs.HugeMultiSourceBFS;
-import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Iterator;

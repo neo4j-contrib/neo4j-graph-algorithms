@@ -1,15 +1,26 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyDouble;
@@ -36,51 +47,68 @@ import static org.mockito.Mockito.verify;
  *
  * @author mknblch
  */
+@RunWith(Parameterized.class)
 public class MSBFSAllShortestPathsTest {
+
+    @ClassRule
+    public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     private static final int width = 2, height = 5;
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
 
-    private static Graph graph;
+    private Graph graph;
+
+    @Parameterized.Parameters(name = "{1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "Heavy"},
+                new Object[]{LightGraphFactory.class, "Light"},
+                new Object[]{HugeGraphFactory.class, "Huge"},
+                new Object[]{GraphViewFactory.class, "View"}
+        );
+    }
 
     @BeforeClass
     public static void setup() throws Exception {
-
-        final GraphDatabaseAPI db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
-
         try (ProgressTimer ignored = ProgressTimer.start(t -> System.out.println(
                 "setup took " + t + "ms"))) {
-            GraphBuilder.create(db)
+            GraphBuilder.create(DB)
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newGridBuilder()
                     .createGrid(width, height);
         }
+    }
 
-        try (ProgressTimer ignored = ProgressTimer.start(t -> System.out.println(
-                "load took " + t + "ms"))) {
-            graph = new GraphLoader(db)
-                    .withLabel(LABEL)
-                    .withRelationshipType(RELATIONSHIP)
-                    .load(HeavyGraphFactory.class);
-        }
+    public MSBFSAllShortestPathsTest(
+            Class<? extends GraphFactory> graphImpl,
+            String nameIgnoredOnlyForTestName) {
 
-        db.shutdown();
+        graph = new GraphLoader(DB)
+                .withLabel(LABEL)
+                .withRelationshipType(RELATIONSHIP)
+                .load(graphImpl);
     }
 
     @Test
     public void testResults() throws Exception {
+        testASP(new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
+    }
 
+    @Test
+    public void testHugeResults() throws Exception {
+        if (graph instanceof HugeGraph) {
+            testASP(new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
+        }
+    }
+
+    private void testASP(final MSBFSASPAlgorithm<?> hugeMSBFSAllShortestPaths) {
         final ResultConsumer mock = mock(ResultConsumer.class);
-
-        new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        hugeMSBFSAllShortestPaths
                 .resultStream()
-                .peek(System.out::println)
+//                .peek(System.out::println)
                 .forEach(r -> {
                     if (r.sourceNodeId > r.targetNodeId) {
                         fail("should not happen");
@@ -89,7 +117,6 @@ public class MSBFSAllShortestPathsTest {
                     }
                     mock.test(r.sourceNodeId, r.targetNodeId, r.distance);
                 });
-
 
         verify(mock, times(35)).test(anyLong(), anyLong(), anyDouble());
         verify(mock, times(1)).test(0, 9, 5.0);
