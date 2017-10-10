@@ -16,7 +16,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
+public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentrality> {
 
     private Graph graph;
     private AtomicIntegerArray farness;
@@ -66,6 +66,7 @@ public class MSClosenessCentrality extends Algorithm<MSClosenessCentrality> {
         return centrality;
     }
 
+    @Override
     public Stream<Result> resultStream() {
         final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
