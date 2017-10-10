@@ -101,7 +101,7 @@ public class ClosenessCentralityTest {
 
         final double[] centrality = new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()
-                .getCentrality();
+                .exportToArray();
 
         assertArrayEquals(EXPECTED, centrality, 0.1);
     }
@@ -123,9 +123,10 @@ public class ClosenessCentralityTest {
     public void testHugeGetCentrality() throws Exception {
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-            final double[] centrality = new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
-                    .compute()
-                    .getCentrality();
+            final double[] centrality =
+                    new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+                            .compute()
+                            .exportToArray();
 
             assertArrayEquals(EXPECTED, centrality, 0.1);
         }

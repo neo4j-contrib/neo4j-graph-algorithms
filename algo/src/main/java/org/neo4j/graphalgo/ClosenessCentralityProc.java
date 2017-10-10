@@ -1,13 +1,14 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
@@ -46,21 +47,46 @@ public class ClosenessCentralityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        AllocationTracker tracker = AllocationTracker.create();
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .withLog(log)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutNodeProperties()
+                .withConcurrency(configuration.getConcurrency())
                 .withDirection(Direction.OUTGOING)
+                .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
-        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
+        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker, graph, configuration.getConcurrency());
+        algo
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute();
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
+        algo.compute();
         graph.release();
         return algo.resultStream();
+    }
+
+    private MSBFSCCAlgorithm<?> newAlgo(
+            final AllocationTracker tracker,
+            final Graph graph,
+            final int concurrency) {
+        final MSBFSCCAlgorithm<?> algo;
+        if (graph instanceof HugeGraph) {
+            HugeGraph hugeGraph = (HugeGraph) graph;
+            algo = new HugeMSClosenessCentrality(
+                    hugeGraph,
+                    tracker,
+                    concurrency,
+                    Pools.DEFAULT);
+        } else {
+            algo = new MSClosenessCentrality(
+                    graph,
+                    concurrency,
+                    Pools.DEFAULT);
+        }
+        return algo;
     }
 
     @Procedure(value = "algo.closeness", mode = Mode.WRITE)
@@ -75,6 +101,10 @@ public class ClosenessCentralityProc {
 
         final ClosenessCentralityProcResult.Builder builder = ClosenessCentralityProcResult.builder();
 
+        AllocationTracker tracker = AllocationTracker.create();
+        int concurrency = configuration.getConcurrency();
+        TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
@@ -82,34 +112,32 @@ public class ClosenessCentralityProc {
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()
+                    .withConcurrency(concurrency)
                     .withDirection(Direction.OUTGOING)
+                    .withAllocationTracker(tracker)
                     .load(configuration.getGraphImpl());
         }
 
         builder.withNodeCount(graph.nodeCount());
 
-        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        final MSClosenessCentrality centrality = new MSClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
+        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker, graph, concurrency);
+        algo
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(terminationFlag);
 
-        builder.timeEval(centrality::compute);
+        builder.timeEval(algo::compute);
 
         if (configuration.isWriteFlag()) {
-
-            final double[] centralityResult = centrality.getCentrality();
-            centrality.release();
             graph.release();
             final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
-            builder.timeWrite(() -> Exporter.of(api, graph)
-                    .withLog(log)
-                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
-                    .build()
-                    .write(
-                            writeProperty,
-                            centralityResult,
-                            DoubleArrayTranslator.INSTANCE)
-            );
+            builder.timeWrite(() -> {
+                Exporter exporter = Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, concurrency, terminationFlag)
+                        .build();
+                algo.export(writeProperty, exporter);
+            });
+            algo.release();
         }
 
         return Stream.of(builder.build());
