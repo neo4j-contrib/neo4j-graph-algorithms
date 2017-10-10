@@ -177,7 +177,7 @@ public final class HugeMultiSourceBFS implements Runnable, MsBFSAlgo {
             }
         }
 
-        long depth = 0;
+        int depth = 0;
 
         while (true) {
             long nodeId = -1L;
