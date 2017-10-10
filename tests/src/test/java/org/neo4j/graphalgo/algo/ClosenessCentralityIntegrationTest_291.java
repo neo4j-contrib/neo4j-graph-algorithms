@@ -18,8 +18,8 @@ import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.AtomicIntArray;
 import org.neo4j.graphalgo.impl.HugeMSClosenessCentrality;
+import org.neo4j.graphalgo.impl.MSBFSCCAlgorithm;
 import org.neo4j.graphalgo.impl.MSClosenessCentrality;
 import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -28,7 +28,7 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.function.LongToIntFunction;
 
 
 /**
@@ -91,39 +91,27 @@ public class ClosenessCentralityIntegrationTest_291 {
                 .withoutNodeProperties()
                 .load(graphImpl);
 
+        MSBFSCCAlgorithm<?> algo;
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-
-            final HugeMSClosenessCentrality algo = new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, 4, Pools.DEFAULT)
-                    .compute();
-
-            final AtomicIntArray farness = algo.getFarness();
-            final double[] centrality = algo.getCentrality();
-
-            System.out.println("graph.nodeCount() = " + graph.nodeCount());
-
-            for (int i = 0; i < graph.nodeCount(); i++) {
-                System.out.printf("node %3d | farness %3d | closeness %3f%n",
-                        i,
-                        farness.get(i),
-                        centrality[i]);
-            }
-
+            algo = new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, 4, Pools.DEFAULT);
         } else {
-            final MSClosenessCentrality algo = new MSClosenessCentrality(graph, 4, Pools.DEFAULT)
-                    .compute();
+            algo = new MSClosenessCentrality(graph, 4, Pools.DEFAULT);
+        }
 
-            final AtomicIntegerArray farness = algo.getFarness();
-            final double[] centrality = algo.getCentrality();
 
-            System.out.println("graph.nodeCount() = " + graph.nodeCount());
+        algo.compute();
 
-            for (int i = 0; i < graph.nodeCount(); i++) {
-                System.out.printf("node %3d | farness %3d | closeness %3f%n",
-                        i,
-                        farness.get(i),
-                        centrality[i]);
-            }
+        final LongToIntFunction farness = algo.farness();
+        final double[] centrality = algo.exportToArray();
+
+        System.out.println("graph.nodeCount() = " + graph.nodeCount());
+
+        for (int i = 0; i < graph.nodeCount(); i++) {
+            System.out.printf("node %3d | farness %3d | closeness %3f%n",
+                    i,
+                    farness.applyAsInt(i),
+                    centrality[i]);
         }
     }
 

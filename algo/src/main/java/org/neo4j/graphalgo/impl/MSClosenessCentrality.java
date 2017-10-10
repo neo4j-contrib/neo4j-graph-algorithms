@@ -2,12 +2,15 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.function.LongToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -33,6 +36,7 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
         farness = new AtomicIntegerArray(nodeCount);
     }
 
+    @Override
     public MSClosenessCentrality compute() {
 
         final ProgressLogger progressLogger = getProgressLogger();
@@ -49,31 +53,28 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
         return this;
     }
 
-    public AtomicIntegerArray getFarness() {
-        return farness;
-    }
-
-    public double[] getCentrality() {
-        final int k = nodeCount - 1;
-        final double[] centrality = new double[nodeCount];
-        for (int i = 0; i < nodeCount; i++) {
-            final int far = farness.get(i);
-            if (far == 0) {
-                continue;
-            }
-            centrality[i] = k / (double) far;
-        }
-        return centrality;
-    }
-
     @Override
     public Stream<Result> resultStream() {
         final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
-                .mapToObj(nodeId ->
-                        new Result(
-                                graph.toOriginalNodeId(nodeId),
-                                farness.get(nodeId) > 0 ? k / (double) farness.get(nodeId) : 0));
+                .mapToObj(nodeId -> new Result(
+                        graph.toOriginalNodeId(nodeId),
+                        centrality(farness.get(nodeId), k)));
+    }
+
+    @Override
+    public LongToIntFunction farness() {
+        return (i) -> farness.get((int) i);
+    }
+
+    @Override
+    public void export(final String propertyName, final Exporter exporter) {
+        final double k = nodeCount - 1;
+        exporter.write(
+                propertyName,
+                farness,
+                (PropertyTranslator.OfDouble<AtomicIntegerArray>)
+                        (data, nodeId) -> centrality(data.get((int) nodeId), k));
     }
 
     @Override

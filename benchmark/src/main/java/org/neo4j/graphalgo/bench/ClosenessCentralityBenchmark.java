@@ -6,6 +6,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -14,6 +15,7 @@ import org.openjdk.jmh.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,11 +32,18 @@ public class ClosenessCentralityBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
-    private static GraphDatabaseAPI db;
-    private static List<Node> lines = new ArrayList<>();
+    @Param({"LIGHT", "HEAVY", "HUGE"})
+    public GraphImpl graph;
+
+    @Param({"30"})
+    public int netSize;
+
+    private GraphDatabaseAPI db;
+
+    private Map<String, Object> params;
 
     @Setup
-    public static void setup() throws KernelException {
+    public void setup() throws KernelException {
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
@@ -43,19 +52,20 @@ public class ClosenessCentralityBenchmark {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(ClosenessCentralityProc.class);
 
-        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("setup took " + l + "ms"))) {
-            createNet(30); // size^2 nodes; size^3 edges
+        try (ProgressTimer ignored = ProgressTimer.start(l -> System.out.println("setup took " + l + "ms"))) {
+            createNet(netSize); // size^2 nodes; size^3 edges
         }
+
+        params = MapUtil.map("graph", graph.name());
     }
 
-
     @TearDown
-    public static void tearDown() {
+    public void tearDown() {
         db.shutdown();
         Pools.DEFAULT.shutdown();
     }
 
-    private static void createNet(int size) {
+    private void createNet(int size) {
         try (Transaction tx = db.beginTx()) {
             List<Node> temp = null;
             for (int i = 0; i < size; i++) {
@@ -76,11 +86,10 @@ public class ClosenessCentralityBenchmark {
         }
     }
 
-    private static List<Node> createLine(int length) {
+    private List<Node> createLine(int length) {
         ArrayList<Node> nodes = new ArrayList<>();
         Node temp = db.createNode();
         nodes.add(temp);
-        lines.add(temp);
         for (int i = 1; i < length; i++) {
             Node node = db.createNode();
             nodes.add(temp);
@@ -92,9 +101,8 @@ public class ClosenessCentralityBenchmark {
 
     @Benchmark
     public Object _01_benchmark() {
-
-        return db.execute("CALL algo.closeness('','', {write:false, stats:false}) YIELD " +
-                "nodes, loadMillis, computeMillis, writeMillis")
+        return db.execute("CALL algo.closeness('','', {write:false, stats:false, graph: $graph}) YIELD " +
+                "nodes, loadMillis, computeMillis, writeMillis", params)
                 .stream()
                 .count();
     }
