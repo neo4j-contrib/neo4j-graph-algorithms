@@ -215,7 +215,7 @@ public final class MultiSourceBFSTest {
 
     @Test
     public void testLarger() throws Exception {
-        final int nodeCount = 65536;
+        final int nodeCount = 8192;
         final int sourceCount = 1024;
 
         RelationshipIterator iter = (nodeId, direction, consumer) -> {

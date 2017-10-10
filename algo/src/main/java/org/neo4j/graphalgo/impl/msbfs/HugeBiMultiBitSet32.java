@@ -105,12 +105,7 @@ final class HugeBiMultiBitSet32 {
      * {@code this.bits[nodeId][def] ∪ bits}.
      */
     void union(long nodeId, int bits) {
-        int index = this.bits.read(nodeId, this.cursor);
-        final long[] page = this.cursor.array;
-        final long bit = page[index];
-        final int aux = (int) (bit >>> 32);
-        bits &= ~aux;
-        page[index] |= (((long) bits) & DEF_MASK);
+        this.bits.or(nodeId, ((long) bits) & DEF_MASK);
     }
 
 
