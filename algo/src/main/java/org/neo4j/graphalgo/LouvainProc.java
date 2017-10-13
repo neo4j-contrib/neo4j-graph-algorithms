@@ -3,6 +3,7 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -23,12 +24,28 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
+ * Phase 1 Louvain algorithm
+ *
+ * mandatory parameters:
+ *
+ *  label: the label or labelQuery
+ *  relationship: the relationship or relationshipQuery
+ *
+ * optional configuration parameters:
+ *
+ *  weightProperty: relationship weight property name (assumes 1.0 as default if empty)
+ *  defaultValue: default weight value if weight property is not set at relationship
+ *  write: write flag
+ *  writeProperty: name of the property to write result cluster id to
+ *  concurrency: concurrency setting (not fully supported yet)
+ *
  * @author mknblch
  */
 public class LouvainProc {
 
-    public static final String CONFIG_CLUSTER_PROPERTY = "partitionProperty";
-    public static final String DEFAULT_CLUSTER_PROPERTY = "partition";
+    public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "community";
+    public static final int DEFAULT_ITERATIONS = 10;
 
     @Context
     public GraphDatabaseAPI api;
@@ -41,7 +58,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.clustering.louvain", mode = Mode.WRITE)
     @Description("CALL algo.clustering.louvain(label:String, relationship:String, " +
-            "{property:'weight', defaultValue:1.0, write: true, partitionProperty:'partition', concurrency:8}) " +
+            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) " +
             "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
     public Stream<LouvainResult> louvain(
             @Name(value = "label", defaultValue = "") String label,
@@ -71,7 +88,7 @@ public class LouvainProc {
 
         // evaluation
         try (ProgressTimer timer = builder.timeEval()) {
-            louvain.compute(configuration.getIterations(10));
+            louvain.compute(configuration.getIterations(DEFAULT_ITERATIONS));
             builder.withIterations(louvain.getIterations())
                     .withCommunityCount(louvain.getCommunityCount());
         }
@@ -87,8 +104,8 @@ public class LouvainProc {
 
     @Procedure(value = "algo.clustering.louvain.stream")
     @Description("CALL algo.clustering.louvain.stream(label:String, relationship:String, " +
-            "{property:'propertyName', defaultValue:1.0, concurrency:8) " +
-            "YIELD nodeId, setId - yields a setId to each node id")
+            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4) " +
+            "YIELD nodeId, community - yields a setId to each node id")
     public Stream<Louvain.Result> louvainStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -105,7 +122,7 @@ public class LouvainProc {
         return new Louvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(configuration.getIterations(10))
+                .compute(configuration.getIterations(DEFAULT_ITERATIONS))
                 .resultStream();
 
     }
@@ -114,8 +131,8 @@ public class LouvainProc {
         return (HeavyGraph) new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
-                .withOptionalRelationshipWeightsFromProperty(
-                        config.getProperty(),
+                .withRelationshipWeightsFromProperty(
+                        ProcedureConstants.PROPERTY_PARAM,
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.BOTH)
                 .load(HeavyGraphFactory.class);
