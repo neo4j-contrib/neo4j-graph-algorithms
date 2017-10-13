@@ -1,7 +1,9 @@
 package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
+import com.carrotsearch.hppc.IntIntScatterMap;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
@@ -16,8 +18,12 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 
+import java.util.function.IntConsumer;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Graph:
@@ -62,7 +68,7 @@ public class LouvainClusteringIntegrationTest {
                         " (f)-[:TYPE]->(h),\n" +
                         " (f)-[:TYPE]->(g),\n" +
                         
-                        " (b)-[:TYPE]->(e)";
+                        " (b)-[:TYPE {w:100}]->(e)";
 
 
         db = TestDatabaseCreator.createTestDatabase();
@@ -80,7 +86,7 @@ public class LouvainClusteringIntegrationTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 1.0)
+                .withRelationshipWeightsFromProperty("w", 0.0)
                 .load(HeavyGraphFactory.class);
 
     }
@@ -103,7 +109,71 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() throws Exception {
-        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'cluster', concurrency:2}) " +
+        final String cypher = "CALL algo.clustering.louvain('', '', {write:true, writeProperty:'community', concurrency:2}) " +
+                "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
+
+        db.execute(cypher).accept(row -> {
+            final long nodes = row.getNumber("nodes").longValue();
+            final long communityCount = row.getNumber("communityCount").longValue();
+            final long iterations = row.getNumber("iterations").longValue();
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            System.out.println("nodes = " + nodes);
+            System.out.println("communityCount = " + communityCount);
+            System.out.println("iterations = " + iterations);
+            assertEquals("invalid node count",9, nodes);
+            assertEquals("wrong community cound", 3, communityCount);
+            assertTrue("invalid loadTime", loadMillis >= 0);
+            assertTrue("invalid writeTime", writeMillis >= 0);
+            assertTrue("invalid computeTime", computeMillis >= 0);
+            return false;
+        });
+    }
+
+
+    @Test
+    public void testStream() throws Exception {
+        final String cypher = "CALL algo.clustering.louvain.stream('', '', {concurrency:2}) " +
+                "YIELD nodeId, community";
+        final IntIntScatterMap testMap = new IntIntScatterMap();
+        db.execute(cypher).accept(row -> {
+            testMap.addTo(row.getNumber("community").intValue(), 1);
+            return false;
+        });
+        assertEquals(3, testMap.size());
+    }
+
+    @Test
+    public void testWithLabelRel() throws Exception {
+        final String cypher = "CALL algo.clustering.louvain('Node', 'TYPE', {write:true, writeProperty:'community', concurrency:2}) " +
+                "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
+
+        db.execute(cypher).accept(row -> {
+            final long nodes = row.getNumber("nodes").longValue();
+            final long communityCount = row.getNumber("communityCount").longValue();
+            final long iterations = row.getNumber("iterations").longValue();
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            System.out.println("nodes = " + nodes);
+            System.out.println("communityCount = " + communityCount);
+            System.out.println("iterations = " + iterations);
+            assertEquals("invalid node count",9, nodes);
+            assertEquals("wrong community cound", 3, communityCount);
+            assertTrue("invalid loadTime", loadMillis >= 0);
+            assertTrue("invalid writeTime", writeMillis >= 0);
+            assertTrue("invalid computeTime", computeMillis >= 0);
+            return false;
+        });
+    }
+
+    // weightProperty is not
+    @Ignore("TODO")
+    @Test
+    public void testWithWeight() throws Exception {
+        final String cypher = "CALL algo.clustering.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:2.0, " +
+                "write:true, writeProperty:'cluster', concurrency:2}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {

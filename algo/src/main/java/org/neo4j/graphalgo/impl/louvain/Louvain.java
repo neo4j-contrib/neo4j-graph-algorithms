@@ -20,8 +20,6 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> {
 
-    public static final IntScatterSet EMPTY = new IntScatterSet();
-
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
     private ExecutorService executorService;
@@ -33,29 +31,6 @@ public class Louvain extends Algorithm<Louvain> {
     private final IdMapping idMapping;
     private double m2;
     private int iterations;
-
-
-//    public void assign(int node, int community) {
-//        // find current community of node
-//        final int actualCommunity = communityIds[node];
-//        if (community == actualCommunity) {
-//            return;
-//        }
-//        // remove node from its old set
-//        final IntSet sourceSet = communities.get(actualCommunity);
-//        if (null != sourceSet) {
-//            sourceSet.removeAll(node);
-//        }
-//        // place it into its new set
-//        IntSet targetSet = communities.get(community);
-//        if (null == targetSet) {
-//            targetSet = new IntScatterSet();
-//        }
-//        targetSet.add(node);
-//        // update communityIds
-//        communityIds[node] = community;
-//    }
-
 
     public Louvain(IdMapping idMapping,
                    RelationshipIterator relationshipIterator,
@@ -145,7 +120,7 @@ public class Louvain extends Algorithm<Louvain> {
             communityIds[i] = i;
         }
         final DoubleAdder adder = new DoubleAdder();
-        ParallelUtil.iterateParallel(executorService, nodeCount, 2 /* TODO */, node -> {
+        ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
             relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                 adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
                 return true;
@@ -182,19 +157,20 @@ public class Louvain extends Algorithm<Louvain> {
             int nodeCommunity = communityIds[node];
             relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                 final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-                // BOTH counts relationships twice therefore count only if id(s) < id(t)
+
+                // TODO eval
+                // BOTH counts relationships twice therefore count only once if id(s) < id(t)
                 if (sourceNodeId < targetNodeId && communityIds[targetNodeId] == nodeCommunity) {
                     sum[0] += weight;
                 }
-                // TODO eval
 //                if (communityIds[targetNodeId] == nodeCommunity) {
 //                    sum[0] += weight;
 //                }
+
                 sum[1] += weight;
                 return true;
             });
         });
-//        System.out.printf("c%d : (%2.3f, %2.3f)%n", community, sum[0], sum[1]);
         return sum;
     }
 
@@ -227,9 +203,9 @@ public class Louvain extends Algorithm<Louvain> {
     private double modGain(int node, int targetCommunity) {
         final double[] sInTot = sInAndsTot(targetCommunity);
         final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
-        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m)
-                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2
-                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // (sIn / 2 * m) - (sTot / 2 * m)^2
+        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
+                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
+                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
                         Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
     }
 
@@ -248,14 +224,13 @@ public class Louvain extends Algorithm<Louvain> {
             relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
                 final double gain = modGain(sourceNodeId, targetCommunity);
-//                System.out.printf("%d: c%d -> c%d : %2.3f (%2.3f)%n", sourceNodeId, currentCommunity, targetCommunity, gain, communityModularity());
                 if (gain > bestGain[0]) {
                     bestCommunity[0] = targetCommunity;
                     bestGain[0] = gain;
                 }
                 return true;
             });
-            if (bestCommunity[0] != currentCommunity && bestCommunity[0] > 0.0) {
+            if (bestCommunity[0] != currentCommunity && bestGain[0] > 0.0) {
                 assign(node, currentCommunity, bestCommunity[0]);
 
                 changes[0] = true;
