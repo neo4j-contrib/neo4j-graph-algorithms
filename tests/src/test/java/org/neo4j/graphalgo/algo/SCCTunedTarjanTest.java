@@ -15,7 +15,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -68,10 +68,7 @@ public class SCCTunedTarjanTest {
                         " (h)-[:TYPE {cost:3}]->(i),\n" +
                         " (i)-[:TYPE {cost:3}]->(g)";
 
-        api = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
 
         api.getDependencyResolver()
                 .resolveDependency(Procedures.class)
@@ -91,7 +88,7 @@ public class SCCTunedTarjanTest {
 
     @AfterClass
     public static void shutdownGraph() throws Exception {
-        api.shutdown();
+        if (api != null) api.shutdown();
     }
 
     public static int getMappedNodeId(String name) {

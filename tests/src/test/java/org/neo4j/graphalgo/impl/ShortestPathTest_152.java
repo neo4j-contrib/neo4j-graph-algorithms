@@ -13,7 +13,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.function.DoubleConsumer;
 
@@ -52,10 +52,7 @@ public class ShortestPathTest_152 {
                 " (e)-[:ROAD {d:40}]->(f),\n" +
                 " (e)-[:RAIL {d:20}]->(f);";
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)

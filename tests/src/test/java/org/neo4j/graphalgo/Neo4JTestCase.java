@@ -8,7 +8,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.TestGraphDatabaseFactory;
 
 /**
  * @author mknblch
@@ -23,9 +22,7 @@ public abstract class Neo4JTestCase {
 
     @BeforeClass
     public static void setup() {
-        db = new TestGraphDatabaseFactory()
-                .newImpermanentDatabaseBuilder()
-                .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
     }
 
     @AfterClass

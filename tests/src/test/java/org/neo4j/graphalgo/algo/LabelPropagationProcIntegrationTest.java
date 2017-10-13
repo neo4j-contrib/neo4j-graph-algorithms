@@ -13,7 +13,7 @@ import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,10 +61,7 @@ public class LabelPropagationProcIntegrationTest {
 
     @Before
     public void setup() throws KernelException {
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
         try (Transaction tx = db.beginTx()) {
             db.execute(DB_CYPHER).close();
             tx.success();

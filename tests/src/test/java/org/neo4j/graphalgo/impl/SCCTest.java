@@ -11,7 +11,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,10 +64,7 @@ public class SCCTest {
                         " (h)-[:TYPE {cost:3}]->(i),\n" +
                         " (i)-[:TYPE {cost:3}]->(g)";
 
-        api = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
             tx.success();
@@ -82,7 +79,7 @@ public class SCCTest {
 
     @AfterClass
     public static void shutdownGraph() throws Exception {
-        api.shutdown();
+        if (api != null) api.shutdown();
 //        Pools.DEFAULT.shutdownNow();
     }
 

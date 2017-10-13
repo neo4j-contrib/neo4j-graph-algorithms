@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +16,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.traverse.ParallelLocalQueueBFS;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
@@ -47,10 +48,7 @@ public class ParallelTraverseTest {
     @BeforeClass
     public static void setup() throws Exception {
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
             gridBuilder = GraphBuilder.create(db)
@@ -75,6 +73,12 @@ public class ParallelTraverseTest {
                     .getId());
         }
     }
+
+    @AfterClass
+    public static void tearDown() {
+        db.shutdown();
+    }
+
 
     @Test
     public void testTraverseLocal() throws Exception {

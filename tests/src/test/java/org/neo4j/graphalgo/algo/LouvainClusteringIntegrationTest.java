@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.algo;
 
 import com.carrotsearch.hppc.IntIntScatterMap;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,7 +16,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.function.IntConsumer;
 
@@ -70,10 +71,7 @@ public class LouvainClusteringIntegrationTest {
                         " (b)-[:TYPE {w:100}]->(e)";
 
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
@@ -91,6 +89,11 @@ public class LouvainClusteringIntegrationTest {
                 .withRelationshipWeightsFromProperty("w", 0.0)
                 .load(HeavyGraphFactory.class);
 
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        if (db != null) db.shutdown();
     }
 
     private String getName(long nodeId) {

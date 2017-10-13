@@ -12,7 +12,7 @@ import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,10 +39,7 @@ public class TerminationTest {
     @BeforeClass
     public static void setup() throws KernelException {
 
-        api = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
 
         final Procedures procedures = api.getDependencyResolver()
                 .resolveDependency(Procedures.class);

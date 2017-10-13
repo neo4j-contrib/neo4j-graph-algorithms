@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import static org.junit.Assert.*;
 
@@ -94,6 +96,7 @@ public class ClosenessCentralityTest {
                 .withoutNodeProperties()
                 .load(graphImpl);
     }
+
 
     @Test
     public void testGetCentrality() throws Exception {

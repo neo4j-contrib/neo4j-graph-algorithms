@@ -4,13 +4,14 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.TriangleProc;
 import org.neo4j.graphalgo.impl.TriangleCount;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -59,10 +60,7 @@ public class ClusteringCoefficientIntegrationTest {
                         " (h)-[:TYPE]->(i),\n" +
                         " (i)-[:TYPE]->(g)";
 
-        api = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
 
         api.getDependencyResolver()
                 .resolveDependency(Procedures.class)

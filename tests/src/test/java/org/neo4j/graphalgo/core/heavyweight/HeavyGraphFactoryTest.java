@@ -13,7 +13,7 @@ import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
@@ -44,9 +44,7 @@ public class HeavyGraphFactoryTest {
     @BeforeClass
     public static void setup() {
 
-        db = new TestGraphDatabaseFactory()
-                .newImpermanentDatabaseBuilder()
-                .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (final Transaction transaction = db.beginTx()) {
             final Node node1 = db.createNode(Label.label("Node1"));

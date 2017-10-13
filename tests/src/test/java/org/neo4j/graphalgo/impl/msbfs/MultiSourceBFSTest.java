@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl.msbfs;
 
 import org.junit.Test;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -13,7 +14,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Pair;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -259,10 +260,7 @@ public final class MultiSourceBFSTest {
     private static void withGraph(
             String cypher,
             Consumer<? super Graph> block) {
-        GraphDatabaseAPI db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        GraphDatabaseAPI db = TestDatabaseCreator.createTestDatabase();
 
         try {
             try (Transaction tx = db.beginTx()) {
@@ -278,10 +276,7 @@ public final class MultiSourceBFSTest {
     private static void withGrid(
             Consumer<? super GraphBuilder<?>> build,
             Consumer<? super Graph> block) {
-        GraphDatabaseAPI db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        GraphDatabaseAPI db = TestDatabaseCreator.createTestDatabase();
         try {
             try (Transaction tx = db.beginTx()) {
                 DefaultBuilder graphBuilder = GraphBuilder.create(db)

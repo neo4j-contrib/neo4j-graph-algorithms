@@ -1,7 +1,9 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
@@ -9,7 +11,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -51,10 +53,7 @@ public class AllShortestPathsTest {
     @BeforeClass
     public static void setup() throws Exception {
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
             GraphBuilder.create(db)
@@ -74,6 +73,10 @@ public class AllShortestPathsTest {
                     .withRelationshipWeightsFromProperty(PROPERTY, 1.0)
                     .load(HeavyGraphFactory.class);
         }
+    }
+    @AfterClass
+    public static void tearDown() {
+        if (db!=null) db.shutdown();
     }
 
     @Test

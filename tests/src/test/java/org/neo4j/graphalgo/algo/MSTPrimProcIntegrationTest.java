@@ -9,7 +9,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.*;
 
@@ -52,10 +52,7 @@ public class MSTPrimProcIntegrationTest {
                 "CREATE (c)-[:TYPE {cost:5.0}]->(e) " +
                 "CREATE (d)-[:TYPE {cost:6.0}]->(e)";
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (Transaction tx = db.beginTx()) {
             db.execute(cypher);

@@ -5,7 +5,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 /**
  * Builds a simple test graph.
@@ -32,9 +32,7 @@ public class SimpleGraphSetup {
     }
 
     public SimpleGraphSetup() {
-        this.db = new TestGraphDatabaseFactory()
-                .newImpermanentDatabaseBuilder()
-                .newGraphDatabase();
+        this.db = TestDatabaseCreator.createTestDatabase();
         setupGraph();
     }
 
@@ -116,5 +114,9 @@ public class SimpleGraphSetup {
 
     public long getN2() {
         return n2;
+    }
+
+    public void shutdown() {
+        if (db != null) db.shutdown();
     }
 }
