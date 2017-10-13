@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.procedures.IntProcedure;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
@@ -10,7 +11,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 
@@ -52,9 +53,7 @@ public class DirectedDijkstraSPTest {
     @BeforeClass
     public static void setup() {
 
-        api = (GraphDatabaseAPI) new TestGraphDatabaseFactory()
-                .newImpermanentDatabaseBuilder()
-                .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
 
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
@@ -67,6 +66,12 @@ public class DirectedDijkstraSPTest {
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(HeavyGraphFactory.class);
     }
+
+    @AfterClass
+    public static void tearDown() {
+        api.shutdown();
+    }
+
 
     private static long id(String name) {
         try (Transaction transaction = api.beginTx()) {

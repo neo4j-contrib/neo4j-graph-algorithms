@@ -39,11 +39,6 @@ public class MSTPrimTest extends Neo4JTestCase {
     private static BufferedWeightMap weightMap;
     private static BothRelationshipAdapter bothRelationshipAdapter;
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if (db != null) db.shutdown();
-    }
-
     @BeforeClass
     public static void setupGraph() {
         a = newNode();

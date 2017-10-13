@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.LouvainProc;
@@ -13,7 +14,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -64,10 +65,7 @@ public class LouvainClusteringIntegrationTest {
                         " (b)-[:TYPE]->(e)";
 
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
@@ -85,6 +83,11 @@ public class LouvainClusteringIntegrationTest {
                 .withRelationshipWeightsFromProperty("w", 1.0)
                 .load(HeavyGraphFactory.class);
 
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        if (db != null) db.shutdown();
     }
 
     private String getName(long nodeId) {

@@ -17,7 +17,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,10 +89,7 @@ public final class ShortestPathDijkstraTest {
 
     @BeforeClass
     public static void setupGraph() {
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
         try (Transaction tx = db.beginTx()) {
             db.execute(DB_CYPHER).close();
             db.execute(DB_CYPHER2).close();

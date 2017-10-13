@@ -9,7 +9,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.Executors;
 
@@ -73,10 +73,7 @@ public final class ShortestPathDeltaSteppingTest {
 
                         " (x)-[:TYPE {cost:2}]->(s)"; // create cycle
 
-        api = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        api = TestDatabaseCreator.createTestDatabase();
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
             tx.success();

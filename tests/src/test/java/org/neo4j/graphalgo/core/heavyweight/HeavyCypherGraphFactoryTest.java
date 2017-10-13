@@ -7,6 +7,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +25,7 @@ public class HeavyCypherGraphFactoryTest {
     @BeforeClass
     public static void setUp() {
 
-        db = new TestGraphDatabaseFactory().newImpermanentDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         db.execute("CREATE (n1)-[:REL  {prop:1}]->(n2)-[:REL {prop:2}]->(n3) CREATE (n1)-[:REL {prop:3}]->(n3) RETURN id(n1) AS id1, id(n2) AS id2, id(n3) AS id3").accept(row -> {
             id1 = row.getNumber("id1").intValue();

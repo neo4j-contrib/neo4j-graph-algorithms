@@ -17,7 +17,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -88,10 +88,7 @@ public final class PageRankTest {
 
     @BeforeClass
     public static void setupGraph() {
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
         try (Transaction tx = db.beginTx()) {
             db.execute(DB_CYPHER).close();
             tx.success();
@@ -100,7 +97,7 @@ public final class PageRankTest {
 
     @AfterClass
     public static void shutdownGraph() throws Exception {
-        db.shutdown();
+        if (db!=null) db.shutdown();
     }
 
     public PageRankTest(

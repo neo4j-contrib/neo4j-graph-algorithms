@@ -12,7 +12,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
@@ -36,10 +36,7 @@ public class TriangleCountExpTest {
     @BeforeClass
     public static void setup() throws Exception {
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLE_COUNT + " nodes"))) {
 

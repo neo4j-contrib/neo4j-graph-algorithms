@@ -11,7 +11,7 @@ import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.Executors;
 
@@ -38,10 +38,7 @@ public class ParallelDeltaSteppingTest {
     @BeforeClass
     public static void setup() throws Exception {
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms"))) {
             gridBuilder = GraphBuilder.create(db)

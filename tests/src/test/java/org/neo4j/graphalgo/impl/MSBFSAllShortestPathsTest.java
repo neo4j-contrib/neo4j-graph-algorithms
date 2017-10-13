@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
@@ -9,7 +10,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyDouble;
@@ -44,14 +45,12 @@ public class MSBFSAllShortestPathsTest {
     private static final String RELATIONSHIP = "REL";
 
     private static Graph graph;
+    private static GraphDatabaseAPI db;
 
     @BeforeClass
     public static void setup() throws Exception {
 
-        final GraphDatabaseAPI db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (ProgressTimer ignored = ProgressTimer.start(t -> System.out.println(
                 "setup took " + t + "ms"))) {
@@ -72,6 +71,12 @@ public class MSBFSAllShortestPathsTest {
 
         db.shutdown();
     }
+
+    @AfterClass
+    public static void tearDown() {
+        db.shutdown();
+    }
+
 
     @Test
     public void testResults() throws Exception {

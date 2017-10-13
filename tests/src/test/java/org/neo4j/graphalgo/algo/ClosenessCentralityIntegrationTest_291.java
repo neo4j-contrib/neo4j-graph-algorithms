@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.ClosenessCentralityProc;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -17,7 +18,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
@@ -40,10 +41,7 @@ public class ClosenessCentralityIntegrationTest_291 {
     @BeforeClass
     public static void setupGraph() throws KernelException {
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)

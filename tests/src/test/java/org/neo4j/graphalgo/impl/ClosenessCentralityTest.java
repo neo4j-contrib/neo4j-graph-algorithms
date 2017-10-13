@@ -1,7 +1,9 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -9,7 +11,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.*;
 
@@ -64,10 +66,7 @@ public class ClosenessCentralityTest {
                         " (e)-[:TYPE]->(d)";
 
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (Transaction tx = db.beginTx()) {
             db.execute(cypher);
@@ -81,6 +80,12 @@ public class ClosenessCentralityTest {
                 .load(HeavyGraphFactory.class);
 
     }
+
+    @AfterClass
+    public static void tearDown() {
+        db.shutdown();
+    }
+
 
     @Test
     public void testGetCentrality() throws Exception {

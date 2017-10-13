@@ -24,7 +24,7 @@ public class HeavyGraphTest extends SimpleGraphTestCase {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (setup != null) setup.getDb().shutdown();
+        if (setup != null) setup.shutdown();
         if (db != null) db.shutdown();
     }
 
