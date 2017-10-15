@@ -24,7 +24,10 @@ Our algorithm returns *normalized closeness centrality* score.
 
 == When to use it / use-cases
 
-The most central nodes according to closeness centrality can quickly interact to all others because they are close to all others.
+As an example, one can consider identifying the location within a city where to place a new public service, so that it is easily accessible for everyone. 
+Similarly, identifying central people that have ideal social network location for the purpose of information dissemination or network influence. 
+In such kind of applications, the nodes who can access the entire network faster need to be selected.
+
 This measure is preferable to degree centrality, because it does not take into account only direct connections among nodes, but also indirect connections.
 For closeness centrality in directed networks, we split the concept into in-closeness
 and out-closeness. 
@@ -45,33 +48,20 @@ image::{img}/closeness_centrality.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (a:Node{id:"A"}),
-       (b:Node{id:"B"}),
-       (c:Node{id:"C"}),
-       (d:Node{id:"D"}),
-       (e:Node{id:"E"})
-CREATE (a)-[:LINK]->(b),
-       (b)-[:LINK]->(a),
-       (b)-[:LINK]->(c),
-       (c)-[:LINK]->(b),
-       (c)-[:LINK]->(d),
-       (d)-[:LINK]->(c),
-       (d)-[:LINK]->(e),
-       (e)-[:LINK]->(d)
+include::scripts/closeness-centrality.cypher[tag=create-sample-graph]
 ----
 
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.closeness.stream('Node', 'LINKS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20 - yields centrality for each node
+include::scripts/closeness-centrality.cypher[tag=stream-sample-graph]
+- yields centrality for each node
 ----
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness('Node', 'LINK', {write:true, writeProperty:'centrality'}) 
-YIELD nodes,loadMillis, computeMillis, writeMillis 
+include::scripts/closeness-centrality.cypher[tag=write-sample-graph]
 - calculates closeness centrality and potentially writes back
 ----
 
@@ -170,10 +160,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.closeness(
-'MATCH (p:Node) RETURN id(p) as id',
-'MATCH (p1:Node)-[:LINK]->(p2:Node) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', write: true});
+include::scripts/closeness-centrality.cypher[tag=cypher-loading]
 ----
 
 == Versions 

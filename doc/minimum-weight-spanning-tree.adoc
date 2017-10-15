@@ -45,26 +45,15 @@ image::{img}/mst.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (a:Place{id:"A"}),
-       (b:Place{id:"B"}),
-       (c:Place{id:"C"}),
-       (d:Place{id:"D"}),
-       (e:Place{id:"E"})
-CREATE (d)-[:LINK{cost:4}]->(b),
-       (d)-[:LINK{cost:6}]->(e),
-       (b)-[:LINK{cost:1}]->(a),
-       (b)-[:LINK{cost:3}]->(c),
-       (a)-[:LINK{cost:2}]->(c),
-       (c)-[:LINK{cost:5}]->(e)
+include::scripts/minimum-weight-spanning-tree.cypher[tag=create-sample-graph]
+
 ----
 
 .Running algorithm and writing back results 
 [source,cypher]
 ----
-MATCH (n:Place{id:"D"}) 
-CALL algo.mst(n, 'cost', {write:true, writeProperty:"mst"})
-YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin,weightMax, relationshipCount
-RETURN loadMillis,computeMillis,writeMillis,weightSum,weightMin,weightMax,relationshipCount
+include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-graph]
+
 ----
 
 .Results
