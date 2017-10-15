@@ -1,4 +1,4 @@
-= Connected Components
+= Community detection: Connected Components
 
 _Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. 
 In graph theory, a connected component of an undirected graph is a subgraph in which any two vertices are connected to each other by paths, and which is connected to no additional vertices in the graph.
@@ -37,17 +37,7 @@ image::{img}/connected_components.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
-,(nAlice)-[:FRIEND{weight:4}]->(nCharles)
-,(nMark)-[:FRIEND{weight:1}]->(nDoug)
-,(nMark)-[:FRIEND{weight:2}]->(nMichael)
-
+include::scripts/connected-components.cypher[tag=create-sample-graph]
 ----
 
 === Unweighted version:
@@ -55,14 +45,12 @@ CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.unionFind.stream('User', 'FRIEND', {}) 
-YIELD nodeId,setId
+include::scripts/connected-components.cypher[tag=unweighted-stream-sample-graph]
 ----
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition"}) 
-YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
+include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 ----
 .Results
 [opts="header",cols="1,1"]
@@ -83,9 +71,7 @@ Results show us, that we have two distinct group of users that have no link betw
 .We can also easily check the number and size of partitions using cypher.
 [source,cypher]
 ----
-MATCH (u:User)
-RETURN u.partition as partition,count(*) as size_of_partition 
-ORDER by size_of_partition DESC LIMIT 20 
+include::scripts/connected-components.cypher[tag=check-results-sample-graph]
 ----
 === Weighted version:
 
@@ -94,14 +80,12 @@ If you define the property that holds the weight(weightProperty) and the thresho
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
-YIELD nodeId,setId
+include::scripts/connected-components.cypher[tag=weighted-stream-sample-graph]
 ----
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition",weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
-YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
+include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 ----
 
 .Results
@@ -119,6 +103,32 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 We can observe, that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship was thrown away and regarded as not existing. 
 
 == Example Usage
+
+As said Connected Components are an essential step in preprocessing your data. 
+One reason is that most centralities suffer from disconnected components or you just want to find disconnected groups of nodes. 
+Yelp's social network will be used to demonstrate how to proceed when dealing with real world data.
+A typical social network consist of one big component and a number of small disconnected components.
+
+.Get the count of connected components
+[source,cypher]
+----
+include::scripts/connected-components.cypher[tag=count-component-yelp]
+----
+
+We get back count of disconnected components being 18512 if we do not count users without friends. 
+Let's now check the size of top 20 components to get a better picture
+
+.Get the size of top 20 components
+[source,cypher]
+----
+include::scripts/connected-components.cypher[tag=top-20-component-yelp]
+----
+
+The biggest component has 8938630 out of total 8981389 (99,5%).
+It is quite high, but not shocking as we have a friendship social network, where we can expect small world effect and 6 degree of separation rule, where you can get to any person in a social network, just depends how long is the path.
+
+We can now move on to next step of analysis and run centralities only on the biggest components, so that our results will be more accurate.
+We just simply write back the results to the node, and use centralities with cypher loading or set a new label for the biggest component.
 
 == Syntax
 
@@ -193,9 +203,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.unionFind('MATCH (p:User) RETURN id(p) as id',
-'MATCH (p1:User)-[:FRIEND]->(p2:User) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher',write:true});
+include::scripts/connected-components.cypher[tag=cypher-loading]
 ----
 == Implementations
 

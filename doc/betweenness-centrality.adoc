@@ -31,6 +31,10 @@ betweenness centrality as an analysis measure, it indicates a potential gate kee
 
 It differs from the other centrality measures. A node can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups).
 
+Node betweenness centrality is relevant to problems such as identifying important nodes that control flows of information between separate parts of the network and identifying causal nodes to influence other entities behavior, such as genes in genomics or customers in marketing studies.
+Betweenness centrality has been used to analyze social networks and protein networks, to identify significant nodes in wireless ad hoc networks, to study the importance and activity of nodes in mobile phone call networks and interaction patterns of players on massively multiplayer online games, to study online expertise sharing communities such as physicians, to identify and analyze linking behavior of key bloggers in dynamic networks of blog posts and to measure network traffic in communication networks.[1]
+
+
 == Constraints / when not to use it
 
 
@@ -42,33 +46,19 @@ People with high betweenness tend to be the innovators and brokers in any networ
 .Create sample graph
 [source,cypher]
 ----
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:MANAGE]->(nBridget)
-,(nAlice)-[:MANAGE]->(nCharles)
-,(nAlice)-[:MANAGE]->(nDoug)
-,(nMark)-[:MANAGE]->(nAlice)
-,(nCharles)-[:MANAGE]->(nMichael)
-
+include::scripts/betweenness-centrality.cypher[tag=create-sample-graph]
 ----
 
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.betweenness.stream('User','MANAGE',{direction:'out'}) 
-YIELD nodeId, centrality 
-RETURN nodeId,centrality order by centrality desc limit 20
+include::scripts/betweenness-centrality.cypher[tag=stream-sample-graph]
 ----
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.betweenness('User','MANAGE', {direction:'out',write:true, writeProperty:'centrality'}) 
-YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis
+include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 ----
 
 .Results
@@ -164,10 +154,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.betweenness(
-'MATCH (p:User) RETURN id(p) as id',
-'MATCH (p1:User)-[:MANAGE]->(p2:User) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', write: true});
+include::scripts/betweenness-centrality.cypher[tag=cypher-loading]
 ----
 
 == Versions 
@@ -176,14 +163,14 @@ We support the following versions of the betweenness centrality algorithm:
 
 * [x] directed, unweighted
 
-- loading incoming relationships: 'INCOMING','IN','I' or '<'
-- loading outgoing relationships: 'OUTGOING','OUT','O' or '>'
+** loading incoming relationships: 'INCOMING','IN','I' or '<'
+** loading outgoing relationships: 'OUTGOING','OUT','O' or '>'
 
 * [ ] directed, weighted
 
 * [x] undirected, unweighted
 
-- direction:'both' or '<>'
+** direction:'both' or '<>'
 
 * [ ] undirected, weighted 
 
@@ -220,6 +207,9 @@ We support the following versions of the betweenness centrality algorithm:
 * https://econsultancy.com/blog/63682-twitter-network-analysis-identifying-influencers-and-innovators/
 
 * http://iima.org/wp/wp-content/uploads/2017/04/Curriculum-Structure-and-Assessment-Placement_Lightfoot.pdf
+
+* [1] https://arxiv.org/pdf/1702.06087.pdf
+
 
 ifdef::implementation[]
 // tag::implementation[]

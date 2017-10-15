@@ -171,7 +171,7 @@ Prior work:
 
 
 
-== Projecting a review similarity graph
+=== Projecting a review similarity graph
 
 We can try to find similar groups of users by projecting a review similiarity network between them. 
 The idea is to start with users that have  more than 10 reviews and find all pairs of users who have reviewed more than 10 common businesses. 

@@ -20,12 +20,13 @@ Centralities:
 * Betweenness Centrality
 * Closeness Centrality
 
-Graph Partitioning:
+Community Detection:
 
-// * Louvain
+* Louvain
 * Label Propagation
 * (Weakly) Connected Components
 * Strongly Connected Components
+* Triangle Count / Clustering Coefficient
 
 Path Finding:
 

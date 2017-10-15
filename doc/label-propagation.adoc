@@ -38,7 +38,6 @@ Moreover, it is computationally expensive to determine the community size.
 Hence, algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential. 
 _Label Propagation_ algorithms (LPA) are such type of algorithms that detects community structure that uses network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities. 
 
-
 == Constraints / when not to use it
 
 == Algorithm explanation on simple sample graph
@@ -48,29 +47,13 @@ image::{img}/label_propagation.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FOLLOW]->(nBridget)
-,(nAlice)-[:FOLLOW]->(nCharles)
-,(nMark)-[:FOLLOW]->(nDoug)
-,(nBridget)-[:FOLLOW]->(nMichael)
-,(nDoug)-[:FOLLOW]->(nMark)
-,(nMichael)-[:FOLLOW]->(nAlice)
-,(nAlice)-[:FOLLOW]->(nMichael)
-,(nBridget)-[:FOLLOW]->(nAlice)
-,(nMichael)-[:FOLLOW]->(nBridget)
-,(nCharles)-[:FOLLOW]->(nDoug)
+include::scripts/label-propagation.cypher[tag=create-sample-graph]
 ----
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {iterations:10,partitionProperty:'partition', write:true}) 
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty 
+include::scripts/label-propagation.cypher[tag=write-sample-graph]
 ----
 
 == Example Usage
@@ -120,11 +103,11 @@ We support the following versions of the label propagation algorithms:
 
 * [x] directed, unweighted:  
 
-- weightProperty: null
+** weightProperty: null
 
 * [x] directed, weighted 
 
-- weightProperty : 'weight'
+** weightProperty : 'weight'
 
 * [ ] undirected, unweighted
 

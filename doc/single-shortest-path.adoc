@@ -42,21 +42,7 @@ image::{img}/sssp.png[]
 .Create sample graph
 [source,cypher]
 ----
-
-CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}), 
-       (d:Loc{name:'D'}), (e:Loc{name:'E'}), (f:Loc{name:'F'}),
-       (a)-[:ROAD {cost:50}]->(b),
-       (a)-[:ROAD {cost:50}]->(c),
-       (a)-[:ROAD {cost:100}]->(d),
-       (a)-[:RAIL {cost:50}]->(d),
-       (b)-[:ROAD {cost:40}]->(d),
-       (c)-[:ROAD {cost:40}]->(d),
-       (c)-[:ROAD {cost:80}]->(e),
-       (d)-[:ROAD {cost:30}]->(e),
-       (d)-[:ROAD {cost:80}]->(f),
-       (e)-[:ROAD {cost:40}]->(f),
-       (e)-[:RAIL {cost:20}]->(f);
-
+include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
 ==== Dijkstra single source shortest path algorithm
@@ -65,21 +51,13 @@ CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}),
 .Running algorithm and streaming results
 [source,cypher]
 ----
-MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
-CALL algo.shortestPath.stream(start, end, 'cost') 
-YIELD nodeId, cost
-RETURN nodeId, cost LIMIT 20
-                       
+ include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]                
 ----
 
 .Running algorithm and writing back results 
 [source,cypher]
 ----
-MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
-CALL algo.shortestPath(start, end, 'cost',{write:true,writeProperty:'sssp'}) 
-YIELD writeMillis,loadMillis,nodeCount, totalCost
-RETURN writeMillis,loadMillis,nodeCount,totalCost
-
+include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]  
 ----
 
 ==== Delta stepping algorithm
@@ -88,22 +66,13 @@ RETURN writeMillis,loadMillis,nodeCount,totalCost
 .Running algorithm and streaming results
 [source,cypher]
 ----
-MATCH (n:Loc {name:'A'})
-CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0)
-YIELD nodeId, distance 
-RETURN nodeId, distance LIMIT 20
-
+include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph] 
 ----
 
 .Running algorithm and writing back results 
 [source,cypher]
 ----
-
-MATCH (n:Loc {name:'A'})
-CALL algo.shortestPath.deltaStepping(n, 'cost', 3.0, {defaultValue:1.0, write:true, writeProperty:'sssp'})
-YIELD nodeCount, loadDuration, evalDuration, writeDuration 
-RETURN nodeCount, loadDuration, evalDuration, writeDuration
-
+include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph] 
 ----
 
 ==== All pairs shortest paths
@@ -112,9 +81,7 @@ RETURN nodeCount, loadDuration, evalDuration, writeDuration
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.allShortestPaths.stream('cost',{nodeQuery:'Loc',defaultValue:1.0})
-YIELD sourceNodeId, targetNodeId, distance
-RETURN sourceNodeId, targetNodeId, distance LIMIT 20
+include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph] 
 ----
 
 == Example Usage
