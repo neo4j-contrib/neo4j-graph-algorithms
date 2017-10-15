@@ -1,4 +1,4 @@
-= Strongly Connected Components
+= Community detection: Strongly Connected Components
 
 _SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. 
 The strongly connected components  of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.There are several algorithms to compute the SCC.
@@ -29,29 +29,15 @@ This algorithms treats the graph as directed, so the direction of the relationsh
 .Create sample graph
 [source,cypher]
 ----
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FOLLOW]->(nBridget)
-,(nAlice)-[:FOLLOW]->(nCharles)
-,(nMark)-[:FOLLOW]->(nDoug)
-,(nMark)-[:FOLLOW]->(nMichael)
-,(nBridget)-[:FOLLOW]->(nMichael)
-,(nDoug)-[:FOLLOW]->(nMark)
-,(nMichael)-[:FOLLOW]->(nAlice)
-,(nAlice)-[:FOLLOW]->(nMichael)
-,(nBridget)-[:FOLLOW]->(nAlice)
-,(nMichael)-[:FOLLOW]->(nBridget)
+include::scripts/strongly-connected-components.cypher[tag=create-sample-graph]
+
 ----
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.scc('User','FOLLOW', {write:true,partitionProperty:'partition'})
-YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
+include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
+
 ----
 
 .Results
@@ -71,8 +57,7 @@ We can see that we have 2 strongly connected components in our sample graph. The
 .Find the largest partition
 [source,cypher]
 ----
-MATCH (u:User)
-RETURN distinct(u.partition) as partition,count(*) as size_of_partition ORDER by size_of_partition DESC LIMIT 1
+include::scripts/strongly-connected-components.cypher[tag=get-largest-component]
 ----
 == Example Usage
 
@@ -120,10 +105,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.scc('MATCH (u:User) RETURN id(u) as id',
-'MATCH (u1:User)-[:FOLLOW]->(u2:User) RETURN id(u1) as source,id(u2) as target',
-{write:true,graph:'cypher'})
-YIELD loadMillis, computeMillis, writeMillis
+include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 ----
 == Implementations
 

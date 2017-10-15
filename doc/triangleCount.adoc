@@ -1,4 +1,4 @@
-= Triangle Counting
+= Community detection: Triangle Counting / Clustering Coefficient
 
 Triangle counting is a community detection graph algorithm which is used to determine the number of triangles passing through each node in the graph. A node is part of a triangle when it has two linked nodes with an relationship between. 
 The triangle is a three-node subgraph, where every two nodes are connected.[1] 
@@ -22,10 +22,10 @@ Finding patterns in large scale graphs, with millions and billions of edges is a
 One of the operations of interest in such a setting is the estimation of the clustering coefficient and the transitivity ratio, which effectively translates to the number of triangles in the graph, or the number of triangles that a node participates in.
 It is known that in social networks there is a higher than-random number of triangles. 
 The reason is that friends of friends are typically friends themselves.
-Thus, the number of triangles can help us spot abnormal graphs and abnormal nodes.
-More-than-expected number of triangles also appear in biological networks,such as protein-protein interaction networks.
-A very recent work shows that the distribution of the local number of triangles can be used to create successful spam filters and also provide useful features to assess content quality in social networks. 
-In the distribution of triangles is used to uncover hidden thematic structure in the World Wide Web. 
+Thus, the number of triangles can help us spot abnormal graphs and abnormal nodes https://pdfs.semanticscholar.org/110b/55a017f52abfedca220036ea129d84b7cadc.pdf[[5\]].
+More-than-expected number of triangles also appear in biological networks,such as protein-protein interaction networks https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-6-270?site=bmcbioinformatics.biomedcentral.com[[7\]].
+A very recent work https://pdfs.semanticscholar.org/110b/55a017f52abfedca220036ea129d84b7cadc.pdf[[5\]] shows that the distribution of the local number of triangles can be used to create successful spam filters and also provide useful features to assess content quality in social networks. 
+In http://www.pnas.org/content/99/9/5825.full.pdf[[6\]] the distribution of triangles is used to uncover hidden thematic structure in the World Wide Web. 
 Therefore, counting triangles is a significant problem in graph mining, with several important applications.[3]
 
 == Constraints / when not to use it
@@ -38,47 +38,47 @@ image::{img}/triangle_count.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (alice:Person{id:"Alice"}),
-       (michael:Person{id:"Michael"}),
-       (karin:Person{id:"Karin"}),
-       (chris:Person{id:"Chris"}),
-       (will:Person{id:"Will"}),
-       (mark:Person{id:"Mark"})
-CREATE (michael)-[:KNOWS]->(karin),
-       (michael)-[:KNOWS]->(chris),
-       (will)-[:KNOWS]->(michael),
-       (mark)-[:KNOWS]->(michael),
-       (mark)-[:KNOWS]->(will),
-       (alice)-[:KNOWS]->(michael),
-       (will)-[:KNOWS]->(chris),
-       (chris)-[:KNOWS]->(karin)
+include::scripts/triangle-count.cypher[tag=create-sample-graph]
 ----
 
 .returns a stream of triples with nodeIds for each triangle.
 [source,cypher]
 ----
-CALL algo.triangle.stream('Person','KNOWS') 
-yield nodeA,nodeB,nodeC
+include::scripts/triangle-count.cypher[tag=stream-triples]
 ----
 
 
 .counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
 ----
-CALL algo.triangleCount('Person', 'KNOWS',
-{concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
 ----
 
 .counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
 [source,cypher]
 ----
-CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4}) 
-YIELD nodeId, triangles
+include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 ----
 
-
 == Example Usage
+
+In graph theory, a clustering coefficient is a measure of the degree to which nodes in a graph tend to cluster together.
+Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.[4] 
+
+We check if this holds true for Yelp's social network of friends.
+
+[source,cypher]
+----
+include::scripts/triangle-count.cypher[tag=triangle-write-yelp]
+----
+
+Average clustering coefficient is 0.0523, which is really low for a social network. 
+This indicates that groups of friends are not tightly knit together, but rather sparse.
+We can assume that users are not on Yelp for finding and creating friends, like for example Facebook, but rather something else, like finding good restaurant recommendations.
+
+   
+Local triangle count and clustering coefficient of nodes can be used as features in finding influencers in social networks.
+
 
 == Syntax
 
@@ -198,6 +198,15 @@ We support the following versions of the triangle count algorithms:
 * [2] http://i11www.iti.kit.edu/extra/publications/sw-fclt-05_t.pdf
 
 * [3] http://www.math.cmu.edu/~ctsourak/tsourICDM08.pdf
+
+* [4] https://en.wikipedia.org/wiki/Clustering_coefficient
+
+* [5] https://pdfs.semanticscholar.org/110b/55a017f52abfedca220036ea129d84b7cadc.pdf
+
+* [6] http://www.pnas.org/content/99/9/5825.full.pdf
+
+* [7] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-6-270?site=bmcbioinformatics.biomedcentral.com
+
 
 
 ifdef::implementation[]

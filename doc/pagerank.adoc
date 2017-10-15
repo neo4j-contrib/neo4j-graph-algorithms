@@ -46,6 +46,17 @@ Pagerank has recently been used to quantify the scientific impact of researchers
 
 == Constraints / when not to use it
 
+However, there are some major limitations of PageRank
+algorithm. 
+A common problem is spider traps. 
+If there are no links from within the group to outside the groups then the group of pages is a spider traps. 
+Another problem is the rank sink problem. 
+It occurs when a network of pages falls in an infinite cycle.
+Moreover, there exists dead-ends and dangling, links problem.
+Dead-ends problem occurs, when pages have no out links. 
+Sometimes a page contains a link of another page which has no out links. 
+These types of link are known as dangling links.[1]
+
 
 == Algorithm explanation on simple sample graph
 
@@ -54,47 +65,21 @@ image::{img}/pagerank.png[]
 .Create sample graph
 [source,cypher]
 ----
-CREATE (home:Page{name:'Home'})
-,(about:Page{name:'About'})
-,(product:Page{name:'Product'})
-,(links:Page{name:'Links'})
-,(a:Page{name:'Site A'})
-,(b:Page{name:'Site B'})
-,(c:Page{name:'Site C'})
-,(d:Page{name:'Site D'})
-CREATE (home)-[:LINKS]->(about)
-,(about)-[:LINKS]->(home)
-,(product)-[:LINKS]->(home)
-,(home)-[:LINKS]->(product)
-,(links)-[:LINKS]->(home)
-,(home)-[:LINKS]->(links)
-,(links)-[:LINKS]->(a)-[:LINKS]->(home)
-,(links)-[:LINKS]->(b)-[:LINKS]->(home)
-,(links)-[:LINKS]->(c)-[:LINKS]->(home)
-,(links)-[:LINKS]->(d)-[:LINKS]->(home)
-
+include::scripts/pagerank.cypher[tag=create-sample-graph]
 ----
 
 
 .Running algorithm and streaming results
 [source,cypher]
 ----
-
-CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) 
-YIELD node, score 
-RETURN node,score order by score desc limit 20
-
+include::scripts/pagerank.cypher[tag=stream-sample-graph]
 ----
 
 
 .Running algorithm and writing back results 
 [source,cypher]
 ----
-
-CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85, 
-write: true,writeProperty:"pagerank"}) 
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty 
-
+include::scripts/pagerank.cypher[tag=write-sample-graph]
 ----
 
 
@@ -200,10 +185,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.pageRank(
-'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', iterations:5, write: true});
+include::scripts/pagerank.cypher[tag=cypher-loading]
 ----
 
 == Versions 
@@ -229,6 +211,8 @@ We support the following versions of the pageRank algorithm:
 * http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 * https://anthonybonato.com/2016/04/13/the-mathematics-of-game-of-thrones/
+
+* [1] http://research.ijcaonline.org/volume110/number12/pxc3901035.pdf
 
 ifdef::implementation[]
 // tag::implementation[]
