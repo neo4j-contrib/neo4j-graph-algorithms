@@ -33,16 +33,18 @@ It's even used for systems analysis of road networks, as well as biology, chemis
 
 In neuroscience, the PageRank of a neuron in a neural network has been found to correlate with its relative firing rate.
 
-Personalized PageRank is used by Twitter to present users with other accounts they may wish to follow.
+Personalized PageRank is used by Twitter to present users with other accounts they may wish to follow https://web.stanford.edu/class/msande233/handouts/lecture8.pdf[[4\]].
 
 
-PageRank has been used to rank spaces or streets to predict how many people (pedestrians or vehicles) come to the individual spaces or streets. In lexical semantics it has been used to perform Word Sense Disambiguation,Semantic similarity, and also to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity.
+PageRank has been used to rank spaces or streets to predict how many people (pedestrians or vehicles) come to the individual spaces or streets. In lexical semantics it has been used to perform Word Sense Disambiguation,Semantic similarity, and also to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity http://nmis.isti.cnr.it/sebastiani/Publications/ACL07.pdf[[2\]].
 
-In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment.
+In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment http://news.bbc.co.uk/2/hi/8238462.stm[[3\]].
 
-For the analysis of protein networks in biology PageRank is also a useful tool.
+For the analysis of protein networks in biology PageRank is also a useful tool https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com[[6\]].
 
-Pagerank has recently been used to quantify the scientific impact of researchers. The underlying citation and collaboration networks are used in conjunction with pagerank algorithm in order to come up with a ranking system for individual publications which propagates to individual authors. The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index in the context of many drawbacks exhibited by h-index.
+Pagerank has been used to quantify the scientific impact of researchers http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf[[5\]].
+The underlying citation and collaboration networks are used in conjunction with pagerank algorithm in order to come up with a ranking system for individual publications which propagates to individual authors . 
+The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index in the context of many drawbacks exhibited by h-index.
 
 == Constraints / when not to use it
 
@@ -206,13 +208,21 @@ We support the following versions of the pageRank algorithm:
 
 * http://infolab.stanford.edu/~ullman/mmds/book.pdf
 
-* http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf
-
 * http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 * https://anthonybonato.com/2016/04/13/the-mathematics-of-game-of-thrones/
 
 * [1] http://research.ijcaonline.org/volume110/number12/pxc3901035.pdf
+
+* [2] http://nmis.isti.cnr.it/sebastiani/Publications/ACL07.pdf
+
+* [3] http://news.bbc.co.uk/2/hi/8238462.stm
+
+* [4] https://web.stanford.edu/class/msande233/handouts/lecture8.pdf 
+
+* [5] http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf
+
+* [6] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com
 
 ifdef::implementation[]
 // tag::implementation[]

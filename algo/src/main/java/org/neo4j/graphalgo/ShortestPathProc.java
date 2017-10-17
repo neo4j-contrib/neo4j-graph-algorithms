@@ -83,7 +83,7 @@ public class ShortestPathProc {
 
     @Procedure(value = "algo.shortestPath", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String" +
-            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', dirction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) " +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) " +
             "YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis")
     public Stream<DijkstraResult> dijkstra(
             @Name("startNode") Node startNode,
