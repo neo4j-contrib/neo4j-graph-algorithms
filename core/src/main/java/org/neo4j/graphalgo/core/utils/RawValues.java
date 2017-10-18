@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo.core.utils;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.values.storable.NumberValue;
+import org.neo4j.values.storable.TextValue;
 
 /**
  * TODO: find suitable name or move
@@ -61,6 +63,17 @@ public class RawValues {
      * @return double representation of value
      */
     public static double extractValue(Object value, double propertyDefaultValue) {
+        if (value instanceof NumberValue) {
+            NumberValue numberValue = (NumberValue) value;
+            return numberValue.doubleValue();
+        }
+        if (value instanceof TextValue) {
+            TextValue textValue = (TextValue) value;
+            String s = textValue.stringValue();
+            if (!s.isEmpty()) {
+                return Double.parseDouble(s);
+            }
+        }
         if (value instanceof Number) {
             Number number = (Number) value;
             return number.doubleValue();
