@@ -213,7 +213,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         }
     }
 
-    private boolean canBatchLoad(int batchSize, String statement) {
+        private boolean canBatchLoad(int batchSize, String statement) {
         return setup.loadConcurrent() && batchSize > 0 &&
                 (statement.contains("{" + LIMIT + "}") || statement.contains("$" + LIMIT)) &&
                 (statement.contains("{" + SKIP + "}") || statement.contains("$" + SKIP));
