@@ -132,7 +132,7 @@ public class LouvainProc {
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withRelationshipWeightsFromProperty(
-                        ProcedureConstants.PROPERTY_PARAM,
+                        config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.BOTH)
                 .load(HeavyGraphFactory.class);
