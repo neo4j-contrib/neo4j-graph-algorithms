@@ -131,8 +131,8 @@ public class LouvainProc {
         return (HeavyGraph) new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
-                .withRelationshipWeightsFromProperty(
-                        ProcedureConstants.PROPERTY_PARAM,
+                .withOptionalRelationshipWeightsFromProperty(
+                        config.getProperty(),
                         config.getPropertyDefaultValue(1.0))
                 .withDirection(Direction.BOTH)
                 .load(HeavyGraphFactory.class);

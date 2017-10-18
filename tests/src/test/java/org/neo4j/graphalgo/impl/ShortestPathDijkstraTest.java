@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -12,12 +12,14 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,22 +27,9 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(Parameterized.class)
 public final class ShortestPathDijkstraTest {
-
-    private Class<? extends GraphFactory> graphImpl;
-
-    @Parameterized.Parameters(name = "{1}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
-                new Object[]{GraphViewFactory.class, "GraphViewFactory"},
-                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
-        );
-    }
 
     // https://en.wikipedia.org/wiki/Shortest_path_problem#/media/File:Shortest_path_with_direct_weights.svg
     private static final String DB_CYPHER = "" +
@@ -85,22 +74,28 @@ public final class ShortestPathDijkstraTest {
             "  (n5)-[:TYPE2 {cost:10}]->(n7),\n" +
             "  (n6)-[:TYPE2 {cost:1}]->(n7)\n";
 
-    private static GraphDatabaseAPI db;
+    @Parameterized.Parameters(name = "{1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
+                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
+        );
+    }
+
+    @ClassRule
+    public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     @BeforeClass
-    public static void setupGraph() {
-        db = TestDatabaseCreator.createTestDatabase();
-        try (Transaction tx = db.beginTx()) {
-            db.execute(DB_CYPHER).close();
-            db.execute(DB_CYPHER2).close();
-            tx.success();
-        }
+    public static void setupGraph() throws KernelException {
+        DB.execute(DB_CYPHER).close();
+        DB.execute(DB_CYPHER2).close();
     }
 
-    @AfterClass
-    public static void shutdownGraph() throws Exception {
-        db.shutdown();
-    }
+    private Class<? extends GraphFactory> graphImpl;
+
+
 
     public ShortestPathDijkstraTest(
             Class<? extends GraphFactory> graphImpl,
@@ -111,20 +106,17 @@ public final class ShortestPathDijkstraTest {
     @Test
     public void test1() throws Exception {
         final Label label = Label.label("Label1");
+        RelationshipType type = RelationshipType.withName("TYPE1");
 
-        long[] expected;
-        try (Transaction tx = db.beginTx()) {
-            expected = new long[]{
-                    db.findNode(label, "name", "a").getId(),
-                    db.findNode(label, "name", "c").getId(),
-                    db.findNode(label, "name", "e").getId(),
-                    db.findNode(label, "name", "d").getId(),
-                    db.findNode(label, "name", "f").getId()
-            };
-            tx.success();
-        }
+        ShortestPath expected = expected(label, type,
+                "name", "a",
+                "name", "c",
+                "name", "e",
+                "name", "d",
+                "name", "f");
+        long[] nodeIds = expected.nodeIds;
 
-        final Graph graph = new GraphLoader(db)
+        final Graph graph = new GraphLoader(DB)
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
@@ -132,36 +124,25 @@ public final class ShortestPathDijkstraTest {
                 .load(graphImpl);
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+        shortestPathDijkstra.compute(nodeIds[0], nodeIds[nodeIds.length - 1], Direction.OUTGOING);
+        final long[] path = Arrays.stream(shortestPathDijkstra.getFinalPath().toArray()).mapToLong(graph::toOriginalNodeId).toArray();
 
-        final long[] path = shortestPathDijkstra.compute(
-                expected[0],
-                expected[expected.length - 1], Direction.OUTGOING)
-                .resultStream()
-                .mapToLong(result -> result.nodeId)
-                .toArray();
-
-        assertEquals(16d, shortestPathDijkstra.getTotalCost(), 0.1);
-        assertArrayEquals(
-                expected,
-                path
-        );
+        assertEquals(expected.weight, shortestPathDijkstra.getTotalCost(), 0.1);
+        assertArrayEquals(nodeIds, path);
     }
 
     @Test
     public void test2() throws Exception {
         final Label label = Label.label("Label2");
-        long[] expected;
-        try (Transaction tx = db.beginTx()) {
-            expected = new long[]{
-                    db.findNode(label, "name", "1").getId(),
-                    db.findNode(label, "name", "3").getId(),
-                    db.findNode(label, "name", "6").getId(),
-                    db.findNode(label, "name", "7").getId()
-            };
-            tx.success();
-        }
+        RelationshipType type = RelationshipType.withName("TYPE2");
+        ShortestPath expected = expected(label, type,
+                "name", "1",
+                "name", "3",
+                "name", "6",
+                "name", "7");
+        long[] nodeIds = expected.nodeIds;
 
-        final Graph graph = new GraphLoader(db)
+        final Graph graph = new GraphLoader(DB)
                 .withLabel(label)
                 .withRelationshipType("TYPE2")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
@@ -169,36 +150,26 @@ public final class ShortestPathDijkstraTest {
                 .load(graphImpl);
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+        shortestPathDijkstra.compute(nodeIds[0], nodeIds[nodeIds.length - 1], Direction.OUTGOING);
+        final long[] path = Arrays.stream(shortestPathDijkstra.getFinalPath().toArray()).mapToLong(graph::toOriginalNodeId).toArray();
 
-        final long[] path = shortestPathDijkstra.compute(
-                expected[0],
-                expected[expected.length - 1], Direction.OUTGOING)
-                .resultStream()
-                .mapToLong(result -> result.nodeId)
-                .toArray();
-
-        assertEquals(12d, shortestPathDijkstra.getTotalCost(), 0.1d);
-        assertArrayEquals(
-                expected,
-                path
-        );
+        assertEquals(expected.weight, shortestPathDijkstra.getTotalCost(), 0.1);
+        assertArrayEquals(nodeIds, path);
     }
 
     @Test
     public void testResultStream() throws Exception {
-
         final Label label = Label.label("Label1");
+        RelationshipType type = RelationshipType.withName("TYPE1");
+        ShortestPath expected = expected(label, type,
+                "name", "a",
+                "name", "c",
+                "name", "e",
+                "name", "d",
+                "name", "f");
+        final long head = expected.nodeIds[0], tail = expected.nodeIds[expected.nodeIds.length - 1];
 
-        final Node head, tail;
-        try (Transaction tx = db.beginTx()) {
-            head = db.findNode(label, "name", "a");
-            tail = db.findNode(label, "name", "f");
-            tx.success();
-        }
-        assertNotNull(head);
-        assertNotNull(tail);
-
-        final Graph graph = new GraphLoader(db)
+        final Graph graph = new GraphLoader(DB)
                 .withLabel(label)
                 .withRelationshipType("TYPE1")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
@@ -207,10 +178,49 @@ public final class ShortestPathDijkstraTest {
 
         final ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
         Stream<ShortestPathDijkstra.Result> resultStream = shortestPathDijkstra
-                .compute(head.getId(), tail.getId(), Direction.OUTGOING)
+                .compute(head, tail, Direction.OUTGOING)
                 .resultStream();
 
-        assertEquals(16d, shortestPathDijkstra.getTotalCost(), 0.1);
-        assertEquals(5, resultStream.count());
+        assertEquals(expected.weight, shortestPathDijkstra.getTotalCost(), 0.1);
+        assertEquals(expected.nodeIds.length, resultStream.count());
+    }
+
+    private static ShortestPath expected(
+            Label label,
+            RelationshipType type,
+            String... kvPairs) {
+        return DB.executeAndCommit(db -> {
+            double weight = 0.0;
+            Node prev = null;
+            long[] nodeIds = new long[kvPairs.length / 2];
+            for (int i = 0; i < nodeIds.length; i++) {
+                Node current = db.findNode(label, kvPairs[2*i], kvPairs[2*i + 1]);
+                long id = current.getId();
+                nodeIds[i] = id;
+                if (prev != null) {
+                    for (Relationship rel : prev.getRelationships(type, Direction.OUTGOING)) {
+                        if (rel.getEndNodeId() == id) {
+                            double cost = RawValues.extractValue(
+                                    rel.getProperty("cost"),
+                                    0.0);
+                            weight += cost;
+                        }
+                    }
+                }
+                prev = current;
+            }
+
+            return new ShortestPath(nodeIds, weight);
+        });
+    }
+
+    private static final class ShortestPath {
+        private final long[] nodeIds;
+        private final double weight;
+
+        private ShortestPath(long[] nodeIds, double weight) {
+            this.nodeIds = nodeIds;
+            this.weight = weight;
+        }
     }
 }
