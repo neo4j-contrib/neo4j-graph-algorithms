@@ -104,4 +104,15 @@ ON CREATE SET cr.weight = weight
 
 // end::coocurence-graph[]
 
+// tag:pagerank-stream-yelp-social[]
 
+call algo.pageRank.stream(
+'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
+'MATCH (u1:User)-[:FRIENDS]->(u2:User) RETURN id(u1) as source, id(u2) as target
+ UNION
+ MATCH (u1:User)-[:FRIENDS]->(u2:User) RETURN id(u2) as source, id(u1) as target',
+{graph:'cypher'}
+) yield node,score with node,score order by score desc limit 10 
+return node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny},score;
+
+// end:pagerank-stream-yelp-social[]
