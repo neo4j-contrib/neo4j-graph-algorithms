@@ -59,6 +59,8 @@ Dead-ends problem occurs, when pages have no out links.
 Sometimes a page contains a link of another page which has no out links. 
 These types of link are known as dangling links.[1]
 
+Check reference http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[[7\]] for more.
+
 
 == Algorithm explanation on simple sample graph
 
@@ -103,11 +105,23 @@ As we expected, we see that Home page has the highest pageRank, because it has i
 
 == Example Usage
 
-.minimal
+In short PageRank is a “vote”, by all the other nodes in the graph, about how important a node is. A relationship to a node counts as a vote of support. If there’s no link there’s no support (but it’s an abstention from voting rather than a vote against the node).[7]
+
+We have to add here that the weight of the support from one node to another is related to how important the "voter" node is.
+
+We will run PageRank on Yelp's social network to find potential influencers.
+If you will check closely you can see that we saved the social network as an undirected graph.
+For now there is no option to load the the relationship as undirected, but we can use cypher loading to help us solve this.
+Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship. 
+
+We do not have to save this reversed relationship, we can project it using *cypher loading*.
+We load all relationships and then use `UNION` to also load all relationships with reversed directions.
+This is applicable to all other algorithms, that use *cypher loading*.
+
+.Running algorithm on Yelp social network
 [source,cypher]
 ----
-CALL algo.pageRank('Label1', 'TYPE1') YIELD computeMillis
-CALL algo.pageRank.stream('Label1', 'TYPE1') YIELD node, score order by score desc limit 20
+include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
 ----
 
 == Syntax
@@ -208,8 +222,6 @@ We support the following versions of the pageRank algorithm:
 
 * http://infolab.stanford.edu/~ullman/mmds/book.pdf
 
-* http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
-
 * https://anthonybonato.com/2016/04/13/the-mathematics-of-game-of-thrones/
 
 * [1] http://research.ijcaonline.org/volume110/number12/pxc3901035.pdf
@@ -223,6 +235,8 @@ We support the following versions of the pageRank algorithm:
 * [5] http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf
 
 * [6] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com
+
+* [7] http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 ifdef::implementation[]
 // tag::implementation[]
