@@ -38,8 +38,6 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     private final int nodeCount;
     // overall cost of the path
     private double totalCost;
-    // target node id
-    private int goal;
     private ProgressLogger progressLogger;
 
     public ShortestPathDijkstra(Graph graph) {
@@ -66,24 +64,21 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     }
 
     public ShortestPathDijkstra compute(long startNode, long goalNode, Direction direction) {
-        visited.clear();
-        queue.clear();
+        reset();
+
         int node = graph.toMappedNodeId(startNode);
-        goal = graph.toMappedNodeId(goalNode);
+        int goal = graph.toMappedNodeId(goalNode);
         costs.put(node, 0.0);
         queue.add(node, 0.0);
         run(goal, direction);
-        finalPath.clear();
-        totalCost = NO_PATH_FOUND;
         if (!path.containsKey(goal)) {
             return this;
         }
+        totalCost = costs.get(goal);
         int last = goal;
-        totalCost = 0.0;
         while (last != PATH_END) {
             finalPath.addFirst(last);
             last = path.getOrDefault(last, PATH_END);
-            totalCost += costs.get(last);
         }
         return this;
     }
@@ -164,6 +159,15 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         finalPath = null;
         visited = null;
         return this;
+    }
+
+    private void reset() {
+        visited.clear();
+        queue.clear();
+        costs.clear();
+        path.clear();
+        finalPath.clear();
+        totalCost = NO_PATH_FOUND;
     }
 
     /**
