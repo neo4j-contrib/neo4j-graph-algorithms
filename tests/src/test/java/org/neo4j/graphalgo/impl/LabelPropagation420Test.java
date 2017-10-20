@@ -138,7 +138,7 @@ public final class LabelPropagation420Test {
         // to minimize the oscillations, but it cannot be guaranteed that
         // it will never happen. It's RNG after all: http://dilbert.com/strip/2001-10-25
         if (lp.didConverge()) {
-            assertTrue(3 <= lp.ranIterations());
+            assertTrue("expected at least 2 iterations, got " + lp.ranIterations(), 2 <= lp.ranIterations());
             assertEquals(2, cluster.size());
             for (IntObjectCursor<IntArrayList> cursor : cluster) {
                 int[] ids = cursor.value.toArray();
@@ -151,7 +151,7 @@ public final class LabelPropagation420Test {
             }
         } else {
             assertEquals((long) 10, lp.ranIterations());
-            System.out.println("cluster = " + cluster);
+            System.out.println("non-converged cluster = " + cluster);
             IntArrayList cluster5 = cluster.get(5);
             assertNotNull(cluster5);
             int[] ids = cluster5.toArray();
