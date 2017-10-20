@@ -3,7 +3,7 @@ package org.neo4j.graphalgo.results;
 public class LabelPropagationStats {
 
     public final long nodes, iterations, loadMillis, computeMillis, writeMillis;
-    public final boolean write;
+    public final boolean write, didConverge;
     public final String weightProperty, partitionProperty;
 
     public LabelPropagationStats(
@@ -13,6 +13,7 @@ public class LabelPropagationStats {
             final long computeMillis,
             final long writeMillis,
             final boolean write,
+            final boolean didConverge,
             final String weightProperty,
             final String partitionProperty) {
         this.nodes = nodes;
@@ -21,6 +22,7 @@ public class LabelPropagationStats {
         this.computeMillis = computeMillis;
         this.writeMillis = writeMillis;
         this.write = write;
+        this.didConverge = didConverge;
         this.weightProperty = weightProperty;
         this.partitionProperty = partitionProperty;
     }
@@ -29,6 +31,7 @@ public class LabelPropagationStats {
 
         private long nodes = 0;
         private long iterations = 0;
+        private boolean didConverge = false;
         private boolean write;
         private String weightProperty;
         private String partitionProperty;
@@ -40,6 +43,11 @@ public class LabelPropagationStats {
 
         public Builder iterations(final long iterations) {
             this.iterations = iterations;
+            return this;
+        }
+
+        public Builder didConverge(final boolean didConverge) {
+            this.didConverge = didConverge;
             return this;
         }
 
@@ -66,6 +74,7 @@ public class LabelPropagationStats {
                     evalDuration,
                     writeDuration,
                     write,
+                    didConverge,
                     weightProperty,
                     partitionProperty);
         }

@@ -106,7 +106,7 @@ public final class ParallelUtil {
      * Executes read operations in parallel, based on the given batch size
      * and executor.
      */
-    public static <T extends Runnable> Collection<T> readParallel(
+    public static <T extends Runnable> List<T> readParallel(
             int concurrency,
             int batchSize,
             BatchNodeIterable idMapping,
@@ -120,7 +120,7 @@ public final class ParallelUtil {
 
         if (!canRunInParallel(executor) || threads == 1) {
             int nodeOffset = 0;
-            Collection<T> tasks = new ArrayList<>(threads);
+            List<T> tasks = new ArrayList<>(threads);
             for (PrimitiveIntIterable iterator : iterators) {
                 final T task = importer.newImporter(nodeOffset, iterator);
                 tasks.add(task);
