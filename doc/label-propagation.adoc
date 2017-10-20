@@ -64,8 +64,8 @@ include::scripts/label-propagation.cypher[tag=write-sample-graph]
 [source,cypher]
 ----
 CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
-weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4}) 
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty,
+weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4})
+YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty,
 partitionProperty - simple label propagation kernel
 ----
 
@@ -77,7 +77,7 @@ partitionProperty - simple label propagation kernel
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
 | concurrency | int | available CPUs | yes | number of concurrent threads
-| iterations | int | 1 | yes | number of iterations
+| iterations | int | 1 | yes | the maximum number of iterations to run
 | weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
 | partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside
 | write | boolean | true | yes | if result should be written back as node property
@@ -89,7 +89,8 @@ partitionProperty - simple label propagation kernel
 |===
 | name | type | description
 | nodes | int | number of nodes considered
-| iterations | int | number of iterations
+| iterations | int | number of iterations that were executed
+| didConverge | boolean | true if the algorithm did converge to a stable labelling within the provided number of maximum iterations
 | loadMillis | int | milliseconds for loading data
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
