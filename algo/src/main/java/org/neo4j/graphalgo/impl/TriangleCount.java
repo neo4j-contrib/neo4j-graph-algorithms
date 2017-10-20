@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-@Deprecated
 public class TriangleCount extends Algorithm<TriangleCount> {
 
     public static final Direction D = Direction.BOTH;
