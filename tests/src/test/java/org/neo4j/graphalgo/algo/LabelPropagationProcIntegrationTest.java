@@ -94,7 +94,8 @@ public class LabelPropagationProcIntegrationTest {
         String query = "CALL algo.labelPropagation(null, null, null, {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'})";
 
         runQuery(query, row -> {
-            assertEquals(5, row.getNumber("iterations").intValue());
+            assertTrue(5 >= row.getNumber("iterations").intValue());
+            assertTrue(row.getBoolean("didConverge"));
             assertFalse(row.getBoolean("write"));
             assertEquals("score", row.getString("weightProperty"));
             assertEquals("key", row.getString("partitionProperty"));
@@ -109,7 +110,7 @@ public class LabelPropagationProcIntegrationTest {
         String check = "MATCH (n) WHERE n.id IN [0,1] RETURN n.partition AS partition";
 
         runQuery(query, row -> {
-            assertEquals(2, row.getNumber("nodes").intValue());
+            assertEquals(12, row.getNumber("nodes").intValue());
             assertTrue(row.getBoolean("write"));
 
             assertTrue(

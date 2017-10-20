@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo;
 
-import com.carrotsearch.hppc.IntDoubleMap;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
@@ -10,7 +9,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.OptionalIntDoubleMapTranslator;
+import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
@@ -52,7 +51,7 @@ public final class LabelPropagationProc {
     @Description("CALL algo.labelPropagation(" +
             "label:String, relationship:String, direction:String, " +
             "{iterations:1, weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4}) " +
-            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - " +
+            "YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - " +
             "simple label propagation kernel")
     public Stream<LabelPropagationStats> labelPropagation(
             @Name(value = "label", defaultValue = "") String label,
@@ -86,10 +85,7 @@ public final class LabelPropagationProc {
                 concurrency,
                 stats);
 
-        IntDoubleMap labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
-
-        stats.nodes(labels.size());
-
+        int[] labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
             write(concurrency, partitionProperty, graph, labels, stats);
         }
@@ -122,7 +118,7 @@ public final class LabelPropagationProc {
         }
     }
 
-    private IntDoubleMap compute(
+    private int[] compute(
             Direction direction,
             int iterations,
             int batchSize,
@@ -133,10 +129,18 @@ public final class LabelPropagationProc {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             batchSize = Math.max(1, batchSize);
             final LabelPropagation labelPropagation = new LabelPropagation(graph, batchSize, concurrency, pool);
-            final IntDoubleMap result = labelPropagation
-                    .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
+            labelPropagation
+                    .withProgressLogger(ProgressLogger.wrap(
+                            log,
+                            "LabelPropagation"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(direction, iterations);
+            final int[] result = labelPropagation.labels();
+
+            stats.iterations(labelPropagation.ranIterations());
+            stats.didConverge(labelPropagation.didConverge());
+            stats.nodes(result.length);
+
             labelPropagation.release();
             graph.release();
             return result;
@@ -147,7 +151,7 @@ public final class LabelPropagationProc {
             int concurrency,
             String partitionKey,
             HeavyGraph graph,
-            IntDoubleMap labels,
+            int[] labels,
             LabelPropagationStats.Builder stats) {
         stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
@@ -158,7 +162,7 @@ public final class LabelPropagationProc {
                     .write(
                             partitionKey,
                             labels,
-                            OptionalIntDoubleMapTranslator.INSTANCE
+                            IntArrayTranslator.INSTANCE
                 );
         }
     }
