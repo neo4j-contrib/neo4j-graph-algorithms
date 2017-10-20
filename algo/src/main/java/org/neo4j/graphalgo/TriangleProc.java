@@ -40,8 +40,9 @@ public class TriangleProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure("algo.triangle.stream")
-    @Description("CALL algo.triangle.stream(label, relationship, {concurrency:4}) " +
+    //@Procedure("algo.triangle.stream")
+    @Procedure("algo.triangle.exp1.stream")
+    @Description("CALL algo.triangle.exp1.stream(label, relationship, {concurrency:4}) " +
             "YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle")
     public Stream<TriangleStream.Result> triangleStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -68,8 +69,9 @@ public class TriangleProc {
         return triangleStream.resultStream();
     }
 
-    @Procedure("algo.triangleCount.stream")
-    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:4}) " +
+    //@Procedure("algo.triangleCount.stream")
+    @Procedure("algo.triangleCount.exp1.stream")
+    @Description("CALL algo.triangleCount.exp1.stream(label, relationship, {concurrency:4}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCount.Result> triangleCountStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -97,7 +99,8 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure("algo.triangleCount.exp1.stream")
+    //@Procedure("algo.triangleCount.stream")
+    @Procedure("algo.triangleCount.stream")
     @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCountExp.Result> triangleCountExp1Stream(
@@ -126,8 +129,9 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount(label, relationship, " +
+    //@Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
+    @Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount.exp1(label, relationship, " +
             "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCount(
@@ -197,7 +201,8 @@ public class TriangleProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
+    //@Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
+    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
     @Description("CALL algo.triangleCount(label, relationship, " +
             "{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
