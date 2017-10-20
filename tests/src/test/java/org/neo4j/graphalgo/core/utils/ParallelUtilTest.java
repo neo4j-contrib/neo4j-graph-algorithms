@@ -269,7 +269,15 @@ public final class ParallelUtilTest extends RandomizedTest {
         } catch (Throwable throwable) {
             throw Exceptions.launderedException(throwable);
         } finally {
+            List<Runnable> unscheduled = pool.shutdownNow();
+            pool.shutdown();
+            try {
+                pool.awaitTermination(1, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                // ok
+            }
             assertTrue(pool.shutdownNow().isEmpty());
+            assertTrue(pool.isTerminated());
         }
     }
 
