@@ -67,8 +67,8 @@ public class TriangleProc {
         return triangleStream.resultStream();
     }
 
-    @Procedure("algo.triangleCount.stream")
-    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:4}) " +
+    @Procedure("algo.triangleCount.exp1.stream")
+    @Description("CALL algo.triangleCount.exp1.stream(label, relationship, {concurrency:4}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCount.Result> triangleCountStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -96,7 +96,7 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure("algo.triangleCount.exp1.stream")
+    @Procedure("algo.triangleCount.stream")
     @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCountExp.Result> triangleCountExp1Stream(
@@ -125,8 +125,8 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount(label, relationship, " +
+    @Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount.exp1(label, relationship, " +
             "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCount(
@@ -184,7 +184,7 @@ public class TriangleProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
+    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
     @Description("CALL algo.triangleCount(label, relationship, " +
             "{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
@@ -194,7 +194,7 @@ public class TriangleProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCount triangleCount;
+        final TriangleCountExp triangleCount;
         final double[] clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
@@ -214,7 +214,7 @@ public class TriangleProc {
         };
 
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCount(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = new TriangleCountExp(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
