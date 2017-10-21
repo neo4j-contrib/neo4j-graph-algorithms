@@ -84,6 +84,19 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph] 
 ----
 
+For now only single-source shortest path support loading the relationship as undirected, but we can use cypher loading to help us solve this.
+Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship. 
+
+We do not have to save this reversed relationship, we can project it using *cypher loading*.
+Note that relationship query does not specify direction of the relationship. 
+This is applicable to all other algorithms, that use *cypher loading*.
+
+.Running all pairs shortest path treating the graph as undirected
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph] 
+----
+
 == Example Usage
 
 == Syntax
