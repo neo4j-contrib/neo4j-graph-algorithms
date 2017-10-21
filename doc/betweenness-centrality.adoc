@@ -99,9 +99,7 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 | stats | boolean | true | yes | if stats about centrality should be returned
 | writeProperty | string | 'centrality' | yes | property name written back to
 | graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
-| concurrency | int | 1 | yes | if concurrency is set and > 1 parallel BC is used. It spawns N(given by the concurrency param) concurrent threads for calculation where each one calculates the BC for one node at a time
-
-
+| concurrency | int | available CPUs | yes | number of concurrent threads
 |===
 
 .Results
@@ -134,7 +132,7 @@ YIELD nodeId, centrality - yields centrality for each node
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
-| concurrency | int | 1 | yes | if concurrency is set and > 1 parallel BC is used. It spawns N(given by the concurrency param) concurrent threads for calculation where each one calculates the BC for one node at a time
+| concurrency | int | available CPUs | yes | number of concurrent threads
 | direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
 |===
 
