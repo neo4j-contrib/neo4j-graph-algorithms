@@ -6,14 +6,14 @@ The intuition of label flooding is that a single label can quickly become domina
 The labels are expected to be trapped inside a densely connected group of nodes.
 Based on the idea of local trapping of labels, the author proposed a local community detection method where a node is initialized with a label and propagates step by step through the neighbours until the end of the community is reached. 
 The end of the community indicates the number of edges proceeding outward from the community and drops below a threshold value. 
-LPA is a method which is effective, simple and near-linear time algorithm. 
+LPA is a method which is effective, simple and near-linear time algorithm.[1] 
 Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
 
 == History, Explanation
 
 
 Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in the community detection research. 
-_Label Propagation_ which was first proposed by Raghavan et al. (2007) uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes and each node selects a label from its neighbourhood to adopt it as its label. 
+_Label Propagation_ which was first proposed by Raghavan et al. (2007)https://arxiv.org/pdf/0709.2938.pdf[[2\]] uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes and each node selects a label from its neighbourhood to adopt it as its label. 
 LPA works as follows: Node x has neighbours and each neighbour carries a label denoting the community to which they belong to. 
 Each node in the network chooses to join the community to which the maximum number of its neighbours belongs to, with ties broken uniformly and randomly. 
 At the beginning, every node is initialized with unique label (called as identifier) and the labels propagate through the network. 
@@ -23,7 +23,7 @@ At end of the propagation, most labels disappear and only few labels exist in th
 Label propagation algorithm reaches convergence when each node has the majority label of its neighbours. 
 At the end of the convergence, nodes connected with the same label form a community. 
 According to LPA, communities are defined as nodes having identical labels at convergence. 
-The agreement between the nodes to spread the labels forms the basis for _Label Propagation_ algorithms. 
+The agreement between the nodes to spread the labels forms the basis for _Label Propagation_ algorithms.[1] 
 
 == When to use it / use-cases
 
@@ -40,6 +40,11 @@ _Label Propagation_ algorithms (LPA) are such type of algorithms that detects co
 
 == Constraints / when not to use it
 
+In contrast with other algorithms label propagation can result in various community structures from the same initial condition.
+The range of solutions can be narrowed if some nodes are given preliminary labels while others are held unlabelled. 
+Consequently, unlabelled nodes will be more likely to adapt to the labelled ones. 
+For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[2]
+
 == Algorithm explanation on simple sample graph
 
 image::{img}/label_propagation.png[]
@@ -54,6 +59,39 @@ include::scripts/label-propagation.cypher[tag=create-sample-graph]
 [source,cypher]
 ----
 include::scripts/label-propagation.cypher[tag=write-sample-graph]
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | partition
+| Alice | 5
+| Charles | 4
+| Bridget | 5
+| Michael | 5
+| Doug | 4
+| Mark | 4 
+|===
+
+Our algorithm found two communities with 3 members each.
+
+=== Using pre-defined labels
+
+_At the beginning of the algorithm, every node is initialized with unique label (called as identifier) and the labels propagate through the network._ 
+
+It is possible to define preliminary labels (identifiers) of nodes using `partition` parameter.
+We need to save preliminary set of labels we would like to run the LPA algorithm with as a property of nodes (must be a number). 
+In our example graph we saved them as property _predefined_label_.
+Algorithm first checks if there is a _predefined label_ assigned to the node and loads it, if there is one.
+If there isn't one it assigns the node new unique label(node id are used).
+Using this preliminary set of labels (identifiers) it then sequentially updates each node's label to a new one, which is the most frequent label among its neighbors at every label propagation step(iteration).
+
+Can be used as semi-supervised way of finding communities, where we hand-pick some initial communities. 
+
+.Running algorithm with pre-defined labels
+[source,cypher]
+----
+include::scripts/label-propagation.cypher[tag=write-existing-label-sample-graph]
 ----
 
 == Example Usage
@@ -79,7 +117,7 @@ partitionProperty - simple label propagation kernel
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | iterations | int | 1 | yes | number of iterations
 | weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
-| partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside
+| partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside, can be used to define initial set of labels (must be a number)
 | write | boolean | true | yes | if result should be written back as node property
 
 |===
@@ -115,9 +153,11 @@ We support the following versions of the label propagation algorithms:
 
 == References
 
-* http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
+* [1] http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf
 
-* http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf
+* [2] https://arxiv.org/pdf/0709.2938.pdf
+
+* http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
 
 ifdef::implementation[]
 // tag::implementation[]

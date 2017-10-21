@@ -64,3 +64,14 @@ YIELD sourceNodeId, targetNodeId, distance
 RETURN sourceNodeId, targetNodeId, distance LIMIT 20
 
 // end::all-pairs-sample-graph[]
+
+
+// tag::all-pairs-bidirected-graph[]
+
+CALL algo.allShortestPaths.stream('cost', {
+nodeQuery:'MATCH (n:Loc) RETURN id(n) as id', 
+relationshipQuery:'MATCH (n:Loc)-[r]-(p:Loc) RETURN id(n) as source, id(p) as target, r.cost as weight',
+graph:'cypher', defaultValue:1.0})
+
+
+// end::all-pairs-bidirected-graph[]
