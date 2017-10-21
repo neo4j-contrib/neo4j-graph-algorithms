@@ -18,7 +18,7 @@ CREATE (nAlice)-[:FRIEND]->(nBridget)
 
 // tag::stream-sample-graph[]
 
-CALL algo.clustering.louvain.stream('User', 'FRIEND', 
+CALL algo.louvain.stream('User', 'FRIEND',
 {}) 
 YIELD nodeId, setId
 RETURN nodeId, setId LIMIT 20;
@@ -27,7 +27,7 @@ RETURN nodeId, setId LIMIT 20;
 
 // tag::write-sample-graph[]
 
-CALL algo.clustering.louvain('User', 'FRIEND', 
+CALL algo.louvain('User', 'FRIEND',
 {write:true, writeProperty:'community'}) 
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
 
@@ -35,7 +35,7 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis;
 
 // tag::write-yelp[]
 
-CALL algo.clustering.louvain('Business', 'CO_OCCURENT_REVIEWS', 
+CALL algo.louvain('Business', 'CO_OCCURENT_REVIEWS',
 {write:true, writeProperty:'community'}) 
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
 

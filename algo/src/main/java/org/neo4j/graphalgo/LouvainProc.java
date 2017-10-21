@@ -56,8 +56,8 @@ public class LouvainProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure(value = "algo.clustering.louvain", mode = Mode.WRITE)
-    @Description("CALL algo.clustering.louvain(label:String, relationship:String, " +
+    @Procedure(value = "algo.louvain", mode = Mode.WRITE)
+    @Description("CALL algo.louvain(label:String, relationship:String, " +
             "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) " +
             "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
     public Stream<LouvainResult> louvain(
@@ -102,8 +102,8 @@ public class LouvainProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.clustering.louvain.stream")
-    @Description("CALL algo.clustering.louvain.stream(label:String, relationship:String, " +
+    @Procedure(value = "algo.louvain.stream")
+    @Description("CALL algo.louvain.stream(label:String, relationship:String, " +
             "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4) " +
             "YIELD nodeId, community - yields a setId to each node id")
     public Stream<Louvain.Result> louvainStream(

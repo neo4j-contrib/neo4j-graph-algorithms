@@ -1,102 +1,96 @@
-= Efficient Graph Algorithms for Neo4j (pre-Alpha / WIP)
+= Efficient Graph Algorithms for Neo4j
 
-image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.1["Build Status", link="https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms"]
+image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.3["Build Status", link="https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms"]
 
 // tag::readme[]
 
-This project aims to develop efficient, well tested graph algorithm implementations for Neo4j 3.1 and 3.2.
+The goal of this library is to provide efficiently implemented, parallel versions of common graph algorithms for Neo4j 3.x exposed as Cypher procedures.
 
 ifndef::env-docs[]
-You can find the documentation (WIP) here http://neo4j-contrib.github.io/neo4j-graph-algorithms
+You can find the documentation here http://neo4j-contrib.github.io/neo4j-graph-algorithms
 endif::env-docs[]
 
 Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
 
-The goal is to provide parallel versions of common graph algorithms for Neo4j exposed as Cypher user defined procedures:
+
+== Algorithms
 
 Centralities:
 
-* Page Rank
-* Betweenness Centrality
-* Closeness Centrality
+* Page Rank (`algo.pageRank`)
+* Betweenness Centrality (`algo.betweenness`)
+* Closeness Centrality (`algo.closeness`)
 
 Community Detection:
 
-* Louvain
-* Label Propagation
-* (Weakly) Connected Components
-* Strongly Connected Components
-* Triangle Count / Clustering Coefficient
+* Louvain (`algo.louvain`)
+* Label Propagation (`algo.labelPropagation`)
+* (Weakly) Connected Components (`algo.unionFind`)
+* Strongly Connected Components (`algo.scc`)
+* Triangle Count / Clustering Coefficient (`algo.triangleCount`)
 
 Path Finding:
 
-* Minimum Weight Spanning Tree
-* All Pairs- and Single Source - Shortest Path
+* Minimum Weight Spanning Tree (`algo.mst`)
+* All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
 
-These procedures work on a subgraphm optionally filtered by label and relationship-type. 
-Future versions will also provide filtering and projection using Cypher queries.
+These procedures work either on the whole graph or on a subgraph optionally filtered by label and relationship-type.
+You can also use filtering and projection using Cypher queries, see below.
 
-*We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case. 
-Also please note things that you miss from installation instructions, readme, etc. 
+*We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case.
+Also please note things that you miss from installation instructions, documentation, etc.
 
 Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
 
 == Installation
 
-Just copy the `graph-algorithms-algo-*.jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] into your `$NEO4J_HOME/plugins` directory and restart Neo4j.
+Just copy the `graph-algorithms-algo-*.jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] into your `$NEO4J_HOME/plugins` directory.
 
-Then running `call dbms.procedures();` should also list the algorithm procedures.
+Because the algorithms use the lower level Kernel API to read from and write to Neo4j you also have to enable them in the configuration (for security reasons):
 
-[source,cypher]
-----
-CALL dbms.procedures() YIELD name, description, signature
-WHERE name STARTS WITH "algo."
-RETURN name, description, signature
-ORDER BY name
-----
-
-[WARNING]
-====
-For safety reasons, in *Neo4j 3.2.x* you will need to add/enable this line in your `$NEO4J_HOME/conf/neo4j.conf`:
-
+.Add to $NEO4J_HOME/conf/neo4j.conf
 ----
 dbms.security.procedures.unrestricted=algo.*
 ----
-====
 
+Then running `call algo.list();` should list the algorithm procedures.
+You can also see the full list in the documentation.
 
+////
 == Introduction
 
-Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes. 
-A graph is made up of nodes (vertices) which are connected by relationships (edges). 
+Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes.
+A graph is made up of nodes (vertices) which are connected by relationships (edges).
 A graph may be _undirected_, meaning that there is no distinction between the two nodes associated with each relationship, or its relationships may be _directed_ from one node to another.
 Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way.
- 
-We are tied to our friends. 
-Cities are connected by roads and airline routes. 
-Flora and fauna are bound together in a food web. 
-Countries are involved in trading relationships. 
+
+We are tied to our friends.
+Cities are connected by roads and airline routes.
+Flora and fauna are bound together in a food web.
+Countries are involved in trading relationships.
 The World Wide Web is a virtual network of information.
 
-
-* _Note that Neo4j can only save directed relationships, but we can treat them as though they are undirected when we are doing the analysis_
-
+* _Note that Neo4j stores directed relationships, we can treat them as though they are undirected when we are doing the analysis_
+////
 
 == Usage
 
 These algorithms are exposed as Neo4j procedures.
 You can call them directly from Cypher in your Neo4j Browser, from cypher-shell or your client code.
 
-For most algorithms there are two procedures, one that writes results back to the graph as node-properties and another (named `algo.<name>.stream`) that returns a stream of data, e.g. node-ids and computed values.
+For most algorithms we provide two procedures, one that writes results back to the graph as node-properties and reports statistics.
+And another (named `algo.<name>.stream`) that returns a stream of data, e.g. node-ids and computed values.
+
+For large graphs the streaming procedure might return millions or billions of results, that's why it is often more convenient to store the results of the algorithm and then use them with later queries.
 
 The general call syntax is:
 
 [source,cypher]
 ----
-CALL algo.<name>([label],[relType],{config})
+CALL algo.<name>([label],[relationshipType],{config})
 ----
 
-For example for page rank on dbpedia:
+For example for page rank on DBpedia (11M nodes, 116M relationships):
 
 [source,cypher]
 ----
@@ -105,11 +99,12 @@ CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, write: true,
 
 CALL algo.pageRank.stream('Page','Link',{iterations:5, dampingFactor:0.85})
 YIELD node, score
-RETURN node, score
+RETURN node.title, score
 ORDER BY score DESC LIMIT 10;
 ----
 
-=== Cypher Loading
+
+=== Projection via Cypher Queries
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
@@ -120,22 +115,23 @@ You can also return a property value or weight (according to your config) in add
 ----
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target, count(*) as weight',
 {graph:'cypher', iterations:5, write: true});
 ----
 
 ifndef::env-docs[]
-Details on how to call the individual algorithms can be found in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
+The detailed call syntax and all parameters and possible return values for each algorithm are listed in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
 endif::env-docs[]
 
 
-== Building
+== Building Locally
 
-Currently aiming at Neo4j 3.1 and 3.2 (in the 3.2 branch)
+Currently aiming at Neo4j 3.x (with a branch per version)
 
 ----
 git clone https://github.com/neo4j-contrib/neo4j-graph-algorithms
 cd neo4j-graph-algorithms
+git checkout 3.3
 mvn clean install
 cp algo/target/graph-algorithms-*.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart
