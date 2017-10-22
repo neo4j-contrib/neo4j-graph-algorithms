@@ -12,6 +12,7 @@
     <artifactId>graph-algorithms-core</artifactId>
 
     <name>Neo4j Graph Algorithms :: Core</name>
+    <description>Efficient Graph Algorithms for Neo4j - Core Implementation</description>
 
     <dependencies>
         <dependency>

@@ -12,6 +12,7 @@
     <artifactId>graph-algorithms-tests</artifactId>
 
     <name>Neo4j Graph Algorithms :: Tests</name>
+    <description>Efficient Graph Algorithms for Neo4j - Tests</description>
 
     <properties>
         <logback.version>1.0.13</logback.version>
