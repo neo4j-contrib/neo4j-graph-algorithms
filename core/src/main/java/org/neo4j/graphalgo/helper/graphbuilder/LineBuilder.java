@@ -33,7 +33,7 @@ public class LineBuilder extends GraphBuilder<LineBuilder> {
     /**
      * create a ring
      *
-     * @param size number of elements (>= 2)
+     * @param size number of elements (&gt;= 2)
      * @return itself for method chaining
      */
     public LineBuilder createLine(int size) {

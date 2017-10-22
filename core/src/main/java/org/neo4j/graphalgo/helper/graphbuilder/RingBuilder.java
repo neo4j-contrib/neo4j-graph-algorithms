@@ -21,7 +21,7 @@ public class RingBuilder extends GraphBuilder<RingBuilder> {
     /**
      * create a ring
      *
-     * @param size number of elements (>= 2)
+     * @param size number of elements (&gt;= 2)
      * @return itself for method chaining
      */
     public RingBuilder createRing(int size) {

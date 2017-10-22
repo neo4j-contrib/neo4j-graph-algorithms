@@ -5,7 +5,7 @@
 
     <groupId>org.neo4j</groupId>
     <artifactId>graph-algorithms-parent</artifactId>
-    <version>3.3.0.0-SNAPSHOT</version>
+    <version>3.3.0.0</version>
     <packaging>pom</packaging>
     <name>Neo4j Graph Algorithms</name>
 
@@ -32,14 +32,14 @@
     </properties>
 
     <organization>
-        <name>Neo Technology, Inc.</name>
+        <name>Neo4j, Inc.</name>
         <url>https://neo4j.com</url>
     </organization>
 
     <developers>
         <developer>
             <id>neo-technology</id>
-            <organization>Neo Technology, Incl.</organization>
+            <organization>Neo4j, Inc.</organization>
             <url>https://neo4j.com</url>
         </developer>
         <developer>
@@ -142,6 +142,35 @@
                     <target>${javac.target}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                   <additionalparam>-Xdoclint:none</additionalparam>
+                </configuration>
+            </plugin>
            <plugin>
                <groupId>org.asciidoctor</groupId>
                <artifactId>asciidoctor-maven-plugin</artifactId>
@@ -182,18 +211,4 @@
            </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-           <id>sonatype-snapshot-repo</id>
-           <name>Sonatype SNAPSHOT repository</name>
-           <layout>default</layout>
-           <releases>
-              <enabled>false</enabled>
-           </releases>
-           <snapshots>
-              <enabled>true</enabled>
-           </snapshots>
-           <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
 </project>
