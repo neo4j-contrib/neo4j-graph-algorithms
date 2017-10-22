@@ -8,6 +8,7 @@
     <version>3.2.5.2</version>
     <packaging>pom</packaging>
     <name>Neo4j Graph Algorithms</name>
+    <description>Efficient Graph Algorithms for Neo4j</description>
 
     <profiles>
         <profile>
