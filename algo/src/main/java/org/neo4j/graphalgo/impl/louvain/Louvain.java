@@ -20,6 +20,8 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> {
 
+    private static final Direction D = Direction.BOTH;
+
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
     private ExecutorService executorService;
@@ -29,8 +31,8 @@ public class Louvain extends Algorithm<Louvain> {
     private final int[] communityIds; // node to community mapping
     private IntObjectMap<IntSet> communities; // bag of communityId -> member-nodes
     private final IdMapping idMapping;
-    private double m2;
     private int iterations;
+    private double m2, m2q;
 
     public Louvain(IdMapping idMapping,
                    RelationshipIterator relationshipIterator,
@@ -48,11 +50,27 @@ public class Louvain extends Algorithm<Louvain> {
         communities = new IntObjectScatterMap<>();
     }
 
-    public Louvain compute(int iterations) {
+//    public Louvain compute(int iterations) {
+//        reset();
+//
+//        int i = 0;
+//        for (; i < iterations && arrange(); i++) {}
+//
+//            if (!arrange()) {
+//                return this; // convergence
+//            }
+//        }
+//        this.iterations = i;
+//        return this;
+//    }
+
+
+    public Louvain compute(int maxIterations) {
         reset();
-        for (int i = 0; i < iterations; i++) {
-            if (!arrange()) {
-                return this; // convergence
+        this.iterations = 0;
+        while (arrange()) {
+            if (this.iterations++ > maxIterations) {
+                break;
             }
         }
         return this;
@@ -109,7 +127,6 @@ public class Louvain extends Algorithm<Louvain> {
     }
 
     private void reset() {
-        iterations = 1;
         communities.clear();
 
         // TODO find better way for init
@@ -121,12 +138,13 @@ public class Louvain extends Algorithm<Louvain> {
         }
         final DoubleAdder adder = new DoubleAdder();
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
                 return true;
             });
         });
         m2 = adder.doubleValue() * 2d;
+        m2q = Math.pow(adder.doubleValue() * 2d, 2);
     }
 
     /**
@@ -155,22 +173,24 @@ public class Louvain extends Algorithm<Louvain> {
         double[] sum = {0.0, 0.0}; // {sIn, sTot}
         set.forEach((IntProcedure) node -> {
             int nodeCommunity = communityIds[node];
-            relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
 
                 // TODO eval
                 // BOTH counts relationships twice therefore count only once if id(s) < id(t)
-                if (sourceNodeId < targetNodeId && communityIds[targetNodeId] == nodeCommunity) {
-                    sum[0] += weight;
-                }
-//                if (communityIds[targetNodeId] == nodeCommunity) {
+//                if (sourceNodeId < targetNodeId && communityIds[targetNodeId] == nodeCommunity) {
 //                    sum[0] += weight;
 //                }
+                if (communityIds[targetNodeId] == nodeCommunity) {
+                    sum[0] += weight;
+                }
 
                 sum[1] += weight;
                 return true;
             });
         });
+//        sum[0] /= 2.0;
+//        sum[1] /= 2.0;
         return sum;
     }
 
@@ -182,7 +202,7 @@ public class Louvain extends Algorithm<Louvain> {
      */
     private double[] kIAndkIIn(int node, int targetCommunity) {
         double[] sum = {0.0, 0.0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
             final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
             sum[0] += weight;
             if (targetCommunity == communityIds[targetNodeId]) {
@@ -190,6 +210,9 @@ public class Louvain extends Algorithm<Louvain> {
             }
             return true;
         });
+
+//        sum[0] /= 2.0;
+//        sum[1] /= 2.0;
         return sum;
     }
 
@@ -203,10 +226,11 @@ public class Louvain extends Algorithm<Louvain> {
     private double modGain(int node, int targetCommunity) {
         final double[] sInTot = sInAndsTot(targetCommunity);
         final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
-        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
-                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
-                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
-                        Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
+//        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
+//                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
+//                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
+//                        Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
+        return (kIAndkIIn[1] / m2) - (sInTot[1] * kIAndkIIn[0] / m2q);
     }
 
     /**
@@ -221,7 +245,7 @@ public class Louvain extends Algorithm<Louvain> {
             bestGain[0] = Double.MIN_VALUE;
             final int currentCommunity = communityIds[node];
             bestCommunity[0] = currentCommunity;
-            relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
                 final double gain = modGain(sourceNodeId, targetCommunity);
                 if (gain > bestGain[0]) {
@@ -236,6 +260,7 @@ public class Louvain extends Algorithm<Louvain> {
                 changes[0] = true;
             }
         }
+        System.out.println("changes[0] = " + changes[0]);
         return changes[0];
     }
 

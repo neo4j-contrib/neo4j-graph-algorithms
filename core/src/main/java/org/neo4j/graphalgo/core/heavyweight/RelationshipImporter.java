@@ -33,6 +33,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
     private WeightMapping nodeProps;
     private final ImportProgress progress;
     private final int[] relationId;
+    private final boolean loadBoth;
     private final boolean loadIncoming;
     private final boolean loadOutgoing;
 
@@ -66,6 +67,8 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         this.relationId = dimensions.relationId();
         loadIncoming = setup.loadIncoming;
         loadOutgoing = setup.loadOutgoing;
+
+        loadBoth = setup.loadBoth;
         this.matrix = new AdjacencyMatrix(nodeSize, loadIncoming, loadOutgoing);
         this.currentNodeCount = 0;
     }
@@ -90,7 +93,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         if (loadOutgoing) {
             if (!hasWeights) {
                 final WeightMap weights = (WeightMap) this.relWeights;
-                hasWeights = true;
+                hasWeights = !loadBoth;
                 visitOutgoing = ((relationshipId, typeId, startNodeId, endNodeId) ->
                         visitOutgoingWithWeight(
                                 readOp,
@@ -288,6 +291,10 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             if (value != null) {
                 long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
                 weights.set(relId, value);
+                if (loadBoth) {
+                    relId = RawValues.combineIntInt(targetGraphId, sourceGraphId);
+                    weights.set(relId, value);
+                }
             }
         } catch (EntityNotFoundException ignored) {
         }

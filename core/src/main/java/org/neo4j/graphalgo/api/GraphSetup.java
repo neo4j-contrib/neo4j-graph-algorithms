@@ -54,6 +54,8 @@ public class GraphSetup {
     // TODO
     public final boolean accumulateWeights;
 
+    public final boolean loadBoth;
+
     /**
      * main ctor
      * @param startLabel the start label. null means any label.
@@ -94,6 +96,7 @@ public class GraphSetup {
         this.startLabel = startLabel;
         this.endLabel = endLabel;
         this.relationshipType = relationshipType;
+        this.loadBoth = direction == Direction.BOTH;
         this.loadIncoming = direction == Direction.INCOMING || direction == Direction.BOTH;
         this.loadOutgoing = direction == Direction.OUTGOING || direction == Direction.BOTH;
         this.relationWeightPropertyName = relationWeightPropertyName;
@@ -132,6 +135,7 @@ public class GraphSetup {
         this.log = NullLog.getInstance();
         this.logMillis = -1;
         this.tracker = AllocationTracker.EMPTY;
+        this.loadBoth = true;
     }
 
     /**
@@ -158,6 +162,7 @@ public class GraphSetup {
         this.log = NullLog.getInstance();
         this.logMillis = -1;
         this.tracker = AllocationTracker.EMPTY;
+        this.loadBoth = true;
     }
 
     public boolean loadConcurrent() {
