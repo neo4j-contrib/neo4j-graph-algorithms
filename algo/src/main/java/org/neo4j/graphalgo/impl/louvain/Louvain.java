@@ -175,23 +175,28 @@ public class Louvain extends Algorithm<Louvain> {
             int nodeCommunity = communityIds[node];
             relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-
-                // TODO eval
-                // BOTH counts relationships twice therefore count only once if id(s) < id(t)
-//                if (sourceNodeId < targetNodeId && communityIds[targetNodeId] == nodeCommunity) {
-//                    sum[0] += weight;
-//                }
                 if (communityIds[targetNodeId] == nodeCommunity) {
                     sum[0] += weight;
                 }
-
                 sum[1] += weight;
                 return true;
             });
         });
-//        sum[0] /= 2.0;
-//        sum[1] /= 2.0;
         return sum;
+    }
+
+    private double sTot(int community) {
+        final IntSet set = communities.get(community); //.getOrDefault(community, EMPTY);
+        double[] sum = {0.0}; // {sIn, sTot}
+        set.forEach((IntProcedure) node -> {
+            int nodeCommunity = communityIds[node];
+            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+                final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
+                sum[0] += weight;
+                return true;
+            });
+        });
+        return sum[0];
     }
 
     /**
@@ -211,8 +216,6 @@ public class Louvain extends Algorithm<Louvain> {
             return true;
         });
 
-//        sum[0] /= 2.0;
-//        sum[1] /= 2.0;
         return sum;
     }
 
@@ -224,13 +227,13 @@ public class Louvain extends Algorithm<Louvain> {
      * @return
      */
     private double modGain(int node, int targetCommunity) {
-        final double[] sInTot = sInAndsTot(targetCommunity);
+//        final double[] sInTot = sInAndsTot(targetCommunity);
         final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
 //        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
 //                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
 //                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
 //                        Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
-        return (kIAndkIIn[1] / m2) - (sInTot[1] * kIAndkIIn[0] / m2q);
+        return (kIAndkIIn[1] / m2) - (sTot(targetCommunity) * kIAndkIIn[0] / m2q);
     }
 
     /**
