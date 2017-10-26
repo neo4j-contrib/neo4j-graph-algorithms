@@ -276,7 +276,7 @@ public final class ParallelUtilTest extends RandomizedTest {
             } catch (InterruptedException e) {
                 // ok
             }
-            assertTrue(pool.shutdownNow().isEmpty());
+            assertTrue(unscheduled.isEmpty());
             assertTrue(pool.isTerminated());
         }
     }

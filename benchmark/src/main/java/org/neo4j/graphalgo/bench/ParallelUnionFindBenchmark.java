@@ -190,7 +190,7 @@ public class ParallelUnionFindBenchmark {
                 .getStruct();
     }
 
-    @Benchmark
+    // TODO: not a benchmark, it's eirther extremely slow or does not terminate rn
     public Object multiSourceColoring() {
         return new MSColoring(graph, Pools.DEFAULT, 8)
                 .compute()

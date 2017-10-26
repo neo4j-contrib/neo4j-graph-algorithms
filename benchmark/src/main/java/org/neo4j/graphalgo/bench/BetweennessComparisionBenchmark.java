@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class BetweennessComparisionBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
