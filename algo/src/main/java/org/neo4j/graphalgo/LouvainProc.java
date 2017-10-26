@@ -45,7 +45,7 @@ public class LouvainProc {
 
     public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
     public static final String DEFAULT_CLUSTER_PROPERTY = "community";
-    public static final int DEFAULT_ITERATIONS = 10;
+    public static final int DEFAULT_ITERATIONS = 100;
 
     @Context
     public GraphDatabaseAPI api;
@@ -80,7 +80,7 @@ public class LouvainProc {
         builder.withNodeCount(graph.nodeCount());
 
         final Louvain louvain = new Louvain(
-                graph, graph, graph,
+                graph, graph, graph, graph,
                 Pools.DEFAULT,
                 configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
@@ -119,7 +119,7 @@ public class LouvainProc {
         final HeavyGraph graph = load(configuration);
 
         // evaluation
-        return new Louvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
+        return new Louvain(graph, graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(configuration.getIterations(DEFAULT_ITERATIONS))

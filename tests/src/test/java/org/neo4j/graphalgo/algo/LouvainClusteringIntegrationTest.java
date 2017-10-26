@@ -58,21 +58,22 @@ public class LouvainClusteringIntegrationTest {
 
                         "CREATE" +
                         
-                        " (a)-[:TYPE {w:1}]->(b),\n" +
-                        " (a)-[:TYPE {w:1}]->(c),\n" +
-                        " (a)-[:TYPE {w:1}]->(d),\n" +
-                        " (c)-[:TYPE {w:1}]->(d),\n" +
-                        " (b)-[:TYPE {w:1}]->(c),\n" +
-                        " (b)-[:TYPE {w:1}]->(d),\n" +
+                        " (a)-[:TYPE]->(b),\n" +
+                        " (a)-[:TYPE]->(c),\n" +
+                        " (a)-[:TYPE]->(d),\n" +
+                        " (c)-[:TYPE]->(d),\n" +
+                        " (b)-[:TYPE]->(c),\n" +
+                        " (b)-[:TYPE]->(d),\n" +
                         
-                        " (e)-[:TYPE {w:1}]->(f),\n" +
-                        " (e)-[:TYPE {w:1}]->(g),\n" +
-                        " (e)-[:TYPE {w:1}]->(h),\n" +
-                        " (f)-[:TYPE {w:1}]->(h),\n" +
-                        " (h)-[:TYPE {w:1}]->(g),\n" +
-                        " (f)-[:TYPE {w:1}]->(g),\n" +
+                        " (f)-[:TYPE]->(e),\n" +
+                        " (e)-[:TYPE]->(g),\n" +
+                        " (e)-[:TYPE]->(h),\n" +
+                        " (f)-[:TYPE]->(h),\n" +
+                        " (f)-[:TYPE]->(g),\n" +
+                        " (g)-[:TYPE]->(h),\n" +
 
-                        " (b)-[:TYPE {w:1}]->(e)";
+                        // this should make b more likely to fall into set of e
+                        " (b)-[:TYPE {w:6}]->(e)";
 
 
         db = TestDatabaseCreator.createTestDatabase();
@@ -90,7 +91,7 @@ public class LouvainClusteringIntegrationTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 0.0)
+                .withRelationshipWeightsFromProperty("w", 1.0)
                 .load(HeavyGraphFactory.class);
 
     }
@@ -175,7 +176,7 @@ public class LouvainClusteringIntegrationTest {
 //    @Ignore("TODO")
     @Test
     public void testWithWeight() throws Exception {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:0.0, " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0, " +
                 "write:true, writeProperty:'cluster', concurrency:2}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 

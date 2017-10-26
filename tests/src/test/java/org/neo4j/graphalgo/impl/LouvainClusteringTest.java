@@ -97,7 +97,7 @@ public class LouvainClusteringTest {
 
     @Test
     public void test() throws Exception {
-        final Louvain louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1)
+        final Louvain louvain = new Louvain(graph, graph, graph, graph, Pools.DEFAULT, 1)
                 .compute(10);
         final int[] communities = louvain.getCommunityIds();
         for (int i = 0; i < communities.length; i++) {
@@ -109,7 +109,7 @@ public class LouvainClusteringTest {
 
     @Test
     public void testParallel() throws Exception {
-        final Louvain louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 8)
+        final Louvain louvain = new Louvain(graph, graph, graph, graph, Pools.DEFAULT, 8)
                 .compute(10);
         final int[] communities = louvain.getCommunityIds();
         for (int i = 0; i < communities.length; i++) {
