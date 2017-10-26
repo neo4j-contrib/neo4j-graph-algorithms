@@ -66,7 +66,7 @@ public class AllShortestPathsComparisionBenchmark {
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
-        createNet(50); // 10000 nodes; 1000000 edges
+        createNet(42); // 1764 nodes; 74088 edges
         params.put("head", lines.get(0).getId());
         params.put("delta", 2.5);
 
@@ -130,13 +130,13 @@ public class AllShortestPathsComparisionBenchmark {
     }
 
     @Benchmark
-    public long _03_benchmark_MS_ASP() {
+    public long _02_benchmark_MS_ASP() {
         return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .resultStream().count();
     }
 
     @Benchmark
-    public long _04_benchmark_Huge_MS_ASP() {
+    public long _03_benchmark_Huge_MS_ASP() {
         return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .resultStream().count();
     }
