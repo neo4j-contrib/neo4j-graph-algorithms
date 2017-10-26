@@ -22,12 +22,9 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
-
-import static java.lang.String.format;
 
 public final class LabelPropagationProc {
 
@@ -61,9 +58,10 @@ public final class LabelPropagationProc {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
-                .overrideRelationshipTypeOrQuery(relationshipType);
+                .overrideRelationshipTypeOrQuery(relationshipType)
+                .overrideDirection(directionName);
 
-        final Direction direction = parseDirection(directionName);
+        final Direction direction = configuration.getDirection(Direction.OUTGOING);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
         final int concurrency = configuration.getConcurrency();
@@ -165,37 +163,5 @@ public final class LabelPropagationProc {
                             IntArrayTranslator.INSTANCE
                 );
         }
-    }
-
-    private static final Direction[] ALLOWED_DIRECTION = Arrays
-            .stream(Direction.values())
-            .filter(d -> d != Direction.BOTH)
-            .toArray(Direction[]::new);
-
-    private static Direction parseDirection(String directionString) {
-        if (null == directionString) {
-            return Direction.OUTGOING;
-        }
-        Direction direction;
-        try {
-            direction = Direction.valueOf(directionString.toUpperCase());
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    format(
-                            "Cannot convert value '%s' to Direction. Legal values are '%s'.",
-                            directionString,
-                            Arrays.toString(ALLOWED_DIRECTION)
-                    )
-            );
-        }
-        if (direction == Direction.BOTH) {
-            throw new IllegalArgumentException(
-                    format(
-                            "Direction BOTH is not allowed. Legal values are '%s'.",
-                            Arrays.toString(ALLOWED_DIRECTION)
-                    )
-            );
-        }
-        return direction;
     }
 }

@@ -6,10 +6,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.LabelPropagationProc;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -18,12 +16,10 @@ import org.neo4j.graphalgo.TestDatabaseCreator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class LabelPropagationProcIntegrationTest {
@@ -168,20 +164,6 @@ public class LabelPropagationProcIntegrationTest {
         runQuery(query);
         runQuery(check, row ->
                 assertEquals(42, row.getNumber("partition").intValue()));
-    }
-
-    @Test
-    public void shouldNotPropagateBoth() throws Exception {
-        String query = "CALL algo.labelPropagation('A', 'X', 'BOTH')";
-        try {
-            runQuery(query);
-            fail();
-        } catch (QueryExecutionException e) {
-            Throwable cause = Exceptions.peel(e, ((Predicate<Throwable>) IllegalArgumentException.class::isInstance).negate());
-            assertEquals(
-                    "Direction BOTH is not allowed. Legal values are '[OUTGOING, INCOMING]'.",
-                    cause.getMessage());
-        }
     }
 
     private void runQuery(String query) {
