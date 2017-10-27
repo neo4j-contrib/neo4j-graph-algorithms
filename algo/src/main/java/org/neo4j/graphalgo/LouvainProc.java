@@ -3,7 +3,6 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -80,7 +79,7 @@ public class LouvainProc {
         builder.withNodeCount(graph.nodeCount());
 
         final Louvain louvain = new Louvain(
-                graph, graph, graph, graph,
+                graph, graph, graph,
                 Pools.DEFAULT,
                 configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
@@ -119,7 +118,7 @@ public class LouvainProc {
         final HeavyGraph graph = load(configuration);
 
         // evaluation
-        return new Louvain(graph, graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
+        return new Louvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(configuration.getIterations(DEFAULT_ITERATIONS))

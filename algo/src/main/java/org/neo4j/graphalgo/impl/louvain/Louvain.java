@@ -20,7 +20,6 @@ public class Louvain extends Algorithm<Louvain> {
 
     private static final Direction D = Direction.BOTH;
 
-    private final Degrees degrees;
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
     private ExecutorService executorService;
@@ -31,10 +30,9 @@ public class Louvain extends Algorithm<Louvain> {
     private IntObjectMap<IntSet> communities; // bag of communityId -> member-nodes
     private final IdMapping idMapping;
     private int iterations;
-    private double m, m2, mq2;
+    private double m2, mq2;
 
     public Louvain(IdMapping idMapping,
-                   Degrees degrees,
                    RelationshipIterator relationshipIterator,
                    RelationshipWeights relationshipWeights,
                    ExecutorService executorService,
@@ -42,7 +40,6 @@ public class Louvain extends Algorithm<Louvain> {
 
         this.idMapping = idMapping;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
-        this.degrees = degrees;
         this.relationshipIterator = relationshipIterator;
         this.relationshipWeights = relationshipWeights;
         this.executorService = executorService;
@@ -58,7 +55,7 @@ public class Louvain extends Algorithm<Louvain> {
                 return this;
             }
         }
-        throw new IllegalStateException("did not converge");
+        throw new IllegalStateException("algorithm did not converge");
     }
 
 
@@ -88,7 +85,6 @@ public class Louvain extends Algorithm<Louvain> {
                 return true;
             });
         });
-        m = adder.doubleValue();
         m2 = adder.doubleValue() * 2.0; // 2m
         mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
     }
@@ -105,30 +101,6 @@ public class Louvain extends Algorithm<Louvain> {
         communities.get(targetCommunity).add(node);
         // update communityIds
         communityIds[node] = targetCommunity;
-    }
-
-    private double vToC(int nodeV, int communityC) {
-        double[] sum = {0.0};
-        relationshipIterator.forEachRelationship(nodeV, D, (sourceNodeId, targetNodeId, relationId) -> {
-            final int targetCommunity = communityIds[targetNodeId];
-            if (communityC == targetCommunity) {
-                sum[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-            }
-            return true;
-        });
-        return sum[0];
-    }
-
-    private double cToV(int nodeV, int communityC) {
-        double[] sum = {0.0};
-        communities.get(communityC)
-                .forEach((IntProcedure) nodeInC -> {
-                    relationshipIterator.forEachRelationship(nodeInC, D, (sourceNodeId, targetNodeId, relationId) -> {
-                        sum[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-                        return true;
-                    });
-                });
-        return sum[0];
     }
 
     private double sTot(int community) {
@@ -165,29 +137,6 @@ public class Louvain extends Algorithm<Louvain> {
     }
 
     /**
-     * return tuple of sIn and sTot for a given community
-     * sIn: sum of weights of nodes within the community pointing to node in the same community
-     * sTot: sum of weights of nodes within the community pointing anywhere
-     * @return {sIn, sTot}
-     */
-    private double[] sInAndsTot(int community) {
-        final IntSet set = communities.get(community); //.getOrDefault(community, EMPTY);
-        double[] sum = {0.0, 0.0}; // {sIn, sTot}
-        set.forEach((IntProcedure) node -> {
-            int nodeCommunity = communityIds[node];
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-                if (communityIds[targetNodeId] == nodeCommunity) {
-                    sum[0] += weight;
-                }
-                sum[1] += weight;
-                return true;
-            });
-        });
-        return sum;
-    }
-
-    /**
      * calculate modularity-delta of moving node into a new community
      *
      * @param node
@@ -195,14 +144,7 @@ public class Louvain extends Algorithm<Louvain> {
      * @return
      */
     private double modGain(int node, int targetCommunity) {
-//        final double[] sInTot = sInAndsTot(targetCommunity);
         final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
-//        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
-//                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
-//                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
-//                        Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
-//        return (kIAndkIIn[1] / (2 * m)) - (sTot(targetCommunity) * kIAndkIIn[0] / (2 * Math.pow(m, 2)));
-//        return (kIAndkIIn[1] / m2) - (sInTot[0] * kIAndkIIn[0] / mq2);
         return (kIAndkIIn[1] / m2) - (sTot(communityIds[node]) * kIAndkIIn[0] / mq2);
     }
 
@@ -215,7 +157,7 @@ public class Louvain extends Algorithm<Louvain> {
         final double[] bestGain = {0};
         final int[] bestCommunity = {0};
         for (int node = 0; node < nodeCount; node++) {
-            bestGain[0] = -1;
+            bestGain[0] = Double.MIN_VALUE;
             final int currentCommunity = communityIds[node];
             bestCommunity[0] = currentCommunity;
             relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
@@ -228,19 +170,10 @@ public class Louvain extends Algorithm<Louvain> {
                 return true;
             });
             if (bestCommunity[0] != currentCommunity && bestGain[0] > 0.0) {
-                System.out.println();
-                System.out.println("node = " + node);
-                System.out.println("currentCommunity = " + currentCommunity + " :" + communities.get(currentCommunity));
-                System.out.println("bestCommunity = " + bestCommunity[0] + " :" + communities.get(bestCommunity[0]));
-                System.out.println("bestGain = " + bestGain[0]);
-
-
                 assign(node, currentCommunity, bestCommunity[0]);
-
                 changes[0] = true;
             }
         }
-        System.out.println("changes[0] = " + changes[0]);
         return changes[0];
     }
 

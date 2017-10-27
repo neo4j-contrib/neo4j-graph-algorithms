@@ -173,7 +173,6 @@ public class LouvainClusteringIntegrationTest {
         });
     }
 
-//    @Ignore("TODO")
     @Test
     public void testWithWeight() throws Exception {
         final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0, " +
@@ -189,6 +188,7 @@ public class LouvainClusteringIntegrationTest {
             final long writeMillis = row.getNumber("writeMillis").longValue();
             System.out.println("nodes = " + nodes);
             System.out.println("communityCount = " + communityCount);
+            assertEquals(4, communityCount);
             System.out.println("iterations = " + iterations);
             assertEquals("invalid node count", 9, nodes);
             assertTrue("invalid loadTime", loadMillis >= 0);
