@@ -1,10 +1,11 @@
 == TODO
 
-`algo.louvain.*` implements *Undirected Weighted* Louvain but due to a bug in the RelationshipWeights
-implementation of HeavyGraph we cant actually iterate using Direction.BOTH. To get around
-this issue (#444) we have to mirror each relationship and its weight. This is only an issue
-when using weights. Otherwise the defaultValue should be set to 1 in this case incoming
-weights are set to 1 as well.
+`algo.louvain` implements *undirected weighted* Louvain community detection but
+due to a bug in the RelationshipWeights implementation of HeavyGraph we cant actually
+iterate using Direction.BOTH. To get around this issue (#444) we have to mirror each
+relationship and its weight. This is only an issue when using weights. Otherwise the
+defaultValue should be set to 1 in this case incoming weights are set to 1 as well.
+This should not happen in the HugeGraph
 
 
 = Community detection: Louvain
