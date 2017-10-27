@@ -73,7 +73,7 @@ public class LouvainClusteringIntegrationTest {
                         " (g)-[:TYPE]->(h),\n" +
 
                         // this should make b more likely to fall into set of e
-                        " (b)-[:TYPE {w:6}]->(e)";
+                        " (b)-[:TYPE {w:3}]->(e)";
 
 
         db = TestDatabaseCreator.createTestDatabase();

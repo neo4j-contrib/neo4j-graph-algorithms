@@ -83,7 +83,7 @@ public class Louvain extends Algorithm<Louvain> {
         }
         final DoubleAdder adder = new DoubleAdder();
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+            relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                 adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
                 return true;
             });
@@ -195,14 +195,15 @@ public class Louvain extends Algorithm<Louvain> {
      * @return
      */
     private double modGain(int node, int targetCommunity) {
-        final double[] sInTot = sInAndsTot(targetCommunity);
+//        final double[] sInTot = sInAndsTot(targetCommunity);
         final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
 //        return (((sInTot[0] + kIAndkIIn[1]) / m2) -                 // (sIn + kIIn / 2*m) -
 //                Math.pow((sInTot[1] + kIAndkIIn[0]) / m2, 2)) -     // ((sTot + kI) / 2)^2 -
 //                ((sInTot[0] / m2) - Math.pow(sInTot[1] / m2, 2) -   // ((sIn / 2 * m) - (sTot / 2 * m)^2) -
 //                        Math.pow(kIAndkIIn[0] / m2, 2));            // (kI / 2 * m)^2
 //        return (kIAndkIIn[1] / (2 * m)) - (sTot(targetCommunity) * kIAndkIIn[0] / (2 * Math.pow(m, 2)));
-        return (kIAndkIIn[1] / (2 * m)) - (sInTot[1] * kIAndkIIn[1] / (2 * Math.pow(m, 2)));
+//        return (kIAndkIIn[1] / m2) - (sInTot[0] * kIAndkIIn[0] / mq2);
+        return (kIAndkIIn[1] / m2) - (sTot(communityIds[node]) * kIAndkIIn[0] / mq2);
     }
 
     /**
