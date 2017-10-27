@@ -56,7 +56,7 @@ public class Louvain extends Algorithm<Louvain> {
                 return this;
             }
         }
-        throw new IllegalStateException("algorithm did not converge");
+        return this;
     }
 
 
@@ -95,7 +95,8 @@ public class Louvain extends Algorithm<Louvain> {
      * @param node nodeId
      * @param targetCommunity communityId
      */
-    private void assign(int node, int sourceCommunity, int targetCommunity) {
+    private void assign(int node, int targetCommunity) {
+        int sourceCommunity = communityIds[node];
         // remove node from its old set
         communities.get(sourceCommunity).removeAll(node);
         // place it into its new set
@@ -104,6 +105,10 @@ public class Louvain extends Algorithm<Louvain> {
         communityIds[node] = targetCommunity;
     }
 
+    /**
+     * sum of weights of nodes in the community pointing anywhere
+     * @return sTot
+     */
     private double sTot(int community) {
         double[] stot = {0.0}; // {sTot}
         communities.get(community)
@@ -118,25 +123,9 @@ public class Louvain extends Algorithm<Louvain> {
     }
 
     /**
-     * return tuple of kI and kI_in
-     * kI: sum of weights of all relationships of a given node
-     * kI_in: sum of weights of a given node pointing into given community  |  v->C
-     * @return {kI, kI_in}
+     * return sum of weights of a given node pointing into given community | v->C
+     * @return kiIn
      */
-    private double[] kIAndkIIn(int node, int targetCommunity) {
-        double[] sum = {0.0, 0.0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-            final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-            sum[0] += weight;
-            if (targetCommunity == communityIds[targetNodeId]) {
-                sum[1] += weight;
-            }
-            return true;
-        });
-
-        return sum;
-    }
-
     private double kIIn(int node, int targetCommunity) {
         double[] sum = {0.0}; // {ki, ki_in}
         relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
@@ -156,7 +145,6 @@ public class Louvain extends Algorithm<Louvain> {
             sum[0] += weight;
             return true;
         });
-
         return sum[0];
     }
 
@@ -182,7 +170,7 @@ public class Louvain extends Algorithm<Louvain> {
                 return true;
             });
             if (bestCommunity[0] != sourceCommunity) {
-                assign(node, sourceCommunity, bestCommunity[0]);
+                assign(node, bestCommunity[0]);
                 changes[0] = true;
             }
         }
