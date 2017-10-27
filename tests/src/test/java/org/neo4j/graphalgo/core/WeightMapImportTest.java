@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
@@ -18,8 +19,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
+@Ignore("Issue #444")
 public class WeightMapImportTest {
-
 
     private static GraphDatabaseAPI db;
     private static HeavyGraph graph;

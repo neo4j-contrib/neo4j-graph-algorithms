@@ -35,13 +35,13 @@ public class LouvainClusteringTest {
 
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (c:Node {name:'c'})\n" + // shuffled
-                        "CREATE (e:Node {name:'e'})\n" +
-                        "CREATE (g:Node {name:'g'})\n" +
-                        "CREATE (d:Node {name:'d'})\n" +
-                        "CREATE (h:Node {name:'h'})\n" +
-                        "CREATE (f:Node {name:'f'})\n" +
                         "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" + // shuffled
+                        "CREATE (d:Node {name:'d'})\n" +
+                        "CREATE (e:Node {name:'e'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
+                        "CREATE (g:Node {name:'g'})\n" +
+                        "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (z:Node {name:'z'})\n" +
 
                         "CREATE" +

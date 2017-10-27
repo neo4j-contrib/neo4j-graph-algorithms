@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> {
 
-    private static final Direction D = Direction.OUTGOING;
+    private static final Direction D = Direction.BOTH;
 
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
