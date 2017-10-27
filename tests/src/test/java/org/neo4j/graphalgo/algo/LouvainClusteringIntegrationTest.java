@@ -72,8 +72,9 @@ public class LouvainClusteringIntegrationTest {
                         " (f)-[:TYPE]->(g),\n" +
                         " (g)-[:TYPE]->(h),\n" +
 
-                        // this should make b more likely to fall into set of e
-                        " (b)-[:TYPE {w:3}]->(e)";
+                        // this should make b & e more likely to fall
+                        " (b)-[:TYPE {w:3}]->(e),\n" +
+                        " (e)-[:TYPE {w:3}]->(b)";
 
 
         db = TestDatabaseCreator.createTestDatabase();
@@ -171,6 +172,8 @@ public class LouvainClusteringIntegrationTest {
             assertTrue("invalid computeTime", computeMillis >= 0);
             return false;
         });
+
+        printNodeSets();
     }
 
     @Test
@@ -197,10 +200,19 @@ public class LouvainClusteringIntegrationTest {
             return false;
         });
 
-        for (String node : NODES) {
-            System.out.println(node + ":" + getClusterId(node));
-        }
+        printNodeSets();
 
+    }
+
+    public void printNodeSets() {
+        final StringBuilder builder = new StringBuilder();
+        for (String node : NODES) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(String.format("%s : C%d", node, getClusterId(node)));
+        }
+        System.out.println(builder.toString());
     }
 
 

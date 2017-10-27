@@ -5,6 +5,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
@@ -18,7 +19,7 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> {
 
-    private static final Direction D = Direction.BOTH;
+    private static final Direction D = Direction.OUTGOING;
 
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
@@ -136,16 +137,27 @@ public class Louvain extends Algorithm<Louvain> {
         return sum;
     }
 
-    /**
-     * calculate modularity-delta of moving node into a new community
-     *
-     * @param node
-     * @param targetCommunity
-     * @return
-     */
-    private double modGain(int node, int targetCommunity) {
-        final double[] kIAndkIIn = kIAndkIIn(node, targetCommunity);
-        return (kIAndkIIn[1] / m2) - (sTot(communityIds[node]) * kIAndkIIn[0] / mq2);
+    private double kIIn(int node, int targetCommunity) {
+        double[] sum = {0.0}; // {ki, ki_in}
+        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+            if (targetCommunity == communityIds[targetNodeId]) {
+                sum[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
+            }
+            return true;
+        });
+
+        return sum[0];
+    }
+
+    private double kI(int node) {
+        double[] sum = {0.0}; // {ki}
+        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+            final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
+            sum[0] += weight;
+            return true;
+        });
+
+        return sum[0];
     }
 
     /**
@@ -157,20 +169,20 @@ public class Louvain extends Algorithm<Louvain> {
         final double[] bestGain = {0};
         final int[] bestCommunity = {0};
         for (int node = 0; node < nodeCount; node++) {
-            bestGain[0] = Double.MIN_VALUE;
-            final int currentCommunity = communityIds[node];
-            bestCommunity[0] = currentCommunity;
+            bestGain[0] = 0.0;
+            final int sourceCommunity = bestCommunity[0] = communityIds[node];
+            final double sSource = (sTot(sourceCommunity) * kI(node)) / mq2;
             relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
-                final double gain = modGain(sourceNodeId, targetCommunity);
+                final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - sSource;
                 if (gain > bestGain[0]) {
                     bestCommunity[0] = targetCommunity;
                     bestGain[0] = gain;
                 }
                 return true;
             });
-            if (bestCommunity[0] != currentCommunity && bestGain[0] > 0.0) {
-                assign(node, currentCommunity, bestCommunity[0]);
+            if (bestCommunity[0] != sourceCommunity) {
+                assign(node, sourceCommunity, bestCommunity[0]);
                 changes[0] = true;
             }
         }
@@ -196,11 +208,11 @@ public class Louvain extends Algorithm<Louvain> {
     }
 
     public int getCommunityCount() {
-        final IntScatterSet set = new IntScatterSet();
+        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
         for (int i = 0; i < communityIds.length; i++) {
-            set.add(communityIds[i]);
+            bitSet.put(communityIds[i]);
         }
-        return set.size();
+        return bitSet.size();
     }
 
     @Override
