@@ -177,7 +177,6 @@ public class Louvain extends Algorithm<Louvain> {
         return changes[0];
     }
 
-
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(i ->
