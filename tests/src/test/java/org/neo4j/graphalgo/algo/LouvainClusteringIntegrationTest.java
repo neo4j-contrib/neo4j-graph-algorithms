@@ -72,13 +72,11 @@ public class LouvainClusteringIntegrationTest {
                         " (f)-[:TYPE]->(g),\n" +
                         " (g)-[:TYPE]->(h),\n" +
 
-                        // this should make b & e more likely to fall
+                        // makes b & e more likely to build their own set
                         " (b)-[:TYPE {w:3}]->(e),\n" +
                         " (e)-[:TYPE {w:3}]->(b)";
 
-
         db = TestDatabaseCreator.createTestDatabase();
-
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(LouvainProc.class);
@@ -115,7 +113,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() throws Exception {
-        final String cypher = "CALL algo.louvain('', '', {write:true, writeProperty:'community', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('', '') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -129,7 +127,7 @@ public class LouvainClusteringIntegrationTest {
             System.out.println("communityCount = " + communityCount);
             System.out.println("iterations = " + iterations);
             assertEquals("invalid node count",9, nodes);
-            assertEquals("wrong community cound", 3, communityCount);
+            assertEquals("wrong community count", 3, communityCount);
             assertTrue("invalid loadTime", loadMillis >= 0);
             assertTrue("invalid writeTime", writeMillis >= 0);
             assertTrue("invalid computeTime", computeMillis >= 0);
@@ -152,7 +150,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testWithLabelRel() throws Exception {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {write:true, writeProperty:'community', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -178,8 +176,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testWithWeight() throws Exception {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0, " +
-                "write:true, writeProperty:'cluster', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -220,7 +217,7 @@ public class LouvainClusteringIntegrationTest {
 
         int id[] = {0};
         db.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
-            id[0] = (int) row.getNode("n").getProperty("cluster");
+            id[0] = (int) row.getNode("n").getProperty("community");
             return true;
         });
         return id[0];
