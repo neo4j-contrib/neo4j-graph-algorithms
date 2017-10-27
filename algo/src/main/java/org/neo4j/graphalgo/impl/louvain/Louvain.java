@@ -159,10 +159,10 @@ public class Louvain extends Algorithm<Louvain> {
         for (int node = 0; node < nodeCount; node++) {
             bestGain[0] = 0.0;
             final int sourceCommunity = bestCommunity[0] = communityIds[node];
-            final double sSource = (sTot(sourceCommunity) * kI(node)) / mq2;
+            final double mSource = (sTot(sourceCommunity) * kI(node)) / mq2;
             relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
-                final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - sSource;
+                final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                 if (gain > bestGain[0]) {
                     bestCommunity[0] = targetCommunity;
                     bestGain[0] = gain;
