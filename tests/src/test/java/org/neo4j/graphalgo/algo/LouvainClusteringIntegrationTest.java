@@ -39,18 +39,21 @@ public class LouvainClusteringIntegrationTest {
     private static GraphDatabaseAPI db;
     private static HeavyGraph graph;
 
+    private final static String[] NODES = {"a", "b", "c", "d", "e", "f", "g", "h", "z"};
+
+
     @BeforeClass
     public static void setupGraph() throws KernelException {
 
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (c:Node {name:'c'})\n" + // shuffled
-                        "CREATE (e:Node {name:'e'})\n" +
-                        "CREATE (g:Node {name:'g'})\n" +
-                        "CREATE (d:Node {name:'d'})\n" +
-                        "CREATE (h:Node {name:'h'})\n" +
-                        "CREATE (f:Node {name:'f'})\n" +
                         "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" + // shuffled
+                        "CREATE (d:Node {name:'d'})\n" +
+                        "CREATE (e:Node {name:'e'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
+                        "CREATE (g:Node {name:'g'})\n" +
+                        "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (z:Node {name:'z'})\n" +
 
                         "CREATE" +
@@ -62,17 +65,17 @@ public class LouvainClusteringIntegrationTest {
                         " (b)-[:TYPE]->(c),\n" +
                         " (b)-[:TYPE]->(d),\n" +
                         
-                        " (e)-[:TYPE]->(f),\n" +
+                        " (f)-[:TYPE]->(e),\n" +
                         " (e)-[:TYPE]->(g),\n" +
                         " (e)-[:TYPE]->(h),\n" +
                         " (f)-[:TYPE]->(h),\n" +
                         " (f)-[:TYPE]->(g),\n" +
-                        
-                        " (b)-[:TYPE {w:100}]->(e)";
+                        " (g)-[:TYPE]->(h),\n" +
 
+                        // makes b & e more likely to build their own set
+                        " (b)-[:TYPE]->(e)";
 
         db = TestDatabaseCreator.createTestDatabase();
-
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(LouvainProc.class);
@@ -86,7 +89,7 @@ public class LouvainClusteringIntegrationTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 0.0)
+                .withRelationshipWeightsFromProperty("w", 1.0)
                 .load(HeavyGraphFactory.class);
 
     }
@@ -98,18 +101,18 @@ public class LouvainClusteringIntegrationTest {
 
     private String getName(long nodeId) {
         String[] name = {""};
-        try (Transaction tx = db.beginTx()) {
-            db.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
-                name[0] = (String) row.getNode("n").getProperty("name");
-                return true;
-            });
-        }
+        db.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
+            name[0] = (String) row.getNode("n").getProperty("name");
+            return true;
+        });
+//        try (Transaction tx = db.beginTx()) {
+//        }
         return name[0];
     }
 
     @Test
     public void test() throws Exception {
-        final String cypher = "CALL algo.louvain('', '', {write:true, writeProperty:'community', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('', '') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -123,7 +126,7 @@ public class LouvainClusteringIntegrationTest {
             System.out.println("communityCount = " + communityCount);
             System.out.println("iterations = " + iterations);
             assertEquals("invalid node count",9, nodes);
-            assertEquals("wrong community cound", 3, communityCount);
+            assertEquals("wrong community count", 3, communityCount);
             assertTrue("invalid loadTime", loadMillis >= 0);
             assertTrue("invalid writeTime", writeMillis >= 0);
             assertTrue("invalid computeTime", computeMillis >= 0);
@@ -146,7 +149,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testWithLabelRel() throws Exception {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {write:true, writeProperty:'community', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -160,20 +163,20 @@ public class LouvainClusteringIntegrationTest {
             System.out.println("communityCount = " + communityCount);
             System.out.println("iterations = " + iterations);
             assertEquals("invalid node count",9, nodes);
-            assertEquals("wrong community cound", 3, communityCount);
+            assertEquals("wrong community count", 3, communityCount);
             assertTrue("invalid loadTime", loadMillis >= 0);
             assertTrue("invalid writeTime", writeMillis >= 0);
             assertTrue("invalid computeTime", computeMillis >= 0);
             return false;
         });
+
+        printNodeSets();
     }
 
-    // weightProperty is not
-    @Ignore("TODO")
+    @Ignore("Issue #444")
     @Test
     public void testWithWeight() throws Exception {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:2.0, " +
-                "write:true, writeProperty:'cluster', concurrency:2}) " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         db.execute(cypher).accept(row -> {
@@ -185,14 +188,39 @@ public class LouvainClusteringIntegrationTest {
             final long writeMillis = row.getNumber("writeMillis").longValue();
             System.out.println("nodes = " + nodes);
             System.out.println("communityCount = " + communityCount);
+            assertEquals(4, communityCount);
             System.out.println("iterations = " + iterations);
-            assertEquals("invalid node count",9, nodes);
-            assertEquals("wrong community cound", 3, communityCount);
+            assertEquals("invalid node count", 9, nodes);
             assertTrue("invalid loadTime", loadMillis >= 0);
             assertTrue("invalid writeTime", writeMillis >= 0);
             assertTrue("invalid computeTime", computeMillis >= 0);
             return false;
         });
+
+        printNodeSets();
+
+    }
+
+    public void printNodeSets() {
+        final StringBuilder builder = new StringBuilder();
+        for (String node : NODES) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(String.format("%s : C%d", node, getClusterId(node)));
+        }
+        System.out.println(builder.toString());
+    }
+
+
+    public int getClusterId(String nodeName) {
+
+        int id[] = {0};
+        db.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
+            id[0] = (int) row.getNode("n").getProperty("community");
+            return true;
+        });
+        return id[0];
     }
 
 }

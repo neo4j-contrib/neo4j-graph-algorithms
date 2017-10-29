@@ -1,4 +1,15 @@
+== TODO
+
+`algo.louvain` implements *undirected weighted* Louvain community detection but
+due to a bug in the RelationshipWeights implementation of HeavyGraph we cant actually
+iterate using Direction.BOTH. To get around this issue (#444) we have to mirror each
+relationship and its weight. This is only an issue when using weights. Otherwise the
+defaultValue should be set to 1 in this case incoming weights are set to 1 as well.
+This should not happen in the HugeGraph.
+
+
 = Community detection: Louvain
+
 
 Communities are groups of nodes within a network that are more densely connected to one another than to other nodes. 
 Modularity is a metric that quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are compared to how connected they would be, on average, in a suitably defined random network. 
@@ -126,7 +137,7 @@ include::scripts/louvain.cypher[tag=write-sample-graph]
 [source,cypher]
 ----
 CALL algo.louvain(label:String, relationship:String,
-{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) 
+{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4})
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 
 ----
