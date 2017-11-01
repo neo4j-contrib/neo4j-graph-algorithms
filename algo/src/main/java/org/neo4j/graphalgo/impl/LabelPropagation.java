@@ -272,7 +272,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
         private void release() {
             // the HPPC release() method allocates new arrays
-            // the clear() method overwrite the existing keys with the default value
+            // the reset() method overwrite the existing keys with the default value
             // we want to throw away all data to allow for GC collection instead.
 
             if (votes.keys != null) {
