@@ -48,19 +48,45 @@ public class LouvainClusteringTest {
                         "CREATE" +
                         
                         " (a)-[:TYPE]->(b),\n" +
+                        " (b)-[:TYPE]->(a),\n" +
+
                         " (a)-[:TYPE]->(c),\n" +
+                        " (c)-[:TYPE]->(a),\n" +
+
                         " (a)-[:TYPE]->(d),\n" +
+                        " (d)-[:TYPE]->(a),\n" +
+
                         " (c)-[:TYPE]->(d),\n" +
+                        " (d)-[:TYPE]->(c),\n" +
+
                         " (b)-[:TYPE]->(c),\n" +
+                        " (c)-[:TYPE]->(b),\n" +
+
                         " (b)-[:TYPE]->(d),\n" +
-                        
+                        " (d)-[:TYPE]->(b),\n" +
+
+
                         " (e)-[:TYPE]->(f),\n" +
+                        " (f)-[:TYPE]->(e),\n" +
+
                         " (e)-[:TYPE]->(g),\n" +
+                        " (g)-[:TYPE]->(e),\n" +
+
                         " (e)-[:TYPE]->(h),\n" +
+                        " (h)-[:TYPE]->(e),\n" +
+
                         " (f)-[:TYPE]->(h),\n" +
+                        " (h)-[:TYPE]->(f),\n" +
+
                         " (f)-[:TYPE]->(g),\n" +
-                        
-                        " (b)-[:TYPE]->(e)";
+                        " (g)-[:TYPE]->(f),\n" +
+
+                        " (g)-[:TYPE]->(h),\n" +
+                        " (h)-[:TYPE]->(g),\n" +
+
+
+                        " (b)-[:TYPE]->(e),\n" +
+                        " (e)-[:TYPE]->(b)";
 
 
         db = TestDatabaseCreator.createTestDatabase();
@@ -109,7 +135,7 @@ public class LouvainClusteringTest {
 
     @Test
     public void testParallel() throws Exception {
-        new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 8)
+        new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 1)
                 .compute(10)
                 .resultStream()
                 .forEach(System.out::println);
