@@ -5,14 +5,17 @@ import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.api.RelationshipWeights;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -32,9 +35,11 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
     private final IdMapping idMapping;
     private int iterations;
     private double m2, mq2;
-    private Communities communities, communitiesTemp;
-    private AtomicInteger queue;
+    private final AtomicIntegerArray community;
+    private final AtomicInteger queue;
     private ArrayList<Task> tasks = new ArrayList<>();
+    private final double[] sumWeights;
+    private final AtomicDoubleArray sTot;
 
     public ParallelLouvain(IdMapping idMapping,
                            RelationshipIterator relationshipIterator,
@@ -48,12 +53,13 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
         this.relationshipWeights = relationshipWeights;
         this.executorService = executorService;
         this.concurrency = concurrency;
-        communities = new Communities(Math.toIntExact(idMapping.nodeCount()));
-        communitiesTemp = new Communities(Math.toIntExact(idMapping.nodeCount()));
+        community = new AtomicIntegerArray(nodeCount);
         queue = new AtomicInteger(0);
         for (int i = 0; i < concurrency; i++) {
             tasks.add(new Task());
         }
+        sumWeights = new double[nodeCount];
+        sTot = new AtomicDoubleArray(nodeCount, 1000);
     }
 
     public ParallelLouvain compute(int maxIterations) {
@@ -63,17 +69,16 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
                 return this;
             }
         }
-        return this;
+        throw new IllegalStateException("max iterations reached");
+//        return this;
     }
 
     private boolean compute() {
-        communitiesTemp = new Communities(nodeCount);
         final ArrayList<Future<?>> futures = new ArrayList<>();
         for (Task task : tasks) {
             futures.add(executorService.submit(task));
         }
         ParallelUtil.awaitTermination(futures);
-        communities = communitiesTemp;
         for (Task task : tasks) {
             if (task.changes) {
                 return true;
@@ -87,20 +92,22 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
         relationshipIterator = null;
         relationshipWeights = null;
         executorService = null;
-        communities = null;
         return this;
     }
 
     private void reset() {
-        communities.reset();
-        communitiesTemp.reset();
-
         final DoubleAdder adder = new DoubleAdder();
+
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
+            final double[] sw = {0.0};
             relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
+                sw[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
                 return true;
             });
+            sumWeights[node] = sw[0];
+            sTot.set(node, sw[0]);
+            adder.add(sw[0]);
+            community.set(node, node);
         });
         m2 = adder.doubleValue() * 2.0; // 2m
         mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
@@ -112,23 +119,11 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
      * @param targetCommunity communityId
      */
     private void assign(int node, int targetCommunity) {
-        communitiesTemp.set(node, targetCommunity);
-    }
-
-    /**
-     * sum of weights of nodes in the community pointing anywhere
-     * @return sTot
-     */
-    private double sTot(int community) {
-        double[] stot = {0.0}; // {sTot}
-        communities.forEachIn(community, (IntProcedure) node -> {
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-                stot[0] += weight;
-                return true;
-            });
-        });
-        return stot[0];
+        final double nodeWeight = sumWeights[node];
+        final int sourceCommunity = community.get(node);
+        sTot.fetchAndAdd(sourceCommunity, -nodeWeight);
+        sTot.fetchAndAdd(targetCommunity, nodeWeight);
+        community.set(node, targetCommunity);
     }
 
     /**
@@ -138,7 +133,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
     private double kIIn(int node, int targetCommunity) {
         double[] sum = {0.0}; // {ki, ki_in}
         relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-            if (targetCommunity == communities.getCommunity(targetNodeId)) {
+            if (targetCommunity == community.get(targetNodeId)) {
                 sum[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
             }
             return true;
@@ -162,7 +157,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(i ->
-                        new Result(idMapping.toOriginalNodeId(i), communities.getCommunity(i)));
+                        new Result(idMapping.toOriginalNodeId(i), community.get(i), sTot.get(i)));
     }
 
 
@@ -186,10 +181,10 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
             changes = false;
             for (int node; (node = queue.getAndIncrement()) < nodeCount; ) {
                 bestGain = 0.0;
-                final int sourceCommunity = bestCommunity = communities.getCommunity(node);
-                final double mSource = (sTot(sourceCommunity) * kI(node)) / mq2;
+                final int sourceCommunity = bestCommunity = community.get(node);
+                final double mSource = (sTot.get(node) * kI(node)) / mq2;
                 relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                    final int targetCommunity = communities.getCommunity(targetNodeId);
+                    final int targetCommunity = community.get(targetNodeId);
                     final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
@@ -213,10 +208,12 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
 
         public final long nodeId;
         public final long community;
+        private final double mod;
 
-        public Result(long nodeId, int community) {
+        public Result(long nodeId, int community, double mod) {
             this.nodeId = nodeId;
             this.community = community;
+            this.mod = mod;
         }
 
         @Override
@@ -224,6 +221,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> {
             return "Result{" +
                     "nodeId=" + nodeId +
                     ", community=" + community +
+                    ", mod=" + mod +
                     '}';
         }
     }
