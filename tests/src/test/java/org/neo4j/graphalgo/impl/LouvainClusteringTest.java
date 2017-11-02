@@ -8,7 +8,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
-import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -48,44 +48,44 @@ public class LouvainClusteringTest {
                         "CREATE" +
                         
                         " (a)-[:TYPE]->(b),\n" +
-                        " (b)-[:TYPE]->(a),\n" +
+//                        " (b)-[:TYPE]->(a),\n" +
 
                         " (a)-[:TYPE]->(c),\n" +
-                        " (c)-[:TYPE]->(a),\n" +
+//                        " (c)-[:TYPE]->(a),\n" +
 
                         " (a)-[:TYPE]->(d),\n" +
-                        " (d)-[:TYPE]->(a),\n" +
+//                        " (d)-[:TYPE]->(a),\n" +
 
                         " (c)-[:TYPE]->(d),\n" +
-                        " (d)-[:TYPE]->(c),\n" +
+//                        " (d)-[:TYPE]->(c),\n" +
 
                         " (b)-[:TYPE]->(c),\n" +
-                        " (c)-[:TYPE]->(b),\n" +
+//                        " (c)-[:TYPE]->(b),\n" +
 
                         " (b)-[:TYPE]->(d),\n" +
-                        " (d)-[:TYPE]->(b),\n" +
+//                        " (d)-[:TYPE]->(b),\n" +
 
 
                         " (e)-[:TYPE]->(f),\n" +
-                        " (f)-[:TYPE]->(e),\n" +
+//                        " (f)-[:TYPE]->(e),\n" +
 
                         " (e)-[:TYPE]->(g),\n" +
-                        " (g)-[:TYPE]->(e),\n" +
+//                        " (g)-[:TYPE]->(e),\n" +
 
                         " (e)-[:TYPE]->(h),\n" +
-                        " (h)-[:TYPE]->(e),\n" +
+//                        " (h)-[:TYPE]->(e),\n" +
 
                         " (f)-[:TYPE]->(h),\n" +
-                        " (h)-[:TYPE]->(f),\n" +
+//                        " (h)-[:TYPE]->(f),\n" +
 
                         " (f)-[:TYPE]->(g),\n" +
-                        " (g)-[:TYPE]->(f),\n" +
+//                        " (g)-[:TYPE]->(f),\n" +
 
                         " (g)-[:TYPE]->(h),\n" +
-                        " (h)-[:TYPE]->(g),\n" +
+//                        " (h)-[:TYPE]->(g),\n" +
 
 
-                        " (b)-[:TYPE]->(e),\n" +
+//                        " (b)-[:TYPE]->(e),\n" +
                         " (e)-[:TYPE]->(b)";
 
 
@@ -98,6 +98,7 @@ public class LouvainClusteringTest {
 
         graph = (HeavyGraph) new GraphLoader(db)
                 .withAnyRelationshipType()
+                .withDirection(Direction.BOTH)
                 .withAnyLabel()
                 .withoutNodeProperties()
                 .withRelationshipWeightsFromProperty("w", 1.0)
@@ -131,13 +132,5 @@ public class LouvainClusteringTest {
         }
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         assertEquals(3, louvain.getCommunityCount());
-    }
-
-    @Test
-    public void testParallel() throws Exception {
-        new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(10)
-                .resultStream()
-                .forEach(System.out::println);
     }
 }
