@@ -56,7 +56,6 @@ public class Louvain extends Algorithm<Louvain> {
             if (!arrange()) {
                 return this;
             }
-            print();
         }
         return this;
     }
@@ -79,7 +78,7 @@ public class Louvain extends Algorithm<Louvain> {
             sTot[node] = d;
             adder.add(d);
         });
-        m2 = adder.doubleValue() * 4.0; // 2m
+        m2 = adder.intValue() * 4.0; // 2m //
         mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
@@ -160,27 +159,6 @@ public class Louvain extends Algorithm<Louvain> {
             bitSet.put(communityIds[i]);
         }
         return bitSet.size();
-    }
-
-
-    public void print() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("\nI: \t");
-        for (int i = 0; i < nodeCount; i++) {
-            builder.append(String.format(" %2d |", i));
-        }
-        builder.append("\nc: \t");
-        for (int i = 0; i < nodeCount; i++) {
-            builder.append(String.format(" %2d |", communityIds[i]));
-        }
-        builder.append("\nt: \t");
-        for (int i = 0; i < nodeCount; i++) {
-            builder.append(String.format(" %2.0f |", sTot[i]));
-        }
-
-        System.out.println(builder.toString());
-
-
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
+import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
@@ -126,8 +127,8 @@ public class LouvainDirectionTest {
 
         return Arrays.<Object[]>asList(
                 new Object[]{HeavyGraphFactory.class, "heavy"},
-                new Object[]{LightGraphFactory.class, "light"}
-//                new Object[]{HugeGraphFactory.class, "huge"},
+                new Object[]{LightGraphFactory.class, "light"},
+                new Object[]{HugeGraphFactory.class, "huge"}
 //                new Object[]{GraphViewFactory.class, "view"}
         );
     }
@@ -139,29 +140,11 @@ public class LouvainDirectionTest {
                 .withAnyLabel()
                 .withoutNodeProperties()
                 .withDirection(direction)
-                .withRelationshipWeightsFromProperty("w", 0.0)
                 .load(graphImpl);
     }
 
-    private int nodeId(String name) {
-        try (Transaction transaction = DB.beginTx()) {
-            return graph.toMappedNodeId(DB.findNodes(Label.label("Node"), "name", name).next().getId());
-        }
-    }
-
-    private String getName(long nodeId) {
-        String[] name = {""};
-        try (Transaction tx = DB.beginTx()) {
-            DB.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
-                name[0] = (String) row.getNode("n").getProperty("name");
-                return true;
-            });
-        }
-        return name[0];
-    }
-
     @Test
-    public void testUnidirectional() throws Exception {
+    public void testUnidirectionalUnweighted() throws Exception {
 
         setup(unidirectional, Direction.BOTH);
 
@@ -173,7 +156,7 @@ public class LouvainDirectionTest {
     }
 
     @Test
-    public void testBidirectional() throws Exception {
+    public void testBidirectionalUnweighted() throws Exception {
 
         setup(bidirectional, Direction.BOTH);
 
