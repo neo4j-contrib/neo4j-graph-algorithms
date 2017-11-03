@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -8,17 +7,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
@@ -34,7 +31,7 @@ import static org.junit.Assert.assertEquals;
  *  @author mknblch
  */
 @RunWith(Parameterized.class)
-public class LouvainDirectionTest {
+public class WeightedLouvainModularityTest {
 
     private static final String unidirectional =
             "CREATE (a:Node {name:'a'})\n" +
@@ -114,22 +111,23 @@ public class LouvainDirectionTest {
     public ErrorCollector collector = new ErrorCollector();
 
     private Class<? extends GraphFactory> graphImpl;
+    private final String cypher;
     private Graph graph;
+    private RelationshipWeights weights;
 
-    public LouvainDirectionTest(
+    public WeightedLouvainModularityTest(
             Class<? extends GraphFactory> graphImpl,
-            String name) {
+            String name, String cypher) {
         this.graphImpl = graphImpl;
+        this.cypher = cypher;
     }
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
 
         return Arrays.<Object[]>asList(
-                new Object[]{HeavyGraphFactory.class, "heavy"},
-                new Object[]{LightGraphFactory.class, "light"},
-                new Object[]{HugeGraphFactory.class, "huge"}
-//                new Object[]{GraphViewFactory.class, "view"}
+                new Object[]{HeavyGraphFactory.class, "heavy unidirectional", unidirectional},
+                new Object[]{HeavyGraphFactory.class, "heavy bidirectional", bidirectional}
         );
     }
     
@@ -139,32 +137,20 @@ public class LouvainDirectionTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
+                .withRelationshipWeightsFromProperty("w", 1.0)
                 .withDirection(direction)
                 .load(graphImpl);
+        weights = (RelationshipWeights) graph;
     }
 
     @Test
-    public void testUnidirectionalUnweighted() throws Exception {
-
-        setup(unidirectional, Direction.BOTH);
-
-        final Louvain louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(10);
+    public void testWeighted() throws Exception {
+        setup(cypher, Direction.BOTH);
+        final WeightedLouvain louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1)
+                .compute(3);
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertEquals(3, louvain.getCommunityCount());
-
-    }
-
-    @Test
-    public void testBidirectionalUnweighted() throws Exception {
-
-        setup(bidirectional, Direction.BOTH);
-
-        final Louvain louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(10);
-        System.out.println("louvain.getRuns() = " + louvain.getIterations());
-        assertEquals(3, louvain.getCommunityCount());
-
     }
 
 }
