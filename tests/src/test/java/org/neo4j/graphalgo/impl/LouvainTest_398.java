@@ -33,12 +33,12 @@ public class LouvainTest_398 {
 
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (z:Node {name:'z'})\n" +
                         "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" + // shuffled
                         "CREATE (e:Node {name:'e'})\n" +
                         "CREATE (f:Node {name:'f'})\n" +
-                        "CREATE (c:Node {name:'c'})\n" + // shuffled
                         "CREATE (h:Node {name:'h'})\n" +
+                        "CREATE (z:Node {name:'z'})\n" +
 
                         "CREATE" +
                         

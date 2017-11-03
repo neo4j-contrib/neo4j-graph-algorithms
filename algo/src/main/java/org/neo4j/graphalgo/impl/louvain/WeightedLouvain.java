@@ -127,6 +127,10 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> {
         return stot[0];
     }
 
+
+
+
+
     /**
      * return sum of weights of a given node pointing into given community | v->C
      * @return kiIn

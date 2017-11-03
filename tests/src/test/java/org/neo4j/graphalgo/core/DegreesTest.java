@@ -85,8 +85,7 @@ public class DegreesTest {
         return Arrays.<Object[]>asList(
                 new Object[]{HeavyGraphFactory.class, "heavy"},
                 new Object[]{LightGraphFactory.class, "light"},
-                new Object[]{HugeGraphFactory.class, "huge"},
-                new Object[]{GraphViewFactory.class, "view"}
+                new Object[]{HugeGraphFactory.class, "huge"}
         );
     }
     

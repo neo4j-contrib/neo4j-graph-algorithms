@@ -21,8 +21,6 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> {
 
-    private static final Direction D = Direction.BOTH;
-
     private RelationshipIterator relationshipIterator;
     private final Degrees degrees;
     private ExecutorService executorService;
@@ -77,11 +75,11 @@ public class Louvain extends Algorithm<Louvain> {
 
         final LongAdder adder = new LongAdder();
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            final int d = degrees.degree(node, D);
+            final int d = degrees.degree(node, Direction.BOTH);
             sTot[node] = d;
             adder.add(d);
         });
-        m2 = adder.doubleValue() * 2.0; // 2m
+        m2 = adder.doubleValue() * 4.0; // 2m
         mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
@@ -91,23 +89,19 @@ public class Louvain extends Algorithm<Louvain> {
      * @param targetCommunity communityId
      */
     private void assign(int node, int targetCommunity) {
-        int sourceCommunity = communityIds[node];
-
-        final int d = degrees.degree(node, D);
-        sTot[sourceCommunity] -= d;
+        final int d = degrees.degree(node, Direction.BOTH);
+        sTot[communityIds[node]] -= d;
         sTot[targetCommunity] += d;
-
         // update communityIds
         communityIds[node] = targetCommunity;
     }
 
      /**
-     * return sum of weights of a given node pointing into given community | v->C
      * @return kiIn
      */
     private int kIIn(int node, int targetCommunity) {
         int[] sum = {0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
             if (targetCommunity == communityIds[targetNodeId]) {
                 sum[0]++;
             }
@@ -128,8 +122,8 @@ public class Louvain extends Algorithm<Louvain> {
         for (int node = 0; node < nodeCount; node++) {
             bestGain[0] = 0.0;
             final int sourceCommunity = bestCommunity[0] = communityIds[node];
-            final double mSource = (sTot[sourceCommunity] * degrees.degree(node, D)) / mq2;
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+            final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
+            relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
                 final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                 if (gain > bestGain[0]) {
