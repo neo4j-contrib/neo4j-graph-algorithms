@@ -8,6 +8,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
+import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -98,7 +99,7 @@ public class LouvainTest_398 {
 
     @Test
     public void testParallel() throws Exception {
-        final LouvainAlgorithm louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 8)
+        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 8)
                 .compute(10);
         final int[] communities = louvain.getCommunityIds();
         for (int i = 0; i < communities.length; i++) {

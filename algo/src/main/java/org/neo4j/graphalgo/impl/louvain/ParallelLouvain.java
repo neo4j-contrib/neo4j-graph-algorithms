@@ -12,6 +12,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -25,16 +26,19 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
 
     private RelationshipIterator relationshipIterator;
     private final Degrees degrees;
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
     private final int concurrency;
     private final int nodeCount;
     private final AtomicInteger queue;
 
-    private final int[] communityIds; // node to community mapping
-    private final double[] sTot;
-    private final IdMapping idMapping;
+    private int[] communityIds; // node to community mapping
+    private double[] sTot;
+    private IdMapping idMapping;
+    private ArrayList<Task> tasks = new ArrayList<>();
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private int iterations;
     private double m2, mq2;
+
 
     public ParallelLouvain(IdMapping idMapping,
                            RelationshipIterator relationshipIterator,
@@ -66,22 +70,29 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
     }
 
     private boolean compute() {
-        final ArrayList<Task> tasks = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            tasks.add(new Task());
-        }
+        ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
 
+        for (Task task : tasks) {
+            if (task.changes) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
     @Override
     public ParallelLouvain release() {
         relationshipIterator = null;
-        executorService = null;
         return this;
     }
 
     private void reset() {
+
+        tasks.clear();
+        for (int i = 0; i < concurrency; i++) {
+            tasks.add(new Task());
+        }
 
         Arrays.setAll(communityIds, i -> i);
 
@@ -102,11 +113,19 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      */
     private void assign(int node, int targetCommunity) { // TODO sync
         final int d = degrees.degree(node, Direction.BOTH);
-        sTot[communityIds[node]] -= d;
-        sTot[targetCommunity] += d;
-        // update communityIds
-        communityIds[node] = targetCommunity;
+
+        final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+        writeLock.lock();
+        try {
+            sTot[communityIds[node]] -= d;
+            sTot[targetCommunity] += d;
+            // update communityIds
+            communityIds[node] = targetCommunity;
+        } finally {
+            writeLock.unlock();
+        }
     }
+
 
      /**
      * @return kiIn
@@ -150,45 +169,29 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         return this;
     }
 
-
     private class Task implements Runnable {
 
         private boolean changes = false;
         private double bestGain;
         private int bestCommunity;
 
-        private final int[] sTot;
-        private final int[] communityIds;
-
-        private Task() {
-            sTot = new int[nodeCount];
-            communityIds = new int[nodeCount];
-        }
-
-        public void reset() {
-            System.arraycopy(ParallelLouvain.this.sTot, 0, sTot, 0, nodeCount);
-            System.arraycopy(ParallelLouvain.this.communityIds, 0, communityIds, 0, nodeCount);
-            changes = false;
-            bestGain = 0.0;
-        }
-
-        private void assign(int node, int targetCommunity) {
-            final int d = degrees.degree(node, Direction.BOTH);
-            sTot[communityIds[node]] -= d;
-            sTot[targetCommunity] += d;
-            // update communityIds
-            communityIds[node] = targetCommunity;
-        }
-
         @Override
         public void run() {
-            reset();
+            changes = false;
+            bestGain = 0.0;
+            final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+
             for (int node; (node = queue.getAndIncrement()) < nodeCount; ) {
                 bestGain = 0.0;
+                readLock.lock();
                 final int sourceCommunity = bestCommunity = communityIds[node];
                 final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
+                readLock.unlock();
+
                 relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+                    readLock.lock();
                     final int targetCommunity = communityIds[targetNodeId];
+                    readLock.unlock();
                     final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
