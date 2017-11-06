@@ -93,7 +93,6 @@ public class LouvainProc {
         return Stream.of(builder.build());
     }
 
-
     @Procedure(value = "algo.louvain.unweighted", mode = Mode.WRITE)
     @Description("CALL algo.louvain.unweighted(label:String, relationship:String, " +
             "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) " +
@@ -172,7 +171,6 @@ public class LouvainProc {
                 .resultStream();
 
     }
-
 
     @Procedure(value = "algo.louvain.unweighted.stream")
     @Description("CALL algo.louvain.stream(label:String, relationship:String, " +
