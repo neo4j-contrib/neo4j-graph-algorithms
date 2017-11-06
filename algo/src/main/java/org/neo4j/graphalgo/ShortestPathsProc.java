@@ -57,7 +57,7 @@ public class ShortestPathsProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
+                        configuration.getWeightPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
@@ -90,7 +90,7 @@ public class ShortestPathsProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
+                        configuration.getWeightPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
         load.stop();

@@ -95,8 +95,8 @@ public class MSColoringProc {
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
-                        config.getProperty(),
-                        config.getPropertyDefaultValue(1.0))
+                        config.getWeightProperty(),
+                        config.getWeightPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
                 .load(config.getGraphImpl());
     }

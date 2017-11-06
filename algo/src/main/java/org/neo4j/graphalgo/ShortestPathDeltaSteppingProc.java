@@ -70,7 +70,7 @@ public class ShortestPathDeltaSteppingProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getPropertyDefaultValue(Double.MAX_VALUE))
+                        configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
@@ -107,7 +107,7 @@ public class ShortestPathDeltaSteppingProc {
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withRelationshipWeightsFromProperty(
                             propertyName,
-                            configuration.getPropertyDefaultValue(Double.MAX_VALUE))
+                            configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
                     .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
         }
