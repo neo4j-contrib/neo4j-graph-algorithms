@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 /**
  * @author mknblch
  */
-public class Louvain extends Algorithm<Louvain> {
+public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     private RelationshipIterator relationshipIterator;
     private final Degrees degrees;
@@ -50,7 +50,7 @@ public class Louvain extends Algorithm<Louvain> {
 
     }
 
-    public Louvain compute(int maxIterations) {
+    public LouvainAlgorithm compute(int maxIterations) {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             if (!arrange()) {
@@ -166,22 +166,4 @@ public class Louvain extends Algorithm<Louvain> {
         return this;
     }
 
-    public static class Result {
-
-        public final long nodeId;
-        public final long community;
-
-        public Result(long nodeId, int community) {
-            this.nodeId = nodeId;
-            this.community = community;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "nodeId=" + nodeId +
-                    ", community=" + community +
-                    '}';
-        }
-    }
 }

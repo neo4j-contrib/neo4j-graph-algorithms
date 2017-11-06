@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 /**
  * @author mknblch
  */
-public class WeightedLouvain extends Algorithm<WeightedLouvain> {
+public class WeightedLouvain extends Algorithm<WeightedLouvain> implements LouvainAlgorithm {
 
     private static final Direction D = Direction.BOTH;
 
@@ -54,7 +54,7 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> {
         communities = new IntObjectScatterMap<>();
     }
 
-    public WeightedLouvain compute(int maxIterations) {
+    public LouvainAlgorithm compute(int maxIterations) {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             if (!arrange()) {
@@ -63,7 +63,6 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> {
         }
         return this;
     }
-
 
     @Override
     public WeightedLouvain release() {
@@ -126,10 +125,6 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> {
                 });
         return stot[0];
     }
-
-
-
-
 
     /**
      * return sum of weights of a given node pointing into given community | v->C
@@ -217,22 +212,4 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> {
         return this;
     }
 
-    public static class Result {
-
-        public final long nodeId;
-        public final long community;
-
-        public Result(long nodeId, int community) {
-            this.nodeId = nodeId;
-            this.community = community;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "nodeId=" + nodeId +
-                    ", community=" + community +
-                    '}';
-        }
-    }
 }

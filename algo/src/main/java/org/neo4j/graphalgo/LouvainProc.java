@@ -1,6 +1,6 @@
 package org.neo4j.graphalgo;
 
-import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
+import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphalgo.results.LouvainResult;
 import org.neo4j.graphdb.Direction;
@@ -58,74 +59,14 @@ public class LouvainProc {
 
         LouvainResult.Builder builder = LouvainResult.builder();
 
-        // loading
         final HeavyGraph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = (HeavyGraph) loader(configuration)
-                    .withOptionalRelationshipWeightsFromProperty(
-                            configuration.getProperty(),
-                            configuration.getPropertyDefaultValue(1.0))
-                    .load(HeavyGraphFactory.class);
+            graph = graph(configuration);
         }
 
         builder.withNodeCount(graph.nodeCount());
 
-        final WeightedLouvain louvain = new WeightedLouvain(
-                graph, graph, graph,
-                Pools.DEFAULT,
-                configuration.getConcurrency())
-                .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
-
-        // evaluation
-        try (ProgressTimer timer = builder.timeEval()) {
-            louvain.compute(configuration.getIterations(DEFAULT_ITERATIONS));
-            builder.withIterations(louvain.getIterations())
-                    .withCommunityCount(louvain.getCommunityCount());
-        }
-
-        if (configuration.isWriteFlag()) {
-            // write back
-            builder.timeWrite(() ->
-                    write(graph, louvain.getCommunityIds(), configuration));
-        }
-
-        return Stream.of(builder.build());
-    }
-
-    @Procedure(value = "algo.louvain.unweighted", mode = Mode.WRITE)
-    @Description("CALL algo.louvain.unweighted(label:String, relationship:String, " +
-            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) " +
-            "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
-    public Stream<LouvainResult> louvainUnweighted(
-            @Name(value = "label", defaultValue = "") String label,
-            @Name(value = "relationship", defaultValue = "") String relationship,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
-                .overrideNodeLabelOrQuery(label)
-                .overrideRelationshipTypeOrQuery(relationship);
-
-        LouvainResult.Builder builder = LouvainResult.builder();
-
-        // loading
-        final HeavyGraph graph;
-        try (ProgressTimer timer = builder.timeLoad()) {
-            graph = (HeavyGraph) loader(configuration)
-                    .withOptionalRelationshipWeightsFromProperty(
-                            configuration.getProperty(),
-                            configuration.getPropertyDefaultValue(1.0))
-                    .load(HeavyGraphFactory.class);
-        }
-
-        builder.withNodeCount(graph.nodeCount());
-
-        final Louvain louvain = new Louvain(
-                graph, graph, graph,
-                Pools.DEFAULT,
-                configuration.getConcurrency())
-                .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
+        final LouvainAlgorithm louvain = louvain(graph, configuration);
 
         // evaluation
         try (ProgressTimer timer = builder.timeEval()) {
@@ -152,58 +93,49 @@ public class LouvainProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        // loading
-        final HeavyGraph graph = (HeavyGraph) loader(configuration)
-                .withOptionalRelationshipWeightsFromProperty(
-                        configuration.getProperty(),
-                        configuration.getPropertyDefaultValue(1.0))
-                .load(HeavyGraphFactory.class);
-
         // evaluation
-        return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
-                .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(configuration.getIterations(DEFAULT_ITERATIONS))
+        return louvain(graph(configuration), configuration)
                 .resultStream();
 
     }
 
-    @Procedure(value = "algo.louvain.unweighted.stream")
-    @Description("CALL algo.louvain.stream(label:String, relationship:String, " +
-            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4) " +
-            "YIELD nodeId, community - yields a setId to each node id")
-    public Stream<Louvain.Result> louvainUnweightedStream(
-            @Name(value = "label", defaultValue = "") String label,
-            @Name(value = "relationship", defaultValue = "") String relationship,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public HeavyGraph graph(ProcedureConfiguration config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
-                .overrideNodeLabelOrQuery(label)
-                .overrideRelationshipTypeOrQuery(relationship);
-
-        // loading
-        final HeavyGraph graph = (HeavyGraph) loader(configuration)
-                .withoutRelationshipWeights()
-                .load(HeavyGraphFactory.class);
-
-        // evaluation
-        return new Louvain(graph, graph, graph, Pools.DEFAULT, configuration.getConcurrency())
-                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(configuration.getIterations(DEFAULT_ITERATIONS))
-                .resultStream();
-
-    }
-
-    private GraphLoader loader(ProcedureConfiguration config) {
-        return new GraphLoader(api, Pools.DEFAULT)
+        final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withDirection(Direction.BOTH);
+
+        if (config.hasWeightProperty()) {
+            return (HeavyGraph) loader
+                    .withOptionalRelationshipWeightsFromProperty(
+                            config.getWeightProperty(),
+                            config.getWeightPropertyDefaultValue(1.0))
+                    .load(HeavyGraphFactory.class);
+        }
+
+        return (HeavyGraph) loader
+                .withoutRelationshipWeights()
+                .withoutNodeWeights()
+                .withoutNodeProperties()
+                .load(HeavyGraphFactory.class);
+    }
+
+    public LouvainAlgorithm louvain(HeavyGraph graph, ProcedureConfiguration config) {
+        if (config.hasWeightProperty()) {
+            return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
+                    .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .compute(config.getIterations(DEFAULT_ITERATIONS));
+        }
+        return new Louvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
+                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
+                .compute(config.getIterations(DEFAULT_ITERATIONS));
     }
 
     private void write(Graph graph, int[] communities, ProcedureConfiguration configuration) {
