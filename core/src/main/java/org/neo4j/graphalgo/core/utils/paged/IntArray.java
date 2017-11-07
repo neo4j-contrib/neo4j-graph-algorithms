@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import org.neo4j.collection.pool.MarshlandPool;
 
+import java.util.Arrays;
 import java.util.function.IntSupplier;
 
 /**
@@ -75,6 +76,12 @@ public final class IntArray extends PagedDataStructure<int[]> {
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         pages[pageIndex][indexInPage] |= value;
+    }
+
+    public void fill(final int value) {
+        for (int[] page : pages) {
+            Arrays.fill(page, value);
+        }
     }
 
     /**

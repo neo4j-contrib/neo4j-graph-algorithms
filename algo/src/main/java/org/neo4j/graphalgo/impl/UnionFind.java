@@ -17,6 +17,7 @@ import java.util.Objects;
  *
  * @author mknblch
  */
+@Deprecated
 public class UnionFind extends Algorithm<UnionFind> {
 
     private AllRelationshipIterator iterator;
