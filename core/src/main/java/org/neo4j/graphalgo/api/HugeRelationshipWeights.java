@@ -15,14 +15,4 @@ public interface HugeRelationshipWeights {
      * @return the weight
      */
     double weightOf(long sourceNodeId, long targetNodeId);
-
-    /**
-     * get weight between source and target node id or the default weight
-     *
-     * @param sourceNodeId  source node
-     * @param targetNodeId  target node
-     * @param defaultWeight default weight
-     * @return the weight
-     */
-    double weightOf(long sourceNodeId, long targetNodeId, double defaultWeight);
 }

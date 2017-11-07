@@ -86,14 +86,15 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
 
         RelationshipVisitor<EntityNotFoundException> visitOutgoing = null;
         RelationshipVisitor<EntityNotFoundException> visitIncoming = null;
-        boolean hasWeights = !(relWeights instanceof WeightMap);
+        boolean shouldLoadWeights = relWeights instanceof WeightMap;
+        boolean isBoth = loadIncoming && loadOutgoing;
         if (loadOutgoing) {
-            if (!hasWeights) {
+            if (shouldLoadWeights) {
                 final WeightMap weights = (WeightMap) this.relWeights;
-                hasWeights = true;
                 visitOutgoing = ((relationshipId, typeId, startNodeId, endNodeId) ->
                         visitOutgoingWithWeight(
                                 readOp,
+                                isBoth,
                                 sourceGraphId,
                                 weights,
                                 relationshipId,
@@ -103,11 +104,12 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             }
         }
         if (loadIncoming) {
-            if (!hasWeights) {
+            if (shouldLoadWeights) {
                 final WeightMap weights = (WeightMap) this.relWeights;
                 visitIncoming = ((relationshipId, typeId, startNodeId, endNodeId) ->
                         visitIncomingWithWeight(
                                 readOp,
+                                isBoth,
                                 sourceGraphId,
                                 weights,
                                 relationshipId,
@@ -235,7 +237,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         }
     }
 
-    private int visitOutgoing(long endNodeId) throws EntityNotFoundException {
+    private int visitOutgoing(long endNodeId) {
         final int targetGraphId = idMap.get(endNodeId);
         if (targetGraphId != -1) {
             matrix.addOutgoing(sourceGraphId, targetGraphId);
@@ -245,18 +247,19 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
 
     private int visitOutgoingWithWeight(
             ReadOperations readOp,
+            boolean isBoth,
             int sourceGraphId,
             WeightMap weights,
             long relationshipId,
             long endNodeId) throws EntityNotFoundException {
         final int targetGraphId = visitOutgoing(endNodeId);
         if (targetGraphId != -1) {
-            visitWeight(readOp, sourceGraphId, targetGraphId, weights, relationshipId);
+            visitWeight(readOp, isBoth, sourceGraphId, targetGraphId, weights, relationshipId);
         }
         return targetGraphId;
     }
 
-    private int visitIncoming(long startNodeId) throws EntityNotFoundException {
+    private int visitIncoming(long startNodeId) {
         final int startGraphId = idMap.get(startNodeId);
         if (startGraphId != -1) {
             matrix.addIncoming(startGraphId, sourceGraphId);
@@ -266,31 +269,40 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
 
     private int visitIncomingWithWeight(
             ReadOperations readOp,
+            boolean isBoth,
             int sourceGraphId,
             WeightMap weights,
             long relationshipId,
             long startNodeId) throws EntityNotFoundException {
         final int targetGraphId = visitIncoming(startNodeId);
         if (targetGraphId != -1) {
-            visitWeight(readOp, sourceGraphId, targetGraphId, weights, relationshipId);
+            visitWeight(readOp, isBoth, sourceGraphId, targetGraphId, weights, relationshipId);
         }
         return targetGraphId;
     }
 
     private void visitWeight(
             ReadOperations readOp,
+            boolean isBoth,
             int sourceGraphId,
             int targetGraphId,
             WeightMap weights,
-            long relationshipId)  {
-        try {
-            Object value = readOp.relationshipGetProperty(relationshipId, weights.propertyId());
-            if (value != null) {
-                long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
-                weights.set(relId, value);
-            }
-        } catch (EntityNotFoundException ignored) {
+            long relationshipId) throws EntityNotFoundException {
+        Object value = readOp.relationshipGetProperty(relationshipId, weights.propertyId());
+        if (value == null) {
+            return;
         }
+        double defaultValue = weights.defaultValue();
+        double doubleValue = RawValues.extractValue(value, defaultValue);
+        if (Double.compare(doubleValue, defaultValue) == 0) {
+            return;
+        }
+
+        long relId = isBoth
+                ? RawValues.combineSorted(sourceGraphId, targetGraphId)
+                : RawValues.combineIntInt(sourceGraphId, targetGraphId);
+
+        weights.put(relId, doubleValue);
     }
 
     Graph toGraph(final IdMap idMap) {

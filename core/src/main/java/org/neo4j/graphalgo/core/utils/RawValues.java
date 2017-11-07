@@ -12,8 +12,7 @@ import org.neo4j.values.storable.TextValue;
 public class RawValues {
 
     public static final IdCombiner OUTGOING = RawValues::combineIntInt;
-
-    public static final IdCombiner INCOMING = (s, e) -> RawValues.combineIntInt(e, s);
+    public static final IdCombiner BOTH = RawValues::combineSorted;
 
     /**
      * shifts head into the most significant 4 bytes of the long
@@ -24,15 +23,30 @@ public class RawValues {
      * @return combination of head and tail
      */
     public static long combineIntInt(int head, int tail) {
-        return ((long) head << 32) | tail & 0xFFFFFFFFL;
+        return ((long) head << 32) | (long) tail & 0xFFFFFFFFL;
+    }
+
+    public static long combineSorted(int head, int tail) {
+        return head <= tail
+                ? combineIntInt(head, tail)
+                : combineIntInt(tail, head);
     }
 
     public static long combineIntInt(Direction direction, int head, int tail) {
-        return direction == Direction.OUTGOING ? combineIntInt(head, tail) : combineIntInt(tail, head);
+        switch (direction) {
+            case OUTGOING:
+                return combineIntInt(head, tail);
+            case INCOMING:
+                return combineIntInt(tail, head);
+            case BOTH:
+                return combineSorted(head, tail);
+            default:
+                throw new IllegalArgumentException("Unkown direction: " + direction);
+        }
     }
 
     public static IdCombiner combiner(Direction direction) {
-        return direction == Direction.OUTGOING ? OUTGOING : INCOMING;
+        return (direction == Direction.BOTH) ? BOTH : OUTGOING;
     }
 
     /**

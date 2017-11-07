@@ -40,7 +40,7 @@ final class CypherExporter {
         return s
                 .append("  (n")
                 .append(rel.getStartNode().getId())
-                .append(")-[")
+                .append(")-[:")
                 .append(rel.getType().name())
                 .append(props(rel, s))
                 .append("]->")
