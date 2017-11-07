@@ -5,6 +5,8 @@ import org.neo4j.graphalgo.api.Degrees;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -12,10 +14,8 @@ import org.neo4j.graphdb.Direction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -42,12 +42,14 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
 
     private final int[] communityIds; // node to community mapping
     private int iterations;
+    private final int maxIterations;
 
     public ParallelLouvain(IdMapping idMapping,
                            RelationshipIterator relationshipIterator,
                            Degrees degrees,
                            ExecutorService executorService,
-                           int concurrency) {
+                           int concurrency,
+                           int maxIterations) {
 
         this.idMapping = idMapping;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
@@ -55,34 +57,28 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         this.degrees = degrees;
         this.executorService = executorService;
         this.concurrency = concurrency;
+        this.maxIterations = maxIterations;
         communityIds = new int[nodeCount];
         sTot = new double[nodeCount];
         this.queue = new AtomicInteger(0);
 
     }
 
-    public LouvainAlgorithm compute(int maxIterations) {
+    public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             queue.set(0);
-            if (!compute()) {
+            ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
+            boolean changes = false;
+            for (Task task : tasks) {
+                changes |= task.changes;
+            }
+            if (!changes) {
                 return this;
             }
         }
         return this;
     }
-
-    private boolean compute() {
-        ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
-
-        for (Task task : tasks) {
-            if (task.changes) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     @Override
     public ParallelLouvain release() {
@@ -176,11 +172,13 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         private double bestGain;
         private int bestCommunity;
         private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+        private final TerminationFlag flag = getTerminationFlag();
+        private final ProgressLogger logger = getProgressLogger();
 
         @Override
         public void run() {
             changes = false;
-            for (int node; (node = queue.getAndIncrement()) < nodeCount; ) {
+            for (int node; (node = queue.getAndIncrement()) < nodeCount && flag.running(); ) {
                 bestGain = 0.0;
                 readLock.lock();
                 final int sourceCommunity = bestCommunity = communityIds[node];
@@ -196,12 +194,13 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
                         bestCommunity = targetCommunity;
                         bestGain = gain;
                     }
-                    return true;
+                    return flag.running();
                 });
                 if (bestCommunity != sourceCommunity) {
                     assign(node, bestCommunity);
                     changes = true;
                 }
+                logger.logProgress(node, nodeCount - 1);
             }
         }
     }

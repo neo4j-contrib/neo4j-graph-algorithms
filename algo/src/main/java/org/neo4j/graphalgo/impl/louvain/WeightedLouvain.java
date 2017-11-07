@@ -37,12 +37,13 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
     private final IdMapping idMapping;
     private int iterations;
     private double m2, mq2;
+    private final int maxIterations;
 
     public WeightedLouvain(IdMapping idMapping,
                            RelationshipIterator relationshipIterator,
                            RelationshipWeights relationshipWeights,
                            ExecutorService executorService,
-                           int concurrency) {
+                           int concurrency, int maxIterations) {
 
         this.idMapping = idMapping;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
@@ -50,11 +51,12 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
         this.relationshipWeights = relationshipWeights;
         this.executorService = executorService;
         this.concurrency = concurrency;
+        this.maxIterations = maxIterations;
         communityIds = new int[nodeCount];
         communities = new IntObjectScatterMap<>();
     }
 
-    public LouvainAlgorithm compute(int maxIterations) {
+    public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             if (!arrange()) {

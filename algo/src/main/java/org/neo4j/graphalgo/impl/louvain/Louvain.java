@@ -1,8 +1,6 @@
 package org.neo4j.graphalgo.impl.louvain;
 
 
-import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
@@ -11,7 +9,6 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -32,12 +29,13 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     private final IdMapping idMapping;
     private int iterations;
     private double m2, mq2;
+    private final int maxIterations;
 
     public Louvain(IdMapping idMapping,
                    RelationshipIterator relationshipIterator,
                    Degrees degrees,
                    ExecutorService executorService,
-                   int concurrency) {
+                   int concurrency, int maxIterations) {
 
         this.idMapping = idMapping;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
@@ -45,12 +43,13 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         this.degrees = degrees;
         this.executorService = executorService;
         this.concurrency = concurrency;
+        this.maxIterations = maxIterations;
         communityIds = new int[nodeCount];
         sTot = new double[nodeCount];
 
     }
 
-    public LouvainAlgorithm compute(int maxIterations) {
+    public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             if (!arrange()) {

@@ -87,8 +87,8 @@ public class LouvainTest_398 {
 
     @Test
     public void test() throws Exception {
-        final LouvainAlgorithm louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(10);
+        final LouvainAlgorithm louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1, 10)
+                .compute();
         final int[] communities = louvain.getCommunityIds();
         for (int i = 0; i < communities.length; i++) {
             System.out.println(getName(i) + " : " + communities[i]);
@@ -99,8 +99,8 @@ public class LouvainTest_398 {
 
     @Test
     public void testParallel() throws Exception {
-        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 8)
-                .compute(10);
+        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 8, 10)
+                .compute();
         final int[] communities = louvain.getCommunityIds();
         for (int i = 0; i < communities.length; i++) {
             System.out.println(getName(i) + " : " + communities[i]);

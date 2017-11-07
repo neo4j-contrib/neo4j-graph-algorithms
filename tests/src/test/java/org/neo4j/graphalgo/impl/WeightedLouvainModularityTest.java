@@ -10,10 +10,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
@@ -147,8 +144,8 @@ public class WeightedLouvainModularityTest {
     @Test
     public void testWeighted() throws Exception {
         setup(cypher, Direction.BOTH);
-        final LouvainAlgorithm louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1)
-                .compute(3);
+        final LouvainAlgorithm louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
+                .compute();
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertEquals(3, louvain.getCommunityCount());

@@ -11,7 +11,6 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
@@ -71,7 +70,7 @@ public class LouvainProc {
 
         // evaluation
         try (ProgressTimer timer = builder.timeEval()) {
-            louvain.compute(configuration.getIterations(DEFAULT_ITERATIONS));
+            louvain.compute();
             builder.withIterations(louvain.getIterations())
                     .withCommunityCount(louvain.getCommunityCount());
         }
@@ -100,6 +99,7 @@ public class LouvainProc {
 
         // evaluation
         return louvain(graph(configuration), configuration)
+                .compute()
                 .resultStream();
 
     }
@@ -128,15 +128,13 @@ public class LouvainProc {
 
     public LouvainAlgorithm louvain(HeavyGraph graph, ProcedureConfiguration config) {
         if (config.hasWeightProperty()) {
-            return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
+            return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
                     .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .compute(config.getIterations(DEFAULT_ITERATIONS));
+                    .withTerminationFlag(TerminationFlag.wrap(transaction));
         }
-        return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
+        return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(config.getIterations(DEFAULT_ITERATIONS));
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
     }
 
     private void write(Graph graph, int[] communities, ProcedureConfiguration configuration) {

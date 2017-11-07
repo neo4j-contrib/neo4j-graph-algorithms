@@ -12,15 +12,11 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
-import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
@@ -153,8 +149,8 @@ public class UnweightedLouvainModularityTest {
     @Test
     public void testUnweighted() throws Exception {
         setup(cypher, Direction.BOTH);
-        final LouvainAlgorithm louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(3);
+        final LouvainAlgorithm louvain = new Louvain(graph, graph, graph, Pools.DEFAULT, 1, 10)
+                .compute();
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertEquals(3, louvain.getCommunityCount());
@@ -164,8 +160,8 @@ public class UnweightedLouvainModularityTest {
     @Test
     public void testParallel() throws Exception {
         setup(cypher, Direction.BOTH);
-        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 1)
-                .compute(3);
+        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 1, 10)
+                .compute();
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertEquals(3, louvain.getCommunityCount());

@@ -7,7 +7,7 @@ import java.util.stream.Stream;
  */
 public interface LouvainAlgorithm {
 
-    LouvainAlgorithm compute(int maxIterations);
+    LouvainAlgorithm compute();
 
     int[] getCommunityIds();
 
