@@ -22,18 +22,21 @@ import java.util.function.Consumer;
  * @author mknobloch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = {"-Xms12g", "-Xmx12g", "-XX:+UseG1GC"})
+@Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g", "-XX:+UseG1GC"})
 @Warmup(iterations = 1)
 @Measurement(iterations = 1)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Timeout(time = 8, timeUnit = TimeUnit.HOURS)
-
+@Timeout(time = 2, timeUnit = TimeUnit.HOURS)
 public class LouvainBenchmarkLdbc {
 
     private GraphDatabaseAPI db;
     private Transaction tx;
+
+
+    @Param({"4", "8"})
+    int threads;
 
     @Setup
     public void setup() throws KernelException, IOException {
@@ -62,10 +65,9 @@ public class LouvainBenchmarkLdbc {
 
     @Benchmark
     public Object _01_louvainParallel() {
-        System.out.println("starting benchmark");
         return runQuery(
                 db,
-                "CALL algo.louvain(null, null, {maxIterations:1, concurrency:8}) "
+                "CALL algo.louvain(null, null, {maxIterations:1, concurrency:" + threads + "}) "
                         + "YIELD loadMillis, computeMillis, writeMillis, nodes, communityCount, iterations"
                 , r -> {
                     long load = r.getNumber("loadMillis").longValue();
@@ -84,24 +86,6 @@ public class LouvainBenchmarkLdbc {
 
                 }
         );
-    }
-
-    private static Object runPrintQuery(GraphDatabaseAPI db, String query) {
-        return runQuery(db, query, result -> {
-            long load = result.getNumber("loadMillis").longValue();
-            long compute = result.getNumber("computeMillis").longValue();
-            long write = result.getNumber("writeMillis").longValue();
-            System.out.printf(
-                    "load: %d ms%ncompute: %d ms%nwrite: %d ms%n",
-                    load,
-                    compute,
-                    write);
-        });
-    }
-
-    private static Object runVoidQuery(GraphDatabaseAPI db, String query) {
-        return runQuery(db, query, r -> {
-        });
     }
 
     private static Object runQuery(
