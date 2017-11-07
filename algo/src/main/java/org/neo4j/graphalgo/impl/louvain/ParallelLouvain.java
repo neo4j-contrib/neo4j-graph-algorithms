@@ -15,30 +15,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * Parallel modularity based community detection algo
+ *
  * @author mknblch
  */
 public class ParallelLouvain extends Algorithm<ParallelLouvain> implements LouvainAlgorithm {
 
-    private RelationshipIterator relationshipIterator;
-    private final Degrees degrees;
     private final ExecutorService executorService;
     private final int concurrency;
     private final int nodeCount;
-    private final AtomicInteger queue;
-
-    private int[] communityIds; // node to community mapping
-    private double[] sTot;
+    private RelationshipIterator relationshipIterator;
     private IdMapping idMapping;
-    private ArrayList<Task> tasks = new ArrayList<>();
+    private Degrees degrees;
+    private final AtomicInteger queue;
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private int iterations;
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    private final ArrayList<Task> tasks = new ArrayList<>();
+    private double[] sTot;
     private double m2, mq2;
 
+    private final int[] communityIds; // node to community mapping
+    private int iterations;
 
     public ParallelLouvain(IdMapping idMapping,
                            RelationshipIterator relationshipIterator,
@@ -114,7 +117,6 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
     private void assign(int node, int targetCommunity) { // TODO sync
         final int d = degrees.degree(node, Direction.BOTH);
 
-        final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
             sTot[communityIds[node]] -= d;
@@ -125,7 +127,6 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
             writeLock.unlock();
         }
     }
-
 
      /**
      * @return kiIn
@@ -174,13 +175,11 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         private boolean changes = false;
         private double bestGain;
         private int bestCommunity;
+        private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
 
         @Override
         public void run() {
             changes = false;
-            bestGain = 0.0;
-            final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-
             for (int node; (node = queue.getAndIncrement()) < nodeCount; ) {
                 bestGain = 0.0;
                 readLock.lock();

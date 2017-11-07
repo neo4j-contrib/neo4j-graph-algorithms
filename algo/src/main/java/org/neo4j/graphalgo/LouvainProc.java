@@ -13,6 +13,7 @@ import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
+import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphalgo.results.LouvainResult;
 import org.neo4j.graphdb.Direction;
@@ -132,7 +133,7 @@ public class LouvainProc {
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(config.getIterations(DEFAULT_ITERATIONS));
         }
-        return new Louvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
+        return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(config.getIterations(DEFAULT_ITERATIONS));
