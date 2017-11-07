@@ -5,9 +5,9 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
+import java.util.function.Function;
 
 /**
  * parallel UnionFind using common ForkJoin-Pool only.
@@ -24,53 +24,45 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJoin> {
+public class ParallelUnionFindForkJoin extends GraphUnionFindAlgo<Graph, DisjointSetStruct, ParallelUnionFindForkJoin> {
 
-    private Graph graph;
-    private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
-    private DisjointSetStruct struct;
+
+    public static Function<Graph, ParallelUnionFindForkJoin> of(int minBatchSize, int concurrency) {
+        return graph -> new ParallelUnionFindForkJoin(
+                graph,
+                minBatchSize,
+                concurrency);
+    }
 
     /**
      * initialize parallel UF
      *
      * @param graph
-     * @param executor
      */
-    public ParallelUnionFindForkJoin(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
-        this.graph = graph;
-        this.executor = executor;
+    public ParallelUnionFindForkJoin(
+            Graph graph,
+            int minBatchSize,
+            int concurrency) {
+        super(graph);
         nodeCount = Math.toIntExact(graph.nodeCount());
-        this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, minBatchSize);
+        this.batchSize = ParallelUtil.adjustBatchSize(
+                nodeCount,
+                concurrency,
+                minBatchSize);
 
     }
 
-    public ParallelUnionFindForkJoin compute() {
-
-        struct = ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
-        return this;
+    public DisjointSetStruct compute() {
+        return ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
     }
 
 
-    public ParallelUnionFindForkJoin compute(double threshold) {
-        struct = ForkJoinPool.commonPool().invoke(new ThresholdUFTask(0, threshold));
-        return this;
-    }
-
-    public DisjointSetStruct getStruct() {
-        return struct;
-    }
-
-    @Override
-    public ParallelUnionFindForkJoin me() {
-        return this;
-    }
-
-    @Override
-    public ParallelUnionFindForkJoin release() {
-        graph = null;
-        return null;
+    public DisjointSetStruct compute(double threshold) {
+        return ForkJoinPool
+                .commonPool()
+                .invoke(new ThresholdUFTask(0, threshold));
     }
 
     private class UnionFindTask extends RecursiveTask<DisjointSetStruct> {
@@ -78,7 +70,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
         protected final int offset;
         protected final int end;
 
-        public UnionFindTask(int offset) {
+        UnionFindTask(int offset) {
             this.offset = offset;
             this.end = Math.min(offset + batchSize, nodeCount);
         }
@@ -96,12 +88,15 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
         protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end && running(); node++) {
-                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                    if (!struct.connected(sourceNodeId, targetNodeId)) {
-                        struct.union(sourceNodeId, targetNodeId);
-                    }
-                    return true;
-                });
+                graph.forEachRelationship(
+                        node,
+                        Direction.OUTGOING,
+                        (sourceNodeId, targetNodeId, relationId) -> {
+                            if (!struct.connected(sourceNodeId, targetNodeId)) {
+                                struct.union(sourceNodeId, targetNodeId);
+                            }
+                            return true;
+                        });
             }
             getProgressLogger().logProgress(end - 1, nodeCount - 1);
 
@@ -113,7 +108,7 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
 
         private final double threshold;
 
-        public ThresholdUFTask(int offset, double threshold) {
+        ThresholdUFTask(int offset, double threshold) {
             super(offset);
             this.threshold = threshold;
         }
@@ -121,15 +116,18 @@ public class ParallelUnionFindForkJoin extends Algorithm<ParallelUnionFindForkJo
         protected DisjointSetStruct run() {
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end && running(); node++) {
-                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, weight) -> {
-                    if (weight < threshold) {
-                        return true;
-                    }
-                    if (!struct.connected(sourceNodeId, targetNodeId)) {
-                        struct.union(sourceNodeId, targetNodeId);
-                    }
-                    return true;
-                });
+                graph.forEachRelationship(
+                        node,
+                        Direction.OUTGOING,
+                        (sourceNodeId, targetNodeId, relationId, weight) -> {
+                            if (weight < threshold) {
+                                return true;
+                            }
+                            if (!struct.connected(sourceNodeId, targetNodeId)) {
+                                struct.union(sourceNodeId, targetNodeId);
+                            }
+                            return true;
+                        });
             }
             return struct;
         }

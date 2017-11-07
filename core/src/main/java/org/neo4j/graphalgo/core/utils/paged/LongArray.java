@@ -55,6 +55,14 @@ public final class LongArray extends PagedDataStructure<long[]> {
         pages[pageIndex][indexInPage] |= value;
     }
 
+    public void addTo(long index, long value) {
+        assert index < capacity();
+        final int pageIndex = pageIndex(index);
+        final int indexInPage = indexInPage(index);
+        final long[] page = pages[pageIndex];
+        page[indexInPage] += value;
+    }
+
     public void fill(long value) {
         for (long[] page : pages) {
             Arrays.fill(page, value);

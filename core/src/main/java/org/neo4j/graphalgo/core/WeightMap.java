@@ -58,7 +58,7 @@ public final class WeightMap implements WeightMapping {
         put(id, doubleVal);
     }
 
-    private void put(long key, double value) {
+    public void put(long key, double value) {
         weights.put(key, value);
     }
 
@@ -83,5 +83,9 @@ public final class WeightMap implements WeightMapping {
     @Override
     public int size() {
         return weights.size();
+    }
+
+    public double defaultValue() {
+        return defaultValue;
     }
 }

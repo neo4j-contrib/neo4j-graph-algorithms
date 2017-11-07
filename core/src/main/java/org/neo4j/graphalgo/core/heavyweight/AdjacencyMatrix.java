@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.core.utils.IdCombiner;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
@@ -23,19 +24,23 @@ class AdjacencyMatrix {
     /**
      * mapping from nodeId to outgoing degree
      */
-    final int[] outOffsets;
+    private final int[] outOffsets;
     /**
      * mapping from nodeId to incoming degree
      */
-    final int[] inOffsets;
+    private final int[] inOffsets;
     /**
      * matrix nodeId x [outgoing edge-relationIds..]
      */
-    final int[][] outgoing;
+    private final int[][] outgoing;
     /**
      * matrix nodeId x [incoming edge-relationIds..]
      */
-    final int[][] incoming;
+    private final int[][] incoming;
+
+    final boolean isBoth;
+    private final IdCombiner inCombiner;
+    private final IdCombiner outCombiner;
 
     AdjacencyMatrix(int nodeCount) {
         this(nodeCount, true, true);
@@ -46,23 +51,21 @@ class AdjacencyMatrix {
         this.inOffsets = withIncoming ? new int[nodeCount] : null;
         this.outgoing = withOutgoing ? new int[nodeCount][] : null;
         this.incoming = withIncoming ? new int[nodeCount][] : null;
-        if (outgoing != null) {
+        if (withOutgoing) {
             Arrays.fill(outgoing, EMPTY_INTS);
         }
-        if (incoming != null) {
+        if (withIncoming) {
             Arrays.fill(incoming, EMPTY_INTS);
         }
-    }
-
-    AdjacencyMatrix(
-            final int[] outOffsets,
-            final int[] inOffsets,
-            final int[][] outgoing,
-            final int[][] incoming) {
-        this.outOffsets = outOffsets;
-        this.inOffsets = inOffsets;
-        this.outgoing = outgoing;
-        this.incoming = incoming;
+        if (withOutgoing && withIncoming) {
+            outCombiner = RawValues.BOTH;
+            inCombiner = RawValues.BOTH;
+            isBoth = true;
+        } else {
+            outCombiner = RawValues.OUTGOING;
+            inCombiner = RawValues.OUTGOING;
+            isBoth = false;
+        }
     }
 
     /**
@@ -194,14 +197,30 @@ class AdjacencyMatrix {
     public void forEach(int nodeId, Direction direction, WeightMapping weights, WeightedRelationshipConsumer consumer) {
         switch (direction) {
             case OUTGOING:
-                forEachOutgoing(nodeId, weights, consumer);
+                forEachRelationship(
+                        nodeId, outOffsets, outgoing,
+                        weights,
+                        consumer,
+                        outCombiner);
                 break;
             case INCOMING:
-                forEachIncoming(nodeId, weights, consumer);
+                forEachRelationship(
+                        nodeId, inOffsets, incoming,
+                        weights,
+                        consumer,
+                        inCombiner);
                 break;
             default:
-                forEachIncoming(nodeId, weights, consumer);
-                forEachOutgoing(nodeId, weights, consumer);
+                forEachRelationship(
+                        nodeId, inOffsets, incoming,
+                        weights,
+                        consumer,
+                        outCombiner);
+                forEachRelationship(
+                        nodeId, outOffsets, outgoing,
+                        weights,
+                        consumer,
+                        inCombiner);
                 break;
         }
     }
@@ -241,21 +260,12 @@ class AdjacencyMatrix {
         }
     }
 
-    private void forEachOutgoing(int nodeId, WeightMapping weights, WeightedRelationshipConsumer consumer) {
-        final int degree = outOffsets[nodeId];
-        final int[] outs = outgoing[nodeId];
+    private void forEachRelationship(int nodeId, int[] offsets, int[][] adjacency, WeightMapping weights, WeightedRelationshipConsumer consumer, IdCombiner combiner) {
+        final int degree = offsets[nodeId];
+        final int[] neighbours = adjacency[nodeId];
         for (int i = 0; i < degree; i++) {
-            final long relationId = RawValues.combineIntInt(nodeId, outs[i]);
-            consumer.accept(nodeId, outs[i], relationId, weights.get(relationId));
-        }
-    }
-
-    private void forEachIncoming(int nodeId, WeightMapping weights, WeightedRelationshipConsumer consumer) {
-        final int degree = inOffsets[nodeId];
-        final int[] ins = incoming[nodeId];
-        for (int i = 0; i < degree; i++) {
-            final long relationId = RawValues.combineIntInt(ins[i], nodeId);
-            consumer.accept(nodeId, ins[i], relationId, weights.get(relationId));
+            final long relationId = combiner.apply(nodeId, neighbours[i]);
+            consumer.accept(nodeId, neighbours[i], relationId, weights.get(relationId));
         }
     }
 

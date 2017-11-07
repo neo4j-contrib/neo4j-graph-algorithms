@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
+import java.util.function.Function;
 
 /**
  * parallel UnionFind using ExecutorService and common ForkJoin-Pool.
@@ -24,13 +25,20 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge> {
+public class ParallelUnionFindFJMerge extends GraphUnionFindAlgo<Graph, DisjointSetStruct, ParallelUnionFindFJMerge> {
 
-    private Graph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
     private DisjointSetStruct struct;
+
+    public static Function<Graph, ParallelUnionFindFJMerge> of(ExecutorService executor, int minBatchSize, int concurrency) {
+        return graph -> new ParallelUnionFindFJMerge(
+                graph,
+                executor,
+                minBatchSize,
+                concurrency);
+    }
 
     /**
      * initialize UF
@@ -39,29 +47,29 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
      * @param executor
      */
     public ParallelUnionFindFJMerge(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
-        this.graph = graph;
+        super(graph);
         this.executor = executor;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, minBatchSize);
     }
 
-    public ParallelUnionFindFJMerge compute() {
+    public DisjointSetStruct compute() {
 
         final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new UFProcess(i, batchSize));
         }
         merge(ufProcesses);
-        return this;
+        return getStruct();
     }
 
-    public ParallelUnionFindFJMerge compute(double threshold) {
+    public DisjointSetStruct compute(double threshold) {
         final ArrayList<TUFProcess> ufProcesses = new ArrayList<>();
         for (int i = 0; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
         }
         merge(ufProcesses);
-        return this;
+        return getStruct();
     }
 
     public void merge(ArrayList<? extends UFProcess> ufProcesses) {
@@ -79,15 +87,9 @@ public class ParallelUnionFindFJMerge extends Algorithm<ParallelUnionFindFJMerge
     }
 
     @Override
-    public ParallelUnionFindFJMerge me() {
-        return this;
-    }
-
-    @Override
     public ParallelUnionFindFJMerge release() {
-        graph = null;
         struct = null;
-        return this;
+        return super.release();
     }
 
     /**

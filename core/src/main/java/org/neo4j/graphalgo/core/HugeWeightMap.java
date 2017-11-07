@@ -20,20 +20,20 @@ public final class HugeWeightMap implements HugeWeightMapping {
         return weights.getOrDefault(source, target, defaultValue);
     }
 
-    @Override
-    public double weight(
-            final long source,
-            final long target,
-            final double defaultValue) {
-        return weights.getOrDefault(source, target, defaultValue);
-    }
-
     public void put(long key1, long key2, Object value) {
         double doubleVal = RawValues.extractValue(value, defaultValue);
         if (doubleVal == defaultValue) {
             return;
         }
         weights.put(key1, key2, doubleVal);
+    }
+
+    public double defaultValue() {
+        return defaultValue;
+    }
+
+    public void put(long key1, long key2, double value) {
+        weights.put(key1, key2, value);
     }
 
     @Override

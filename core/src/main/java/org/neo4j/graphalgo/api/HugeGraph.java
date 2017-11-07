@@ -4,7 +4,6 @@ package org.neo4j.graphalgo.api;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -58,6 +57,14 @@ public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator,
     default PrimitiveIntIterator nodeIterator() {
         return new LongToIntIterator(hugeNodeIterator());
     }
+
+    @Override
+    default double weightOf(
+            int sourceNodeId,
+            int targetNodeId) {
+        return weightOf((long) sourceNodeId, (long) targetNodeId);
+    }
+
 
     final class LongToIntIterator implements PrimitiveIntIterator {
         private final PrimitiveLongIterator iter;

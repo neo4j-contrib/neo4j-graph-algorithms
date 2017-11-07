@@ -71,6 +71,7 @@ public class HugeGraphImpl implements HugeGraph {
     private ByteArray.DeltaCursor empty;
     private ByteArray.DeltaCursor inCache;
     private ByteArray.DeltaCursor outCache;
+    private final boolean isBoth;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
@@ -90,6 +91,7 @@ public class HugeGraphImpl implements HugeGraph {
         inCache = newCursor(this.inAdjacency);
         outCache = newCursor(this.outAdjacency);
         empty = inCache == null ? newCursor(this.outAdjacency) : newCursor(this.inAdjacency);
+        isBoth = inAdjacency != null && outAdjacency != null;
     }
 
     @Override
@@ -114,15 +116,10 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public double weightOf(final long sourceNodeId, final long targetNodeId) {
+        if (isBoth && sourceNodeId > targetNodeId) {
+            return weights.weight(targetNodeId, sourceNodeId);
+        }
         return weights.weight(sourceNodeId, targetNodeId);
-    }
-
-    @Override
-    public double weightOf(
-            final long sourceNodeId,
-            final long targetNodeId,
-            final double defaultWeight) {
-        return weights.weight(sourceNodeId, targetNodeId, defaultWeight);
     }
 
     @Override
@@ -179,9 +176,7 @@ public class HugeGraphImpl implements HugeGraph {
             Direction direction,
             WeightedRelationshipConsumer consumer) {
         RelationshipConsumer nonWeighted = (s, t, relId) -> {
-            double weight = direction == Direction.OUTGOING
-                    ? weightOf((long) s, (long) t)
-                    : weightOf((long) t, (long) s);
+            double weight = weightOf((long) s, (long) t);
             return consumer.accept(
                     s,
                     t,

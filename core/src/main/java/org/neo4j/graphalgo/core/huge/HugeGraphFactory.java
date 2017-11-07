@@ -11,6 +11,7 @@ import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.StatementTask;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
@@ -67,7 +68,6 @@ public final class HugeGraphFactory extends GraphFactory {
         final long nodeCount = dimensions.hugeNodeCount();
         final int[] relationId = dimensions.relationId();
         final int weightId = dimensions.weightId();
-        boolean loadsAnything = false;
         LongArray inOffsets = null;
         LongArray outOffsets = null;
         ByteArray inAdjacency = null;
@@ -76,15 +76,13 @@ public final class HugeGraphFactory extends GraphFactory {
             inOffsets = LongArray.newArray(nodeCount, tracker);
             inAdjacency = ByteArray.newArray(0, tracker);
             inAdjacency.skipAllocationRegion(1);
-            loadsAnything = true;
         }
         if (setup.loadOutgoing) {
             outOffsets = LongArray.newArray(nodeCount, tracker);
             outAdjacency = ByteArray.newArray(nodeCount, tracker);
             outAdjacency.skipAllocationRegion(1);
-            loadsAnything = true;
         }
-        if (loadsAnything) {
+        if (setup.loadIncoming || setup.loadOutgoing) {
             // needs final b/c of reference from lambda
             final LongArray finalInOffsets = inOffsets;
             final LongArray finalOutOffsets = outOffsets;
@@ -135,6 +133,7 @@ public final class HugeGraphFactory extends GraphFactory {
         private final int[] relationId;
         private final int weightId;
         private final HugeWeightMapping weights;
+        private final boolean loadsBoth;
 
         private DeltaEncodingVisitor inImporter;
         private DeltaEncodingVisitor outImporter;
@@ -164,6 +163,7 @@ public final class HugeGraphFactory extends GraphFactory {
             this.relationId = relationId;
             this.weightId = weightId;
             this.weights = weights;
+            this.loadsBoth = inAdjacency != null && outAdjacency != null;
         }
 
         @Override
@@ -180,18 +180,10 @@ public final class HugeGraphFactory extends GraphFactory {
             boolean loadOutgoing = outAllocator != null;
 
             if (loadIncoming) {
-                inImporter = newImporter(
-                        readOp,
-                        idMap,
-                        Direction.INCOMING
-                );
+                inImporter = newImporter(readOp, Direction.INCOMING);
             }
             if (loadOutgoing) {
-                outImporter = newImporter(
-                        readOp,
-                        idMap,
-                        Direction.OUTGOING
-                );
+                outImporter = newImporter(readOp, Direction.OUTGOING);
             }
 
             while (iterator.hasNext()) {
@@ -210,7 +202,6 @@ public final class HugeGraphFactory extends GraphFactory {
 
         DeltaEncodingVisitor newImporter(
                 ReadOperations readOp,
-                HugeIdMap idMap,
                 Direction direction) {
             if (weightId >= 0) {
                 return new RelationshipImporterWithWeights(
@@ -218,7 +209,8 @@ public final class HugeGraphFactory extends GraphFactory {
                         direction,
                         readOp,
                         weightId,
-                        weights);
+                        weights,
+                        loadsBoth);
             }
             return new DeltaEncodingVisitor(idMap, direction);
         }
@@ -305,10 +297,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 Direction direction) throws EntityNotFoundException {
             return relationId == null
                     ? readOp.nodeGetRelationships(sourceNodeId, direction)
-                    : readOp.nodeGetRelationships(
-                    sourceNodeId,
-                    direction,
-                    relationId);
+                    : readOp.nodeGetRelationships(sourceNodeId, direction, relationId);
         }
     }
 
@@ -324,7 +313,7 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         private final HugeIdMap idMap;
-        final Direction direction;
+        private final Direction direction;
 
         long sourceGraphId;
         private long prevTarget;
@@ -398,21 +387,26 @@ public final class HugeGraphFactory extends GraphFactory {
         private final int weightId;
         private final HugeWeightMap weights;
         private final ReadOperations readOp;
+        private final boolean isBoth;
+        private final double defaultValue;
 
         private RelationshipImporterWithWeights(
                 final HugeIdMap idMap,
                 final Direction direction,
                 final ReadOperations readOp,
                 int weightId,
-                HugeWeightMapping weights) {
+                HugeWeightMapping weights,
+                boolean isBoth) {
             super(idMap, direction);
             this.readOp = readOp;
+            this.isBoth = isBoth;
             if (!(weights instanceof HugeWeightMap) || weightId < 0) {
                 throw new IllegalArgumentException(
                         "expected weights to be defined");
             }
             this.weightId = weightId;
             this.weights = (HugeWeightMap) weights;
+            defaultValue = this.weights.defaultValue();
         }
 
         @Override
@@ -424,16 +418,15 @@ public final class HugeGraphFactory extends GraphFactory {
                 Object value = readOp.relationshipGetProperty(
                         relationshipId,
                         weightId);
-                if (direction == Direction.OUTGOING) {
-                    weights.put(
-                            sourceGraphId,
-                            targetGraphId,
-                            value);
-                } else {
-                    weights.put(
-                            targetGraphId,
-                            sourceGraphId,
-                            value);
+                double doubleVal = RawValues.extractValue(value, defaultValue);
+                if (doubleVal != defaultValue) {
+                    long source = sourceGraphId;
+                    long target = targetGraphId;
+                    if (isBoth && source > target) {
+                        target = source;
+                        source = targetGraphId;
+                    }
+                    weights.put(source, target, doubleVal);
                 }
             }
             return targetGraphId;

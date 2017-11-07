@@ -1,83 +1,175 @@
 package org.neo4j.graphalgo.core;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.graphalgo.LouvainProc;
-import org.neo4j.graphalgo.TestDatabaseCreator;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
+import org.junit.rules.ErrorCollector;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphView;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assume.assumeFalse;
 
 /**
  * @author mknblch
  */
-@Ignore("Issue #444")
+@RunWith(Parameterized.class)
 public class WeightMapImportTest {
 
-    private static GraphDatabaseAPI db;
-    private static HeavyGraph graph;
-
-    @BeforeClass
-    public static void setupGraph() throws KernelException {
-
-        final String cypher =
-                "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (b:Node {name:'b'})\n" +
-                        "CREATE (a)-[:TYPE {w:1}]->(b)";
-
-
-        db = TestDatabaseCreator.createTestDatabase();
-
-        db.getDependencyResolver()
-                .resolveDependency(Procedures.class)
-                .registerProcedure(LouvainProc.class);
-
-        try (Transaction tx = db.beginTx()) {
-            db.execute(cypher);
-            tx.success();
-        }
-
-        graph = (HeavyGraph) new GraphLoader(db)
-                .withAnyRelationshipType()
-                .withAnyLabel()
-                .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 0.0)
-                .load(HeavyGraphFactory.class);
-
+    @Parameterized.Parameters(name = "{1}")
+    public static Collection<Object[]> data() {
+        return Arrays.<Object[]>asList(
+                new Object[]{HeavyGraphFactory.class, "heavy"},
+                new Object[]{LightGraphFactory.class, "light"},
+                new Object[]{HugeGraphFactory.class, "huge"},
+                new Object[]{GraphViewFactory.class, "view"}
+        );
     }
 
-    @AfterClass
-    public static void tearDown() {
-        if (db != null) db.shutdown();
-    }
+    @Rule
+    public ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
-    private String getName(long nodeId) {
-        String[] name = {""};
-        db.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
-            name[0] = (String) row.getNode("n").getProperty("name");
-            return true;
-        });
-        return name[0];
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+
+    private Class<? extends GraphFactory> graphImpl;
+    private Graph graph;
+
+    public WeightMapImportTest(
+            Class<? extends GraphFactory> graphImpl,
+            String name) {
+        this.graphImpl = graphImpl;
     }
 
     @Test
-    public void testWeights() throws Exception {
-        graph.forEachNode(node -> {
-            graph.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                assertEquals(String.format("wrong weight in (%s)->(%s)", getName(sourceNodeId), getName(targetNodeId)),
-                        1.0,
-                        graph.weightOf(sourceNodeId, targetNodeId), 0.0);
-                return true;
-            });
+    public void testWeightsOfInterconnectedNodesWithOutgoing() {
+        setup("CREATE (a:N),(b:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(a)", Direction.OUTGOING);
+
+        checkWeight(0, Direction.OUTGOING, 1.0);
+        checkWeight(1, Direction.OUTGOING, 2.0);
+    }
+
+    @Test
+    public void testWeightsOfTriangledNodesWithOutgoing() {
+        setup("CREATE (a:N),(b:N),(c:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(c),(c)-[:R{w:3}]->(a)", Direction.OUTGOING);
+
+        checkWeight(0, Direction.OUTGOING, 1.0);
+        checkWeight(1, Direction.OUTGOING, 2.0);
+        checkWeight(2, Direction.OUTGOING, 3.0);
+    }
+
+    @Test
+    public void testWeightsOfInterconnectedNodesWithIncoming() {
+        setup("CREATE (a:N),(b:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(a)", Direction.INCOMING);
+
+        checkWeight(0, Direction.INCOMING, 2.0);
+        checkWeight(1, Direction.INCOMING, 1.0);
+    }
+
+    @Test
+    public void testWeightsOfTriangledNodesWithIncoming() {
+        setup("CREATE (a:N),(b:N),(c:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(c),(c)-[:R{w:3}]->(a)", Direction.INCOMING);
+
+        checkWeight(0, Direction.INCOMING, 3.0);
+        checkWeight(1, Direction.INCOMING, 1.0);
+        checkWeight(2, Direction.INCOMING, 2.0);
+    }
+
+    @Test
+    public void testWeightsOfInterconnectedNodesWithBoth() {
+        setup("CREATE (a:N),(b:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(a)", Direction.BOTH);
+
+        // loading both overwrites the weights in the following order,
+        // which expects the GraphFactory to load OUTGOINGs before INCOMINGs
+        //   (a)-[{w:1}]->(b)  |  (a)<-[{w:2}]-(b)  |  (b)-[{w:2}]->(a)  |  (b)<-[{w:1}]-(a)
+        // therefore the final weight for in/outs of either a/b is 1,
+        // the weight of 2 is discarded.
+        // This cannot be represented in the graph view
+        assumeFalse("GraphView is not able to represent the test case", graph instanceof GraphView);
+
+        checkWeight(0, Direction.OUTGOING, 1.0);
+        checkWeight(1, Direction.OUTGOING, 1.0);
+
+        checkWeight(0, Direction.INCOMING, 1.0);
+        checkWeight(1, Direction.INCOMING, 1.0);
+
+        checkWeight(0, Direction.BOTH, 1.0, 1.0);
+        checkWeight(1, Direction.BOTH, 1.0, 1.0);
+    }
+
+    @Test
+    public void testWeightsOfTriangledNodesWithBoth() {
+        setup("CREATE (a:N),(b:N),(c:N) CREATE (a)-[:R{w:1}]->(b),(b)-[:R{w:2}]->(c),(c)-[:R{w:3}]->(a)", Direction.BOTH);
+
+        checkWeight(0, Direction.OUTGOING, 1.0);
+        checkWeight(1, Direction.OUTGOING, 2.0);
+        checkWeight(2, Direction.OUTGOING, 3.0);
+
+        checkWeight(0, Direction.INCOMING, 3.0);
+        checkWeight(1, Direction.INCOMING, 1.0);
+        checkWeight(2, Direction.INCOMING, 2.0);
+
+        checkWeight(0, Direction.BOTH, 3.0, 1.0);
+        checkWeight(1, Direction.BOTH, 1.0, 2.0);
+        checkWeight(2, Direction.BOTH, 2.0, 3.0);
+    }
+
+    private void setup(String cypher, Direction direction) {
+        DB.execute(cypher);
+        graph = new GraphLoader(DB)
+                .withAnyRelationshipType()
+                .withAnyLabel()
+                .withoutNodeProperties()
+                .withDirection(direction)
+                .withRelationshipWeightsFromProperty("w", 0.0)
+                .load(graphImpl);
+    }
+
+    private void checkWeight(int nodeId, Direction direction, double... expecteds) {
+        graph.forEachRelationship(nodeId, direction, checks(direction, expecteds));
+    }
+
+    private WeightedRelationshipConsumer checks(Direction direction, double... expecteds) {
+        AtomicInteger i = new AtomicInteger();
+        int limit = expecteds.length;
+        return (s, t, r, w) -> {
+            String rel = String.format("(%d %s %d)", s, arrow(direction), t);
+            if (i.get() >= limit) {
+                collector.addError(new RuntimeException(String.format("Unexpected relationship: %s = %.1f", rel, w)));
+                return false;
+            }
+            double actual = graph.weightOf(s, t);
+            double expected = expecteds[i.getAndIncrement()];
+            collector.checkThat(String.format("%s (RW): %.1f != %.1f", rel, actual, expected), actual, is(closeTo(expected, 1e-4)));
+            collector.checkThat(String.format("%s (WRI): %.1f != %.1f", rel, w, expected), w, is(closeTo(expected, 1e-4)));
             return true;
-        });
+        };
+    }
+
+    private static String arrow(Direction direction) {
+        switch (direction) {
+            case OUTGOING:
+                return "->";
+            case INCOMING:
+                return "<-";
+            case BOTH:
+                return "<->";
+            default:
+                return "???";
+        }
     }
 }

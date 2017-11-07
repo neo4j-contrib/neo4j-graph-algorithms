@@ -20,15 +20,13 @@ import org.neo4j.graphdb.Direction;
  *
  * @author mknblch
  */
-public class GraphUnionFind extends Algorithm<GraphUnionFind> {
-
-    private Graph graph;
+public class GraphUnionFind extends GraphUnionFindAlgo<Graph, DisjointSetStruct, GraphUnionFind> {
 
     private DisjointSetStruct dss;
     private final int nodeCount;
 
     public GraphUnionFind(Graph graph) {
-        this.graph = graph;
+        super(graph);
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.dss = new DisjointSetStruct(nodeCount);
     }
@@ -38,6 +36,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      *
      * @return a DSS
      */
+    @Override
     public DisjointSetStruct compute() {
         dss.reset();
         final ProgressLogger progressLogger = getProgressLogger();
@@ -61,6 +60,7 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
      * @param threshold the minimum threshold
      * @return a DSS
      */
+    @Override
     public DisjointSetStruct compute(final double threshold) {
         dss.reset();
         final ProgressLogger progressLogger = getProgressLogger();
@@ -81,14 +81,8 @@ public class GraphUnionFind extends Algorithm<GraphUnionFind> {
     }
 
     @Override
-    public GraphUnionFind me() {
-        return this;
-    }
-
-    @Override
     public GraphUnionFind release() {
-        graph = null;
         dss = null;
-        return this;
+        return super.release();
     }
 }

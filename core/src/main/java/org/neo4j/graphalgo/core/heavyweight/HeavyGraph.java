@@ -4,6 +4,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.function.IntPredicate;
  *
  * @author mknblch
  */
-public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, NodeProperties {
+public class HeavyGraph implements Graph, NodeWeights, NodeProperties {
 
     private final IdMap nodeIdMap;
     private AdjacencyMatrix container;
@@ -90,7 +91,10 @@ public class HeavyGraph implements Graph, RelationshipWeights, NodeWeights, Node
 
     @Override
     public double weightOf(final int sourceNodeId, final int targetNodeId) {
-        return relationshipWeights.get(sourceNodeId, targetNodeId);
+        long relId = container.isBoth
+                ? RawValues.combineSorted(sourceNodeId, targetNodeId)
+                : RawValues.combineIntInt(sourceNodeId, targetNodeId);
+        return relationshipWeights.get(relId);
     }
 
     @Override

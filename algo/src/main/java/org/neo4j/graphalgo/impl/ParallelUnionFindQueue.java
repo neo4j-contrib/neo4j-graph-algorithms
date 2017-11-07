@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
 /**
  * parallel UnionFind using ExecutorService only.
@@ -21,104 +22,115 @@ import java.util.concurrent.*;
  *
  * @author mknblch
  */
-public class ParallelUnionFindQueue extends Algorithm<ParallelUnionFindQueue> {
+public class ParallelUnionFindQueue extends GraphUnionFindAlgo<Graph, DisjointSetStruct, ParallelUnionFindQueue> {
 
-    private Graph graph;
     private final ExecutorService executor;
     private final int nodeCount;
     private final int batchSize;
-    private final LinkedBlockingQueue<DisjointSetStruct> queue;
-    private final List<Future<?>> futures;
+    private final int stepSize;
 
-    private DisjointSetStruct struct;
+    public static Function<Graph, ParallelUnionFindQueue> of(ExecutorService executor, int minBatchSize, int concurrency) {
+        return graph -> new ParallelUnionFindQueue(
+                graph,
+                executor,
+                minBatchSize,
+                concurrency);
+    }
 
     /**
      * initialize parallel UF
      */
     public ParallelUnionFindQueue(Graph graph, ExecutorService executor, int minBatchSize, int concurrency) {
-        this.graph = graph;
+        super(graph);
         this.executor = executor;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, minBatchSize);
-        queue = new LinkedBlockingQueue<>();
-        futures = new ArrayList<>();
+        stepSize = ParallelUtil.threadSize(batchSize, nodeCount);
     }
 
-    public ParallelUnionFindQueue compute() {
-        final int steps = Math.floorDiv(nodeCount, batchSize) - 1;
+    @Override
+    public DisjointSetStruct compute() {
+        final List<Future<?>> futures = new ArrayList<>(stepSize);
+        final BlockingQueue<DisjointSetStruct> queue = new ArrayBlockingQueue<>(stepSize);
+
+        Phaser phaser = new Phaser();
+        int steps = 0;
         for (int i = 0; i < nodeCount; i += batchSize) {
-            futures.add(executor.submit(new UnionFindTask(i)));
+            futures.add(executor.submit(new UnionFindTask(queue, i, phaser)));
+            ++steps;
         }
-        for (int i = steps - 1; i >= 0; i--) {
+        phaser.awaitAdvance(phaser.getPhase());
+
+        for (int i = 1; i < steps; ++i) {
             futures.add(executor.submit(() -> {
-                final DisjointSetStruct a;
-                final DisjointSetStruct b;
                 try {
-                    a = queue.take();
-                    b = queue.take();
+                    final DisjointSetStruct a = queue.take();
+                    final DisjointSetStruct b = queue.take();
                     queue.add(a.merge(b));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
                 }
             }));
         }
 
-        await();
-
-        return this;
+        await(futures);
+        return getStruct(queue);
     }
 
-    private void await() {
+    private void await(final List<Future<?>> futures) {
         ParallelUtil.awaitTermination(futures);
     }
 
-    public ParallelUnionFindQueue compute(double threshold) {
-        throw new IllegalArgumentException("Not yet implemented");
+    @Override
+    public DisjointSetStruct compute(double threshold) {
+        throw new IllegalArgumentException("Parallel UnionFind with threshold not implemented, please use either `concurrency:1` or one of the exp* variants of UnionFind");
     }
 
-    public DisjointSetStruct getStruct() {
+    private DisjointSetStruct getStruct(final BlockingQueue<DisjointSetStruct> queue) {
         try {
             return queue.take();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
-        return null;
-    }
-
-    @Override
-    public ParallelUnionFindQueue me() {
-        return this;
-    }
-
-    @Override
-    public ParallelUnionFindQueue release() {
-        graph = null;
-        return null;
     }
 
     private class UnionFindTask implements Runnable {
 
-        protected final int offset;
-        protected final int end;
+        private final BlockingQueue<DisjointSetStruct> queue;
+        private final Phaser phaser;
+        private final int offset;
+        private final int end;
 
-        public UnionFindTask(int offset) {
+        UnionFindTask(
+                BlockingQueue<DisjointSetStruct> queue,
+                int offset,
+                Phaser phaser) {
+            this.queue = queue;
             this.offset = offset;
             this.end = Math.min(offset + batchSize, nodeCount);
+            this.phaser = phaser;
+            phaser.register();
         }
 
         @Override
         public void run() {
+            phaser.arriveAndDeregister();
             final DisjointSetStruct struct = new DisjointSetStruct(nodeCount).reset();
             for (int node = offset; node < end; node++) {
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                    if (!struct.connected(sourceNodeId, targetNodeId)) {
-                        struct.union(sourceNodeId, targetNodeId);
-                    }
+                    struct.union(sourceNodeId, targetNodeId);
                     return true;
                 });
             }
             getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
-            queue.add(struct);
+            try {
+                queue.put(struct);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
         }
     }
 }
