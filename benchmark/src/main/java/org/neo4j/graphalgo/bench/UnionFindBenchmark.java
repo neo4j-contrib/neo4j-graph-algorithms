@@ -2,20 +2,20 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
-import org.neo4j.graphalgo.core.sources.LazyIdMapper;
-import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.GraphUnionFind;
-import org.neo4j.graphalgo.impl.MSColoring;
-import org.neo4j.graphalgo.impl.UnionFind;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,145 +31,26 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class UnionFindBenchmark {
 
-    private static GraphDatabaseAPI db;
-    private static SingleRunAllRelationIterator singleRunAllRelationIterator;
-    private static LazyIdMapper idMapping;
-    private static BufferedAllRelationshipIterator iterator;
-    private static Graph heavyGraph;
-    private static Graph lightGraph;
+    @Param({"LIGHT_QUEUE", "LIGHT_FORK_JOIN", "LIGHT_FJ_MERGE", "LIGHT_SEQ", "HEAVY_QUEUE", "HEAVY_FORK_JOIN", "HEAVY_FJ_MERGE", "HEAVY_SEQ", "HUGE_QUEUE", "HUGE_FORK_JOIN", "HUGE_FJ_MERGE", "HUGE_SEQ", "HUGE_HUGE_QUEUE", "HUGE_HUGE_FORK_JOIN", "HUGE_HUGE_FJ_MERGE", "HUGE_HUGE_SEQ"})
+    UFBenchmarkCombination uf;
+
+    private Graph theGraph;
 
     @Setup
-    public static void setup() {
-        String createGraph = "CREATE (nA)\n" +
-                "CREATE (nB)\n" +
-                "CREATE (nC)\n" +
-                "CREATE (nD)\n" +
-                "CREATE (nE)\n" +
-                "CREATE (nF)\n" +
-                "CREATE (nG)\n" +
-                "CREATE (nH)\n" +
-                "CREATE (nI)\n" +
-                "CREATE (nJ)\n" +
-                "CREATE (nK)\n" +
-                "CREATE\n" +
-                "  (nA)-[:TYPE]->(nB),\n" +
-                "  (nB)-[:TYPE]->(nC),\n" +
-                "  (nC)-[:TYPE]->(nD),\n" +
-                "  (nD)-[:TYPE]->(nA),\n" +
-
-                "  (nE)-[:TYPE]->(nF),\n" +
-                "  (nF)-[:TYPE]->(nG),\n" +
-                "  (nG)-[:TYPE]->(nH),\n" +
-                "  (nH)-[:TYPE]->(nI),\n" +
-                "  (nI)-[:TYPE]->(nE),\n" +
-
-                "  (nJ)-[:TYPE]->(nK),\n" +
-                "  (nK)-[:TYPE]->(nJ);";
-
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
-        try (Transaction tx = db.beginTx()) {
-            db.execute(createGraph).close();
-            tx.success();
-        }
-
-        idMapping = LazyIdMapper.importer(db)
-                .withAnyLabel()
-                .build();
-
-        iterator = BufferedAllRelationshipIterator.importer(db)
-                .withIdMapping(idMapping)
-                .withAnyLabel()
-                .withAnyRelationshipType()
-                .build();
-
-        singleRunAllRelationIterator = new SingleRunAllRelationIterator(db, idMapping);
-
-        heavyGraph = loadHeavy();
-
-        lightGraph = loadLight();
-
+    public void setup(HeroGraph heroGraph) {
+        theGraph = new GraphLoader(heroGraph.db).load(uf.graph.impl);
+        heroGraph.db.shutdown();
     }
 
-
     @TearDown
-    public static void tearDown() throws Exception {
-        if (heavyGraph != null) {
-            heavyGraph.release();
-        }
-        if (lightGraph != null) {
-            lightGraph.release();
-        }
-        if (db != null) db.shutdown();
+    public void tearDown() {
+        theGraph.release();
         Pools.DEFAULT.shutdownNow();
     }
 
-    @Benchmark
-    public Object _01_unbufferedUnionFind() {
-        return new UnionFind(idMapping, singleRunAllRelationIterator)
-                .compute()
-                .getSetSize();
-    }
 
     @Benchmark
-    public Object _02_bufferedUnionFind() {
-        return new UnionFind(idMapping, iterator)
-                .compute()
-                .getSetSize();
-    }
-
-    @Benchmark
-    public Object _03_heavyGraphUnionFind() {
-        return new GraphUnionFind(heavyGraph)
-                .compute()
-                .getSetSize();
-    }
-
-    @Benchmark
-    public Object _04_lightGraphUnionFind() {
-        return new GraphUnionFind(lightGraph)
-                .compute()
-                .getSetSize();
-    }
-
-    @Benchmark
-    public Object _05_buildBufferedDataSource() {
-
-        final LazyIdMapper lazyIdMapper = LazyIdMapper.importer(db)
-                .withAnyLabel()
-                .build();
-
-        return BufferedAllRelationshipIterator.importer(db)
-                .withIdMapping(lazyIdMapper)
-                .withAnyLabel()
-                .withAnyRelationshipType()
-                .build();
-    }
-
-    @Benchmark
-    public Object _06_buildHeavyGraph() {
-        return loadHeavy();
-    }
-
-    @Benchmark
-    public Object _07_buildLightGraph() {
-        return loadLight();
-    }
-
-    @Benchmark
-    public Object _08_multiSourceBFSColoringUnionFind() {
-        return new MSColoring(heavyGraph, Pools.DEFAULT, 1)
-                .compute()
-                .getColors();
-    }
-
-    private static Graph loadLight() {
-        return new GraphLoader(db).withDirection(Direction.OUTGOING).load(LightGraphFactory.class);
-    }
-
-    private static Graph loadHeavy() {
-        return new GraphLoader(db).withDirection(Direction.OUTGOING).load(HeavyGraphFactory.class);
+    public Object unionFind() {
+        return uf.run(theGraph);
     }
 }

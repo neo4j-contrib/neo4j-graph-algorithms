@@ -144,50 +144,43 @@ public class ParallelUnionFindBenchmark {
     @Benchmark
     public Object parallelUnionFindQueue_200000() {
         return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 200_000, 8)
-                .compute()
-                .getStruct();
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindQueue_400000() {
         return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 400_000, 8)
-                .compute()
-                .getStruct();
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindQueue_800000() {
         return new ParallelUnionFindQueue(graph, Pools.DEFAULT, 800_000, 8)
-                .compute()
-                .getStruct();
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoinMerge_400000() {
         return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 400_000, 8)
-                .compute()
-                .getStruct();
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoinMerge_800000() {
         return new ParallelUnionFindFJMerge(graph, Pools.DEFAULT, 800_000, 8)
-                .compute()
-                .getStruct();
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoin_400000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 400_000, 8)
-                .compute()
-                .getStruct();
+        return new ParallelUnionFindForkJoin(graph, 400_000, 8)
+                .compute();
     }
 
     @Benchmark
     public Object parallelUnionFindForkJoin_800000() {
-        return new ParallelUnionFindForkJoin(graph, Pools.DEFAULT, 800_000, 8)
-                .compute()
-                .getStruct();
+        return new ParallelUnionFindForkJoin(graph, 800_000, 8)
+                .compute();
     }
 
     // TODO: not a benchmark, it's eirther extremely slow or does not terminate rn

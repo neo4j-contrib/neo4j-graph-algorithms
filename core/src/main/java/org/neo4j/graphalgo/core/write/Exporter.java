@@ -245,11 +245,11 @@ public final class Exporter extends StatementApi {
     }
 
     private void writeParallel(WriteConsumer writer) {
-        final long batchSize = Math.min(
-                MAX_BATCH_SIZE,
-                ParallelUtil.adjustBatchSize(nodeCount,
-                        concurrency,
-                        MIN_BATCH_SIZE));
+        final long batchSize = ParallelUtil.adjustBatchSize(
+                nodeCount,
+                concurrency,
+                MIN_BATCH_SIZE,
+                MAX_BATCH_SIZE);
         final AtomicLong progress = new AtomicLong(0L);
         final Collection<Runnable> runnables = LazyBatchCollection.of(
                 nodeCount,

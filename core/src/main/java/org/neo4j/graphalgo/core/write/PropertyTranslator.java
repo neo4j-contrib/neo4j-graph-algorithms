@@ -74,4 +74,20 @@ public interface PropertyTranslator<T> {
             return null;
         }
     }
+
+    interface OfLong<T> extends PropertyTranslator<T> {
+        long toLong(final T data, final long nodeId);
+
+        @Override
+        default DefinedProperty toProperty(
+                int propertyId,
+                T data,
+                long nodeId) {
+            final long value = toLong(data, nodeId);
+            return DefinedProperty.longProperty(
+                    propertyId,
+                    value
+            );
+        }
+    }
 }

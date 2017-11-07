@@ -18,6 +18,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.Blackhole;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +72,10 @@ public class GraphLoadLdbc {
     }
 
     @Benchmark
-    public Graph load() throws Exception {
-        return loader.load(this.graph.impl);
+    public void load(Blackhole bh) throws Exception {
+        Graph graph = loader.load(this.graph.impl);
+        bh.consume(graph);
+        graph.release();
+        bh.consume(loader);
     }
 }
