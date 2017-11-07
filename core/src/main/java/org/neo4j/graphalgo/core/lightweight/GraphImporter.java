@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.lightweight;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.StatementTask;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
@@ -64,7 +65,8 @@ final class GraphImporter extends StatementTask<LightGraph, EntityNotFoundExcept
                         relationId,
                         Direction.INCOMING,
                         inAdjacency.newBulkAdder(),
-                        weights);
+                        weights,
+                        loadOutgoing ? RawValues.BOTH : RawValues.OUTGOING);
             }
             if (loadOutgoing) {
                 outOffsets = new long[nodeCount + 1];
@@ -77,14 +79,11 @@ final class GraphImporter extends StatementTask<LightGraph, EntityNotFoundExcept
                         relationId,
                         Direction.OUTGOING,
                         outAdjacency.newBulkAdder(),
-                        weights);
-
-
+                        weights,
+                        loadIncoming ? RawValues.BOTH : RawValues.OUTGOING);
             }
 
-            final RelationshipImport importer = RelationshipImport.combine(
-                    inImporter,
-                    outImporter);
+            final RelationshipImport importer = RelationshipImport.combine(outImporter, inImporter);
             final long[] ids = mapping.mappedIds();
             final int length = mapping.size();
             for (int i = 0; i < length; i++) {
