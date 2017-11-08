@@ -9,13 +9,12 @@ import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.AtomicFloatingPointArray;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -115,7 +114,7 @@ public class BetweennessCentralityTest {
                 new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
                         .compute();
 
-        final AtomicDoubleArray centrality = bc.getCentrality();
+        final AtomicFloatingPointArray centrality = bc.getCentrality();
 
 
         for (int i = 0; i < centrality.length(); i++) {

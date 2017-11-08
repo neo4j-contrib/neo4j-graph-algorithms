@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.AtomicFloatingPointArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
@@ -30,7 +31,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
     // atomic double array which supports only atomic-add
-    private AtomicDoubleArray centrality;
+    private AtomicFloatingPointArray centrality;
     // the node count
     private final int nodeCount;
     // global executor service
@@ -81,7 +82,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      *
      * @return array with centrality
      */
-    public AtomicDoubleArray getCentrality() {
+    public AtomicFloatingPointArray getCentrality() {
         return centrality;
     }
 

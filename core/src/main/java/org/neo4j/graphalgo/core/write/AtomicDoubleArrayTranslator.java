@@ -1,13 +1,13 @@
 package org.neo4j.graphalgo.core.write;
 
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.AtomicFloatingPointArray;
 
-public final class AtomicDoubleArrayTranslator implements PropertyTranslator.OfDouble<AtomicDoubleArray> {
+public final class AtomicDoubleArrayTranslator implements PropertyTranslator.OfDouble<AtomicFloatingPointArray> {
 
-    public static final PropertyTranslator<AtomicDoubleArray> INSTANCE = new AtomicDoubleArrayTranslator();
+    public static final PropertyTranslator<AtomicFloatingPointArray> INSTANCE = new AtomicDoubleArrayTranslator();
 
     @Override
-    public double toDouble(final AtomicDoubleArray data, final long nodeId) {
+    public double toDouble(final AtomicFloatingPointArray data, final long nodeId) {
         return data.get((int) nodeId);
     }
 }

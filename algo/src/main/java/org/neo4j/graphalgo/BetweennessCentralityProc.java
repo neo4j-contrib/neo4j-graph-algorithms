@@ -145,7 +145,7 @@ public class BetweennessCentralityProc {
             }
         });
 
-        final AtomicDoubleArray centrality = bc.getCentrality();
+        final AtomicFloatingPointArray centrality = bc.getCentrality();
         bc.release();
         graph.release();
 
@@ -276,7 +276,7 @@ public class BetweennessCentralityProc {
         graph.release();
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
-                final AtomicDoubleArray centrality = bc.getCentrality();
+                final AtomicFloatingPointArray centrality = bc.getCentrality();
                 final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
                 Exporter.of(api, graph)
                         .withLog(log)
@@ -309,7 +309,7 @@ public class BetweennessCentralityProc {
                 .withCentralitySum(sum);
     }
 
-    private void computeStats(BetweennessCentralityProcResult.Builder builder, AtomicDoubleArray centrality) {
+    private void computeStats(BetweennessCentralityProcResult.Builder builder, AtomicFloatingPointArray centrality) {
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
         double sum = 0.0;

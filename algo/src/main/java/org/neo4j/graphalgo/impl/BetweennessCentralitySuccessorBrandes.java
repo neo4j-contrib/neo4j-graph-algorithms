@@ -2,6 +2,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.AtomicFloatingPointArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
@@ -31,7 +32,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
     // the graph
     private Graph graph;
     // atomic double array which supports only atomic-add
-    private AtomicDoubleArray centrality;
+    private AtomicFloatingPointArray centrality;
     // the node count
     private int nodeCount;
     // global executor service
@@ -156,7 +157,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      *
      * @return array with centrality
      */
-    public AtomicDoubleArray getCentrality() {
+    public AtomicFloatingPointArray getCentrality() {
         return centrality;
     }
 
