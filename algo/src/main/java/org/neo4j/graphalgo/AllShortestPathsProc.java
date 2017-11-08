@@ -54,7 +54,7 @@ public class AllShortestPathsProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getPropertyDefaultValue(1.0))
+                        configuration.getWeightPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
                 .withConcurrency(configuration.getConcurrency())
                 .withAllocationTracker(tracker)

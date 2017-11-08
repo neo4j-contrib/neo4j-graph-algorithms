@@ -119,8 +119,8 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
-                        config.getProperty(),
-                        config.getPropertyDefaultValue(1.0))
+                        config.getWeightProperty(),
+                        config.getWeightPropertyDefaultValue(1.0))
                 .withDirection(Direction.OUTGOING)
                 .withAllocationTracker(tracker)
                 .load(config.getGraphImpl());
