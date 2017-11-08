@@ -1,18 +1,19 @@
 package org.neo4j.graphalgo.core.utils;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * @author mknblch
  */
 public class AtomicDoubleArray {
 
-    private final AtomicIntegerArray data;
+    private final AtomicLongArray data;
 
     private final double scaleFactor;
 
     public AtomicDoubleArray(int capacity, double scaleFactor) {
-        data = new AtomicIntegerArray(capacity);
+        data = new AtomicLongArray(capacity);
         this.scaleFactor = scaleFactor;
     }
 
@@ -25,7 +26,7 @@ public class AtomicDoubleArray {
     }
 
     public double fetchCAS(int index, double expected, double value) {
-        final int ret = data.get(index);
+        final long ret = data.get(index);
         compareAndSwap(index, expected, value);
         return ret;
     }
@@ -44,7 +45,7 @@ public class AtomicDoubleArray {
 
     public void addExact(int index, double value) {
         final int newValue = (int) (value * scaleFactor);
-        int result, expected;
+        long result, expected;
         do {
             expected = data.get(index);
             result = Math.addExact(expected, newValue);
@@ -53,7 +54,7 @@ public class AtomicDoubleArray {
 
     public void addCapped(int index, double value) {
         final int newValue = (int) (value * scaleFactor);
-        int result, expected;
+        long result, expected;
         do {
             expected = data.get(index);
             result = expected + newValue;
