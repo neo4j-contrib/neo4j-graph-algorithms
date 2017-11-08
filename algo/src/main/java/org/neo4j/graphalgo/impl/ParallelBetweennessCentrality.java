@@ -44,11 +44,10 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
      * constructs a parallel centrality solver
      *
      * @param graph the graph iface
-     * @param scaleFactor factor used to scale up doubles to integers in AtomicDoubleArray
      * @param executorService the executor service
      * @param concurrency desired number of threads to spawn
      */
-    public ParallelBetweennessCentrality(Graph graph, double scaleFactor, ExecutorService executorService, int concurrency) {
+    public ParallelBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
@@ -168,7 +167,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
                         return true;
                     });
                     if (node != startNodeId) {
-                        centrality.addCapped(node, delta[node] / divisor);
+                        centrality.add(node, delta[node] / divisor);
                     }
                 }
             }

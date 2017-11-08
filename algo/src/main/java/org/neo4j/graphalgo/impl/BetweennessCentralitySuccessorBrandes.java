@@ -51,10 +51,9 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * constructs a parallel centrality solver
      *
      * @param graph           the graph iface
-     * @param scaleFactor     factor used to scale up doubles to integers in AtomicDoubleArray
      * @param executorService the executor service
      */
-    public BetweennessCentralitySuccessorBrandes(Graph graph, double scaleFactor, ExecutorService executorService) {
+    public BetweennessCentralitySuccessorBrandes(Graph graph, ExecutorService executorService) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
@@ -144,7 +143,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
                         w,
                         v -> dsw[0] += (sw / (double) sigma.get(v)) * (1.0 + delta[v]));
                 delta[w] = dsw[0];
-                centrality.addCapped(w, dsw[0]);
+                centrality.add(w, dsw[0]);
             });
             ParallelUtil.awaitTermination(futures);
         }
