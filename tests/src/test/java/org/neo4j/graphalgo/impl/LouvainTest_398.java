@@ -1,7 +1,10 @@
 package org.neo4j.graphalgo.impl;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -54,10 +57,7 @@ public class LouvainTest_398 {
                         " (b)-[:TYPE]->(e)";
 
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
+        db = TestDatabaseCreator.createTestDatabase();
 
         try (Transaction tx = db.beginTx()) {
             db.execute(cypher);
@@ -71,6 +71,11 @@ public class LouvainTest_398 {
                 .withRelationshipWeightsFromProperty("w", 1.0)
                 .load(HeavyGraphFactory.class);
 
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db!= null) db.shutdown();
     }
 
     private String getName(long nodeId) {

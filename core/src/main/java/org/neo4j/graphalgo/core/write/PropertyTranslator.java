@@ -68,15 +68,12 @@ public interface PropertyTranslator<T> {
         long toLong(final T data, final long nodeId);
 
         @Override
-        default DefinedProperty toProperty(
+        default Value toProperty(
                 int propertyId,
                 T data,
                 long nodeId) {
             final long value = toLong(data, nodeId);
-            return DefinedProperty.longProperty(
-                    propertyId,
-                    value
-            );
+            return Values.longValue(value);
         }
     }
 }
