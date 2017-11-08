@@ -188,16 +188,15 @@ public class ProcedureConfiguration {
         return get(ProcedureConstants.STATS_FLAG, defaultValue);
     }
 
-    /**
-     * get property name
-     *
-     * @return
-     */
-    public String getProperty() {
+    public boolean hasWeightProperty() {
+        return containsKeys(ProcedureConstants.PROPERTY_PARAM);
+    }
+
+    public String getWeightProperty() {
         return getString(ProcedureConstants.PROPERTY_PARAM, null);
     }
 
-    public double getPropertyDefaultValue(double defaultValue) {
+    public double getWeightPropertyDefaultValue(double defaultValue) {
         return get(ProcedureConstants.DEFAULT_PROPERTY_VALUE_PARAM, defaultValue);
     }
 

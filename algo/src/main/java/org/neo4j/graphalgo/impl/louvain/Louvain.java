@@ -1,55 +1,55 @@
 package org.neo4j.graphalgo.impl.louvain;
 
 
-import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
  * @author mknblch
  */
-public class Louvain extends Algorithm<Louvain> {
-
-    private static final Direction D = Direction.BOTH;
+public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     private RelationshipIterator relationshipIterator;
-    private RelationshipWeights relationshipWeights;
+    private final Degrees degrees;
     private ExecutorService executorService;
     private final int concurrency;
     private final int nodeCount;
 
     private final int[] communityIds; // node to community mapping
-    private IntObjectMap<IntSet> communities; // bag of communityId -> member-nodes
+    private final double[] sTot;
     private final IdMapping idMapping;
     private int iterations;
     private double m2, mq2;
+    private final int maxIterations;
 
     public Louvain(IdMapping idMapping,
                    RelationshipIterator relationshipIterator,
-                   RelationshipWeights relationshipWeights,
+                   Degrees degrees,
                    ExecutorService executorService,
-                   int concurrency) {
+                   int concurrency, int maxIterations) {
 
         this.idMapping = idMapping;
         nodeCount = Math.toIntExact(idMapping.nodeCount());
         this.relationshipIterator = relationshipIterator;
-        this.relationshipWeights = relationshipWeights;
+        this.degrees = degrees;
         this.executorService = executorService;
         this.concurrency = concurrency;
+        this.maxIterations = maxIterations;
         communityIds = new int[nodeCount];
-        communities = new IntObjectScatterMap<>();
+        sTot = new double[nodeCount];
+
     }
 
-    public Louvain compute(int maxIterations) {
+    public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
             if (!arrange()) {
@@ -63,31 +63,22 @@ public class Louvain extends Algorithm<Louvain> {
     @Override
     public Louvain release() {
         relationshipIterator = null;
-        relationshipWeights = null;
         executorService = null;
-        communities = null;
         return this;
     }
 
     private void reset() {
-        communities.clear();
 
-        // TODO find better way for init
-        for (int i = 0; i < nodeCount; i++) {
-            final IntScatterSet set = new IntScatterSet();
-            set.add(i);
-            communities.put(i, set);
-            communityIds[i] = i;
-        }
-        final DoubleAdder adder = new DoubleAdder();
+        Arrays.setAll(communityIds, i -> i);
+
+        final LongAdder adder = new LongAdder();
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
-                return true;
-            });
+            final int d = degrees.degree(node, Direction.BOTH);
+            sTot[node] = d;
+            adder.add(d);
         });
-        m2 = adder.doubleValue() * 2.0; // 2m
-        mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
+        m2 = adder.intValue() * 4.0; // 2m //
+        mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
     /**
@@ -96,55 +87,25 @@ public class Louvain extends Algorithm<Louvain> {
      * @param targetCommunity communityId
      */
     private void assign(int node, int targetCommunity) {
-        int sourceCommunity = communityIds[node];
-        // remove node from its old set
-        communities.get(sourceCommunity).removeAll(node);
-        // place it into its new set
-        communities.get(targetCommunity).add(node);
+        final int d = degrees.degree(node, Direction.BOTH);
+        sTot[communityIds[node]] -= d;
+        sTot[targetCommunity] += d;
         // update communityIds
         communityIds[node] = targetCommunity;
     }
 
-    /**
-     * sum of weights of nodes in the community pointing anywhere
-     * @return sTot
-     */
-    private double sTot(int community) {
-        double[] stot = {0.0}; // {sTot}
-        communities.get(community)
-                .forEach((IntProcedure) node -> {
-                    relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                        final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-                        stot[0] += weight;
-                        return true;
-                    });
-                });
-        return stot[0];
-    }
-
-    /**
-     * return sum of weights of a given node pointing into given community | v->C
+     /**
      * @return kiIn
      */
-    private double kIIn(int node, int targetCommunity) {
-        double[] sum = {0.0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+    private int kIIn(int node, int targetCommunity) {
+        int[] sum = {0}; // {ki, ki_in}
+        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
             if (targetCommunity == communityIds[targetNodeId]) {
-                sum[0] += relationshipWeights.weightOf(sourceNodeId, targetNodeId);
+                sum[0]++;
             }
             return true;
         });
 
-        return sum[0];
-    }
-
-    private double kI(int node) {
-        double[] sum = {0.0}; // {ki}
-        relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-            final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
-            sum[0] += weight;
-            return true;
-        });
         return sum[0];
     }
 
@@ -159,8 +120,8 @@ public class Louvain extends Algorithm<Louvain> {
         for (int node = 0; node < nodeCount; node++) {
             bestGain[0] = 0.0;
             final int sourceCommunity = bestCommunity[0] = communityIds[node];
-            final double mSource = (sTot(sourceCommunity) * kI(node)) / mq2;
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+            final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
+            relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                 final int targetCommunity = communityIds[targetNodeId];
                 final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                 if (gain > bestGain[0]) {
@@ -187,10 +148,6 @@ public class Louvain extends Algorithm<Louvain> {
         return communityIds;
     }
 
-    public IntObjectMap<IntSet> getCommunities() {
-        return communities;
-    }
-
     public int getIterations() {
         return iterations;
     }
@@ -208,22 +165,4 @@ public class Louvain extends Algorithm<Louvain> {
         return this;
     }
 
-    public static class Result {
-
-        public final long nodeId;
-        public final long community;
-
-        public Result(long nodeId, int community) {
-            this.nodeId = nodeId;
-            this.community = community;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "nodeId=" + nodeId +
-                    ", community=" + community +
-                    '}';
-        }
-    }
 }
