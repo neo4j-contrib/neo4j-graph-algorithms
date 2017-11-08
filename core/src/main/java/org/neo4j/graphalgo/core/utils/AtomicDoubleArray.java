@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  * Atomic double Array implementation
  * @author mknblch
  */
-public class AtomicDoubleArray implements AtomicFloatingPointArray {
+public class AtomicDoubleArray {
 
     private final AtomicLongArray data;
 
@@ -23,7 +23,6 @@ public class AtomicDoubleArray implements AtomicFloatingPointArray {
      * @param index the index
      * @return value at index
      */
-    @Override
     public double get(int index) {
         return Double.longBitsToDouble(data.get(index));
     }
@@ -33,7 +32,6 @@ public class AtomicDoubleArray implements AtomicFloatingPointArray {
      * @param index the index
      * @param value the value
      */
-    @Override
     public void set(int index, double value) {
         data.set(index, Double.doubleToLongBits(value));
     }
@@ -43,7 +41,6 @@ public class AtomicDoubleArray implements AtomicFloatingPointArray {
      * @param index index
      * @param value value to add
      */
-    @Override
     public void add(int index, double value) {
         long newBits, currentBits;
         do {
@@ -56,7 +53,6 @@ public class AtomicDoubleArray implements AtomicFloatingPointArray {
      * return capacity
      * @return the capacity
      */
-    @Override
     public int length() {
         return data.length();
     }
@@ -64,18 +60,10 @@ public class AtomicDoubleArray implements AtomicFloatingPointArray {
     /**
      * set all elements to 0
      */
-    @Override
     public void clear() { // TODO parallel ?!
         for (int i = data.length() - 1; i >= 0; i--) {
             data.set(i, 0);
         }
     }
 
-    /**
-     * @see AtomicFloatingPointArray#getPrecision()
-     */
-    @Override
-    public int getPrecision() {
-        return AtomicFloatingPointArray.HIGH_PRECISION;
-    }
 }

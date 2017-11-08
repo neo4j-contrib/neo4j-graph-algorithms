@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
  */
 public class AtomicDoubleArrayTest {
 
-    final AtomicFloatingPointArray array =
+    final AtomicDoubleArray array =
             new AtomicDoubleArray(1);
 
     @Test
