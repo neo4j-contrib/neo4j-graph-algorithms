@@ -53,7 +53,7 @@ public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweenness
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.centrality = new AtomicDoubleArray(nodeCount, scaleFactor);
+        this.centrality = new AtomicDoubleArray(nodeCount);
     }
 
     public ParallelBetweennessCentrality withDirection(Direction direction) {

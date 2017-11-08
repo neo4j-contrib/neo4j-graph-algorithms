@@ -58,7 +58,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
-        this.centrality = new AtomicDoubleArray(nodeCount, scaleFactor);
+        this.centrality = new AtomicDoubleArray(nodeCount);
         sigma = new AtomicIntegerArray(nodeCount);
         delta = new double[nodeCount];
         d = new AtomicIntegerArray(nodeCount);
@@ -144,7 +144,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
                         w,
                         v -> dsw[0] += (sw / (double) sigma.get(v)) * (1.0 + delta[v]));
                 delta[w] = dsw[0];
-                centrality.add(w, dsw[0]);
+                centrality.addCapped(w, dsw[0]);
             });
             ParallelUtil.awaitTermination(futures);
         }

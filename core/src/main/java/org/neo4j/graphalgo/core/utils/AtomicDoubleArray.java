@@ -8,60 +8,36 @@ import java.util.concurrent.atomic.AtomicLongArray;
  */
 public class AtomicDoubleArray {
 
+    private static final long MAX = Double.doubleToLongBits(Double.MAX_VALUE);
+
     private final AtomicLongArray data;
 
-    private final double scaleFactor;
-
-    public AtomicDoubleArray(int capacity, double scaleFactor) {
+    public AtomicDoubleArray(int capacity) {
         data = new AtomicLongArray(capacity);
-        this.scaleFactor = scaleFactor;
-    }
-
-    public boolean compareAndSwap(int index, double expected, double value) {
-        return data.compareAndSet(index, (int) (expected * scaleFactor), (int) (value * scaleFactor));
-    }
-
-    public double fetchAndAdd(int index, double value) {
-        return data.getAndAdd(index, (int) (value * scaleFactor));
-    }
-
-    public double fetchCAS(int index, double expected, double value) {
-        final long ret = data.get(index);
-        compareAndSwap(index, expected, value);
-        return ret;
     }
 
     public double get(int index) {
-        return (double) data.get(index) / scaleFactor;
+        return Double.longBitsToDouble(data.get(index));
     }
 
     public void set(int index, double value) {
-        data.set(index, (int) (value * scaleFactor));
+        data.set(index, Double.doubleToLongBits(value));
     }
 
     public void add(int index, double value) {
-        data.addAndGet(index, (int) (scaleFactor * value));
-    }
-
-    public void addExact(int index, double value) {
-        final int newValue = (int) (value * scaleFactor);
-        long result, expected;
-        do {
-            expected = data.get(index);
-            result = Math.addExact(expected, newValue);
-        } while (!data.compareAndSet(index, expected, result));
+        data.set(index, Double.doubleToLongBits(value));
     }
 
     public void addCapped(int index, double value) {
-        final int newValue = (int) (value * scaleFactor);
-        long result, expected;
+
+        double result, expected;
         do {
-            expected = data.get(index);
-            result = expected + newValue;
+            expected = Double.longBitsToDouble(data.get(index));
+            result = expected + value;
             if (result < expected) {
-                result = Integer.MAX_VALUE;
+                result = MAX;
             }
-        } while (!data.compareAndSet(index, expected, result));
+        } while (!data.compareAndSet(index, Double.doubleToLongBits(expected), Double.doubleToLongBits(result)));
     }
 
     public int length() {
