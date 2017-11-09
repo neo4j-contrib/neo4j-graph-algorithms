@@ -69,8 +69,8 @@ public class TerminationTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        api.shutdown();
+    public static void tearDown() throws Exception {
+        if (api != null) api.shutdown();
     }
 
     // terminate a transaction by its id

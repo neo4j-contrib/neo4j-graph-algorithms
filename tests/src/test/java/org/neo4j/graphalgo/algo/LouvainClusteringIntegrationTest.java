@@ -90,7 +90,6 @@ public class LouvainClusteringIntegrationTest {
                         " (f)-[:TYPE]->(g),\n" +
                         " (g)-[:TYPE]->(h),\n" +
 
-                        // makes b & e more likely to build their own set
                         " (b)-[:TYPE]->(e)";
 
         db = TestDatabaseCreator.createTestDatabase();
@@ -123,8 +122,6 @@ public class LouvainClusteringIntegrationTest {
             name[0] = (String) row.getNode("n").getProperty("name");
             return true;
         });
-//        try (Transaction tx = db.beginTx()) {
-//        }
         return name[0];
     }
 

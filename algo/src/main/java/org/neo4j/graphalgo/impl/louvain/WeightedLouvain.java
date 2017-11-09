@@ -110,7 +110,7 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
                 return true;
             });
         });
-        m2 = adder.doubleValue() * 2.0; // 2m
+        m2 = adder.doubleValue() * 4.0; // 2m
         mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
     }
 
@@ -209,10 +209,6 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
 
     public int[] getCommunityIds() {
         return communityIds;
-    }
-
-    public IntObjectMap<IntSet> getCommunities() {
-        return communities;
     }
 
     public int getIterations() {

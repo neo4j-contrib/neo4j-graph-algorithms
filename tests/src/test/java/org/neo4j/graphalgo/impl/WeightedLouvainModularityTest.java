@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -28,6 +29,9 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
@@ -74,7 +78,7 @@ public class WeightedLouvainModularityTest {
                     " (f)-[:TYPE]->(g),\n" +
                     " (g)-[:TYPE]->(h),\n" +
 
-                    " (e)-[:TYPE]->(b)";
+                    " (e)-[:TYPE {w:10}]->(b)";
 
 
     private static final String bidirectional =
@@ -116,8 +120,8 @@ public class WeightedLouvainModularityTest {
                     " (g)-[:TYPE]->(h),\n" +
                     " (h)-[:TYPE]->(g),\n" +
 
-                    " (b)-[:TYPE]->(e),\n" +
-                    " (e)-[:TYPE]->(b)";
+                    " (b)-[:TYPE {w:5}]->(e),\n" +
+                    " (e)-[:TYPE {w:5}]->(b)";
 
 
     @Rule
@@ -127,46 +131,80 @@ public class WeightedLouvainModularityTest {
     public ErrorCollector collector = new ErrorCollector();
 
     private Class<? extends GraphFactory> graphImpl;
-    private final String cypher;
     private Graph graph;
     private RelationshipWeights weights;
 
     public WeightedLouvainModularityTest(
             Class<? extends GraphFactory> graphImpl,
-            String name, String cypher) {
+            String name) {
         this.graphImpl = graphImpl;
-        this.cypher = cypher;
     }
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
 
         return Arrays.<Object[]>asList(
-                new Object[]{HeavyGraphFactory.class, "heavy unidirectional", unidirectional},
-                new Object[]{HeavyGraphFactory.class, "heavy bidirectional", bidirectional}
+                new Object[]{HeavyGraphFactory.class, "heavy"},
+                new Object[]{LightGraphFactory.class, "light"},
+                new Object[]{GraphViewFactory.class, "view"}
+
+                // new Object[]{HugeGraphFactory.class, "huge"} // TODO
         );
     }
     
-    private void setup(String cypher, Direction direction) {
+    private void setup(String cypher) {
         DB.execute(cypher);
         graph = new GraphLoader(DB)
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
                 .withRelationshipWeightsFromProperty("w", 1.0)
-                .withDirection(direction)
+                .withDirection(Direction.BOTH)
                 .load(graphImpl);
         weights = (RelationshipWeights) graph;
     }
 
+
+    private String getName(long nodeId) {
+        String[] name = {""};
+        DB.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
+            name[0] = (String) row.getNode("n").getProperty("name");
+            return true;
+        });
+        return name[0];
+    }
+
     @Test
-    public void testWeighted() throws Exception {
-        setup(cypher, Direction.BOTH);
+    public void testUnidirectional() throws Exception {
+        setup(unidirectional);
         final LouvainAlgorithm louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
                 .compute();
+
+        louvain.resultStream()
+                .forEach(r -> {
+                    System.out.println(getName(r.nodeId) + ":" + r.community);
+                });
+
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
-        assertEquals(3, louvain.getCommunityCount());
+        assertEquals(4, louvain.getCommunityCount());
+    }
+
+    @Ignore
+    @Test
+    public void testBidirectional() throws Exception {
+        setup(bidirectional);
+        final LouvainAlgorithm louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
+                .compute();
+
+        louvain.resultStream()
+                .forEach(r -> {
+                    System.out.println(getName(r.nodeId) + ":" + r.community);
+                });
+
+        System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
+        assertEquals(4, louvain.getCommunityCount());
     }
 
 }

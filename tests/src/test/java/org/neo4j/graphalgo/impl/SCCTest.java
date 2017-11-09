@@ -96,9 +96,9 @@ public class SCCTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
+    public static void tearDown() throws Exception {
         if (api != null) api.shutdown();
-//        Pools.DEFAULT.shutdownNow();
+        graph = null;
     }
 
     public static int getMappedNodeId(String name) {

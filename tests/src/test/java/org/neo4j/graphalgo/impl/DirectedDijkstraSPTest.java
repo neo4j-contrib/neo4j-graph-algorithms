@@ -86,8 +86,9 @@ public class DirectedDijkstraSPTest {
     }
 
     @AfterClass
-    public static void tearDown() {
-        api.shutdown();
+    public static void tearDown() throws Exception {
+        if (api != null) api.shutdown();
+        graph = null;
     }
 
 
