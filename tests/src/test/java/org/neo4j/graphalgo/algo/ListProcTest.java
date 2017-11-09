@@ -59,5 +59,9 @@ public class ListProcTest {
     private List<String> listProcs(Object name) {
         return DB.execute("CALL algo.list($name)", singletonMap("name", name)).<String>columnAs("name").stream().collect(Collectors.toList());
     }
-
+    @Test
+    public void listEmpty() throws Exception {
+        assertEquals(asList("algo.pageRank","algo.pageRank.stream"),
+                DB.execute("CALL algo.list()").<String>columnAs("name").stream().collect(Collectors.toList()));
+    }
 }

@@ -41,7 +41,7 @@ public class ListProc {
 
     @Procedure("algo.list")
     @Description("CALL algo.list - lists all algorithm procedures, their description and signature")
-    public Stream<ListResult> list(@Name(value = "name", defaultValue = "null") String name) {
+    public Stream<ListResult> list(@Name(value = "name", defaultValue = "") String name) {
         return db.execute(QUERY, singletonMap("name", name)).stream().map(ListResult::new);
     }
 
