@@ -72,13 +72,12 @@ public class BetweennessCentralityProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
-        final BetweennessCentralitySuccessorBrandes algo = new BetweennessCentralitySuccessorBrandes(graph,
-                configuration.getNumber("scaleFactor", 100_000).intValue(),
-                Pools.DEFAULT)
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
-                .withDirection(Direction.OUTGOING)
-                .compute();
+        final BetweennessCentralitySuccessorBrandes algo =
+                new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
+                        .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                        .withDirection(Direction.OUTGOING)
+                        .compute();
 
         graph.release();
 
@@ -107,14 +106,12 @@ public class BetweennessCentralityProc {
 
         int concurrency = configuration.getConcurrency();
         if (concurrency > 1) {
-            int scaleFactor = configuration
-                    .getNumber("scaleFactor", 100_000)
-                    .intValue();
-            final ParallelBetweennessCentrality algo = new ParallelBetweennessCentrality(graph, scaleFactor, Pools.DEFAULT, concurrency)
-                    .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction))
-                    .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
-                    .compute();
+            final ParallelBetweennessCentrality algo =
+                    new ParallelBetweennessCentrality(graph, Pools.DEFAULT, concurrency)
+                            .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                            .withTerminationFlag(TerminationFlag.wrap(transaction))
+                            .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
+                            .compute();
             graph.release();
             return algo.resultStream();
         }
@@ -153,13 +150,11 @@ public class BetweennessCentralityProc {
         builder.withNodeCount(graph.nodeCount());
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        final BetweennessCentralitySuccessorBrandes bc = new BetweennessCentralitySuccessorBrandes(
-                graph,
-                configuration.getNumber("scaleFactor", 100_000).doubleValue(),
-                Pools.DEFAULT)
-                .withDirection(Direction.OUTGOING)
-                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
-                .withTerminationFlag(terminationFlag);
+        final BetweennessCentralitySuccessorBrandes bc =
+                new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
+                        .withDirection(Direction.OUTGOING)
+                        .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality"))
+                        .withTerminationFlag(terminationFlag);
 
         builder.timeEval(() -> {
             bc.compute();
@@ -283,14 +278,11 @@ public class BetweennessCentralityProc {
         builder.withNodeCount(graph.nodeCount());
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        final ParallelBetweennessCentrality bc = new ParallelBetweennessCentrality(
-                graph,
-                configuration.getNumber("scaleFactor", 100_000).doubleValue(),
-                Pools.DEFAULT,
-                configuration.getConcurrency())
-                .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
-                .withTerminationFlag(terminationFlag)
-                .withDirection(configuration.getDirection(Direction.OUTGOING));
+        final ParallelBetweennessCentrality bc =
+                new ParallelBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency())
+                        .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
+                        .withTerminationFlag(terminationFlag)
+                        .withDirection(configuration.getDirection(Direction.OUTGOING));
 
         builder.timeEval(() -> {
             bc.compute();

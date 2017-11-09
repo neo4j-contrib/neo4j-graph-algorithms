@@ -33,7 +33,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -114,7 +113,7 @@ public class BetweennessCentralityTest {
     @Test
     public void testPBC() throws Exception {
 
-        new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
+        new ParallelBetweennessCentrality(graph, Pools.DEFAULT, 4)
                 .compute()
                 .resultStream()
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
@@ -126,7 +125,7 @@ public class BetweennessCentralityTest {
         final TestConsumer mock = mock(TestConsumer.class);
 
         final BetweennessCentralitySuccessorBrandes bc =
-                new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
+                new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
                         .compute();
 
         final AtomicDoubleArray centrality = bc.getCentrality();

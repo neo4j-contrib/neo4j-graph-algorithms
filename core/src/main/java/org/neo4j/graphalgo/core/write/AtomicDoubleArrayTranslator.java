@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core.write;
 
+
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 
 public final class AtomicDoubleArrayTranslator implements PropertyTranslator.OfDouble<AtomicDoubleArray> {

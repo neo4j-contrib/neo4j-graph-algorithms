@@ -106,7 +106,7 @@ public class ProcedureConfiguration {
      *
      * @return self
      */
-    public ProcedureConfiguration overrideProperty(String weightProperty) {
+    public ProcedureConfiguration overrideWeightProperty(String weightProperty) {
         config.put(ProcedureConstants.PROPERTY_PARAM, weightProperty);
         return this;
     }

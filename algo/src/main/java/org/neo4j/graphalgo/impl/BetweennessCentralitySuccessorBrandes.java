@@ -19,9 +19,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphdb.Direction;
 
@@ -69,14 +67,13 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * constructs a parallel centrality solver
      *
      * @param graph           the graph iface
-     * @param scaleFactor     factor used to scale up doubles to integers in AtomicDoubleArray
      * @param executorService the executor service
      */
-    public BetweennessCentralitySuccessorBrandes(Graph graph, double scaleFactor, ExecutorService executorService) {
+    public BetweennessCentralitySuccessorBrandes(Graph graph, ExecutorService executorService) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
-        this.centrality = new AtomicDoubleArray(nodeCount, scaleFactor);
+        this.centrality = new AtomicDoubleArray(nodeCount);
         sigma = new AtomicIntegerArray(nodeCount);
         delta = new double[nodeCount];
         d = new AtomicIntegerArray(nodeCount);
