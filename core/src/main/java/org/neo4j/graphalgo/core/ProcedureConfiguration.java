@@ -29,10 +29,14 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Wrapper around configuration options map
@@ -291,6 +295,23 @@ public class ProcedureConfiguration {
         }
     }
 
+    @SafeVarargs
+    public final Class<? extends GraphFactory> getGraphImpl(
+            Class<? extends GraphFactory> allowed,
+            Class<? extends GraphFactory>... alloweds) {
+        Class<? extends GraphFactory> graphImpl = getGraphImpl();
+        if (allowed.isAssignableFrom(graphImpl) || Arrays
+                .stream(alloweds)
+                .anyMatch(c -> c.isAssignableFrom(graphImpl))) {
+            return graphImpl;
+        }
+
+        String allowedGraphs = Stream.concat(Stream.of(allowed), Arrays.stream(alloweds))
+                .map(ProcedureConfiguration::reverseGraphLookup)
+                .collect(Collectors.joining("' or '", "'", "'."));
+        throw new IllegalArgumentException("The selected graph is not suitable for this algo, please use either " + allowedGraphs);
+    }
+
     /**
      * specialized getter for String which either returns the value
      * if found, the defaultValue if the key is not found or null if
@@ -347,5 +368,24 @@ public class ProcedureConfiguration {
 
     public static ProcedureConfiguration create(Map<String, Object> config) {
         return new ProcedureConfiguration(config);
+    }
+
+    private static String reverseGraphLookup(Class<? extends GraphFactory> cls) {
+        if (HeavyGraphFactory.class.isAssignableFrom(cls)) {
+            return "heavy";
+        }
+        if (HeavyCypherGraphFactory.class.isAssignableFrom(cls)) {
+            return "cypher";
+        }
+        if (LightGraphFactory.class.isAssignableFrom(cls)) {
+            return "light";
+        }
+        if (GraphViewFactory.class.isAssignableFrom(cls)) {
+            return "kernel";
+        }
+        if (HugeGraphFactory.class.isAssignableFrom(cls)) {
+            return "huge";
+        }
+        throw new IllegalArgumentException("Unknown impl: " + cls);
     }
 }
