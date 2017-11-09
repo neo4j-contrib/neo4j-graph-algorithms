@@ -93,7 +93,8 @@ public class LouvainTest_398 {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (db!= null) db.shutdown();
+        if (db != null) db.shutdown();
+        graph = null;
     }
 
     private String getName(long nodeId) {

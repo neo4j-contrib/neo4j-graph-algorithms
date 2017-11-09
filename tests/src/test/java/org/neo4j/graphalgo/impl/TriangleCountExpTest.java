@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
@@ -80,6 +81,12 @@ public class TriangleCountExpTest {
                     .withoutNodeWeights()
                     .load(HeavyGraphFactory.class);
         };
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        if (db != null) db.shutdown();
+        graph = null;
     }
 
     @Test

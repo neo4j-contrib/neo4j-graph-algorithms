@@ -85,10 +85,6 @@ public class BetweennessCentralityTest {
 
     }
 
-    @Before
-    public void setupMocks() {
-    }
-
     @AfterClass
     public static void tearDown() throws Exception {
         if (db != null) db.shutdown();

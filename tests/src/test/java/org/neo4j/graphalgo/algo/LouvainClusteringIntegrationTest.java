@@ -85,7 +85,6 @@ public class LouvainClusteringIntegrationTest {
                         " (f)-[:TYPE]->(g),\n" +
                         " (g)-[:TYPE]->(h),\n" +
 
-                        // makes b & e more likely to build their own set
                         " (b)-[:TYPE]->(e)";
 
         DB.resolveDependency(Procedures.class).registerProcedure(LouvainProc.class);
