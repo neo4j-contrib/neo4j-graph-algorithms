@@ -18,8 +18,10 @@
  */
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -92,11 +94,9 @@ public final class LabelPropagationProc {
                 .weightProperty(weightProperty);
 
         HeavyGraph graph = load(
-                configuration.getNodeLabelOrQuery(),
-                configuration.getRelationshipOrQuery(),
+                configuration,
                 direction,
                 partitionProperty,
-                weightProperty,
                 batchSize,
                 concurrency,
                 stats);
@@ -110,27 +110,32 @@ public final class LabelPropagationProc {
     }
 
     private HeavyGraph load(
-            String label,
-            String relationshipType,
+            ProcedureConfiguration config,
             Direction direction,
             String partitionKey,
-            String weightKey,
             int batchSize,
             int concurrency,
             LabelPropagationStats.Builder stats) {
 
         try (ProgressTimer timer = stats.timeLoad()) {
+
+            Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
+                HeavyGraphFactory.class,
+                HeavyCypherGraphFactory.class);
+
+            final String weightKey = config.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
+
             return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
                     .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationshipType)
+                    .withOptionalLabel(config.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(config.getRelationshipOrQuery())
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
                     .withDirection(direction)
                     .withBatchSize(batchSize)
                     .withConcurrency(concurrency)
-                    .load(HeavyGraphFactory.class);
+                    .load(graphImpl);
         }
     }
 

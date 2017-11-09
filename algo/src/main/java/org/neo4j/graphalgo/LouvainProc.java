@@ -21,6 +21,7 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -124,6 +125,10 @@ public class LouvainProc {
 
     public HeavyGraph graph(ProcedureConfiguration config) {
 
+        Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
+                HeavyGraphFactory.class,
+                HeavyCypherGraphFactory.class);
+
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(config.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(config.getRelationshipOrQuery())
@@ -134,14 +139,14 @@ public class LouvainProc {
                     .withOptionalRelationshipWeightsFromProperty(
                             config.getWeightProperty(),
                             config.getWeightPropertyDefaultValue(1.0))
-                    .load(HeavyGraphFactory.class);
+                    .load(graphImpl);
         }
 
         return (HeavyGraph) loader
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
+                .load(graphImpl);
     }
 
     public LouvainAlgorithm louvain(HeavyGraph graph, ProcedureConfiguration config) {

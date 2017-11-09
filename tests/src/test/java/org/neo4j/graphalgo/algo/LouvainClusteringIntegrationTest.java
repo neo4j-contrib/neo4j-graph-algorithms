@@ -19,29 +19,25 @@
 package org.neo4j.graphalgo.algo;
 
 import com.carrotsearch.hppc.IntIntScatterMap;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.neo4j.graphalgo.LouvainProc;
-import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.QueryExecutionException;
+import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.function.IntConsumer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 /**
  * Graph:
@@ -54,11 +50,10 @@ import static org.mockito.Mockito.verify;
  */
 public class LouvainClusteringIntegrationTest {
 
-    private static GraphDatabaseAPI db;
-    private static HeavyGraph graph;
-
     private final static String[] NODES = {"a", "b", "c", "d", "e", "f", "g", "h", "z"};
 
+    @ClassRule
+    public static ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -75,14 +70,14 @@ public class LouvainClusteringIntegrationTest {
                         "CREATE (z:Node {name:'z'})\n" +
 
                         "CREATE" +
-                        
+
                         " (a)-[:TYPE]->(b),\n" +
                         " (a)-[:TYPE]->(c),\n" +
                         " (a)-[:TYPE]->(d),\n" +
                         " (c)-[:TYPE]->(d),\n" +
                         " (b)-[:TYPE]->(c),\n" +
                         " (b)-[:TYPE]->(d),\n" +
-                        
+
                         " (f)-[:TYPE]->(e),\n" +
                         " (e)-[:TYPE]->(g),\n" +
                         " (e)-[:TYPE]->(h),\n" +
@@ -93,47 +88,19 @@ public class LouvainClusteringIntegrationTest {
                         // makes b & e more likely to build their own set
                         " (b)-[:TYPE]->(e)";
 
-        db = TestDatabaseCreator.createTestDatabase();
-        db.getDependencyResolver()
-                .resolveDependency(Procedures.class)
-                .registerProcedure(LouvainProc.class);
-
-        try (Transaction tx = db.beginTx()) {
-            db.execute(cypher);
-            tx.success();
-        }
-
-        graph = (HeavyGraph) new GraphLoader(db)
-                .withAnyRelationshipType()
-                .withAnyLabel()
-                .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 1.0)
-                .load(HeavyGraphFactory.class);
-
+        DB.resolveDependency(Procedures.class).registerProcedure(LouvainProc.class);
+        DB.execute(cypher);
     }
 
-    @AfterClass
-    public static void tearDown() {
-        if (db != null) db.shutdown();
-    }
-
-    private String getName(long nodeId) {
-        String[] name = {""};
-        db.execute(String.format("MATCH (n) WHERE id(n) = %d RETURN n", nodeId)).accept(row -> {
-            name[0] = (String) row.getNode("n").getProperty("name");
-            return true;
-        });
-//        try (Transaction tx = db.beginTx()) {
-//        }
-        return name[0];
-    }
+    @Rule
+    public ExpectedException exceptions = ExpectedException.none();
 
     @Test
-    public void test() throws Exception {
+    public void test() {
         final String cypher = "CALL algo.louvain('', '') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
-        db.execute(cypher).accept(row -> {
+        DB.execute(cypher).accept(row -> {
             final long nodes = row.getNumber("nodes").longValue();
             final long communityCount = row.getNumber("communityCount").longValue();
             final long iterations = row.getNumber("iterations").longValue();
@@ -154,11 +121,11 @@ public class LouvainClusteringIntegrationTest {
 
 
     @Test
-    public void testStream() throws Exception {
+    public void testStream() {
         final String cypher = "CALL algo.louvain.stream('', '', {concurrency:2}) " +
                 "YIELD nodeId, community";
         final IntIntScatterMap testMap = new IntIntScatterMap();
-        db.execute(cypher).accept(row -> {
+        DB.execute(cypher).accept(row -> {
             testMap.addTo(row.getNumber("community").intValue(), 1);
             return false;
         });
@@ -166,11 +133,11 @@ public class LouvainClusteringIntegrationTest {
     }
 
     @Test
-    public void testWithLabelRel() throws Exception {
+    public void testWithLabelRel() {
         final String cypher = "CALL algo.louvain('Node', 'TYPE') " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
-        db.execute(cypher).accept(row -> {
+        DB.execute(cypher).accept(row -> {
             final long nodes = row.getNumber("nodes").longValue();
             final long communityCount = row.getNumber("communityCount").longValue();
             final long iterations = row.getNumber("iterations").longValue();
@@ -193,11 +160,11 @@ public class LouvainClusteringIntegrationTest {
 
     @Ignore("Issue #444")
     @Test
-    public void testWithWeight() throws Exception {
+    public void testWithWeight() {
         final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
-        db.execute(cypher).accept(row -> {
+        DB.execute(cypher).accept(row -> {
             final long nodes = row.getNumber("nodes").longValue();
             final long communityCount = row.getNumber("communityCount").longValue();
             final long iterations = row.getNumber("iterations").longValue();
@@ -219,6 +186,47 @@ public class LouvainClusteringIntegrationTest {
 
     }
 
+
+
+    @Test
+    public void shouldAllowHeavyGraph() {
+        final String cypher = "CALL algo.louvain('', '', {graph:'heavy'}) YIELD nodes, communityCount";
+
+        DB.execute(cypher).accept(row -> {
+            assertEquals("invalid node count",9, row.getNumber("nodes").longValue());
+            assertEquals("wrong community count", 3, row.getNumber("communityCount").longValue());
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldAllowCypherGraph() {
+        final String cypher = "CALL algo.louvain('MATCH (n) RETURN id(n) as id', 'MATCH (s)-->(t) RETURN id(s) as source, id(t) as target', {graph:'cypher'}) YIELD nodes, communityCount";
+
+        DB.execute(cypher).accept(row -> {
+            assertEquals("invalid node count",9, row.getNumber("nodes").longValue());
+            assertEquals("wrong community count", 3, row.getNumber("communityCount").longValue());
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldNotAllowLightOrHugeOrKernelGraph() throws Throwable {
+        String query = "CALL algo.louvain('', '', {graph:$graph})";
+
+        exceptions.expect(IllegalArgumentException.class);
+        exceptions.expectMessage("The selected graph is not suitable for this algo, please use either 'heavy' or 'cypher'.");
+
+        for (final String graph : Arrays.asList("light", "huge", "kernel")) {
+            Map<String, Object> params = Collections.singletonMap("graph", graph);
+            try {
+                DB.execute(query, params).close();
+            } catch (QueryExecutionException qee) {
+                throw Exceptions.rootCause(qee);
+            }
+        }
+    }
+
     public void printNodeSets() {
         final StringBuilder builder = new StringBuilder();
         for (String node : NODES) {
@@ -234,7 +242,7 @@ public class LouvainClusteringIntegrationTest {
     public int getClusterId(String nodeName) {
 
         int id[] = {0};
-        db.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
+        DB.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
             id[0] = (int) row.getNode("n").getProperty("community");
             return true;
         });
