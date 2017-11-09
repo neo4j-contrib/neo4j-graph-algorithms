@@ -106,8 +106,9 @@ public class ClusteringCoefficientTest {
     }
 
     @AfterClass
-    public static void tearDown() {
-        db.shutdown();
+    public static void tearDown() throws Exception {
+        if (db != null) db.shutdown();
+        graph = null;
     }
 
 

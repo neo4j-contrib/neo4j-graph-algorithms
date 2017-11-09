@@ -98,8 +98,8 @@ public class TriangleStreamTest {
     }
 
     @AfterClass
-    public static void tearDown() {
-        db.shutdown();
+    public static void tearDown() throws Exception {
+        if (db != null) db.shutdown();
     }
 
     public TriangleStreamTest(Class<? extends GraphFactory> graphImpl, String name) {

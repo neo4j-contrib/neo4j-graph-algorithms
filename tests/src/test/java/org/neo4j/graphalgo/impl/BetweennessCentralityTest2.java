@@ -109,10 +109,6 @@ public class BetweennessCentralityTest2 {
                 .load(HeavyGraphFactory.class);
     }
 
-    @Before
-    public void setupMocks() {
-    }
-
     @AfterClass
     public static void tearDown() throws Exception {
         if (db != null) db.shutdown();

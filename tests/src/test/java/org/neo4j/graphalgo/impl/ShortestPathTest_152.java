@@ -87,9 +87,10 @@ public class ShortestPathTest_152 {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        db.shutdown();
+    public static void tearDown() throws Exception {
+        if (db != null) db.shutdown();
     }
+
 
     @Test
     public void testDirect() throws Exception {

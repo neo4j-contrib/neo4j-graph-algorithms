@@ -99,9 +99,9 @@ public class MultistepSCCTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        api.shutdown();
-//        Pools.DEFAULT.shutdownNow();
+    public static void tearDown() throws Exception {
+        if (api != null) api.shutdown();
+        graph = null;
     }
 
     public static int getMappedNodeId(String name) {

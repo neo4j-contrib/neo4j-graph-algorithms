@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -174,7 +175,6 @@ public class UnweightedLouvainModularityTest {
         assertEquals(3, louvain.getCommunityCount());
     }
 
-    @Ignore("TODO")
     @Test
     public void testParallel() throws Exception {
         setup(cypher, Direction.BOTH);
