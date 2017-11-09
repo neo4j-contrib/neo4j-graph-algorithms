@@ -108,8 +108,9 @@ public final class ShortestPathDeltaSteppingTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        api.shutdown();
+    public static void tearDown() throws Exception {
+        if (api != null) api.shutdown();
+        graph = null;
     }
 
     @Test

@@ -92,6 +92,7 @@ public class AllShortestPathsTest {
                     .load(HeavyGraphFactory.class);
         }
     }
+
     @AfterClass
     public static void tearDown() {
         if (db!=null) db.shutdown();
