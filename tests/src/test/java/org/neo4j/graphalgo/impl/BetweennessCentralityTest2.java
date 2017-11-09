@@ -143,7 +143,7 @@ public class BetweennessCentralityTest2 {
     @Test
     public void testPBC() throws Exception {
 
-        new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
+        new ParallelBetweennessCentrality(graph, Pools.DEFAULT, 4)
                 .compute()
                 .resultStream()
                 .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));
@@ -154,7 +154,7 @@ public class BetweennessCentralityTest2 {
     @Test
     public void testSuccessorBrandes() throws Exception {
 
-        new BetweennessCentralitySuccessorBrandes(graph, 100_000, Pools.DEFAULT)
+        new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
                 .compute()
                 .resultStream()
                 .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));

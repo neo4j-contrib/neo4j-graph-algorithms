@@ -170,7 +170,7 @@ public class BetweennessCentralityTest_349 {
                 .withRelationshipType("FRIEND")
                 .load(HeavyGraphFactory.class);
 
-        final Optional<BetweennessCentrality.Result> any = new ParallelBetweennessCentrality(graph, 100_000, Pools.DEFAULT, 4)
+        final Optional<BetweennessCentrality.Result> any = new ParallelBetweennessCentrality(graph, Pools.DEFAULT, 4)
                 .withDirection(Direction.BOTH)
                 .compute()
                 .resultStream()
