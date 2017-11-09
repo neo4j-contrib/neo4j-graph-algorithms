@@ -1,3 +1,21 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.GraphFactory;
@@ -11,10 +29,14 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Wrapper around configuration options map
@@ -273,6 +295,23 @@ public class ProcedureConfiguration {
         }
     }
 
+    @SafeVarargs
+    public final Class<? extends GraphFactory> getGraphImpl(
+            Class<? extends GraphFactory> allowed,
+            Class<? extends GraphFactory>... alloweds) {
+        Class<? extends GraphFactory> graphImpl = getGraphImpl();
+        if (allowed.isAssignableFrom(graphImpl) || Arrays
+                .stream(alloweds)
+                .anyMatch(c -> c.isAssignableFrom(graphImpl))) {
+            return graphImpl;
+        }
+
+        String allowedGraphs = Stream.concat(Stream.of(allowed), Arrays.stream(alloweds))
+                .map(ProcedureConfiguration::reverseGraphLookup)
+                .collect(Collectors.joining("' or '", "'", "'."));
+        throw new IllegalArgumentException("The selected graph is not suitable for this algo, please use either " + allowedGraphs);
+    }
+
     /**
      * specialized getter for String which either returns the value
      * if found, the defaultValue if the key is not found or null if
@@ -329,5 +368,24 @@ public class ProcedureConfiguration {
 
     public static ProcedureConfiguration create(Map<String, Object> config) {
         return new ProcedureConfiguration(config);
+    }
+
+    private static String reverseGraphLookup(Class<? extends GraphFactory> cls) {
+        if (HeavyGraphFactory.class.isAssignableFrom(cls)) {
+            return "heavy";
+        }
+        if (HeavyCypherGraphFactory.class.isAssignableFrom(cls)) {
+            return "cypher";
+        }
+        if (LightGraphFactory.class.isAssignableFrom(cls)) {
+            return "light";
+        }
+        if (GraphViewFactory.class.isAssignableFrom(cls)) {
+            return "kernel";
+        }
+        if (HugeGraphFactory.class.isAssignableFrom(cls)) {
+            return "huge";
+        }
+        throw new IllegalArgumentException("Unknown impl: " + cls);
     }
 }

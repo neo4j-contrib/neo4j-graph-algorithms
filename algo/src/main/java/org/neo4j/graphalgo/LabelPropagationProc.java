@@ -1,7 +1,27 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -74,11 +94,9 @@ public final class LabelPropagationProc {
                 .weightProperty(weightProperty);
 
         HeavyGraph graph = load(
-                configuration.getNodeLabelOrQuery(),
-                configuration.getRelationshipOrQuery(),
+                configuration,
                 direction,
                 partitionProperty,
-                weightProperty,
                 batchSize,
                 concurrency,
                 stats);
@@ -92,27 +110,32 @@ public final class LabelPropagationProc {
     }
 
     private HeavyGraph load(
-            String label,
-            String relationshipType,
+            ProcedureConfiguration config,
             Direction direction,
             String partitionKey,
-            String weightKey,
             int batchSize,
             int concurrency,
             LabelPropagationStats.Builder stats) {
 
         try (ProgressTimer timer = stats.timeLoad()) {
+
+            Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
+                HeavyGraphFactory.class,
+                HeavyCypherGraphFactory.class);
+
+            final String weightKey = config.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
+
             return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
                     .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationshipType)
+                    .withOptionalLabel(config.getNodeLabelOrQuery())
+                    .withOptionalRelationshipType(config.getRelationshipOrQuery())
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
                     .withDirection(direction)
                     .withBatchSize(batchSize)
                     .withConcurrency(concurrency)
-                    .load(HeavyGraphFactory.class);
+                    .load(graphImpl);
         }
     }
 
