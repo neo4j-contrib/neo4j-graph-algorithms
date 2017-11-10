@@ -126,15 +126,11 @@ public final class LabelPropagationProc {
             final String weightKey = config.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
             return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(config.getNodeLabelOrQuery())
-                    .withOptionalRelationshipType(config.getRelationshipOrQuery())
+                    .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionKey, 0.0d)
                     .withDirection(direction)
-                    .withBatchSize(batchSize)
-                    .withConcurrency(concurrency)
                     .load(graphImpl);
         }
     }

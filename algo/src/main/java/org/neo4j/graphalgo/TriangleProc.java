@@ -75,7 +75,7 @@ public class TriangleProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
-                .withLog(log)
+                .init(log, label, relationship, configuration)
                 .withDirection(TriangleCount.D)
                 .load(configuration.getGraphImpl());
 
@@ -103,7 +103,7 @@ public class TriangleProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
-                .withLog(log)
+                .init(log, label, relationship, configuration)
                 .withDirection(TriangleCount.D)
                 .load(configuration.getGraphImpl());
 
@@ -132,7 +132,7 @@ public class TriangleProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
-                .withLog(log)
+                .init(log, label, relationship, configuration)
                 .withDirection(TriangleCount.D)
                 .load(configuration.getGraphImpl());
 
@@ -168,7 +168,7 @@ public class TriangleProc {
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
-                    .withLog(log)
+                    .init(log, label, relationship, configuration)
                     .withDirection(TriangleCount.D)
                     .load(configuration.getGraphImpl());
         };
@@ -235,11 +235,9 @@ public class TriangleProc {
 
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
-                    .withLog(log)
                     .withDirection(TriangleCount.D)
                     .load(configuration.getGraphImpl());
         };

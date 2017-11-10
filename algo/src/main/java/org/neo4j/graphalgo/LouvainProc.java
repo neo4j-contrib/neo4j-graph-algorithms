@@ -130,8 +130,7 @@ public class LouvainProc {
                 HeavyCypherGraphFactory.class);
 
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
-                .withOptionalLabel(config.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(config.getRelationshipOrQuery())
+                .init(log, config.getNodeLabelOrQuery(),config.getRelationshipOrQuery(),config)
                 .withDirection(Direction.BOTH);
 
         if (config.hasWeightProperty()) {

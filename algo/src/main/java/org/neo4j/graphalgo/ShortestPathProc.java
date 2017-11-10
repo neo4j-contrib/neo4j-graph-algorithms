@@ -86,9 +86,7 @@ public class ShortestPathProc {
         final Direction direction = configuration.getDirection(Direction.BOTH);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getWeightPropertyDefaultValue(1.0))
@@ -123,9 +121,7 @@ public class ShortestPathProc {
         final Direction direction = configuration.getDirection(Direction.BOTH);
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withOptionalRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getWeightPropertyDefaultValue(1.0))

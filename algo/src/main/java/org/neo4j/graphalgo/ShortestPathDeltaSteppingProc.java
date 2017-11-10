@@ -83,9 +83,7 @@ public class ShortestPathDeltaSteppingProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
@@ -120,9 +118,7 @@ public class ShortestPathDeltaSteppingProc {
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(configuration.getNodeLabelOrQuery())
-                    .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
+                    .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
