@@ -162,8 +162,9 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
                 Relationship rel = iterator.next();
                 final boolean[] hasRelation = {false};
                 long startNode = rel.getStartNode().getId();
-                long targetRelId = RawValues.combineIntInt((int) startNode, (int) rel.getEndNode().getId());
                 int startId = graph.toMappedNodeId(startNode);
+                int endId = graph.toMappedNodeId(rel.getEndNodeId());
+                long targetRelId = RawValues.combineIntInt((int) startId, endId);
                 graph.forEachRelationship(startId, Direction.OUTGOING, (src, tgt, relId) -> {
                     if (relId == targetRelId) {
                         hasRelation[0] = true;
