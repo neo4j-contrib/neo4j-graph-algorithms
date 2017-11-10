@@ -24,6 +24,8 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -56,6 +58,8 @@ public class GraphSetup {
     public final String nodePropertyName;
     // default property is used for node properties if property is not set.
     public final double nodeDefaultPropertyValue;
+
+    public final Map<String,Object> params;
 
     public final Log log;
     public final long logMillis;
@@ -101,6 +105,7 @@ public class GraphSetup {
             double nodeDefaultWeight,
             String nodePropertyName,
             double nodeDefaultPropertyValue,
+            Map<String,Object> params,
             ExecutorService executor,
             int concurrency,
             int batchSize,
@@ -120,6 +125,7 @@ public class GraphSetup {
         this.nodeDefaultWeight = nodeDefaultWeight;
         this.nodePropertyName = nodePropertyName;
         this.nodeDefaultPropertyValue = nodeDefaultPropertyValue;
+        this.params = params == null ? Collections.emptyMap() : params;
         this.executor = executor;
         this.concurrency = concurrency;
         this.batchSize = batchSize;
@@ -143,6 +149,7 @@ public class GraphSetup {
         this.nodeDefaultWeight = 1.0;
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
+        this.params = Collections.emptyMap();
         this.executor = null;
         this.concurrency = Pools.DEFAULT_CONCURRENCY;
         this.batchSize = -1;
@@ -169,6 +176,7 @@ public class GraphSetup {
         this.nodeDefaultWeight = 1.0;
         this.nodePropertyName = null;
         this.nodeDefaultPropertyValue = 1.0;
+        this.params = Collections.emptyMap();
         this.executor = executor;
         this.concurrency = Pools.DEFAULT_CONCURRENCY;
         this.batchSize = -1;

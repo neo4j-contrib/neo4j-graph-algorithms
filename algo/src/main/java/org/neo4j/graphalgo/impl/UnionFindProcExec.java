@@ -133,9 +133,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
             ProcedureConfiguration config,
             AllocationTracker tracker) {
         return new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(config.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(config.getRelationshipOrQuery())
+                .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getWeightProperty(),
                         config.getWeightPropertyDefaultValue(1.0))

@@ -78,7 +78,7 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         AllocationTracker tracker = AllocationTracker.create();
-        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder);
+        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder, configuration);
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
 
@@ -102,7 +102,7 @@ public final class PageRankProc {
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         AllocationTracker tracker = AllocationTracker.create();
-        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder);
+        final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder, configuration);
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
@@ -130,13 +130,11 @@ public final class PageRankProc {
             String relationship,
             AllocationTracker tracker,
             Class<? extends GraphFactory> graphFactory,
-            PageRankScore.Stats.Builder statsBuilder) {
+            PageRankScore.Stats.Builder statsBuilder, ProcedureConfiguration configuration) {
 
         GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
+                .init(log, label, relationship, configuration)
                 .withAllocationTracker(tracker)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
                 .withDirection(Direction.OUTGOING)
                 .withoutRelationshipWeights();
 
