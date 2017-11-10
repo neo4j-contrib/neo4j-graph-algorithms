@@ -40,11 +40,9 @@ import java.util.stream.Stream;
 public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
 
     private Graph graph;
-
-    private AtomicDoubleArray inverseFarness;
-
+    private final AtomicDoubleArray inverseFarness;
     private final int concurrency;
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
     private final int nodeCount;
 
     public MSHarmonicCentrality(Graph graph, int concurrency, ExecutorService executorService) {
@@ -82,7 +80,6 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
                 inverseFarness,
                 (PropertyTranslator.OfDouble<AtomicDoubleArray>)
                         (data, nodeId) -> data.get((int) nodeId) * k);
-
     }
 
     @Override
@@ -93,7 +90,7 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
     @Override
     public MSHarmonicCentrality release() {
         graph = null;
-        inverseFarness = null;
+        executorService = null;
         return this;
     }
 
