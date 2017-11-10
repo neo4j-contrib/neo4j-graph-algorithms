@@ -110,7 +110,7 @@ public class HarmonicCentralityProc {
                     .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withoutNodeProperties()
                     .withConcurrency(concurrency)
-                    .withDirection(Direction.OUTGOING)
+                    .withDirection(Direction.BOTH)
                     .withAllocationTracker(tracker)
                     .load(configuration.getGraphImpl());
         }
