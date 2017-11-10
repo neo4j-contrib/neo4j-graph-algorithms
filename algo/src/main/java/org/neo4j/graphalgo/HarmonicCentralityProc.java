@@ -66,12 +66,10 @@ public class HarmonicCentralityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-        AllocationTracker tracker = AllocationTracker.create();
+        final AllocationTracker tracker = AllocationTracker.create();
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withoutNodeProperties()
                 .withConcurrency(configuration.getConcurrency())
                 .withDirection(Direction.OUTGOING)
@@ -96,20 +94,20 @@ public class HarmonicCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+                .overrideNodeLabelOrQuery(label)
+                .overrideRelationshipTypeOrQuery(relationship);
 
         final ClosenessCentralityProcResult.Builder builder = ClosenessCentralityProcResult.builder();
 
-        AllocationTracker tracker = AllocationTracker.create();
-        int concurrency = configuration.getConcurrency();
-        TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+        final AllocationTracker tracker = AllocationTracker.create();
+        final int concurrency = configuration.getConcurrency();
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
-        Graph graph;
+        final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
+                    .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withoutNodeProperties()
                     .withConcurrency(concurrency)
                     .withDirection(Direction.OUTGOING)
