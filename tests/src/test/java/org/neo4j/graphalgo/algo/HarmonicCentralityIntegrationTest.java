@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalMatchers;
@@ -35,6 +36,7 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.*;
@@ -48,9 +50,13 @@ public class HarmonicCentralityIntegrationTest {
 
     public static final String TYPE = "TYPE";
 
-    private static GraphDatabaseAPI db;
+    @ClassRule
+    public static final ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
+
     private static DefaultBuilder builder;
     private static long centerNodeId;
+
+
 
     interface TestConsumer {
 
@@ -62,8 +68,6 @@ public class HarmonicCentralityIntegrationTest {
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
-
-        db = TestDatabaseCreator.createTestDatabase();
 
         builder = GraphBuilder.create(db)
                 .setLabel("Node")
@@ -96,11 +100,6 @@ public class HarmonicCentralityIntegrationTest {
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(HarmonicCentralityProc.class);
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if (db != null) db.shutdown();
     }
 
     @Test
@@ -141,7 +140,7 @@ public class HarmonicCentralityIntegrationTest {
     }
 
     private void verifyMock() {
-        verify(consumer, times(1)).accept(eq(centerNodeId), AdditionalMatchers.eq(0.04, 0.1));
-        verify(consumer, times(10)).accept(anyLong(), AdditionalMatchers.eq(0.20, 0.1));
+        verify(consumer, times(1)).accept(eq(centerNodeId), AdditionalMatchers.eq(1.0, 0.1));
+        verify(consumer, times(10)).accept(anyLong(), AdditionalMatchers.eq(0.65, 0.1));
     }
 }
