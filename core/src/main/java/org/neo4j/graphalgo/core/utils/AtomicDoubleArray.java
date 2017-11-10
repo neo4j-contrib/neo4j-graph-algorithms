@@ -84,4 +84,19 @@ public class AtomicDoubleArray {
         }
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < data.length(); i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(get(i));
+            if (i >= 20) {
+                builder.append(", ..");
+                break;
+            }
+        }
+        return "[" + builder.toString() + "]";
+    }
 }

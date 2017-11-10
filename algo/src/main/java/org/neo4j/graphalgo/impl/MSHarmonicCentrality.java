@@ -56,11 +56,10 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
     public MSHarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            int len = sourceNodeIds.size();
-            inverseFarness.add(nodeId, 1.0 / (len * depth));
+            inverseFarness.add(nodeId, sourceNodeIds.size() * (1.0 / depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
-        new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
+        new MultiSourceBFS(graph, graph, Direction.BOTH, consumer)
                 .run(concurrency, executorService);
         return this;
     }

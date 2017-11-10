@@ -61,7 +61,7 @@ import static org.junit.Assert.assertEquals;
  *  --|------------------------------
  * -1 |1.5    2    1.5    1     1
  *  ==|==============================
- * *k |0.37  0.12  0.37  0.25  0.25
+ * *k |0.37  0.5  0.37  0.25  0.25
  *
  * instead of calculating the farness we sum the inverse
  * of each cell and multiply by 1/(n-1)
@@ -71,7 +71,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class HarmonicCentralityTest {
 
-    private static final double[] EXPECTED = new double[]{0.375, 0.125, 0.375, 0.25, 0.25};
+    private static final double[] EXPECTED = new double[]{0.375, 0.5, 0.375, 0.25, 0.25};
 
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
@@ -95,11 +95,8 @@ public class HarmonicCentralityTest {
                 "CREATE (e:Node {name:'e'})\n" +
                 "CREATE" +
                 " (a)-[:TYPE]->(b),\n" +
-                " (b)-[:TYPE]->(a),\n" +
                 " (b)-[:TYPE]->(c),\n" +
-                " (c)-[:TYPE]->(b),\n" +
-                " (d)-[:TYPE]->(e),\n" +
-                " (e)-[:TYPE]->(d)");
+                " (d)-[:TYPE]->(e)");
     }
 
     private Graph graph;
