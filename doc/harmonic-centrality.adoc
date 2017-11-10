@@ -1,0 +1,158 @@
+= Harmonic Centrality
+
+== TODO
+
+Closely related to Closeness Centrality. Should lead to the same distribution of values but
+should also be resistant to disconnected graphs.
+
+== When to use it / use-cases
+
+Like closeness centrality but on disconnected graphs
+
+== Constraints / when not to use it
+
+?
+
+== Algorithm explanation on simple sample graph
+
+
+
+Disconnected-Graph:
+
+ (A)<-->(B)<-->(C)  (D)<-->(E)
+
+Calculation:
+
+k = N-1 = 4
+
+     A     B     C     D     E
+ ---|-----------------------------
+ A  | 0     1     2     -     -    // distance between each pair of nodes
+ B  | 1     0     1     -     -    // or infinite if no path exists
+ C  | 2     1     0     -     -
+ D  | -     -     -     0     1
+ E  | -     -     -     1     0
+ ---|------------------------------
+ A  | 0     1    1/2    0     0    // inverse
+ B  | 1     0     1     0     0
+ C  |1/2    1     0     0     0
+ D  | 0     0     0     0     1
+ E  | 0     0     0     1     0
+ ---|------------------------------
+sum |1.5    2    1.5    1     1
+ ---|------------------------------
+ *k |0.37  0.5  0.37  0.25  0.25
+==================================
+
+instead of calculating the farness we sum the inverse
+of each cell and multiply by 1/(n-1)
+
+
+
+== Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.harmonic(label:String, relationship:String,
+{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis 
+- calculates closeness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| write | boolean | true | yes | if result should be written back as node property
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| writeProperty | string | 'centrality' | yes | property name written back to
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4}) 
+YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | closeness centrality weight 
+|===
+
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+include::scripts/closeness-centrality.cypher[tag=cypher-loading]
+----
+
+== Versions 
+
+We support the following versions of the betweenness centrality algorithm:
+
+* [*] directed, unweighted
+
+* [ ] directed, weighted
+
+* [*] undirected, unweighted
+
+* [ ] undirected, weighted 
+
+
+== References
+
+* https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
+
+ifdef::implementation[]
+// tag::implementation[]
+
+== Implementation Details
+
+...
+
+== Details
+
+- use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
+- MSBFS gives depth and number of sources.
+- in this scheme the farness can be calculated as follows
+
+ inverseFarness(v) = inverseFarness(v) + numberOfSources(v) * (1/depth(v))
+
+// end::implementation[]
+endif::implementation[]
