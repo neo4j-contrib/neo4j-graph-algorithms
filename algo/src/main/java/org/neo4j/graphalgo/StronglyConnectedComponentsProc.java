@@ -102,7 +102,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
+                .init(log, label, relationship, configuration)
                 .withOptionalLabel(label)
                 .withOptionalRelationshipType(relationship)
                 .withoutRelationshipWeights()
@@ -164,9 +164,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
@@ -211,9 +209,7 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
@@ -240,9 +236,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
@@ -290,9 +284,7 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
@@ -323,9 +315,7 @@ public class StronglyConnectedComponentsProc {
 
         ProgressTimer loadTimer = builder.timeLoad();
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .load(configuration.getGraphImpl());
         loadTimer.stop();
@@ -374,9 +364,7 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .load(configuration.getGraphImpl());
 
@@ -404,9 +392,7 @@ public class StronglyConnectedComponentsProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .load(configuration.getGraphImpl());
 

@@ -33,6 +33,7 @@ import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -327,6 +328,11 @@ public class HeavyCypherGraphFactory extends GraphFactory {
     }
 
     private Map<String, Object> params(long offset, int batchSize) {
-        return batchSize > 0 ? MapUtil.map(SKIP, offset, LIMIT, batchSize) : MapUtil.map(SKIP, offset);
+        Map<String,Object> params = new HashMap<>(setup.params);
+        params.put(SKIP, offset);
+        if (batchSize > 0) {
+            params.put(LIMIT, batchSize);
+        }
+        return params;
     }
 }

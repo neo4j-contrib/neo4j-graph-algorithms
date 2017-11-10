@@ -29,12 +29,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -387,5 +382,8 @@ public class ProcedureConfiguration {
             return "huge";
         }
         throw new IllegalArgumentException("Unknown impl: " + cls);
+    }
+    public Map<String, Object> getParams() {
+        return (Map<String, Object>)config.getOrDefault("params", Collections.emptyMap());
     }
 }

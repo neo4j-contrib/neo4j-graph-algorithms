@@ -68,11 +68,8 @@ public class ClosenessCentralityProc {
         AllocationTracker tracker = AllocationTracker.create();
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
-                .withConcurrency(configuration.getConcurrency())
                 .withDirection(Direction.OUTGOING)
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
@@ -126,11 +123,8 @@ public class ClosenessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
+                    .init(log, label, relationship, configuration)
                     .withoutNodeProperties()
-                    .withConcurrency(concurrency)
                     .withDirection(Direction.OUTGOING)
                     .withAllocationTracker(tracker)
                     .load(configuration.getGraphImpl());

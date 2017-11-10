@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.*;
+import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -64,9 +65,10 @@ public class HeavyCypherGraphFactoryTest {
 
 
         String nodes = "MATCH (n) RETURN id(n) as id";
-        String rels = "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight";
+        String rels = "MATCH (n)-[r]->(m) WHERE type(r) = {rel} RETURN id(n) as source, id(m) as target, r.prop as weight";
 
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
+                .withParams(MapUtil.map("rel","REL"))
                 .withRelationshipWeightsFromProperty("prop", 0)
                 .withLabel(nodes)
                 .withRelationshipType(rels)

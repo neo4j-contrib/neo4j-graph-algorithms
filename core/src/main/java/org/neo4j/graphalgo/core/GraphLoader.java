@@ -36,6 +36,8 @@ import org.neo4j.logging.NullLog;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +71,7 @@ public class GraphLoader {
     private ExecutorService executorService;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
+    private Map<String,Object> params = new HashMap<>();
     private double nodePropDefault = 0.0;
     private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
     private int concurrency = Pools.DEFAULT_CONCURRENCY;
@@ -437,6 +440,11 @@ public class GraphLoader {
         return this;
     }
 
+    public GraphLoader withParams(Map<String,Object> params) {
+        this.params.putAll(params);
+        return this;
+    }
+
     /**
      * Loads the graph using the provided GraphFactory, passing the built
      * configuration as parameters.
@@ -472,6 +480,7 @@ public class GraphLoader {
                 nodeWeightDefault,
                 nodeProp,
                 nodePropDefault,
+                params,
                 executorService,
                 concurrency,
                 batchSize,
@@ -529,5 +538,13 @@ public class GraphLoader {
     public GraphLoader withAccumulateWeights(boolean accumulateWeights) {
         this.accumulateWeights = accumulateWeights;
         return this;
+    }
+
+    public GraphLoader init(Log log, String label, String relationship, ProcedureConfiguration config) {
+        return withLog(log)
+                .withOptionalLabel(label).withOptionalRelationshipType(relationship)
+                .withConcurrency(config.getConcurrency())
+                .withBatchSize(config.getBatchSize())
+                .withParams(config.getParams());
     }
 }
