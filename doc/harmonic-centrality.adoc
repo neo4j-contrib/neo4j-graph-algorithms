@@ -126,11 +126,11 @@ include::scripts/closeness-centrality.cypher[tag=cypher-loading]
 
 We support the following versions of the betweenness centrality algorithm:
 
-* [x] directed, unweighted
+* [*] directed, unweighted
 
 * [ ] directed, weighted
 
-* [ ] undirected, unweighted
+* [*] undirected, unweighted
 
 * [ ] undirected, weighted 
 
