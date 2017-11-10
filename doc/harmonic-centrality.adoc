@@ -56,7 +56,7 @@ of each cell and multiply by 1/(n-1)
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness(label:String, relationship:String, 
+CALL algo.harmonic(label:String, relationship:String,
 {write:true, writeProperty:'centrality',graph:'heavy', concurrency:4}) 
 YIELD nodes,loadMillis, computeMillis, writeMillis 
 - calculates closeness centrality and potentially writes back
@@ -137,26 +137,14 @@ We support the following versions of the betweenness centrality algorithm:
 
 == References
 
-* https://toreopsahl.com/2010/03/20/closeness-centrality-in-networks-with-disconnected-components/
-
-* http://www.casos.cs.cmu.edu/publications/papers/CMU-ISR-11-113.pdf
-
-* http://mrvar.fdv.uni-lj.si/sola/info4/uvod/part4.pdf
-
-* http://qualquant.org/wp-content/uploads/networks/2008%201-7-3.pdf
-
-* https://www.andrew.cmu.edu/user/andersok/Katharine_A._Anderson/Social_Economic_and_Information_Networks_files/CentralitySlides.pdf
+* https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
 
 ifdef::implementation[]
 // tag::implementation[]
 
 == Implementation Details
 
-:leveloffset: +1
-// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99
-
-_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. 
-Thus the more central a node is, the closer it is to all other nodes.
+...
 
 == Details
 
@@ -164,7 +152,7 @@ Thus the more central a node is, the closer it is to all other nodes.
 - MSBFS gives depth and number of sources.
 - in this scheme the farness can be calculated as follows
 
- farness(v) = farness(v) + numberOfSources(v) * depth(v)
+ inverseFarness(v) = inverseFarness(v) + numberOfSources(v) * (1/depth(v))
 
 // end::implementation[]
 endif::implementation[]
