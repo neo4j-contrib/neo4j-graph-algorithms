@@ -65,9 +65,7 @@ public class BetweennessCentralityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withLog(log)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
@@ -99,8 +97,7 @@ public class BetweennessCentralityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-                .withOptionalLabel(label)
-                .withOptionalRelationshipType(relationship)
+                .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
                 .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                 .load(configuration.getGraphImpl());
@@ -142,9 +139,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
+                    .init(log, label, relationship, configuration)
                     .withoutNodeProperties()
                     .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
@@ -218,9 +213,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
-                    .withOptionalLabel(label)
-                    .withOptionalRelationshipType(relationship)
+                    .init(log, label, relationship, configuration)
                     .withoutNodeProperties()
                     .withDirection(configuration.getDirection(Direction.OUTGOING))
                     .load(configuration.getGraphImpl());
@@ -272,7 +265,7 @@ public class BetweennessCentralityProc {
         Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = new GraphLoader(api, Pools.DEFAULT)
-                    .withLog(log)
+                    .init(log, label, relationship, configuration)
                     .withOptionalLabel(label)
                     .withOptionalRelationshipType(relationship)
                     .withoutNodeProperties()

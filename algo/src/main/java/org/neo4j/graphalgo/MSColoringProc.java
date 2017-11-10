@@ -110,8 +110,7 @@ public class MSColoringProc {
 
     private Graph load(ProcedureConfiguration config) {
         return new GraphLoader(api, Pools.DEFAULT)
-                .withOptionalLabel(config.getNodeLabelOrQuery())
-                .withOptionalRelationshipType(config.getRelationshipOrQuery())
+                .init(log, config.getNodeLabelOrQuery(),config.getRelationshipOrQuery(),config)
                 .withOptionalRelationshipWeightsFromProperty(
                         config.getWeightProperty(),
                         config.getWeightPropertyDefaultValue(1.0))
