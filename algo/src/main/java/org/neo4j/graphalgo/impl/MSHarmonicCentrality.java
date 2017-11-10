@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Normalized Closeness Centrality
+ * Harmonic Centrality Algorithm
  *
  * @author mknblch
  */
