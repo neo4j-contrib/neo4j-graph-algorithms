@@ -23,6 +23,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.HugeGraph;
@@ -41,6 +42,10 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Disconnected-Graph:
@@ -71,8 +76,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class HarmonicCentralityTest {
 
-    private static final double[] EXPECTED = new double[]{0.375, 0.5, 0.375, 0.25, 0.25};
-
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
@@ -101,6 +104,7 @@ public class HarmonicCentralityTest {
 
     private Graph graph;
 
+
     public HarmonicCentralityTest(
             Class<? extends GraphFactory> graphImpl,
             String nameIgnoredOnlyForTestName) {
@@ -111,23 +115,22 @@ public class HarmonicCentralityTest {
                 .load(graphImpl);
     }
 
-
-    @Test
-    public void testGetCentrality() throws Exception {
-        final double[] centrality = new MSHarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
-                .compute()
-                .exportToArray();
-
-        assertArrayEquals(EXPECTED, centrality, 0.1);
-    }
-
     @Test
     public void testStream() throws Exception {
+
+        final Consumer mock = mock(Consumer.class);
+
         new MSHarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()
                 .resultStream()
-                .forEach(r -> {
-                    assertEquals(EXPECTED[(int) r.nodeId], r.centrality, 0.1);
-                });
+                .forEach(r -> mock.consume(r.nodeId, r.centrality));
+
+        verify(mock, times(2)).consume(anyLong(), AdditionalMatchers.eq(0.375, 0.1));
+        verify(mock, times(2)).consume(anyLong(), AdditionalMatchers.eq(0.25, 0.1));
+        verify(mock, times(1)).consume(anyLong(), AdditionalMatchers.eq(0.5, 0.1));
+    }
+
+    interface Consumer {
+        void consume(long id, double centrality);
     }
 }
