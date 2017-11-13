@@ -80,7 +80,7 @@ public final class PageRankTest {
             "CREATE (o:Label2 {name:\"o\"})\n" +
             "CREATE (p:Label2 {name:\"p\"})\n" +
             "CREATE (q:Label2 {name:\"q\"})\n" +
-            "CREATE (r:Label2 {name:\"r\"})\n" +
+            "CREATE (abs:Label2 {name:\"abs\"})\n" +
             "CREATE (s:Label2 {name:\"s\"})\n" +
             "CREATE (t:Label2 {name:\"t\"})\n" +
             "CREATE\n" +

@@ -38,17 +38,20 @@ public class CompleteGraphBuilder extends GraphBuilder<CompleteGraphBuilder> {
 
     public CompleteGraphBuilder createCompleteGraph(int nodeCount) {
         ArrayList<Node> nodes = new ArrayList<>();
-        for (int i = 0; i < nodeCount; i++) {
-            nodes.add(createNode());
-        }
-        for (int i = 0; i < nodeCount; i++) {
-            for (int j = 0; j < nodeCount; j++) {
-                if (i == j) {
-                    continue;
-                }
-                createRelationship(nodes.get(i), nodes.get(j));
+        withinTransaction(() -> {
+
+            for (int i = 0; i < nodeCount; i++) {
+                nodes.add(createNode());
             }
-        }
+            for (int i = 0; i < nodeCount; i++) {
+                for (int j = 0; j < nodeCount; j++) {
+                    if (i == j) {
+                        continue;
+                    }
+                    createRelationship(nodes.get(i), nodes.get(j));
+                }
+            }
+        });
         return this;
     }
 

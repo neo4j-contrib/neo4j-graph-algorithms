@@ -110,6 +110,16 @@ public class BetweennessCentralityTest {
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
     }
 
+
+    @Test
+    public void testSBC() throws Exception {
+
+        new SampledBetweennessCentrality(graph, 3)
+                .compute()
+                .resultStream()
+                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
+    }
+
     @Test
     public void testPBC() throws Exception {
 
