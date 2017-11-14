@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.betweenness;
 
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntStack;
@@ -24,6 +24,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.Paths;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -35,11 +36,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Randomized Approximate Brandes
+ * Implements Betweenness Centrality for unweighted graphs
+ * as specified in <a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
+ * using node-partitioning
  *
  * @author mknblch
  */
-public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweennessCentrality> {
+public class ParallelBetweennessCentrality extends Algorithm<ParallelBetweennessCentrality> {
 
     // the graph
     private Graph graph;
@@ -53,7 +56,6 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private final double p;
     private Direction direction = Direction.OUTGOING;
     private double divisor = 1.0;
 
@@ -64,16 +66,15 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
      * @param executorService the executor service
      * @param concurrency desired number of threads to spawn
      */
-    public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency) {
+    public ParallelBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.p = Math.log10(nodeCount) / Math.exp(2);
         this.centrality = new AtomicDoubleArray(nodeCount);
     }
 
-    public RABrandesBetweennessCentrality withDirection(Direction direction) {
+    public ParallelBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
         this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
@@ -84,7 +85,7 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
      *
      * @return itself for method chaining
      */
-    public RABrandesBetweennessCentrality compute() {
+    public ParallelBetweennessCentrality compute() {
         nodeQueue.set(0);
         final ArrayList<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -117,12 +118,12 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     }
 
     @Override
-    public RABrandesBetweennessCentrality me() {
+    public ParallelBetweennessCentrality me() {
         return this;
     }
 
     @Override
-    public RABrandesBetweennessCentrality release() {
+    public ParallelBetweennessCentrality release() {
         graph = null;
         centrality = null;
         return null;
@@ -158,9 +159,6 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                 if (startNodeId >= nodeCount || !running()) {
                     return;
                 }
-                if (Math.random() > p) {
-                    continue;
-                }
                 getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
                 sigma[startNodeId] = 1;
                 distance[startNodeId] = 0;
@@ -188,7 +186,7 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                         return true;
                     });
                     if (node != startNodeId) {
-                        centrality.add(node, (1.0 / p) * (delta[node] / divisor));
+                        centrality.add(node, delta[node] / divisor);
                     }
                 }
             }
