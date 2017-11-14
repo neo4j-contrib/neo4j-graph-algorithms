@@ -41,10 +41,8 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentralityProc {
 
-
     public static final String DEFAULT_TARGET_PROPERTY = "centrality";
     public static final Direction DEFAULT_DIRECTION = Direction.OUTGOING;
-
 
     @Context
     public GraphDatabaseAPI api;
@@ -56,7 +54,7 @@ public class BetweennessCentralityProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.betweenness.exp2.stream")
-    @Description("CALL algo.betweenness.exp3.stream(label:String, relationship:String, {direction:'out', scaleFactor:100000}) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.exp2.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessRABrandes(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -73,7 +71,35 @@ public class BetweennessCentralityProc {
         final RABrandesBetweennessCentrality algo =
                 new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency())
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
-                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality"))
+                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
+                        .withDirection(Direction.OUTGOING)
+                        .compute();
+
+        graph.release();
+
+        return algo.resultStream();
+    }
+
+
+    @Procedure(value = "algo.betweenness.exp3.stream")
+    @Description("CALL algo.betweenness.exp3.stream(label:String, relationship:String, {maxDepth:5, direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
+    public Stream<MaxDepthBetweennessCentrality.Result> betweennessMaxDepthStream(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
+                .init(log, label, relationship, configuration)
+                .withoutNodeProperties()
+                .withDirection(Direction.OUTGOING)
+                .load(configuration.getGraphImpl());
+
+        final MaxDepthBetweennessCentrality algo =
+                new MaxDepthBetweennessCentrality(graph, configuration.getNumber("maxDepth", Integer.MAX_VALUE).intValue())
+                        .withTerminationFlag(TerminationFlag.wrap(transaction))
+                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
                         .withDirection(Direction.OUTGOING)
                         .compute();
 
@@ -84,7 +110,7 @@ public class BetweennessCentralityProc {
 
 
     @Procedure(value = "algo.betweenness.exp1.stream")
-    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {direction:'out', scaleFactor:100000}) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessSuccessorBrandesStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -150,7 +176,7 @@ public class BetweennessCentralityProc {
 
     @Procedure(value = "algo.betweenness.exp1", mode = Mode.WRITE)
     @Description("CALL algo.betweenness.exp1(label:String, relationship:String, " +
-            "{direction:'out', write:true, writeProperty:'centrality', stats:true, scaleFactor:100000}) YIELD " +
+            "{direction:'out', write:true, writeProperty:'centrality', stats:true}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality] - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessSucessorBrandes(
             @Name(value = "label", defaultValue = "") String label,
@@ -254,7 +280,7 @@ public class BetweennessCentralityProc {
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final RABrandesBetweennessCentrality bc =
                 new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency())
-                        .withProgressLogger(ProgressLogger.wrap(log, "BetweennessCentrality(parallel)"))
+                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
                         .withTerminationFlag(terminationFlag)
                         .withDirection(configuration.getDirection(Direction.OUTGOING));
 
@@ -275,6 +301,63 @@ public class BetweennessCentralityProc {
                         .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                         .build()
                         .write(writeProperty, centrality, AtomicDoubleArrayTranslator.INSTANCE);
+            });
+        }
+        bc.release();
+
+        return Stream.of(builder.build());
+    }
+
+    @Procedure(value = "algo.betweenness.exp3", mode = Mode.WRITE)
+    @Description("CALL algo.betweenness.exp3(label:String, relationship:String, {maxDepth:5, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
+            "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
+    public Stream<BetweennessCentralityProcResult> betweennessMaxDepth(
+            @Name(value = "label", defaultValue = "") String label,
+            @Name(value = "relationship", defaultValue = "") String relationship,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        final BetweennessCentralityProcResult.Builder builder =
+                BetweennessCentralityProcResult.builder();
+
+        Graph graph;
+        try (ProgressTimer timer = builder.timeLoad()) {
+            graph = new GraphLoader(api, Pools.DEFAULT)
+                    .init(log, label, relationship, configuration)
+                    .withOptionalLabel(label)
+                    .withOptionalRelationshipType(relationship)
+                    .withoutNodeProperties()
+                    .withDirection(configuration.getDirection(Direction.OUTGOING))
+                    .load(configuration.getGraphImpl());
+        }
+
+        builder.withNodeCount(graph.nodeCount());
+
+        final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+        final MaxDepthBetweennessCentrality bc =
+                new MaxDepthBetweennessCentrality(graph, configuration.getNumber("maxDepth", Integer.MAX_VALUE).intValue())
+                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
+                        .withTerminationFlag(terminationFlag)
+                        .withDirection(configuration.getDirection(Direction.OUTGOING));
+
+        builder.timeEval(() -> {
+            bc.compute();
+            if (configuration.isStatsFlag()) {
+                computeStats(builder, bc.getCentrality());
+            }
+        });
+
+        graph.release();
+        if (configuration.isWriteFlag()) {
+            builder.timeWrite(() -> {
+                final double[] centrality = bc.getCentrality();
+                final String writeProperty = configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY);
+                Exporter.of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build()
+                        .write(writeProperty, centrality, DoubleArrayTranslator.INSTANCE);
             });
         }
         bc.release();
