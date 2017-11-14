@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
@@ -110,11 +109,20 @@ public class BetweennessCentralityTest {
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
     }
 
+    @Test
+    public void testMBC() throws Exception {
+
+        new MaxDepthBetweennessCentrality(graph, 3)
+                .compute()
+                .resultStream()
+                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
+    }
+
 
     @Test
-    public void testSBC() throws Exception {
+    public void testRABrandes() throws Exception {
 
-        new SampledBetweennessCentrality(graph, 3)
+        new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 3, 0.9)
                 .compute()
                 .resultStream()
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));

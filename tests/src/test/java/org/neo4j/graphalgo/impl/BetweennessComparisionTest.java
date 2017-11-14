@@ -9,6 +9,7 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
@@ -26,32 +27,16 @@ import static org.junit.Assert.assertEquals;
  * @author mknblch
  */
 @Ignore("playground")
-@RunWith(Parameterized.class)
 public class BetweennessComparisionTest {
 
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     public static final String TYPE = "TYPE";
-    public static final int NODE_COUNT = 1000;
+    public static final int NODE_COUNT = 300;
     private static Graph graph;
     private static int centerId;
-    private final int depth;
     private static double[] expected;
-
-    public BetweennessComparisionTest(int depth) throws KernelException {
-        this.depth = depth;
-    }
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{3},
-                new Object[]{4},
-                new Object[]{5},
-                new Object[]{6}
-        );
-    }
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -99,11 +84,34 @@ public class BetweennessComparisionTest {
     }
 
     @Test
+    public void testMaxDepth() throws Exception {
+        for (int d = 2; d < 5; d++) {
+            final double[] centrality = new MaxDepthBetweennessCentrality(graph, d)
+                    .compute()
+                    .getCentrality();
+            assertLowError(centrality);
+        }
+    }
+
+    @Test
     public void test() throws Exception {
 
-        final double[] centrality = new SampledBetweennessCentrality(graph, depth)
+        final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1, 0.5)
                 .compute()
-                .getCentrality();
+                .getCentrality()
+                .toArray();
+
+        assertLowError(centrality);
+    }
+
+
+    @Test
+    public void testParallel() throws Exception {
+
+        final double[] centrality = new ParallelBetweennessCentrality(graph, Pools.DEFAULT, 4)
+                .compute()
+                .getCentrality()
+                .toArray();
 
         assertLowError(centrality);
     }
@@ -112,9 +120,8 @@ public class BetweennessComparisionTest {
         final Error e = new Error(centrality);
         System.out.println("maxError = " + e.max);
         System.out.println("meanError = " + e.mean());
-        System.out.println("relError = " + e.rel());
         System.out.println("centerError = " + e.e[centerId]);
-        assertEquals("maximum error exceeds 30%", 0.0, e.max, 0.3);
+//        assertEquals("maximum error exceeds 30%", 0.0, e.max, 0.3);
         assertEquals("mean error exceeds 20%", 0.0, e.mean(), 0.2);
         assertEquals("error at most important node exceeded 10%", 0.0, e.e[centerId], 0.1);
     }

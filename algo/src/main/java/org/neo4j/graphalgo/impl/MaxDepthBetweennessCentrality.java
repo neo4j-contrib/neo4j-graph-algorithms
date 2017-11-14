@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class SampledBetweennessCentrality extends Algorithm<SampledBetweennessCentrality> {
+public class MaxDepthBetweennessCentrality extends Algorithm<MaxDepthBetweennessCentrality> {
 
     private Graph graph;
 
@@ -51,7 +51,7 @@ public class SampledBetweennessCentrality extends Algorithm<SampledBetweennessCe
     private Direction direction = Direction.OUTGOING;
     private double divisor = 1.0;
 
-    public SampledBetweennessCentrality(Graph graph, int maxDepth) {
+    public MaxDepthBetweennessCentrality(Graph graph, int maxDepth) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.maxDepth = maxDepth;
@@ -65,7 +65,7 @@ public class SampledBetweennessCentrality extends Algorithm<SampledBetweennessCe
         delta = new double[nodeCount];
     }
 
-    public SampledBetweennessCentrality withDirection(Direction direction) {
+    public MaxDepthBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
         this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
@@ -76,7 +76,7 @@ public class SampledBetweennessCentrality extends Algorithm<SampledBetweennessCe
      *
      * @return itself for method chaining
      */
-    public SampledBetweennessCentrality compute() {
+    public MaxDepthBetweennessCentrality compute() {
         Arrays.fill(centrality, 0);
         graph.forEachNode(this::compute);
         return this;
@@ -180,12 +180,12 @@ public class SampledBetweennessCentrality extends Algorithm<SampledBetweennessCe
     }
 
     @Override
-    public SampledBetweennessCentrality me() {
+    public MaxDepthBetweennessCentrality me() {
         return this;
     }
 
     @Override
-    public SampledBetweennessCentrality release() {
+    public MaxDepthBetweennessCentrality release() {
         graph = null;
         centrality = null;
         delta = null;
