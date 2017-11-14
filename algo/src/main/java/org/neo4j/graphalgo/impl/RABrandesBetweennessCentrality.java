@@ -64,12 +64,12 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
      * @param executorService the executor service
      * @param concurrency desired number of threads to spawn
      */
-    public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency, double p) {
+    public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.p = p;
+        this.p = Math.log10(nodeCount) / Math.exp(2);
         this.centrality = new AtomicDoubleArray(nodeCount);
     }
 

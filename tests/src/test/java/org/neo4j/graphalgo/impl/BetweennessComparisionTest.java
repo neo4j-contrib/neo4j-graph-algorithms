@@ -33,7 +33,7 @@ public class BetweennessComparisionTest {
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     public static final String TYPE = "TYPE";
-    public static final int NODE_COUNT = 300;
+    public static final int NODE_COUNT = 500;
     private static Graph graph;
     private static int centerId;
     private static double[] expected;
@@ -96,7 +96,7 @@ public class BetweennessComparisionTest {
     @Test
     public void test() throws Exception {
 
-        final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1, 0.5)
+        final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1)
                 .compute()
                 .getCentrality()
                 .toArray();

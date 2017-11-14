@@ -122,7 +122,7 @@ public class BetweennessCentralityTest {
     @Test
     public void testRABrandes() throws Exception {
 
-        new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 3, 0.9)
+        new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 3)
                 .compute()
                 .resultStream()
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
