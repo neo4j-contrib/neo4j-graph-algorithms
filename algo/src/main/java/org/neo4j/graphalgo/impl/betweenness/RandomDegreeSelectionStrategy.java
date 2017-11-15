@@ -1,5 +1,6 @@
 package org.neo4j.graphalgo.impl.betweenness;
 
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Degrees;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
@@ -11,11 +12,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * @author mknblch
  */
-public class RandomDegreeSelectionStrategy implements SelectionStrategy {
+public class RandomDegreeSelectionStrategy implements NodeIterator {
 
     private final SecureRandom random;
 
@@ -42,12 +44,19 @@ public class RandomDegreeSelectionStrategy implements SelectionStrategy {
     }
 
     @Override
-    public void forEachNode(IntConsumer nodeConsumer) {
+    public void forEachNode(IntPredicate consumer) {
         nodeIterator.forEachNode(node -> {
             if (random.nextDouble() > (double) degrees.degree(node, direction) / maxDegree) {
-                nodeConsumer.accept(node);
+                if (!consumer.test(node)) {
+                    return false;
+                }
             }
             return true;
         });
+    }
+
+    @Override
+    public PrimitiveIntIterator nodeIterator() {
+        return null;
     }
 }
