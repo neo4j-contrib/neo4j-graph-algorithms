@@ -113,8 +113,6 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 | loadMillis | int | milliseconds for loading data
 | evalMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
-
-
 |===
 
 

@@ -116,9 +116,10 @@ partitionProperty - simple label propagation kernel
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | iterations | int | 1 | yes | the maximum number of iterations to run
-| weightProperty | string | 'weight' | yes | property name that contains weight. Must be numeric.
+| weightProperty | string | 'weight' | yes | property name of node and/or relationship that contain weight. Must be numeric. 
 | partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside, can be used to define initial set of labels (must be a number)
 | write | boolean | true | yes | if result should be written back as node property
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 
 |===
 
@@ -136,21 +137,37 @@ partitionProperty - simple label propagation kernel
 | partitionProperty | string | property name written back to
 | write | boolean | true | yes | if result was written back as node property
 |===
+
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+include::scripts/label-propagation.cypher[tag=cypher-loading]
+----
+
 == Versions 
 
 We support the following versions of the label propagation algorithms:
 
 * [x] directed, unweighted:  
 
-** weightProperty: null
+** direction: 'INCOMING' or 'OUTGOING', weightProperty: null
 
 * [x] directed, weighted 
 
-** weightProperty : 'weight'
+** direction: 'INCOMING' or 'OUTGOING', weightProperty : 'weight'
 
-* [ ] undirected, unweighted
+* [x] undirected, unweighted
 
-* [ ] undirected, weighted 
+** direction: 'BOTH', weightProperty: null
+
+* [x] undirected, weighted 
+
+** direction: 'BOTH', weightProperty: 'weight'
 
 == References
 

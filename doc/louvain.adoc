@@ -153,6 +153,7 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 | writeProperty | string | 'community' | yes | property name written back the id of the community particular node belongs to
 | defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
 | concurrency | int | available CPUs | yes | number of concurrent threads
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
@@ -173,7 +174,7 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 ----
 CALL algo.louvain.stream(label:String, relationship:String,
 {weightProperty:'propertyName', defaultValue:1.0, concurrency:4}) 
-YIELD nodeId, setId - yields a setId to each node id
+YIELD nodeId, community - yields a community to each node id
 ----
 
 .Parameters
@@ -184,6 +185,7 @@ YIELD nodeId, setId - yields a setId to each node id
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
 | weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
 | defaultValue | float | 1.0 | yes | default value of the weight in case it is missing or invalid
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
@@ -191,8 +193,21 @@ YIELD nodeId, setId - yields a setId to each node id
 |===
 | name | type | description
 | nodeId | int | node id
-| setId | int | community id
+| community | int | community id
 |===
+
+== Cypher loading
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+
+
+[source,cypher]
+----
+include::scripts/louvain.cypher[tag=cypher-loading]
+----
 
 == Versions 
 
@@ -200,8 +215,8 @@ YIELD nodeId, setId - yields a setId to each node id
 
 ** weightProperty: null
 
-* [x] undirected, weighted 
-
+* [x] undirected, weighted
+ 
 ** weightProperty : 'weight'
 
 == References

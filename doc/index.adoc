@@ -36,10 +36,6 @@ include::implementers.adoc[leveloffset=2]
 
 :implementation:
 
-=== Triangle Count
-
-include::triangleCount.adoc[leveloffset=2,tags=implementation]
-
 === PageRank
 
 include::pagerank.adoc[leveloffset=2,tags=implementation]
@@ -52,6 +48,10 @@ include::betweenness-centrality.adoc[leveloffset=2,tags=implementation]
 
 include::closeness-centrality.adoc[leveloffset=2,tags=implementation]
 
+=== Harmonic Centrality
+
+include::harmonic-centrality.adoc[leveloffset=2,tags=implementation]
+
 === Minimum Weight Spanning Tree
 
 include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
@@ -60,11 +60,17 @@ include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
 
 include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
 
+=== Triangle Count
+
+include::triangleCount.adoc[leveloffset=2,tags=implementation]
+
 === Label Propagation
 
 include::label-propagation.adoc[leveloffset=2,tags=implementation]
 
-// include::louvain.adoc[leveloffset=2,tags=implementation]
+=== Louvain
+
+include::louvain.adoc[leveloffset=2,tags=implementation]
 
 === Weakly Connected Components
 

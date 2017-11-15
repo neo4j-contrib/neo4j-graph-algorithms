@@ -142,6 +142,7 @@ YIELD nodeId, centrality - yields centrality for each node
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
 | concurrency | int | available CPUs | yes | number of concurrent threads
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results

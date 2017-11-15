@@ -42,7 +42,6 @@ k = N-1 = 4
 sum |1.5    2    1.5    1     1
  ---|------------------------------
  *k |0.37  0.5  0.37  0.25  0.25
-==================================
 
 instead of calculating the farness we sum the inverse
 of each cell and multiply by 1/(n-1)

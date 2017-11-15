@@ -97,6 +97,32 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 |===
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.scc.stream(label:String, relationship:String, {concurrency:4}) 
+YIELD nodeId, partition - yields a partition to each node id
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| partition | int | partition id
+|===
+
 == Cypher loading
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
