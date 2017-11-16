@@ -37,6 +37,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
+ * Betweenness Centrality Algorithms
+ *
+ * all procedures accept {in, incoming, <, out, outgoing, >, both, <>} as direction
+ *
  * @author mknblch
  */
 public class BetweennessCentralityProc {
@@ -53,6 +57,15 @@ public class BetweennessCentralityProc {
     @Context
     public KernelTransaction transaction;
 
+    /**
+     * Randomized Approximate Brandes Algorithm
+     * for approximating Betweenness Centrality
+     *
+     * optional Arguments:
+     *  strategy:'degree'   Degree based randomization
+     *  strategy:'random'   Randomized selection. Takes optional argument probability:double[0-1]
+     *                      or use log10(nodeCount) / e^2 as default
+     */
     @Procedure(value = "algo.betweenness.sampled.stream")
     @Description("CALL algo.betweenness.sampled.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessRABrandes(
@@ -60,19 +73,19 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
-                .withDirection(Direction.OUTGOING)
+                .withDirection(configuration.getDirection(Direction.OUTGOING))
                 .load(configuration.getGraphImpl());
 
         final RABrandesBetweennessCentrality algo =
                 new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency(), strategy(configuration, graph))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
-                        .withDirection(Direction.OUTGOING)
+                        .withDirection(configuration.getDirection(Direction.OUTGOING))
                         .compute();
 
         graph.release();
@@ -81,26 +94,34 @@ public class BetweennessCentralityProc {
     }
 
 
+    /**
+     * Experimental!
+     *
+     * Brandes BC Algorithm with maximum path length as termination condition.
+     *
+     * additional Arguments:
+     *  maxDepth: maximum path length from pivot node
+     */
     @Procedure(value = "algo.betweenness.sampled.exp1.stream")
-    @Description("CALL algo.betweenness.sampled.exp1.stream(label:String, relationship:String, {maxDepth:5, direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
+    @Description("CALL algo.betweenness.sampled.exp1.stream(label:String, relationship:String, maxDepth:int, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<MaxDepthBetweennessCentrality.Result> betweennessMaxDepthStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
-                .withDirection(Direction.OUTGOING)
+                .withDirection(configuration.getDirection(Direction.OUTGOING))
                 .load(configuration.getGraphImpl());
 
         final MaxDepthBetweennessCentrality algo =
                 new MaxDepthBetweennessCentrality(graph, configuration.getNumber("maxDepth", Integer.MAX_VALUE).intValue())
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
-                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
-                        .withDirection(Direction.OUTGOING)
+                        .withProgressLogger(ProgressLogger.wrap(log, "MaxDepthBetweennessCentrality"))
+                        .withDirection(configuration.getDirection(Direction.OUTGOING))
                         .compute();
 
         graph.release();
@@ -109,6 +130,11 @@ public class BetweennessCentralityProc {
     }
 
 
+    /**
+     * Experimental!
+     *
+     * Brandes BC using successor sets instead of predecessors
+     */
     @Procedure(value = "algo.betweenness.exp1.stream")
     @Description("CALL algo.betweenness.exp1.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessSuccessorBrandesStream(
@@ -116,7 +142,7 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
@@ -137,7 +163,8 @@ public class BetweennessCentralityProc {
     }
 
     /**
-     * Procedure accepts {in, incoming, <, out, outgoing, >, both, <>} as direction
+     * Brandes Betweenness Centrality Algorithm
+     *
      */
     @Procedure(value = "algo.betweenness.stream")
     @Description("CALL algo.betweenness.stream(label:String, relationship:String, {direction:'out', concurrency :4})" +
@@ -147,7 +174,7 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
@@ -155,7 +182,7 @@ public class BetweennessCentralityProc {
                 .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                 .load(configuration.getGraphImpl());
 
-        int concurrency = configuration.getConcurrency();
+        final int concurrency = configuration.getConcurrency();
         if (concurrency > 1) {
             final ParallelBetweennessCentrality algo =
                     new ParallelBetweennessCentrality(graph, Pools.DEFAULT, concurrency)
@@ -183,7 +210,7 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
 
@@ -242,7 +269,7 @@ public class BetweennessCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         if (configuration.getConcurrency() > 1) {
             return computeBetweennessParallel(label, relationship, configuration);
@@ -251,8 +278,18 @@ public class BetweennessCentralityProc {
         }
     }
 
+
+    /**
+     * Randomized Approximate Brandes Algorithm
+     * for approximating Betweenness Centrality
+     *
+     * optional Arguments:
+     *  strategy:'degree'   Degree based randomization
+     *  strategy:'random'   Randomized selection. Takes optional argument probability:double[0-1]
+     *                      or use log10(nodeCount) / e^2 as default
+     */
     @Procedure(value = "algo.betweenness.sampled", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness.sampled(label:String, relationship:String, {direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
+    @Description("CALL algo.betweenness.sampled(label:String, relationship:String, {strategy:'random', probability:double, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessRABrandesWrite(
             @Name(value = "label", defaultValue = "") String label,
@@ -309,14 +346,15 @@ public class BetweennessCentralityProc {
     }
 
     @Procedure(value = "algo.betweenness.sampled.exp1", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness.sampled.exp1(label:String, relationship:String, {maxDepth:5, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
+    @Description("CALL algo.betweenness.sampled.exp1(label:String, relationship:String, {maxDepth:5, direction:'out'," +
+            "write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessMaxDepth(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         final BetweennessCentralityProcResult.Builder builder =
                 BetweennessCentralityProcResult.builder();
@@ -337,7 +375,7 @@ public class BetweennessCentralityProc {
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final MaxDepthBetweennessCentrality bc =
                 new MaxDepthBetweennessCentrality(graph, configuration.getNumber("maxDepth", Integer.MAX_VALUE).intValue())
-                        .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
+                        .withProgressLogger(ProgressLogger.wrap(log, "MaxDepthBetweennessCentrality"))
                         .withTerminationFlag(terminationFlag)
                         .withDirection(configuration.getDirection(Direction.OUTGOING));
 

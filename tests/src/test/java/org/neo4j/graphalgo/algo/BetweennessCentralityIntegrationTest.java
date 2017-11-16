@@ -260,8 +260,8 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testBetweennessWriteWithDirection() throws Exception {
 
-        db.execute("CALL algo.betweenness('','', {direction:'both', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
-                "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
+        db.execute("CALL algo.betweenness('','', {direction:'both', write:true, stats:true, writeProperty:'centrality'}) " +
+                "YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(35.0, (double) row.getNumber("sumCentrality"), 0.01);
                     assertEquals(30.0, (double) row.getNumber("maxCentrality"), 0.01);
@@ -292,7 +292,8 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testRABrandesHighProbability() throws Exception {
 
-        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', probability:1.0, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', probability:1.0, write:true, " +
+                "stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.1);
@@ -308,7 +309,8 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testRABrandesNoProbability() throws Exception {
 
-        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', write:true, stats:true, " +
+                "writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
@@ -319,9 +321,10 @@ public class BetweennessCentralityIntegrationTest {
     }
 
     @Test
-    public void testRABrandesRandomDegree() throws Exception {
+    public void testRABrandeseWrite() throws Exception {
 
-        db.execute("CALL algo.betweenness.sampled('','', {strategy:'degree', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', probability:1.0, " +
+                "write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
@@ -329,6 +332,38 @@ public class BetweennessCentralityIntegrationTest {
                     assertNotEquals(-1L, row.getNumber("nodes"));
                     return true;
                 });
+    }
+
+    @Test
+    public void testRABrandesStream() throws Exception {
+
+        db.execute("CALL algo.betweenness.sampled.stream('','', {strategy:'random', probability:1.0, " +
+                "write:true, stats:true, writeProperty:'centrality'}) YIELD nodeId, centrality")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    consumer.consume(
+                            row.getNumber("nodeId").intValue(),
+                            row.getNumber("centrality").doubleValue());
+                    return true;
+                });
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
+    }
+
+    @Test
+    public void testMaxDepthBrandesStream() throws Exception {
+
+        db.execute("CALL algo.betweenness.sampled.exp1.stream('','', {maxDepth:4, " +
+                "write:true, stats:true, writeProperty:'centrality'}) YIELD nodeId, centrality")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    consumer.consume(
+                            row.getNumber("nodeId").intValue(),
+                            row.getNumber("centrality").doubleValue());
+                    return true;
+                });
+
+        verify(consumer, times(10)).consume(anyLong(), eq(6.0));
+        verify(consumer, times(1)).consume(eq(centerNodeId), eq(25.0));
     }
 
     @Test
