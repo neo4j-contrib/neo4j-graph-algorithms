@@ -69,7 +69,7 @@ public class BetweennessCentralityProc {
                 .load(configuration.getGraphImpl());
 
         final RABrandesBetweennessCentrality algo =
-                new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency())
+                new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency(), strategy(configuration, graph))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
                         .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
                         .withDirection(Direction.OUTGOING)
@@ -279,7 +279,7 @@ public class BetweennessCentralityProc {
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final RABrandesBetweennessCentrality bc =
-                new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency())
+                new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency(), strategy(configuration, graph))
                         .withProgressLogger(ProgressLogger.wrap(log, "Randomized Approximate Brandes: BetweennessCentrality(parallel)"))
                         .withTerminationFlag(terminationFlag)
                         .withDirection(configuration.getDirection(Direction.OUTGOING));
@@ -505,5 +505,25 @@ public class BetweennessCentralityProc {
         builder.withCentralityMax(max)
                 .withCentralityMin(min)
                 .withCentralitySum(sum);
+    }
+
+    private static RABrandesBetweennessCentrality.SelectionStrategy strategy(ProcedureConfiguration configuration, Graph graph) {
+
+        switch (configuration.getString("strategy", "random")) {
+
+            case "degree":
+                return new RandomDegreeSelectionStrategy(
+                        configuration.getDirection(Direction.OUTGOING),
+                        graph,
+                        Pools.DEFAULT,
+                        configuration.getConcurrency());
+
+            default:
+                return new RandomSelectionStrategy(
+                        graph,
+                        configuration.getNumber(
+                                "probability",
+                                Math.log10(graph.nodeCount()) / Math.exp(2)).doubleValue());
+        }
     }
 }

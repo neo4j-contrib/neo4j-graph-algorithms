@@ -42,6 +42,21 @@ import java.util.stream.Stream;
  */
 public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweennessCentrality> {
 
+    public interface SelectionStrategy {
+
+        /**
+         * tell if the node is part of the selection
+         */
+        boolean select(int nodeId);
+
+        /**
+         * total count of selectable nodes
+         */
+        int size();
+    }
+
+
+
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -54,23 +69,21 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private final double p;
+    private final SelectionStrategy selectionStrategy;
     private Direction direction = Direction.OUTGOING;
     private double divisor = 1.0;
 
     /**
-     * constructs a parallel centrality solver
-     *
      * @param graph the graph iface
      * @param executorService the executor service
      * @param concurrency desired number of threads to spawn
      */
-    public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency) {
+    public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency, SelectionStrategy selectionStrategy) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.p = Math.log10(nodeCount) / Math.exp(2);
+        this.selectionStrategy = selectionStrategy;
         this.centrality = new AtomicDoubleArray(nodeCount);
     }
 
@@ -153,13 +166,14 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
 
         @Override
         public void run() {
+            final double f = (nodeCount * divisor) / selectionStrategy.size();
             for (;;) {
                 reset();
                 final int startNodeId = nodeQueue.getAndIncrement();
                 if (startNodeId >= nodeCount || !running()) {
                     return;
                 }
-                if (Math.random() > p) {
+                if (!selectionStrategy.select(startNodeId)) {
                     continue;
                 }
                 getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
@@ -189,7 +203,7 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                         return true;
                     });
                     if (node != startNodeId) {
-                        centrality.add(node, (1.0 / p) * (delta[node] / divisor));
+                        centrality.add(node, f * (delta[node]));
                     }
                 }
             }

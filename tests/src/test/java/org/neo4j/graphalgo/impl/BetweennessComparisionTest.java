@@ -11,10 +11,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.impl.betweenness.BetweennessCentrality;
-import org.neo4j.graphalgo.impl.betweenness.MaxDepthBetweennessCentrality;
-import org.neo4j.graphalgo.impl.betweenness.ParallelBetweennessCentrality;
-import org.neo4j.graphalgo.impl.betweenness.RABrandesBetweennessCentrality;
+import org.neo4j.graphalgo.impl.betweenness.*;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -25,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
-@Ignore("playground")
+@Ignore("approximations")
 public class BetweennessComparisionTest {
 
     @ClassRule
@@ -53,7 +50,7 @@ public class BetweennessComparisionTest {
                     .newCompleteGraphBuilder()
                     .createCompleteGraph(NODE_COUNT - 1)
                     .forEachRelInTx(r -> {
-                        if (Math.random() > 0.005) {
+                        if (Math.random() > 0.005) { // keep ~2.5 connections per node
                             r.delete();
                         }
                     })
@@ -95,7 +92,8 @@ public class BetweennessComparisionTest {
     @Test
     public void test() throws Exception {
 
-        final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1)
+        final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1,
+                new RandomSelectionStrategy(graph))
                 .compute()
                 .getCentrality()
                 .toArray();
@@ -117,58 +115,40 @@ public class BetweennessComparisionTest {
 
     public void assertLowError(double[] centrality) {
         final Error e = new Error(centrality);
-        System.out.println("maxError = " + e.max);
         System.out.println("meanError = " + e.mean());
-        System.out.println("centerError = " + e.e[centerId]);
-//        assertEquals("maximum error exceeds 30%", 0.0, e.max, 0.3);
+        System.out.println("maxError = " + e.max());
+        System.out.println("centerError = " + e.error(centerId));
         assertEquals("mean error exceeds 20%", 0.0, e.mean(), 0.2);
-        assertEquals("error at most important node exceeded 10%", 0.0, e.e[centerId], 0.1);
+        assertEquals("error at most important node exceeded 10%", 0.0, e.error(centerId), 0.1);
     }
 
     private class Error {
 
-        private double[] centrality;
-        double[] e = new double[NODE_COUNT];
-        double[] abs = new double[NODE_COUNT];
-
-        double max = 0.0;
+        double[] absError = new double[NODE_COUNT];
+        double fMax = 0;
+        double fMin = Double.POSITIVE_INFINITY;
         double sum = 0.0;
-        double absE = 0.0;
+
 
         public Error(double[] centrality) {
-            this.centrality = centrality;
             for (int i = 0; i < NODE_COUNT; i++) {
-                abs[i] = Math.abs(expected[i] - centrality[i]);
-                if (i > 0) {
-                    absE += Math.abs(abs[i] - abs[i - 1]);
-                }
-                e[i] = abs[i] == 0.0 ? 0.0 : abs[i] / expected[i];
-                max = Math.max(e[i], max);
-                sum += e[i];
-            }
-        }
-
-        public void print() {
-            int skipped = 0;
-            for (int i = 0; i < NODE_COUNT; i++) {
-                if (e[i] > 0.01) {
-                    System.out.println(i + " " + expected[i] + " " + centrality[i] + " " + e[i]);
-                } else {
-                    skipped++;
-                }
-            }
-            if (skipped > 0) {
-                System.out.println(skipped + " nodes have an error <= 0.01");
+                absError[i] = Math.abs(expected[i] - centrality[i]);
+                fMin = Math.min(fMin, absError[i]);
+                fMax = Math.max(fMax, absError[i]);
+                sum += absError[i];
             }
         }
 
         public double mean() {
-            return sum / NODE_COUNT;
+            return sum > 0.0 ? (sum / (fMax - fMin)) * (1.0 / NODE_COUNT) : 0.0;
         }
 
-        public double rel() {
-            return absE / NODE_COUNT;
+        public double error(int nodeId) {
+            return absError[nodeId] > 0.0 ? (absError[nodeId] / (fMax - fMin)) : 0.0;
         }
 
+        public double max() {
+            return fMax > 0.0 ? (fMax / (fMax - fMin)) : 0.0;
+        }
     }
 }

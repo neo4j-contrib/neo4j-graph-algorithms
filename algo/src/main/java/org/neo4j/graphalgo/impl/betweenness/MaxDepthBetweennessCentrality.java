@@ -30,8 +30,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Implements Betweenness Centrality for unweighted graphs
- * as specified in <a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
+ * Implements Brandes Betweenness Centrality with
+ * additional restriction on the maximum allowed
+ * depth
  *
  * @author mknblch
  */
