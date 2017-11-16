@@ -53,8 +53,8 @@ public class BetweennessCentralityProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure(value = "algo.betweenness.exp2.stream")
-    @Description("CALL algo.betweenness.exp2.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
+    @Procedure(value = "algo.betweenness.sampled.stream")
+    @Description("CALL algo.betweenness.sampled.stream(label:String, relationship:String, {direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<BetweennessCentrality.Result> betweennessRABrandes(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -81,8 +81,8 @@ public class BetweennessCentralityProc {
     }
 
 
-    @Procedure(value = "algo.betweenness.exp3.stream")
-    @Description("CALL algo.betweenness.exp3.stream(label:String, relationship:String, {maxDepth:5, direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
+    @Procedure(value = "algo.betweenness.sampled.exp1.stream")
+    @Description("CALL algo.betweenness.sampled.exp1.stream(label:String, relationship:String, {maxDepth:5, direction:'out'}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<MaxDepthBetweennessCentrality.Result> betweennessMaxDepthStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -251,8 +251,8 @@ public class BetweennessCentralityProc {
         }
     }
 
-    @Procedure(value = "algo.betweenness.exp2", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness.exp2(label:String, relationship:String, {direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
+    @Procedure(value = "algo.betweenness.sampled", mode = Mode.WRITE)
+    @Description("CALL algo.betweenness.sampled(label:String, relationship:String, {direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessRABrandesWrite(
             @Name(value = "label", defaultValue = "") String label,
@@ -308,8 +308,8 @@ public class BetweennessCentralityProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.betweenness.exp3", mode = Mode.WRITE)
-    @Description("CALL algo.betweenness.exp3(label:String, relationship:String, {maxDepth:5, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
+    @Procedure(value = "algo.betweenness.sampled.exp1", mode = Mode.WRITE)
+    @Description("CALL algo.betweenness.sampled.exp1(label:String, relationship:String, {maxDepth:5, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation")
     public Stream<BetweennessCentralityProcResult> betweennessMaxDepth(
             @Name(value = "label", defaultValue = "") String label,

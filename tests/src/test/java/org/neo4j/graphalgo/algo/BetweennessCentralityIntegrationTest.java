@@ -292,7 +292,7 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testRABrandesHighProbability() throws Exception {
 
-        db.execute("CALL algo.betweenness.exp2('','', {strategy:'random', probability:1.0, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', probability:1.0, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.1);
@@ -308,7 +308,7 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testRABrandesNoProbability() throws Exception {
 
-        db.execute("CALL algo.betweenness.exp2('','', {strategy:'random', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'random', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
@@ -321,7 +321,7 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testRABrandesRandomDegree() throws Exception {
 
-        db.execute("CALL algo.betweenness.exp2('','', {strategy:'degree', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled('','', {strategy:'degree', write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
@@ -334,7 +334,7 @@ public class BetweennessCentralityIntegrationTest {
     @Test
     public void testMaxDepthBC() throws Exception {
 
-        db.execute("CALL algo.betweenness.exp3('','', {maxDepth:4, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.betweenness.sampled.exp1('','', {maxDepth:4, write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertEquals(85.0, (double) row.getNumber("sumCentrality"), 0.1);
