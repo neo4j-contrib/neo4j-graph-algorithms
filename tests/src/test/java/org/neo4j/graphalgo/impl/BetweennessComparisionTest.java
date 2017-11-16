@@ -131,7 +131,7 @@ public class BetweennessComparisionTest {
         assertLowError(centrality);
     }
 
-    public void assertLowError(double[] centrality) {
+    private void assertLowError(double[] centrality) {
         final Error e = new Error(centrality);
         System.out.println("meanError = " + e.mean());
         System.out.println("maxError = " + e.max());
