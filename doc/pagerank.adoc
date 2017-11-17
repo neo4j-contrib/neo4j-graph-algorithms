@@ -182,6 +182,7 @@ YIELD node, score - calculates page rank and streams results
 | iterations | int | 20 | yes | how many iterations of page-rank to run
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .results

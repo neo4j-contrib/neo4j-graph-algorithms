@@ -37,9 +37,7 @@ Closeness centrality makes sense whenever direct access is important, such as ac
 
 == Constraints / when not to use it
 
-A key node centrality measure in networks is closeness centrality (Freeman, 1978; Opsahl et al., 2010; Wasserman and Faust, 1994). 
-It is defined as the inverse of farness, which in turn, is the sum of distances to all other nodes. 
-As the distance between nodes in disconnected components of a network is infinite, this measure cannot be applied to networks with disconnected components (Opsahl et al., 2010; Wasserman and Faust, 1994). 
+Unfortunately, when the graph is unconnected, closeness centrality appears to be useless because the distance between two vertices belonging to different components is infinite by convention, which makes the sum in 2 infinite too and therefore its inverse equal to zero. For every vertex of such a graph, there is always another vertex belonging to another component: indices of all vertices of the graph are therefore useless and the calculation of the index is limited to the largest component, omitting the roles played by individuals of other components.[1]
 
 == Algorithm explanation on simple sample graph
 
@@ -142,6 +140,7 @@ YIELD nodeId, centrality - yields centrality for each node
 | label  | string | null | yes | label to load from the graph, if null load all nodes
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
 | concurrency | int | available CPUs | yes | number of concurrent threads
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
@@ -177,6 +176,8 @@ We support the following versions of the betweenness centrality algorithm:
 
 
 == References
+
+* [1]  https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
 
 * https://toreopsahl.com/2010/03/20/closeness-centrality-in-networks-with-disconnected-components/
 

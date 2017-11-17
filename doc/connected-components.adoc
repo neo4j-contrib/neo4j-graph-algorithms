@@ -186,6 +186,7 @@ YIELD nodeId, setId - yields a setId to each node id
 | weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
 | threshold | float | null | yes | value of the weight above which the relationship is not thrown away
 | defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
