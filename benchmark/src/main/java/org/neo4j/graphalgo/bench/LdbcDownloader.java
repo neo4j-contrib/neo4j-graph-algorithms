@@ -27,6 +27,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.slf4j.Slf4jLogProvider;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -83,6 +84,7 @@ public final class LdbcDownloader {
 
     private static GraphDatabaseAPI openDb(Path dbLocation) {
         GraphDatabaseService db = new GraphDatabaseFactory()
+                .setUserLogProvider(new Slf4jLogProvider())
                 .newEmbeddedDatabaseBuilder(dbLocation.toFile())
                 .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
                 .setConfig(GraphDatabaseSettings.allow_store_upgrade, "true")

@@ -55,8 +55,6 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
         int size();
     }
 
-
-
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -138,8 +136,7 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     @Override
     public RABrandesBetweennessCentrality release() {
         graph = null;
-        centrality = null;
-        return null;
+        return this;
     }
 
     /**
@@ -166,17 +163,26 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
 
         @Override
         public void run() {
+            System.out.println("nodeCount = " + nodeCount);
+            System.out.println(" selectionStrategy.size() = " + selectionStrategy.size());
             final double f = (nodeCount * divisor) / selectionStrategy.size();
             for (;;) {
-                reset();
                 final int startNodeId = nodeQueue.getAndIncrement();
                 if (startNodeId >= nodeCount || !running()) {
+                    System.out.println("end");
                     return;
                 }
+                System.out.println(startNodeId);
+                getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
                 if (!selectionStrategy.select(startNodeId)) {
                     continue;
                 }
-                getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
+                if (Math.random() > 0.1) {
+                    continue;
+                }
+
+                reset();
+                System.out.println("ok " + graph.degree(startNodeId, direction));
                 sigma[startNodeId] = 1;
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);
@@ -185,6 +191,9 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                     stack.push(node);
                     graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                         if (distance[target] < 0) {
+                            sigma[target] = 0;
+                            delta[target] = 0;
+                            paths.clear(target);
                             queue.addLast(target);
                             distance[target] = distance[node] + 1;
                         }
@@ -213,11 +222,8 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
          * reset local state
          */
         private void reset() {
-            paths.clear();
-            stack.clear();
-            queue.clear();
-            Arrays.fill(sigma, 0);
-            Arrays.fill(delta, 0);
+//            Arrays.fill(sigma, 0);
+//            Arrays.fill(delta, 0);
             Arrays.fill(distance, -1);
         }
     }
