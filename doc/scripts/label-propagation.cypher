@@ -34,7 +34,15 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 
 // end::write-existing-label-sample-graph[]
 
+// tag::cypher-loading[]
 
+CALL algo.labelPropagation(
+'MATCH (p:User) RETURN id(p) as id, p.weight as weight, id(p) as value',
+'MATCH (p1:User)-[f:FRIEND]->(p2:User) 
+RETURN id(p1) as source, id(p2) as target,f.weight as weight',
+"OUT",{graph:'cypher',write:true});
+
+// end::cypher-loading[]
 
 
 
