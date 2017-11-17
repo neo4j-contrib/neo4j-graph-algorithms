@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,11 +31,13 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.impl.betweenness.BetweennessCentrality;
+import org.neo4j.graphalgo.impl.betweenness.BetweennessCentralitySuccessorBrandes;
+import org.neo4j.graphalgo.impl.betweenness.ParallelBetweennessCentrality;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
