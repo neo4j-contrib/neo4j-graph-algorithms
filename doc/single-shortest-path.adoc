@@ -51,7 +51,7 @@ include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 .Running algorithm and streaming results
 [source,cypher]
 ----
- include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]                
+include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]                
 ----
 
 .Running algorithm and writing back results 
@@ -172,15 +172,19 @@ We support the following versions of the shortest path algorithms:
 
 * [x] directed, unweighted:  
 
-- weightProperty: null
+** direction: 'OUTGOING' or INCOMING, weightProperty: null
 
 * [x] directed, weighted 
 
-- weightProperty : 'cost'
+** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
 
-* [ ] undirected, unweighted
+* [x] undirected, unweighted
 
-* [ ] undirected, weighted 
+** direction: 'BOTH', weightProperty: null
+
+* [x] undirected, weighted 
+
+** direction: 'BOTH', weightProperty: 'cost'
 
 == Implementations
 
