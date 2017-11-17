@@ -1,5 +1,5 @@
 org.neo4j.graphalgo.impl.AllShortestPaths	        algo.allShortestPaths
-org.neo4j.graphalgo.impl.BetweennessCentrality  	algo.betweenness
+org.neo4j.graphalgo.impl.betweenness.BetweennessCentrality  	algo.betweenness
 org.neo4j.graphalgo.impl.MSTPrim	                algo.mst
 org.neo4j.graphalgo.impl.PageRank	                algo.pageRank
 org.neo4j.graphalgo.impl.ShortestPathDijkstra	    algo.shortestPath

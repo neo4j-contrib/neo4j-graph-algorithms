@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils;
 
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.stream.IntStream;
 
 /**
  * Atomic double Array implementation
@@ -27,12 +28,14 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public class AtomicDoubleArray {
 
     private final AtomicLongArray data;
+    private final int capacity;
 
     /**
      * Create a new AtomicDoubleArray
      * @param capacity its capacity
      */
     public AtomicDoubleArray(int capacity) {
+        this.capacity = capacity;
         data = new AtomicLongArray(capacity);
     }
 
@@ -98,5 +101,11 @@ public class AtomicDoubleArray {
             }
         }
         return "[" + builder.toString() + "]";
+    }
+
+    public double[] toArray() {
+        return IntStream.range(0, capacity)
+                .mapToDouble(this::get)
+                .toArray();
     }
 }

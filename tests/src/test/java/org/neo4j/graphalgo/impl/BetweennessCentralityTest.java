@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
@@ -29,6 +28,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.impl.betweenness.*;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -105,6 +105,25 @@ public class BetweennessCentralityTest {
     public void testBC() throws Exception {
 
         new BetweennessCentrality(graph)
+                .compute()
+                .resultStream()
+                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
+    }
+
+    @Test
+    public void testMBC() throws Exception {
+
+        new MaxDepthBetweennessCentrality(graph, 3)
+                .compute()
+                .resultStream()
+                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
+    }
+
+
+    @Test
+    public void testRABrandes() throws Exception {
+
+        new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 3, new RandomSelectionStrategy(graph, 0.3))
                 .compute()
                 .resultStream()
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
