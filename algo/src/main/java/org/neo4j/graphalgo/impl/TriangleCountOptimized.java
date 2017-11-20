@@ -81,7 +81,7 @@ final class CountTrianglesRecursive extends RecursiveTask<Long> {
             final long secondId = firstNeighbours[secondIndex];
             if (secondId > firstId) {
                 final long[] secondNeighbours = adjacencyListGraph.apply(secondId);
-                final boolean scanSecond = secondNeighbours.length < firstNeighbours.length;
+                final boolean scanSecond = secondNeighbours.length < firstNeighbours.length - (secondIndex + 1);
                 final long[] scanArray = (scanSecond) ? secondNeighbours : firstNeighbours;
                 final long[] searchArray = (scanSecond) ? firstNeighbours : secondNeighbours;
                 final int thirdSearchStartIndex = (scanSecond) ? secondIndex + 1 : 0;
