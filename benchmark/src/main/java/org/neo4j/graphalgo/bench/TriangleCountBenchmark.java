@@ -19,14 +19,9 @@
 package org.neo4j.graphalgo.bench;
 
 import com.carrotsearch.hppc.LongArrayList;
-import org.neo4j.graphalgo.TriangleProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.sources.BufferedAllRelationshipIterator;
-import org.neo4j.graphalgo.core.sources.LazyIdMapper;
-import org.neo4j.graphalgo.core.sources.SingleRunAllRelationIterator;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
@@ -35,9 +30,7 @@ import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
@@ -150,8 +143,20 @@ public class TriangleCountBenchmark {
 
     @Benchmark
     public Object _03_triangleCountOptimized() {
-        return new TriangleCountOptimized(adjacencyListGraph, ForkJoinPool.commonPool(), 10000)
-                .countTriangles();
+        return new Triangles(adjacencyListGraph, ForkJoinPool.commonPool(), 10000)
+                .count();
+    }
+
+    @Benchmark
+    public Object _03_triangleFindOptimized() {
+        TriangleIterator i = new Triangles(adjacencyListGraph, ForkJoinPool.commonPool(), 10000)
+                .find();
+        long count = 0;
+        while (i.hasNext()) {
+            i.next();
+            count += 1;
+        }
+        return count;
     }
 
 }

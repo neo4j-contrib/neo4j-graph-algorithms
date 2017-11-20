@@ -1,0 +1,67 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.neo4j.graphalgo.impl;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.concurrent.LinkedBlockingQueue;
+
+final public class TriangleIterator implements Iterator<TriangleStream.Result> {
+
+    protected int nextResultArrayIndex = 0;
+    protected ArrayList<TriangleStream.Result> currentResultArray = null;
+
+    protected LinkedBlockingQueue<ArrayList<TriangleStream.Result>> incomingResultsQueue = new LinkedBlockingQueue<>();
+
+    final public void add(ArrayList<TriangleStream.Result> results) {
+        try {
+            incomingResultsQueue.put(results);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            add(results);
+        }
+    }
+
+    final public TriangleStream.Result next() {
+        TriangleStream.Result result = currentResultArray.get(nextResultArrayIndex);
+        nextResultArrayIndex += 1;
+        if (nextResultArrayIndex >= currentResultArray.size()) {
+            currentResultArray = null;
+        }
+        return result;
+    }
+
+    final protected void replenishCurrentArray() throws InterruptedException {
+        currentResultArray = incomingResultsQueue.take();
+        nextResultArrayIndex = 0;
+    }
+
+    final public boolean hasNext() {
+        if (currentResultArray == null) {
+            try {
+                replenishCurrentArray();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                hasNext();
+            }
+        }
+        return currentResultArray.size() > 0;
+    }
+
+}
