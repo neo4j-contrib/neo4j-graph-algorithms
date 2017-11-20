@@ -50,13 +50,13 @@ public class BetweennessCentralityLDBC {
 
 
     private GraphDatabaseAPI db;
-    private Transaction tx;
     private Graph graph;
 
 
     @Before
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb();
+
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
@@ -71,20 +71,19 @@ public class BetweennessCentralityLDBC {
 
     @Test
     public void test_01_sbcParallel() {
-        System.out.println("start");
         runQuery(
                 db,
-                "CALL algo.betweenness.sampled(null, null, {strategy:'degree', probability:0.1, concurrency:8}) "
-                        + "YIELD loadMillis, computeMillis, writeMillis"
+                "CALL algo.betweenness.sampled(null, null, {strategy:'random', probability:0.001, concurrency:8}) "
+                        + "YIELD loadMillis, computeMillis, writeMillis, nodes"
                 , r -> {
                     long load = r.getNumber("loadMillis").longValue();
                     long compute = r.getNumber("computeMillis").longValue();
                     long write = r.getNumber("writeMillis").longValue();
+                    long nodeCount = r.getNumber("nodes").longValue();
 
                     System.out.println("load = " + load);
                     System.out.println("compute = " + compute);
                     System.out.println("write = " + write);
-
                 }
         );
     }
