@@ -111,7 +111,7 @@ public class BetweennessComparisionTest {
     public void test() throws Exception {
 
         final double[] centrality = new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 1,
-                new RandomSelectionStrategy(graph))
+                new RandomSelectionStrategy(graph, 0.5))
                 .compute()
                 .getCentrality()
                 .toArray();

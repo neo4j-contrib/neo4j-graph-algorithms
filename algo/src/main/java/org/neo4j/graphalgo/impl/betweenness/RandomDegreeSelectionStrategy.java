@@ -36,7 +36,7 @@ public class RandomDegreeSelectionStrategy implements RABrandesBetweennessCentra
 
     private final Degrees degrees;
     private final Direction direction;
-    private final int maxDegree;
+    private final double maxDegree;
     private final SimpleBitSet bitSet;
     private final int size;
 
