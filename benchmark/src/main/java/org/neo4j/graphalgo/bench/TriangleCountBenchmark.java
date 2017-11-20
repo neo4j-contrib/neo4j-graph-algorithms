@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.bench;
 
+import com.carrotsearch.hppc.LongArrayList;
 import org.neo4j.graphalgo.TriangleProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -40,7 +41,12 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
+import scala.reflect.ClassTag;
+import xerial.larray.LArray;
+import xerial.larray.LArray$;
 
+import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,7 +66,30 @@ public class TriangleCountBenchmark {
     public static final long TRIANGLE_COUNT = 1000L;
 
     private static Graph graph;
+    private static LArray<long[]> adjacencyListGraph;
     private static GraphDatabaseAPI api;
+
+    protected static LArray<long[]> createAdjacencyListGraph(Graph g) {
+        LArray<long[]> adjGraph = createGraphLArray(Long.valueOf(graph.nodeCount()));
+        LongArrayList lal = new LongArrayList();
+        g.forEachNode((id) -> {
+            g.forEachRelationship(id, Direction.BOTH, (u, v, relationId) -> {
+                lal.add(Long.valueOf(v));
+                return true;
+            });
+            long[] adjAsArray = lal.toArray();
+            Arrays.parallelSort(adjAsArray);
+            adjGraph.update(id, adjAsArray);
+            lal.clear();
+            return true;
+        });
+        return adjGraph;
+    }
+
+    protected static LArray<long[]> createGraphLArray(Long size) {
+        ClassTag<long[]> ct = scala.reflect.ClassTag$.MODULE$.apply(long[].class);
+        return LArray$.MODULE$.of(size, ct);
+    }
 
     @Param({"1", "2", "4", "8"})
     int threads;
@@ -94,6 +123,7 @@ public class TriangleCountBenchmark {
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
                     .load(HeavyGraphFactory.class);
+            adjacencyListGraph = createAdjacencyListGraph(graph);
         };
     }
 
@@ -118,5 +148,10 @@ public class TriangleCountBenchmark {
                 .getTriangleCount();
     }
 
+    @Benchmark
+    public Object _03_triangleCountOptimized() {
+        return new TriangleCountOptimized(adjacencyListGraph, ForkJoinPool.commonPool(), 10000)
+                .countTriangles();
+    }
 
 }
