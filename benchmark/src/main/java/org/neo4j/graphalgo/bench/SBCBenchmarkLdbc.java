@@ -81,7 +81,7 @@ public class SBCBenchmarkLdbc {
     public Object _01_sbcParallel() {
         return runQuery(
                 db,
-                "CALL algo.betweenness.sampled(null, null, {strategy:'random', probability:0.000001, concurrency:" + threads + "}) "
+                "CALL algo.betweenness.sampled(null, null, {strategy:'random', probability:0.001, maxDepth:5, concurrency:" + threads + "}) "
                         + "YIELD loadMillis, computeMillis, writeMillis"
                 , r -> {
                     long load = r.getNumber("loadMillis").longValue();
