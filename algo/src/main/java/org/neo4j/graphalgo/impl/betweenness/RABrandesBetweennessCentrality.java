@@ -240,13 +240,5 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
             }
             intCursors.add(node);
         }
-
-        private void clear(int node) {
-            final IntArrayList intCursors = paths.get(node);
-            if (null != intCursors) {
-                intCursors.clear();
-            }
-        }
-
     }
 }
