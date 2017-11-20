@@ -18,12 +18,11 @@
  */
 package org.neo4j.graphalgo.impl.betweenness;
 
-import com.carrotsearch.hppc.IntArrayDeque;
-import com.carrotsearch.hppc.IntStack;
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
@@ -32,6 +31,7 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -55,8 +55,6 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
         int size();
     }
 
-
-
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -65,13 +63,16 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     private AtomicDoubleArray centrality;
     // the node count
     private final int nodeCount;
+    private final int expectedNodeCount;
     // global executor service
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private final SelectionStrategy selectionStrategy;
+    private SelectionStrategy selectionStrategy;
     private Direction direction = Direction.OUTGOING;
     private double divisor = 1.0;
+
+    private int maxDepth = Integer.MAX_VALUE;
 
     /**
      * @param graph the graph iface
@@ -80,16 +81,22 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
      */
     public RABrandesBetweennessCentrality(Graph graph, ExecutorService executorService, int concurrency, SelectionStrategy selectionStrategy) {
         this.graph = graph;
-        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.selectionStrategy = selectionStrategy;
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.centrality = new AtomicDoubleArray(nodeCount);
+        this.selectionStrategy = selectionStrategy;
+        this.expectedNodeCount = selectionStrategy.size();
     }
 
     public RABrandesBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
         this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
+        return this;
+    }
+
+    public RABrandesBetweennessCentrality withMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
         return this;
     }
 
@@ -138,8 +145,8 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
     @Override
     public RABrandesBetweennessCentrality release() {
         graph = null;
-        centrality = null;
-        return null;
+        selectionStrategy = null;
+        return this;
     }
 
     /**
@@ -148,27 +155,27 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
      */
     private class BCTask implements Runnable {
 
-        private final Paths paths;
+        private final IntObjectMap<IntArrayList> paths;
         private final IntStack stack;
         private final IntArrayDeque queue;
-        private final double[] delta;
-        private final int[] sigma;
+        private final IntDoubleMap delta;
+        private final IntIntMap sigma;
         private final int[] distance;
 
         private BCTask() {
-            this.paths = new Paths();
+            this.paths = new IntObjectScatterMap<>(expectedNodeCount);
             this.stack = new IntStack();
             this.queue = new IntArrayDeque();
-            this.sigma = new int[nodeCount];
+            this.sigma = new IntIntScatterMap(expectedNodeCount);
+            this.delta = new IntDoubleScatterMap(expectedNodeCount);
+
             this.distance = new int[nodeCount];
-            this.delta = new double[nodeCount];
         }
 
         @Override
         public void run() {
             final double f = (nodeCount * divisor) / selectionStrategy.size();
             for (;;) {
-                reset();
                 final int startNodeId = nodeQueue.getAndIncrement();
                 if (startNodeId >= nodeCount || !running()) {
                     return;
@@ -177,20 +184,31 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                     continue;
                 }
                 getProgressLogger().logProgress((double) startNodeId / (nodeCount - 1));
-                sigma[startNodeId] = 1;
+                Arrays.fill(distance, -1);
+                sigma.clear();
+                paths.clear();
+                delta.clear();
+                sigma.put(startNodeId, 1);
                 distance[startNodeId] = 0;
                 queue.addLast(startNodeId);
+                queue.addLast(0);
                 while (!queue.isEmpty()) {
                     int node = queue.removeFirst();
+                    int nodeDepth = queue.removeFirst();
+                    if (nodeDepth > maxDepth) {
+                        continue;
+                    }
                     stack.push(node);
                     graph.forEachRelationship(node, direction, (source, target, relationId) -> {
                         if (distance[target] < 0) {
                             queue.addLast(target);
+                            queue.addLast(nodeDepth + 1);
                             distance[target] = distance[node] + 1;
                         }
+
                         if (distance[target] == distance[node] + 1) {
-                            sigma[target] += sigma[node];
-                            paths.append(target, node);
+                            sigma.addTo(target, sigma.getOrDefault(node, 0));
+                            append(target, node);
                         }
                         return true;
                     });
@@ -198,27 +216,29 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
 
                 while (!stack.isEmpty()) {
                     int node = stack.pop();
-                    paths.forEach(node, v -> {
-                        delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
-                        return true;
-                    });
+                    final IntArrayList intCursors = paths.get(node);
+                    if (null != intCursors) {
+                        intCursors.forEach((Consumer<? super IntCursor>) c -> {
+                            delta.addTo(c.value,
+                                    (double) sigma.getOrDefault(c.value, 0) /
+                                            (double) sigma.getOrDefault(node, 0) *
+                                            (delta.getOrDefault(node, 0) + 1.0));
+                        });
+                    }
                     if (node != startNodeId) {
-                        centrality.add(node, f * (delta[node]));
+                        centrality.add(node, f * (delta.getOrDefault(node, 0)));
                     }
                 }
             }
         }
 
-        /**
-         * reset local state
-         */
-        private void reset() {
-            paths.clear();
-            stack.clear();
-            queue.clear();
-            Arrays.fill(sigma, 0);
-            Arrays.fill(delta, 0);
-            Arrays.fill(distance, -1);
+        private void append(int target, int node) {
+            IntArrayList intCursors = paths.get(target);
+            if (null == intCursors) {
+                intCursors = new IntArrayList();
+                paths.put(target, intCursors);
+            }
+            intCursors.add(node);
         }
     }
 }
