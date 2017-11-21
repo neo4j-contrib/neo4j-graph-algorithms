@@ -79,6 +79,7 @@ public class GraphLoader {
     private Log log = NullLog.getInstance();
     private long logMillis = -1;
     private AllocationTracker tracker = AllocationTracker.EMPTY;
+    private boolean sort = false;
 
     /**
      * Creates a new serial GraphLoader.
@@ -123,6 +124,11 @@ public class GraphLoader {
      */
     public GraphLoader withDefaultLogInterval() {
         this.logMillis = -1;
+        return this;
+    }
+
+    public GraphLoader withSort(boolean sort) {
+        this.sort = sort;
         return this;
     }
 
@@ -487,6 +493,7 @@ public class GraphLoader {
                 accumulateWeights,
                 log,
                 logMillis,
+                sort,
                 tracker);
 
         try {
