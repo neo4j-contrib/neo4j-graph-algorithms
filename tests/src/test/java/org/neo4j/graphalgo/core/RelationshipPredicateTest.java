@@ -7,23 +7,27 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
+import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
  *
- *      (A)-->(B)-->(C)--//->(A)
+ *      (A)-->(B)-->(C)
+ *       ^           |
+ *       °-----------°
  *
  * @author mknblch
  */
@@ -43,11 +47,13 @@ public class RelationshipPredicateTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        // TODO
-        return Collections.singletonList(new Object[]{"Heavy", HeavyGraphFactory.class});
+        return Arrays.asList(
+                new Object[]{"Heavy", HeavyGraphFactory.class},
+                new Object[]{"Light", LightGraphFactory.class},
+                new Object[]{"Huge", HugeGraphFactory.class},
+                new Object[]{"View", GraphViewFactory.class}
+        );
     }
-
-    private Graph graph;
 
     public RelationshipPredicateTest(
             String ignoredNameForNiceTestDisplay,
@@ -76,7 +82,7 @@ public class RelationshipPredicateTest {
     @Test
     public void testOutgoing() throws Exception {
 
-        final HeavyGraph graph = (HeavyGraph) loader()
+        final Graph graph = loader()
                 .withDirection(Direction.OUTGOING)
                 .withSort(true)
                 .load(HeavyGraphFactory.class);
@@ -124,7 +130,7 @@ public class RelationshipPredicateTest {
     @Test
     public void testIncoming() throws Exception {
 
-        final HeavyGraph graph = (HeavyGraph) loader()
+        final Graph graph = loader()
                 .withDirection(Direction.INCOMING)
                 .withSort(true)
                 .load(HeavyGraphFactory.class);
@@ -179,11 +185,10 @@ public class RelationshipPredicateTest {
     @Test
     public void testBoth() throws Exception {
 
-        final HeavyGraph graph = (HeavyGraph) loader()
+        final Graph graph = loader()
                 .withDirection(Direction.BOTH)
                 .withSort(true)
                 .load(HeavyGraphFactory.class);
-
 
         // A -> B
         assertTrue(graph.exists(
@@ -314,7 +319,6 @@ public class RelationshipPredicateTest {
                 Direction.BOTH
         ));
     }
-
 
     private GraphLoader loader() {
         return new GraphLoader(DB)

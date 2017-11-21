@@ -24,7 +24,7 @@ package org.neo4j.graphalgo.api;
  *
  * @author mknblch
  */
-public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterable, RelationshipWeights, RelationshipIterator, WeightedRelationshipIterator {
+public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterable, RelationshipWeights, RelationshipIterator, RelationshipPredicate, WeightedRelationshipIterator {
 
     /**
      * release resources which are not part of the result or IdMapping

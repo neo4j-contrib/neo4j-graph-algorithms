@@ -281,4 +281,39 @@ public class LightGraph implements Graph {
         inOffsets = null;
         outOffsets = null;
     }
+
+    @Override
+    public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
+
+        final boolean[] found = {false};
+        switch (direction) {
+            case OUTGOING:
+                forEachOutgoing(sourceNodeId, (s, t, r) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+            case INCOMING:
+                forEachIncoming(sourceNodeId, (s, t, r) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+
+            default:
+                forEachRelationship(sourceNodeId, Direction.BOTH, (s, t, r) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+        }
+
+        return found[0];
+    }
 }
