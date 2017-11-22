@@ -75,11 +75,46 @@ include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 
 We can see that Alice is the main broker in this network and Charles is a minor broker.
 
+== Approximation of betweenness centrality
+
+Currently, the fastest known algorithm for exactly computing betweenness of all the vertices, designed by Brandes, requires at least O(nm) time for unweighted graphs, where n
+is the number of vertices and m is the number of edges. 
+Thus, for large-scale graphs, exact centrality computation on current workstations is not practically viable.[2] 
+
+Fast betweenness estimation is thus an important problem, as a good approximation is an acceptable alternative to exact scores.
+
+
+=== RA-Brandes Algorithm
+
+RA-Brandes algorithm, proposed by Brandes and Pich[3], is different from original Brandes’ algorithm in only one main respect: Brandes’ algorithm considers all nodes within the graph, while RA-Brandes considers only a subset of nodes, also known as pivots, from the graph.
+
+We implement two strategies of selecting the subset of nodes:
+
+* random: nodes are selected uniformly at random with defined probability of selection. Default probability is `log10(N) / e^2`. If probability is 1 algorihm works as original Brandes, where all nodes are loaded.
+
+* degree: first calculates the mean degree of the nodes and then allows only nodes whose degree is higher then the mean, so that only dense nodes are visited
+
+
+First step in calculating betweenness centrality is to collect all shortest paths that run through specific node. With parameter `maxDepth` you can limit the depth of all shortest paths traversal.
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/betweenness-centrality.cypher[tag=stream-rabrandes-graph]
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+include::scripts/betweenness-centrality.cypher[tag=write-rabrandes-graph]
+----
+
 == Example Usage
 
 == Syntax
 
-.Running algorithm and writing back results
+.Running Brandes algorithm and writing back results
 [source,cypher]
 ----
 CALL algo.betweenness(label:String, relationship:String, 
@@ -116,7 +151,7 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 |===
 
 
-.Running algorithm and streaming results
+.Running Brandes algorithm and streaming results
 [source,cypher]
 ----
 CALL algo.betweenness.stream(label:String, relationship:String,
@@ -132,6 +167,77 @@ YIELD nodeId, centrality - yields centrality for each node
 | relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | betweenness centrality weight 
+|===
+
+
+.Running RA-Brandes algorithm and writing back results
+[source,cypher]
+----
+CALL algo.betweenness.sampled(label:String, relationship:String, 
+{direction:'out', strategy:'random', probability: 1, maxDepth: 4, stats:true,
+ writeProperty:'centrality',concurrency:1}) 
+YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis 
+- calculates betweenness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+| write | boolean | true | yes | if result should be written back as node property
+| strategy | string | 'random' | yes | node selection strategy 
+| probability | float | log10(N) / e^2 | yes | probability a node is selected. Values between 0 and 1.  If 1 selects all nodes and works like original Brandes algorithm
+| maxDepth | int | Integer.MAX | yes | depth of the shortest paths traversal 
+| stats | boolean | true | yes | if stats about centrality should be returned
+| writeProperty | string | 'centrality' | yes | property name written back to
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| minCentrality | int | minimum centrality value
+| maxCentrality | int | maximum centrality value
+| sumCentrality | int | sum of all centrality values
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
+
+
+.Running RA-Brandes algorithm and streaming results
+[source,cypher]
+----
+CALL algo.betweenness.sampled.stream(label:String, relationship:String,
+{direction:'out',concurrency:1, strategy:'random', probability: 1, maxDepth: 4}) 
+YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+| strategy | string | 'random' | yes | node selection strategy 
+| probability | float | log10(N) / e^2 | yes | probability a node is selected. Values between 0 and 1.  If 1 selects all nodes and works like original Brandes algorithm
+| maxDepth | int | Integer.MAX | yes | depth of the shortest paths traversal 
 |===
 
 .Results
@@ -186,6 +292,15 @@ We support the following versions of the betweenness centrality algorithm:
  regarding the dependency-accumulation step.
 - Does not support undirected graph 
 
+`algo.betweenness.sampled()`
+
+- Calculates betweenness-dependencies on a subset of pivot nodes (instead of all nodes). Up to now 2 randomization strategies are implemented which can be set using the optional argument strategy:
+
+- random selection(default): strategy:'random': (takes optional argument probability:double(0-1) or log10(N) / e^2 as default)
+- degree based randomization: strategy:'degree': (makes dense nodes more likely)
+- optional Arguments: maxDepth:int 
+
+
 == References
 
 * http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
@@ -206,6 +321,9 @@ We support the following versions of the betweenness centrality algorithm:
 
 * [1] https://arxiv.org/pdf/1702.06087.pdf
 
+* [2] https://www.cc.gatech.edu/~mihail/WAW07.pdf
+
+* [3] https://pdfs.semanticscholar.org/2e0d/94d072d79ba73c9a153a228b93520b3ce670.pdf
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -246,6 +364,15 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 - The algorithm is based on Brandes definition but with some changes
  regarding the dependency-accumulation step.
 - http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
+
+=== algo.betweenness.sampled.*
+
+- Calculates betweenness-dependencies on a subset of pivot nodes (instead of all nodes). Up to now 2 randomization strategies are implemented which can be set using the optional argument strategy:
+
+- random selection(default): strategy:'random': (takes optional argument probability:double(0-1) or log10(N) / e^2 as default)
+- degree based randomization: strategy:'degree': (makes dense nodes more likely)
+- optional Arguments: maxDepth:int 
+
 
 // end::implementation[]
 endif::implementation[]
