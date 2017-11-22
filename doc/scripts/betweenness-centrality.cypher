@@ -37,3 +37,20 @@ CALL algo.betweenness(
 {graph:'cypher', write: true});
 
 // end::cypher-loading[]
+
+// tag::stream-rabrandes-graph[]
+
+CALL algo.betweenness.sampled.stream('User','FRIEND', 
+{strategy:'random', probability:1.0, maxDepth:5}) 
+YIELD nodeId, centrality
+
+// end::stream-rabrandes-graph[]
+
+// tag::write-rabrandes-graph[]
+
+CALL algo.betweenness.sampled('User','FRIEND', 
+{strategy:'random', probability:1.0, writeProperty:'centrality', maxDepth:5}) 
+YIELD nodes, minCentrality, maxCentrality
+
+// end::write-rabrandes-graph[]
+
