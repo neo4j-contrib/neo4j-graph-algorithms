@@ -1,25 +1,68 @@
 = Harmonic Centrality
 
-== TODO
+The harmonic mean has been known since the time of Pythagoras and Plato as the mean expressing “harmonious and tuneful ratios”, and later has been employed by musicians to formalize the diatonic scale, and by architects as paradigm for beautiful proportions.[1]
 
-Closely related to Closeness Centrality. Should lead to the same distribution of values but
-should also be resistant to disconnected graphs.
+Social network analysis is a rapid expanding interdisciplinary field, growing from work of sociologists, physicists, historians, mathematicians, political scientists, etc. 
+Some methods have been commonly accepted in spite of defects, perhaps because of the rareness of synthetic work like (Freeman, 1978; Faust & Wasserman, 1992). 
+Harmonic centrality was proposed as an alternative index of closeness centrality defined on undirected networks.
+Results show its computation on real cases are identical to those of the closeness centrality index, with same computational complexity and we give some interpretations. 
+An important property is its use in the case of unconnected networks.[2]
+
+
+
+== History, Explanation
+
+
+Main problem of closeness centrality lies in the presence of pairs of unreachable nodes.
+We get inspiration from Marchiori and Latora [1]: faced with the problem of providing a sensible notion of “average shortest path” for a generic directed network, they propose to replace the average distance with the harmonic mean of all distances (i.e., the n(n − 1) distances between every pair of distinct nodes). 
+Indeed, in case a large number of pairs of nodes are not reachable, the average of finite distances can be misleading: a graph might have a very low average distance while it is almost completely disconnected (e.g., a perfect matching has average distance 1/2). 
+The harmonic mean has the useful property of handling ∞ cleanly.
+For example, the harmonic mean of distances of a perfect matching is n − 1: in fact, for every node there is exactly another node at a non-infinite distance, and its distance is 1; so the sum of the inverse of all distances is n, making the harmonic average equal to n(n − 1)/n = n − 1.
+In general, for each graph-theoretical notion based on arithmetic averaging or maximization there is an equivalent notion based on the harmonic mean. 
+If we consider closeness the reciprocal of a denormalized average of distances, it is natural to consider also the reciprocal of a denormalized harmonic mean of distances.[3] 
+
+The difference with might seem minor, but actually it is a radical change. 
+Harmonic centrality is strongly correlated to closeness centrality in simple networks, but naturally also accounts for nodes y that cannot reach x. 
+Thus, it can be fruitfully applied to graphs that are not strongly connected.[3]
+
+Harmonic centrality was proposed independently by Dekker (2005)[4], using the name "valued centrality," and by Rochat (2009)[2].
+
 
 == When to use it / use-cases
 
-Like closeness centrality but on disconnected graphs
+Because harmonic centrality was proposed as an alternative to closeness centrality, they have similar use cases. 
+As an example, one can consider identifying the location within a city where to place a new public service, so that it is easily accessible for everyone. 
+Similarly, identifying central people that have ideal social network location for the purpose of information dissemination or network influence. 
+In such kind of applications, the nodes who can access the entire network faster need to be selected.
+As mentioned above it can be fruitfully applied to graphs that are not connected.
 
 == Constraints / when not to use it
 
-?
-
 == Algorithm explanation on simple sample graph
 
+image::{img}/harmonic_centrality.png[]
 
 
-Disconnected-Graph:
+.Create sample graph
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=create-sample-graph]
+----
 
- (A)<-->(B)<-->(C)  (D)<-->(E)
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=stream-sample-graph]
+- yields centrality for each node
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=write-sample-graph]
+- calculates closeness centrality and potentially writes back
+----
 
 Calculation:
 
@@ -89,7 +132,7 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4}) 
+CALL algo.harmonic.stream(label:String, relationship:String,{concurrency:4}) 
 YIELD nodeId, centrality - yields centrality for each node
 ----
 
@@ -118,7 +161,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-include::scripts/closeness-centrality.cypher[tag=cypher-loading]
+include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
 ----
 
 == Versions 
@@ -136,7 +179,16 @@ We support the following versions of the betweenness centrality algorithm:
 
 == References
 
-* https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
+* [1] https://arxiv.org/pdf/cond-mat/0008357.pdf
+
+* [2] \https://infoscience.epfl.ch/record/200525/files/[[EN]]ASNA09.pdf?
+
+* [3] https://arxiv.org/pdf/1308.2140.pdf
+
+* [4] https://www.cmu.edu/joss/content/articles/volume6/dekker/index.html
+
+
+
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -155,3 +207,9 @@ ifdef::implementation[]
 
 // end::implementation[]
 endif::implementation[]
+
+
+
+
+
+
