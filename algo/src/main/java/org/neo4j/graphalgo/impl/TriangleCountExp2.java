@@ -161,10 +161,9 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
             final IntStack nodes = new IntStack();
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
-            final int[] k = {0};
-            while ((k[0] = queue.getAndIncrement()) < nodeCount) {
-
-                graph.forEachRelationship(k[0], D, (s, t, r) -> {
+            int head;
+            while ((head = queue.getAndIncrement()) < nodeCount) {
+                graph.forEachRelationship(head, D, (s, t, r) -> {
                     if (t > s) {
                         nodes.add(t);
                     }
@@ -173,8 +172,8 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
                 while (!nodes.isEmpty()) {
                     final int node = nodes.pop();
                     graph.forEachRelationship(node, D, (s, t, r) -> {
-                        if (t > s && graph.exists(t, k[0], Direction.BOTH)) {
-                            exportTriangle(k[0], s, t);
+                        if (t > s && graph.exists(t, head, Direction.BOTH)) {
+                            exportTriangle(head, s, t);
                         }
                         return flag.running();
                     });
