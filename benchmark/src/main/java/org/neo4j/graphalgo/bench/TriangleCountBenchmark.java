@@ -119,4 +119,12 @@ public class TriangleCountBenchmark {
     }
 
 
+    @Benchmark
+    public Object _02_triangleCountExp2() {
+        return new TriangleCountExp2(graph, Pools.DEFAULT, threads)
+                .compute()
+                .getTriangleCount();
+    }
+
+
 }
