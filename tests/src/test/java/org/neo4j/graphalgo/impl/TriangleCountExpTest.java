@@ -90,6 +90,30 @@ public class TriangleCountExpTest {
     }
 
     @Test
+    public void testExp2() throws Exception {
+        final TriangleCountExp2 algo = new TriangleCountExp2(graph, Pools.DEFAULT, 1);
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("took " + l + "ms"))) {
+            algo.compute();
+        }
+        assertEquals(TRIANGLE_COUNT, (long) algo.getTriangleCount());
+        assertTriangles(algo.getTriangles());
+        assertClusteringCoefficient(algo.getClusteringCoefficients());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
+    }
+
+    @Test
+    public void testExp2Parallel() throws Exception {
+        final TriangleCountExp2 algo = new TriangleCountExp2(graph, Pools.DEFAULT, 4);
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("took " + l + "ms"))) {
+            algo.compute();
+        }
+        assertEquals(TRIANGLE_COUNT, (long) algo.getTriangleCount());
+        assertTriangles(algo.getTriangles());
+        assertClusteringCoefficient(algo.getClusteringCoefficients());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
+    }
+
+    @Test
     public void testSequential() throws Exception {
         final TriangleCountExp algo = new TriangleCountExp(graph, Pools.DEFAULT, 1);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
