@@ -161,9 +161,9 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
             final IntStack nodes = new IntStack();
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
-            int head;
-            while ((head = queue.getAndIncrement()) < nodeCount) {
-                graph.forEachRelationship(head, D, (s, t, r) -> {
+            final int[] head = new int[1];
+            while ((head[0] = queue.getAndIncrement()) < nodeCount) {
+                graph.forEachRelationship(head[0], D, (s, t, r) -> {
                     if (t > s) {
                         nodes.add(t);
                     }
@@ -172,8 +172,8 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
                 while (!nodes.isEmpty()) {
                     final int node = nodes.pop();
                     graph.forEachRelationship(node, D, (s, t, r) -> {
-                        if (t > s && graph.exists(t, head, Direction.BOTH)) {
-                            exportTriangle(head, s, t);
+                        if (t > s && graph.exists(t, head[0], Direction.BOTH)) {
+                            exportTriangle(head[0], s, t);
                         }
                         return flag.running();
                     });
@@ -182,43 +182,6 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
             }
         }
     }
-
-//    private class Task implements Runnable {
-//
-//        @Override
-//        public void run() {
-//            final TerminationFlag flag = getTerminationFlag();
-//            final ProgressLogger progressLogger = getProgressLogger();
-//            final int[] triangle = {-1, -1, -1}; // (u, v, w)
-//            while ((triangle[0] = queue.getAndIncrement()) < nodeCount) {
-//                // (u, v, w)
-//                graph.forEachRelationship(triangle[0], D, (u, v, relationId) -> {
-//                    if (u >= v) {
-//                        return true;
-//                    }
-//                    if (!flag.running()) {
-//                        return false;
-//                    }
-//                    triangle[1] = v;
-//                    graph.forEachRelationship(triangle[1], D, (v2, w, relationId2) -> {
-//                        if (v2 >= w) {
-//                            return true;
-//                        }
-//                        if (!flag.running()) {
-//                            return false;
-//                        }
-//                        if (graph.exists(u, w, Direction.BOTH)) {
-//                            triangle[2] = w;
-//                            exportTriangle(triangle);
-//                        }
-//                        return true;
-//                    });
-//                    return true;
-//                });
-//                progressLogger.logProgress(visitedNodes.incrementAndGet(), nodeCount);
-//            }
-//        }
-//    }
 
     public static class Result {
 
