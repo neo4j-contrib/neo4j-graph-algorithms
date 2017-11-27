@@ -164,17 +164,17 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
             final int[] k = {0};
             while ((k[0] = queue.getAndIncrement()) < nodeCount) {
 
-                graph.forEachRelationship(k[0], D, (s, t, relationId) -> {
-                    if (s >= t) {
+                graph.forEachRelationship(k[0], D, (s, t, r) -> {
+                    if (t > s) {
                         nodes.add(t);
                     }
                     return flag.running();
                 });
                 while (!nodes.isEmpty()) {
                     final int node = nodes.pop();
-                    graph.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                        if (sourceNodeId >= targetNodeId && graph.exists(targetNodeId, k[0], Direction.BOTH)) {
-                            exportTriangle(k[0], sourceNodeId, targetNodeId);
+                    graph.forEachRelationship(node, D, (s, t, r) -> {
+                        if (t > s && graph.exists(t, k[0], Direction.BOTH)) {
+                            exportTriangle(k[0], s, t);
                         }
                         return flag.running();
                     });
