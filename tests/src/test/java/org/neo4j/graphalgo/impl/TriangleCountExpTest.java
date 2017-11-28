@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -33,6 +34,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import static org.junit.Assert.assertEquals;
@@ -115,6 +117,18 @@ public class TriangleCountExpTest {
     }
 
     @Test
+    public void testExp3() throws Exception {
+        final TriangleCountExp3 algo = new TriangleCountExp3(graph, ForkJoinPool.commonPool(), 100);
+        try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("took " + l + "ms"))) {
+            algo.compute(true);
+        }
+        assertEquals(TRIANGLE_COUNT, (long) algo.getTriangleCount());
+        assertTriangles(algo.getTriangles());
+        assertClusteringCoefficient(algo.getClusteringCoefficients());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
+    }
+
+    @Test
     public void testSequential() throws Exception {
         final TriangleCountExp algo = new TriangleCountExp(graph, Pools.DEFAULT, 1);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("sequential count took " + l + "ms"))) {
@@ -156,6 +170,16 @@ public class TriangleCountExpTest {
                 continue;
             }
             assertEquals(EXPECTED_COEFFICIENT, coefficients[i], 0.01);
+        }
+    }
+
+    private void assertClusteringCoefficient(AtomicDoubleArray coefficients) {
+        final int centerMapped = graph.toMappedNodeId(centerId);
+        for (int i = 0; i < coefficients.length(); i++) {
+            if (i == centerMapped) {
+                continue;
+            }
+            assertEquals(EXPECTED_COEFFICIENT, coefficients.get(i), 0.01);
         }
     }
 }

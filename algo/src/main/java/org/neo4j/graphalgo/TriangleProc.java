@@ -116,8 +116,8 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure("algo.triangleCount.stream")
-    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
+    @Procedure("algo.triangleCount.exp2.stream")
+    @Description("CALL algo.triangleCount.exp2.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCountExp.Result> triangleCountExp1Stream(
             @Name(value = "label", defaultValue = "") String label,
@@ -145,8 +145,8 @@ public class TriangleProc {
         return triangleCount.resultStream();
     }
 
-    @Procedure("algo.triangleCount.exp2.stream")
-    @Description("CALL algo.triangleCount.exp2.stream(label, relationship, {concurrency:8}) " +
+    @Procedure("algo.triangleCount.stream")
+    @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCountExp2.Result> triangleCountExp2Stream(
             @Name(value = "label", defaultValue = "") String label,
@@ -245,8 +245,8 @@ public class TriangleProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.triangleCount.exp2", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount.exp2(label, relationship, " +
+    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount(label, relationship, " +
             "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCountExp2(
@@ -316,8 +316,8 @@ public class TriangleProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.triangleCount", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount(label, relationship, " +
+    @Procedure(value = "algo.triangleCount.exp2", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount.exp2(label, relationship, " +
             "{concurrency:8, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCountExp1(
