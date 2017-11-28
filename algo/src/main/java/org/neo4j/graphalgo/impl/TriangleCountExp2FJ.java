@@ -102,7 +102,6 @@ public class TriangleCountExp2FJ extends Algorithm<TriangleCountExp2FJ> {
         return this;
     }
 
-
     public double[] getClusteringCoefficients() {
         final double[] coefficient = new double[nodeCount];
         double sum = 0;
@@ -155,8 +154,8 @@ public class TriangleCountExp2FJ extends Algorithm<TriangleCountExp2FJ> {
             final IntStack nodes = new IntStack();
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
-            final int[] head = {0};
-            for (head[0] = startNode; head[0] < endNode && head[0] < endNode; head[0]++) {
+            final int[] head = {-1};
+            for (head[0] = startNode; head[0] < endNode; head[0]++) {
                 graph.forEachRelationship(head[0], D, (s, t, r) -> {
                     if (t > s) {
                         nodes.push(t);
