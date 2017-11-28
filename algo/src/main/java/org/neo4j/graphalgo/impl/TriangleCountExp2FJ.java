@@ -24,6 +24,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
 
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -43,6 +44,8 @@ public class TriangleCountExp2FJ extends Algorithm<TriangleCountExp2FJ> {
     private Graph graph;
 
     private final int nodeCount;
+    private final ForkJoinPool pool;
+    private final int sequentialThreshold;
     private final AtomicInteger visitedNodes;
     private final LongAdder triangleCount;
     private AtomicIntegerArray triangles;
@@ -50,9 +53,17 @@ public class TriangleCountExp2FJ extends Algorithm<TriangleCountExp2FJ> {
 
     private final AtomicInteger queue;
 
+
+
     public TriangleCountExp2FJ(Graph graph) {
+        this(graph, ForkJoinPool.commonPool(), 100); // TODO threshold
+    }
+
+    public TriangleCountExp2FJ(Graph graph, ForkJoinPool pool, int sequentialThreshold) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
+        this.pool = pool;
+        this.sequentialThreshold = sequentialThreshold;
         triangles = new AtomicIntegerArray(nodeCount);
         triangleCount = new LongAdder();
         visitedNodes = new AtomicInteger();
