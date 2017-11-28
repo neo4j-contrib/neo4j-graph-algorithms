@@ -48,21 +48,21 @@ import java.util.concurrent.TimeUnit;
  */
 @Threads(1)
 @Fork(1)
-@Warmup(iterations = 10)
-@Measurement(iterations = 10)
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class TriangleCountBenchmark {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLE_COUNT = 1000L;
+    public static final int TRIANGLE_COUNT = 500;
 
     private static Graph graph;
     private static GraphDatabaseAPI api;
 
-    @Param({"1", "2", "4", "8"})
+    @Param({"8"})
     int threads;
 
     @Setup
@@ -74,16 +74,17 @@ public class TriangleCountBenchmark {
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLE_COUNT + " nodes"))) {
 
-            final RelationshipType type = RelationshipType.withName(RELATIONSHIP);
             final DefaultBuilder builder = GraphBuilder.create(api)
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newDefaultBuilder();
-            final Node center = builder.createNode();
-            builder.newRingBuilder()
-                    .createRing((int) TRIANGLE_COUNT)
-                    .forEachNodeInTx(node -> {
-                        center.createRelationshipTo(node, type);
+
+            builder.newCompleteGraphBuilder()
+                    .createCompleteGraph(TRIANGLE_COUNT)
+                    .forEachRelInTx(r -> {
+                        if (Math.random() > 0.5) {
+                            r.delete();
+                        }
                     });
         };
 
@@ -93,6 +94,7 @@ public class TriangleCountBenchmark {
                     .withRelationshipType(RELATIONSHIP)
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
+                    .withSort(true)
                     .load(HeavyGraphFactory.class);
         };
     }
@@ -117,7 +119,6 @@ public class TriangleCountBenchmark {
                 .compute()
                 .getTriangleCount();
     }
-
 
     @Benchmark
     public Object _02_triangleCountExp2() {
