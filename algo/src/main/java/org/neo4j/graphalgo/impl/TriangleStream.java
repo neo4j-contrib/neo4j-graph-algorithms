@@ -117,61 +117,6 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
     }
 
-//    private class Task implements Runnable {
-//
-//        private final int startIndex;
-//        private final int endIndex;
-//
-//        private Task(int startIndex, int endIndex) {
-//            runningThreads.incrementAndGet();
-//            this.startIndex = startIndex;
-//            this.endIndex = endIndex;
-//        }
-//
-//        @Override
-//        public void run() {
-//            final TerminationFlag flag = getTerminationFlag();
-//            final ProgressLogger progressLogger = getProgressLogger();
-//            for (int i = startIndex; i < endIndex; i++) {
-//                // (u, v, w)
-//                graph.forEachRelationship(i, D, (u, v, relationId) -> {
-//                    if (u >= v) {
-//                        return true;
-//                    }
-//                    if (!flag.running()) {
-//                        return false;
-//                    }
-//                    graph.forEachRelationship(v, D, (v2, w, relationId2) -> {
-//                        if (v2 >= w) {
-//                            return true;
-//                        }
-//                        if (!flag.running()) {
-//                            return false;
-//                        }
-//                        graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
-//                            if (t == u) {
-//                                try {
-//                                    resultQueue.put(new Result(
-//                                            graph.toOriginalNodeId(u),
-//                                            graph.toOriginalNodeId(v),
-//                                            graph.toOriginalNodeId(w)));
-//                                } catch (InterruptedException e) {
-//                                    throw new RuntimeException(e);
-//                                }
-//                                return false;
-//                            }
-//                            return flag.running();
-//                        });
-//                        return true;
-//                    });
-//                    return true;
-//                });
-//                progressLogger.logProgress(visitedNodes.incrementAndGet(), nodeCount);
-//            }
-//            runningThreads.decrementAndGet();
-//        }
-//    }
-
     private class Task implements Runnable {
 
         private final Graph graph;
@@ -187,7 +132,6 @@ public class TriangleStream extends Algorithm<TriangleStream> {
             final ProgressLogger progressLogger = getProgressLogger();
             final int[] k = {0};
             while ((k[0] = queue.getAndIncrement()) < nodeCount) {
-
                 graph.forEachRelationship(k[0], D, (s, t, r) -> {
                     if (t > s) {
                         nodes.add(t);

@@ -148,7 +148,6 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
 
     private class Task implements Runnable {
 
-
         @Override
         public void run() {
             final IntStack nodes = new IntStack();

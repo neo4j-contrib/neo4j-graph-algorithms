@@ -33,9 +33,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * TriangleCount counts the number of triangles in the Graph as well
- * as the number of triangles that passes through a node
- *
  * @author mknblch
  */
 public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
