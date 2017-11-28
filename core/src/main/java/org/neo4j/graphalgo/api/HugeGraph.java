@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  *
  * @author mknblch
  */
-public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator, HugeBatchNodeIterable, HugeRelationshipIterator, HugeRelationshipWeights, Graph {
+public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator, HugeBatchNodeIterable, HugeRelationshipIterator, HugeRelationshipWeights, HugeRelationshipPredicate, Graph {
 
     /**
      * release resources which are not part of the result or IdMapping

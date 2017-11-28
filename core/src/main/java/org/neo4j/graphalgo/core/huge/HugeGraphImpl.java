@@ -360,4 +360,44 @@ public class HugeGraphImpl implements HugeGraph {
         outCache = null;
         weights = null;
     }
+
+    /**
+     * O(n) !
+     */
+    @Override
+    public boolean exists(long sourceNodeId, long targetNodeId, Direction direction) {
+        final boolean[] found = {false};
+        switch (direction) {
+            case OUTGOING:
+                forEachOutgoing(sourceNodeId, (s, t) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+            case INCOMING:
+                forEachIncoming(sourceNodeId, (s, t) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+            default:
+                forEachRelationship(sourceNodeId, Direction.BOTH, (s, t) -> {
+                    if (t == targetNodeId) {
+                        found[0] = true;
+                        return false;
+                    }
+                    return true;
+                });
+        }
+        return found[0];
+    }
+
+    @Override
+    public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
+        return exists((long) sourceNodeId, (long) targetNodeId, direction);
+    }
 }

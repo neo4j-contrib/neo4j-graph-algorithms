@@ -73,8 +73,10 @@ public class GraphSetup {
      * batchSize for parallel compuation
      */
     public final int batchSize;
-    // TODO
+
     public final boolean accumulateWeights;
+    // tells whether the underlying array should be sorted during import
+    public final boolean sort;
 
     /**
      * main ctor
@@ -93,6 +95,7 @@ public class GraphSetup {
      * @param executor the executor. null means single threaded evaluation
      * @param batchSize batch size for parallel loading
      * @param accumulateWeights true if relationship-weights should be summed within the loader
+     * @param sort
      */
     public GraphSetup(
             String startLabel,
@@ -105,14 +108,14 @@ public class GraphSetup {
             double nodeDefaultWeight,
             String nodePropertyName,
             double nodeDefaultPropertyValue,
-            Map<String,Object> params,
+            Map<String, Object> params,
             ExecutorService executor,
             int concurrency,
             int batchSize,
             boolean accumulateWeights,
             Log log,
             long logMillis,
-            AllocationTracker tracker) {
+            boolean sort, AllocationTracker tracker) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -132,6 +135,7 @@ public class GraphSetup {
         this.accumulateWeights = accumulateWeights;
         this.log = log;
         this.logMillis = logMillis;
+        this.sort = sort;
         this.tracker = tracker;
     }
 
@@ -156,6 +160,7 @@ public class GraphSetup {
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
         this.logMillis = -1;
+        this.sort = false;
         this.tracker = AllocationTracker.EMPTY;
     }
 
@@ -183,6 +188,7 @@ public class GraphSetup {
         this.accumulateWeights = false;
         this.log = NullLog.getInstance();
         this.logMillis = -1;
+        this.sort = false;
         this.tracker = AllocationTracker.EMPTY;
     }
 

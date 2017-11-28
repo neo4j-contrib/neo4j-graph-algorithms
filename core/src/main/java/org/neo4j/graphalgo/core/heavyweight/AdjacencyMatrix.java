@@ -22,10 +22,12 @@ import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 import java.util.function.IntPredicate;
 
 /**
@@ -59,6 +61,8 @@ class AdjacencyMatrix {
     final boolean isBoth;
     private final IdCombiner inCombiner;
     private final IdCombiner outCombiner;
+
+    private boolean sorted = false;
 
     AdjacencyMatrix(int nodeCount) {
         this(nodeCount, true, true);
@@ -135,6 +139,11 @@ class AdjacencyMatrix {
      * checks for outgoing target node, currently O(n)
      */
     public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
+
+        if (sorted) {
+            return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) > 0;
+        }
+
         final int degree = outOffsets[sourceNodeId];
         int[] rels = outgoing[sourceNodeId];
         for (int offset = degree - 1; offset >= 0; offset--) {
@@ -162,6 +171,11 @@ class AdjacencyMatrix {
      * checks for incoming target node, currently O(n)
      */
     public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
+
+        if (sorted) {
+            return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) > 0;
+        }
+
         final int degree = inOffsets[sourceNodeId];
         int[] rels = incoming[sourceNodeId];
         for (int offset = degree - 1; offset >= 0; offset--) {
@@ -293,6 +307,14 @@ class AdjacencyMatrix {
         } else {
             return new DegreeCheckingNodeIterator(inOffsets);
         }
+    }
+
+    public void sort(ExecutorService executorService, int concurrency) {
+        ParallelUtil.iterateParallel(executorService, outOffsets.length, concurrency, node -> {
+            Arrays.sort(outgoing[node]);
+            Arrays.sort(incoming[node]);
+        });
+        sorted = true;
     }
 
     private static class DegreeCheckingNodeIterator implements NodeIterator {
