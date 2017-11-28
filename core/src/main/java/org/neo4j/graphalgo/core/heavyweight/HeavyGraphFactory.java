@@ -127,6 +127,10 @@ public class HeavyGraphFactory extends GraphFactory {
             task.release();
         }
 
+        if (setup.sort) {
+            matrix.sort(threadPool, setup.concurrency);
+        }
+
         return new HeavyGraph(
                 idMap,
                 matrix,
