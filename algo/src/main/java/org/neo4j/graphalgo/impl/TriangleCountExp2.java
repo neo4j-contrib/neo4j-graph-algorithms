@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -44,8 +46,6 @@ import java.util.stream.Stream;
  */
 public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
 
-    public static final IntSet EMPTY_SET = new IntScatterSet();
-
     public static final Direction D = Direction.BOTH;
     private Graph graph;
 
@@ -53,7 +53,7 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
     private final int concurrency;
     private final int nodeCount;
     private final AtomicInteger visitedNodes;
-    private final AtomicInteger triangleCount;
+    private final LongAdder triangleCount;
     private AtomicIntegerArray triangles;
     private double averageClusteringCoefficient;
 
@@ -65,7 +65,7 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
         this.concurrency = concurrency;
         nodeCount = Math.toIntExact(graph.nodeCount());
         triangles = new AtomicIntegerArray(nodeCount);
-        triangleCount = new AtomicInteger();
+        triangleCount = new LongAdder();
         visitedNodes = new AtomicInteger();
         queue = new AtomicInteger();
     }
@@ -79,7 +79,7 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
     }
 
     public int getTriangleCount() {
-        return triangleCount.get();
+        return triangleCount.intValue();
     }
 
     public AtomicIntegerArray getTriangles() {
@@ -103,7 +103,7 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
         queue.set(0);
         // list of runnables
         visitedNodes.set(0);
-        triangleCount.set(0);
+        triangleCount.reset();
         averageClusteringCoefficient = 0.0;
         final ArrayList<Task> tasks = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -132,15 +132,8 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
         return averageClusteringCoefficient;
     }
 
-    private void exportTriangle(int[] triangle) {
-        triangleCount.incrementAndGet();
-        triangles.incrementAndGet(triangle[0]);
-        triangles.incrementAndGet(triangle[1]);
-        triangles.incrementAndGet(triangle[2]);
-    }
-
     private void exportTriangle(int u, int v, int w) {
-        triangleCount.incrementAndGet();
+        triangleCount.increment();
         triangles.incrementAndGet(u);
         triangles.incrementAndGet(v);
         triangles.incrementAndGet(w);
@@ -165,14 +158,14 @@ public class TriangleCountExp2 extends Algorithm<TriangleCountExp2> {
             while ((head[0] = queue.getAndIncrement()) < nodeCount) {
                 graph.forEachRelationship(head[0], D, (s, t, r) -> {
                     if (t > s) {
-                        nodes.add(t);
+                        nodes.push(t);
                     }
                     return flag.running();
                 });
                 while (!nodes.isEmpty()) {
                     final int node = nodes.pop();
                     graph.forEachRelationship(node, D, (s, t, r) -> {
-                        if (t > s && graph.exists(t, head[0], Direction.BOTH)) {
+                        if (t > s && graph.exists(t, head[0], D)) {
                             exportTriangle(head[0], s, t);
                         }
                         return flag.running();
