@@ -222,49 +222,6 @@ public class TriangleProcTest {
 
     }
 
-
-    @Test
-    public void testTriangleCountExp2WriteCypher() throws Exception {
-        final String cypher = "CALL algo.triangleCount.exp2('Node', '', {concurrency:4, write:true}) " +
-                "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount";
-        api.execute(cypher).accept(row -> {
-            final long loadMillis = row.getNumber("loadMillis").longValue();
-            final long computeMillis = row.getNumber("computeMillis").longValue();
-            final long writeMillis = row.getNumber("writeMillis").longValue();
-            final long nodeCount = row.getNumber("nodeCount").longValue();
-            final long triangleCount = row.getNumber("triangleCount").longValue();
-            assertNotEquals(-1, loadMillis);
-            assertNotEquals(-1, computeMillis);
-            assertNotEquals(-1, writeMillis);
-            assertEquals(3, triangleCount);
-            assertEquals(9, nodeCount);
-            return true;
-        });
-
-        final String request = "MATCH (n) WHERE exists(n.triangles) RETURN n.triangles as t";
-        api.execute(request).accept(row -> {
-            final int triangles = row.getNumber("t").intValue();
-            assertEquals(1, triangles);
-            return true;
-        });
-    }
-
-    @Test
-    public void testTriangleCountExp2Stream() throws Exception {
-        final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
-        final String cypher = "CALL algo.triangleCount.exp2.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
-        api.execute(cypher).accept(row -> {
-            final long nodeId = row.getNumber("nodeId").longValue();
-            final long triangles = row.getNumber("triangles").longValue();
-            mock.consume(nodeId, triangles);
-            return true;
-        });
-        verify(mock, times(9)).consume(anyLong(), eq(1L));
-    }
-
-
-
-
     interface TriangleCountConsumer {
         void consume(long nodeId, long triangles);
     }

@@ -51,7 +51,7 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
     private double averageClusteringCoefficient = 0.0d;
 
     public TriangleCountExp3(Graph graph) {
-        this(graph, ForkJoinPool.commonPool(), 100); // TODO threshold
+        this(graph, ForkJoinPool.commonPool(), 10_000);
     }
 
     public TriangleCountExp3(Graph graph, ForkJoinPool pool, int sequentialThreshold) {
@@ -213,7 +213,7 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
             for (int i = start; i < end; i++) {
                 final double c = calculateCoefficient(triangles.get(i), graph.degree(i, TriangleCountExp3.D));
                 averageClusteringCoefficient[0] += c;
-//                coefficients.set(i, c);
+                coefficients.set(i, c);
             }
             return averageClusteringCoefficient[0];
         }
