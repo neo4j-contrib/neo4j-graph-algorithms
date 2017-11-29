@@ -152,7 +152,7 @@ public class TriangleProcTest {
 
     @Test
     public void testTriangleCountExp1WriteCypher() throws Exception {
-        final String cypher = "CALL algo.triangleCount.exp1('Node', '', {concurrency:4, write:true}) " +
+        final String cypher = "CALL algo.triangleCount.forkJoin('Node', '', {concurrency:4, write:true}) " +
                 "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount";
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
@@ -192,7 +192,7 @@ public class TriangleProcTest {
     @Test
     public void testTriangleCountExp1Stream() throws Exception {
         final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
-        final String cypher = "CALL algo.triangleCount.exp1.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
+        final String cypher = "CALL algo.triangleCount.forkJoin.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
         api.execute(cypher).accept(row -> {
             final long nodeId = row.getNumber("nodeId").longValue();
             final long triangles = row.getNumber("triangles").longValue();
