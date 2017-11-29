@@ -47,7 +47,7 @@ public class TriangleCountExpTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLE_COUNT = 10000L;
+    public static final long TRIANGLE_COUNT = 1000L;
     public static final double EXPECTED_COEFFICIENT = 0.666;
 
     private static GraphDatabaseAPI db;
