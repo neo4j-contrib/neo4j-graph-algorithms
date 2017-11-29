@@ -52,6 +52,9 @@ public class TriangleCountBenchmark {
     private static Graph graph;
     private static GraphDatabaseAPI api;
 
+    @Param({"0.02", "0.5", "0.8"})
+    private double connecteness;
+
     @Setup
     public static void setup() throws KernelException {
         api = (GraphDatabaseAPI)
@@ -65,12 +68,7 @@ public class TriangleCountBenchmark {
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newCompleteGraphBuilder()
-                    .createCompleteGraph(TRIANGLE_COUNT)
-                    .forEachRelInTx(r -> {
-                        if (Math.random() > 0.5) {
-                            r.delete();
-                        }
-                    });
+                    .createCompleteGraph(TRIANGLE_COUNT, 0.5);
         };
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
@@ -91,35 +89,35 @@ public class TriangleCountBenchmark {
         Pools.DEFAULT.shutdownNow();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCount_singleThreaded() {
         return new TriangleCount(graph, Pools.DEFAULT, 1)
                 .compute()
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCount_multiThreaded() {
         return new TriangleCount(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
                 .compute()
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCountExp_singleThreaded() {
         return new TriangleCountExp(graph, Pools.DEFAULT, 1)
                 .compute()
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCountExp_multiThreaded() {
         return new TriangleCountExp(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
                 .compute()
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCountExp2_singleThreaded() {
         return new TriangleCountExp2(graph, Pools.DEFAULT, 1)
                 .compute()
@@ -128,35 +126,35 @@ public class TriangleCountBenchmark {
 
     @Benchmark
     public Object triangleCountExp2_multiThreaded() {
-        return new TriangleCountExp2(graph, Pools.DEFAULT, 1)
+        return new TriangleCountExp2(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
                 .compute()
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCountExp3_singleThreaded() {
-        return new TriangleCountExp3(graph, ForkJoinPool.commonPool(), 10000)
+        return new TriangleCountExp3(graph, Pools.FJ_POOL, 10000)
                 .compute(false)
                 .getTriangleCount();
     }
 
     @Benchmark
     public Object triangleCountExp3_multiThreaded() {
-        return new TriangleCountExp3(graph, ForkJoinPool.commonPool(), TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
+        return new TriangleCountExp3(graph, Pools.FJ_POOL, TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
                 .compute(false)
                 .getTriangleCount();
     }
 
-    @Benchmark
+//    @Benchmark
     public Object triangleCountExp3_Coefficients_singleThreaded() {
-        return new TriangleCountExp3(graph, ForkJoinPool.commonPool(), 10000)
+        return new TriangleCountExp3(graph, Pools.FJ_POOL, 10000)
                 .compute(true)
                 .getTriangleCount();
     }
 
     @Benchmark
     public Object triangleCountExp3_Coefficients_multiThreaded() {
-        return new TriangleCountExp3(graph, ForkJoinPool.commonPool(), TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
+        return new TriangleCountExp3(graph, Pools.FJ_POOL, TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
                 .compute(true)
                 .getTriangleCount();
     }

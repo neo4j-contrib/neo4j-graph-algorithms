@@ -55,6 +55,28 @@ public class CompleteGraphBuilder extends GraphBuilder<CompleteGraphBuilder> {
         return this;
     }
 
+
+    public CompleteGraphBuilder createCompleteGraph(int nodeCount, double connectedness) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        withinTransaction(() -> {
+
+            for (int i = 0; i < nodeCount; i++) {
+                nodes.add(createNode());
+            }
+            for (int i = 0; i < nodeCount; i++) {
+                for (int j = 0; j < nodeCount; j++) {
+                    if (i == j) {
+                        continue;
+                    }
+                    if (Math.random() < connectedness) {
+                        createRelationship(nodes.get(i), nodes.get(j));
+                    }
+                }
+            }
+        });
+        return this;
+    }
+
     @Override
     protected CompleteGraphBuilder me() {
         return this;

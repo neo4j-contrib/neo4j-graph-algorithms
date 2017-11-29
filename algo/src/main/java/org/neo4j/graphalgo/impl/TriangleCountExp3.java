@@ -25,6 +25,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -44,11 +45,10 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
     private final ForkJoinPool pool;
     private final int sequentialThreshold;
     private final AtomicInteger visitedNodes;
-    private final LongAdder triangleCount;
     private final AtomicIntegerArray triangles;
-    private final DoubleAdder averageClusteringCoefficient = new DoubleAdder();
     private final AtomicDoubleArray coefficients;
-
+    private long triangleCount = -1;
+    private double averageClusteringCoefficient = 0.0d;
 
     public TriangleCountExp3(Graph graph) {
         this(graph, ForkJoinPool.commonPool(), 100); // TODO threshold
@@ -61,7 +61,6 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
         this.sequentialThreshold = sequentialThreshold;
         triangles = new AtomicIntegerArray(nodeCount);
         coefficients = new AtomicDoubleArray(nodeCount);
-        triangleCount = new LongAdder();
         visitedNodes = new AtomicInteger();
     }
 
@@ -73,8 +72,8 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
                         coefficients.get(i)));
     }
 
-    public int getTriangleCount() {
-        return triangleCount.intValue();
+    public long getTriangleCount() {
+        return triangleCount;
     }
 
     public AtomicIntegerArray getTriangles() {
@@ -94,19 +93,17 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
 
     public TriangleCountExp3 compute(boolean calculateClusteringCoefficient) {
         visitedNodes.set(0);
-        triangleCount.reset();
-        averageClusteringCoefficient.reset();
         // calculate triangles
-        pool.invoke(new TriangleTask(0, nodeCount));
+        triangleCount = pool.invoke(new TriangleTask(0, nodeCount));
         if (calculateClusteringCoefficient) {
-            // now that we've got the triangles, calculate coefficients
-            pool.invoke(new CoefficientTask(0, nodeCount));
+            // calculate coefficients
+            averageClusteringCoefficient = pool.invoke(new CoefficientTask(0, nodeCount));
         }
         return this;
     }
 
     public double getAverageClusteringCoefficient() {
-        return averageClusteringCoefficient.doubleValue() / nodeCount;
+        return averageClusteringCoefficient / nodeCount;
     }
 
     public AtomicDoubleArray getClusteringCoefficients() {
@@ -114,7 +111,6 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
     }
 
     private void exportTriangle(int u, int v, int w) {
-        triangleCount.increment();
         triangles.incrementAndGet(u);
         triangles.incrementAndGet(v);
         triangles.incrementAndGet(w);
@@ -130,7 +126,7 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
     /**
      * task for counting triangles at each node
      */
-    private class TriangleTask extends RecursiveAction {
+    private class TriangleTask extends RecursiveTask<Long> {
 
         private final int start;
         private final int end;
@@ -141,7 +137,7 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
         }
 
         @Override
-        protected void compute() {
+        protected Long compute() {
 
             final int l = end - start;
             if (l > sequentialThreshold && running()) {
@@ -149,14 +145,14 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
                 final TriangleTask left = new TriangleTask(start, pivot);
                 final TriangleTask right = new TriangleTask(pivot, end);
                 left.fork();
-                right.compute();
-                left.join();
+                return right.compute() + left.join();
             } else {
-                execute(start, end);
+                return execute(start, end);
             }
         }
 
-        private void execute(int startNode, int endNode) {
+        private long execute(int startNode, int endNode) {
+            final int triangles[] = {0};
             final IntStack nodes = new IntStack();
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
@@ -173,12 +169,14 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
                     graph.forEachRelationship(node, D, (s, t, r) -> {
                         if (t > s && graph.exists(t, head[0], D)) {
                             exportTriangle(head[0], s, t);
+                            triangles[0]++;
                         }
                         return flag.running();
                     });
                 }
                 progressLogger.logProgress(visitedNodes.incrementAndGet(), nodeCount);
             }
+            return triangles[0];
         }
 
     }
@@ -186,7 +184,7 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
     /**
      * task for calculating node clustering coefficients
      */
-    private class CoefficientTask extends RecursiveAction {
+    private class CoefficientTask extends RecursiveTask<Double> {
 
         private final int start;
         private final int end;
@@ -197,31 +195,27 @@ public class TriangleCountExp3 extends Algorithm<TriangleCountExp3> {
         }
 
         @Override
-        protected void compute() {
-
-            if (!running()) {
-                return;
-            }
-
+        protected Double compute() {
             final int l = end - start;
             if (l > sequentialThreshold && running()) {
                 final int pivot = start + l / 2;
                 final CoefficientTask left = new CoefficientTask(start, pivot);
                 final CoefficientTask right = new CoefficientTask(pivot, end);
                 left.fork();
-                right.compute();
-                left.join();
+                return right.compute() + left.join();
             } else {
-                execute(start, end);
+                return execute(start, end);
             }
         }
 
-        private void execute(int start, int end) {
+        private double execute(int start, int end) {
+            double[] averageClusteringCoefficient = {0.0};
             for (int i = start; i < end; i++) {
                 final double c = calculateCoefficient(triangles.get(i), graph.degree(i, TriangleCountExp3.D));
-                coefficients.set(i, c);
-                averageClusteringCoefficient.add(c);
+                averageClusteringCoefficient[0] += c;
+//                coefficients.set(i, c);
             }
+            return averageClusteringCoefficient[0];
         }
     }
 
