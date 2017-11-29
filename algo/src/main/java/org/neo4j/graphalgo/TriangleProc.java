@@ -114,8 +114,8 @@ public class TriangleProc {
     }
 
 
-    @Procedure("algo.triangleCount.exp1.stream")
-    @Description("CALL algo.triangleCount.exp1.stream(label, relationship, {concurrency:8}) " +
+    @Procedure("algo.triangleCount.forkJoin.stream")
+    @Description("CALL algo.triangleCount.forkJoin.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
     public Stream<TriangleCountExp3.Result> triangleCountExp3Stream(
             @Name(value = "label", defaultValue = "") String label,
@@ -219,8 +219,8 @@ public class TriangleProc {
         return Stream.of(builder.build());
     }
 
-    @Procedure(value = "algo.triangleCount.exp1", mode = Mode.WRITE)
-    @Description("CALL algo.triangleCount.exp1(label, relationship, " +
+    @Procedure(value = "algo.triangleCount.forkJoin", mode = Mode.WRITE)
+    @Description("CALL algo.triangleCount.forkJoin(label, relationship, " +
             "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
     public Stream<Result> triangleCountExp3(
