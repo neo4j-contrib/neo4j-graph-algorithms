@@ -18,12 +18,14 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Spliterators;
@@ -43,6 +45,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
     public static final Direction D = Direction.BOTH;
     private Graph graph;
     private ExecutorService executorService;
+    private final AtomicInteger queue;
     private final int concurrency;
     private final int nodeCount;
     private AtomicInteger visitedNodes;
@@ -57,6 +60,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         this.resultQueue = new LinkedBlockingQueue<>();
         runningThreads = new AtomicInteger();
         visitedNodes = new AtomicInteger();
+        queue = new AtomicInteger();
     }
 
     @Override
@@ -104,67 +108,54 @@ public class TriangleStream extends Algorithm<TriangleStream> {
     }
 
     private void submitTasks() {
+        queue.set(0);
         runningThreads.set(0);
-        final int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency, 1);
-        for (int i = 0; i < nodeCount; i += batchSize) {
-            // partition
-            final int end = Math.min(i + batchSize, nodeCount);
-            executorService.execute(new Task(i, end));
+        final ArrayList<Task> tasks = new ArrayList<>();
+        for (int i = 0; i < concurrency; i++) {
+            tasks.add(new Task());
         }
+        ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
     }
 
     private class Task implements Runnable {
 
-        private final int startIndex;
-        private final int endIndex;
+        private final Graph graph;
 
-        private Task(int startIndex, int endIndex) {
-            runningThreads.incrementAndGet();
-            this.startIndex = startIndex;
-            this.endIndex = endIndex;
+        private Task() {
+            this.graph = TriangleStream.this.graph;
         }
 
         @Override
         public void run() {
+            final IntStack nodes = new IntStack();
             final TerminationFlag flag = getTerminationFlag();
             final ProgressLogger progressLogger = getProgressLogger();
-            for (int i = startIndex; i < endIndex; i++) {
-                // (u, v, w)
-                graph.forEachRelationship(i, D, (u, v, relationId) -> {
-                    if (u >= v) {
-                        return true;
+            final int[] k = {0};
+            while ((k[0] = queue.getAndIncrement()) < nodeCount) {
+                graph.forEachRelationship(k[0], D, (s, t, r) -> {
+                    if (t > s) {
+                        nodes.add(t);
                     }
-                    if (!flag.running()) {
-                        return false;
-                    }
-                    graph.forEachRelationship(v, D, (v2, w, relationId2) -> {
-                        if (v2 >= w) {
-                            return true;
-                        }
-                        if (!flag.running()) {
-                            return false;
-                        }
-                        graph.forEachRelationship(w, D, (sourceNodeId3, t, relationId3) -> {
-                            if (t == u) {
-                                try {
-                                    resultQueue.put(new Result(
-                                            graph.toOriginalNodeId(u),
-                                            graph.toOriginalNodeId(v),
-                                            graph.toOriginalNodeId(w)));
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                return false;
-                            }
-                            return flag.running();
-                        });
-                        return true;
-                    });
-                    return true;
+                    return flag.running();
                 });
+                while (!nodes.isEmpty()) {
+                    final int node = nodes.pop();
+                    graph.forEachRelationship(node, D, (s, t, r) -> {
+                        if (t > s && graph.exists(t, k[0], Direction.BOTH)) {
+                            try {
+                                resultQueue.put(new Result(
+                                        graph.toOriginalNodeId(k[0]),
+                                        graph.toOriginalNodeId(s),
+                                        graph.toOriginalNodeId(t)));
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        return flag.running();
+                    });
+                }
                 progressLogger.logProgress(visitedNodes.incrementAndGet(), nodeCount);
             }
-            runningThreads.decrementAndGet();
         }
     }
 
