@@ -23,6 +23,7 @@ import org.neo4j.helpers.NamedThreadFactory;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ public class Pools {
     public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;
     public final static ExecutorService DEFAULT = createDefaultPool();
+    public final static ForkJoinPool FJ_POOL = createFJPool();
 
     private Pools() {
         throw new UnsupportedOperationException();
@@ -46,6 +48,10 @@ public class Pools {
                 new ArrayBlockingQueue<>(DEFAULT_QUEUE_SIZE),
                 NamedThreadFactory.daemon("algo"),
                 new CallerBlocksPolicy());
+    }
+
+    public static ForkJoinPool createFJPool() {
+        return new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
     }
 
     static class CallerBlocksPolicy implements RejectedExecutionHandler {

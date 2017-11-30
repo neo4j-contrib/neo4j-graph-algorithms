@@ -22,14 +22,18 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.TriangleProc;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 
+import java.util.HashSet;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.longThat;
@@ -48,20 +52,22 @@ import static org.mockito.Mockito.verify;
  */
 public class TriangleProcTest {
 
+    public static final Label LABEL = Label.label("Node");
     private static GraphDatabaseAPI api;
+    private static String[] idToName;
 
     @BeforeClass
     public static void setup() throws KernelException {
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (b:Node {name:'b'})\n" +
-                        "CREATE (c:Node {name:'c'})\n" +
-                        "CREATE (d:Node {name:'d'})\n" +
-                        "CREATE (e:Node {name:'e'})\n" +
                         "CREATE (f:Node {name:'f'})\n" +
-                        "CREATE (g:Node {name:'g'})\n" +
-                        "CREATE (h:Node {name:'h'})\n" +
+                        "CREATE (c:Node {name:'c'})\n" +
+                        "CREATE (e:Node {name:'e'})\n" +
                         "CREATE (i:Node {name:'i'})\n" +
+                        "CREATE (b:Node {name:'b'})\n" +
+                        "CREATE (h:Node {name:'h'})\n" +
+                        "CREATE (d:Node {name:'d'})\n" +
+                        "CREATE (g:Node {name:'g'})\n" +
                         "CREATE" +
                         " (a)-[:TYPE]->(b),\n" +
                         " (b)-[:TYPE]->(c),\n" +
@@ -89,11 +95,32 @@ public class TriangleProcTest {
             api.execute(cypher);
             tx.success();
         }
+
+        idToName = new String[9];
+
+        try (Transaction tx = api.beginTx()) {
+            for (int i = 0; i < 9; i++) {
+                final String name = (String) api.getNodeById(i).getProperty("name");
+                idToName[i] = name;
+            }
+        }
     }
 
     @AfterClass
     public static void shutdownGraph() throws Exception {
         if (api != null) api.shutdown();
+    }
+
+    private static int idsum(String... names) {
+        int sum = 0;
+        for (int i = 0; i < idToName.length; i++) {
+            for (String name : names) {
+                if (idToName[i].equals(name)) {
+                    sum += i;
+                }
+            }
+        }
+        return sum;
     }
 
     @Test
@@ -125,7 +152,7 @@ public class TriangleProcTest {
 
     @Test
     public void testTriangleCountExp1WriteCypher() throws Exception {
-        final String cypher = "CALL algo.triangleCount.exp1('Node', '', {concurrency:4, write:true}) " +
+        final String cypher = "CALL algo.triangleCount.forkJoin('Node', '', {concurrency:4, write:true}) " +
                 "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount";
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
@@ -165,7 +192,7 @@ public class TriangleProcTest {
     @Test
     public void testTriangleCountExp1Stream() throws Exception {
         final TriangleCountConsumer mock = mock(TriangleCountConsumer.class);
-        final String cypher = "CALL algo.triangleCount.exp1.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
+        final String cypher = "CALL algo.triangleCount.forkJoin.stream('Node', '', {concurrency:4}) YIELD nodeId, triangles";
         api.execute(cypher).accept(row -> {
             final long nodeId = row.getNumber("nodeId").longValue();
             final long triangles = row.getNumber("triangles").longValue();
@@ -177,19 +204,22 @@ public class TriangleProcTest {
 
     @Test
     public void testTriangleStream() throws Exception {
-        final TripleConsumer mock = mock(TripleConsumer.class);
+        HashSet<Integer> sums = new HashSet<>();
+        final TripleConsumer consumer = (a, b, c) -> sums.add(idsum(a, b, c));
         final String cypher = "CALL algo.triangle.stream('Node', '', {concurrency:4}) YIELD nodeA, nodeB, nodeC";
         api.execute(cypher).accept(row -> {
             final long nodeA = row.getNumber("nodeA").longValue();
             final long nodeB = row.getNumber("nodeB").longValue();
             final long nodeC = row.getNumber("nodeC").longValue();
-            mock.consume(nodeA, nodeB, nodeC);
+            System.out.println(idToName[(int) nodeA] + ","+ idToName[(int) nodeB] + "," + idToName[(int) nodeC]);
+            consumer.consume(idToName[(int) nodeA], idToName[(int) nodeB], idToName[(int) nodeC]);
             return true;
         });
 
-        verify(mock, times(1)).consume(eq(0L), eq(1L), eq(2L));
-        verify(mock, times(1)).consume(eq(3L), eq(4L), eq(5L));
-        verify(mock, times(1)).consume(eq(6L), eq(7L), eq(8L));
+        assertTrue(sums.contains(7)); // abc
+        assertTrue(sums.contains(11)); // ghi
+        assertTrue(sums.contains(18)); // def
+
     }
 
     interface TriangleCountConsumer {
@@ -197,6 +227,6 @@ public class TriangleProcTest {
     }
 
     interface TripleConsumer {
-        void consume(long nodeA, long nodeB, long nodeC);
+        void consume(String nodeA, String nodeB, String nodeC);
     }
 }

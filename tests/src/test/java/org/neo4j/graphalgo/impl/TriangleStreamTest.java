@@ -35,6 +35,7 @@ import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -67,8 +68,7 @@ public class TriangleStreamTest {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
-                new Object[]{GraphViewFactory.class, "GraphViewFactory"},
-                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
+                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
     }
 
@@ -105,6 +105,7 @@ public class TriangleStreamTest {
     public TriangleStreamTest(Class<? extends GraphFactory> graphImpl, String name) {
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load " + name + " took " + t + "ms"))) {
             graph = new GraphLoader(db)
+                    .withDirection(Direction.BOTH)
                     .withLabel(LABEL)
                     .withRelationshipType(RELATIONSHIP)
                     .withoutRelationshipWeights()
