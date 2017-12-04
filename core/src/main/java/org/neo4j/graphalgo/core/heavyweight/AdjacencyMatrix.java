@@ -138,7 +138,7 @@ class AdjacencyMatrix {
         outOffsets[sourceNodeId] = nextDegree;
     }
 
-    private static boolean linearScan(int[] arr, int degree, int key) {
+    private static boolean linearSearch(int[] arr, int degree, int key) {
         int i = 0;
         for (; i < degree - 4; i += 4) {
             if (arr [i] == key) return true;
@@ -147,8 +147,9 @@ class AdjacencyMatrix {
             if (arr [i + 3] == key) return true;
         }
         for (; i < degree; i++) {
-            if (arr [i] == key)
+            if (arr[i] == key) {
                 return true;
+            }
         }
         return false;
     }
@@ -165,7 +166,7 @@ class AdjacencyMatrix {
             return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
-        return linearScan(rels, degree, targetNodeId);
+        return linearSearch(rels, degree, targetNodeId);
     }
 
     /**
@@ -180,7 +181,7 @@ class AdjacencyMatrix {
             return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
-        return linearScan(rels, degree, targetNodeId);
+        return linearSearch(rels, degree, targetNodeId);
     }
 
     /**
