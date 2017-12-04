@@ -139,21 +139,98 @@ class AdjacencyMatrix {
     }
 
     /**
-     * checks for outgoing target node, currently O(n)
+     * checks for outgoing target node
      */
     public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
 
-        if (sorted && outOffsets[sourceNodeId] > LINEAR_SEARCH_LIMIT) {
-            return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) >= 0;
+        final int degree = outOffsets[sourceNodeId];
+        final int[] rels = outgoing[sourceNodeId];
+
+        if (sorted && degree > LINEAR_SEARCH_LIMIT) {
+            int low = 0;
+            int high = degree - 1;
+
+            while (low - high > LINEAR_SEARCH_LIMIT) {
+                int mid = (low + high) >>> 1;
+                int midVal = rels[mid];
+
+                if (midVal < targetNodeId) {
+                    low = mid + 1;
+                }
+                else if (midVal > targetNodeId) {
+                    high = mid - 1;
+                }
+                else {
+                    return true; // key found
+                }
+            }
+            return false;
         }
 
-        final int degree = outOffsets[sourceNodeId];
-        int[] rels = outgoing[sourceNodeId];
-        for (int i = 0; i < degree; i++) {
+        int i = 0;
+        for (; i < degree; i += 4) {
+            if (rels[i] == targetNodeId ||
+                    rels[i + 1] == targetNodeId ||
+                    rels[i + 2] == targetNodeId ||
+                    rels[i + 3] == targetNodeId) {
+                return true;
+            }
+        }
+        // check remaining 0-3
+        for (; i < degree; i++) {
             if (rels[i] == targetNodeId) {
                 return true;
             }
         }
+
+        return false;
+    }
+
+    /**
+     * checks for incoming target node, currently O(n)
+     */
+    public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
+
+        final int degree = outOffsets[sourceNodeId];
+        final int[] rels = outgoing[sourceNodeId];
+
+        if (sorted && degree > LINEAR_SEARCH_LIMIT) {
+            int low = 0;
+            int high = degree - 1;
+
+            while (low - high > LINEAR_SEARCH_LIMIT) {
+                int mid = (low + high) >>> 1;
+                int midVal = rels[mid];
+
+                if (midVal < targetNodeId) {
+                    low = mid + 1;
+                }
+                else if (midVal > targetNodeId) {
+                    high = mid - 1;
+                }
+                else {
+                    return true; // key found
+                }
+            }
+            return false;
+        }
+
+        int i = 0;
+        for (; i < degree; i += 4) {
+            if (rels[i] == targetNodeId ||
+                    rels[i + 1] == targetNodeId ||
+                    rels[i + 2] == targetNodeId ||
+                    rels[i + 3] == targetNodeId) {
+                return true;
+            }
+        }
+        // check remaining 0-3
+        for (; i < degree; i++) {
+            if (rels[i] == targetNodeId) {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -168,25 +245,6 @@ class AdjacencyMatrix {
         }
         incoming[targetNodeId][degree] = sourceNodeId;
         inOffsets[targetNodeId] = nextDegree;
-    }
-
-    /**
-     * checks for incoming target node, currently O(n)
-     */
-    public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
-
-        if (sorted && inOffsets[sourceNodeId] > LINEAR_SEARCH_LIMIT) {
-            return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) >= 0;
-        }
-
-        final int degree = inOffsets[sourceNodeId];
-        int[] rels = incoming[sourceNodeId];
-        for (int i = 0; i < degree; i++) {
-            if (rels[i] == targetNodeId) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
