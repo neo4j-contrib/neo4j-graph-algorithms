@@ -134,16 +134,6 @@ public class ParallelBetweennessCentralityIntegrationTest {
         testBetweennessWrite(cypher);
     }
 
-    @Test
-    public void testSuccessorBCWrite() throws Exception {
-
-        String cypher = "CALL algo.betweenness.exp1('', '', {write:true, writeProperty:'bc', stats:true}) YIELD " +
-                "loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality";
-
-        testBetweennessWrite(cypher);
-
-    }
-
     public void testBetweennessWrite(String cypher) {
         db.execute(cypher).accept(row -> {
             assertNotEquals(-1L, row.getNumber("writeMillis").longValue());
