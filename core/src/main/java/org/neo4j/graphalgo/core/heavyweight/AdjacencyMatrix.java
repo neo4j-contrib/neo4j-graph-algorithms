@@ -138,15 +138,34 @@ class AdjacencyMatrix {
         outOffsets[sourceNodeId] = nextDegree;
     }
 
-    private static boolean linearSearch(int[] arr, int degree, int key) {
-        int i = 0;
-        for (; i < degree - 4; i += 4) {
+    private static boolean binarySearch(int[] arr, int length, int key) {
+        int low = 0;
+        int high = length;
+
+        while (high - low > LINEAR_SEARCH_LIMIT) {
+            int mid = (low + high) >>> 1;
+            int midVal = arr[mid];
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return true;
+        }
+
+        return linearSearch(arr, low, high, key);
+
+    }
+
+    private static boolean linearSearch(int[] arr, int low, int high, int key) {
+        int i = low;
+        for (; i < high - 4; i += 4) {
             if (arr [i] == key) return true;
             if (arr [i + 1] == key) return true;
             if (arr [i + 2] == key) return true;
             if (arr [i + 3] == key) return true;
         }
-        for (; i < degree; i++) {
+        for (; i < high; i++) {
             if (arr[i] == key) {
                 return true;
             }
@@ -163,10 +182,10 @@ class AdjacencyMatrix {
         final int[] rels = outgoing[sourceNodeId];
 
         if (sorted && degree > LINEAR_SEARCH_LIMIT) {
-            return Arrays.binarySearch(rels, targetNodeId) >= 0;
+            return binarySearch(rels, degree, targetNodeId);
         }
 
-        return linearSearch(rels, degree, targetNodeId);
+        return linearSearch(rels, 0, degree, targetNodeId);
     }
 
     /**
@@ -178,10 +197,10 @@ class AdjacencyMatrix {
         final int[] rels = incoming[sourceNodeId];
 
         if (sorted && degree > LINEAR_SEARCH_LIMIT) {
-            return Arrays.binarySearch(rels, targetNodeId) >= 0;
+            return binarySearch(rels, degree, targetNodeId);
         }
 
-        return linearSearch(rels, degree, targetNodeId);
+        return linearSearch(rels, 0, degree, targetNodeId);
     }
 
     /**
