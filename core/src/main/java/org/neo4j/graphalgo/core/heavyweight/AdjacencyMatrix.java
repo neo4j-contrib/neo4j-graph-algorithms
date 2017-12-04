@@ -41,6 +41,8 @@ class AdjacencyMatrix {
 
     private static final int[] EMPTY_INTS = new int[0];
 
+    private static final int LINEAR_SEARCH_LIMIT = 64;
+
     /**
      * mapping from nodeId to outgoing degree
      */
@@ -141,7 +143,7 @@ class AdjacencyMatrix {
      */
     public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
 
-        if (sorted) {
+        if (sorted && outOffsets[sourceNodeId] > LINEAR_SEARCH_LIMIT) {
             return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) >= 0;
         }
 
@@ -173,7 +175,7 @@ class AdjacencyMatrix {
      */
     public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
 
-        if (sorted) {
+        if (sorted && inOffsets[sourceNodeId] > LINEAR_SEARCH_LIMIT) {
             return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) >= 0;
         }
 
