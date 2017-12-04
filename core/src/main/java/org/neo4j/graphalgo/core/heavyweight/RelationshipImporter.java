@@ -44,6 +44,7 @@ import java.util.function.Supplier;
 
 final class RelationshipImporter extends StatementTask<Void, EntityNotFoundException> {
 
+    private final boolean sort;
     private IdMap idMap;
     private final PrimitiveIntIterable nodes;
     private WeightMapping relWeights;
@@ -71,7 +72,8 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             PrimitiveIntIterable nodes,
             Supplier<WeightMapping> relWeights,
             Supplier<WeightMapping> nodeWeights,
-            Supplier<WeightMapping> nodeProps) {
+            Supplier<WeightMapping> nodeProps,
+            boolean sort) {
         super(api);
         int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
         this.progress = progress;
@@ -84,8 +86,9 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         this.relationId = dimensions.relationId();
         loadIncoming = setup.loadIncoming;
         loadOutgoing = setup.loadOutgoing;
-        this.matrix = new AdjacencyMatrix(nodeSize, loadIncoming, loadOutgoing);
+        this.matrix = new AdjacencyMatrix(nodeSize, loadIncoming, loadOutgoing, setup.sort);
         this.currentNodeCount = 0;
+        this.sort = sort;
     }
 
     @Override
@@ -214,6 +217,9 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             final long relId = rels.next();
             rels.relationshipVisit(relId, visit);
         }
+        if (sort) {
+            matrix.sortOutgoing(localNodeId);
+        }
     }
 
     private void readIncoming(
@@ -237,6 +243,9 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         while (rels.hasNext()) {
             final long relId = rels.next();
             rels.relationshipVisit(relId, visit);
+        }
+        if (sort) {
+            matrix.sortIncoming(localNodeId);
         }
     }
 
