@@ -147,28 +147,11 @@ class AdjacencyMatrix {
         final int[] rels = outgoing[sourceNodeId];
 
         if (sorted && degree > LINEAR_SEARCH_LIMIT) {
-            int low = 0;
-            int high = degree - 1;
-
-            while (low - high > LINEAR_SEARCH_LIMIT) {
-                int mid = (low + high) >>> 1;
-                int midVal = rels[mid];
-
-                if (midVal < targetNodeId) {
-                    low = mid + 1;
-                }
-                else if (midVal > targetNodeId) {
-                    high = mid - 1;
-                }
-                else {
-                    return true; // key found
-                }
-            }
-            return false;
+            return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
         int i = 0;
-        for (; i < degree; i += 4) {
+        for (; i < degree - 4; i += 4) {
             if (rels[i] == targetNodeId ||
                     rels[i + 1] == targetNodeId ||
                     rels[i + 2] == targetNodeId ||
@@ -187,36 +170,19 @@ class AdjacencyMatrix {
     }
 
     /**
-     * checks for incoming target node, currently O(n)
+     * checks for incoming target node
      */
     public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
 
-        final int degree = outOffsets[sourceNodeId];
-        final int[] rels = outgoing[sourceNodeId];
+        final int degree = inOffsets[sourceNodeId];
+        final int[] rels = incoming[sourceNodeId];
 
         if (sorted && degree > LINEAR_SEARCH_LIMIT) {
-            int low = 0;
-            int high = degree - 1;
-
-            while (low - high > LINEAR_SEARCH_LIMIT) {
-                int mid = (low + high) >>> 1;
-                int midVal = rels[mid];
-
-                if (midVal < targetNodeId) {
-                    low = mid + 1;
-                }
-                else if (midVal > targetNodeId) {
-                    high = mid - 1;
-                }
-                else {
-                    return true; // key found
-                }
-            }
-            return false;
+            return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
         int i = 0;
-        for (; i < degree; i += 4) {
+        for (; i < degree - 4; i += 4) {
             if (rels[i] == targetNodeId ||
                     rels[i + 1] == targetNodeId ||
                     rels[i + 2] == targetNodeId ||
