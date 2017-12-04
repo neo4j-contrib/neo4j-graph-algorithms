@@ -56,6 +56,9 @@ public class GraphLoadLdbc {
     @Param({"true", "false"})
     boolean parallel;
 
+    @Param({"true", "false"})
+    boolean undirected;
+
     @Param({"IN", "OUT", "NONE", "BOTH"})
     DirectionParam dir;
 
@@ -72,12 +75,15 @@ public class GraphLoadLdbc {
     private GraphLoader loader;
 
     @Setup
-    public void setup() throws KernelException, IOException {
+    public void setup() throws IOException {
         db = LdbcDownloader.openDb(graphId);
         loader = new GraphLoader(db)
                 .withOptionalRelationshipWeightsFromProperty(weightProp.isEmpty() ? null : weightProp, 1.0)
                 .withOptionalLabel(label.isEmpty() ? null : label)
                 .withDirection(dir.direction);
+        if (undirected) {
+            loader.asUndirected(true);
+        }
         if (parallel) {
             loader.withExecutorService(Pools.DEFAULT);
         }
@@ -90,7 +96,7 @@ public class GraphLoadLdbc {
     }
 
     @Benchmark
-    public void load(Blackhole bh) throws Exception {
+    public void load(Blackhole bh) {
         Graph graph = loader.load(this.graph.impl);
         bh.consume(graph);
         graph.release();
