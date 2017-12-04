@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -193,10 +194,13 @@ public class PageRankProcIntegrationTest {
     public void testPageRankParallelExecution() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {batchSize:2, graph:'"+graphImpl+"'}) YIELD node, score",
-                row -> actual.put(
-                        row.getNode("node").getId(),
-                        (Double) row.get("score")));
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {batchSize:2, graph:'"+graphImpl+"'}) YIELD nodeId, node, score",
+                row -> {
+                    final long nodeId = row.getNumber("nodeId").longValue();
+                    final Node node = row.getNode("node");
+                    assertEquals(node.getId(), nodeId);
+                    actual.put(nodeId, (Double) row.get("score"));
+                });
         assertMapEquals(expected, actual);
     }
 

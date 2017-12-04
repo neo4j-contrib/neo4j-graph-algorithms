@@ -22,10 +22,12 @@ import org.neo4j.graphdb.Node;
 
 public class PageRankScore {
 
-    public final Node node;
+    public final long nodeId;
+    @Deprecated public final Node node;
     public final Double score;
 
-    public PageRankScore(final Node node, final Double score) {
+    public PageRankScore(long nodeId, final Node node, final Double score) {
+        this.nodeId = nodeId;
         this.node = node;
         this.score = score;
     }
