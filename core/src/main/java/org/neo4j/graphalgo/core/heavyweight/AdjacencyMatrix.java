@@ -138,6 +138,23 @@ class AdjacencyMatrix {
         outOffsets[sourceNodeId] = nextDegree;
     }
 
+    private static boolean linearScan(int[] arr, int degree, int key) {
+        int i = 0;
+        while (i < degree - 4) {
+            if (arr [i] == key) return true;
+            if (arr [i + 1] == key) return true;
+            if (arr [i + 2] == key) return true;
+            if (arr [i + 3] == key) return true;
+            i += 4;
+        }
+        while (i < degree) {
+            if (arr [i] == key)
+                return true;
+            ++i;
+        }
+        return false;
+    }
+
     /**
      * checks for outgoing target node
      */
@@ -150,23 +167,7 @@ class AdjacencyMatrix {
             return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
-        int i = 0;
-        for (; i < degree - 4; i += 4) {
-            if (rels[i] == targetNodeId ||
-                    rels[i + 1] == targetNodeId ||
-                    rels[i + 2] == targetNodeId ||
-                    rels[i + 3] == targetNodeId) {
-                return true;
-            }
-        }
-        // check remaining 0-3
-        for (; i < degree; i++) {
-            if (rels[i] == targetNodeId) {
-                return true;
-            }
-        }
-
-        return false;
+        return linearScan(rels, degree, targetNodeId);
     }
 
     /**
@@ -181,23 +182,7 @@ class AdjacencyMatrix {
             return Arrays.binarySearch(rels, targetNodeId) >= 0;
         }
 
-        int i = 0;
-        for (; i < degree - 4; i += 4) {
-            if (rels[i] == targetNodeId ||
-                    rels[i + 1] == targetNodeId ||
-                    rels[i + 2] == targetNodeId ||
-                    rels[i + 3] == targetNodeId) {
-                return true;
-            }
-        }
-        // check remaining 0-3
-        for (; i < degree; i++) {
-            if (rels[i] == targetNodeId) {
-                return true;
-            }
-        }
-
-        return false;
+        return linearScan(rels, degree, targetNodeId);
     }
 
     /**
