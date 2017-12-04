@@ -140,17 +140,15 @@ class AdjacencyMatrix {
 
     private static boolean linearScan(int[] arr, int degree, int key) {
         int i = 0;
-        while (i < degree - 4) {
+        for (; i < degree - 4; i += 4) {
             if (arr [i] == key) return true;
             if (arr [i + 1] == key) return true;
             if (arr [i + 2] == key) return true;
             if (arr [i + 3] == key) return true;
-            i += 4;
         }
-        while (i < degree) {
+        for (; i < degree; i++) {
             if (arr [i] == key)
                 return true;
-            ++i;
         }
         return false;
     }
