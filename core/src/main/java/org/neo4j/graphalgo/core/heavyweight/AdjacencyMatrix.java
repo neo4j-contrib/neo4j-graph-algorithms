@@ -64,15 +64,16 @@ class AdjacencyMatrix {
 
     private boolean sorted = false;
 
-    AdjacencyMatrix(int nodeCount) {
-        this(nodeCount, true, true);
+    AdjacencyMatrix(int nodeCount, boolean sorted) {
+        this(nodeCount, true, true, sorted);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing) {
+    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted) {
         this.outOffsets = withOutgoing ? new int[nodeCount] : null;
         this.inOffsets = withIncoming ? new int[nodeCount] : null;
         this.outgoing = withOutgoing ? new int[nodeCount][] : null;
         this.incoming = withIncoming ? new int[nodeCount][] : null;
+        this.sorted = sorted;
         if (withOutgoing) {
             Arrays.fill(outgoing, EMPTY_INTS);
         }
@@ -141,13 +142,13 @@ class AdjacencyMatrix {
     public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
 
         if (sorted) {
-            return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) > 0;
+            return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) >= 0;
         }
 
         final int degree = outOffsets[sourceNodeId];
         int[] rels = outgoing[sourceNodeId];
-        for (int offset = degree - 1; offset >= 0; offset--) {
-            if (rels[offset] == targetNodeId) {
+        for (int i = 0; i < degree; i++) {
+            if (rels[i] == targetNodeId) {
                 return true;
             }
         }
@@ -173,13 +174,13 @@ class AdjacencyMatrix {
     public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
 
         if (sorted) {
-            return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) > 0;
+            return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) >= 0;
         }
 
         final int degree = inOffsets[sourceNodeId];
         int[] rels = incoming[sourceNodeId];
-        for (int offset = degree - 1; offset >= 0; offset--) {
-            if (rels[offset] == targetNodeId) {
+        for (int i = 0; i < degree; i++) {
+            if (rels[i] == targetNodeId) {
                 return true;
             }
         }
@@ -309,15 +310,24 @@ class AdjacencyMatrix {
         }
     }
 
-    public void sort(ExecutorService executorService, int concurrency) {
-        ParallelUtil.iterateParallel(executorService, outOffsets.length, concurrency, node -> {
-            Arrays.sort(outgoing[node]);
-            Arrays.sort(incoming[node]);
+    public void sortIncoming(int node) {
+        Arrays.sort(incoming[node]);
+    }
+
+    public void sortOutgoing(int node) {
+        Arrays.sort(outgoing[node]);
+    }
+
+    public void sortAll(ExecutorService pool, int concurrency) {
+        ParallelUtil.iterateParallel(pool, outgoing.length, concurrency, node -> {
+            sortIncoming(node);
+            sortOutgoing(node);
         });
         sorted = true;
     }
 
     private static class DegreeCheckingNodeIterator implements NodeIterator {
+
         private final int[] array;
 
         DegreeCheckingNodeIterator(int[] array) {

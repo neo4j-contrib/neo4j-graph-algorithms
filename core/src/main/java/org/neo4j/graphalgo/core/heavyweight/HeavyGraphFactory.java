@@ -90,7 +90,8 @@ public class HeavyGraphFactory extends GraphFactory {
                         nodeIds,
                         relWeights,
                         nodeWeights,
-                        nodeProps
+                        nodeProps,
+                        setup.sort
                 ),
                 threadPool);
 
@@ -118,17 +119,13 @@ public class HeavyGraphFactory extends GraphFactory {
             return importer.toGraph(idMap);
         }
 
-        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount);
+        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, setup.sort);
         final WeightMapping relWeights = relWeightsSupplier.get();
         final WeightMapping nodeWeights = nodeWeightsSupplier.get();
         final WeightMapping nodeProps = nodePropsSupplier.get();
         for (RelationshipImporter task : tasks) {
             task.writeInto(matrix, relWeights, nodeWeights, nodeProps);
             task.release();
-        }
-
-        if (setup.sort) {
-            matrix.sort(threadPool, setup.concurrency);
         }
 
         return new HeavyGraph(
