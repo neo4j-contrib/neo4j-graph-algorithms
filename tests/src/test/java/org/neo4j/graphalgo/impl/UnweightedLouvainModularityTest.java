@@ -145,12 +145,12 @@ public class UnweightedLouvainModularityTest {
     public static Collection<Object[]> data() {
 
         return Arrays.<Object[]>asList(
-                new Object[]{HeavyGraphFactory.class, "heavy", unidirectional},
-                new Object[]{HeavyGraphFactory.class, "heavy", bidirectional},
-                new Object[]{LightGraphFactory.class, "light", unidirectional},
-                new Object[]{LightGraphFactory.class, "light", bidirectional},
-                new Object[]{HugeGraphFactory.class, "huge", unidirectional},
-                new Object[]{HugeGraphFactory.class, "huge", bidirectional}
+                new Object[]{HeavyGraphFactory.class, "heavy-uni", unidirectional},
+                new Object[]{HeavyGraphFactory.class, "heavy-bi", bidirectional},
+                new Object[]{LightGraphFactory.class, "light-uni", unidirectional},
+                new Object[]{LightGraphFactory.class, "light-bi", bidirectional},
+                new Object[]{HugeGraphFactory.class, "huge-uni", unidirectional},
+                new Object[]{HugeGraphFactory.class, "huge-bi", bidirectional}
 //                new Object[]{GraphViewFactory.class, "view"}
         );
     }
@@ -180,6 +180,9 @@ public class UnweightedLouvainModularityTest {
         setup(cypher, Direction.BOTH);
         final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, 1, 10)
                 .compute();
+        louvain
+                .resultStream()
+                .forEach(r -> System.out.println(r));
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertEquals(3, louvain.getCommunityCount());

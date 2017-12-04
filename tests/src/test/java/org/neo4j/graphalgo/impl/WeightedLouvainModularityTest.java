@@ -34,6 +34,8 @@ import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
+import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
+import org.neo4j.graphalgo.impl.louvain.ParallelWeightedLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
@@ -178,6 +180,23 @@ public class WeightedLouvainModularityTest {
     public void testUnidirectional() throws Exception {
         setup(unidirectional);
         final LouvainAlgorithm louvain = new WeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
+                .compute();
+
+        louvain.resultStream()
+                .forEach(r -> {
+                    System.out.println(getName(r.nodeId) + ":" + r.community);
+                });
+
+        System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
+        assertEquals(4, louvain.getCommunityCount());
+    }
+
+
+    @Test
+    public void testUnidirectionalParallel() throws Exception {
+        setup(unidirectional);
+        final LouvainAlgorithm louvain = new ParallelWeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
                 .compute();
 
         louvain.resultStream()
