@@ -48,7 +48,7 @@ public class UnionFindProc3 {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure(value = "algo.unionFind.exp2", mode = Mode.WRITE)
+    @Procedure(value = "algo.unionFind.forkJoinMerge", mode = Mode.WRITE)
     @Description("CALL algo.unionFind(label:String, relationship:String, " +
             "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition', concurrency:4}) " +
             "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
@@ -64,7 +64,7 @@ public class UnionFindProc3 {
                 this::ufExec);
     }
 
-    @Procedure(value = "algo.unionFind.exp2.stream")
+    @Procedure(value = "algo.unionFind.forkJoinMerge.stream")
     @Description("CALL algo.unionFind.stream(label:String, relationship:String, " +
             "{property:'propertyName', threshold:0.42, defaultValue:1.0, concurrency:4}) " +
             "YIELD nodeId, setId - yields a setId to each node id")
