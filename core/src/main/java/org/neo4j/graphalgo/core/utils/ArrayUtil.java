@@ -35,8 +35,17 @@ public final class ArrayUtil {
             else
                 return true;
         }
-        return linearSearch(arr, low, high, key);
+        return linearSearch2(arr, low, high, key);
 
+    }
+
+    // TODO eval
+    public static boolean linearSearch2(int[] arr, int low, int high, int key) {
+        for (int i = low; i <= high; i++) {
+            if (arr[i] == key) return true;
+            if (arr[i] > key) return false;
+        }
+        return false;
     }
 
     public static boolean linearSearch(int[] arr, int length, int key) {
