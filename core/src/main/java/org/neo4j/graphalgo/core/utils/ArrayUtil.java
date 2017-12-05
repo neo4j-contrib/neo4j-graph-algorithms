@@ -24,7 +24,7 @@ public final class ArrayUtil {
 
     public static boolean binarySearch(int[] arr, int length, int key) {
         int low = 0;
-        int high = length-1;
+        int high = length - 1;
         while (high - low > LINEAR_SEARCH_LIMIT) {
             int mid = (low + high) >>> 1;
             int midVal = arr[mid];
