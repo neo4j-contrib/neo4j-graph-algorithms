@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.IntPredicate;
 
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.*;
+
 /**
  * Relation Container built of multiple arrays. The node capacity must be constant and the node IDs have to be
  * smaller then the capacity. The number of relations per node is limited only to the maximum array size of the VM
@@ -40,8 +42,6 @@ import java.util.function.IntPredicate;
 class AdjacencyMatrix {
 
     private static final int[] EMPTY_INTS = new int[0];
-
-    private static final int LINEAR_SEARCH_LIMIT = 64;
 
     /**
      * mapping from nodeId to outgoing degree
@@ -138,41 +138,6 @@ class AdjacencyMatrix {
         outOffsets[sourceNodeId] = nextDegree;
     }
 
-    private static boolean binarySearch(int[] arr, int length, int key) {
-        int low = 0;
-        int high = length;
-
-        while (high - low > LINEAR_SEARCH_LIMIT) {
-            int mid = (low + high) >>> 1;
-            int midVal = arr[mid];
-            if (midVal < key)
-                low = mid + 1;
-            else if (midVal > key)
-                high = mid - 1;
-            else
-                return true;
-        }
-
-        return linearSearch(arr, low, high, key);
-
-    }
-
-    private static boolean linearSearch(int[] arr, int low, int high, int key) {
-        int i = low;
-        for (; i < high - 4; i += 4) {
-            if (arr [i] == key) return true;
-            if (arr [i + 1] == key) return true;
-            if (arr [i + 2] == key) return true;
-            if (arr [i + 3] == key) return true;
-        }
-        for (; i < high; i++) {
-            if (arr[i] == key) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * checks for outgoing target node
      */
@@ -185,7 +150,7 @@ class AdjacencyMatrix {
             return binarySearch(rels, degree, targetNodeId);
         }
 
-        return linearSearch(rels, 0, degree, targetNodeId);
+        return linearSearch(rels, degree, targetNodeId);
     }
 
     /**
@@ -200,7 +165,7 @@ class AdjacencyMatrix {
             return binarySearch(rels, degree, targetNodeId);
         }
 
-        return linearSearch(rels, 0, degree, targetNodeId);
+        return linearSearch(rels, degree, targetNodeId);
     }
 
     /**
