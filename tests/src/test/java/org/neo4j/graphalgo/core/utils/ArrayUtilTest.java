@@ -40,10 +40,7 @@ public class ArrayUtilTest {
     public void testBinarySearch() throws Exception {
         for (int i = 0; i < testData.length; i++) {
             assertTrue(String.format("False negative at %d value %d%n", i, testData[i]), ArrayUtil.binarySearch(testData, testData.length, (i + 1) * 2));
-        }
-        for (int i = 0; i < testData.length; i++) {
             assertFalse(String.format("False positive at %d value %d%n", i, testData[i]), ArrayUtil.binarySearch(testData, testData.length, (i * 2) + 1));
-
         }
     }
 
@@ -51,10 +48,7 @@ public class ArrayUtilTest {
     public void testLinearSearch() throws Exception {
         for (int i = 0; i < testData.length; i++) {
             assertTrue(String.format("False negative at %d value %d%n", i, testData[i]), ArrayUtil.linearSearch(testData, testData.length, (i + 1) * 2));
-        }
-        for (int i = 0; i < testData.length; i++) {
             assertFalse(String.format("False positive at %d value %d%n", i, testData[i]), ArrayUtil.linearSearch(testData, testData.length, (i * 2) + 1));
-
         }
     }
 }
