@@ -77,6 +77,8 @@ public class GraphSetup {
     public final boolean accumulateWeights;
     // tells whether the underlying array should be sorted during import
     public final boolean sort;
+    // in/out adjacencies are allowed to be merged into an undirected view of the graph
+    public final boolean loadAsUndirected;
 
     /**
      * main ctor
@@ -115,7 +117,9 @@ public class GraphSetup {
             boolean accumulateWeights,
             Log log,
             long logMillis,
-            boolean sort, AllocationTracker tracker) {
+            boolean sort,
+            boolean loadAsUndirected,
+            AllocationTracker tracker) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -136,6 +140,7 @@ public class GraphSetup {
         this.log = log;
         this.logMillis = logMillis;
         this.sort = sort;
+        this.loadAsUndirected = loadAsUndirected;
         this.tracker = tracker;
     }
 
@@ -161,6 +166,7 @@ public class GraphSetup {
         this.log = NullLog.getInstance();
         this.logMillis = -1;
         this.sort = false;
+        this.loadAsUndirected = false;
         this.tracker = AllocationTracker.EMPTY;
     }
 
@@ -189,6 +195,7 @@ public class GraphSetup {
         this.log = NullLog.getInstance();
         this.logMillis = -1;
         this.sort = false;
+        this.loadAsUndirected = false;
         this.tracker = AllocationTracker.EMPTY;
     }
 

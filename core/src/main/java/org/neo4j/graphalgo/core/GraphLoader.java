@@ -80,6 +80,7 @@ public class GraphLoader {
     private long logMillis = -1;
     private AllocationTracker tracker = AllocationTracker.EMPTY;
     private boolean sort = false;
+    private boolean loadAsUndirected = false;
 
     /**
      * Creates a new serial GraphLoader.
@@ -129,6 +130,11 @@ public class GraphLoader {
 
     public GraphLoader withSort(boolean sort) {
         this.sort = sort;
+        return this;
+    }
+
+    public GraphLoader asUndirected(boolean loadAsUndirected) {
+        this.loadAsUndirected = loadAsUndirected;
         return this;
     }
 
@@ -494,6 +500,7 @@ public class GraphLoader {
                 log,
                 logMillis,
                 sort,
+                loadAsUndirected,
                 tracker);
 
         try {
