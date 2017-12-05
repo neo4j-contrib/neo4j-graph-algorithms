@@ -720,7 +720,10 @@ public final class ParallelUtil {
                 try {
                     future.get();
                 } catch (ExecutionException ee) {
-                    error = Exceptions.chain(error, ee.getCause());
+                    final Throwable cause = ee.getCause();
+                    if (error != cause) {
+                        error = Exceptions.chain(error, cause);
+                    }
                 } catch (CancellationException ignore) {
                 }
             }
