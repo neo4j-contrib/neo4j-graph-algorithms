@@ -18,16 +18,12 @@ public class ArrayUtilTest {
     final private int[] testData;
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
+    public static Collection<Integer> data() {
         return Arrays.asList(
-                new Object[]{32},
-                new Object[]{33},
-                new Object[]{64},
-                new Object[]{65},
-                new Object[]{2048},
-                new Object[]{2049},
-                new Object[]{4096},
-                new Object[]{4097}
+                32, 33,
+                64, 65,
+                2048, 2049,
+                4096, 4097
         );
     }
 
