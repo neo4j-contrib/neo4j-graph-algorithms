@@ -147,12 +147,15 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      */
     private int kIIn(int node, int targetCommunity) {
         int[] sum = {0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+        readLock.lock();
+        relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
             if (targetCommunity == communityIds[targetNodeId]) {
                 sum[0]++;
             }
             return true;
         });
+        readLock.unlock();
         return sum[0];
     }
 

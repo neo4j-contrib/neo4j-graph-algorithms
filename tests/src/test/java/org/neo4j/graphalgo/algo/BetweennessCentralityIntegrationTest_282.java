@@ -155,45 +155,6 @@ public class BetweennessCentralityIntegrationTest_282 {
      * @throws Exception
      */
     @Test
-    public void testBCPredecessorWriteBack() throws Exception {
-
-        final String evalQuery = "CALL algo.betweenness.exp1('Node', 'EDGE', {concurrency:1, write:true, stats:true, writeProperty:'centrality'})\n" +
-                "YIELD nodes, minCentrality, maxCentrality, sumCentrality";
-
-        db.execute(evalQuery).accept(row -> {
-            final long nodes = row.getNumber("nodes").longValue();
-            final double minCentrality = row.getNumber("minCentrality").doubleValue();
-            final double maxCentrality = row.getNumber("maxCentrality").doubleValue();
-            final double sumCentrality = row.getNumber("sumCentrality").doubleValue();
-
-            System.out.println("nodes = " + nodes);
-            System.out.println("minCentrality = " + minCentrality);
-            System.out.println("maxCentrality = " + maxCentrality);
-            System.out.println("sumCentrality = " + sumCentrality);
-            return false;
-        });
-
-        final String checkQuery = "MATCH (n) WHERE exists(n.centrality) RETURN id(n) as id, n.centrality as c";
-        final double[] result = new double[EXPECTED.length];
-        db.execute(checkQuery).accept(row -> {
-            final int id = row.getNumber("id").intValue();
-            final double c = row.getNumber("c").doubleValue();
-            result[id] = c;
-
-            System.out.printf("id: %2d centrality: %f%n", id, c);
-
-            return true;
-        });
-
-        assertArrayEquals(EXPECTED, result, 0.1);
-    }
-
-    /**
-     * test org.neo4j.graphalgo.impl.BetweennessCentrality
-     *
-     * @throws Exception
-     */
-    @Test
     public void testBCWriteBackParallel() throws Exception {
 
         final String evalQuery = "CALL algo.betweenness('Node', 'EDGE', {write:true, stats:true, writeProperty:'centrality', concurrency:4})\n" +
