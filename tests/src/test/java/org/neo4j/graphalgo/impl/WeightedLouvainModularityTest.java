@@ -233,7 +233,7 @@ public class WeightedLouvainModularityTest {
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertUnidirectionalCommunities(louvain);
-        assertTrue(louvain.getIterations() < MAX_ITERATIONS);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
     @Test
@@ -246,7 +246,7 @@ public class WeightedLouvainModularityTest {
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertBidirectionalCommunities(louvain);
-        assertTrue(louvain.getIterations() < MAX_ITERATIONS);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
     @Test
@@ -259,7 +259,7 @@ public class WeightedLouvainModularityTest {
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertBidirectionalCommunities(louvain);
-        assertTrue(louvain.getIterations() < MAX_ITERATIONS);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
     @Test
@@ -272,7 +272,7 @@ public class WeightedLouvainModularityTest {
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertUnidirectionalCommunities(louvain);
-        assertTrue(louvain.getIterations() < MAX_ITERATIONS);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
     public void assertBidirectionalCommunities(LouvainAlgorithm louvain) {
