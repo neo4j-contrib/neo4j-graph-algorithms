@@ -112,17 +112,25 @@ public final class PageRankProc {
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
             return LongStream.range(0, hugeGraph.nodeCount())
-                    .mapToObj(i -> new PageRankScore(
-                            api.getNodeById(hugeGraph.toOriginalNodeId(i)),
-                            scores.score(i)
-                    ));
+                    .mapToObj(i -> {
+                        final long nodeId = hugeGraph.toOriginalNodeId(i);
+                        return new PageRankScore(
+                                nodeId,
+                                api.getNodeById(nodeId),
+                                scores.score(i)
+                        );
+                    });
         }
 
         return IntStream.range(0, Math.toIntExact(graph.nodeCount()))
-                .mapToObj(i -> new PageRankScore(
-                        api.getNodeById(graph.toOriginalNodeId(i)),
-                        scores.score(i)
-                ));
+                .mapToObj(i -> {
+                    final long nodeId = graph.toOriginalNodeId(i);
+                    return new PageRankScore(
+                            nodeId,
+                            api.getNodeById(nodeId),
+                            scores.score(i)
+                    );
+                });
     }
 
     private Graph load(

@@ -51,7 +51,7 @@ public class AdjacencyMatrixTest {
     @BeforeClass
     public static void setup() {
 
-        matrix = new AdjacencyMatrix(3);
+        matrix = new AdjacencyMatrix(3, false);
 
         // 0 -> {1, 2}
         matrix.armOut(0, 2);

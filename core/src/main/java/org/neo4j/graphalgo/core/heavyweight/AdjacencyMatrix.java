@@ -41,6 +41,8 @@ class AdjacencyMatrix {
 
     private static final int[] EMPTY_INTS = new int[0];
 
+    private static final int LINEAR_SEARCH_LIMIT = 64;
+
     /**
      * mapping from nodeId to outgoing degree
      */
@@ -64,15 +66,16 @@ class AdjacencyMatrix {
 
     private boolean sorted = false;
 
-    AdjacencyMatrix(int nodeCount) {
-        this(nodeCount, true, true);
+    AdjacencyMatrix(int nodeCount, boolean sorted) {
+        this(nodeCount, true, true, sorted);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing) {
+    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted) {
         this.outOffsets = withOutgoing ? new int[nodeCount] : null;
         this.inOffsets = withIncoming ? new int[nodeCount] : null;
         this.outgoing = withOutgoing ? new int[nodeCount][] : null;
         this.incoming = withIncoming ? new int[nodeCount][] : null;
+        this.sorted = sorted;
         if (withOutgoing) {
             Arrays.fill(outgoing, EMPTY_INTS);
         }
@@ -135,23 +138,69 @@ class AdjacencyMatrix {
         outOffsets[sourceNodeId] = nextDegree;
     }
 
-    /**
-     * checks for outgoing target node, currently O(n)
-     */
-    public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
+    private static boolean binarySearch(int[] arr, int length, int key) {
+        int low = 0;
+        int high = length;
 
-        if (sorted) {
-            return Arrays.binarySearch(outgoing[sourceNodeId], targetNodeId) > 0;
+        while (high - low > LINEAR_SEARCH_LIMIT) {
+            int mid = (low + high) >>> 1;
+            int midVal = arr[mid];
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return true;
         }
 
-        final int degree = outOffsets[sourceNodeId];
-        int[] rels = outgoing[sourceNodeId];
-        for (int offset = degree - 1; offset >= 0; offset--) {
-            if (rels[offset] == targetNodeId) {
+        return linearSearch(arr, low, high, key);
+
+    }
+
+    private static boolean linearSearch(int[] arr, int low, int high, int key) {
+        int i = low;
+        for (; i < high - 4; i += 4) {
+            if (arr [i] == key) return true;
+            if (arr [i + 1] == key) return true;
+            if (arr [i + 2] == key) return true;
+            if (arr [i + 3] == key) return true;
+        }
+        for (; i < high; i++) {
+            if (arr[i] == key) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * checks for outgoing target node
+     */
+    public boolean hasOutgoing(int sourceNodeId, int targetNodeId) {
+
+        final int degree = outOffsets[sourceNodeId];
+        final int[] rels = outgoing[sourceNodeId];
+
+        if (sorted && degree > LINEAR_SEARCH_LIMIT) {
+            return binarySearch(rels, degree, targetNodeId);
+        }
+
+        return linearSearch(rels, 0, degree, targetNodeId);
+    }
+
+    /**
+     * checks for incoming target node
+     */
+    public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
+
+        final int degree = inOffsets[sourceNodeId];
+        final int[] rels = incoming[sourceNodeId];
+
+        if (sorted && degree > LINEAR_SEARCH_LIMIT) {
+            return binarySearch(rels, degree, targetNodeId);
+        }
+
+        return linearSearch(rels, 0, degree, targetNodeId);
     }
 
     /**
@@ -165,25 +214,6 @@ class AdjacencyMatrix {
         }
         incoming[targetNodeId][degree] = sourceNodeId;
         inOffsets[targetNodeId] = nextDegree;
-    }
-
-    /**
-     * checks for incoming target node, currently O(n)
-     */
-    public boolean hasIncoming(int sourceNodeId, int targetNodeId) {
-
-        if (sorted) {
-            return Arrays.binarySearch(incoming[sourceNodeId], targetNodeId) > 0;
-        }
-
-        final int degree = inOffsets[sourceNodeId];
-        int[] rels = incoming[sourceNodeId];
-        for (int offset = degree - 1; offset >= 0; offset--) {
-            if (rels[offset] == targetNodeId) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -309,15 +339,24 @@ class AdjacencyMatrix {
         }
     }
 
-    public void sort(ExecutorService executorService, int concurrency) {
-        ParallelUtil.iterateParallel(executorService, outOffsets.length, concurrency, node -> {
-            Arrays.sort(outgoing[node]);
-            Arrays.sort(incoming[node]);
+    public void sortIncoming(int node) {
+        Arrays.sort(incoming[node]);
+    }
+
+    public void sortOutgoing(int node) {
+        Arrays.sort(outgoing[node]);
+    }
+
+    public void sortAll(ExecutorService pool, int concurrency) {
+        ParallelUtil.iterateParallel(pool, outgoing.length, concurrency, node -> {
+            sortIncoming(node);
+            sortOutgoing(node);
         });
         sorted = true;
     }
 
     private static class DegreeCheckingNodeIterator implements NodeIterator {
+
         private final int[] array;
 
         DegreeCheckingNodeIterator(int[] array) {
