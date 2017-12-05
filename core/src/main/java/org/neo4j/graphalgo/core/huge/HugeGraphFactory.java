@@ -83,6 +83,16 @@ public final class HugeGraphFactory extends GraphFactory {
             int batchSize,
             AllocationTracker tracker,
             ImportProgress progress) {
+        if (setup.loadAsUndirected) {
+            return loadUndirectedRelationships(
+                    dimensions,
+                    mapping,
+                    weights,
+                    concurrency,
+                    tracker,
+                    progress);
+        }
+
         final long nodeCount = dimensions.hugeNodeCount();
         final int[] relationId = dimensions.relationId();
         final int weightId = dimensions.weightId();
@@ -121,6 +131,7 @@ public final class HugeGraphFactory extends GraphFactory {
                             finalOutOffsets,
                             finalInAdjacency,
                             finalOutAdjacency,
+                            false,
                             relationId,
                             weightId,
                             weights
@@ -139,6 +150,61 @@ public final class HugeGraphFactory extends GraphFactory {
         );
     }
 
+    private HugeGraph loadUndirectedRelationships(
+            GraphDimensions dimensions,
+            HugeIdMap mapping,
+            HugeWeightMapping weights,
+            int concurrency,
+            int batchSize,
+            AllocationTracker tracker,
+            ImportProgress progress) {
+        final long nodeCount = dimensions.hugeNodeCount();
+        final int[] relationId = dimensions.relationId();
+        final int weightId = dimensions.weightId();
+
+        LongArray offsets = LongArray.newArray(nodeCount, tracker);
+        ByteArray adjacency = ByteArray.newArray(0, tracker);
+        adjacency.skipAllocationRegion(1);
+
+        // needs final b/c of reference from lambda
+        final AtomicInteger batchIndex = new AtomicInteger();
+        ParallelUtil.readParallel(
+                concurrency,
+                batchSize,
+                mapping,
+                (offset, nodeIds) -> new BatchImportTask(
+                        api,
+                        batchIndex.incrementAndGet(),
+                        nodeIds,
+                        progress,
+                        mapping,
+                        null,
+                        offsets,
+                        null,
+                        adjacency,
+                        true,
+                        relationId,
+                        weightId,
+                        weights
+                ),
+                threadPool);
+
+        return new HugeGraphImpl(
+                tracker,
+                mapping,
+                weights,
+                null,
+                adjacency,
+                null,
+                offsets
+        );
+    }
+
+    @FunctionalInterface
+    private interface RelationshipLoader {
+        void apply(long neoId, long nodeId) throws EntityNotFoundException;
+    }
+
     private static final class BatchImportTask extends StatementTask<Void, EntityNotFoundException> {
         private final int batchIndex;
         private final ImportProgress progress;
@@ -152,9 +218,7 @@ public final class HugeGraphFactory extends GraphFactory {
         private final int weightId;
         private final HugeWeightMapping weights;
         private final boolean loadsBoth;
-
-        private DeltaEncodingVisitor inImporter;
-        private DeltaEncodingVisitor outImporter;
+        private final boolean undirected;
 
         BatchImportTask(
                 GraphDatabaseAPI api,
@@ -166,6 +230,7 @@ public final class HugeGraphFactory extends GraphFactory {
                 LongArray outOffsets,
                 ByteArray inAdjacency,
                 ByteArray outAdjacency,
+                boolean undirected,
                 int[] relationId,
                 int weightId,
                 HugeWeightMapping weights) {
@@ -182,6 +247,7 @@ public final class HugeGraphFactory extends GraphFactory {
             this.weightId = weightId;
             this.weights = weights;
             this.loadsBoth = inAdjacency != null && outAdjacency != null;
+            this.undirected = undirected;
         }
 
         @Override
@@ -193,26 +259,79 @@ public final class HugeGraphFactory extends GraphFactory {
         public Void apply(final Statement statement) throws EntityNotFoundException {
             ReadOperations readOp = statement.readOperations();
 
+            final RelationshipLoader loader;
+            if (undirected) {
+                assert outOffsets != null;
+                assert outAllocator != null;
+
+                DeltaEncodingVisitor importer = newImporter(readOp, Direction.BOTH);
+                loader = (neo, node) -> readUndirectedRelationships(
+                        node,
+                        neo,
+                        readOp,
+                        outOffsets,
+                        outAllocator,
+                        importer
+                );
+            } else {
+
+                if (inAllocator != null) {
+                    DeltaEncodingVisitor inImporter = newImporter(readOp, Direction.INCOMING);
+                    if (outAllocator != null) {
+                        DeltaEncodingVisitor outImporter = newImporter(readOp, Direction.OUTGOING);
+                        loader = (neo, node) -> {
+                            readRelationships(
+                                    node,
+                                    neo,
+                                    readOp,
+                                    Direction.OUTGOING,
+                                    outOffsets,
+                                    outAllocator,
+                                    outImporter
+                            );
+                            readRelationships(
+                                    node,
+                                    neo,
+                                    readOp,
+                                    Direction.INCOMING,
+                                    inOffsets,
+                                    inAllocator,
+                                    inImporter
+                            );
+                        };
+                    } else {
+                        loader = (neo, node) -> readRelationships(
+                                node,
+                                neo,
+                                readOp,
+                                Direction.INCOMING,
+                                inOffsets,
+                                inAllocator,
+                                inImporter
+                        );
+                    }
+                } else {
+                    if (outAllocator != null) {
+                        DeltaEncodingVisitor outImporter = newImporter(readOp, Direction.OUTGOING);
+                        loader = (neo, node) -> readRelationships(
+                                node,
+                                neo,
+                                readOp,
+                                Direction.OUTGOING,
+                                outOffsets,
+                                outAllocator,
+                                outImporter
+                        );
+                    } else {
+                        loader = (neo, node) -> {};
+                    }
+                }
+            }
+
             PrimitiveLongIterator iterator = nodes.iterator();
-            boolean loadIncoming = inAllocator != null;
-            boolean loadOutgoing = outAllocator != null;
-
-            if (loadIncoming) {
-                inImporter = newImporter(readOp, Direction.INCOMING);
-            }
-            if (loadOutgoing) {
-                outImporter = newImporter(readOp, Direction.OUTGOING);
-            }
-
             while (iterator.hasNext()) {
                 long nodeId = iterator.next();
-                long neoId = idMap.toOriginalNodeId(nodeId);
-                readNodeBatch(
-                        nodeId,
-                        neoId,
-                        readOp,
-                        loadIncoming,
-                        loadOutgoing);
+                loader.apply(idMap.toOriginalNodeId(nodeId), nodeId);
                 progress.relProgress();
             }
             return null;
@@ -233,37 +352,7 @@ public final class HugeGraphFactory extends GraphFactory {
             return new DeltaEncodingVisitor(idMap, direction);
         }
 
-        private void readNodeBatch(
-                long sourceGraphId,
-                long sourceNodeId,
-                ReadOperations readOp,
-                boolean loadIncoming,
-                boolean loadOutgoing) throws EntityNotFoundException {
-            if (loadOutgoing) {
-                readRelationshipsBatch(
-                        sourceGraphId,
-                        sourceNodeId,
-                        readOp,
-                        Direction.OUTGOING,
-                        outOffsets,
-                        outAllocator,
-                        outImporter
-                );
-            }
-            if (loadIncoming) {
-                readRelationshipsBatch(
-                        sourceGraphId,
-                        sourceNodeId,
-                        readOp,
-                        Direction.INCOMING,
-                        inOffsets,
-                        inAllocator,
-                        inImporter
-                );
-            }
-        }
-
-        private void readRelationshipsBatch(
+        private void readRelationships(
                 long sourceGraphId,
                 long sourceNodeId,
                 ReadOperations readOp,
@@ -292,12 +381,12 @@ public final class HugeGraphFactory extends GraphFactory {
                 rs.relationshipVisit(rs.next(), delta);
             }
 
+            long requiredSize = delta.applyDelta();
             degree = delta.length;
             if (degree == 0) {
                 return;
             }
 
-            long requiredSize = delta.applyDelta();
             long adjacencyIdx = allocator.allocate(requiredSize);
             offsets.set(sourceGraphId, adjacencyIdx);
 
@@ -307,6 +396,51 @@ public final class HugeGraphFactory extends GraphFactory {
             for (int i = 0; i < degree; i++) {
                 bulkAdder.addVLong(targets[i]);
             }
+        }
+
+        private void readUndirectedRelationships(
+                long sourceGraphId,
+                long sourceNodeId,
+                ReadOperations readOp,
+                LongArray offsets,
+                ByteArray.LocalAllocator allocator,
+                DeltaEncodingVisitor delta) throws EntityNotFoundException {
+
+            int degree = degree(sourceNodeId, readOp, Direction.BOTH);
+            if (degree > 0) {
+                delta.reset(degree, sourceGraphId);
+                delta.setDirection(Direction.INCOMING);
+                RelationshipIterator rs = relationships(sourceNodeId, readOp, Direction.INCOMING);
+                while (rs.hasNext()) {
+                    rs.relationshipVisit(rs.next(), delta);
+                }
+                delta.setDirection(Direction.OUTGOING);
+                rs = relationships(sourceNodeId, readOp, Direction.OUTGOING);
+                while (rs.hasNext()) {
+                    rs.relationshipVisit(rs.next(), delta);
+                }
+
+                long requiredSize = delta.applyDelta();
+                degree = delta.length;
+                long adjacencyIdx = allocator.allocate(requiredSize);
+                offsets.set(sourceGraphId, adjacencyIdx);
+
+                ByteArray.BulkAdder bulkAdder = allocator.adder;
+                bulkAdder.addUnsignedInt(degree);
+                long[] targets = delta.targets;
+                for (int i = 0; i < degree; i++) {
+                    bulkAdder.addVLong(targets[i]);
+                }
+            }
+        }
+
+        private int degree(
+                long sourceNodeId,
+                ReadOperations readOp,
+                Direction direction) throws EntityNotFoundException {
+            return relationId == null
+                    ? readOp.nodeGetDegree(sourceNodeId, direction)
+                    : readOp.nodeGetDegree(sourceNodeId, direction, relationId[0]);
         }
 
         private RelationshipIterator relationships(
@@ -320,18 +454,18 @@ public final class HugeGraphFactory extends GraphFactory {
     }
 
     private static class DeltaEncodingVisitor implements RelationshipVisitor<EntityNotFoundException> {
-        private static final int[] encodingSizeCache;
+        private static final long[] encodingSizeCache;
 
         static {
-            encodingSizeCache = new int[66];
+            encodingSizeCache = new long[66];
             for (int i = 0; i < 65; i++) {
-                encodingSizeCache[i] = (int) Math.ceil(i / 7.0);
+                encodingSizeCache[i] = (long) Math.ceil((double) i / 7.0);
             }
-            encodingSizeCache[65] = 1;
+            encodingSizeCache[65] = 1L;
         }
 
         private final HugeIdMap idMap;
-        private final Direction direction;
+        private Direction direction;
 
         long sourceGraphId;
         private long prevTarget;
@@ -348,13 +482,17 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         final void reset(int degree, long sourceGraphId) {
-            length = 0;
             this.sourceGraphId = sourceGraphId;
+            length = 0;
             prevTarget = -1L;
             isSorted = true;
             if (targets.length < degree) {
                 targets = new long[ArrayUtil.oversize(degree, Long.BYTES)];
             }
+        }
+
+        final void setDirection(Direction direction) {
+            this.direction = direction;
         }
 
         @Override
@@ -384,20 +522,36 @@ public final class HugeGraphFactory extends GraphFactory {
 
         final long applyDelta() {
             int length = this.length;
+            if (length == 0) {
+                return 0L;
+            }
+
             long[] targets = this.targets;
             if (!isSorted) {
                 Arrays.sort(targets, 0, length);
             }
-            long delta = 0;
-            long requiredBytes = 4;  // length as full-int
-            for (int i = 0; i < length; i++) {
+
+            long delta = targets[0];
+            int writePos = 1;
+            long requiredBytes = 4L + vSize(delta);  // length as full-int
+
+            for (int i = 1; i < length; ++i) {
                 long nextDelta = targets[i];
-                long value = targets[i] -= delta;
-                delta = nextDelta;
-                int bits = Long.numberOfTrailingZeros(Long.highestOneBit(value)) + 1;
-                requiredBytes += encodingSizeCache[bits];
+                long value = targets[writePos] = nextDelta - delta;
+                if (value > 0L) {
+                    ++writePos;
+                    requiredBytes += vSize(value);
+                    delta = nextDelta;
+                }
             }
+
+            this.length = writePos;
             return requiredBytes;
+        }
+
+        private long vSize(long value) {
+            int bits = Long.numberOfTrailingZeros(Long.highestOneBit(value)) + 1;
+            return encodingSizeCache[bits];
         }
     }
 
