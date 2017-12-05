@@ -19,8 +19,6 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.collection.primitive.PrimitiveLongIterable;
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.HugeGraph;
@@ -44,7 +42,7 @@ import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class HugeGraphFactory extends GraphFactory {
 
@@ -66,11 +64,10 @@ public final class HugeGraphFactory extends GraphFactory {
 
     private HugeGraph importGraph() throws EntityNotFoundException {
         int concurrency = setup.concurrency();
-        int batchSize = setup.batchSize;
         AllocationTracker tracker = setup.tracker;
         HugeWeightMapping weights = hugeWeightMapping(tracker, dimensions.weightId(), setup.relationDefaultWeight);
         HugeIdMap mapping = loadHugeIdMap(tracker);
-        HugeGraph graph = loadRelationships(dimensions, mapping, weights, concurrency, batchSize, tracker, progress);
+        HugeGraph graph = loadRelationships(dimensions, mapping, weights, concurrency, tracker, progress);
         progressLogger.logDone(tracker);
         return graph;
     }
@@ -80,7 +77,6 @@ public final class HugeGraphFactory extends GraphFactory {
             HugeIdMap mapping,
             HugeWeightMapping weights,
             int concurrency,
-            int batchSize,
             AllocationTracker tracker,
             ImportProgress progress) {
         if (setup.loadAsUndirected) {
@@ -96,6 +92,7 @@ public final class HugeGraphFactory extends GraphFactory {
         final long nodeCount = dimensions.hugeNodeCount();
         final int[] relationId = dimensions.relationId();
         final int weightId = dimensions.weightId();
+
         LongArray inOffsets = null;
         LongArray outOffsets = null;
         ByteArray inAdjacency = null;
@@ -116,27 +113,25 @@ public final class HugeGraphFactory extends GraphFactory {
             final LongArray finalOutOffsets = outOffsets;
             final ByteArray finalInAdjacency = inAdjacency;
             final ByteArray finalOutAdjacency = outAdjacency;
-            final AtomicInteger batchIndex = new AtomicInteger();
-            ParallelUtil.readParallel(
-                    concurrency,
-                    batchSize,
+
+            NodeQueue nodes = new NodeQueue(nodeCount);
+            BatchImportTask[] tasks = new BatchImportTask[concurrency];
+            Arrays.setAll(tasks, i -> new BatchImportTask(
+                    api,
+                    i,
+                    nodes,
+                    progress,
                     mapping,
-                    (offset, nodeIds) -> new BatchImportTask(
-                            api,
-                            batchIndex.getAndIncrement(),
-                            nodeIds,
-                            progress,
-                            mapping,
-                            finalInOffsets,
-                            finalOutOffsets,
-                            finalInAdjacency,
-                            finalOutAdjacency,
-                            false,
-                            relationId,
-                            weightId,
-                            weights
-                    ),
-                    threadPool);
+                    finalInOffsets,
+                    finalOutOffsets,
+                    finalInAdjacency,
+                    finalOutAdjacency,
+                    false,
+                    relationId,
+                    weightId,
+                    weights
+            ));
+            ParallelUtil.run(Arrays.asList(tasks), threadPool);
         }
 
         return new HugeGraphImpl(
@@ -155,7 +150,6 @@ public final class HugeGraphFactory extends GraphFactory {
             HugeIdMap mapping,
             HugeWeightMapping weights,
             int concurrency,
-            int batchSize,
             AllocationTracker tracker,
             ImportProgress progress) {
         final long nodeCount = dimensions.hugeNodeCount();
@@ -166,28 +160,24 @@ public final class HugeGraphFactory extends GraphFactory {
         ByteArray adjacency = ByteArray.newArray(0, tracker);
         adjacency.skipAllocationRegion(1);
 
-        // needs final b/c of reference from lambda
-        final AtomicInteger batchIndex = new AtomicInteger();
-        ParallelUtil.readParallel(
-                concurrency,
-                batchSize,
+        NodeQueue nodes = new NodeQueue(nodeCount);
+        BatchImportTask[] tasks = new BatchImportTask[concurrency];
+        Arrays.setAll(tasks, i -> new BatchImportTask(
+                api,
+                i,
+                nodes,
+                progress,
                 mapping,
-                (offset, nodeIds) -> new BatchImportTask(
-                        api,
-                        batchIndex.incrementAndGet(),
-                        nodeIds,
-                        progress,
-                        mapping,
-                        null,
-                        offsets,
-                        null,
-                        adjacency,
-                        true,
-                        relationId,
-                        weightId,
-                        weights
-                ),
-                threadPool);
+                null,
+                offsets,
+                null,
+                adjacency,
+                true,
+                relationId,
+                weightId,
+                weights
+        ));
+        ParallelUtil.run(Arrays.asList(tasks), threadPool);
 
         return new HugeGraphImpl(
                 tracker,
@@ -205,10 +195,25 @@ public final class HugeGraphFactory extends GraphFactory {
         void apply(long neoId, long nodeId) throws EntityNotFoundException;
     }
 
+    private static final class NodeQueue {
+        private final AtomicLong current = new AtomicLong();
+
+        private final long max;
+
+        private NodeQueue(final long max) {
+            this.max = max;
+        }
+
+        public long next() {
+            long nodeId = current.getAndIncrement();
+            return nodeId < max ? nodeId : -1L;
+        }
+    }
+
     private static final class BatchImportTask extends StatementTask<Void, EntityNotFoundException> {
         private final int batchIndex;
         private final ImportProgress progress;
-        private final PrimitiveLongIterable nodes;
+        private final NodeQueue nodes;
         private final HugeIdMap idMap;
         private final LongArray inOffsets;
         private final LongArray outOffsets;
@@ -223,7 +228,7 @@ public final class HugeGraphFactory extends GraphFactory {
         BatchImportTask(
                 GraphDatabaseAPI api,
                 int batchIndex,
-                PrimitiveLongIterable nodes,
+                NodeQueue nodes,
                 ImportProgress progress,
                 HugeIdMap idMap,
                 LongArray inOffsets,
@@ -328,9 +333,9 @@ public final class HugeGraphFactory extends GraphFactory {
                 }
             }
 
-            PrimitiveLongIterator iterator = nodes.iterator();
-            while (iterator.hasNext()) {
-                long nodeId = iterator.next();
+            NodeQueue nodes = this.nodes;
+            long nodeId;
+            while ((nodeId = nodes.next()) != -1L) {
                 loader.apply(idMap.toOriginalNodeId(nodeId), nodeId);
                 progress.relProgress();
             }
@@ -361,21 +366,12 @@ public final class HugeGraphFactory extends GraphFactory {
                 ByteArray.LocalAllocator allocator,
                 DeltaEncodingVisitor delta) throws EntityNotFoundException {
 
-            int degree = relationId == null
-                    ? readOp.nodeGetDegree(sourceNodeId, direction)
-                    : readOp.nodeGetDegree(
-                    sourceNodeId,
-                    direction,
-                    relationId[0]);
-
+            int degree = degree(sourceNodeId, readOp, direction);
             if (degree <= 0) {
                 return;
             }
 
-            RelationshipIterator rs = relationships(
-                    sourceNodeId,
-                    readOp,
-                    direction);
+            RelationshipIterator rs = relationships(sourceNodeId, readOp, direction);
             delta.reset(degree, sourceGraphId);
             while (rs.hasNext()) {
                 rs.relationshipVisit(rs.next(), delta);
