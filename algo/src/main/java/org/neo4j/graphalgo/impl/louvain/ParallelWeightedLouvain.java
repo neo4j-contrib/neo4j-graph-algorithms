@@ -28,11 +28,15 @@ import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
@@ -57,6 +61,8 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
     private int iterations;
     private double m2, mq2;
     private final int maxIterations;
+    private final AtomicInteger queue;
+    private final List<Task> tasks;
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -77,12 +83,20 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
         this.maxIterations = maxIterations;
         communityIds = new int[nodeCount];
         communities = new IntObjectScatterMap<>();
+        queue = new AtomicInteger(0);
+        tasks = new ArrayList<>();
     }
 
     public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
-            if (!arrange()) {
+            queue.set(0);
+            ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), executorService);
+            boolean changes = false;
+            for (Task task : tasks) {
+                changes |= task.changes;
+            }
+            if (!changes) {
                 return this;
             }
         }
@@ -99,6 +113,12 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
     }
 
     private void reset() {
+
+        tasks.clear();
+        for (int i = 0; i < concurrency; i++) {
+            tasks.add(new Task());
+        }
+
         communities.clear();
 
         // TODO find better way for init
@@ -108,15 +128,15 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
             communities.put(i, set);
             communityIds[i] = i;
         }
-        final DoubleAdder adder = new DoubleAdder();
+        final DoubleAdder m = new DoubleAdder();
         ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                adder.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
+            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+                m.add(relationshipWeights.weightOf(sourceNodeId, targetNodeId));
                 return true;
             });
         });
-        m2 = adder.doubleValue() * 4.0; // 2m
-        mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
+        m2 = m.doubleValue() * 2.0; // 2m
+        mq2 = 2.0 * Math.pow(m.doubleValue(), 2.0); // 2m^2
     }
 
     /**
@@ -125,13 +145,18 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
      * @param targetCommunity communityId
      */
     private void assign(int node, int targetCommunity) {
+        writeLock.lock();
         int sourceCommunity = communityIds[node];
+
+        System.out.println("assign " + node + " to " + sourceCommunity + " -> " + targetCommunity);
+
         // remove node from its old set
         communities.get(sourceCommunity).removeAll(node);
         // place it into its new set
         communities.get(targetCommunity).add(node);
         // update communityIds
         communityIds[node] = targetCommunity;
+        writeLock.unlock();
     }
 
     /**
@@ -140,6 +165,8 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
      */
     private double sTot(int community) {
         double[] stot = {0.0}; // {sTot}
+        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+        readLock.lock();
         communities.get(community)
                 .forEach((IntProcedure) node -> {
                     relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
@@ -148,6 +175,7 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
                         return true;
                     });
                 });
+        readLock.unlock();
         return stot[0];
     }
 
@@ -163,50 +191,59 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
             }
             return true;
         });
-
         return sum[0];
     }
 
     private double kI(int node) {
         double[] sum = {0.0}; // {ki}
+
+        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+        readLock.lock();
         relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
             final double weight = relationshipWeights.weightOf(sourceNodeId, targetNodeId);
             sum[0] += weight;
             return true;
         });
+        readLock.unlock();
         return sum[0];
     }
 
-    /**
-     * implements phase 1 of louvain
-     * @return
-     */
-    private boolean arrange() {
-        final boolean[] changes = {false};
-        final double[] bestGain = {0};
-        final int[] bestCommunity = {0};
-        for (int node = 0; node < nodeCount; node++) {
-            bestGain[0] = 0.0;
-            final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-            readLock.lock();
-            final int sourceCommunity = bestCommunity[0] = communityIds[node];
-            final double mSource = (sTot(sourceCommunity) * kI(node)) / mq2;
-            readLock.unlock();
-            relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
-                final int targetCommunity = communityIds[targetNodeId];
-                final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
-                if (gain > bestGain[0]) {
-                    bestCommunity[0] = targetCommunity;
-                    bestGain[0] = gain;
+
+    private class Task implements Runnable {
+
+        private boolean changes = false;
+        private final ProgressLogger logger = getProgressLogger();
+
+        @Override
+        public void run() {
+            changes = false;
+            final double[] bestGain = {0};
+            final int[] bestCommunity = {0};
+            for (int node; (node = queue.getAndIncrement()) < nodeCount && running(); ) {
+                bestGain[0] = 0.0;
+                final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+                readLock.lock();
+                final int sourceCommunity = bestCommunity[0] = communityIds[node];
+                final double mSource = (sTot(sourceCommunity) * kI(node)) / mq2;
+                readLock.unlock();
+                relationshipIterator.forEachRelationship(node, D, (sourceNodeId, targetNodeId, relationId) -> {
+                    readLock.lock();
+                    final int targetCommunity = communityIds[targetNodeId];
+                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
+                    readLock.unlock();
+                    if (gain > bestGain[0]) {
+                        bestCommunity[0] = targetCommunity;
+                        bestGain[0] = gain;
+                    }
+                    return true;
+                });
+                if (bestCommunity[0] != sourceCommunity) {
+                    assign(node, bestCommunity[0]);
+                    changes = true;
                 }
-                return true;
-            });
-            if (bestCommunity[0] != sourceCommunity) {
-                assign(node, bestCommunity[0]);
-                changes[0] = true;
+                logger.logProgress(node, nodeCount - 1);
             }
         }
-        return changes[0];
     }
 
     public Stream<Result> resultStream() {
