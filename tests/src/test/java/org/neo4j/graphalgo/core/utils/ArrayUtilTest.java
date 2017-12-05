@@ -17,21 +17,21 @@ public class ArrayUtilTest {
 
     final private int[] testData;
 
-    @Parameterized.Parameters(name = "{1}")
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{32, "32"},
-                new Object[]{33, "33"},
-                new Object[]{64, "64"},
-                new Object[]{65, "65"},
-                new Object[]{128, "128"},
-                new Object[]{129, "129"},
-                new Object[]{2048, "2048"},
-                new Object[]{2049, "2049"}
+                new Object[]{32},
+                new Object[]{33},
+                new Object[]{64},
+                new Object[]{65},
+                new Object[]{2048},
+                new Object[]{2049},
+                new Object[]{4096},
+                new Object[]{4097}
         );
     }
 
-    public ArrayUtilTest(int size, String ignored) {
+    public ArrayUtilTest(int size) {
         testData = new int[size];
         Arrays.setAll(testData, i -> (i + 1) * 2);
     }
