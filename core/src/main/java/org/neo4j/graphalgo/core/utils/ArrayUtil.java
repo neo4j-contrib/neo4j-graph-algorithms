@@ -25,7 +25,6 @@ public final class ArrayUtil {
     public static boolean binarySearch(int[] arr, int length, int key) {
         int low = 0;
         int high = length-1;
-
         while (high - low > LINEAR_SEARCH_LIMIT) {
             int mid = (low + high) >>> 1;
             int midVal = arr[mid];
@@ -36,7 +35,6 @@ public final class ArrayUtil {
             else
                 return true;
         }
-
         return linearSearch(arr, low, high, key);
 
     }
@@ -60,7 +58,7 @@ public final class ArrayUtil {
     private static boolean linearSearch(int[] arr, int low, int high, int key) {
         int i = low;
         for (; i < high - 3; i += 4) {
-            if (arr[i] > key) return false;
+            if (arr [i] > key) return false;
             if (arr [i] == key) return true;
             if (arr [i + 1] == key) return true;
             if (arr [i + 2] == key) return true;
