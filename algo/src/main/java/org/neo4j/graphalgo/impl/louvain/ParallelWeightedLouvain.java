@@ -47,7 +47,7 @@ import java.util.stream.Stream;
  */
 public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> implements LouvainAlgorithm {
 
-    private static final Direction D = Direction.BOTH;
+    private static final Direction D = Direction.OUTGOING;
 
     private RelationshipIterator relationshipIterator;
     private RelationshipWeights relationshipWeights;
