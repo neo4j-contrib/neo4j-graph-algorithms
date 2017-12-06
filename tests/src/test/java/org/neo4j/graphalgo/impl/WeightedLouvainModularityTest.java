@@ -34,6 +34,7 @@ import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
+import org.neo4j.graphalgo.impl.louvain.ModularityCommunityDetection;
 import org.neo4j.graphalgo.impl.louvain.ParallelWeightedLouvain;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -129,7 +130,7 @@ public class WeightedLouvainModularityTest {
                     " (b)-[:TYPE {w:5}]->(e),\n" +
                     " (e)-[:TYPE {w:5}]->(b)";
 
-    private static final int MAX_ITERATIONS = 5;
+    private static final int MAX_ITERATIONS = 10;
 
     @Rule
     public ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
@@ -226,7 +227,7 @@ public class WeightedLouvainModularityTest {
     @Test
     public void testUnidirectional() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new ParallelWeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, MAX_ITERATIONS)
+        final LouvainAlgorithm louvain = new ModularityCommunityDetection(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
                 .compute();
 
         printCommunities(louvain);
@@ -239,8 +240,9 @@ public class WeightedLouvainModularityTest {
     @Test
     public void testBidirectional() throws Exception {
         setup(bidirectional);
-        final LouvainAlgorithm louvain = new ParallelWeightedLouvain(graph, graph, weights, Pools.DEFAULT, 1, 10)
+        final LouvainAlgorithm louvain = new ModularityCommunityDetection(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
                 .compute();
+
 
         printCommunities(louvain);
         System.out.println("louvain.getRuns() = " + louvain.getIterations());

@@ -96,7 +96,6 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
     private void reset() {
         communities.clear();
 
-        // TODO find better way for init
         for (int i = 0; i < nodeCount; i++) {
             final IntScatterSet set = new IntScatterSet();
             set.add(i);
@@ -110,7 +109,7 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
                 return true;
             });
         });
-        m2 = adder.doubleValue() * 4.0; // 2m
+        m2 = adder.doubleValue() * 2.0; // 2m
         mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
     }
 
