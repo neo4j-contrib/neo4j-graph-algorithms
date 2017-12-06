@@ -148,7 +148,7 @@ public class ParallelWeightedLouvain extends Algorithm<ParallelWeightedLouvain> 
         writeLock.lock();
         int sourceCommunity = communityIds[node];
 
-        System.out.println("assign " + node + " to " + sourceCommunity + " -> " + targetCommunity);
+        //System.out.println("assign " + node + " to " + sourceCommunity + " -> " + targetCommunity);
 
         // remove node from its old set
         communities.get(sourceCommunity).removeAll(node);

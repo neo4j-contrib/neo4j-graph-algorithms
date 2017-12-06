@@ -32,6 +32,7 @@ import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
+import org.neo4j.graphalgo.impl.louvain.ParallelWeightedLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphalgo.results.LouvainResult;
 import org.neo4j.graphdb.Direction;
@@ -150,8 +151,8 @@ public class LouvainProc {
 
     public LouvainAlgorithm louvain(HeavyGraph graph, ProcedureConfiguration config) {
         if (config.hasWeightProperty()) {
-            return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                    .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
+            return new ParallelWeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+                    .withProgressLogger(ProgressLogger.wrap(log, "ParallelWeightedLouvain"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction));
         }
         return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
