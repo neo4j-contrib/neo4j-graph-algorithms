@@ -1,5 +1,9 @@
 package org.neo4j.graphalgo.impl.louvain;
 
+import com.carrotsearch.hppc.IntDoubleMap;
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntIntScatterMap;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
@@ -43,9 +47,9 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     private final AtomicInteger queue;
     private final List<Task> tasks;
 
-//    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-//
-//    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     public ModularityCommunityDetection(Graph graph, ExecutorService pool, int concurrency, int maxIterations) {
         this.graph = graph;
@@ -88,12 +92,12 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     }
 
     private void move(int node, int targetCommunity) {
-//        writeLock.lock();
+        writeLock.lock();
         final int sourceCommunity = nodeCommunity[node];
         sTot[sourceCommunity] -= w[node];
         sTot[targetCommunity] += w[node];
         nodeCommunity[node] = targetCommunity;
-//        writeLock.unlock();
+        writeLock.unlock();
     }
 
     private double weightIntoC(int node, int targetCommunity) {
@@ -161,9 +165,10 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
             if (!changes) {
                 return this;
             }
-//            for (int i = 0; i < nodeCount; i++) {
-//                System.out.println(i + " : C" + nodeCommunity[i]);
-//            }
+            for (int i = 0; i < nodeCount; i++) {
+                System.out.println(i + " : C" + nodeCommunity[i]);
+            }
+            System.out.println();
         }
         return this;
     }
