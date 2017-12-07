@@ -1,9 +1,5 @@
 package org.neo4j.graphalgo.impl.louvain;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
@@ -38,18 +34,18 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     // weighted degree
     private double[] w;
     // node to community
-    private int[] nodeCommunity;
+    private volatile int[] nodeCommunity;
     // community weight
-    private double[] sTot;
+    private volatile double[] sTot;
     // number of iterations
     private int iterations;
 
     private final AtomicInteger queue;
     private final List<Task> tasks;
 
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+//    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+//
+//    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     public ModularityCommunityDetection(Graph graph, ExecutorService pool, int concurrency, int maxIterations) {
         this.graph = graph;
@@ -75,7 +71,7 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
         final DoubleAdder adder = new DoubleAdder();
         ParallelUtil.iterateParallel(pool, nodeCount, concurrency, node -> {
             final double[] ws = {0.0};
-            graph.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+            graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                 ws[0] += graph.weightOf(sourceNodeId, targetNodeId);
                 return true;
             });
@@ -84,22 +80,25 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
         });
 
         this.iterations = 0;
-        this.m2 = adder.doubleValue() * 2.0; // 2m
-        this.mq2 = 2.0 * Math.pow(adder.doubleValue(), 2.0); // 2m^2
+        this.m2 = adder.doubleValue(); // 2m
+
+//        System.out.println("m2 = " + m2);
+
+        this.mq2 = Math.pow(adder.doubleValue(), 2.0); // 2m^2
     }
 
     private void move(int node, int targetCommunity) {
-        writeLock.lock();
+//        writeLock.lock();
         final int sourceCommunity = nodeCommunity[node];
         sTot[sourceCommunity] -= w[node];
         sTot[targetCommunity] += w[node];
         nodeCommunity[node] = targetCommunity;
-        writeLock.unlock();
+//        writeLock.unlock();
     }
 
     private double weightIntoC(int node, int targetCommunity) {
         final double[] w = {0.0};
-        graph.forEachRelationship(node, Direction.BOTH, (s, t, r) -> {
+        graph.forEachRelationship(node, Direction.OUTGOING, (s, t, r) -> {
             if(nodeCommunity[t] != targetCommunity) return true;
             w[0] += graph.weightOf(s, t);
             return true;
@@ -108,38 +107,32 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     }
 
     private double modGain(int node, int targetCommunity) {
-        return weightIntoC(node, targetCommunity) / m2 - w[node] * sTot[targetCommunity] / mq2;
+        return (weightIntoC(node, targetCommunity) / m2) - (w[node] * sTot[targetCommunity] / mq2);
     }
 
     private int bestCommunity(int node) {
-        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         final double[] bestGain = {0.0};
-        final int[] bestCommunity = {-1};
-        readLock.lock();
-        final int sourceCommunity = nodeCommunity[node];
-        readLock.unlock();
+        final int[] bestCommunity = {nodeCommunity[node]};
+//        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+//        readLock.lock();
 
-        graph.forEachRelationship(node, Direction.BOTH, (s, t, r) -> {
+        graph.forEachRelationship(node, Direction.OUTGOING, (s, t, r) -> {
 
-            readLock.lock();
             final int targetCommunity = nodeCommunity[t];
-            if (targetCommunity == sourceCommunity) {
-                readLock.unlock();
-                return true;
-            }
             final double gain = modGain(node, targetCommunity);
-            readLock.unlock();
-            System.out.println("Gain for (" + node + ") -> (" + t + ") : C" + sourceCommunity + " -> C" + targetCommunity + " : " + gain);
-            if (gain > bestGain[0]) {
+
+//            System.out.println("Gain for (" + node + ") -> (" + t + ") : C" + nodeCommunity[node] + " -> C" + targetCommunity + " : " + gain);
+
+            if (gain >= bestGain[0]) {
                 bestGain[0] = gain;
                 bestCommunity[0] = targetCommunity;
             }
             return true;
         });
+//        readLock.unlock();
+//        System.out.println("moving " + node + " into community " + bestCommunity[0]);
         return bestCommunity[0];
     }
-
-
 
     @Override
     public ModularityCommunityDetection me() {
@@ -168,6 +161,9 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
             if (!changes) {
                 return this;
             }
+//            for (int i = 0; i < nodeCount; i++) {
+//                System.out.println(i + " : C" + nodeCommunity[i]);
+//            }
         }
         return this;
     }
@@ -209,11 +205,10 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
             changes = false;
             for (int node; (node = queue.getAndIncrement()) < nodeCount && running(); ) {
                 final int bestCommunity = bestCommunity(node);
-                if (bestCommunity == -1) {
-                    continue;
+                if (bestCommunity != nodeCommunity[node]) {
+                    move(node, bestCommunity);
+                    changes = true;
                 }
-                move(node, bestCommunity);
-                changes = true;
                 logger.logProgress(node, nodeCount - 1, () -> "Round " + iterations);
             }
         }
