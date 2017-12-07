@@ -83,8 +83,8 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     }
 
     private void move(int node, int targetCommunity) {
-        final int sourceCommunity = nodeCommunity[node];
         writeLock.lock();
+        final int sourceCommunity = nodeCommunity[node];
         sTot[sourceCommunity] -= w[node];
         sTot[targetCommunity] += w[node];
         nodeCommunity[node] = targetCommunity;
