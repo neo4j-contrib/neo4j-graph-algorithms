@@ -119,7 +119,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
             sTot[node] = d;
             adder.add(d);
         });
-        m2 = adder.intValue() * 2.0; // 2m //
+        m2 = adder.intValue() * 4.0; // 2m //
         mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
@@ -129,7 +129,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      * @param targetCommunity communityId
      */
     private void assign(int node, int targetCommunity) { // TODO sync
-        final int d = kIIn(node, targetCommunity);
+        final int d = degrees.degree(node, Direction.BOTH);
 
         writeLock.lock();
         try {
@@ -147,15 +147,13 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      */
     private int kIIn(int node, int targetCommunity) {
         int[] sum = {0}; // {ki, ki_in}
-        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-        readLock.lock();
-        relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
             if (targetCommunity == communityIds[targetNodeId]) {
                 sum[0]++;
             }
             return true;
         });
-        readLock.unlock();
+
         return sum[0];
     }
 
@@ -202,14 +200,14 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
                 bestGain = 0.0;
                 readLock.lock();
                 final int sourceCommunity = bestCommunity = communityIds[node];
-                final double mSource = (sTot[sourceCommunity] * kIIn(node, sourceCommunity)) / mq2;
+                final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
                 readLock.unlock();
 
-                relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                     readLock.lock();
                     final int targetCommunity = communityIds[targetNodeId];
-                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     readLock.unlock();
+                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
                         bestGain = gain;

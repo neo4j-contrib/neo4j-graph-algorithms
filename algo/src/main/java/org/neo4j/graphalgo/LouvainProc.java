@@ -124,14 +124,13 @@ public class LouvainProc {
 
     public Graph graph(ProcedureConfiguration config) {
 
-        Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
-                HugeGraphFactory.class,
-                HeavyGraphFactory.class,
-                HeavyCypherGraphFactory.class);
+        // TODO
+        final Class<? extends GraphFactory> graphImpl =
+                config.getGraphImplDefault("huge",
+                        HugeGraphFactory.class); // only huge implements 'asUndirected' yet
 
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
-                .withDirection(Direction.BOTH)
                 .asUndirected(true);
 
         if (config.hasWeightProperty()) {
@@ -151,11 +150,11 @@ public class LouvainProc {
 
     public LouvainAlgorithm louvain(Graph graph, ProcedureConfiguration config) {
         if (config.hasWeightProperty()) {
-            return new ModularityCommunityDetection(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+            return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
                     .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction));
         }
-        return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+        return new Louvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
     }
