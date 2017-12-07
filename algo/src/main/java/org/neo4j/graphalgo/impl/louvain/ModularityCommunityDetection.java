@@ -1,9 +1,5 @@
 package org.neo4j.graphalgo.impl.louvain;
 
-import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.IntIntMap;
-import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
@@ -31,8 +27,12 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     private final int concurrency;
     private final int nodeCount;
     private final int maxIterations;
+    private final AtomicInteger queue;
+    private final List<Task> tasks;
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
-    // m = sum of all weights
+    // m = sum of all weights *2
     private double m2;
     private double mq2;
     // weighted degree
@@ -44,11 +44,6 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     // number of iterations
     private int iterations;
 
-    private final AtomicInteger queue;
-    private final List<Task> tasks;
-
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     public ModularityCommunityDetection(Graph graph, ExecutorService pool, int concurrency, int maxIterations) {
         this.graph = graph;
@@ -88,8 +83,8 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     }
 
     private void move(int node, int targetCommunity) {
-        writeLock.lock();
         final int sourceCommunity = nodeCommunity[node];
+        writeLock.lock();
         sTot[sourceCommunity] -= w[node];
         sTot[targetCommunity] += w[node];
         nodeCommunity[node] = targetCommunity;
@@ -201,5 +196,4 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
             }
         }
     }
-
 }
