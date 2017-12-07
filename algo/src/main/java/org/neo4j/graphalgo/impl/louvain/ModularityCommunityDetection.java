@@ -48,7 +48,6 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     private final List<Task> tasks;
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     public ModularityCommunityDetection(Graph graph, ExecutorService pool, int concurrency, int maxIterations) {
@@ -85,9 +84,6 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
 
         this.iterations = 0;
         this.m2 = adder.doubleValue(); // 2m
-
-//        System.out.println("m2 = " + m2);
-
         this.mq2 = Math.pow(adder.doubleValue(), 2.0); // 2m^2
     }
 
@@ -117,24 +113,15 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
     private int bestCommunity(int node) {
         final double[] bestGain = {0.0};
         final int[] bestCommunity = {nodeCommunity[node]};
-//        final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-//        readLock.lock();
-
         graph.forEachRelationship(node, Direction.OUTGOING, (s, t, r) -> {
-
             final int targetCommunity = nodeCommunity[t];
             final double gain = modGain(node, targetCommunity);
-
-//            System.out.println("Gain for (" + node + ") -> (" + t + ") : C" + nodeCommunity[node] + " -> C" + targetCommunity + " : " + gain);
-
             if (gain >= bestGain[0]) {
                 bestGain[0] = gain;
                 bestCommunity[0] = targetCommunity;
             }
             return true;
         });
-//        readLock.unlock();
-//        System.out.println("moving " + node + " into community " + bestCommunity[0]);
         return bestCommunity[0];
     }
 
@@ -165,10 +152,6 @@ public class ModularityCommunityDetection extends Algorithm<ModularityCommunityD
             if (!changes) {
                 return this;
             }
-            for (int i = 0; i < nodeCount; i++) {
-                System.out.println(i + " : C" + nodeCommunity[i]);
-            }
-            System.out.println();
         }
         return this;
     }
