@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -32,7 +33,6 @@ import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.*;
 import org.neo4j.graphalgo.results.LouvainResult;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -124,9 +124,10 @@ public class LouvainProc {
 
     public Graph graph(ProcedureConfiguration config) {
 
-        // TODO
         final Class<? extends GraphFactory> graphImpl =
                 config.getGraphImplDefault("huge",
+                        HeavyGraphFactory.class,
+                        HeavyCypherGraphFactory.class,
                         HugeGraphFactory.class); // only huge implements 'asUndirected' yet
 
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
@@ -149,6 +150,17 @@ public class LouvainProc {
     }
 
     public LouvainAlgorithm louvain(Graph graph, ProcedureConfiguration config) {
+
+        if (graph instanceof HeavyGraph) {
+            return new ParallelLouvain(graph,
+                    graph,
+                    graph,
+                    Pools.DEFAULT,
+                    config.getConcurrency(),
+                    config.getIterations(DEFAULT_ITERATIONS))
+                    .withProgressLogger(ProgressLogger.wrap(log, "Louvain(deprecated)"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction));
+        }
         if (config.hasWeightProperty()) {
             return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
                     .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
