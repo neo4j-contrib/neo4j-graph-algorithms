@@ -54,6 +54,8 @@ public final class JFR implements ExternalProfiler {
     public Collection<String> addJVMOptions(final BenchmarkParams params) {
         final String fileName = getFileName(params);
         return Arrays.asList(
+                "-XX:+UnlockDiagnosticVMOptions",
+                "-XX:+DebugNonSafepoints",
                 "-XX:+UnlockCommercialFeatures",
                 "-XX:+FlightRecorder",
                 "-XX:StartFlightRecording=duration=0s,delay=0s,dumponexit=true,filename=" + fileName

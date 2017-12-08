@@ -43,10 +43,18 @@ public interface HugeRelationshipIterator {
     }
 
     /**
-     * Returns a copy of this iterator that reuses new cursors internally,
+     * @return a copy of this iterator that reuses new cursors internally,
      * so that iterations happen independent from other iterations.
      */
     default HugeRelationshipIterator concurrentCopy() {
         return this;
+    }
+
+    /**
+     * @return a copy of this iterator that is capable of intersecting two
+     * adjacency lists independent from other iterations.
+     */
+    default HugeRelationshipIntersect intersectionCopy() {
+        throw new UnsupportedOperationException("Not implemented");
     }
 }
