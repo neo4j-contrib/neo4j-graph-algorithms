@@ -73,7 +73,7 @@ public class TriangleProc {
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .init(log, label, relationship, configuration)
-                .withDirection(TriangleCount.D)
+                .withDirection(TriangleCountBase.D)
                 .load(configuration.getGraphImpl());
 
         final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency())
@@ -86,7 +86,7 @@ public class TriangleProc {
     @Procedure("algo.triangleCount.stream")
     @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
-    public Stream<TriangleCountExp2.Result> triangleCountExp2Stream(
+    public Stream<TriangleCountBase.Result> triangleCountQueueStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -101,23 +101,23 @@ public class TriangleProc {
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withSort(true)
+                .asUndirected(true)
                 .init(log, label, relationship, configuration)
-                .withDirection(TriangleCount.D)
+                .withDirection(TriangleCountBase.D)
                 .load(configuration.getGraphImpl());
 
-        final TriangleCountExp2 triangleCount = new TriangleCountExp2(graph, Pools.DEFAULT, configuration.getConcurrency())
+        return new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute();
-
-        return triangleCount.resultStream();
+                .compute()
+                .resultStream();
     }
 
 
     @Procedure("algo.triangleCount.forkJoin.stream")
     @Description("CALL algo.triangleCount.forkJoin.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
-    public Stream<TriangleCountExp3.Result> triangleCountExp3Stream(
+    public Stream<TriangleCountBase.Result> triangleCountForkJoinStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -132,18 +132,19 @@ public class TriangleProc {
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withSort(true)
+                .asUndirected(true)
                 .init(log, label, relationship, configuration)
-                .withDirection(TriangleCount.D)
+                .withDirection(TriangleCountBase.D)
                 .load(configuration.getGraphImpl());
 
-        final TriangleCountExp3 triangleCount = new TriangleCountExp3(graph,
+        return new TriangleCountForkJoin(
+                graph,
                 ForkJoinPool.commonPool(),
                 configuration.getNumber("threshold", 10_000).intValue())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute(true);
-
-        return triangleCount.resultStream();
+                .compute()
+                .resultStream();
     }
 
 
@@ -151,13 +152,13 @@ public class TriangleProc {
     @Description("CALL algo.triangleCount(label, relationship, " +
             "{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient")
-    public Stream<Result> triangleCountExp2(
+    public Stream<Result> triangleCountQueue(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCountExp2 triangleCount;
+        final TriangleCountQueue triangleCount;
         final double[] clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
@@ -172,19 +173,20 @@ public class TriangleProc {
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
                     .withSort(true)
+                    .asUndirected(true)
                     .init(log, label, relationship, configuration)
-                    .withDirection(TriangleCountExp2.D)
+                    .withDirection(TriangleCountBase.D)
                     .load(configuration.getGraphImpl());
-        };
+        }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCountExp2(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(terminationFlag)
                     .compute();
             clusteringCoefficients = triangleCount.getClusteringCoefficients();
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
@@ -229,7 +231,7 @@ public class TriangleProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCountExp3 triangleCount;
+        final TriangleCountForkJoin triangleCount;
         final AtomicDoubleArray clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
@@ -244,21 +246,23 @@ public class TriangleProc {
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
                     .withSort(true)
+                    .asUndirected(true)
                     .init(log, label, relationship, configuration)
-                    .withDirection(TriangleCountExp2.D)
+                    .withDirection(TriangleCountBase.D)
                     .load(configuration.getGraphImpl());
-        };
+        }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCountExp3(graph,
+            triangleCount = new TriangleCountForkJoin(
+                    graph,
                     ForkJoinPool.commonPool(),
                     configuration.getNumber("threshold", 10_000).intValue())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(terminationFlag)
-                    .compute(true);
+                    .compute();
             clusteringCoefficients = triangleCount.getClusteringCoefficients();
-        };
+        }
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
@@ -306,7 +310,13 @@ public class TriangleProc {
         public final long triangleCount;
         public final double averageClusteringCoefficient;
 
-        public Result(long loadMillis, long computeMillis, long writeMillis, long nodeCount, long triangleCount, double averageClusteringCoefficient) {
+        public Result(
+                long loadMillis,
+                long computeMillis,
+                long writeMillis,
+                long nodeCount,
+                long triangleCount,
+                double averageClusteringCoefficient) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.writeMillis = writeMillis;
@@ -339,7 +349,8 @@ public class TriangleProc {
 
         @Override
         public Result build() {
-            return new Result(loadDuration,
+            return new Result(
+                    loadDuration,
                     evalDuration,
                     writeDuration,
                     nodeCount,

@@ -18,12 +18,11 @@
  */
 package org.neo4j.graphalgo.impl;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -38,8 +37,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,15 +56,18 @@ public class TriangleStreamTest {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final long TRIANGLES = 1000;
+    private static final long TRIANGLES = 1000;
 
-    private static GraphDatabaseAPI db;
+    @ClassRule
+    public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
+
     private static long centerId;
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"},
                 new Object[]{LightGraphFactory.class, "LightGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
@@ -75,48 +76,38 @@ public class TriangleStreamTest {
     private Graph graph;
 
     @BeforeClass
-    public static void setup() throws Exception {
-
-        db = TestDatabaseCreator.createTestDatabase();
-
+    public static void setup() {
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println(
                 "setup took " + t + "ms for " + TRIANGLES + " nodes"))) {
 
             final RelationshipType type = RelationshipType.withName(RELATIONSHIP);
-            final DefaultBuilder builder = GraphBuilder.create(db)
+            final DefaultBuilder builder = GraphBuilder.create(DB)
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newDefaultBuilder();
             final Node center = builder.createNode();
             builder.newRingBuilder()
                     .createRing((int) TRIANGLES)
-                    .forEachNodeInTx(node -> {
-                        center.createRelationshipTo(node, type);
-                    });
+                    .forEachNodeInTx(node -> center.createRelationshipTo(node, type));
             centerId = center.getId();
         }
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if (db != null) db.shutdown();
-    }
-
     public TriangleStreamTest(Class<? extends GraphFactory> graphImpl, String name) {
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load " + name + " took " + t + "ms"))) {
-            graph = new GraphLoader(db)
+            graph = new GraphLoader(DB)
                     .withDirection(Direction.BOTH)
                     .withLabel(LABEL)
                     .withRelationshipType(RELATIONSHIP)
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
+                    .asUndirected(true)
                     .load(graphImpl);
         }
     }
 
     @Test
-    public void testSequential() throws Exception {
-
+    public void testSequential() {
         final TripleConsumer mock = mock(TripleConsumer.class);
 
         new TriangleStream(graph, Pools.DEFAULT, 1)
@@ -127,7 +118,7 @@ public class TriangleStreamTest {
     }
 
     @Test
-    public void testParallel() throws Exception {
+    public void testParallel() {
 
         final TripleConsumer mock = mock(TripleConsumer.class);
 
