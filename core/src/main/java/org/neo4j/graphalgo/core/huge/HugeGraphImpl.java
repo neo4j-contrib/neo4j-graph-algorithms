@@ -22,6 +22,7 @@ import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
+import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
@@ -304,6 +305,11 @@ public class HugeGraphImpl implements HugeGraph {
                 inOffsets,
                 outOffsets
         );
+    }
+
+    @Override
+    public HugeRelationshipIntersect intersectionCopy() {
+        return new HugeGraphIntersectImpl(outAdjacency, outOffsets);
     }
 
     private ByteArray.DeltaCursor newCursor(final ByteArray adjacency) {

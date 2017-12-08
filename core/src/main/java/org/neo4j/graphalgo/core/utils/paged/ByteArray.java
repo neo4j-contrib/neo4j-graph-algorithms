@@ -434,6 +434,10 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             return this;
         }
 
+        public int cost() {
+            return maxTargets;
+        }
+
         public long getVLong() {
             if (currentTarget++ >= maxTargets) {
                 return -1L;
