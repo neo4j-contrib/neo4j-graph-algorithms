@@ -20,26 +20,24 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.impl.*;
-import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
 
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author mknblch
  */
 @Threads(1)
-@Fork(1)
-@Warmup(iterations = 5)
-@Measurement(iterations = 5)
+@Fork(value = 1, jvmArgs = {"-Xms2g", "-Xmx2g"})
+@Warmup(iterations = 5, time = 3)
+@Measurement(iterations = 5, time = 3)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -47,117 +45,72 @@ public class TriangleCountBenchmark {
 
     private static final String LABEL = "Node";
     private static final String RELATIONSHIP = "REL";
-    public static final int TRIANGLE_COUNT = 500;
+    private static final int TRIANGLE_COUNT = 500;
 
-    private static Graph graph;
-    private static GraphDatabaseAPI api;
+    private Graph g;
+    private GraphDatabaseAPI api;
 
-    @Param({"0.02", "0.5", "0.8"})
-    private double connecteness;
+    @Param({"0.2", "0.5", "0.8"})
+    private double connectedness;
+
+    @Param({"true", "false"})
+    private boolean parallel;
+
+    @Param({"LIGHT", "HEAVY", "HUGE"})
+    GraphImpl graph;
+
+    private int concurrency;
+    private int seqThreshold;
 
     @Setup
-    public static void setup() throws KernelException {
+    public void setup() {
         api = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
                         .newGraphDatabase();
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("setup took " + t + "ms for " + TRIANGLE_COUNT + " nodes"))) {
-
             GraphBuilder.create(api)
                     .setLabel(LABEL)
                     .setRelationship(RELATIONSHIP)
                     .newCompleteGraphBuilder()
-                    .createCompleteGraph(TRIANGLE_COUNT, 0.5);
-        };
+                    .createCompleteGraph(TRIANGLE_COUNT, connectedness);
+        }
 
         try (ProgressTimer timer = ProgressTimer.start(t -> System.out.println("load took " + t + "ms"))) {
-            graph = new GraphLoader(api)
+            g = new GraphLoader(api)
                     .withLabel(LABEL)
                     .withRelationshipType(RELATIONSHIP)
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
                     .withSort(true)
-                    .load(HeavyGraphFactory.class);
-        };
+                    .asUndirected(true)
+                    .load(graph.impl);
+        }
+
+        concurrency = parallel ? Pools.DEFAULT_CONCURRENCY : 1;
+        seqThreshold = parallel ? ParallelUtil.threadSize(Pools.DEFAULT_CONCURRENCY, TRIANGLE_COUNT) : 2 * TRIANGLE_COUNT;
     }
 
 
     @TearDown
-    public static void tearDown() throws Exception {
+    public void tearDown() {
         if (api != null) api.shutdown();
         Pools.DEFAULT.shutdownNow();
     }
 
-//    @Benchmark
-    public Object triangleCount_singleThreaded() {
-        return new TriangleCount(graph, Pools.DEFAULT, 1)
-                .compute()
-                .getTriangleCount();
-    }
-
-//    @Benchmark
-    public Object triangleCount_multiThreaded() {
-        return new TriangleCount(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
-                .compute()
-                .getTriangleCount();
-    }
-
-//    @Benchmark
-    public Object triangleCountExp_singleThreaded() {
-        return new TriangleCountExp(graph, Pools.DEFAULT, 1)
-                .compute()
-                .getTriangleCount();
-    }
-
-//    @Benchmark
-    public Object triangleCountExp_multiThreaded() {
-        return new TriangleCountExp(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
-                .compute()
-                .getTriangleCount();
-    }
-
-//    @Benchmark
-    public Object triangleCountExp2_singleThreaded() {
-        return new TriangleCountExp2(graph, Pools.DEFAULT, 1)
-                .compute()
-                .getTriangleCount();
+    @Benchmark
+    public Object _01_queue() {
+        return new TriangleCountQueue(g, Pools.DEFAULT, concurrency).compute().getTriangleCount();
     }
 
     @Benchmark
-    public Object triangleCountExp2_multiThreaded() {
-        return new TriangleCountExp2(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
-                .compute()
-                .getTriangleCount();
-    }
-
-//    @Benchmark
-    public Object triangleCountExp3_singleThreaded() {
-        return new TriangleCountExp3(graph, Pools.FJ_POOL, 10000)
-                .compute(false)
-                .getTriangleCount();
+    public Object _02_forkJoin() {
+        return new TriangleCountForkJoin(g, Pools.FJ_POOL, seqThreshold).compute().getTriangleCount();
     }
 
     @Benchmark
-    public Object triangleCountExp3_multiThreaded() {
-        return new TriangleCountExp3(graph, Pools.FJ_POOL, TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
-                .compute(false)
-                .getTriangleCount();
+    public Object _03_stream() {
+        return new TriangleStream(g, Pools.DEFAULT, concurrency).resultStream().count();
     }
-
-//    @Benchmark
-    public Object triangleCountExp3_Coefficients_singleThreaded() {
-        return new TriangleCountExp3(graph, Pools.FJ_POOL, 10000)
-                .compute(true)
-                .getTriangleCount();
-    }
-
-    @Benchmark
-    public Object triangleCountExp3_Coefficients_multiThreaded() {
-        return new TriangleCountExp3(graph, Pools.FJ_POOL, TRIANGLE_COUNT / Pools.DEFAULT_CONCURRENCY)
-                .compute(true)
-                .getTriangleCount();
-    }
-
-
 }
