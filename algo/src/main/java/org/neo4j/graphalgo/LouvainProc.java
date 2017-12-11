@@ -128,7 +128,7 @@ public class LouvainProc {
                 config.getGraphImplDefault("huge",
                         HeavyGraphFactory.class,
                         HeavyCypherGraphFactory.class,
-                        HugeGraphFactory.class); // only huge implements 'asUndirected' yet
+                        HugeGraphFactory.class);
 
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
@@ -151,23 +151,24 @@ public class LouvainProc {
 
     public LouvainAlgorithm louvain(Graph graph, ProcedureConfiguration config) {
 
-        if (graph instanceof HeavyGraph) {
-            return new ParallelLouvain(graph,
-                    graph,
-                    graph,
-                    Pools.DEFAULT,
-                    config.getConcurrency(),
-                    config.getIterations(DEFAULT_ITERATIONS))
-                    .withProgressLogger(ProgressLogger.wrap(log, "Louvain(deprecated)"))
+        if (graph instanceof HugeGraph) {
+            if (config.hasWeightProperty()) {
+                return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+                        .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction));
+            }
+            return new Louvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+                    .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction));
         }
-        if (config.hasWeightProperty()) {
-            return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                    .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction));
-        }
-        return new Louvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
+
+        return new ParallelLouvain(graph,
+                graph,
+                graph,
+                Pools.DEFAULT,
+                config.getConcurrency(),
+                config.getIterations(DEFAULT_ITERATIONS))
+                .withProgressLogger(ProgressLogger.wrap(log, "Louvain(deprecated)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
     }
 
