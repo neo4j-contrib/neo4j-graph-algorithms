@@ -60,12 +60,12 @@ public class LouvainClusteringIntegrationTest {
 
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (b:Node {name:'b'})\n" +
                         "CREATE (c:Node {name:'c'})\n" + // shuffled
+                        "CREATE (b:Node {name:'b'})\n" +
                         "CREATE (d:Node {name:'d'})\n" +
                         "CREATE (e:Node {name:'e'})\n" +
-                        "CREATE (f:Node {name:'f'})\n" +
                         "CREATE (g:Node {name:'g'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
                         "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (z:Node {name:'z'})\n" +
 
@@ -121,7 +121,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testStream() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:2}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1}) " +
                 "YIELD nodeId, community";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
@@ -133,7 +133,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testWithLabelRel() {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE') " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE', {concurrency:1}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         DB.execute(cypher).accept(row -> {
@@ -157,10 +157,9 @@ public class LouvainClusteringIntegrationTest {
         printNodeSets();
     }
 
-    @Ignore("Issue #444")
     @Test
     public void testWithWeight() {
-        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0}) " +
+        final String cypher = "CALL algo.louvain('Node', 'TYPE', {weightProperty:'w', defaultValue:1.0, concurrency:1}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         DB.execute(cypher).accept(row -> {
@@ -172,7 +171,7 @@ public class LouvainClusteringIntegrationTest {
             final long writeMillis = row.getNumber("writeMillis").longValue();
             System.out.println("nodes = " + nodes);
             System.out.println("communityCount = " + communityCount);
-            assertEquals(4, communityCount);
+            assertEquals(3, communityCount);
             System.out.println("iterations = " + iterations);
             assertEquals("invalid node count", 9, nodes);
             assertTrue("invalid loadTime", loadMillis >= 0);
@@ -184,8 +183,6 @@ public class LouvainClusteringIntegrationTest {
         printNodeSets();
 
     }
-
-
 
     @Test
     public void shouldAllowHeavyGraph() {
@@ -210,11 +207,11 @@ public class LouvainClusteringIntegrationTest {
     }
 
     @Test
-    public void shouldNotAllowLightOrHugeOrKernelGraph() throws Throwable {
+    public void shouldNotAllowLightOrKernelGraph() throws Throwable {
         String query = "CALL algo.louvain('', '', {graph:$graph})";
 
         exceptions.expect(IllegalArgumentException.class);
-        exceptions.expectMessage("The selected graph is not suitable for this algo, please use either 'heavy' or 'cypher'.");
+        exceptions.expectMessage("The selected graph is not suitable for this algo, please use either 'heavy' or 'cypher' or 'huge'.");
 
         for (final String graph : Arrays.asList("light", "huge", "kernel")) {
             Map<String, Object> params = Collections.singletonMap("graph", graph);
