@@ -24,17 +24,15 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
-import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
-import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
-import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
+import org.neo4j.graphalgo.impl.louvain.*;
 import org.neo4j.graphalgo.results.LouvainResult;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -52,7 +50,8 @@ public class LouvainProc {
 
     public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
     public static final String DEFAULT_CLUSTER_PROPERTY = "community";
-    public static final int DEFAULT_ITERATIONS = 20;
+
+    public static final int DEFAULT_ITERATIONS = 5;
 
     @Context
     public GraphDatabaseAPI api;
@@ -78,7 +77,7 @@ public class LouvainProc {
 
         LouvainResult.Builder builder = LouvainResult.builder();
 
-        final HeavyGraph graph;
+        final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
             graph = graph(configuration);
         }
@@ -123,39 +122,53 @@ public class LouvainProc {
 
     }
 
-    public HeavyGraph graph(ProcedureConfiguration config) {
+    public Graph graph(ProcedureConfiguration config) {
 
-        Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
-                HeavyGraphFactory.class,
-                HeavyCypherGraphFactory.class);
+        final Class<? extends GraphFactory> graphImpl =
+                config.getGraphImplDefault("huge",
+                        HeavyGraphFactory.class,
+                        HeavyCypherGraphFactory.class,
+                        HugeGraphFactory.class);
 
         final GraphLoader loader = new GraphLoader(api, Pools.DEFAULT)
-                .init(log, config.getNodeLabelOrQuery(),config.getRelationshipOrQuery(),config)
-                .withDirection(Direction.BOTH);
+                .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
+                .asUndirected(true);
 
         if (config.hasWeightProperty()) {
-            return (HeavyGraph) loader
+            return loader
                     .withOptionalRelationshipWeightsFromProperty(
                             config.getWeightProperty(),
                             config.getWeightPropertyDefaultValue(1.0))
                     .load(graphImpl);
         }
 
-        return (HeavyGraph) loader
+        return loader
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
                 .withoutNodeProperties()
                 .load(graphImpl);
     }
 
-    public LouvainAlgorithm louvain(HeavyGraph graph, ProcedureConfiguration config) {
-        if (config.hasWeightProperty()) {
-            return new WeightedLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                    .withProgressLogger(ProgressLogger.wrap(log, "WeightedLouvain"))
+    public LouvainAlgorithm louvain(Graph graph, ProcedureConfiguration config) {
+
+        if (graph instanceof HugeGraph) {
+            if (config.hasWeightProperty()) {
+                return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+                        .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
+                        .withTerminationFlag(TerminationFlag.wrap(transaction));
+            }
+            return new Louvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
+                    .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction));
         }
-        return new ParallelLouvain(graph, graph, graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
+
+        return new ParallelLouvain(graph,
+                graph,
+                graph,
+                Pools.DEFAULT,
+                config.getConcurrency(),
+                config.getIterations(DEFAULT_ITERATIONS))
+                .withProgressLogger(ProgressLogger.wrap(log, "Louvain(deprecated)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
     }
 

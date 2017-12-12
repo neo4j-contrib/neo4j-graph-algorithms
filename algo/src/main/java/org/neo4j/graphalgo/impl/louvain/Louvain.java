@@ -18,16 +18,21 @@
  */
 package org.neo4j.graphalgo.impl.louvain;
 
-
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -36,146 +41,102 @@ import java.util.stream.Stream;
  */
 public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
-    private RelationshipIterator relationshipIterator;
-    private final Degrees degrees;
-    private ExecutorService executorService;
+    private Graph graph;
+    private ExecutorService pool;
     private final int concurrency;
     private final int nodeCount;
-
-    private final int[] communityIds; // node to community mapping
-    private final double[] sTot;
-    private final IdMapping idMapping;
-    private int iterations;
-    private double m2, mq2;
     private final int maxIterations;
+    private final AtomicInteger queue;
+    private final List<Task> tasks;
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
-    public Louvain(IdMapping idMapping,
-                   RelationshipIterator relationshipIterator,
-                   Degrees degrees,
-                   ExecutorService executorService,
-                   int concurrency, int maxIterations) {
+    // m = sum of all weights *2
+    private double m2;
+    private double mq2;
+    // node to community
+    private volatile int[] nodeCommunity;
+    // community weight
+    private volatile double[] sTot;
+    // number of iterations
+    private int iterations;
 
-        this.idMapping = idMapping;
-        nodeCount = Math.toIntExact(idMapping.nodeCount());
-        this.relationshipIterator = relationshipIterator;
-        this.degrees = degrees;
-        this.executorService = executorService;
+
+    public Louvain(Graph graph, ExecutorService pool, int concurrency, int maxIterations) {
+        this.graph = graph;
+        this.pool = pool;
         this.concurrency = concurrency;
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.maxIterations = maxIterations;
-        communityIds = new int[nodeCount];
+        nodeCommunity = new int[nodeCount];
         sTot = new double[nodeCount];
-
+        queue = new AtomicInteger();
+        tasks = new ArrayList<>();
     }
 
-    public LouvainAlgorithm compute() {
-        reset();
-        for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
-            if (!arrange()) {
-                return this;
-            }
+    private void init() {
+
+        getProgressLogger().logProgress(0, () -> "init");
+        tasks.clear();
+        for (int i = 0; i < concurrency; i++) {
+            tasks.add(new Task());
         }
-        return this;
-    }
 
-
-    @Override
-    public Louvain release() {
-        relationshipIterator = null;
-        executorService = null;
-        return this;
-    }
-
-    private void reset() {
-
-        Arrays.setAll(communityIds, i -> i);
-
+        Arrays.setAll(nodeCommunity, i -> i);
         final LongAdder adder = new LongAdder();
-        ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            final int d = degrees.degree(node, Direction.BOTH);
-            sTot[node] = d;
-            adder.add(d);
+        ParallelUtil.iterateParallel(pool, nodeCount, concurrency, node -> {
+            final int degree = graph.degree(node, Direction.OUTGOING);
+            adder.add(degree);
+            this.sTot[node] = degree;
         });
-        m2 = adder.intValue() * 4.0; // 2m //
-        mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
+
+        this.iterations = 0;
+        this.m2 = adder.doubleValue(); // 2m
+        this.mq2 = Math.pow(adder.doubleValue(), 2.0); // (2m)^2
+        getProgressLogger().logProgress(0, () -> "init done");
+    }
+
+    private void move(int node, int targetCommunity) {
+//        final double w = weightIntoC(node, nodeCommunity[node]);
+        final double w = graph.degree(node, Direction.OUTGOING);
+        writeLock.lock();
+        final int sourceCommunity = nodeCommunity[node];
+        sTot[sourceCommunity] -= w;
+        sTot[targetCommunity] += w;
+        nodeCommunity[node] = targetCommunity;
+        writeLock.unlock();
     }
 
     /**
-     * assign node to community
-     * @param node nodeId
-     * @param targetCommunity communityId
+     * count number of edges pointing into targetCommunity
      */
-    private void assign(int node, int targetCommunity) {
-        final int d = degrees.degree(node, Direction.BOTH);
-        sTot[communityIds[node]] -= d;
-        sTot[targetCommunity] += d;
-        // update communityIds
-        communityIds[node] = targetCommunity;
+    private double weightIntoC(int node, int targetCommunity) {
+        final int[] w = {0};
+        graph.forEachRelationship(node, Direction.OUTGOING, (s, t, r) -> {
+            if(nodeCommunity[t] != targetCommunity) return true;
+            w[0]++;
+            return true;
+        });
+        return w[0];
     }
 
-     /**
-     * @return kiIn
-     */
-    private int kIIn(int node, int targetCommunity) {
-        int[] sum = {0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-            if (targetCommunity == communityIds[targetNodeId]) {
-                sum[0]++;
+    private double modGain(int node, int targetCommunity) {
+        return (weightIntoC(node, targetCommunity) / m2) - (graph.degree(node, Direction.OUTGOING) * sTot[targetCommunity] / mq2);
+    }
+
+    private int bestCommunity(int node) {
+        final double[] bestGain = {0.0};
+        final int[] bestCommunity = {nodeCommunity[node]};
+        graph.forEachRelationship(node, Direction.OUTGOING, (s, t, r) -> {
+            final int targetCommunity = nodeCommunity[t];
+            final double gain = modGain(node, targetCommunity);
+            if (gain >= bestGain[0]) {
+                bestGain[0] = gain;
+                bestCommunity[0] = targetCommunity;
             }
             return true;
         });
-
-        return sum[0];
-    }
-
-    /**
-     * implements phase 1 of louvain
-     * @return
-     */
-    private boolean arrange() {
-        final boolean[] changes = {false};
-        final double[] bestGain = {0};
-        final int[] bestCommunity = {0};
-        for (int node = 0; node < nodeCount; node++) {
-            bestGain[0] = 0.0;
-            final int sourceCommunity = bestCommunity[0] = communityIds[node];
-            final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
-            relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                final int targetCommunity = communityIds[targetNodeId];
-                final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
-                if (gain > bestGain[0]) {
-                    bestCommunity[0] = targetCommunity;
-                    bestGain[0] = gain;
-                }
-                return true;
-            });
-            if (bestCommunity[0] != sourceCommunity) {
-                assign(node, bestCommunity[0]);
-                changes[0] = true;
-            }
-        }
-        return changes[0];
-    }
-
-    public Stream<Result> resultStream() {
-        return IntStream.range(0, nodeCount)
-                .mapToObj(i ->
-                        new Result(idMapping.toOriginalNodeId(i), communityIds[i]));
-    }
-
-    public int[] getCommunityIds() {
-        return communityIds;
-    }
-
-    public int getIterations() {
-        return iterations;
-    }
-
-    public int getCommunityCount() {
-        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
-        for (int i = 0; i < communityIds.length; i++) {
-            bitSet.put(communityIds[i]);
-        }
-        return bitSet.size();
+        return bestCommunity[0];
     }
 
     @Override
@@ -183,4 +144,74 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         return this;
     }
 
+    @Override
+    public Louvain release() {
+        graph = null;
+        pool = null;
+        sTot = null;
+        return this;
+    }
+
+    @Override
+    public LouvainAlgorithm compute() {
+        init();
+        for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
+            queue.set(0);
+            ParallelUtil.runWithConcurrency(concurrency, tasks, getTerminationFlag(), pool);
+            boolean changes = false;
+            for (Task task : tasks) {
+                changes |= task.changes;
+            }
+            if (!changes) {
+                return this;
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public int[] getCommunityIds() {
+        return nodeCommunity;
+    }
+
+    @Override
+    public int getIterations() {
+        return iterations;
+    }
+
+    @Override
+    public int getCommunityCount() {
+        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
+        for (int i = 0; i < nodeCount; i++) {
+            bitSet.put(nodeCommunity[i]);
+        }
+        return bitSet.size();
+
+    }
+
+    @Override
+    public Stream<Result> resultStream() {
+        return IntStream.range(0, nodeCount)
+                .mapToObj(i ->
+                        new Result(graph.toOriginalNodeId(i), nodeCommunity[i]));
+    }
+
+    private class Task implements Runnable {
+
+        private boolean changes;
+
+        @Override
+        public void run() {
+            final ProgressLogger logger = getProgressLogger();
+            changes = false;
+            for (int node; (node = queue.getAndIncrement()) < nodeCount && running(); ) {
+                final int bestCommunity = bestCommunity(node);
+                if (bestCommunity != nodeCommunity[node]) {
+                    move(node, bestCommunity);
+                    changes = true;
+                }
+                logger.logProgress(node, nodeCount - 1, () -> "Round " + iterations);
+            }
+        }
+    }
 }

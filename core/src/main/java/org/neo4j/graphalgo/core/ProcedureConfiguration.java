@@ -265,15 +265,19 @@ public class ProcedureConfiguration {
         return Directions.fromString(getDirectionName(defaultDirection.name()));
     }
 
+    public Class<? extends GraphFactory> getGraphImpl() {
+        return getGraphImpl(ProcedureConstants.DEFAULT_GRAPH_IMPL);
+    }
+
     /**
      * return the Graph-Implementation Factory class
      *
      * @return
      */
-    public Class<? extends GraphFactory> getGraphImpl() {
+    public Class<? extends GraphFactory> getGraphImpl(String defaultGraphImpl) {
         final String graphImpl = getString(
                 ProcedureConstants.GRAPH_IMPL_PARAM,
-                ProcedureConstants.DEFAULT_GRAPH_IMPL);
+                defaultGraphImpl);
         switch (graphImpl.toLowerCase(Locale.ROOT)) {
             case "heavy":
                 return HeavyGraphFactory.class;
@@ -288,6 +292,22 @@ public class ProcedureConfiguration {
             default:
                 throw new IllegalArgumentException("Unknown impl: " + graphImpl);
         }
+    }
+
+    @SafeVarargs
+    public final Class<? extends GraphFactory> getGraphImplDefault(
+            String defaultImpl,
+            Class<? extends GraphFactory>... alloweds) {
+        Class<? extends GraphFactory> graphImpl = getGraphImpl(defaultImpl);
+        if (Arrays.stream(alloweds)
+                .anyMatch(c -> c.isAssignableFrom(graphImpl))) {
+            return graphImpl;
+        }
+
+        final String allowedGraphs = Arrays.stream(alloweds)
+                .map(ProcedureConfiguration::reverseGraphLookup)
+                .collect(Collectors.joining("' or '", "'", "'."));
+        throw new IllegalArgumentException("The selected graph is not suitable for this algo, please use either " + allowedGraphs);
     }
 
     @SafeVarargs
