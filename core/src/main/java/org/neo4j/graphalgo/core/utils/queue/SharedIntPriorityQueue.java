@@ -29,10 +29,10 @@ import com.carrotsearch.hppc.IntDoubleMap;
  *
  * @author phorn@avantgarde-labs.de
  */
-public final class SharedIntMinPriorityQueue extends IntPriorityQueue {
+public abstract class SharedIntPriorityQueue extends IntPriorityQueue {
 
-    private final IntDoubleMap costs;
-    private final double defaultCost;
+    protected final IntDoubleMap costs;
+    protected final double defaultCost;
 
     /**
      * Creates a new queue with the given capacity.
@@ -42,18 +42,13 @@ public final class SharedIntMinPriorityQueue extends IntPriorityQueue {
      * costs are up-to-date.
      * The defaultCost is used in case a value has no entry in the costs map.
      */
-    public SharedIntMinPriorityQueue(
+    public SharedIntPriorityQueue(
             int initialCapacity,
             IntDoubleMap costs,
             double defaultCost) {
         super(initialCapacity);
         this.costs = costs;
         this.defaultCost = defaultCost;
-    }
-
-    @Override
-    protected boolean lessThan(int a, int b) {
-        return costs.getOrDefault(a, defaultCost) < costs.getOrDefault(b, defaultCost);
     }
 
     @Override
@@ -64,5 +59,23 @@ public final class SharedIntMinPriorityQueue extends IntPriorityQueue {
     @Override
     protected void addCost(final int element, final double cost) {
         // does nothing, costs should be managed outside of this queue
+    }
+
+    public static SharedIntPriorityQueue min(int capacity, IntDoubleMap costs, double defaultCost) {
+        return new SharedIntPriorityQueue(capacity, costs, defaultCost) {
+            @Override
+            protected boolean lessThan(int a, int b) {
+                return costs.get(a) < costs.get(b);
+            }
+        };
+    }
+
+    public static SharedIntPriorityQueue max(int capacity, IntDoubleMap costs, double defaultCost) {
+        return new SharedIntPriorityQueue(capacity, costs, defaultCost) {
+            @Override
+            protected boolean lessThan(int a, int b) {
+                return costs.get(a) > costs.get(b);
+            }
+        };
     }
 }

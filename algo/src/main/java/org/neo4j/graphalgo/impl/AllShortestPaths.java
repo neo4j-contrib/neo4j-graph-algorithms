@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.queue.IntMinPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -128,12 +128,12 @@ public class AllShortestPaths extends MSBFSASPAlgorithm<AllShortestPaths> {
      */
     private class ShortestPathTask implements Runnable {
 
-        private final IntMinPriorityQueue queue;
+        private final IntPriorityQueue queue;
         private final double[] distance;
 
         private ShortestPathTask() {
             distance = new double[nodeCount];
-            queue = new IntMinPriorityQueue();
+            queue = IntPriorityQueue.min();
         }
 
         @Override
