@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.algo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.MSTPrimProc;
+import org.neo4j.graphalgo.PrimProc;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
  *
  * @author mknblch
  */
-public class MSTPrimProcIntegrationTest {
+public class PrimProcIntegrationTest {
 
     private static final RelationshipType type = RelationshipType.withName("TYPE");
     private static GraphDatabaseAPI db;
@@ -63,6 +63,7 @@ public class MSTPrimProcIntegrationTest {
                 "CREATE(c:Node) " +
                 "CREATE(d:Node) " +
                 "CREATE(e:Node) " +
+                "CREATE(z:Node) " +
                 "CREATE (a)-[:TYPE {cost:1.0}]->(b) " +
                 "CREATE (a)-[:TYPE {cost:2.0}]->(c) " +
                 "CREATE (b)-[:TYPE {cost:3.0}]->(c) " +
@@ -79,32 +80,58 @@ public class MSTPrimProcIntegrationTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(MSTPrimProc.class);
+                .registerProcedure(PrimProc.class);
     }
 
     @Test
-    public void testMst() throws Exception {
+    public void testMinimum() throws Exception {
 
-        db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.mst(n, 'cost', {write:true, stats:true}) " +
-                "YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, " +
-                "weightMax, relationshipCount RETURN loadMillis, computeMillis, " +
-                "writeMillis, weightSum, weightMin, weightMax, relationshipCount").accept(res -> {
+        db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.spanningTree('Node', 'TYPE', 'cost', id(n), {graph:'huge', write:true, stats:true}) " +
+                "YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount " +
+                "RETURN loadMillis, computeMillis, writeMillis, effectiveNodeCount").accept(res -> {
 
             System.out.println(res.get("loadMillis"));
             System.out.println(res.get("computeMillis"));
             System.out.println(res.get("writeMillis"));
-            System.out.println(res.get("weightSum"));
-            System.out.println(res.get("weightMin"));
-            System.out.println(res.get("weightMax"));
-            System.out.println(res.get("relationshipCount"));
+            System.out.println(res.get("effectiveNodeCount"));
 
             assertNotEquals(-1L, res.getNumber("writeMillis").longValue());
-            assertEquals(12.0, res.getNumber("weightSum").doubleValue(), 0.01);
-            assertEquals(1.0, res.getNumber("weightMin").doubleValue(), 0.01);
-            assertEquals(5.0, res.getNumber("weightMax").doubleValue(), 0.01);
-            assertEquals(4, res.getNumber("relationshipCount").intValue());
+            assertEquals(5, res.getNumber("effectiveNodeCount").intValue());
 
             return true;
         });
+
+        final long relCount = db.execute("MATCH (a)-[:MST]->(b) RETURN id(a) as a, id(b) as b")
+                .stream()
+                .peek(m -> System.out.println(m.get("a") + " -> " + m.get("b")))
+                .count();
+
+        assertEquals(relCount, 4);
+    }
+
+    @Test
+    public void testMaximum() throws Exception {
+
+        db.execute("MATCH(n:Node{start:true}) WITH n CALL algo.spanningTree.maximum('Node', 'TYPE', 'cost', id(n), {writeProperty:'MAX', graph:'huge', write:true, stats:true}) " +
+                "YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount " +
+                "RETURN loadMillis, computeMillis, writeMillis, effectiveNodeCount").accept(res -> {
+
+            System.out.println(res.get("loadMillis"));
+            System.out.println(res.get("computeMillis"));
+            System.out.println(res.get("writeMillis"));
+            System.out.println(res.get("effectiveNodeCount"));
+
+            assertNotEquals(-1L, res.getNumber("writeMillis").longValue());
+            assertEquals(5, res.getNumber("effectiveNodeCount").intValue());
+
+            return true;
+        });
+
+        final long relCount = db.execute("MATCH (a)-[:MAX]->(b) RETURN id(a) as a, id(b) as b")
+                .stream()
+                .peek(m -> System.out.println(m.get("a") + " -> " + m.get("b")))
+                .count();
+
+        assertEquals(relCount, 4);
     }
 }

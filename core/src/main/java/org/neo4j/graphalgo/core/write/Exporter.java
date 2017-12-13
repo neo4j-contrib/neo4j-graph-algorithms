@@ -128,7 +128,11 @@ public final class Exporter extends StatementApi {
     }
 
     public interface WriteConsumer {
-        void accept(DataWriteOperations ops, long nodeId) throws KernelException;
+        void accept(DataWriteOperations ops, long value) throws KernelException;
+    }
+
+    public interface PropertyWriteConsumer {
+        void accept(DataWriteOperations ops, int relationshipId, int propertyId) throws KernelException;
     }
 
     private Exporter(
@@ -198,15 +202,31 @@ public final class Exporter extends StatementApi {
         }
     }
 
-    public void writeRelationships(String property, WriteConsumer writer) {
-        final int propertyId = getOrCreateRelationshipId(property);
+    public void writeRelationships(String relationship, WriteConsumer writer) {
+        final int propertyId = getOrCreateRelationshipId(relationship);
         if (propertyId == -1) {
             throw new IllegalStateException("no write property id is set");
         }
         try {
             acceptInTransaction(stmt -> {
                 DataWriteOperations ops = stmt.dataWriteOperations();
-                writer.accept(ops, (long) propertyId);
+                writer.accept(ops, propertyId);
+            });
+        } catch (KernelException e) {
+            throw Exceptions.launderedException(e);
+        }
+    }
+
+    public void writeRelationshipAndProperty(String relationship, String property, PropertyWriteConsumer writer) {
+        final int relationshipId = getOrCreateRelationshipId(relationship);
+        final int propertyId = getOrCreatePropertyId(property);
+        if (relationshipId == -1) {
+            throw new IllegalStateException("no write property id is set");
+        }
+        try {
+            acceptInTransaction(stmt -> {
+                DataWriteOperations ops = stmt.dataWriteOperations();
+                writer.accept(ops, relationshipId, propertyId);
             });
         } catch (KernelException e) {
             throw Exceptions.launderedException(e);

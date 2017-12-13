@@ -39,14 +39,14 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
     @Test
     public void testIsEmpty() throws Exception {
         final int capacity = RandomizedTest.between(10, 20);
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue(capacity);
+        final IntPriorityQueue queue = IntPriorityQueue.min(capacity);
         assertEquals(queue.size(), 0);
     }
 
     @Test
     public void testClear() throws Exception {
         final int maxSize = RandomizedTest.between(3, 10);
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue(maxSize);
+        final IntPriorityQueue queue = IntPriorityQueue.min(maxSize);
         final int iterations = RandomizedTest.between(3, maxSize);
         for (int i = 0; i < iterations; i++) {
             queue.add(i, RandomizedTest.between(1, 5));
@@ -59,7 +59,7 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
     @Test
     public void testGrowing() throws Exception {
         final int maxSize = RandomizedTest.between(10, 20);
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue(1);
+        final IntPriorityQueue queue = IntPriorityQueue.min(1);
         for (int i = 0; i < maxSize; i++) {
             queue.add(i, RandomizedTest.randomIntBetween(1, 5));
         }
@@ -69,7 +69,7 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
     @Test
     public void testAdd() throws Exception {
         final int iterations = RandomizedTest.between(5, 50);
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue();
+        final IntPriorityQueue queue = IntPriorityQueue.min();
         int min = -1;
         double minWeight = Double.POSITIVE_INFINITY;
         for (int i = 0; i < iterations; i++) {
@@ -84,7 +84,7 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
 
     @Test
     public void testAddAndPop() throws Exception {
-        final IntMinPriorityQueue queue = new IntMinPriorityQueue();
+        final IntPriorityQueue queue = IntPriorityQueue.min();
         final List<Pair<Integer, Double>> elements = new ArrayList<>();
 
         final int iterations = RandomizedTest.between(5, 50);

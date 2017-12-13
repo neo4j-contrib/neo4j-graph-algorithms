@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
-import org.neo4j.graphalgo.core.utils.queue.SharedIntMinPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
 
@@ -62,7 +62,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         costs = new IntDoubleScatterMap(nodeCount);
-        queue = new SharedIntMinPriorityQueue(
+        queue = SharedIntPriorityQueue.min(
                 nodeCount,
                 costs,
                 Double.MAX_VALUE);

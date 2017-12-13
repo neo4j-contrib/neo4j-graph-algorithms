@@ -268,4 +268,16 @@ public class UndirectedTree {
             while ((sibling = siblings[sibling]) != INVALID_NODE);
         }
     }
+
+    public String toString(int root) {
+        final StringBuilder builder = new StringBuilder();
+        iterateBFS(root, (s, t, r) -> {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(s).append(" -> ").append(t);
+            return true;
+        });
+        return builder.toString();
+    }
 }

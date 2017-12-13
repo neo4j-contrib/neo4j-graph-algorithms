@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.core.utils.traverse;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
-import org.neo4j.graphalgo.core.utils.queue.IntMaxPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.*;
@@ -97,7 +97,7 @@ public class ParallelLocalQueueBFS implements BFS {
         if (!predicate.test(startNodeId)) {
             return this;
         }
-        final IntMaxPriorityQueue queue = new IntMaxPriorityQueue();
+        final IntPriorityQueue queue = IntPriorityQueue.max();
         queue.add(startNodeId, 0d);
         while (!queue.isEmpty()) {
             final int node = queue.pop();
