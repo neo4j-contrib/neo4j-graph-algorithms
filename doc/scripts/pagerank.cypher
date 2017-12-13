@@ -17,43 +17,43 @@ CREATE (home)-[:LINKS]->(about)
 ,(links)-[:LINKS]->(a)-[:LINKS]->(home)
 ,(links)-[:LINKS]->(b)-[:LINKS]->(home)
 ,(links)-[:LINKS]->(c)-[:LINKS]->(home)
-,(links)-[:LINKS]->(d)-[:LINKS]->(home);
+,(links)-[:LINKS]->(d)-[:LINKS]->(home)
 
 // end::create-sample-graph[]
 
 // tag::stream-sample-graph[]
 
-CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85}) 
-YIELD node, score 
-RETURN node,score order by score desc limit 20;
+CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
+YIELD node, score
+RETURN node,score order by score desc limit 20
 
 // end::stream-sample-graph[]
 
 // tag::write-sample-graph[]
 
-CALL algo.pageRank('Page', 'LINKS', {iterations:20, dampingFactor:0.85, 
-write: true,writeProperty:"pagerank"}) 
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty;
+CALL algo.pageRank('Page', 'LINKS',
+  {iterations:20, dampingFactor:0.85, write: true,writeProperty:"pagerank"})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 
 // end::write-sample-graph[]
 
 // tag::cypher-loading[]
 
 CALL algo.pageRank(
-'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', iterations:5, write: true});
+  'MATCH (p:Page) RETURN id(p) as id',
+  'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', iterations:5, write: true}
+)
 
 // end::cypher-loading[]
 
 // tag::pagerank-stream-yelp-social[]
 
-call algo.pageRank.stream(
-'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
-'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target',
-{graph:'cypher'}
-) yield node,score with node,score order by score desc limit 10 
-return node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny},score;
+CALL algo.pageRank.stream(
+  'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
+  'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target',
+  {graph:'cypher'}
+) YIELD node,score with node,score order by score desc limit 10
+RETURN node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny}, score
 
 // end::pagerank-stream-yelp-social[]
-
