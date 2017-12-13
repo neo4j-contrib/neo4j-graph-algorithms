@@ -18,47 +18,35 @@
  */
 package org.neo4j.graphalgo.core.utils.queue;
 
-import com.carrotsearch.hppc.IntDoubleScatterMap;
+import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.collection.primitive.PrimitiveLongIterable;
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 
-import java.util.Arrays;
+import java.util.NoSuchElementException;
+
 
 /**
  * A PriorityQueue specialized for ints that maintains a partial ordering of
  * its elements such that the smallest value can always be found in constant time.
- * The definition of what <i>small</i> means is up to the implementing subclass.
- * <p>
  * Put()'s and pop()'s require log(size) time but the remove() cost implemented here is linear.
  * <p>
  * <b>NOTE</b>: Iteration order is not specified.
  *
  * @author phorn@avantgarde-labs.de
  */
-public abstract class IntPriorityQueue implements PrimitiveIntIterable {
-
-    public static final int DEFAULT_CAPACITY = 14;
-
-    private static final int[] EMPTY_INT = new int[0];
-
-    private int[] heap;
+public abstract class LongPriorityQueue implements PrimitiveLongIterable {
+    private static final int DEFAULT_CAPACITY = 14;
     private int size = 0;
+    private long[] heap;
 
-    /**
-     * Creates a new queue with an initial capacity of {@link #DEFAULT_CAPACITY}.
-     *
-     * @see #IntPriorityQueue(int)
-     */
-    protected IntPriorityQueue() {
+    protected final LongDoubleScatterMap costs;
+
+    public LongPriorityQueue() {
         this(DEFAULT_CAPACITY);
     }
 
-    /**
-     * Creates a new queue with the given capacity.
-     * The queue dynamically grows to hold all elements.
-     */
-    protected IntPriorityQueue(final int initialCapacity) {
+    public LongPriorityQueue(final int initialCapacity) {
         final int heapSize;
         if (0 == initialCapacity) {
             // We allocate 1 extra to avoid if statement in top()
@@ -68,74 +56,42 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
             // 1-based not 0-based.  heap[0] is unused.
             heapSize = initialCapacity + 1;
         }
-        this.heap = new int[ArrayUtil.oversize(heapSize, Integer.BYTES)];
+        this.heap = new long[ArrayUtil.oversize(heapSize, Integer.BYTES)];
+        this.costs = new LongDoubleScatterMap(heapSize);
     }
 
-    public double getCost(int node) {
-        return cost(node);
-    }
-
-    /**
-     * Defines the ordering of the queue.
-     * Returns true iff {@code a} is strictly less than {@code b}.
-     * <p>
-     * The default behavior assumes a min queue, where the smallest value is on top.
-     * To implement a max queue, return {@code b < a}.
-     * The resulting order is not stable.
-     */
-    protected abstract boolean lessThan(int a, int b);
-
-    /**
-     * Adds the cost for the given element.
-     */
-    protected abstract void addCost(int element, double cost);
-
-    /**
-     * Gets the cost for the given element.
-     */
-    protected abstract double cost(int element);
-
-    /**
-     * Optional callback for subclasses to get informed, when a value is removed
-     * from the heap. This method is only called from {@link #pop()}, not from
-     * {@link #clear()}.
-     */
-    protected void elementRemoved(int element) {
-        // empty default behavior
-    }
+    protected abstract boolean lessThan(long a, long b);
 
     /**
      * Adds an int associated with the given weight to a queue in log(size) time.
-     * <p>
-     * NOTE: The default implementation does nothing with the cost parameter.
-     * It is up to the implementation how the cost parameter is used.
      *
      * @return the new 'top' element in the queue.
      */
-    public final int add(int element, double cost) {
-        addCost(element, cost);
+    public long add(long element, double cost) {
         size++;
         ensureCapacityForInsert();
         heap[size] = element;
+        costs.put(element, cost);
         upHeap(size);
         return heap[1];
+    }
+
+    public double getCost(long element) {
+        return costs.get(element);
     }
 
     /**
      * @return the least element of the queue in constant time.
      */
-    public final int top() {
+    public long top() {
         // We don't need to check size here: if maxSize is 0,
         // then heap is length 2 array with both entries null.
         // If size is 0 then heap[1] is already null.
         return heap[1];
     }
 
-    /**
-     * @return the costs of least element in constant time.
-     */
-    public final double topCost() {
-        return cost(top());
+    public double topCost() {
+        return costs.get(top());
     }
 
     /**
@@ -143,13 +99,13 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
      *
      * @return the least element of the queue in log(size) time while removing it.
      */
-    public final int pop() {
+    public long pop() {
         if (size > 0) {
-            int result = heap[1];    // save first value
-            heap[1] = heap[size];    // move last to first
+            long result = heap[1];       // save first value
+            heap[1] = heap[size];     // move last to first
             size--;
-            downHeap(1);           // adjust heap
-            elementRemoved(result);
+            downHeap(1);              // adjust heap
+            costs.remove(result);
             return result;
         } else {
             return -1;
@@ -159,21 +115,21 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     /**
      * @return the number of elements currently stored in the queue.
      */
-    public final int size() {
+    public int size() {
         return size;
     }
 
     /**
      * @return true iff there are currently no elements stored in the queue.
      */
-    public final boolean isEmpty() {
+    public boolean isEmpty() {
         return size == 0;
     }
 
     /**
      * @return true iff there is currently at least one element stored in the queue.
      */
-    public final boolean nonEmpty() {
+    public boolean nonEmpty() {
         return size != 0;
     }
 
@@ -191,23 +147,28 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     public void release() {
         size = 0;
         heap = null;
+
+        costs.keys = new long[0];
+        costs.clear();
+        costs.keys = null;
+        costs.values = null;
     }
 
     private boolean upHeap(int origPos) {
         int i = origPos;
-        int node = heap[i];          // save bottom node
+        long node = heap[i];          // save bottom node
         int j = i >>> 1;
         while (j > 0 && lessThan(node, heap[j])) {
             heap[i] = heap[j];       // shift parents down
             i = j;
             j = j >>> 1;
         }
-        heap[i] = node;              // install saved node
+        heap[i] = node;            // install saved node
         return i != origPos;
     }
 
     private void downHeap(int i) {
-        int node = heap[i];          // save top node
+        long node = heap[i];          // save top node
         int j = i << 1;              // find smaller child
         int k = j + 1;
         if (k <= size && lessThan(heap[k], heap[j])) {
@@ -222,20 +183,22 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
                 j = k;
             }
         }
-        heap[i] = node;              // install saved node
+        heap[i] = node;            // install saved node
     }
 
     private void ensureCapacityForInsert() {
         if (size >= heap.length) {
-            heap = Arrays.copyOf(
-                    heap,
-                    ArrayUtil.oversize(size + 1, Integer.BYTES));
+            long[] newHeap = new long[ArrayUtil.oversize(
+                    size + 1,
+                    Integer.BYTES)];
+            System.arraycopy(heap, 0, newHeap, 0, heap.length);
+            heap = newHeap;
         }
     }
 
     @Override
-    public PrimitiveIntIterator iterator() {
-        return new PrimitiveIntIterator() {
+    public PrimitiveLongIterator iterator() {
+        return new PrimitiveLongIterator() {
 
             int i = 1;
 
@@ -244,69 +207,39 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
                 return i <= size;
             }
 
-            /**
-             * @throws ArrayIndexOutOfBoundsException when the iterator is exhausted.
-             */
             @Override
-            public int next() {
+            public long next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
                 return heap[i++];
             }
         };
     }
 
-    public static IntPriorityQueue min(int capacity) {
-        return new AbstractPriorityQueue(capacity) {
+    public static LongPriorityQueue min(int capacity) {
+        return new LongPriorityQueue() {
             @Override
-            protected boolean lessThan(int a, int b) {
+            protected boolean lessThan(long a, long b) {
                 return costs.get(a) < costs.get(b);
             }
         };
     }
 
-    public static IntPriorityQueue max(int capacity) {
-        return new AbstractPriorityQueue(capacity) {
+    public static LongPriorityQueue max(int capacity) {
+        return new LongPriorityQueue() {
             @Override
-            protected boolean lessThan(int a, int b) {
+            protected boolean lessThan(long a, long b) {
                 return costs.get(a) > costs.get(b);
             }
         };
     }
 
-    public static IntPriorityQueue min() {
+    public static LongPriorityQueue min() {
         return min(DEFAULT_CAPACITY);
     }
 
-    public static IntPriorityQueue max() {
+    public static LongPriorityQueue max() {
         return max(DEFAULT_CAPACITY);
     }
-
-    private static abstract class AbstractPriorityQueue extends IntPriorityQueue {
-
-        protected final IntDoubleScatterMap costs;
-
-        public AbstractPriorityQueue(int initialCapacity) {
-            super(initialCapacity);
-            this.costs = new IntDoubleScatterMap(initialCapacity);
-        }
-
-        @Override
-        protected void addCost(int element, double cost) {
-            costs.put(element, cost);
-        }
-
-        @Override
-        protected double cost(int element) {
-            return costs.get(element);
-        }
-
-        @Override
-        public void release() {
-            super.release();
-            costs.keys = EMPTY_INT;
-            costs.clear();
-            costs.keys = null;
-            costs.values = null;
-        }
-    }
-
 }

@@ -1,3 +1,11 @@
+== TODO ==
+
+renamed `algo.spanningTree`, old proc also available
+alternative is `algo.spanningTree.minimum`
+
+also available is the maximumSpanningTree `algo.spanningTree.maximum`
+
+
 = Minimum Weight Spanning Tree
 
 A _Minimum Weight Spanning Tree_ (MST) is a subset of the relationships of a connected, weighted undirected graph that connects all the nodes together, without any cycles and with the minimum possible total edge weight.
@@ -67,20 +75,17 @@ image::{img}/mst_result.png[]
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.mst(node:Node, weightProperty:String, {nodeQuery:String,
- relationshipQuery:String, write:boolean, writeProperty:String stats:boolean}) 
-YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, relationshipCount
- 
+CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, weightSum, effectiveNodeCount
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| node  | Node | null | no | node to load from the graph
-| weightProperty | string | 'cost' | yes | property name that contains weight. Must be numeric.
-| nodeQuery | string | null | yes |  label to load from the graph, if null load all nodes
-| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| label  | String | null | no | node label
+| relationshipType  | String | null | no | relationship type
+| weightProperty | string | null | no | property name that contains weight. Must be numeric.
+| startNodeId | long | null | no | start node id
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'mst' | yes | relationship-type written back as result
 
@@ -90,10 +95,8 @@ YIELD loadMillis, computeMillis, writeMillis, weightSum, weightMin, weightMax, r
 [opts="header",cols="1,1,6"]
 |===
 | name | type | description
-| weightSum | int | sum of all weights
-| weightMax | int | maximum value of weight
-| weightMin | int | minimum value of weight
-| relationshipCount | int | number of relationships created
+| weightSum | int | sum of all weights in the MST
+| effectiveNodeCount | int | number of visited nodes
 | loadMillis | int | milliseconds for loading data
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
