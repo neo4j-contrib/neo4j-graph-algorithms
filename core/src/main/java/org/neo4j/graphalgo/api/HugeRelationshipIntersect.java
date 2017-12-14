@@ -20,8 +20,6 @@ package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
-
 /**
  * Intersect adjacency lists of two nodes.
  * Only {@link org.neo4j.graphdb.Direction#OUTGOING} is used for intersection.
@@ -45,31 +43,5 @@ public interface HugeRelationshipIntersect {
      */
     void forEachRelationship(long nodeId, HugeRelationshipConsumer consumer);
 
-    /**
-     * Intersect the adjacency lists of {@code nodeIdA} and {@code nodeIdB} and write
-     * the found ids into {@code result}, starting at {@code resultOffset}.
-     * It is the responsibility of the caller to ensure that {@code result} is long enough,
-     * usually by using degree such as
-     * <pre>
-     *     int length = Math.min(degree(nodeIdA), degree(nodeIdB));
-     *     long[] result = new long[length];
-     *     length = intersect(nodeIdA, nodeIdB, result, 0);
-     *     result = Arrays.copyOf(result, length)
-     * </pre>
-     * @return the number of target ids written to the result array.
-     */
-    int intersect(long nodeIdA, long nodeIdB, long[] result, int resultOffset);
-
-    /**
-     * Intersect the adjacency lists of {@code nodeIdA} and {@code nodeIdB}.
-     * For performance sensitive call-sites, {@link #intersect(long, long, long[], int)} is
-     * generally preferred as the result array can be reused by the caller.
-     * @return an array of result ids
-     */
-    default long[] intersect(long nodeIdA, long nodeIdB) {
-        int length = Math.min(degree(nodeIdA), degree(nodeIdB));
-        long[] result = new long[length];
-        length = intersect(nodeIdA, nodeIdB, result, 0);
-        return length < result.length ? Arrays.copyOf(result, length) : result;
-    }
+    void intersectAll(long nodeIdA, IntersectionConsumer consumer);
 }
