@@ -19,11 +19,10 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntStack;
-import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
@@ -144,44 +143,26 @@ public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCoun
         }
     }
 
-    private class HugeTask implements Runnable, HugeRelationshipConsumer {
+    private class HugeTask implements Runnable, IntersectionConsumer {
 
         private HugeRelationshipIntersect hg;
 
-        private int degree;
-        private long[] intersect;
-
         HugeTask(HugeGraph graph) {
             hg = graph.intersectionCopy();
-            intersect = new long[0];
         }
 
         @Override
         public void run() {
             int node;
             while ((node = queue.getAndIncrement()) < nodeCount && running()) {
-                degree = hg.degree(node);
-                hg.forEachRelationship(node, this);
+                hg.intersectAll(node, this);
                 nodeVisited();
             }
         }
 
         @Override
-        public boolean accept(long nodeA, long nodeB) {
-            if (nodeB > nodeA) {
-                final int required = Math.min(degree, hg.degree(nodeB));
-                long[] ts = grow(required);
-                final int len = hg.intersect(nodeA, nodeB, ts, 0);
-                for (int i = 0; i < len; i++) {
-                    exportTriangle((int) nodeA, (int) nodeB, (int) ts[i]);
-                }
-            }
-            // TODO: benchmark against return true
-            return running();
-        }
-
-        private long[] grow(int minSize) {
-            return intersect.length >= minSize ? intersect : (intersect = new long[ArrayUtil.oversize(minSize, Long.BYTES)]);
+        public void accept(final long nodeA, final long nodeB, final long nodeC) {
+            exportTriangle((int) nodeA, (int) nodeB, (int) nodeC);
         }
     }
 }

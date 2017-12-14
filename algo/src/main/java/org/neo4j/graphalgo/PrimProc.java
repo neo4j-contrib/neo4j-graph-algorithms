@@ -133,6 +133,7 @@ public class PrimProc {
                     .asUndirected(true)
                     .withLog(log)
                     .load(configuration.getGraphImpl(HugeGraph.TYPE));
+
         }
         final int root = graph.toMappedNodeId(startNode);
         final Prim mstPrim = new Prim(graph, graph, graph)
