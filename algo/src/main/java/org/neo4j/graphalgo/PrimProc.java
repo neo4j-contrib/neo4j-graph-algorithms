@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -131,7 +132,7 @@ public class PrimProc {
                     .withoutNodeWeights()
                     .asUndirected(true)
                     .withLog(log)
-                    .load(configuration.getGraphImpl(HugeGraphFactory.class));
+                    .load(configuration.getGraphImpl(HugeGraph.TYPE));
         }
         final int root = graph.toMappedNodeId(startNode);
         final Prim mstPrim = new Prim(graph, graph, graph)
