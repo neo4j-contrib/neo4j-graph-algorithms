@@ -19,11 +19,10 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntStack;
-import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.Direction;
@@ -182,15 +181,13 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
         }
     }
 
-    private class HugeTask extends RecursiveTask<Long> implements HugeRelationshipConsumer {
+    private class HugeTask extends RecursiveTask<Long> implements IntersectionConsumer {
 
         private HugeGraph hugeGraph;
         private HugeRelationshipIntersect hg;
         private final int start;
         private final int end;
 
-        private int degree;
-        private long[] intersect;
         private long count;
 
         HugeTask(HugeGraph graph, int start, int end) {
@@ -198,7 +195,6 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
             this.start = start;
             this.end = end;
             hg = graph.intersectionCopy();
-            intersect = new long[0];
         }
 
         @Override
@@ -217,29 +213,16 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
 
         private long execute(int start, int end) {
             for (int node = start; node < end && running(); node++) {
-                degree = hg.degree(node);
-                hg.forEachRelationship(node, this);
+                hg.intersectAll(node, this);
                 nodeVisited();
             }
             return count;
         }
 
         @Override
-        public boolean accept(long nodeA, long nodeB) {
-            if (nodeB > nodeA) {
-                final int required = Math.min(degree, hg.degree(nodeB));
-                long[] ts = grow(required);
-                final int len = hg.intersect(nodeA, nodeB, ts, 0);
-                for (int i = 0; i < len; i++) {
-                    exportTriangle((int) nodeA, (int) nodeB, (int) ts[i]);
-                    ++count;
-                }
-            }
-            return running();
-        }
-
-        private long[] grow(int minSize) {
-            return intersect.length >= minSize ? intersect : (intersect = new long[ArrayUtil.oversize(minSize, Long.BYTES)]);
+        public void accept(final long nodeA, final long nodeB, final long nodeC) {
+            ++count;
+            exportTriangle((int) nodeA, (int) nodeB, (int) nodeC);
         }
     }
 }

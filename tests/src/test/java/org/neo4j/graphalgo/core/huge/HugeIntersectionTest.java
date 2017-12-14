@@ -13,27 +13,25 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
+import java.util.PrimitiveIterator;
 import java.util.Random;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public final class HugeIntersectionTest {
 
     private static final int DEGREE = 25;
-    private static HugeGraph GRAPH;
     private static HugeRelationshipIntersect INTERSECT;
     private static long START1;
     private static long START2;
-    private static long START3;
-    private static long[] ALL_TARGETS;
-    private static long[] SOME_TARGETS;
+    private static long[] TARGETS;
 
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     @BeforeClass
     public static void setup() {
-        long[] neoStarts = new long[3];
+        long[] neoStarts = new long[2];
         long[] neoTargets = DB.executeAndCommit(db -> {
             try (Statement st = DB.statement()) {
                 TokenWriteOperations token = st.tokenWriteOperations();
@@ -45,15 +43,16 @@ public final class HugeIntersectionTest {
                 final long start3 = write.nodeCreate();
                 neoStarts[0] = start1;
                 neoStarts[1] = start2;
-                neoStarts[2] = start3;
-                final long[] targets = new long[DEGREE * 2];
-                int some = DEGREE;
+                write.relationshipCreate(type, start1, start2);
+                final long[] targets = new long[DEGREE];
+                int some = 0;
                 for (int i = 0; i < DEGREE; i++) {
-                    targets[i] = write.nodeCreate();
-                    write.relationshipCreate(type, start1, targets[i]);
+                    long target = write.nodeCreate();
+                    write.relationshipCreate(type, start1, target);
+                    write.relationshipCreate(type, start3, target);
                     if (random.nextBoolean()) {
-                        write.relationshipCreate(type, start2, targets[i]);
-                        targets[some++] = targets[i];
+                        write.relationshipCreate(type, start2, target);
+                        targets[some++] = target;
                     }
                 }
                 return Arrays.copyOf(targets, some);
@@ -62,34 +61,21 @@ public final class HugeIntersectionTest {
             }
         });
 
-        GRAPH = (HugeGraph) new GraphLoader(DB).asUndirected(true).load(HugeGraphFactory.class);
-        INTERSECT = GRAPH.intersectionCopy();
-        START1 = GRAPH.toHugeMappedNodeId(neoStarts[0]);
-        START2 = GRAPH.toHugeMappedNodeId(neoStarts[1]);
-        START3 = GRAPH.toHugeMappedNodeId(neoStarts[2]);
-        ALL_TARGETS = new long[DEGREE];
-        SOME_TARGETS = new long[neoTargets.length - DEGREE];
-        Arrays.setAll(ALL_TARGETS, i -> GRAPH.toHugeMappedNodeId(neoTargets[i]));
-        Arrays.setAll(SOME_TARGETS, i -> GRAPH.toHugeMappedNodeId(neoTargets[i + DEGREE]));
-        Arrays.sort(ALL_TARGETS);
-        Arrays.sort(SOME_TARGETS);
+        final HugeGraph graph = (HugeGraph) new GraphLoader(DB).asUndirected(true).load(HugeGraphFactory.class);
+        INTERSECT = graph.intersectionCopy();
+        START1 = graph.toHugeMappedNodeId(neoStarts[0]);
+        START2 = graph.toHugeMappedNodeId(neoStarts[1]);
+        TARGETS = Arrays.stream(neoTargets).map(graph::toHugeMappedNodeId).toArray();
+        Arrays.sort(TARGETS);
     }
 
     @Test
-    public void intersectWithCompleteTargets() {
-        final long[] intersect = INTERSECT.intersect(START1, START1);
-        assertArrayEquals(ALL_TARGETS, intersect);
-    }
-
-    @Test
-    public void intersectWithEmptyTargets() {
-        final long[] intersect = INTERSECT.intersect(START1, START3);
-        assertArrayEquals(new long[0], intersect);
-    }
-
-    @Test
-    public void intersectWithSomeExistingTargets() {
-        final long[] intersect = INTERSECT.intersect(START1, START2);
-        assertArrayEquals(SOME_TARGETS, intersect);
+    public void intersectWithTargets() {
+        PrimitiveIterator.OfLong targets = Arrays.stream(TARGETS).iterator();
+        INTERSECT.intersectAll(START1, (a, b, c) -> {
+            assertEquals(START1, a);
+            assertEquals(START2, b);
+            assertEquals(targets.nextLong(), c);
+        });
     }
 }
