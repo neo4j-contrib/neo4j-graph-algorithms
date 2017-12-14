@@ -139,6 +139,30 @@ ifndef::env-docs[]
 The detailed call syntax and all parameters and possible return values for each algorithm are listed in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
 endif::env-docs[]
 
+== Graph Loading
+
+As it can take some time to load large graphs into the algorithm data structures, you can pre-load graphs and then later refer to them by name for several graph algorithms.
+After usage they can be removed from memory to free resources used.
+
+[source,cypher]
+----
+// Load graph
+CALL algo.graph.load('my-graph','Label','REL_TYPE',{graph:'heavy',..other config...})
+  YIELD name, graph, direction, undirected, sorted, nodes, loadMillis, alreadyLoaded,
+        nodeWeight, relationshipWeight, nodeProperty, loadNodes, loadRelationships;
+
+// Info on loaded graph
+CALL algo.graph.info('my-graph')
+  YIELD name, type, exists, removed, nodes;
+
+// Use graph
+CALL algo.pageRank(null,null,{graph:'my-graph',...})
+
+
+// Remove graph
+CALL algo.graph.remove('my-graph')
+  YIELD name, type, exists, removed, nodes;
+----
 
 == Building Locally
 

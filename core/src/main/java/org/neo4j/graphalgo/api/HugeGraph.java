@@ -36,11 +36,17 @@ import java.util.stream.Collectors;
  */
 public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator, HugeBatchNodeIterable, HugeRelationshipIterator, HugeRelationshipWeights, HugeRelationshipPredicate, Graph {
 
+    String TYPE = "huge";
+
     /**
      * release resources which are not part of the result or IdMapping
      */
     default void release() {
 
+    }
+
+    default String getType() {
+        return TYPE;
     }
 
     @Override

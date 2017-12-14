@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutorService;
  */
 public class GraphSetup {
 
+    // graph name
+    public String name;
     // start label type. null means any label.
     public final String startLabel;
     // end label type (not yet implemented).
@@ -119,7 +121,8 @@ public class GraphSetup {
             long logMillis,
             boolean sort,
             boolean loadAsUndirected,
-            AllocationTracker tracker) {
+            AllocationTracker tracker,
+            String name) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -142,6 +145,7 @@ public class GraphSetup {
         this.sort = sort;
         this.loadAsUndirected = loadAsUndirected;
         this.tracker = tracker;
+        this.name = name;
     }
 
     /**
