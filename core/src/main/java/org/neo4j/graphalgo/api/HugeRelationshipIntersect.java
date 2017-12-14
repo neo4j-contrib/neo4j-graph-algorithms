@@ -45,6 +45,8 @@ public interface HugeRelationshipIntersect {
      */
     void forEachRelationship(long nodeId, HugeRelationshipConsumer consumer);
 
+    void intersectAll(long nodeIdA, IntersectionConsumer consumer);
+
     /**
      * Intersect the adjacency lists of {@code nodeIdA} and {@code nodeIdB} and write
      * the found ids into {@code result}, starting at {@code resultOffset}.
@@ -58,6 +60,7 @@ public interface HugeRelationshipIntersect {
      * </pre>
      * @return the number of target ids written to the result array.
      */
+    @Deprecated
     int intersect(long nodeIdA, long nodeIdB, long[] result, int resultOffset);
 
     /**
@@ -66,6 +69,7 @@ public interface HugeRelationshipIntersect {
      * generally preferred as the result array can be reused by the caller.
      * @return an array of result ids
      */
+    @Deprecated
     default long[] intersect(long nodeIdA, long nodeIdB) {
         int length = Math.min(degree(nodeIdA), degree(nodeIdB));
         long[] result = new long[length];

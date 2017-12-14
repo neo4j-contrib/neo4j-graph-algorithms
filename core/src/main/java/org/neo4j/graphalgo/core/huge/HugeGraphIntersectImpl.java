@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 
@@ -54,6 +55,56 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
         return degree(node, offsets, adjacency);
     }
 
+    @Override
+    public void intersectAll(long nodeIdA, IntersectionConsumer consumer) {
+        LongArray offsets = this.offsets;
+        ByteArray adjacency = this.adjacency;
+
+        ByteArray.DeltaCursor mainCursor = cursor(nodeIdA, cache, offsets, adjacency);
+        long nodeIdB = mainCursor.skipUntil(nodeIdA);
+        if (nodeIdB <= nodeIdA) {
+            return;
+        }
+
+        ByteArray.DeltaCursor lead, follow, cursorA = cacheA, cursorB = cacheB;
+        long nodeIdC, currentA, s, t;
+        boolean hasNext = true;
+
+        while (hasNext) {
+            cursorB = cursor(nodeIdB, cursorB, offsets, adjacency);
+            nodeIdC = cursorB.skipUntil(nodeIdB);
+            if (nodeIdC > nodeIdB) {
+                cursorA.copyFrom(mainCursor);
+                currentA = cursorA.advance(nodeIdC);
+
+                if (currentA == nodeIdC) {
+                    consumer.accept(nodeIdA, nodeIdB, nodeIdC);
+                }
+
+                if (cursorA.remaining() <= cursorB.remaining()) {
+                    lead = cursorA;
+                    follow = cursorB;
+                } else {
+                    lead = cursorB;
+                    follow = cursorA;
+                }
+
+                while (lead.hasNextVLong() && follow.hasNextVLong()) {
+                    s = lead.nextVLong();
+                    t = follow.advance(s);
+                    if (t == s) {
+                        consumer.accept(nodeIdA, nodeIdB, s);
+                    }
+                }
+            }
+
+            if (hasNext = mainCursor.hasNextVLong()) {
+                nodeIdB = mainCursor.nextVLong();
+            }
+        }
+    }
+
+    @Deprecated
     @Override
     public int intersect(long nodeIdA, long nodeIdB, long[] result, int resultOffset) {
         final ByteArray.DeltaCursor aCursor = cursor(nodeIdA, cacheA, offsets, adjacency);
