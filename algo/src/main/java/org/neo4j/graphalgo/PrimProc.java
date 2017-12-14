@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
@@ -33,10 +34,11 @@ import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
+import org.neo4j.values.storable.Value;
+import org.neo4j.values.storable.Values;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -131,7 +133,7 @@ public class PrimProc {
                     .withoutNodeWeights()
                     .asUndirected(true)
                     .withLog(log)
-                    .load(configuration.getGraphImpl(HugeGraphFactory.class));
+                    .load(configuration.getGraphImpl(HugeGraph.TYPE));
         }
         final int root = graph.toMappedNodeId(startNode);
         final Prim mstPrim = new Prim(graph, graph, graph)
@@ -170,7 +172,7 @@ public class PrimProc {
                         graph.toOriginalNodeId(source),
                         graph.toOriginalNodeId(target)
                 );
-                ops.relationshipSetProperty(relId, DefinedProperty.doubleProperty(propertyType, graph.weightOf(source, target)));
+                ops.relationshipSetProperty(relId, propertyType, Values.doubleValue(graph.weightOf(source, target)));
             } catch (KernelException e) {
                 throw Exceptions.launderedException(e);
             }

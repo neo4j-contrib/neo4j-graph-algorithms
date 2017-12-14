@@ -60,6 +60,7 @@ public class GraphLoader {
             GraphDatabaseAPI.class,
             GraphSetup.class);
 
+    private String name = null;
     private String label = null;
     private String relation = null;
     private String relWeightProp = null;
@@ -190,6 +191,11 @@ public class GraphLoader {
      */
     public GraphLoader withDefaultConcurrency() {
         this.concurrency = Pools.DEFAULT_CONCURRENCY;
+        return this;
+    }
+
+    public GraphLoader withName(String name) {
+        this.name = name;
         return this;
     }
 
@@ -501,7 +507,8 @@ public class GraphLoader {
                 logMillis,
                 sort,
                 loadAsUndirected,
-                tracker);
+                tracker,
+                name);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -556,6 +563,7 @@ public class GraphLoader {
 
     public GraphLoader init(Log log, String label, String relationship, ProcedureConfiguration config) {
         return withLog(log)
+                .withName(config.getGraphName(null))
                 .withOptionalLabel(label).withOptionalRelationshipType(relationship)
                 .withConcurrency(config.getConcurrency())
                 .withBatchSize(config.getBatchSize())

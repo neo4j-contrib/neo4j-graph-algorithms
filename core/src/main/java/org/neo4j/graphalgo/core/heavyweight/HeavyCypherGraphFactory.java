@@ -50,6 +50,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
     private static final int ESTIMATED_DEGREE = 3;
     private static final String LIMIT = "limit";
     private static final String SKIP = "skip";
+    public static final String TYPE = "cypher";
 
     public HeavyCypherGraphFactory(
             GraphDatabaseAPI api,

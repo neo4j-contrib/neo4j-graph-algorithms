@@ -48,6 +48,8 @@ import java.util.function.*;
  */
 public class GraphView implements Graph {
 
+    public static final String TYPE = "kernel";
+
     private final ThreadToStatementContextBridge contextBridge;
     private final GraphDatabaseAPI db;
 
@@ -349,6 +351,14 @@ public class GraphView implements Graph {
 
         return found[0];
     }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public void canRelease(boolean canRelease) {}
 
     private interface CheckedConsumer<T, E extends Exception> {
         void accept(T t) throws E;
