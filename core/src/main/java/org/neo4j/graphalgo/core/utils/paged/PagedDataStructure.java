@@ -18,8 +18,6 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
-import org.apache.lucene.util.ArrayUtil;
-
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,7 +49,7 @@ public class PagedDataStructure<T> {
 
         this.allocator = allocator;
         pages = allocator.emptyPages();
-        setPages(numPages(size), 0);
+        setPages(numPages(size));
     }
 
     PagedDataStructure(long size, T[] pages, PageAllocator<T> allocator) {
@@ -120,6 +118,14 @@ public class PagedDataStructure<T> {
      * If the current size is large enough, this is no-op and no downsizing is happening.
      */
     final void grow(final long newSize) {
+        grow(newSize, -1);
+    }
+
+    /**
+     * Grows the page structure to the new size. The existing content will be preserved.
+     * If the current size is large enough, this is no-op and no downsizing is happening.
+     */
+    final void grow(final long newSize, final int skipPage) {
         assert newSize <= maxSupportedSize;
         long cap = capacity.get();
         if (cap >= newSize) {
@@ -133,10 +139,7 @@ public class PagedDataStructure<T> {
                 growSize(newSize);
                 return;
             }
-            int numPages = ArrayUtil.oversize(
-                numPages(newSize),
-                MemoryUsage.BYTES_OBJECT_REF);
-            setPages(numPages, this.pages.length);
+            setPages(numPages(newSize), this.pages.length, skipPage);
             growSize(newSize);
         } finally {
             growLock.unlock();
@@ -150,10 +153,18 @@ public class PagedDataStructure<T> {
         } while (size < newSize && !this.size.compareAndSet(size, newSize));
     }
 
-    private void setPages(int numPages, int currentNumPages) {
+    private void setPages(int numPages) {
+        if (numPages > 0) {
+            setPages(numPages, 0, -1);
+        }
+    }
+
+    private void setPages(int numPages, int currentNumPages, int skipPage) {
         T[] pages = Arrays.copyOf(this.pages, numPages);
         for (int i = currentNumPages; i < numPages; i++) {
-            pages[i] = allocateNewPage();
+            if (i != skipPage) {
+                pages[i] = allocateNewPage();
+            }
         }
         this.pages = pages;
         this.capacity.set(capacityFor(numPages));
