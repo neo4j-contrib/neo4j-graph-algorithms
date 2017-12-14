@@ -104,41 +104,6 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
         }
     }
 
-    @Deprecated
-    @Override
-    public int intersect(long nodeIdA, long nodeIdB, long[] result, int resultOffset) {
-        final ByteArray.DeltaCursor aCursor = cursor(nodeIdA, cacheA, offsets, adjacency);
-        final ByteArray.DeltaCursor bCursor = cursor(nodeIdB, cacheB, offsets, adjacency);
-
-        final ByteArray.DeltaCursor lead, follow;
-        if (aCursor.cost() <= bCursor.cost()) {
-            lead = aCursor;
-            follow = bCursor;
-        } else {
-            lead = bCursor;
-            follow = aCursor;
-        }
-
-        long s = -1L;
-        while (s < nodeIdB && lead.hasNextVLong()) {
-            s = lead.nextVLong();
-        }
-        long t = follow.hasNextVLong() ? follow.nextVLong() : -1L;
-        int start = resultOffset;
-
-        while (lead.hasNextVLong() && follow.hasNextVLong()) {
-            while (t < s && follow.hasNextVLong()) {
-                t = follow.nextVLong();
-            }
-            if (t == s) {
-                result[resultOffset++] = t;
-            }
-            s = lead.nextVLong();
-        }
-
-        return resultOffset - start;
-    }
-
     private int degree(long node, LongArray offsets, ByteArray array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
