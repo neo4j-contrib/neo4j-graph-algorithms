@@ -19,11 +19,11 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -42,9 +42,11 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 public final class LabelPropagationProc {
 
@@ -119,9 +121,8 @@ public final class LabelPropagationProc {
 
         try (ProgressTimer timer = stats.timeLoad()) {
 
-            Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
-                HeavyGraphFactory.class,
-                HeavyCypherGraphFactory.class);
+            Class<? extends GraphFactory> graphImpl = config.getGraphImpl(HeavyGraph.TYPE,
+                    HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE);
 
             final String weightKey = config.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
