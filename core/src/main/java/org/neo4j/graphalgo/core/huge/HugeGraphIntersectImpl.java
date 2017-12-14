@@ -68,21 +68,21 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
             follow = aCursor;
         }
 
-        long s = lead.getVLong();
-        while (s < nodeIdB && s != -1L) {
-            s = lead.getVLong();
+        long s = -1L;
+        while (s < nodeIdB && lead.hasNextVLong()) {
+            s = lead.nextVLong();
         }
-        long t = follow.getVLong();
+        long t = follow.hasNextVLong() ? follow.nextVLong() : -1L;
         int start = resultOffset;
 
-        while (s != -1L && t != -1L) {
-            while (t < s && t != -1L) {
-                t = follow.getVLong();
+        while (lead.hasNextVLong() && follow.hasNextVLong()) {
+            while (t < s && follow.hasNextVLong()) {
+                t = follow.nextVLong();
             }
             if (t == s) {
                 result[resultOffset++] = t;
             }
-            s = lead.getVLong();
+            s = lead.nextVLong();
         }
 
         return resultOffset - start;
@@ -112,9 +112,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
             long startNode,
             ByteArray.DeltaCursor cursor,
             HugeRelationshipConsumer consumer) {
-        long next;
         //noinspection StatementWithEmptyBody
-        while ((next = cursor.getVLong()) != -1L &&
-                consumer.accept(startNode, next)) ;
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
     }
 }

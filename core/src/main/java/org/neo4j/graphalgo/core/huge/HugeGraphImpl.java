@@ -341,10 +341,8 @@ public class HugeGraphImpl implements HugeGraph {
             long startNode,
             ByteArray.DeltaCursor cursor,
             HugeRelationshipConsumer consumer) {
-        long next;
         //noinspection StatementWithEmptyBody
-        while ((next = cursor.getVLong()) != -1L &&
-                consumer.accept(startNode, next)) ;
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
     }
 
     @Override

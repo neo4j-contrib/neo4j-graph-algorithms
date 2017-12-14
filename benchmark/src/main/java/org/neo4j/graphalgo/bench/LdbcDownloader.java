@@ -24,6 +24,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.config.Setting;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -43,10 +44,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+import static org.neo4j.kernel.configuration.Settings.BOOLEAN;
+import static org.neo4j.kernel.configuration.Settings.setting;
+
 public final class LdbcDownloader {
 
     private static Path DEFAULT_TEMP_DIR;
     private static final Map<String, S3Location> FILES;
+
+    private static final Setting<Boolean> udc = setting( "dbms.udc.enabled", BOOLEAN, "true" );
 
     static {
         FILES = new HashMap<>();
@@ -86,6 +92,7 @@ public final class LdbcDownloader {
                 .newEmbeddedDatabaseBuilder(dbLocation.toFile())
                 .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
                 .setConfig(GraphDatabaseSettings.allow_store_upgrade, "true")
+                .setConfig(udc, "false")
                 .newGraphDatabase();
         return (GraphDatabaseAPI) db;
     }
