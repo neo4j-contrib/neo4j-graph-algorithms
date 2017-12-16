@@ -38,6 +38,8 @@ import java.util.function.IntPredicate;
  */
 public class LightGraph implements Graph {
 
+    public static final String TYPE = "light";
+
     private final IdMap idMapping;
     private WeightMapping weightMapping;
     private IntArray inAdjacency;
@@ -47,6 +49,7 @@ public class LightGraph implements Graph {
     private final boolean isBoth;
     private final IdCombiner inCombiner;
     private final IdCombiner outCombiner;
+    private boolean canRelease = true;
 
 
     LightGraph(
@@ -265,6 +268,7 @@ public class LightGraph implements Graph {
 
     @Override
     public void release() {
+        if (!canRelease) return;
         if (inAdjacency != null) {
             inAdjacency.release();
             inAdjacency = null;
@@ -315,5 +319,15 @@ public class LightGraph implements Graph {
         }
 
         return found[0];
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public void canRelease(boolean canRelease) {
+        this.canRelease = canRelease;
     }
 }

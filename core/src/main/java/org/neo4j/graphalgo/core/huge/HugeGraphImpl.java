@@ -91,6 +91,7 @@ public class HugeGraphImpl implements HugeGraph {
     private ByteArray.DeltaCursor inCache;
     private ByteArray.DeltaCursor outCache;
     private final boolean isBoth;
+    private boolean canRelease = true;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
@@ -340,14 +341,13 @@ public class HugeGraphImpl implements HugeGraph {
             long startNode,
             ByteArray.DeltaCursor cursor,
             HugeRelationshipConsumer consumer) {
-        long next;
         //noinspection StatementWithEmptyBody
-        while ((next = cursor.getVLong()) != -1L &&
-                consumer.accept(startNode, next)) ;
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
     }
 
     @Override
     public void release() {
+        if (!canRelease) return;
         if (inAdjacency != null) {
             tracker.remove(inAdjacency.release());
             tracker.remove(inOffsets.release());
@@ -360,11 +360,18 @@ public class HugeGraphImpl implements HugeGraph {
             outAdjacency = null;
             outOffsets = null;
         }
-        tracker.remove(weights.release());
+        if (weights != null) {
+            tracker.remove(weights.release());
+        }
         empty = null;
         inCache = null;
         outCache = null;
         weights = null;
+    }
+
+    @Override
+    public void canRelease(boolean canRelease) {
+        this.canRelease = canRelease;
     }
 
     /**

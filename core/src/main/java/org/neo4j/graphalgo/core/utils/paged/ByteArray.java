@@ -20,46 +20,36 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfByteArray;
+
 
 public final class ByteArray extends PagedDataStructure<byte[]> {
 
     private final AtomicLong allocIdx = new PaddedAtomicLong();
+    private final AllocationTracker tracker;
 
     private static final PageAllocator.Factory<byte[]> ALLOCATOR_FACTORY =
-            PageAllocator.ofArray(byte[].class);
+            PageAllocator.ofArray(byte[].class, 1 << 18);
+
 
     public static long estimateMemoryUsage(long size) {
         return ALLOCATOR_FACTORY.estimateMemoryUsage(size, ByteArray.class);
     }
 
     public static ByteArray newArray(long size, AllocationTracker tracker) {
-        return new ByteArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+        return new ByteArray(size, ALLOCATOR_FACTORY.newAllocator(tracker), tracker);
     }
 
-    private ByteArray(long size, PageAllocator<byte[]> allocator) {
+    private ByteArray(long size, PageAllocator<byte[]> allocator, AllocationTracker tracker) {
         super(size, allocator);
-    }
-
-    public byte get(long index) {
-        assert index < capacity();
-        final int pageIndex = pageIndex(index);
-        final int indexInPage = indexInPage(index);
-        return pages[pageIndex][indexInPage];
+        this.tracker = tracker;
     }
 
     public int getInt(long index) {
         assert index < capacity();
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
-        byte[] page = pages[pageIndex];
-
-        if (page.length - indexInPage >= 4) {
-            return getInt(page, indexInPage);
-        }
-        if (pageIndex + 1 >= pages.length) {
-            return -1;
-        }
-        return getInt(page, pages[pageIndex + 1], indexInPage);
+        return getInt(pages[pageIndex], indexInPage);
     }
 
     private int getInt(byte[] page, int offset) {
@@ -67,40 +57,6 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
                 ((page[offset + 1] & 0xFF) << 16) |
                 ((page[offset + 2] & 0xFF) << 8) |
                 (page[offset + 3] & 0xFF);
-    }
-
-    private int getInt(byte[] page, byte[] nextPage, int offset) {
-        switch (page.length - offset) {
-            case 0:
-                return getInt(nextPage, 0);
-            case 1:
-                return ((page[offset] & 0xFF) << 24) |
-                        ((nextPage[0] & 0xFF) << 16) |
-                        ((nextPage[1] & 0xFF) << 8) |
-                        (nextPage[2] & 0xFF);
-            case 2:
-                return ((page[offset] & 0xFF) << 24) |
-                        ((page[offset + 1] & 0xFF) << 16) |
-                        ((nextPage[0] & 0xFF) << 8) |
-                        (nextPage[1] & 0xFF);
-            case 3:
-                return ((page[offset] & 0xFF) << 24) |
-                        ((page[offset + 1] & 0xFF) << 16) |
-                        ((page[offset + 2] & 0xFF) << 8) |
-                        (nextPage[0] & 0xFF);
-            default:
-                throw new IllegalArgumentException("wrong boundary");
-        }
-    }
-
-    public byte set(long index, byte value) {
-        assert index < capacity();
-        final int pageIndex = pageIndex(index);
-        final int indexInPage = indexInPage(index);
-        final byte[] page = pages[pageIndex];
-        final byte ret = page[indexInPage];
-        page[indexInPage] = value;
-        return ret;
     }
 
     public LocalAllocator newAllocator() {
@@ -118,22 +74,30 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
      * {@inheritDoc}
      */
     public DeltaCursor newCursor() {
-        return new DeltaCursor(pages, pageSize, pageShift, pageMask);
+        return new DeltaCursor(pages, pageShift, pageMask);
     }
 
-    private long allocate(long numberOfElements, BulkAdder into) {
+    private long allocate(int numberOfPages, BulkAdder into) {
+        long numberOfElements = capacityFor(numberOfPages);
         long intoIndex = allocIdx.getAndAdd(numberOfElements);
         grow(intoIndex + numberOfElements);
         into.grow(pages);
-        into.init(intoIndex, numberOfElements);
+        into.init(intoIndex, numberOfPages);
         return intoIndex;
     }
 
-    /**
-     * Skip a region of {@code numberOfElements} that will not be allocated.
-     */
-    public final void skipAllocationRegion(long numberOfElements) {
-        allocIdx.addAndGet(numberOfElements);
+    private long allocate(byte[] page, BulkAdder into) {
+        long intoIndex = allocIdx.getAndAdd(pageSize);
+        insertPage(intoIndex, page);
+        tracker.add(sizeOfByteArray(page.length));
+        into.insertPage(page);
+        return intoIndex;
+    }
+
+    private void insertPage(final long atIndex, final byte[] newPage) {
+        int pageIndex = pageIndex(atIndex);
+        grow(atIndex + pageSize, pageIndex);
+        pages[pageIndex] = newPage;
     }
 
     public final long release() {
@@ -144,312 +108,253 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
         return reuse.init(offset);
     }
 
-    private static abstract class BaseCursor {
+    public static final class BulkAdder {
 
         private byte[][] pages;
-        private int numPages;
-        private final int pageSize;
         private final int pageShift;
         private final int pageMask;
 
         public byte[] array;
         public int offset;
-        public int limit;
+        public final int limit;
 
-        private long from;
-        private long to;
-        private long size;
-        private int fromPage;
+        private int prevOffset;
         private int toPage;
         private int currentPage;
-
-        BaseCursor(
-                byte[][] pages,
-                int pageSize,
-                int pageShift,
-                int pageMask) {
-            this.pages = pages;
-            this.pageSize = pageSize;
-            this.pageShift = pageShift;
-            this.pageMask = pageMask;
-            this.numPages = pages.length;
-        }
-
-        void grow(byte[][] pages) {
-            this.pages = pages;
-            this.numPages = pages.length;
-        }
-
-        void init(long fromIndex, long length) {
-            array = null;
-            from = fromIndex;
-            to = fromIndex + length;
-            size = length;
-            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
-            toPage = PageUtil.pageIndex(to - 1L, pageShift);
-            currentPage = fromPage - 1;
-        }
-
-        void initAll(long fromIndex) {
-            array = null;
-            from = fromIndex;
-            to = PageUtil.capacityFor(numPages, pageShift);
-            size = to - fromIndex;
-            fromPage = PageUtil.pageIndex(fromIndex, pageShift);
-            toPage = numPages - 1;
-            currentPage = fromPage - 1;
-        }
-
-        public final boolean next() {
-            int current = ++currentPage;
-            if (current >= pages.length) {
-                System.out.println("current = " + current);
-            }
-            if (current == fromPage) {
-                array = pages[current];
-                offset = PageUtil.indexInPage(from, pageMask);
-                int length = (int) Math.min((long) (pageSize - offset), size);
-                limit = offset + length;
-                return true;
-            }
-            if (current < toPage) {
-                array = pages[current];
-                offset = 0;
-                limit = offset + pageSize;
-                return true;
-            }
-            if (current == toPage) {
-                array = pages[current];
-                offset = 0;
-                int length = PageUtil.indexInPage(to - 1L, pageMask) + 1;
-                limit = offset + length;
-                return true;
-            }
-            array = null;
-            return false;
-        }
-
-        final void tryNext() {
-            if (offset >= limit) {
-                next();
-            }
-        }
-    }
-
-    public static final class LocalAllocator {
-        private static final long PREFETCH_PAGES = 16L;
-
-        private final ByteArray array;
-        private final long prefetchSize;
-
-        public final BulkAdder adder;
-
-        private long top;
-        private long limit;
-
-        LocalAllocator(final ByteArray array) {
-            this.array = array;
-            this.adder = array.newBulkAdder();
-            this.prefetchSize = (long) array.pageSize * PREFETCH_PAGES;
-        }
-
-        public long allocate(long size) {
-            long address = top;
-            if (address + size <= limit) {
-                top += size;
-                adder.tryNext();
-                return address;
-            }
-            return majorAllocate(size);
-        }
-
-        private long majorAllocate(long size) {
-            long allocate = Math.max(size, prefetchSize);
-            long address = top = array.allocate(allocate, adder);
-            limit = top + allocate;
-            top += size;
-            return address;
-        }
-    }
-
-    public static final class BulkAdder extends BaseCursor {
 
         private BulkAdder(
                 byte[][] pages,
                 int pageSize,
                 int pageShift,
                 int pageMask) {
-            super(pages, pageSize, pageShift, pageMask);
-        }
-
-        @Override
-        public final void init(long fromIndex, long length) {
-            super.init(fromIndex, length);
-            next();
+            this.pages = pages;
+            this.pageShift = pageShift;
+            this.pageMask = pageMask;
+            limit = pageSize;
+            prevOffset = -1;
         }
 
         public void addUnsignedInt(int i) {
-            if (limit - offset >= 4) {
-                quickAddUnsignedInt(i);
-            } else {
-                slowAddUnsignedInt(i);
-            }
+            offset = DeltaEncoding.encodeInt(i, array, offset);
         }
 
         public void addVLong(long i) {
-            if (limit - offset >= 9) {
-                quickAddVLong(i);
-            } else {
-                slowAddVLong(i);
-            }
+            offset = DeltaEncoding.encodeVLong(i, array, offset);
         }
 
-        private void quickAddUnsignedInt(int i) {
-            int offset = this.offset;
-            byte[] array = this.array;
-            array[offset++] = (byte) (i >>> 24);
-            array[offset++] = (byte) (i >>> 16);
-            array[offset++] = (byte) (i >>> 8);
-            array[offset++] = (byte) (i);
-            this.offset = offset;
+        void grow(byte[][] pages) {
+            this.pages = pages;
         }
 
-        private void slowAddUnsignedInt(int i) {
-            byte[] array = this.array;
-            int offset = this.offset;
-            switch (limit - offset) {
-                case 0:
-                    if (!next()) {
-                        break;
-                    }
-                    quickAddUnsignedInt(i);
-                    break;
-                case 1:
-                    array[offset++] = (byte) (i >>> 24);
-                    if (!next()) {
-                        break;
-                    }
-                    array = this.array;
-                    offset = this.offset;
-                    array[offset++] = (byte) (i >>> 16);
-                    array[offset++] = (byte) (i >>> 8);
-                    array[offset++] = (byte) (i);
-                    break;
-                case 2:
-                    array[offset++] = (byte) (i >>> 24);
-                    array[offset++] = (byte) (i >>> 16);
-                    if (!next()) {
-                        break;
-                    }
-                    array = this.array;
-                    offset = this.offset;
-                    array[offset++] = (byte) (i >>> 8);
-                    array[offset++] = (byte) (i);
-                    break;
-                case 3:
-                    array[offset++] = (byte) (i >>> 24);
-                    array[offset++] = (byte) (i >>> 16);
-                    array[offset++] = (byte) (i >>> 8);
-                    if (!next()) {
-                        break;
-                    }
-                    array = this.array;
-                    offset = this.offset;
-                    array[offset++] = (byte) (i);
-                    break;
-                default:
-                    throw new IllegalArgumentException("invalid boundaries");
-            }
-            this.offset = offset;
+        void init(long fromIndex, int numberOfPages) {
+            currentPage = PageUtil.pageIndex(fromIndex, pageShift);
+            toPage = currentPage + numberOfPages - 1;
+            array = pages[currentPage];
+            offset = PageUtil.indexInPage(fromIndex, pageMask);
+            assert offset == 0;
         }
 
-        private void quickAddVLong(long i) {
-            int offset = this.offset;
-            byte[] array = this.array;
-
-            while ((i & ~0x7FL) != 0L) {
-                array[offset++] = (byte) ((i & 0x7FL) | 0x80L);
-                i >>>= 7L;
+        void insertPage(byte[] page) {
+            if (prevOffset == -1) {
+                prevOffset = offset;
             }
-            array[offset++] = (byte) i;
-
-            this.offset = offset;
+            array = page;
+            offset = 0;
         }
 
-        private void slowAddVLong(long i) {
-            int offset = this.offset;
-            int limit = this.limit;
-            byte[] array = this.array;
-
-            while ((i & ~0x7FL) != 0L) {
-                if (offset >= limit) {
-                    if (!next()) {
-                        return;
-                    }
-                    array = this.array;
-                    offset = this.offset;
-                    limit = this.limit;
-                } else {
-                    array[offset++] = (byte) ((i & 0x7FL) | 0x80L);
-                    i >>>= 7L;
-                }
+        boolean reset() {
+            if (prevOffset != -1) {
+                array = pages[currentPage];
+                offset = prevOffset;
+                prevOffset = -1;
+                return true;
             }
+            return false;
+        }
 
-            this.offset = offset;
-            if (offset >= limit) {
-                if (!next()) {
-                    return;
-                }
+        public boolean next() {
+            if (++currentPage <= toPage) {
+                array = pages[currentPage];
+                offset = 0;
+                return true;
             }
-
-            this.array[this.offset++] = (byte) i;
+            array = null;
+            return false;
         }
     }
 
-    public static final class DeltaCursor extends BaseCursor {
+    public static final class LocalAllocator {
+        private static final int PREFETCH_PAGES = 4;
+
+        private final ByteArray array;
+
+        public final BulkAdder adder;
+
+        private long top;
+
+        private LocalAllocator(final ByteArray array) {
+            this.array = array;
+            this.adder = array.newBulkAdder();
+        }
+
+        public void prepare() {
+            top = array.allocate(PREFETCH_PAGES, adder);
+            if (top == 0L) {
+                ++top;
+                ++adder.offset;
+            }
+        }
+
+        public long allocate(long size) {
+            return localAllocate(size, top);
+        }
+
+        private long localAllocate(long size, long address) {
+            long maxOffset = array.pageSize - size;
+            if (maxOffset >= adder.offset) {
+                top += size;
+                return address;
+            }
+            return majorAllocate(size, maxOffset, address);
+        }
+
+        private long majorAllocate(long size, long maxOffset, long address) {
+            if (maxOffset < 0L) {
+                return oversizingAllocate(size);
+            }
+            if (adder.reset() && maxOffset >= adder.offset) {
+                top += size;
+                return address;
+            }
+            address = top += (adder.limit - adder.offset);
+            if (adder.next()) {
+                // TODO: store and reuse fragments
+                // branch: huge-alloc-fragmentation-recycle
+                top += size;
+                return address;
+            }
+            return prefetchAllocate(size);
+        }
+
+        private long prefetchAllocate(long size) {
+            long address = top = array.allocate(PREFETCH_PAGES, adder);
+            top += size;
+            return address;
+        }
+
+        /**
+         * We are faking a valid page by over-allocating a single page to be large enough to hold all data
+         * Since we are storing all degrees into a single page and thus never have to switch pages
+         * and keep the offsets as if this page would be of the correct size, we might just get by.
+         */
+        private long oversizingAllocate(long size) {
+            if (size > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("requested page of size " + size + " is too large to be allocated");
+            }
+            byte[] largePage = new byte[(int) size];
+            return array.allocate(largePage, adder);
+        }
+    }
+
+    public static final class DeltaCursor {
+
+        private byte[][] pages;
+        private final int pageShift;
+        private final int pageMask;
+
+        private byte[] array;
+        private int offset;
+
         private int currentTarget;
         private int maxTargets;
         private long delta;
 
         private DeltaCursor(
                 byte[][] pages,
-                int pageSize,
                 int pageShift,
                 int pageMask) {
-            super(pages, pageSize, pageShift, pageMask);
+            this.pages = pages;
+            this.pageShift = pageShift;
+            this.pageMask = pageMask;
         }
 
-        DeltaCursor init(long fromIndex) {
-            super.initAll(fromIndex);
-            next();
-
-            currentTarget = 0;
-            delta = 0L;
-            if (limit - offset >= 4) {
-                initLength(array, offset);
-            } else {
-                initLengthSlow();
-            }
-
-            return this;
+        /**
+         * Copy iteration state from another cursor without changing {@code other}.
+         */
+        public void copyFrom(DeltaCursor other) {
+            array = other.array;
+            offset = other.offset;
+            currentTarget = other.currentTarget;
+            maxTargets = other.maxTargets;
+            delta = other.delta;
         }
 
+        /**
+         * Return how many targets can be decoded in total. This is equivalent to the degree.
+         */
         public int cost() {
             return maxTargets;
         }
 
-        public long getVLong() {
-            if (currentTarget++ >= maxTargets) {
-                return -1L;
-            }
-            return delta = getVLong0();
+        /**
+         * Return how many targets are still left to be decoded.
+         */
+        public int remaining() {
+            return maxTargets - currentTarget;
         }
 
-        private long getVLong0() {
-            if (limit - offset >= 9) {
-                return getVLong(array, offset);
-            }
-            return slowGetVLong();
+        /**
+         * Return true iff there is at least one more target to decode.
+         */
+        public boolean hasNextVLong() {
+            return currentTarget < maxTargets;
+        }
+
+        /**
+         * Read and decode the next target id.
+         * It is undefined behavior if this is called after {@link #hasNextVLong()} returns {@code false}.
+         */
+        public long nextVLong() {
+            ++currentTarget;
+            return nextVLong(array, offset);
+        }
+
+        /**
+         * Read and decode target ids until it is strictly larger than (`>`) the provided {@code target}.
+         * Might return an id that is less than or equal to {@code target} iff the cursor did exhaust before finding an
+         * id that is large enough.
+         * {@code skipUntil(target) <= target} can be used to distinguish the no-more-ids case and afterwards {@link #hasNextVLong()}
+         * will return {@code false}
+         */
+        public long skipUntil(long target) {
+            return skipUntil(target, array, offset);
+        }
+
+        /**
+         * Read and decode target ids until it is larger than or equal (`>=`) the provided {@code target}.
+         * Might return an id that is less than {@code target} iff the cursor did exhaust before finding an
+         * id that is large enough.
+         * {@code advance(target) < target} can be used to distinguish the no-more-ids case and afterwards {@link #hasNextVLong()}
+         * will return {@code false}
+         */
+        public long advance(long target) {
+            return advance(target, array, offset);
+        }
+
+        DeltaCursor init(long fromIndex) {
+            initPage(fromIndex);
+
+            currentTarget = 0;
+            delta = 0L;
+            initLength(array, offset);
+
+            return this;
+        }
+
+        private void initPage(long fromIndex) {
+            final int currentPage = PageUtil.pageIndex(fromIndex, pageShift);
+            array = pages[currentPage];
+            offset = PageUtil.indexInPage(fromIndex, pageMask);
         }
 
         private void initLength(byte[] array, int offset) {
@@ -460,52 +365,7 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             this.offset = offset;
         }
 
-        private void initLengthSlow() {
-            int offset = this.offset;
-            int limit = this.limit;
-            byte[] page1 = this.array;
-
-            if (!next()) {
-                return;
-            }
-
-            byte[] page2 = this.array;
-            int offset2 = this.offset;
-
-            switch (limit - offset) {
-                case 0:
-                    initLength(page2, offset2);
-                    return;
-
-                case 1:
-                    this.maxTargets = ((page1[offset] & 0xFF) << 24) |
-                            ((page2[offset2++] & 0xFF) << 16) |
-                            ((page2[offset2++] & 0xFF) << 8) |
-                            (page2[offset2++] & 0xFF);
-                    break;
-
-                case 2:
-                    this.maxTargets = ((page1[offset++] & 0xFF) << 24) |
-                            ((page1[offset] & 0xFF) << 16) |
-                            ((page2[offset2++] & 0xFF) << 8) |
-                            (page2[offset2++] & 0xFF);
-                    break;
-
-                case 3:
-                    this.maxTargets = ((page1[offset++] & 0xFF) << 24) |
-                            ((page1[offset++] & 0xFF) << 16) |
-                            ((page1[offset] & 0xFF) << 8) |
-                            (page2[offset2++] & 0xFF);
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("invalid boundary");
-            }
-
-            this.offset = offset2;
-        }
-
-        private long getVLong(byte[] page, int offset) {
+        private long nextVLong(byte[] page, int offset) {
             byte b = page[offset++];
             long i = (long) ((int) b & 0x7F);
             for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
@@ -513,36 +373,45 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
                 i |= ((long) b & 0x7FL) << shift;
             }
             this.offset = offset;
-            return i + delta;
+            return delta += i;
         }
 
-        private long slowGetVLong() {
-            int diff = limit - offset;
-            if (diff == 0) {
-                if (!next()) {
-                    return -1L;
+        private long skipUntil(long target, byte[] page, int offset) {
+            long value = delta;
+            int current = currentTarget;
+            int limit = maxTargets;
+            while (value <= target && current++ < limit) {
+                byte b = page[offset++];
+                long i = (long) ((int) b & 0x7F);
+                for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
+                    b = page[offset++];
+                    i |= ((long) b & 0x7FL) << shift;
                 }
-                return getVLong(this.array, this.offset);
+                value += i;
             }
-
-            byte[] array = this.array;
-            int offset = this.offset;
-
-            byte b = array[offset++];
-            long i = (long) ((int) b & 0x7F);
-            for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
-                if (--diff == 0) {
-                    if (!next()) {
-                        return -1L;
-                    }
-                    array = this.array;
-                    offset = this.offset;
-                }
-                b = array[offset++];
-                i |= ((long) b & 0x7FL) << shift;
-            }
+            this.currentTarget = current;
             this.offset = offset;
-            return i + delta;
+            this.delta = value;
+            return value;
+        }
+
+        private long advance(long target, byte[] page, int offset) {
+            long value = delta;
+            int current = currentTarget;
+            int limit = maxTargets;
+            while (value < target && current++ < limit) {
+                byte b = page[offset++];
+                long i = (long) ((int) b & 0x7F);
+                for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
+                    b = page[offset++];
+                    i |= ((long) b & 0x7FL) << shift;
+                }
+                value += i;
+            }
+            this.currentTarget = current;
+            this.offset = offset;
+            this.delta = value;
+            return value;
         }
     }
 }

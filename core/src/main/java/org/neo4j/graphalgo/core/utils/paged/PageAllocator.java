@@ -74,6 +74,23 @@ public abstract class PageAllocator<T> {
         return of(pageSize, bytesPerPage, newPage, emptyPages);
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> Factory<T> ofArray(Class<T> arrayClass, int pageSize) {
+        Class<?> componentType = arrayClass.getComponentType();
+        assert componentType != null && componentType.isPrimitive();
+
+        long bytesPerElement = shallowSizeOfInstance(componentType);
+        long bytesPerPage = sizeOfArray(pageSize, bytesPerElement);
+
+        T[] emptyPages = (T[]) Array.newInstance(componentType, 0, 0);
+        PageFactory<T> newPage = (tracker) -> {
+            tracker.add(bytesPerPage);
+            return (T) Array.newInstance(componentType, pageSize);
+        };
+
+        return of(pageSize, bytesPerPage, newPage, emptyPages);
+    }
+
     public static final class Factory<T> {
         private final int pageSize;
         private final long bytesPerPage;

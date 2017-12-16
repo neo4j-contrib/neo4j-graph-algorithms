@@ -191,7 +191,7 @@ public class LabelPropagationProcIntegrationTest {
         Map<String, Object> params = parParams();
 
         exceptions.expect(IllegalArgumentException.class);
-        exceptions.expectMessage("The selected graph is not suitable for this algo, please use either 'heavy' or 'cypher'.");
+        exceptions.expectMessage("The graph algorithm only supports these graph types; [heavy, cypher]");
 
         for (final String graph : Arrays.asList("light", "huge", "kernel")) {
             params.put("graph", graph);

@@ -19,11 +19,10 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntStack;
-import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
@@ -182,39 +181,22 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         }
     }
 
-    private final class HugeTask extends BaseTask implements HugeRelationshipConsumer {
+    private final class HugeTask extends BaseTask implements IntersectionConsumer {
 
         private HugeRelationshipIntersect hg;
 
-        private int degree;
-        private long[] intersect;
-
         HugeTask(HugeGraph graph) {
             hg = graph.intersectionCopy();
-            intersect = new long[0];
         }
 
         @Override
         void evaluateNode(final int nodeId) {
-            degree = hg.degree(nodeId);
-            hg.forEachRelationship(nodeId, this);
+            hg.intersectAll(nodeId, this);
         }
 
         @Override
-        public boolean accept(long nodeA, long nodeB) {
-            if (nodeB > nodeA) {
-                final int required = Math.min(degree, hg.degree(nodeB));
-                long[] ts = grow(required);
-                final int len = hg.intersect(nodeA, nodeB, ts, 0);
-                for (int i = 0; i < len; i++) {
-                    emit((int) nodeA, (int) nodeB, (int) ts[i]);
-                }
-            }
-            return running();
-        }
-
-        private long[] grow(int minSize) {
-            return intersect.length >= minSize ? intersect : (intersect = new long[ArrayUtil.oversize(minSize, Long.BYTES)]);
+        public void accept(final long nodeA, final long nodeB, final long nodeC) {
+            emit((int) nodeA, (int) nodeB, (int) nodeC);
         }
     }
 

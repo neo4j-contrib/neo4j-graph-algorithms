@@ -211,7 +211,7 @@ public class LouvainClusteringIntegrationTest {
         String query = "CALL algo.louvain('', '', {graph:$graph})";
 
         exceptions.expect(IllegalArgumentException.class);
-        exceptions.expectMessage("The selected graph is not suitable for this algo, please use either 'heavy' or 'cypher' or 'huge'.");
+        exceptions.expectMessage("The graph algorithm only supports these graph types; [heavy, cypher, huge]");
 
         for (final String graph : Arrays.asList("light", "huge", "kernel")) {
             Map<String, Object> params = Collections.singletonMap("graph", graph);

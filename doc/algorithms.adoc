@@ -4,12 +4,12 @@ Graph algorithms are used to compute metrics for graphs, nodes or relationships.
 
 They can provide insights on relevant entities (centralities, ranking) in the graph or inherent structures like communities (community-detection, graph-partitioning, clustering).
 
-Many of them are iterative aproaches that frequently traverse the graph for the computation using random walks, breadth-first- or depth-first searches or pattern matching.
+Many of them are iterative approaches that frequently traverse the graph for the computation using random walks, breadth-first- or depth-first searches or pattern matching.
 
-Due to the exponential growth of possible paths with increasing distance many of the approaches are also of a high algorithmic complexity.
+Due to the exponential growth of possible paths with increasing distance, many of the approaches also have high algorithmic complexity.
 
-Fortunately some optimized algorithms exist that utilize certain structures of the graph, memoize of already explored parts and if possible parallelize operations.
-Whenever possible we tried to apply these optimizations.
+Fortunately optimized algorithms exist that utilize certain structures of the graph, memoize already explored parts, and parallelize operations.
+Whenever possible we've applied these optimizations.
 
 // todo introduction to graph algorithms, also say something about pregel & parallelization
 // todo sensible ordering

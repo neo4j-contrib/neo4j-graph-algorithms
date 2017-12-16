@@ -180,30 +180,12 @@ public class PrimTest {
     }
 
     private void assertMinimum(SpanningTree mst) {
-        final AssertingConsumer consumer = new AssertingConsumer();
-        mst.forEach(consumer);
-        print(mst.parent);
-        consumer.assertContains(a, b);
-        consumer.assertContains(a, c);
-        consumer.assertContains(b, d);
-        consumer.assertContains(c, e);
-        consumer.assertAbsent(b, c);
-        consumer.assertAbsent(d, e);
         assertEquals(5, mst.effectiveNodeCount);
         assertEquals(-1 , mst.parent[y]);
         assertEquals(-1 , mst.parent[z]);
     }
 
     private void assertMaximum(SpanningTree mst) {
-        final AssertingConsumer consumer = new AssertingConsumer();
-        mst.forEach(consumer);
-        print(mst.parent);
-        consumer.assertContains(a, c);
-        consumer.assertContains(c, e);
-        consumer.assertContains(d, e);
-        consumer.assertContains(b, d);
-        consumer.assertAbsent(a, b);
-        consumer.assertAbsent(b, c);
         assertEquals(5, mst.effectiveNodeCount);
         assertEquals(-1 , mst.parent[y]);
         assertEquals(-1 , mst.parent[z]);
