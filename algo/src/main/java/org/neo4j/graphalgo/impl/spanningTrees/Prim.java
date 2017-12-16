@@ -16,30 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.spanningTrees;
 
 import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.IntDoubleScatterMap;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.container.UndirectedTree;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 
 /**
- * Sequential Single-Source minimum weight spanning tree algorithm (PRIM).
- * <p>
- * The algorithm computes the MST by traversing all nodes from a given
- * startNodeId. It aggregates all transitions into a MinPriorityQueue
- * and visits each (unvisited) connected node by following only the
- * cheapest transition and adding it to a specialized form of {@link UndirectedTree}.
- * <p>
- * The algorithm also computes the minimum, maximum and sum of all
- * weights in the MST.
+ * Sequential Single-Source minimum/maximum weight spanning tree algorithm (PRIM).
  *
  * @author mknblch
  */
@@ -68,7 +60,7 @@ public class Prim extends Algorithm<Prim> {
     }
 
     private SpanningTree prim(int startNode, boolean max) {
-        final SpanningTree spanningTree = new SpanningTree(nodeCount);
+        final int[] parent = new int[nodeCount];
         final IntDoubleMap cost = new IntDoubleScatterMap(nodeCount);
         final SharedIntPriorityQueue queue = SharedIntPriorityQueue.min(
                 nodeCount,
@@ -76,6 +68,7 @@ public class Prim extends Algorithm<Prim> {
                 Double.MAX_VALUE);
         final ProgressLogger logger = getProgressLogger();
         final SimpleBitSet visited = new SimpleBitSet(nodeCount);
+        Arrays.fill(parent, -1);
         cost.put(startNode, 0.0);
         queue.add(startNode, -1.0);
         int effectiveNodeCount = 0;
@@ -95,15 +88,13 @@ public class Prim extends Algorithm<Prim> {
                 if (w < cost.getOrDefault(t, Double.MAX_VALUE)) {
                     cost.put(t, w);
                     queue.add(t, -1.0);
-                    spanningTree.parent[t] = s;
+                    parent[t] = s;
                 }
                 return true;
             });
             logger.logProgress(effectiveNodeCount, nodeCount - 1);
         }
-        spanningTree.effectiveNodeCount = effectiveNodeCount;
-        logger.logDone(() -> "Prim done");
-        return spanningTree;
+        return new SpanningTree(startNode, nodeCount, effectiveNodeCount, parent);
     }
 
     public SpanningTree getSpanningTree() {
@@ -119,33 +110,6 @@ public class Prim extends Algorithm<Prim> {
     public Prim release() {
         spanningTree = null;
         return this;
-    }
-
-    public static class SpanningTree {
-
-        public final int nodeCount;
-        public final int[] parent;
-        private int effectiveNodeCount;
-
-        public SpanningTree(int nodeCount) {
-            this.nodeCount = nodeCount;
-            parent = new int[nodeCount];
-            Arrays.fill(parent, -1);
-        }
-
-        public void forEach(RelationshipConsumer consumer) {
-            for (int i = 0; i < nodeCount; i++) {
-                final int parent = this.parent[i];
-                if (parent == -1) {
-                    continue;
-                }
-                consumer.accept(parent, i, -1L);
-            }
-        }
-
-        public int getEffectiveNodeCount() {
-            return effectiveNodeCount;
-        }
     }
 
     public static class Result {

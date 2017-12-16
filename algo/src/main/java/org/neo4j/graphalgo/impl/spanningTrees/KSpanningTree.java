@@ -16,24 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.spanningTrees;
 
-import com.carrotsearch.hppc.*;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.container.UndirectedTree;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.queue.*;
-import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
-import org.neo4j.graphdb.Direction;
-
-import java.util.Arrays;
 
 /**
  * Sequential Single-Source minimum weight spanning tree algorithm (PRIM).
@@ -55,8 +48,7 @@ public class KSpanningTree extends Algorithm<KSpanningTree> {
     private RelationshipWeights weights;
     private final int nodeCount;
 
-    private DisjointSetStruct setStruct;
-    private int effectiveNodeCount = -1;
+    private SpanningTree kSpanningTree;
 
     public KSpanningTree(IdMapping idMapping, RelationshipIterator relationshipIterator, RelationshipWeights weights) {
         this.idMapping = idMapping;
@@ -80,7 +72,6 @@ public class KSpanningTree extends Algorithm<KSpanningTree> {
             prim.computeMinimumSpanningTree(startNode);
             priorityQueue = IntPriorityQueue.max();
         }
-        effectiveNodeCount = prim.getSpanningTree().getEffectiveNodeCount();
         final int[] parent = prim.getSpanningTree().parent;
         for (int i = 0; i < parent.length && running(); i++) {
             final int p = parent[i];
@@ -90,30 +81,17 @@ public class KSpanningTree extends Algorithm<KSpanningTree> {
             priorityQueue.add(i, weights.weightOf(p, i));
             logger.logProgress(i, nodeCount, () -> "reorganization");
         }
-        // remove top k-1 relationships
+        // remove k-1 relationships
         for (int i = 0; i < k - 1 && running(); i++) {
             final int cutNode = priorityQueue.pop();
             parent[cutNode] = -1;
         }
-        // eval disjoint sets
-        setStruct = new DisjointSetStruct(nodeCount).reset();
-        for (int i = 0; i < nodeCount && running(); i++) {
-            final int p = parent[i];
-            if (p == -1) {
-                continue;
-            }
-            setStruct.union(p, i);
-            logger.logProgress(i, nodeCount, () -> "grouping");
-        }
+        this.kSpanningTree = prim.getSpanningTree();
         return this;
     }
 
-    public int getEffectiveNodeCount() {
-        return effectiveNodeCount;
-    }
-
-    public DisjointSetStruct getSetStruct() {
-        return setStruct;
+    public SpanningTree getSpanningTree() {
+        return kSpanningTree;
     }
 
     @Override
@@ -126,7 +104,7 @@ public class KSpanningTree extends Algorithm<KSpanningTree> {
         idMapping = null;
         relationshipIterator = null;
         weights = null;
-        setStruct = null;
+        kSpanningTree = null;
         return this;
     }
 

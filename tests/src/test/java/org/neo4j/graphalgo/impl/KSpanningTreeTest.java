@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -8,28 +7,26 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
+import org.neo4j.graphalgo.impl.spanningTrees.KSpanningTree;
+import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  *          1
- *      (a)---(d)       (a)   (d)
- *      /3 \2 /3   =>   /     /
- *    (b)---(c)       (b)   (c)
+ *  (x) >(a)---(d)    (x)  (a)   (d)
+ *      /3 \2 /3   =>     /     /
+ *    (b)---(c)         (b)   (c)
  *        1
  *
  * @author mknblch
@@ -42,6 +39,7 @@ public class KSpanningTreeTest {
                     "CREATE (b:Node {name:'b'})\n" +
                     "CREATE (c:Node {name:'c'})\n" +
                     "CREATE (d:Node {name:'d'})\n" +
+                    "CREATE (x:Node {name:'x'})\n" +
 
                     "CREATE" +
                     " (a)-[:TYPE {w:3.0}]->(b),\n" +
@@ -64,7 +62,7 @@ public class KSpanningTreeTest {
 //        );
     }
 
-    private int a, b, c, d;
+    private int a, b, c, d, x;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -88,27 +86,34 @@ public class KSpanningTreeTest {
             b = graph.toMappedNodeId(DB.findNode(Label.label("Node"), "name", "b").getId());
             c = graph.toMappedNodeId(DB.findNode(Label.label("Node"), "name", "c").getId());
             d = graph.toMappedNodeId(DB.findNode(Label.label("Node"), "name", "d").getId());
+            x = graph.toMappedNodeId(DB.findNode(Label.label("Node"), "name", "x").getId());
             tx.success();
         };
     }
 
     @Test
     public void testMaximumKSpanningTree() throws Exception {
-        final DisjointSetStruct struct = new KSpanningTree(graph, graph, graph)
+        final SpanningTree spanningTree = new KSpanningTree(graph, graph, graph)
                 .compute(a, 2, true)
-                .getSetStruct();
-        assertTrue(struct.connected(a, b));
-        assertTrue(struct.connected(c, d));
-        assertFalse(struct.connected(a, c));
+                .getSpanningTree();
+
+        assertEquals(spanningTree.head(a), spanningTree.head(b));
+        assertEquals(spanningTree.head(c), spanningTree.head(d));
+        assertNotEquals(spanningTree.head(a), spanningTree.head(c));
+        assertNotEquals(spanningTree.head(a), spanningTree.head(x));
+        assertNotEquals(spanningTree.head(c), spanningTree.head(x));
     }
 
     @Test
     public void testMinimumKSpanningTree() throws Exception {
-        final DisjointSetStruct struct = new KSpanningTree(graph, graph, graph)
+        final SpanningTree spanningTree = new KSpanningTree(graph, graph, graph)
                 .compute(a, 2, false)
-                .getSetStruct();
-        assertTrue(struct.connected(a, d));
-        assertTrue(struct.connected(b, c));
-        assertFalse(struct.connected(a, b));
+                .getSpanningTree();
+
+        assertEquals(spanningTree.head(a), spanningTree.head(d));
+        assertEquals(spanningTree.head(b), spanningTree.head(c));
+        assertNotEquals(spanningTree.head(a), spanningTree.head(b));
+        assertNotEquals(spanningTree.head(a), spanningTree.head(x));
+        assertNotEquals(spanningTree.head(b), spanningTree.head(x));
     }
 }

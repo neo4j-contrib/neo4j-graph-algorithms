@@ -28,6 +28,8 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.impl.spanningTrees.Prim;
+import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
@@ -177,7 +179,7 @@ public class PrimTest {
         assertMinimum(new Prim(graph, graph, graph).computeMinimumSpanningTree(d).getSpanningTree());
     }
 
-    private void assertMinimum(Prim.SpanningTree mst) {
+    private void assertMinimum(SpanningTree mst) {
         final AssertingConsumer consumer = new AssertingConsumer();
         mst.forEach(consumer);
         print(mst.parent);
@@ -187,12 +189,12 @@ public class PrimTest {
         consumer.assertContains(c, e);
         consumer.assertAbsent(b, c);
         consumer.assertAbsent(d, e);
-        assertEquals(5, mst.getEffectiveNodeCount());
+        assertEquals(5, mst.effectiveNodeCount);
         assertEquals(-1 , mst.parent[y]);
         assertEquals(-1 , mst.parent[z]);
     }
 
-    private void assertMaximum(Prim.SpanningTree mst) {
+    private void assertMaximum(SpanningTree mst) {
         final AssertingConsumer consumer = new AssertingConsumer();
         mst.forEach(consumer);
         print(mst.parent);
@@ -202,7 +204,7 @@ public class PrimTest {
         consumer.assertContains(b, d);
         consumer.assertAbsent(a, b);
         consumer.assertAbsent(b, c);
-        assertEquals(5, mst.getEffectiveNodeCount());
+        assertEquals(5, mst.effectiveNodeCount);
         assertEquals(-1 , mst.parent[y]);
         assertEquals(-1 , mst.parent[z]);
     }

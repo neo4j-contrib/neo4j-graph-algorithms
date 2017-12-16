@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
@@ -27,19 +26,11 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
-import org.neo4j.graphalgo.core.write.DisjointSetStructTranslator;
+import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.HugeDisjointSetStructTranslator;
-import org.neo4j.graphalgo.impl.DSSResult;
-import org.neo4j.graphalgo.impl.KSpanningTree;
-import org.neo4j.graphalgo.impl.Prim;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.graphalgo.impl.spanningTrees.KSpanningTree;
+import org.neo4j.graphalgo.impl.spanningTrees.Prim;
 import org.neo4j.kernel.api.KernelTransaction;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -118,17 +109,19 @@ public class KSplitSpanningTreeProc {
         }
         final int root = graph.toMappedNodeId(startNode);
 
-        final KSpanningTree kSpanningTree = new KSpanningTree(graph, graph, graph);
+        final KSpanningTree kSpanningTree = new KSpanningTree(graph, graph, graph)
+                .withProgressLogger(ProgressLogger.wrap(log, "KSpanningTrees"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(() -> {
             kSpanningTree.compute(root, (int)k, max);
-            builder.withEffectiveNodeCount(kSpanningTree.getEffectiveNodeCount());
+            builder.withEffectiveNodeCount(kSpanningTree.getSpanningTree().effectiveNodeCount);
         });
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
-                final DisjointSetStruct struct = kSpanningTree.getSetStruct();
 
+                final SpanningTree spanningTree = kSpanningTree.getSpanningTree();
                 final Exporter exporter = Exporter.of(api, graph)
                         .withLog(log)
                         .parallel(
@@ -141,8 +134,8 @@ public class KSplitSpanningTreeProc {
                         configuration.get(
                                 CONFIG_CLUSTER_PROPERTY,
                                 DEFAULT_CLUSTER_PROPERTY),
-                        struct,
-                        DisjointSetStructTranslator.INSTANCE);
+                        spanningTree,
+                        SpanningTree.TRANSLATOR);
             }
         }
 
