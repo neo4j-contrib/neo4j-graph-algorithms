@@ -78,6 +78,7 @@ public final class DisjointSetStruct {
      */
     public DisjointSetStruct reset() {
         Arrays.fill(parent, -1);
+        Arrays.fill(depth, 0);
         return this;
     }
 
@@ -155,21 +156,6 @@ public final class DisjointSetStruct {
     /**
      * find setId of element p.
      * <p>
-     * Non-recursive implementation using path-halving optimization and tree balancing
-     *
-     * @param p the element in the set we are looking for
-     * @return an id of the set it belongs to
-     */
-    public int findPH(int p) {
-        while (-1 != parent[p]) {
-            p = parent[p] = parent[parent[p]];
-        }
-        return p;
-    }
-
-    /**
-     * find setId of element p.
-     * <p>
      * find-impl using a recursive path compression logic
      *
      * @param p the element in the set we are looking for
@@ -178,7 +164,7 @@ public final class DisjointSetStruct {
     public int findPC(int p) {
         if (parent[p] == -1) return p;
         // path compression optimization
-        parent[p] = find(parent[p]); // balance tree while traversing
+        parent[p] = findPC(parent[p]); // balance tree while traversing
         return parent[p];
     }
 
