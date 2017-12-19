@@ -21,14 +21,13 @@ package org.neo4j.graphalgo.core.utils.paged;
 import com.carrotsearch.hppc.LongDoubleMap;
 import org.neo4j.graphalgo.core.utils.container.TrackingLongDoubleHashMap;
 
-import static com.carrotsearch.hppc.HashContainers.DEFAULT_LOAD_FACTOR;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 
 
-public final class HugeLongLongDoubleMap extends PagedDataStructure<HugeLongLongDoubleMap.NestedMap> {
+public final class PagedLongLongDoubleMap extends PagedDataStructure<PagedLongLongDoubleMap.NestedMap> {
 
 
     private static final PageAllocator.Factory<NestedMap> ALLOCATOR_FACTORY;
@@ -53,14 +52,14 @@ public final class HugeLongLongDoubleMap extends PagedDataStructure<HugeLongLong
     }
 
     public static long estimateMemoryUsage(long size) {
-        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, HugeLongLongDoubleMap.class);
+        return ALLOCATOR_FACTORY.estimateMemoryUsage(size, PagedLongLongDoubleMap.class);
     }
 
-    public static HugeLongLongDoubleMap newMap(long size, AllocationTracker tracker) {
-        return new HugeLongLongDoubleMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    public static PagedLongLongDoubleMap newMap(long size, AllocationTracker tracker) {
+        return new PagedLongLongDoubleMap(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
-    private HugeLongLongDoubleMap(long size, PageAllocator<NestedMap> allocator) {
+    private PagedLongLongDoubleMap(long size, PageAllocator<NestedMap> allocator) {
         super(size, allocator);
     }
 

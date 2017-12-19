@@ -25,23 +25,23 @@ import org.neo4j.graphalgo.api.HugeNodeIterator;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 
 import java.util.stream.Stream;
 
 public final class DSSResult {
     public final DisjointSetStruct struct;
-    public final HugeDisjointSetStruct hugeStruct;
+    public final PagedDisjointSetStruct hugeStruct;
 
     public DSSResult(final DisjointSetStruct struct) {
         this(struct, null);
     }
 
-    public DSSResult(final HugeDisjointSetStruct hugeStruct) {
+    public DSSResult(final PagedDisjointSetStruct hugeStruct) {
         this(null, hugeStruct);
     }
 
-    private DSSResult(DisjointSetStruct struct, HugeDisjointSetStruct hugeStruct) {
+    private DSSResult(DisjointSetStruct struct, PagedDisjointSetStruct hugeStruct) {
         assert (struct != null && hugeStruct == null) || (struct == null && hugeStruct != null);
         this.struct = struct;
         this.hugeStruct = hugeStruct;

@@ -26,27 +26,26 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-public final class HugeDisjointSetStruct {
+public final class PagedDisjointSetStruct {
 
     private final LongArray parent;
     private final LongArray depth;
     private final long capacity;
 
-
-    public HugeDisjointSetStruct(long capacity, AllocationTracker tracker) {
+    public PagedDisjointSetStruct(long capacity, AllocationTracker tracker) {
         parent = LongArray.newArray(capacity, tracker);
         depth = LongArray.newArray(capacity, tracker);
         this.capacity = capacity;
     }
 
-    public HugeDisjointSetStruct reset() {
+    public PagedDisjointSetStruct reset() {
         parent.fill(-1);
         return this;
     }
 
     public static long estimateSize(long capacity) {
         return LongArray.estimateMemoryUsage(capacity) * 2
-                + MemoryUsage.shallowSizeOfInstance(HugeDisjointSetStruct.class);
+                + MemoryUsage.shallowSizeOfInstance(PagedDisjointSetStruct.class);
     }
 
     public boolean connected(long p, long q) {
@@ -89,7 +88,7 @@ public final class HugeDisjointSetStruct {
         }
     }
 
-    public HugeDisjointSetStruct merge(HugeDisjointSetStruct other) {
+    public PagedDisjointSetStruct merge(PagedDisjointSetStruct other) {
 
         if (other.capacity != this.capacity) {
             throw new IllegalArgumentException("Different Capacity");

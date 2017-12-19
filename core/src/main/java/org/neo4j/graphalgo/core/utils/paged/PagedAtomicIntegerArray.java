@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
 
-public final class AtomicIntArray extends PagedDataStructure<AtomicIntegerArray> {
+public final class PagedAtomicIntegerArray extends PagedDataStructure<AtomicIntegerArray> {
 
     private static final PageAllocator.Factory<AtomicIntegerArray> ALLOCATOR_FACTORY;
 
@@ -39,11 +39,11 @@ public final class AtomicIntArray extends PagedDataStructure<AtomicIntegerArray>
     }
 
 
-    public static AtomicIntArray newArray(long size, AllocationTracker tracker) {
-        return new AtomicIntArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
+    public static PagedAtomicIntegerArray newArray(long size, AllocationTracker tracker) {
+        return new PagedAtomicIntegerArray(size, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
-    private AtomicIntArray(
+    private PagedAtomicIntegerArray(
             final long size,
             final PageAllocator<AtomicIntegerArray> allocator) {
         super(size, allocator);

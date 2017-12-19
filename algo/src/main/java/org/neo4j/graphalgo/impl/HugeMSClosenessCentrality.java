@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.AtomicIntArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.impl.msbfs.HugeBfsConsumer;
@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessCentrality> {
 
     private HugeGraph graph;
-    private AtomicIntArray farness;
+    private PagedAtomicIntegerArray farness;
 
     private final int concurrency;
     private final ExecutorService executorService;
@@ -58,7 +58,7 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
         this.concurrency = concurrency;
         this.executorService = executorService;
         this.tracker = tracker;
-        farness = AtomicIntArray.newArray(nodeCount, this.tracker);
+        farness = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
         exporter.write(
                 propertyName,
                 farness,
-                (PropertyTranslator.OfDouble<AtomicIntArray>)
+                (PropertyTranslator.OfDouble<PagedAtomicIntegerArray>)
                         (data, nodeId) -> centrality(data.get(nodeId), k));
     }
 

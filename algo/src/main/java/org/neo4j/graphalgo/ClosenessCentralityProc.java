@@ -29,7 +29,7 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.*;
-import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
+import org.neo4j.graphalgo.results.CentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -107,14 +107,14 @@ public class ClosenessCentralityProc {
     @Procedure(value = "algo.closeness", mode = Mode.WRITE)
     @Description("CALL algo.closeness(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
-    public Stream<ClosenessCentralityProcResult> closeness(
+    public Stream<CentralityProcResult> closeness(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final ClosenessCentralityProcResult.Builder builder = ClosenessCentralityProcResult.builder();
+        final CentralityProcResult.Builder builder = CentralityProcResult.builder();
 
         AllocationTracker tracker = AllocationTracker.create();
         int concurrency = configuration.getConcurrency();

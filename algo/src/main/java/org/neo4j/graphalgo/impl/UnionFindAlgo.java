@@ -22,7 +22,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
@@ -67,7 +67,7 @@ public enum UnionFindAlgo {
                     concurrency,
                     tracker);
             prepare.accept("CC(HugeParallelUnionFindQueue)", algo);
-            HugeDisjointSetStruct struct = Double.isFinite(threshold)
+            PagedDisjointSetStruct struct = Double.isFinite(threshold)
                     ? algo.compute(threshold)
                     : algo.compute();
             algo.release();
@@ -110,7 +110,7 @@ public enum UnionFindAlgo {
                     minBatchSize,
                     concurrency);
             prepare.accept("CC(HugeParallelUnionFindForkJoin)", algo);
-            HugeDisjointSetStruct struct = Double.isFinite(threshold)
+            PagedDisjointSetStruct struct = Double.isFinite(threshold)
                     ? algo.compute(threshold)
                     : algo.compute();
             algo.release();
@@ -155,7 +155,7 @@ public enum UnionFindAlgo {
                     minBatchSize,
                     concurrency);
             prepare.accept("CC(HugeParallelUnionFindFJMerge)", algo);
-            HugeDisjointSetStruct struct = Double.isFinite(threshold)
+            PagedDisjointSetStruct struct = Double.isFinite(threshold)
                     ? algo.compute(threshold)
                     : algo.compute();
             algo.release();
@@ -193,7 +193,7 @@ public enum UnionFindAlgo {
                     hugeGraph,
                     AllocationTracker.EMPTY);
             prepare.accept("CC(HugeSequentialUnionFind)", algo);
-            HugeDisjointSetStruct struct = Double.isFinite(threshold)
+            PagedDisjointSetStruct struct = Double.isFinite(threshold)
                     ? algo.compute(threshold)
                     : algo.compute();
             algo.release();

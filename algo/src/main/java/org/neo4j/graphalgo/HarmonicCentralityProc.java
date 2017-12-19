@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -28,11 +27,9 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.impl.HugeMSClosenessCentrality;
-import org.neo4j.graphalgo.impl.MSBFSCCAlgorithm;
-import org.neo4j.graphalgo.impl.MSClosenessCentrality;
-import org.neo4j.graphalgo.impl.MSHarmonicCentrality;
-import org.neo4j.graphalgo.results.ClosenessCentralityProcResult;
+import org.neo4j.graphalgo.impl.harmonic.HarmonicCentrality;
+import org.neo4j.graphalgo.impl.harmonic.HarmonicCentralityAlgorithm;
+import org.neo4j.graphalgo.results.CentralityProcResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -60,7 +57,7 @@ public class HarmonicCentralityProc {
 
     @Procedure(value = "algo.harmonic.stream")
     @Description("CALL algo.harmonic.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
-    public Stream<MSHarmonicCentrality.Result> harmonicStream(
+    public Stream<HarmonicCentrality.Result> harmonicStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -76,8 +73,8 @@ public class HarmonicCentralityProc {
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
-        final MSHarmonicCentrality algo = new MSHarmonicCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
-                .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
+        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, configuration.getConcurrency())
+                .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute();
 
@@ -89,7 +86,7 @@ public class HarmonicCentralityProc {
     @Procedure(value = "algo.harmonic", mode = Mode.WRITE)
     @Description("CALL algo.harmonic(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
-    public Stream<ClosenessCentralityProcResult> harmonic(
+    public Stream<CentralityProcResult> harmonic(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -98,7 +95,7 @@ public class HarmonicCentralityProc {
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        final ClosenessCentralityProcResult.Builder builder = ClosenessCentralityProcResult.builder();
+        final CentralityProcResult.Builder builder = CentralityProcResult.builder();
 
         final AllocationTracker tracker = AllocationTracker.create();
         final int concurrency = configuration.getConcurrency();
@@ -117,8 +114,8 @@ public class HarmonicCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
-        final MSHarmonicCentrality algo = new MSHarmonicCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
-                .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
+        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, concurrency)
+                .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         builder.timeEval(algo::compute);

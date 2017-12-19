@@ -26,14 +26,13 @@ import org.junit.runners.Parameterized;
 import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.impl.harmonic.HarmonicCentrality;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
@@ -120,7 +119,7 @@ public class HarmonicCentralityTest {
 
         final Consumer mock = mock(Consumer.class);
 
-        new MSHarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        new HarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()
                 .resultStream()
                 .forEach(r -> mock.consume(r.nodeId, r.centrality));

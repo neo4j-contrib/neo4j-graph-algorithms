@@ -22,7 +22,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ import java.util.concurrent.Future;
  *
  * @author mknblch
  */
-public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, HugeDisjointSetStruct, HugeParallelUnionFindQueue> {
+public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, PagedDisjointSetStruct, HugeParallelUnionFindQueue> {
 
     private final ExecutorService executor;
     private final long nodeCount;
@@ -84,9 +84,9 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
     }
 
     @Override
-    public HugeDisjointSetStruct compute() {
+    public PagedDisjointSetStruct compute() {
         final List<Future<?>> futures = new ArrayList<>(stepSize);
-        final BlockingQueue<HugeDisjointSetStruct> queue = new ArrayBlockingQueue<>(stepSize);
+        final BlockingQueue<PagedDisjointSetStruct> queue = new ArrayBlockingQueue<>(stepSize);
 
         int steps = 0;
         for (long i = 0L; i < nodeCount; i += batchSize) {
@@ -97,8 +97,8 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
         for (int i = 1; i < steps; ++i) {
             futures.add(executor.submit(() -> {
                 try {
-                    final HugeDisjointSetStruct a = queue.take();
-                    final HugeDisjointSetStruct b = queue.take();
+                    final PagedDisjointSetStruct a = queue.take();
+                    final PagedDisjointSetStruct b = queue.take();
                     queue.add(a.merge(b));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -111,7 +111,7 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
         return getStruct(queue);
     }
 
-    public HugeDisjointSetStruct compute(double threshold) {
+    public PagedDisjointSetStruct compute(double threshold) {
         throw new IllegalArgumentException("Not yet implemented");
     }
 
@@ -119,7 +119,7 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
         ParallelUtil.awaitTermination(futures);
     }
 
-    private HugeDisjointSetStruct getStruct(final BlockingQueue<HugeDisjointSetStruct> queue) {
+    private PagedDisjointSetStruct getStruct(final BlockingQueue<PagedDisjointSetStruct> queue) {
         try {
             return queue.take();
         } catch (InterruptedException e) {
@@ -131,11 +131,11 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
     private class HugeUnionFindTask implements Runnable {
 
         private final HugeRelationshipIterator rels;
-        private final BlockingQueue<HugeDisjointSetStruct> queue;
+        private final BlockingQueue<PagedDisjointSetStruct> queue;
         private final long offset;
         private final long end;
 
-        HugeUnionFindTask(BlockingQueue<HugeDisjointSetStruct> queue, long offset) {
+        HugeUnionFindTask(BlockingQueue<PagedDisjointSetStruct> queue, long offset) {
             this.rels = graph.concurrentCopy();
             this.queue = queue;
             this.offset = offset;
@@ -144,7 +144,7 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Hu
 
         @Override
         public void run() {
-            final HugeDisjointSetStruct struct = new HugeDisjointSetStruct(
+            final PagedDisjointSetStruct struct = new PagedDisjointSetStruct(
                     nodeCount,
                     tracker).reset();
             for (long node = offset; node < end; node++) {

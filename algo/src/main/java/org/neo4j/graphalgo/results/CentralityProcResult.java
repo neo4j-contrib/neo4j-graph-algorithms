@@ -21,17 +21,17 @@ package org.neo4j.graphalgo.results;
 /**
  * @author mknblch
  */
-public class ClosenessCentralityProcResult {
+public class CentralityProcResult {
 
     public final Long loadMillis;
     public final Long computeMillis;
     public final Long writeMillis;
     public final Long nodes;
 
-    private ClosenessCentralityProcResult(Long loadMillis,
-                                          Long computeMillis,
-                                          Long writeMillis,
-                                          Long nodes) {
+    private CentralityProcResult(Long loadMillis,
+                                 Long computeMillis,
+                                 Long writeMillis,
+                                 Long nodes) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.writeMillis = writeMillis;
@@ -42,7 +42,7 @@ public class ClosenessCentralityProcResult {
         return new Builder();
     }
 
-    public static class Builder extends AbstractResultBuilder<ClosenessCentralityProcResult> {
+    public static class Builder extends AbstractResultBuilder<CentralityProcResult> {
 
         private long nodes = 0;
         private double centralityMin = -1;
@@ -54,8 +54,8 @@ public class ClosenessCentralityProcResult {
             return this;
         }
 
-        public ClosenessCentralityProcResult build() {
-            return new ClosenessCentralityProcResult(loadDuration,
+        public CentralityProcResult build() {
+            return new CentralityProcResult(loadDuration,
                     evalDuration,
                     writeDuration,
                     nodes);
