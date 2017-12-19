@@ -66,20 +66,18 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
     }
 
     public Stream<Result> resultStream() {
-        final double k = 1.0 / (nodeCount - 1);
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        inverseFarness.get(nodeId) *  k));
+                        inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
     }
 
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = 1.0 / (nodeCount - 1);
         exporter.write(
                 propertyName,
                 inverseFarness,
                 (PropertyTranslator.OfDouble<AtomicDoubleArray>)
-                        (data, nodeId) -> data.get((int) nodeId) * k);
+                        (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
     }
 
     @Override
