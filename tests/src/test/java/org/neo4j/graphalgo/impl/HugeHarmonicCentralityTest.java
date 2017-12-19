@@ -25,26 +25,21 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.harmonic.HarmonicCentrality;
+import org.neo4j.graphalgo.impl.harmonic.HugeHarmonicCentrality;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Disconnected-Graph:
@@ -72,21 +67,10 @@ import static org.mockito.Mockito.verify;
  *
  * @author mknblch
  */
-@RunWith(Parameterized.class)
-public class HarmonicCentralityTest {
+public class HugeHarmonicCentralityTest {
 
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
-
-    @Parameterized.Parameters(name = "{1}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{HeavyGraphFactory.class, "Heavy"},
-                new Object[]{LightGraphFactory.class, "Light"},
-                new Object[]{HugeGraphFactory.class, "Huge"},
-                new Object[]{GraphViewFactory.class, "View"}
-        );
-    }
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -101,17 +85,14 @@ public class HarmonicCentralityTest {
                 " (d)-[:TYPE]->(e)");
     }
 
-    private Graph graph;
+    private HugeGraph graph;
 
-
-    public HarmonicCentralityTest(
-            Class<? extends GraphFactory> graphImpl,
-            String nameIgnoredOnlyForTestName) {
-        graph = new GraphLoader(DB)
+    public HugeHarmonicCentralityTest() {
+        graph = (HugeGraph) new GraphLoader(DB)
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .load(graphImpl);
+                .load(HugeGraphFactory.class);
     }
 
     @Test
@@ -119,9 +100,10 @@ public class HarmonicCentralityTest {
 
         final Consumer mock = mock(Consumer.class);
 
-        new HarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        new HugeHarmonicCentrality(graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()
                 .resultStream()
+                .peek(System.out::println)
                 .forEach(r -> mock.consume(r.nodeId, r.centrality));
 
         verify(mock, times(2)).consume(anyLong(), AdditionalMatchers.eq(0.375, 0.1));

@@ -16,19 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.harmonic;
 
+import org.neo4j.graphalgo.HarmonicCentralityProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -37,7 +38,7 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
+public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements HarmonicCentralityAlgorithm {
 
     private Graph graph;
     private final AtomicDoubleArray inverseFarness;
@@ -45,7 +46,7 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
     private ExecutorService executorService;
     private final int nodeCount;
 
-    public MSHarmonicCentrality(Graph graph, int concurrency, ExecutorService executorService) {
+    public HarmonicCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
@@ -53,7 +54,7 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
         inverseFarness = new AtomicDoubleArray(nodeCount);
     }
 
-    public MSHarmonicCentrality compute() {
+    public HarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             inverseFarness.add(nodeId, sourceNodeIds.size() * (1.0 / depth));
@@ -65,29 +66,27 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
     }
 
     public Stream<Result> resultStream() {
-        final double k = 1.0 / (nodeCount - 1);
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        inverseFarness.get(nodeId) *  k));
+                        inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
     }
 
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = 1.0 / (nodeCount - 1);
         exporter.write(
                 propertyName,
                 inverseFarness,
                 (PropertyTranslator.OfDouble<AtomicDoubleArray>)
-                        (data, nodeId) -> data.get((int) nodeId) * k);
+                        (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
     }
 
     @Override
-    public MSHarmonicCentrality me() {
+    public HarmonicCentrality me() {
         return this;
     }
 
     @Override
-    public MSHarmonicCentrality release() {
+    public HarmonicCentrality release() {
         graph = null;
         executorService = null;
         return this;
@@ -100,25 +99,5 @@ public class MSHarmonicCentrality extends Algorithm<MSHarmonicCentrality> {
                 .toArray();
     }
 
-    /**
-     * Result class used for streaming
-     */
-    public static final class Result {
 
-        public final long nodeId;
-        public final double centrality;
-
-        public Result(long nodeId, double centrality) {
-            this.nodeId = nodeId;
-            this.centrality = centrality;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "nodeId=" + nodeId +
-                    ", centrality=" + centrality +
-                    '}';
-        }
-    }
 }

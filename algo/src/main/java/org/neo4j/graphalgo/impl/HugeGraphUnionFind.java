@@ -23,7 +23,7 @@ import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
 /**
@@ -41,9 +41,9 @@ import org.neo4j.graphdb.Direction;
  *
  * @author mknblch
  */
-public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, HugeDisjointSetStruct, HugeGraphUnionFind> {
+public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, PagedDisjointSetStruct, HugeGraphUnionFind> {
 
-    private HugeDisjointSetStruct dss;
+    private PagedDisjointSetStruct dss;
     private final long nodeCount;
     private HugeRelationshipConsumer unrestricted;
 
@@ -53,7 +53,7 @@ public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, HugeDisjoi
         super(graph);
         this.graph = graph;
         nodeCount = graph.nodeCount();
-        this.dss = new HugeDisjointSetStruct(nodeCount, tracker);
+        this.dss = new PagedDisjointSetStruct(nodeCount, tracker);
         unrestricted = (source, target) -> {
             dss.union(source, target);
             return true;
@@ -66,7 +66,7 @@ public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, HugeDisjoi
      * @return a DSS
      */
     @Override
-    public HugeDisjointSetStruct compute() {
+    public PagedDisjointSetStruct compute() {
         return compute(unrestricted);
     }
 
@@ -77,7 +77,7 @@ public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, HugeDisjoi
      * @return a DSS
      */
     @Override
-    public HugeDisjointSetStruct compute(final double threshold) {
+    public PagedDisjointSetStruct compute(final double threshold) {
         return compute(new WithThreshold(threshold));
     }
 
@@ -88,7 +88,7 @@ public class HugeGraphUnionFind extends GraphUnionFindAlgo<HugeGraph, HugeDisjoi
         return super.release();
     }
 
-    private HugeDisjointSetStruct compute(HugeRelationshipConsumer consumer) {
+    private PagedDisjointSetStruct compute(HugeRelationshipConsumer consumer) {
         dss.reset();
         final ProgressLogger progressLogger = getProgressLogger();
         graph.forEachNode((long node) -> {

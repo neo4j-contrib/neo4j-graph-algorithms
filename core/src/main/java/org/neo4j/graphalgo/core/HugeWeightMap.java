@@ -21,16 +21,16 @@ package org.neo4j.graphalgo.core;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongLongDoubleMap;
+import org.neo4j.graphalgo.core.utils.paged.PagedLongLongDoubleMap;
 
 public final class HugeWeightMap implements HugeWeightMapping {
 
-    private HugeLongLongDoubleMap weights;
+    private PagedLongLongDoubleMap weights;
     private final double defaultValue;
 
     public HugeWeightMap(long capacity, double defaultValue, AllocationTracker tracker) {
         this.defaultValue = defaultValue;
-        this.weights = HugeLongLongDoubleMap.newMap(capacity, tracker);
+        this.weights = PagedLongLongDoubleMap.newMap(capacity, tracker);
     }
 
     @Override
