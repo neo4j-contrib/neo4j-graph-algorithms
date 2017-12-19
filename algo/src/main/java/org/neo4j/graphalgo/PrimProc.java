@@ -29,7 +29,8 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.impl.Prim;
+import org.neo4j.graphalgo.impl.spanningTrees.Prim;
+import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -146,8 +147,8 @@ public class PrimProc {
                 mstPrim.computeMinimumSpanningTree(root);
             }
         });
-        final Prim.SpanningTree spanningTree = mstPrim.getSpanningTree();
-        builder.withEffectiveNodeCount(spanningTree.getEffectiveNodeCount());
+        final SpanningTree spanningTree = mstPrim.getSpanningTree();
+        builder.withEffectiveNodeCount(spanningTree.effectiveNodeCount);
         if (configuration.isWriteFlag()) {
             mstPrim.release();
             builder.timeWrite(() -> {
