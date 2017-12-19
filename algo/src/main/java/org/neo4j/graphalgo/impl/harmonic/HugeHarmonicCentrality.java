@@ -16,106 +16,99 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.harmonic;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.msbfs.HugeBfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.HugeMultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
-import java.util.function.LongToIntFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
- * Normalized Closeness Centrality
+ * Harmonic Centrality Algorithm
  *
  * @author mknblch
  */
-public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessCentrality> {
+public class HugeHarmonicCentrality extends Algorithm<HugeHarmonicCentrality> implements HarmonicCentralityAlgorithm {
 
     private HugeGraph graph;
-    private PagedAtomicIntegerArray farness;
-
+    private final AllocationTracker allocationTracker;
+    private PagedAtomicDoubleArray inverseFarness;
+    private ExecutorService executorService;
     private final int concurrency;
-    private final ExecutorService executorService;
     private final long nodeCount;
-    private final AllocationTracker tracker;
 
-    public HugeMSClosenessCentrality(
-            HugeGraph graph,
-            AllocationTracker tracker,
-            int concurrency,
-            ExecutorService executorService) {
+    public HugeHarmonicCentrality(HugeGraph graph, AllocationTracker allocationTracker, int concurrency, ExecutorService executorService) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
+        this.allocationTracker = allocationTracker;
         this.concurrency = concurrency;
         this.executorService = executorService;
-        this.tracker = tracker;
-        farness = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
+        nodeCount = graph.nodeCount();
+        inverseFarness = PagedAtomicDoubleArray.newArray(nodeCount, allocationTracker);
     }
 
-    @Override
-    public HugeMSClosenessCentrality compute() {
-
+    public HugeHarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
-
         final HugeBfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            int len = sourceNodeIds.size();
-            farness.add(nodeId, len * depth);
+            final double len = sourceNodeIds.size();
+            inverseFarness.add(nodeId, len * (1.0 / depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
 
         new HugeMultiSourceBFS(
                 graph,
                 graph,
-                Direction.OUTGOING,
+                Direction.BOTH,
                 consumer,
-                tracker)
+                allocationTracker)
                 .run(concurrency, executorService);
 
         return this;
     }
 
-    @Override
+    public Stream<Result> resultStream() {
+        return LongStream.range(0, nodeCount)
+                .mapToObj(nodeId -> new Result(
+                        graph.toOriginalNodeId(nodeId),
+                        inverseFarness.get(nodeId) / (double)(nodeCount - 1)));
+    }
+
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
-                farness,
-                (PropertyTranslator.OfDouble<PagedAtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get(nodeId), k));
+                inverseFarness,
+                (PropertyTranslator.OfDouble<PagedAtomicDoubleArray>)
+                        (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
     }
 
     @Override
-    public LongToIntFunction farness() {
-        return farness::get;
-    }
-
-    @Override
-    public Stream<MSClosenessCentrality.Result> resultStream() {
-        final double k = nodeCount - 1;
-        return LongStream.range(0L, nodeCount)
-                .mapToObj(nodeId -> new MSClosenessCentrality.Result(
-                        graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
-    }
-
-    @Override
-    public HugeMSClosenessCentrality me() {
+    public HugeHarmonicCentrality me() {
         return this;
     }
 
     @Override
-    public HugeMSClosenessCentrality release() {
+    public HugeHarmonicCentrality release() {
         graph = null;
-        farness = null;
+        executorService = null;
+        inverseFarness.release();
+        inverseFarness = null;
         return this;
     }
+
+    public final double[] exportToArray() {
+        return resultStream()
+                .limit(Integer.MAX_VALUE)
+                .mapToDouble(r -> r.centrality)
+                .toArray();
+    }
+
 }

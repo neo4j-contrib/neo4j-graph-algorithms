@@ -27,7 +27,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import org.neo4j.graphalgo.core.write.DisjointSetStructTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.HugeDisjointSetStructTranslator;
@@ -219,7 +219,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
 
     private void write(
             Exporter exporter,
-            HugeDisjointSetStruct struct,
+            PagedDisjointSetStruct struct,
             ProcedureConfiguration configuration) {
         exporter.write(
                 configuration.get(

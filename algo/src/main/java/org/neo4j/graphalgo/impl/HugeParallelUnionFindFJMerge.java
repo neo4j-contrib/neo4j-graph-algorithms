@@ -22,7 +22,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -46,13 +46,13 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, HugeDisjointSetStruct, HugeParallelUnionFindFJMerge> {
+public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, PagedDisjointSetStruct, HugeParallelUnionFindFJMerge> {
 
     private final ExecutorService executor;
     private final AllocationTracker tracker;
     private final long nodeCount;
     private final long batchSize;
-    private HugeDisjointSetStruct struct;
+    private PagedDisjointSetStruct struct;
 
     /**
      * initialize UF
@@ -76,7 +76,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
                 minBatchSize);
     }
 
-    public HugeDisjointSetStruct compute() {
+    public PagedDisjointSetStruct compute() {
 
         final ArrayList<UFProcess> ufProcesses = new ArrayList<>();
         for (long i = 0L; i < nodeCount; i += batchSize) {
@@ -86,7 +86,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
         return getStruct();
     }
 
-    public HugeDisjointSetStruct compute(double threshold) {
+    public PagedDisjointSetStruct compute(double threshold) {
         final Collection<TUFProcess> ufProcesses = new ArrayList<>();
         for (long i = 0L; i < nodeCount; i += batchSize) {
             ufProcesses.add(new TUFProcess(i, batchSize, threshold));
@@ -100,12 +100,12 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
         if (!running()) {
             return;
         }
-        final Stack<HugeDisjointSetStruct> temp = new Stack<>();
+        final Stack<PagedDisjointSetStruct> temp = new Stack<>();
         ufProcesses.forEach(uf -> temp.add(uf.struct()));
         struct = ForkJoinPool.commonPool().invoke(new Merge(temp));
     }
 
-    public HugeDisjointSetStruct getStruct() {
+    public PagedDisjointSetStruct getStruct() {
         return struct;
     }
 
@@ -116,7 +116,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
     }
 
     private abstract class UFTask implements Runnable {
-        abstract HugeDisjointSetStruct struct();
+        abstract PagedDisjointSetStruct struct();
     }
 
     /**
@@ -126,13 +126,13 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
 
         private final long offset;
         private final long end;
-        private final HugeDisjointSetStruct struct;
+        private final PagedDisjointSetStruct struct;
         private final HugeRelationshipIterator rels;
 
         UFProcess(long offset, long length) {
             this.offset = offset;
             this.end = offset + length;
-            struct = new HugeDisjointSetStruct(nodeCount, tracker).reset();
+            struct = new PagedDisjointSetStruct(nodeCount, tracker).reset();
             rels = graph.concurrentCopy();
         }
 
@@ -157,7 +157,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
         }
 
         @Override
-        HugeDisjointSetStruct struct() {
+        PagedDisjointSetStruct struct() {
             return struct;
         }
     }
@@ -169,7 +169,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
 
         private final long offset;
         private final long end;
-        private final HugeDisjointSetStruct struct;
+        private final PagedDisjointSetStruct struct;
         private final HugeRelationshipIterator rels;
         private final double threshold;
 
@@ -177,7 +177,7 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
             this.offset = offset;
             this.end = offset + length;
             this.threshold = threshold;
-            struct = new HugeDisjointSetStruct(nodeCount, tracker).reset();
+            struct = new PagedDisjointSetStruct(nodeCount, tracker).reset();
             rels = graph.concurrentCopy();
         }
 
@@ -200,21 +200,21 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
         }
 
         @Override
-        HugeDisjointSetStruct struct() {
+        PagedDisjointSetStruct struct() {
             return struct;
         }
     }
 
-    private class Merge extends RecursiveTask<HugeDisjointSetStruct> {
+    private class Merge extends RecursiveTask<PagedDisjointSetStruct> {
 
-        private final Stack<HugeDisjointSetStruct> structs;
+        private final Stack<PagedDisjointSetStruct> structs;
 
-        private Merge(Stack<HugeDisjointSetStruct> structs) {
+        private Merge(Stack<PagedDisjointSetStruct> structs) {
             this.structs = structs;
         }
 
         @Override
-        protected HugeDisjointSetStruct compute() {
+        protected PagedDisjointSetStruct compute() {
             final int size = structs.size();
             if (size == 1) {
                 return structs.pop();
@@ -225,13 +225,13 @@ public class HugeParallelUnionFindFJMerge extends GraphUnionFindAlgo<HugeGraph, 
             if (size == 2) {
                 return structs.pop().merge(structs.pop());
             }
-            final Stack<HugeDisjointSetStruct> list = new Stack<>();
+            final Stack<PagedDisjointSetStruct> list = new Stack<>();
             list.push(structs.pop());
             list.push(structs.pop());
             final Merge mergeA = new Merge(structs);
             final Merge mergeB = new Merge(list);
             mergeA.fork();
-            final HugeDisjointSetStruct computed = mergeB.compute();
+            final PagedDisjointSetStruct computed = mergeB.compute();
             return mergeA.join().merge(computed);
         }
     }

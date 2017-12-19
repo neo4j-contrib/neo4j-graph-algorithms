@@ -22,7 +22,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeDisjointSetStruct;
+import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ForkJoinPool;
@@ -43,7 +43,7 @@ import java.util.concurrent.RecursiveTask;
  *
  * @author mknblch
  */
-public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph, HugeDisjointSetStruct, HugeParallelUnionFindForkJoin> {
+public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph, PagedDisjointSetStruct, HugeParallelUnionFindForkJoin> {
 
     private final AllocationTracker tracker;
     private final long nodeCount;
@@ -69,18 +69,18 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
 
     }
 
-    public HugeDisjointSetStruct compute() {
+    public PagedDisjointSetStruct compute() {
         return ForkJoinPool.commonPool().invoke(new UnionFindTask(0));
     }
 
 
-    public HugeDisjointSetStruct compute(double threshold) {
+    public PagedDisjointSetStruct compute(double threshold) {
         return ForkJoinPool
                 .commonPool()
                 .invoke(new ThresholdUFTask(0, threshold));
     }
 
-    private class UnionFindTask extends RecursiveTask<HugeDisjointSetStruct> {
+    private class UnionFindTask extends RecursiveTask<PagedDisjointSetStruct> {
 
         private final long offset;
         private final long end;
@@ -93,7 +93,7 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
         }
 
         @Override
-        protected HugeDisjointSetStruct compute() {
+        protected PagedDisjointSetStruct compute() {
             if (nodeCount - end >= batchSize && running()) {
                 final UnionFindTask process = new UnionFindTask(end);
                 process.fork();
@@ -102,8 +102,8 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
             return run();
         }
 
-        protected HugeDisjointSetStruct run() {
-            final HugeDisjointSetStruct struct = new HugeDisjointSetStruct(
+        protected PagedDisjointSetStruct run() {
+            final PagedDisjointSetStruct struct = new PagedDisjointSetStruct(
                     nodeCount,
                     tracker).reset();
             for (long node = offset; node < end && running(); node++) {
@@ -121,7 +121,7 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
         }
     }
 
-    private class ThresholdUFTask extends RecursiveTask<HugeDisjointSetStruct> {
+    private class ThresholdUFTask extends RecursiveTask<PagedDisjointSetStruct> {
 
         private final long offset;
         private final long end;
@@ -136,7 +136,7 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
         }
 
         @Override
-        protected HugeDisjointSetStruct compute() {
+        protected PagedDisjointSetStruct compute() {
             if (nodeCount - end >= batchSize && running()) {
                 final ThresholdUFTask process = new ThresholdUFTask(
                         offset,
@@ -147,8 +147,8 @@ public class HugeParallelUnionFindForkJoin extends GraphUnionFindAlgo<HugeGraph,
             return run();
         }
 
-        protected HugeDisjointSetStruct run() {
-            final HugeDisjointSetStruct struct = new HugeDisjointSetStruct(
+        protected PagedDisjointSetStruct run() {
+            final PagedDisjointSetStruct struct = new PagedDisjointSetStruct(
                     nodeCount,
                     tracker).reset();
             for (long node = offset; node < end && running(); node++) {
