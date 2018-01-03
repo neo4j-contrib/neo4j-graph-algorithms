@@ -18,8 +18,7 @@ CREATE (nAlice)-[:FRIEND]->(nBridget)
 
 // tag::stream-sample-graph[]
 
-CALL algo.louvain.stream('User', 'FRIEND',
-{}) 
+CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
 RETURN nodeId, community LIMIT 20;
 
@@ -28,7 +27,7 @@ RETURN nodeId, community LIMIT 20;
 // tag::write-sample-graph[]
 
 CALL algo.louvain('User', 'FRIEND',
-{write:true, writeProperty:'community'}) 
+  {write:true, writeProperty:'community'})
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
 
 // end::write-sample-graph[]
@@ -36,16 +35,17 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis;
 // tag::write-yelp[]
 
 CALL algo.louvain('Business', 'CO_OCCURENT_REVIEWS',
-{write:true, writeProperty:'community'}) 
+  {write:true, writeProperty:'community'})
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
 
 // tag::end-yelp[]
 
 // tag::cypher-loading[]
 
-CALL algo.louvain('MATCH (p:User) RETURN id(p) as id',
-'MATCH (p1:User)-[f:FRIEND]-(p2:User) 
-RETURN id(p1) as source, id(p2) as target,f.weight as weight',
-{graph:'cypher',write:true});
+CALL algo.louvain(
+  'MATCH (p:User) RETURN id(p) as id',
+  'MATCH (p1:User)-[f:FRIEND]-(p2:User)
+   RETURN id(p1) as source, id(p2) as target, f.weight as weight',
+  {graph:'cypher',write:true});
 
 // end::cypher-loading[]
