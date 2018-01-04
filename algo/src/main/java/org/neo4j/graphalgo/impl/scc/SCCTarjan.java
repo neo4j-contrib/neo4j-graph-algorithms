@@ -16,16 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.scc;
 
-import com.carrotsearch.hppc.*;
-import org.neo4j.graphalgo.api.HugeGraph;
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.IntStack;
+import com.carrotsearch.hppc.ObjectArrayList;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.paged.*;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.function.IntPredicate;
 
 /**
@@ -35,31 +39,27 @@ import java.util.function.IntPredicate;
  * within the graph. Also calculates minimum and maximum setSize as well
  * as the overall count of distinct sets.
  */
-public class HugeSCCTarjan extends Algorithm<HugeSCCTarjan> {
+public class SCCTarjan extends Algorithm<SCCTarjan> {
 
-    private HugeGraph graph;
-    private final AllocationTracker allocationTracker;
-    private final long nodeCount;
-
+    private Graph graph;
+    private final int nodeCount;
     private Aggregator aggregator;
 
-    public HugeSCCTarjan(HugeGraph graph, AllocationTracker allocationTracker) {
+    public SCCTarjan(Graph graph) {
         this.graph = graph;
-        nodeCount = graph.nodeCount();
-        this.allocationTracker = allocationTracker;
+        nodeCount = Math.toIntExact(graph.nodeCount());
 
-        new Aggregator(
-                graph,
-                LongArray.newArray(nodeCount, allocationTracker),
-                LongArray.newArray(nodeCount, allocationTracker),
+        aggregator = new Aggregator(graph,
+                new int[nodeCount],
+                new int[nodeCount],
                 new ObjectArrayList<>(),
-                PagedSimpleBitSet.newBitSet(nodeCount, allocationTracker),
-                new PagedLongStack(nodeCount, allocationTracker));
+                new BitSet(nodeCount),
+                new IntStack(nodeCount));
     }
 
-    public HugeSCCTarjan compute() {
+    public SCCTarjan compute() {
         aggregator.reset();
-        graph.forEachNode(aggregator::compute);
+        graph.forEachNode(aggregator);
         return this;
     }
 
@@ -68,7 +68,7 @@ public class HugeSCCTarjan extends Algorithm<HugeSCCTarjan> {
      *
      * @return list of sets of strongly connected component ID's
      */
-    public ObjectArrayList<LongSet> getConnectedComponents() {
+    public ObjectArrayList<IntSet> getConnectedComponents() {
         return aggregator.connectedComponents;
     }
 
@@ -91,45 +91,44 @@ public class HugeSCCTarjan extends Algorithm<HugeSCCTarjan> {
     }
 
     @Override
-    public HugeSCCTarjan me() {
+    public SCCTarjan me() {
         return this;
     }
 
     @Override
-    public HugeSCCTarjan release() {
+    public SCCTarjan release() {
         aggregator = null;
         graph = null;
         return this;
     }
 
+    private final class Aggregator implements IntPredicate, RelationshipConsumer {
 
-    private final class Aggregator {
-
-        private final HugeGraph graph;
-        private final LongArray indices;
-        private final LongArray lowLink;
-        private final ObjectArrayList<LongSet> connectedComponents;
-        private final PagedSimpleBitSet onStack;
-        private final PagedLongStack stack;
-
-        private long index;
+        private final Graph graph;
+        private final int[] indices;
+        private final int[] lowLink;
+        private final ObjectArrayList<IntSet> connectedComponents;
+        private final BitSet onStack;
+        private final IntStack stack;
+        private int index;
         private long minSetSize = Long.MAX_VALUE;
         private long maxSetSize = 0;
         private ProgressLogger progressLogger;
 
-        private Aggregator(HugeGraph graph, LongArray indices, LongArray lowLink, ObjectArrayList<LongSet> connectedComponents, PagedSimpleBitSet onStack, PagedLongStack stack) {
+        private Aggregator(Graph graph, int[] indices, int[] lowLink, ObjectArrayList<IntSet> connectedComponents, BitSet onStack, IntStack stack) {
             this.graph = graph;
             this.indices = indices;
             this.lowLink = lowLink;
             this.connectedComponents = connectedComponents;
             this.onStack = onStack;
             this.stack = stack;
+            this.progressLogger = getProgressLogger();
         }
 
         public void reset() {
             connectedComponents.clear();
-            indices.fill(-1);
-            lowLink.fill(-1);
+            Arrays.fill(indices, -1);
+            Arrays.fill(lowLink, -1);
             onStack.clear();
             stack.clear();
             index = 0;
@@ -137,33 +136,24 @@ public class HugeSCCTarjan extends Algorithm<HugeSCCTarjan> {
             maxSetSize = 0;
         }
 
-        private void strongConnect(long node) {
-            lowLink.set(node, index);
-            indices.set(node, index);
+        private void strongConnect(int node) {
+            lowLink[node] = index;
+            indices[node] = index;
             index++;
             stack.push(node);
-            onStack.put(node);
-            graph.forEachRelationship(node, Direction.OUTGOING, ((s, t) -> {
-                if (indices.get(t) == -1L) {
-                    strongConnect(t);
-                    lowLink.set(s, Math.min(lowLink.get(s), lowLink.get(t)));
-                } else if (onStack.contains(t)) {
-                    lowLink.set(s, Math.min(lowLink.get(s), indices.get(t)));
-                }
-                return true;
-            }));
-
-            if (indices.get(node) == lowLink.get(node)) {
+            onStack.set(node);
+            graph.forEachRelationship(node, Direction.OUTGOING, this);
+            if (indices[node] == lowLink[node]) {
                 relax(node);
             }
         }
 
-        private void relax(long nodeId) {
-            LongHashSet connected = new LongHashSet();
-            long w;
+        private void relax(int nodeId) {
+            IntHashSet connected = new IntHashSet();
+            int w;
             do {
                 w = stack.pop();
-                onStack.remove(w);
+                onStack.clear(w);
                 connected.add(w);
             } while (w != nodeId);
             connectedComponents.add(connected);
@@ -176,8 +166,20 @@ public class HugeSCCTarjan extends Algorithm<HugeSCCTarjan> {
             }
         }
 
-        public boolean compute(int node) {
-            if (indices.get(node) == -1L) {
+        @Override
+        public boolean accept(int source, int target, long edgeId) {
+            if (indices[target] == -1) {
+                strongConnect(target);
+                lowLink[source] = Math.min(lowLink[source], lowLink[target]);
+            } else if (onStack.get(target)) {
+                lowLink[source] = Math.min(lowLink[source], indices[target]);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean test(int node) {
+            if (indices[node] == -1) {
                 strongConnect(node);
             }
             progressLogger.logProgress((double) node / (nodeCount - 1));

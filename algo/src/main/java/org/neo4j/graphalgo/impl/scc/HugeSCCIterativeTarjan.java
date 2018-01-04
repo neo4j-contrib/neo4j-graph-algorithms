@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.scc;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedLongStack;
 import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 import java.util.function.LongPredicate;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
  * <p>
  * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
-public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> {
+public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> implements SCCAlgorithm {
 
     private enum Action {
         VISIT(0L),
