@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
  */
 public class PagedSimpleBitSetTest {
 
-    private final PagedSimpleBitSet set = PagedSimpleBitSet.newArray(Integer.MAX_VALUE + 100L, AllocationTracker.EMPTY);
+    private final PagedSimpleBitSet set = PagedSimpleBitSet.newBitSet(Integer.MAX_VALUE + 100L, AllocationTracker.EMPTY);
 
     @Test
     public void testLowValues() throws Exception {

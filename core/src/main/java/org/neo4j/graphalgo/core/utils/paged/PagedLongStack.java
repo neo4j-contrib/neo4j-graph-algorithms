@@ -23,4 +23,16 @@ public class PagedLongStack {
     public long pop() {
         return array.get(--offset);
     }
+
+    public long peek() {
+        return array.get(offset - 1);
+    }
+
+    public boolean isEmpty() {
+        return offset == 0;
+    }
+
+    public long size() {
+        return offset;
+    }
 }

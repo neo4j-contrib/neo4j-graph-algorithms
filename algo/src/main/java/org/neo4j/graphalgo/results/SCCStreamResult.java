@@ -34,7 +34,7 @@ public class SCCStreamResult {
      */
     public final long partition;
 
-    public SCCStreamResult(long nodeId, int clusterId) {
+    public SCCStreamResult(long nodeId, long clusterId) {
         this.nodeId = nodeId;
         this.partition = clusterId;
     }
