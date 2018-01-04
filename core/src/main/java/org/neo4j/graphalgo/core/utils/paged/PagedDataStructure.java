@@ -97,7 +97,7 @@ public class PagedDataStructure<T> {
         return freed;
     }
 
-    private int numPages(long capacity) {
+    protected int numPages(long capacity) {
         return PageUtil.numPagesFor(capacity, pageShift, pageMask);
     }
 
