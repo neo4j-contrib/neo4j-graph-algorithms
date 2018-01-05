@@ -18,6 +18,10 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
+
 import java.util.Arrays;
 import java.util.function.LongSupplier;
 
@@ -186,4 +190,15 @@ public final class LongArray extends PagedDataStructure<long[]> {
             return true;
         }
     }
+
+    public static class Translator implements PropertyTranslator.OfLong<LongArray> {
+
+        public static final Translator INSTANCE = new Translator();
+
+        @Override
+        public long toLong(final LongArray data, final long nodeId) {
+            return data.get((int) nodeId);
+        }
+    }
+
 }

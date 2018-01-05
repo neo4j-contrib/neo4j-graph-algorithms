@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * <p>
  * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
-public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
+public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> implements SCCAlgorithm {
 
     private enum Action {
         VISIT(0),
@@ -108,21 +108,21 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
         return connectedComponents;
     }
 
-    public Stream<SCCStreamResult> resultStream() {
+    public Stream<SCCAlgorithm.StreamResult> resultStream() {
         return IntStream.range(0, nodeCount)
                 .filter(i -> connectedComponents[i] != -1)
-                .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
+                .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
     }
 
-    public int getSetCount() {
+    public long getSetCount() {
         return setCount;
     }
 
-    public int getMinSetSize() {
+    public long getMinSetSize() {
         return minSetSize;
     }
 
-    public int getMaxSetSize() {
+    public long getMaxSetSize() {
         return maxSetSize;
     }
 

@@ -24,7 +24,6 @@ import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedLongStack;
 import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 import java.util.function.LongPredicate;
 import java.util.stream.LongStream;
@@ -109,21 +108,21 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
         return connectedComponents;
     }
 
-    public Stream<SCCStreamResult> resultStream() {
+    public Stream<SCCAlgorithm.StreamResult> resultStream() {
         return LongStream.range(0, nodeCount)
                 .filter(i -> connectedComponents.get(i) != -1)
-                .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents.get(i)));
+                .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents.get(i)));
     }
 
-    public int getSetCount() {
+    public long getSetCount() {
         return setCount;
     }
 
-    public int getMinSetSize() {
+    public long getMinSetSize() {
         return minSetSize;
     }
 
-    public int getMaxSetSize() {
+    public long getMaxSetSize() {
         return maxSetSize;
     }
 
