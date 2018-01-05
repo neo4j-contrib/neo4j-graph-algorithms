@@ -1,11 +1,3 @@
-== TODO ==
-
-renamed `algo.spanningTree`, old proc also available
-alternative is `algo.spanningTree.minimum`
-
-also available is the maximumSpanningTree `algo.spanningTree.maximum`
-
-
 = Minimum Weight Spanning Tree
 
 A _Minimum Weight Spanning Tree_ (MST) is a subset of the relationships of a connected, weighted undirected graph that connects all the nodes together, without any cycles and with the minimum possible total edge weight.
