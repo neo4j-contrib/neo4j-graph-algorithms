@@ -235,12 +235,12 @@ public class StronglyConnectedComponentsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        SCCResult.Builder builder = SCCResult.builder();
+        final SCCResult.Builder builder = SCCResult.builder();
 
-        ProgressTimer loadTimer = builder.timeLoad();
-        Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        final ProgressTimer loadTimer = builder.timeLoad();
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
@@ -249,7 +249,7 @@ public class StronglyConnectedComponentsProc {
 
         final AllocationTracker tracker = AllocationTracker.create();
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        SCCAlgorithm tarjan = SCCAlgorithm.iterativeTarjan(graph, tracker)
+        final SCCAlgorithm tarjan = SCCAlgorithm.iterativeTarjan(graph, tracker)
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(IterativeTarjan)"))
                 .withTerminationFlag(terminationFlag);
 
@@ -308,9 +308,9 @@ public class StronglyConnectedComponentsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutRelationshipWeights()
                 .withDirection(Direction.OUTGOING)
