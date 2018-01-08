@@ -113,17 +113,8 @@ public class HugeSCCTest {
         return graph.toMappedNodeId(node[0].getId());
     }
 
-    private IntSet allNodes() {
-        final IntScatterSet nodes = new IntScatterSet();
-        for (int i = 0; i < graph.nodeCount(); i++) {
-            nodes.add(i);
-        }
-        return nodes;
-    }
-
-
     @Test
-    public void testTunedTarjan() throws Exception {
+    public void testHugeIterativeScc() throws Exception {
         assertCC(new HugeSCCIterativeTarjan(graph, AllocationTracker.EMPTY)
                 .compute()
                 .getConnectedComponents());
