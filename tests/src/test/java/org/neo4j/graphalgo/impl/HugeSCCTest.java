@@ -16,24 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.algo;
+package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.StronglyConnectedComponentsProc;
-import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.impl.scc.SCCIterativeTarjan;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.impl.scc.HugeSCCIterativeTarjan;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,15 +50,15 @@ import static org.junit.Assert.assertNotEquals;
  *
  * @author mknblch
  */
-public class IterativeTarjanSCCTest {
+public class HugeSCCTest {
 
 
     private static GraphDatabaseAPI api;
 
-    private static Graph graph;
+    private static HugeGraph graph;
 
     @BeforeClass
-    public static void setup() throws KernelException {
+    public static void setup() {
         final String cypher =
                 "CREATE (a:Node {name:'a'})\n" +
                         "CREATE (b:Node {name:'b'})\n" +
@@ -70,6 +69,7 @@ public class IterativeTarjanSCCTest {
                         "CREATE (g:Node {name:'g'})\n" +
                         "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (i:Node {name:'i'})\n" +
+                        "CREATE (x:Node {name:'x'})\n" +
                         "CREATE" +
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
                         " (b)-[:TYPE {cost:5}]->(c),\n" +
@@ -86,26 +86,22 @@ public class IterativeTarjanSCCTest {
                         " (i)-[:TYPE {cost:3}]->(g)";
 
         api = TestDatabaseCreator.createTestDatabase();
-
-        api.getDependencyResolver()
-                .resolveDependency(Procedures.class)
-                .registerProcedure(StronglyConnectedComponentsProc.class);
-
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
             tx.success();
         }
 
-        graph = new GraphLoader(api)
+        graph = (HugeGraph) new GraphLoader(api)
                 .withLabel("Node")
                 .withRelationshipType("TYPE")
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
-                .load(HeavyGraphFactory.class);
+                .load(HugeGraphFactory.class);
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
-        api.shutdown();
+    public static void tearDown() throws Exception {
+        if (api != null) api.shutdown();
+        graph = null;
     }
 
     public static int getMappedNodeId(String name) {
@@ -118,66 +114,13 @@ public class IterativeTarjanSCCTest {
     }
 
     @Test
-    public void testDirect() throws Exception {
-
-        final SCCIterativeTarjan tarjan = new SCCIterativeTarjan(graph)
-                .compute();
-
-        assertCC(tarjan.getConnectedComponents());
-        assertEquals(3, tarjan.getMaxSetSize());
-        assertEquals(3, tarjan.getMinSetSize());
-        assertEquals(3, tarjan.getSetCount());
+    public void testHugeIterativeScc() throws Exception {
+        assertCC(new HugeSCCIterativeTarjan(graph, AllocationTracker.EMPTY)
+                .compute()
+                .getConnectedComponents());
     }
 
-    @Test
-    public void testCypher() throws Exception {
-
-        String cypher = "CALL algo.scc.iterative('', '', {write:true}) YIELD loadMillis, computeMillis, writeMillis";
-
-        api.execute(cypher).accept(row -> {
-            final long loadMillis = row.getNumber("loadMillis").longValue();
-            final long computeMillis = row.getNumber("computeMillis").longValue();
-            final long writeMillis = row.getNumber("writeMillis").longValue();
-            assertNotEquals(-1, loadMillis);
-            assertNotEquals(-1, computeMillis);
-            assertNotEquals(-1, writeMillis);
-            return true;
-        });
-
-        String cypher2 = "MATCH (n) RETURN n.partition as c";
-        final IntIntScatterMap testMap = new IntIntScatterMap();
-        api.execute(cypher2).accept(row -> {
-            testMap.addTo(row.getNumber("c").intValue(), 1);
-            return true;
-        });
-
-        // 3 sets with 3 elements each
-        assertEquals(3, testMap.size());
-        for (IntIntCursor cursor : testMap) {
-            assertEquals(3, cursor.value);
-        }
-    }
-
-    @Test
-    public void testCypherStream() throws Exception {
-
-        final IntIntScatterMap testMap = new IntIntScatterMap();
-
-        String cypher = "CALL algo.scc.iterative.stream() YIELD nodeId, partition";
-
-        api.execute(cypher).accept(row -> {
-            testMap.addTo(row.getNumber("partition").intValue(), 1);
-            return true;
-        });
-
-        // 3 sets with 3 elements each
-        assertEquals(3, testMap.size());
-        for (IntIntCursor cursor : testMap) {
-            assertEquals(3, cursor.value);
-        }
-    }
-
-    private void assertCC(int[] connectedComponents) {
+    private void assertCC(LongArray connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),
                 getMappedNodeId("b"),
@@ -192,20 +135,20 @@ public class IterativeTarjanSCCTest {
                 getMappedNodeId("i"));
     }
 
-    private static void assertBelongSameSet(int[] data, Integer... expected) {
+    private static void assertBelongSameSet(LongArray data, Integer... expected) {
         // check if all belong to same set
-        final int needle = data[expected[0]];
+        final long needle = data.get(expected[0]);
         for (int i : expected) {
-            assertEquals(needle, data[i]);
+            assertEquals(needle, data.get(i));
         }
 
         final List<Integer> exp = Arrays.asList(expected);
         // check no other element belongs to this set
-        for (int i = 0; i < data.length; i++) {
+        for (int i = 0; i < data.size(); i++) {
             if (exp.contains(i)) {
                 continue;
             }
-            assertNotEquals(needle, data[i]);
+            assertNotEquals(needle, data.get(i));
         }
 
     }
