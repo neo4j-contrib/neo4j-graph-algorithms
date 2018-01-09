@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.scc;
 
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.SCCStreamResult;
 import org.neo4j.graphdb.Direction;
 
@@ -33,15 +34,13 @@ import java.util.stream.Stream;
  * <p>
  * as specified in: https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
  */
-public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
+public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> implements SCCAlgorithm {
 
     private Graph graph;
     private IntStack edgeStack;
-
     private IntStack open;
     private int[] connectedComponents;
     private int nodeCount;
-
     private int dfs = 0;
     private int setCount = 0;
     private int minSetSize = Integer.MAX_VALUE;
@@ -78,21 +77,21 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> {
         return connectedComponents;
     }
 
-    public Stream<SCCStreamResult> resultStream() {
+    public Stream<SCCAlgorithm.StreamResult> resultStream() {
         return IntStream.range(0, nodeCount)
                 .filter(i -> connectedComponents[i] != -1)
-                .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
+                .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
     }
 
-    public int getSetCount() {
+    public long getSetCount() {
         return setCount;
     }
 
-    public int getMinSetSize() {
+    public long getMinSetSize() {
         return minSetSize;
     }
 
-    public int getMaxSetSize() {
+    public long getMaxSetSize() {
         return maxSetSize;
     }
 

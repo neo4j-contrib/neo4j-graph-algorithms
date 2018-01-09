@@ -16,16 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.scc;
 
-import com.carrotsearch.hppc.IntStack;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.results.SCCStreamResult;
+import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedLongStack;
+import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.impl.util.collection.SimpleBitSet;
-
-import java.util.Arrays;
-import java.util.stream.IntStream;
+import java.util.function.LongPredicate;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
@@ -33,66 +34,66 @@ import java.util.stream.Stream;
  * <p>
  * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
-public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
+public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> implements SCCAlgorithm {
 
     private enum Action {
-        VISIT(0),
-        VISITEDGE(1),
-        POSTVISIT(2);
+        VISIT(0L),
+        VISITEDGE(1L),
+        POSTVISIT(2L);
 
-        public final int code;
+        public final long code;
 
-        Action(int code) {
+        Action(long code) {
             this.code = code;
         }
 
     }
 
-    private Graph graph;
+    private HugeGraph graph;
 
-    private final int nodeCount;
-    private int[] index;
-    private SimpleBitSet visited;
-    private int[] connectedComponents;
-    private IntStack stack;
-    private IntStack boundaries;
-    private IntStack todo;
+    private final long nodeCount;
+    private LongArray index;
+    private PagedSimpleBitSet visited;
+    private LongArray connectedComponents;
+    private PagedLongStack stack;
+    private PagedLongStack boundaries;
+    private PagedLongStack todo;
     private int setCount;
 
     private int minSetSize;
     private int maxSetSize;
 
-    public SCCIterativeTarjan(Graph graph) {
+    public HugeSCCIterativeTarjan(HugeGraph graph, AllocationTracker tracker) {
         this.graph = graph;
-        nodeCount = Math.toIntExact(graph.nodeCount());
-        index = new int[nodeCount];
-        stack = new IntStack();
-        boundaries = new IntStack();
-        connectedComponents = new int[nodeCount];
-        visited = new SimpleBitSet(nodeCount);
-        todo = new IntStack();
+        nodeCount = graph.nodeCount();
+        index = LongArray.newArray(nodeCount, tracker);
+        stack = new PagedLongStack(nodeCount, tracker);
+        boundaries = new PagedLongStack(nodeCount, tracker);
+        connectedComponents = LongArray.newArray(nodeCount, tracker);
+        visited = PagedSimpleBitSet.newBitSet(nodeCount, tracker);
+        todo = new PagedLongStack(nodeCount, tracker);
     }
 
-    public SCCIterativeTarjan compute() {
+    public HugeSCCIterativeTarjan compute() {
         setCount = 0;
         minSetSize = Integer.MAX_VALUE;
         maxSetSize = 0;
-        Arrays.fill(index, -1);
-        Arrays.fill(connectedComponents, -1);
+        index.fill(-1);
+        connectedComponents.fill(-1);
         todo.clear();
         boundaries.clear();
         stack.clear();
-        graph.forEachNode(this::compute);
+        graph.forEachNode((LongPredicate) this::compute);
         return this;
     }
 
     @Override
-    public SCCIterativeTarjan me() {
+    public HugeSCCIterativeTarjan me() {
         return this;
     }
 
     @Override
-    public SCCIterativeTarjan release() {
+    public HugeSCCIterativeTarjan release() {
         graph = null;
         index = null;
         visited = null;
@@ -103,39 +104,39 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
         return this;
     }
 
-    public int[] getConnectedComponents() {
+    public LongArray getConnectedComponents() {
         return connectedComponents;
     }
 
-    public Stream<SCCStreamResult> resultStream() {
-        return IntStream.range(0, nodeCount)
-                .filter(i -> connectedComponents[i] != -1)
-                .mapToObj(i -> new SCCStreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
+    public Stream<SCCAlgorithm.StreamResult> resultStream() {
+        return LongStream.range(0, nodeCount)
+                .filter(i -> connectedComponents.get(i) != -1)
+                .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents.get(i)));
     }
 
-    public int getSetCount() {
+    public long getSetCount() {
         return setCount;
     }
 
-    public int getMinSetSize() {
+    public long getMinSetSize() {
         return minSetSize;
     }
 
-    public int getMaxSetSize() {
+    public long getMaxSetSize() {
         return maxSetSize;
     }
 
-    private boolean compute(int nodeId) {
+    private boolean compute(long nodeId) {
         if (!running()) {
             return false;
         }
-        if (index[nodeId] != -1) {
+        if (index.get(nodeId) != -1) {
             return true;
         }
         push(Action.VISIT, nodeId);
         while (!todo.isEmpty()) {
-            final int action = todo.pop();
-            final int node = todo.pop();
+            final long action = todo.pop();
+            final long node = todo.pop();
             if (action == Action.VISIT.code) {
                 visit(node);
             } else if (action == Action.VISITEDGE.code) {
@@ -148,24 +149,24 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
         return true;
     }
 
-    private void visitEdge(int nodeId) {
-        if (index[nodeId] == -1) {
+    private void visitEdge(long nodeId) {
+        if (index.get(nodeId) == -1) {
             push(Action.VISIT, nodeId);
         } else if (!visited.contains(nodeId)) {
-            while (index[nodeId] < boundaries.peek()) {
+            while (index.get(nodeId) < boundaries.peek()) {
                 boundaries.pop();
             }
         }
     }
 
-    private void postVisit(int nodeId) {
-        if (boundaries.peek() == index[nodeId]) {
+    private void postVisit(long nodeId) {
+        if (boundaries.peek() == index.get(nodeId)) {
             boundaries.pop();
             int elementCount = 0;
-            int element;
+            long element;
             do {
                 element = stack.pop();
-                connectedComponents[element] = nodeId;
+                connectedComponents.set(element, nodeId);
                 visited.put(element);
                 elementCount++;
             } while (element != nodeId);
@@ -176,14 +177,14 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
 
     }
 
-    private void visit(int nodeId) {
-        final int stackSize = stack.size();
-        index[nodeId] = stackSize;
+    private void visit(long nodeId) {
+        final long stackSize = stack.size();
+        index.set(nodeId, stackSize);
         stack.push(nodeId);
         boundaries.push(stackSize);
         push(Action.POSTVISIT, nodeId);
-        graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-            push(Action.VISITEDGE, targetNodeId);
+        graph.forEachRelationship(nodeId, Direction.OUTGOING, (s, t) -> {
+            push(Action.VISITEDGE, t);
             return true;
         });
     }
@@ -194,7 +195,7 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> {
      * @param action
      * @param value
      */
-    private void push(Action action, int value) {
+    private void push(Action action, long value) {
         todo.push(value);
         todo.push(action.code);
     }
