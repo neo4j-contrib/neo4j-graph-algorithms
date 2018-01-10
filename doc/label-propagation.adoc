@@ -1,49 +1,52 @@
 = Community detection: Label Propagation
 
-The main idea behind _Label Propagation_  ( LPA ) is to propagate the labels of node throughout the network using some technique and form communities through the process of label propagation itself. 
-The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005). 
-The intuition of label flooding is that a single label can quickly become dominant in a densely connected group of nodes whereas it has trouble crossing a sparsely connected region. 
-The labels are expected to be trapped inside a densely connected group of nodes.
-Based on the idea of local trapping of labels, the author proposed a local community detection method where a node is initialized with a label and propagates step by step through the neighbours until the end of the community is reached. 
-The end of the community indicates the number of edges proceeding outward from the community and drops below a threshold value. 
-LPA is a method which is effective, simple and near-linear time algorithm.[1] 
-Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks. 
+_Label Propagation_ (LPA) is an algorithm for finding communities in near linear time http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[[1\]].
+It detects these communities using network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities.
+
+Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks.
 
 == History, Explanation
 
+Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in community detection research.
 
-Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in the community detection research. 
-_Label Propagation_ which was first proposed by Raghavan et al. (2007)https://arxiv.org/pdf/0709.2938.pdf[[2\]] uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes and each node selects a label from its neighbourhood to adopt it as its label. 
-LPA works as follows: Node x has neighbours and each neighbour carries a label denoting the community to which they belong to. 
-Each node in the network chooses to join the community to which the maximum number of its neighbours belongs to, with ties broken uniformly and randomly. 
-At the beginning, every node is initialized with unique label (called as identifier) and the labels propagate through the network. 
-At every iteration of propagation, each node updates its label based on the labels of its neighbours. 
-As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label. 
-At end of the propagation, most labels disappear and only few labels exist in the network. 
-Label propagation algorithm reaches convergence when each node has the majority label of its neighbours. 
-At the end of the convergence, nodes connected with the same label form a community. 
-According to LPA, communities are defined as nodes having identical labels at convergence. 
-The agreement between the nodes to spread the labels forms the basis for _Label Propagation_ algorithms.[1] 
+The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005) https://arxiv.org/pdf/cond-mat/0412482.pdf[[2\]]
+The main idea behind LPA is to propagate the labels of node throughout the network and form communities through the process of label propagation.
+The intuition of label flooding is that a single label can quickly become dominant in a densely connected group of nodes whereas it has trouble crossing a sparsely connected region.
+Labels will get trapped inside a densely connected group of nodes.
+Based on the idea of local trapping of labels, the author proposed a local community detection method where a node is initialized with a label which propagates step by step through the neighbours until the end of the community is reached.
+
+LPA, which was first proposed by Raghavan et al. (2007) https://arxiv.org/pdf/0709.2938.pdf[[3\]], uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes.
+
+The algorithm works as follows:
+
+* Every node is initialized with a unique label (an identifier)
+* These labels propagate through the network
+* At every iteration of propagation, each node updates its label to the one that the maximum numbers of its neighbours belongs to. Ties are broken uniformly and randomly.
+* LPA reaches convergence when each node has the majority label of its neighbours.
+
+As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label.
+At the end of the propagation only a few labels will remain - most will have disappeared.
+Nodes that have the same label at convergence are said to belong to the same community.
 
 == When to use it / use-cases
 
+Community structure is considered one of the most interesting features in complex networks.
+Many real-world complex systems exhibit community structure, where individuals with similar properties form a community (partition).
+The identification of partitions in a network is important for understanding its structure.
 
-Community structure is considered one of the most interesting features in complex networks. 
-Many real-world complex systems exhibit community structure, where individuals with similar properties form a community (partition). 
-The identification of partitions in a network is important for understanding the structure of said network, in a specific perspective. 
-There exist various algorithms that identify community structures in large-scale real-world networks. 
-Many of those algorithms require prior information about the number and size of communities.
-The size of the community is often not predictable beforehand in many complex networks. Particularly, in social networks where the size of the network is huge and heterogeneous in nature, it is impossible to predict about the number of communities initially. 
-Moreover, it is computationally expensive to determine the community size. 
-Hence, algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential. 
-_Label Propagation_ algorithms (LPA) are such type of algorithms that detects community structure that uses network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities. 
+There are many algorithms that identify community structures in large-scale real-world networks and a lot of them require prior information about the number and size of communities.
+In complex networks this size of community is very difficult to calculate.
+With social networks, which are often huge and heterogeneous in nature, it is impossible to predict the number of initial communities.
+
+Algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential.
+LPA is such an algorithm and requires neither a pre-defined objective function nor prior information about the communities.
 
 == Constraints / when not to use it
 
-In contrast with other algorithms label propagation can result in various community structures from the same initial condition.
-The range of solutions can be narrowed if some nodes are given preliminary labels while others are held unlabelled. 
-Consequently, unlabelled nodes will be more likely to adapt to the labelled ones. 
-For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[2]
+In contrast with other algorithms label propagation can result in different community structures from the same initial condition.
+The range of solutions can be narrowed if some nodes are given preliminary labels while others are held unlabelled.
+Consequently, unlabelled nodes will be more likely to adapt to the labelled ones.
+For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[3]
 
 == Algorithm explanation on simple sample graph
 
@@ -70,23 +73,23 @@ include::scripts/label-propagation.cypher[tag=write-sample-graph]
 | Bridget | 5
 | Michael | 5
 | Doug | 4
-| Mark | 4 
+| Mark | 4
 |===
 
 Our algorithm found two communities with 3 members each.
 
 === Using pre-defined labels
 
-_At the beginning of the algorithm, every node is initialized with unique label (called as identifier) and the labels propagate through the network._ 
+_At the beginning of the algorithm, every node is initialized with unique label (called as identifier) and the labels propagate through the network._
 
 It is possible to define preliminary labels (identifiers) of nodes using `partition` parameter.
-We need to save preliminary set of labels we would like to run the LPA algorithm with as a property of nodes (must be a number). 
+We need to save preliminary set of labels we would like to run the LPA algorithm with as a property of nodes (must be a number).
 In our example graph we saved them as property _predefined_label_.
 Algorithm first checks if there is a _predefined label_ assigned to the node and loads it, if there is one.
 If there isn't one it assigns the node new unique label(node id are used).
 Using this preliminary set of labels (identifiers) it then sequentially updates each node's label to a new one, which is the most frequent label among its neighbors at every label propagation step(iteration).
 
-Can be used as semi-supervised way of finding communities, where we hand-pick some initial communities. 
+Can be used as semi-supervised way of finding communities, where we hand-pick some initial communities.
 
 .Running algorithm with pre-defined labels
 [source,cypher]
@@ -116,7 +119,7 @@ partitionProperty - simple label propagation kernel
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | iterations | int | 1 | yes | the maximum number of iterations to run
-| weightProperty | string | 'weight' | yes | property name of node and/or relationship that contain weight. Must be numeric. 
+| weightProperty | string | 'weight' | yes | property name of node and/or relationship that contain weight. Must be numeric.
 | partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside, can be used to define initial set of labels (must be a number)
 | write | boolean | true | yes | if result should be written back as node property
 | graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
@@ -149,15 +152,15 @@ Set `graph:'cypher'` in the config.
 include::scripts/label-propagation.cypher[tag=cypher-loading]
 ----
 
-== Versions 
+== Versions
 
 We support the following versions of the label propagation algorithms:
 
-* [x] directed, unweighted:  
+* [x] directed, unweighted:
 
 ** direction: 'INCOMING' or 'OUTGOING', weightProperty: null
 
-* [x] directed, weighted 
+* [x] directed, weighted
 
 ** direction: 'INCOMING' or 'OUTGOING', weightProperty : 'weight'
 
@@ -165,15 +168,17 @@ We support the following versions of the label propagation algorithms:
 
 ** direction: 'BOTH', weightProperty: null
 
-* [x] undirected, weighted 
+* [x] undirected, weighted
 
 ** direction: 'BOTH', weightProperty: 'weight'
 
 == References
 
-* [1] http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf
+* [1] http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[Label Propagation in Community Detection^]
 
-* [2] https://arxiv.org/pdf/0709.2938.pdf
+* [2] https://arxiv.org/pdf/0709.2938.pdf[A Local Method for Detecting Communities^]
+
+* [3] https://arxiv.org/abs/cond-mat/0412482
 
 * http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
 
