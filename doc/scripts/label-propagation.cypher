@@ -21,7 +21,8 @@ CREATE (nAlice)-[:FOLLOW]->(nBridget)
 
 // tag::write-sample-graph[]
 
-CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {iterations:10,partitionProperty:'partition', write:true}) 
+CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING',
+  {iterations:10,partitionProperty:'partition', write:true})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty;
 
 // end::write-sample-graph[]
@@ -29,7 +30,8 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 
 // tag::write-existing-label-sample-graph[]
 
-CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING', {iterations:10,partitionProperty:'predefined_label', write:true}) 
+CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING',
+  {iterations:10,partitionProperty:'predefined_label', write:true})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty;
 
 // end::write-existing-label-sample-graph[]
@@ -37,10 +39,11 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 // tag::cypher-loading[]
 
 CALL algo.labelPropagation(
-'MATCH (p:User) RETURN id(p) as id, p.weight as weight, id(p) as value',
-'MATCH (p1:User)-[f:FRIEND]->(p2:User) 
-RETURN id(p1) as source, id(p2) as target,f.weight as weight',
-"OUT",{graph:'cypher',write:true});
+  'MATCH (p:User) RETURN id(p) as id, p.weight as weight, id(p) as value',
+  'MATCH (p1:User)-[f:FRIEND]->(p2:User)
+   RETURN id(p1) as source, id(p2) as target, f.weight as weight',
+  "OUT",
+  {graph:'cypher',write:true});
 
 // end::cypher-loading[]
 
