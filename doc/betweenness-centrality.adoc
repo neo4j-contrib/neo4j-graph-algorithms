@@ -1,47 +1,57 @@
 = Betweenness Centrality
 
-_Betweenness Centrality_ is a measure of centrality in a graph. In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. It is based on observation, that every pair of vertices exchange information and information flows along the geodesic (shortest) path between two vertices. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges , that the path passes through ( unweighted network ) or the sum of the weights of the edges is minimized ( weighted network). The betweenness centrality for each node is the number of these shortest paths, that pass through the node.
+_Betweenness Centrality_ is a measure of centrality in a graph based on calculating geodesic (shortest) paths between nodes.
+There is at least one shortest path between every pair of nodes in a connected graph.
+The shortest path can be based on the number of relationships that the path passes through in an unweighted network or the sum of the weights of the relationships in a weighted network.
+
+The betweenness centrality for each node is the number of these shortest paths that pass through that node.
+The nodes that most frequently lie on these shortest paths are will have a higher betweenness centrality score.
 
 == History, Explanation
 
-Anthonisse (1971) introduced the concept _rush_ in a graph as the amount a node in a network has to intermediate between other nodes. 
-Freeman (1977, 1979) defined betweenness centrality as one of the “three distinct intuitive conceptions of centrality” (Freeman, 1979: 215). 
-Betweenness centrality is often connected with the notion of control over the flow of information. 
-Betweenness centrality is calculated by a breath-first search algorithm which calculates the shortest paths from every node to all other nodes (Brandes 2001). 
-The nodes which most frequently lie on these shortest paths are favored in the betweenness centrality score. 
+The original idea behind betweenness centrality was introduced by J. M. Anthonisse in his 1971 paper http://oai.cwi.nl/oai/asset/9791/9791A.pdf[The rush in a directed graph^].
+Anthonisse defined the _rush_ in a graph as the amount a node in a network has to intermediate between other nodes.
 
-
-_Betweenness Centrality_ finds wide application in network theory. 
-It represents the degree of which nodes stand between each other. 
-For example, in a telecommunications network, a node with higher betweenness centrality would have more control over the network, because more information will pass through that node. 
-Betweenness centrality was devised as a general measure of centrality. 
-It applies to a wide range of problems in network theory, including problems related to social networks, biology, transport and scientific cooperation.
-
+Linton Freeman gave the first formal definition of betweenness centrality as one of the “three distinct intuitive conceptions of centrality” in his paper http://moreno.ss.uci.edu/23.pdf[A Set of Measures of Centrality Based on Betweenness^].
+It is calculated by a breath-first search algorithm that computes the shortest paths from every node to all other nodes.
+Ulrik Brandes' http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.11.2024&rep=rep1&type=pdf[Faster Algorithm for Betweenness Centrality^] is often used to make the calculation.
 
 == When to use it / use-cases
 
 image::{img}/betweenness_centrality.png[]
 
+_Betweenness centrality_ is useful for finding nodes that serve as a bridge from one part of a graph to another.
+As a result, it is a rudimentary measure of the control that a node exerts over the flow throughout the graph.
 
-_Betweenness centrality_ is useful in finding vertices that serve as a bridge from one part of a graph to
-another. Consequently, betweenness is a rudimentary measure of the control, that a specific node exerts
-over the flow throughout the full graph. For example, Alice in above example is the
-main connection in the graph. Were Alice to be removed, all connections in the graph would be cut off. This makes Alice “important”, because it ensures that no nodes are isolated. When using
-betweenness centrality as an analysis measure, it indicates a potential gate keeping or controlling node. 
+In the above example Alice is the main connection in the graph.
+If Alice is removed all connections in the graph would be cut off.
+This makes Alice “important” because she ensures that no nodes are isolated.
 
-It differs from the other centrality measures. A node can have quite low degree, be connected to others that have low degree, even be a long way from others on average, and still have high betweenness. Consider a node A that lies on a bridge between two groups of vertices within a network. Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected (it lies at the periphery of both groups).
+The betweenness score for a node can be non intuitive.
+The node may have low degree, be connected to others that have low degree, and even be a long way from others on average, yet still have high betweenness.
+Consider a node A that lies on a bridge between two groups of nodes within a network.
+Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected within either group.
 
-Node betweenness centrality is relevant to problems such as identifying important nodes that control flows of information between separate parts of the network and identifying causal nodes to influence other entities behavior, such as genes in genomics or customers in marketing studies.
-Betweenness centrality has been used to analyze social networks and protein networks, to identify significant nodes in wireless ad hoc networks, to study the importance and activity of nodes in mobile phone call networks and interaction patterns of players on massively multiplayer online games, to study online expertise sharing communities such as physicians, to identify and analyze linking behavior of key bloggers in dynamic networks of blog posts and to measure network traffic in communication networks.[1]
+_Betweenness Centrality_ has wide applicability in network theory.
+It represents the degree to which nodes stand between each other.
+It has founds uses in a variety of different domains [1] including:
 
+* analyzing social and protein networks.
+* identifying important bloggers
+* measuring network traffic in communication networks
+* studying the interaction patterns of players in massively multi player online games
+* analyzing the importance of people in mobile phone call networks
+* finding the controlling nodes in a telecommunications network
 
 == Constraints / when not to use it
 
+Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
+It therefore doesn't give us a perfect view of the most influential nodes in a graph, but rather a good approximation. [4]
 
 == Algorithm explanation on simple sample graph
 
-
-People with high betweenness tend to be the innovators and brokers in any network. They combine different perspectives, transfer ideas between groups (or decide to withold them), and get power from their ability to make introductions and pull strings.
+People with high betweenness tend to be the innovators and brokers in social networks.
+They combine different perspectives, transfer ideas between groups, and get power from their ability to make introductions and pull strings.
 
 .Create sample graph
 [source,cypher]
@@ -77,12 +87,8 @@ We can see that Alice is the main broker in this network and Charles is a minor 
 
 == Approximation of betweenness centrality
 
-Currently, the fastest known algorithm for exactly computing betweenness of all the vertices, designed by Brandes, requires at least O(nm) time for unweighted graphs, where n
-is the number of vertices and m is the number of edges. 
-Thus, for large-scale graphs, exact centrality computation on current workstations is not practically viable.[2] 
-
-Fast betweenness estimation is thus an important problem, as a good approximation is an acceptable alternative to exact scores.
-
+The fastest known algorithm for exactly computing betweenness of all the nodes, designed by Brandes, requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
+For large-scale graphs exact centrality computation isn't practical [2], but we can work with a subset of the nodes and calculate an approximate score.
 
 === RA-Brandes Algorithm
 
@@ -90,10 +96,9 @@ RA-Brandes algorithm, proposed by Brandes and Pich[3], is different from origina
 
 We implement two strategies of selecting the subset of nodes:
 
-* random: nodes are selected uniformly at random with defined probability of selection. Default probability is `log10(N) / e^2`. If probability is 1 algorihm works as original Brandes, where all nodes are loaded.
+* random: nodes are selected uniformly at random with defined probability of selection. Default probability is `log10(N) / e^2`. If probability is 1 then the algorithm works as original Brandes where all nodes are loaded.
 
 * degree: first calculates the mean degree of the nodes and then allows only nodes whose degree is higher then the mean, so that only dense nodes are visited
-
 
 First step in calculating betweenness centrality is to collect all shortest paths that run through specific node. With parameter `maxDepth` you can limit the depth of all shortest paths traversal.
 
@@ -118,7 +123,7 @@ include::scripts/betweenness-centrality.cypher[tag=write-rabrandes-graph]
 [source,cypher]
 ----
 CALL algo.betweenness(label:String, relationship:String, 
-{direction:'out',write:true, stats:true, writeProperty:'centrality',concurrency:1}) 
+  {direction:'out',write:true, stats:true, writeProperty:'centrality',concurrency:1})
 YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis 
 - calculates betweenness centrality and potentially writes back
 ----
@@ -182,7 +187,7 @@ YIELD nodeId, centrality - yields centrality for each node
 [source,cypher]
 ----
 CALL algo.betweenness.sampled(label:String, relationship:String, 
-{direction:'out', strategy:'random', probability: 1, maxDepth: 4, stats:true,
+  {direction:'out', strategy:'random', probability: 1, maxDepth: 4, stats:true,
  writeProperty:'centrality',concurrency:1}) 
 YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMillis, writeMillis 
 - calculates betweenness centrality and potentially writes back
@@ -223,7 +228,7 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 [source,cypher]
 ----
 CALL algo.betweenness.sampled.stream(label:String, relationship:String,
-{direction:'out',concurrency:1, strategy:'random', probability: 1, maxDepth: 4}) 
+  {direction:'out',concurrency:1, strategy:'random', probability: 1, maxDepth: 4})
 YIELD nodeId, centrality - yields centrality for each node
 ----
 
@@ -325,6 +330,8 @@ We support the following versions of the betweenness centrality algorithm:
 
 * [3] https://pdfs.semanticscholar.org/2e0d/94d072d79ba73c9a153a228b93520b3ce670.pdf
 
+* [4] https://global.oup.com/academic/product/networks-9780199206650?cc=us&lang=en&[Newman, Mark. Networks: An Introduction (Page 186). OUP Oxford.^]
+
 ifdef::implementation[]
 // tag::implementation[]
 
@@ -333,14 +340,14 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/98
 
-In graph theory, betweenness centrality is a measure of centrality in a graph based on shortest paths. For every pair of vertices in a connected graph, there exists at least one shortest path between the vertices such that either the number of edges that the path passes through (for unweighted graphs) or the sum of the weights of the edges (for weighted graphs) is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.
+In graph theory, betweenness centrality is a measure of centrality in a graph based on shortest paths. For every pair of nodes in a connected graph, there exists at least one shortest path between the nodes such that either the number of relationships that the path passes through (for unweighted graphs) or the sum of the weights of the relationships (for weighted graphs) is minimized. The betweenness centrality for each vertex is the number of these shortest paths that pass through the vertex.
 
 ## Progress
 
 - [x] adapt apoc-procedure to algorithm-api
 - [x] implement procedure
 - [x] tests
-- [x] edge case tests
+- [x] relationship case tests
 - [x] simple benchmark 
 - [x] benchmark on bigger graphs
 - [x] parallelization
