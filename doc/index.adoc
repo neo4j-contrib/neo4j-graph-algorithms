@@ -4,7 +4,7 @@
 :sectid:
 :sectlinks:
 :toclevels: 2
-:img: https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.1/doc/img
+:img: https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img
 :env-docs: true
 
 == Introduction

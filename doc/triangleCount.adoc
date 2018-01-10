@@ -120,8 +120,8 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
 | concurrency | int | available CPUs | yes | number of concurrent threads
 |===
 
@@ -147,8 +147,8 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'triangles' | yes | property name the number of triangles a node is member of is written to

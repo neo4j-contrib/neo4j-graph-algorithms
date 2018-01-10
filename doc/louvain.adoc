@@ -139,7 +139,7 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 |===
 | name | type | default | optional | description
 | label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
 | weightProperty | string | null | yes | property name that contains weight. If null treats the graph as unweighted. Must be numeric.
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'community' | yes | property name written back the id of the community particular node belongs to
@@ -225,6 +225,8 @@ include::scripts/louvain.cypher[tag=cypher-loading]
 
 
 ifdef::implementation[]
+// tag::implementation[]
+
 
 == Implementation Details
 
@@ -245,6 +247,5 @@ _Louvain_ is an algorithm for detecting graph partitions in networks that relies
 
 == Details
 
-*not yet implemented*
-
+// end::implementation[]
 endif::implementation[]

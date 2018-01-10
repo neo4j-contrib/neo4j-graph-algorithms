@@ -1,4 +1,4 @@
-= Graph Partitioning: Label Propagation
+= Community detection: Label Propagation
 
 The main idea behind _Label Propagation_  ( LPA ) is to propagate the labels of node throughout the network using some technique and form communities through the process of label propagation itself. 
 The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005). 
@@ -111,8 +111,8 @@ partitionProperty - simple label propagation kernel
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
 | direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
 | concurrency | int | available CPUs | yes | number of concurrent threads
 | iterations | int | 1 | yes | the maximum number of iterations to run
