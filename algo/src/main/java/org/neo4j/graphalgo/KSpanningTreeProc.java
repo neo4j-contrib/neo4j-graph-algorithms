@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  */
 public class KSpanningTreeProc {
 
-    private static final String CONFIG_CLUSTER_PROPERTY = "partitionProperty";
+    private static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
     private static final String DEFAULT_CLUSTER_PROPERTY = "partition";
 
     @Context

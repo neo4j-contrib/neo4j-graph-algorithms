@@ -77,8 +77,8 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
 | write | boolean | true | yes | if result should be written back as node property
 | partitionProperty | string | 'partition' | yes | property name written back to
 | concurrency | int | available CPUs | yes | number of concurrent threads

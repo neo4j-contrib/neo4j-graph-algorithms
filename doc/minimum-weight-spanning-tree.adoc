@@ -2,7 +2,7 @@
 
 A _Minimum Weight Spanning Tree_ (MST) is a subset of the relationships of a connected, weighted undirected graph that connects all the nodes together, without any cycles and with the minimum possible total edge weight.
 That is, it is a spanning tree whose sum of relationship weights is as small as possible.
-Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node. 
+Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node.
 It can be used to cluster the graph (KMeans).
 
 == History, Explanation
@@ -49,16 +49,93 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=create-sample-graph]
 
 ----
 
-.Running algorithm and writing back results 
+Minimum weighted spanning tree visits all nodes that are in the same connected component as the starting node and returns a spanning tree of all nodes in the component where the total weight of the relationships is minimized.
+
+.Running minimum spanning tree algorithm and writing back results 
 [source,cypher]
 ----
-include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-graph]
+include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-minst-graph]
 
 ----
 
 .Results
-image::{img}/mst_result.png[]
 
+image::{img}/minst_result.png[]
+
+
+Maximum weighted tree spanning algorithm is similar to the mininum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
+
+
+.Running maximum spanning tree algorithm and writing back results 
+[source,cypher]
+----
+include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-maxst-graph]
+
+----
+
+
+image::{img}/maxst_result.png[]
+
+=== k-Spanning tree
+
+Sometimes we want to limit the size of our spanning tree result as we are only interested in finding a smaller tree within our graph that does not span across all nodes. 
+K-Spanning tree algorithm returns a tree with k nodes and k − 1 relationships.
+
+In our sample graph we have 5 nodes.
+When we ran MST above we got returned a 5-minimum spanning tree, that covered all five nodes.
+By setting the `k=3` we define that we want to get returned a 3-minimum spanning tree that covers 3 nodes and has 2 relationships.
+
+.Running k-minimum spanning tree algorithm and writing back results 
+[source,cypher]
+----
+include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kminst-graph]
+
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| Place | partition 
+| A | 1
+| B | 1
+| C | 1
+| D | 3
+| E | 4 
+|===
+
+Nodes A, B and C are the result 3-minimum spanning tree of our graph.
+
+.Running k-maximum spanning tree algorithm and writing back results 
+[source,cypher]
+----
+include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kmaxst-graph]
+
+----
+
+.Results
+[opts="header",cols="1,1"]
+|===
+| Place | partition 
+| A | 0
+| B | 1
+| C | 3
+| D | 3
+| E | 3 
+|===
+
+Nodes C, D and E are the result 3-maximum spanning tree of our graph.
+
+
+When we run this algorithm on a bigger graph we can use the following query to find nodes that belong to our k-spanning tree result. 
+
+.Find nodes that belong to our k-spanning tree result.
+[source,cypher]
+----
+MATCH (n:Place)
+WITH n.partition as partition, count(*) as count 
+WHERE count = k
+RETURN n 
+----
 
 == Example Usage
 
@@ -67,17 +144,50 @@ image::{img}/mst_result.png[]
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, weightSum, effectiveNodeCount
+CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:int, {writeProperty:String}) 
+YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
 | name | type | default | optional | description
-| label  | String | null | no | node label
-| relationshipType  | String | null | no | relationship type
+| label  | String | null | no | label to load from the graph. If null load all nodes
+| relationshipType  | String | null | no | relationship-type to load from the graph. If null load all nodes
 | weightProperty | string | null | no | property name that contains weight. Must be numeric.
 | startNodeId | long | null | no | start node id
+| write | boolean | true | yes | if result should be written back as relationships
+| writeProperty | string | 'mst' | yes | relationship-type written back as result
+
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| effectiveNodeCount | int | number of visited nodes
+| loadMillis | int | milliseconds for loading data
+| computeMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
+
+
+.Running k-spanning tree algorithm and writing back results
+[source,cypher]
+----
+CALL algo.spanningTree.k*(label:String, relationshipType:String, weightProperty:String, startNodeId:int, k:int, {writeProperty:String}) 
+YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | String | null | no | label to load from the graph. If null load all nodes
+| relationshipType  | String | null | no | relationship type
+| weightProperty | string | null | no | property name that contains weight. Must be numeric.
+| startNodeId | int | null | no | start node id
+| k | int | null | no | result is a tree with k nodes and k − 1 relationships
 | write | boolean | true | yes | if result should be written back as node property
 | writeProperty | string | 'mst' | yes | relationship-type written back as result
 
@@ -87,12 +197,12 @@ CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:Str
 [opts="header",cols="1,1,6"]
 |===
 | name | type | description
-| weightSum | int | sum of all weights in the MST
 | effectiveNodeCount | int | number of visited nodes
 | loadMillis | int | milliseconds for loading data
 | computeMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
 |===
+
 
 == Versions 
 
