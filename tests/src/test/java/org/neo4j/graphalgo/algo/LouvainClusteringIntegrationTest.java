@@ -28,7 +28,7 @@ import org.junit.rules.ExpectedException;
 import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 

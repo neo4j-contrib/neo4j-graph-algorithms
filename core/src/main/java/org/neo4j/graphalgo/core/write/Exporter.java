@@ -31,7 +31,7 @@ import org.neo4j.graphalgo.core.utils.StatementApi;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.values.storable.Value;
