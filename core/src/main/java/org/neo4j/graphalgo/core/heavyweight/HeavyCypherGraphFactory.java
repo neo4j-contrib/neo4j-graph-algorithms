@@ -29,7 +29,6 @@ import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Result;
-import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
@@ -252,7 +251,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, false);
 
         boolean hasRelationshipWeights = !setup.loadDefaultRelationshipWeight();
-        final WeightMapping relWeigths = newWeightMapping(hasRelationshipWeights, setup.relationDefaultWeight, capacity);
+        final WeightMapping relWeights = newWeightMapping(hasRelationshipWeights, setup.relationDefaultWeight, capacity);
 
         class RelationshipRowVisitor implements Result.ResultVisitor<RuntimeException> {
             private long lastSourceId = -1, lastTargetId = -1;
@@ -280,7 +279,10 @@ public class HeavyCypherGraphFactory extends GraphFactory {
                 }
                 if (hasRelationshipWeights) {
                     long relId = RawValues.combineIntInt(source, target);
-                    relWeigths.set(relId, row.get("weight"));
+                    Object weight = getProperty(row, "weight");
+                    if (weight != null) {
+                        relWeights.set(relId, weight);
+                    }
                 }
                 matrix.addOutgoing(source, target);
                 return true;
@@ -288,7 +290,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         }
         RelationshipRowVisitor visitor = new RelationshipRowVisitor();
         api.execute(setup.relationshipType, params(offset, batchSize)).accept(visitor);
-        return new Relationships(offset, visitor.rows, matrix, relWeigths);
+        return new Relationships(offset, visitor.rows, matrix, relWeights);
     }
 
     private Nodes loadNodes(long offset, int batchSize) {
@@ -310,10 +312,16 @@ public class HeavyCypherGraphFactory extends GraphFactory {
                 long id = row.getNumber("id").longValue();
                 idMap.add(id);
                 if (hasNodeWeights) {
-                    nodeWeights.set(id, row.get("weight"));
+                    Object weight = getProperty(row, "weight");
+                    if (weight != null) {
+                        nodeWeights.set(id, weight);
+                    }
                 }
                 if (hasNodeProperty) {
-                    nodeProps.set(id, row.get("value"));
+                    Object value = getProperty(row, "value");
+                    if (value != null) {
+                        nodeProps.set(id, value);
+                    }
                 }
                 return true;
             }
@@ -323,6 +331,14 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         api.execute(setup.startLabel, params(offset, batchSize)).accept(visitor);
         idMap.buildMappedIds();
         return new Nodes(offset, visitor.rows, idMap, nodeWeights, nodeProps);
+    }
+
+    private Object getProperty(Result.ResultRow row, String propertyName) {
+        try {
+            return row.get(propertyName);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private WeightMapping newWeightMapping(boolean needWeights, double defaultValue, int capacity) {
