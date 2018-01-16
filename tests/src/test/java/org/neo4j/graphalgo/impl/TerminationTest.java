@@ -80,7 +80,7 @@ public class TerminationTest {
                 .filter(thx -> thx.lastTransactionIdWhenStarted() == txId)
                 .forEach(thx -> {
                     System.out.println("terminating transaction " + txId);
-                    thx.markForTermination(Status.Transaction.TransactionTerminated);
+                    thx.markForTermination(Status.Transaction.Terminated);
                 });
     }
 
