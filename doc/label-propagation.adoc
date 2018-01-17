@@ -182,6 +182,8 @@ We support the following versions of the label propagation algorithms:
 
 == References
 
+// tag::references[]
+
 * [1] http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[Label Propagation in Community Detection^]
 
 * [2] https://arxiv.org/pdf/0709.2938.pdf[A Local Method for Detecting Communities^]
@@ -189,6 +191,8 @@ We support the following versions of the label propagation algorithms:
 * [3] https://arxiv.org/abs/cond-mat/0412482
 
 * http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
+
+// end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
