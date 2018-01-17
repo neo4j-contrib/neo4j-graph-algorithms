@@ -222,6 +222,8 @@ We support the following versions of the pageRank algorithm:
 
 == References
 
+// tag::references[]
+
 * https://en.wikipedia.org/wiki/PageRank
 
 * http://infolab.stanford.edu/~ullman/mmds/book.pdf
@@ -241,6 +243,8 @@ We support the following versions of the pageRank algorithm:
 * [6] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com
 
 * [7] http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
+
+// end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
