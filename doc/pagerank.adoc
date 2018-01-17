@@ -1,11 +1,14 @@
 = Page Rank
 
+// tag::introduction[]
 PageRank is Google's popular search algorithm.
 PageRank counts the number and quality of links to a page to determine an estimate of how important the website is.
 The underlying assumption is that more important websites are likely to receive more links from other websites.
+// end::introduction[]
 
 == History, Explanation
 
+// tag::explanation[]
 In order to measure the relative importance of web pages, Sergey Brin and Larry Page proposed PageRank, a method for computing a ranking for every web page based on the graph of the web.
 PageRank has applications in search, browsing, and traffic estimation.
 
@@ -24,9 +27,11 @@ The underlying mathematics of PageRank has to do with random walks on networks, 
 Random surfers follow links, but occasionally teleport to random vertices.
 The PageRank of a node is the probability it is visited by a random surfer with teleportation.
 PageRank is now widely recognized as a way of detecting central nodes in a network.
+// end::explanation[]
 
 == When to use it / use-cases
 
+// tag::use-case[]
 The mathematics of PageRank are entirely general and apply to any graph or network in any domain.
 PageRank is regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation.
 It's even used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.
@@ -48,9 +53,11 @@ These are some other notable uses:
 * PageRank has been used to quantify the scientific impact of researchers http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf[[5\]].
 The underlying citation and collaboration networks are used in conjunction with PageRank algorithm to come up with a ranking system for individual publications that propagates to individual authors.
 The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index and addresses many of the drawbacks exhibited by h-index.
+// end::use-case[]
 
 == Constraints / when not to use it
 
+// tag::constraint[]
 There are some major limitations of the PageRank algorithm.
 
 * Spider traps - if there are no links from within the group to outside the groups then the group of pages is a spider trap.
@@ -60,6 +67,7 @@ There are some major limitations of the PageRank algorithm.
 * Dead-ends and Dangling links - Dead-ends occurs when pages have no out links. If a page contains a link to another page which has no out links, the link would be known as a dangling link. [1]
 
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[[7\]] for more.
+// end::constraint[]
 
 == Algorithm explanation on simple sample graph
 
