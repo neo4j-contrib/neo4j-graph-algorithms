@@ -1,10 +1,13 @@
 = Community detection: Connected Components
 
+// tag::introduction[]
 _Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. 
 In graph theory, a connected component of an undirected graph is a subgraph in which any two vertices are connected to each other by paths, and which is connected to no additional vertices in the graph.
+// end::introduction[]
 
 == History, Explanation
 
+// tag::explanation[]
 The _Connected Components_ of a graph represent, in general terms, the pieces of the graph. 
 Two vertices are in the same component of graph if and only if there is some path between them.
 
@@ -12,14 +15,17 @@ Finding connected components is at the heart of many graph applications.
 For example, consider the problem of identifying partitions in a set of items. 
 We can represent each item by a node and add an edge between each pair of items that are deemed similar. 
 The connected components of this graph correspond to different classes of items.
+// end::explanation[]
 
 == When to use it / use-cases
 
+// tag::use-case[]
 Testing whether a graph is connected is an essential preprocessing step for every graph algorithm. 
 Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be. 
 Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
 
-Connected components have other practical use cases, for example, if we are analysing a social network and we want to find all the disconnected groups of people that exist in our graph. 
+Connected components have other practical use cases, for example, if we are analysing a social network and we want to find all the disconnected groups of people that exist in our graph.
+// end::use-case[]
 
 
 == Constraints / when not to use it
@@ -238,9 +244,13 @@ the calculation of the DSS is done by the ExecutorService.
 
 == References
 
+// tag::references[]
+
 * http://math.hws.edu/eck/cs327_s04/chapter9.pdf
 
 * https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
+
+// end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
