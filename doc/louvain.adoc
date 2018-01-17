@@ -221,6 +221,8 @@ include::scripts/louvain.cypher[tag=cypher-loading]
 
 == References
 
+// tag::references[]
+
 * [1] https://arxiv.org/pdf/0803.0476.pdf
 
 * [2] https://www.quora.com/Is-there-a-simple-explanation-of-the-Louvain-Method-of-community-detection 
@@ -230,7 +232,7 @@ include::scripts/louvain.cypher[tag=cypher-loading]
 * [4] https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/
 
 
-
+// end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
