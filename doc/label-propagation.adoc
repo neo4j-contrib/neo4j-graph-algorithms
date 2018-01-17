@@ -1,12 +1,15 @@
 = Community detection: Label Propagation
 
+// tag::introduction[]
 _Label Propagation_ (LPA) is an algorithm for finding communities in near linear time http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[[1\]].
 It detects these communities using network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities.
 
 Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks.
+// tag::introduction[]
 
 == History, Explanation
 
+// tag::explanation[]
 Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in community detection research.
 
 The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005) https://arxiv.org/pdf/cond-mat/0412482.pdf[[2\]]
@@ -27,9 +30,11 @@ The algorithm works as follows:
 As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label.
 At the end of the propagation only a few labels will remain - most will have disappeared.
 Nodes that have the same label at convergence are said to belong to the same community.
+// tag::explanation[]
 
 == When to use it / use-cases
 
+// tag::use-case[]
 Community structure is considered one of the most interesting features in complex networks.
 Many real-world complex systems exhibit community structure, where individuals with similar properties form a community (partition).
 The identification of partitions in a network is important for understanding its structure.
@@ -40,13 +45,16 @@ With social networks, which are often huge and heterogeneous in nature, it is im
 
 Algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential.
 LPA is such an algorithm and requires neither a pre-defined objective function nor prior information about the communities.
+// tag::use-case[]
 
 == Constraints / when not to use it
 
+// tag::constraint[]
 In contrast with other algorithms label propagation can result in different community structures from the same initial condition.
 The range of solutions can be narrowed if some nodes are given preliminary labels while others are held unlabelled.
 Consequently, unlabelled nodes will be more likely to adapt to the labelled ones.
 For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[3]
+// tag::constraint[]
 
 == Algorithm explanation on simple sample graph
 
