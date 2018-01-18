@@ -62,7 +62,10 @@ public class HarmonicCentralityProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
+                .overrideNodeLabelOrQuery(label)
+                .overrideRelationshipTypeOrQuery(relationship);
+
         final AllocationTracker tracker = AllocationTracker.create();
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
