@@ -28,7 +28,7 @@ yield nodeA,nodeB,nodeC;
 // tag::triangle-write-sample-graph[]
 
 CALL algo.triangleCount('Person', 'KNOWS',
-{concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
+  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
 
 // end::triangle-write-sample-graph[]
@@ -43,7 +43,17 @@ YIELD nodeId, triangles;
 // tag::triangle-write-yelp[]
 
 CALL algo.triangleCount('User', 'FRIEND',
-{concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
+  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
 
 // end::triangle-write-yelp[]
+
+// tag::cypher-loading[]
+
+CALL algo.triangleCount(
+  'MATCH (p:Person) RETURN id(p) as id',
+  'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source,id(p2) as target',
+  {concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'}) 
+yield loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+
+// end::cypher-loading[]

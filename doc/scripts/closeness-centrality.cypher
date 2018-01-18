@@ -33,8 +33,9 @@ YIELD nodes,loadMillis, computeMillis, writeMillis;
 // tag::cypher-loading[]
 
 CALL algo.closeness(
-'MATCH (p:Node) RETURN id(p) as id',
-'MATCH (p1:Node)-[:LINK]->(p2:Node) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', write: true});
+  'MATCH (p:Node) RETURN id(p) as id',
+  'MATCH (p1:Node)-[:LINK]->(p2:Node) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', write: true}
+);
 
 // end::cypher-loading[]

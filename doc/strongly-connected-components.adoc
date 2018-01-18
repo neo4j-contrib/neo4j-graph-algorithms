@@ -129,7 +129,7 @@ YIELD nodeId, partition - yields a partition to each node id
 | partition | int | partition id
 |===
 
-== Cypher loading
+== Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.

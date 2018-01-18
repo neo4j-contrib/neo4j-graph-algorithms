@@ -69,9 +69,11 @@ ORDER BY size_of_component LIMIT 20;
 
 // tag::cypher-loading[]
 
-CALL algo.unionFind('MATCH (p:User) RETURN id(p) as id',
-'MATCH (p1:User)-[f:FRIEND]->(p2:User) 
-RETURN id(p1) as source, id(p2) as target, f.weight as weight',
-{graph:'cypher',write:true});
+CALL algo.unionFind(
+  'MATCH (p:User) RETURN id(p) as id',
+  'MATCH (p1:User)-[f:FRIEND]->(p2:User) 
+   RETURN id(p1) as source, id(p2) as target, f.weight as weight',
+  {graph:'cypher',write:true}
+);
 
 // end::cypher-loading[]
