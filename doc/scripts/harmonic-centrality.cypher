@@ -28,8 +28,9 @@ YIELD nodes,loadMillis, computeMillis, writeMillis;
 // tag::cypher-loading[]
 
 CALL algo.harmonic(
-'MATCH (p:Node) RETURN id(p) as id',
-'MATCH (p1:Node)-[:LINK]-(p2:Node) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', writeProperty: 'centrality'});
+  'MATCH (p:Node) RETURN id(p) as id',
+  'MATCH (p1:Node)-[:LINK]-(p2:Node) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', writeProperty: 'centrality'}
+);
 
 // end::cypher-loading[]

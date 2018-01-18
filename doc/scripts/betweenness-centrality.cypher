@@ -32,16 +32,17 @@ YIELD nodes, minCentrality, maxCentrality, sumCentrality, loadMillis, computeMil
 // tag::cypher-loading[]
 
 CALL algo.betweenness(
-'MATCH (p:User) RETURN id(p) as id',
-'MATCH (p1:User)-[:MANAGE]->(p2:User) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', write: true});
+  'MATCH (p:User) RETURN id(p) as id',
+  'MATCH (p1:User)-[:MANAGE]->(p2:User) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', write: true}
+);
 
 // end::cypher-loading[]
 
 // tag::stream-rabrandes-graph[]
 
 CALL algo.betweenness.sampled.stream('User','FRIEND', 
-{strategy:'random', probability:1.0, maxDepth:5}) 
+  {strategy:'random', probability:1.0, maxDepth:5}) 
 YIELD nodeId, centrality
 
 // end::stream-rabrandes-graph[]
@@ -49,7 +50,7 @@ YIELD nodeId, centrality
 // tag::write-rabrandes-graph[]
 
 CALL algo.betweenness.sampled('User','FRIEND', 
-{strategy:'random', probability:1.0, writeProperty:'centrality', maxDepth:5}) 
+  {strategy:'random', probability:1.0, writeProperty:'centrality', maxDepth:5}) 
 YIELD nodes, minCentrality, maxCentrality
 
 // end::write-rabrandes-graph[]
