@@ -89,7 +89,7 @@ The World Wide Web is a virtual network of information.
 == Usage
 
 These algorithms are exposed as Neo4j procedures.
-You can call them directly from Cypher in your Neo4j Browser, from cypher-shell, or your client code.
+We can call them directly from Cypher in your Neo4j Browser, from cypher-shell, or your client code.
 
 For most algorithms we provide two procedures:
 
@@ -97,6 +97,29 @@ For most algorithms we provide two procedures:
 * another named `algo.<name>.stream` that returns a stream of data, e.g. node-ids and computed values.
 
 For large graphs the streaming procedure might return millions or billions of results, that's why it is often more convenient to store the results of the algorithm and then use them with later queries.
+
+We can project the graph we want to run algorithms on with either label and relationship-type projection or cypher projection.
+
+
+[ditaa]
+----
++----------+label/rel type projection +-----------+
+|  Neo4j   +------------------------->| Projected |  Execute algorithm
+| stored   |    cypher projection     |   graph   |<-------------------
+|  graph   +------------------------->|           |
++----------+                          +-----------+
+       
+----
+
+Projected graph model is separate from Neo4j's stored graph model to allow fast cache for the topology of the graph containing only relevant nodes, relations and in addition the weights.
+For now the projected graph model does not support multiple relationships between a single pair of nodes.
+During projection we allow only one relationship between a pair of nodes per direction (in, out) in the directed case but two relationships for BOTH the undirected case.
+
+
+
+=== Label and relationship-type projection
+
+We can project the subgraph we want to run the algorithm on using label parameter to describe nodes and relationship-type to describe relationships.
 
 The general call syntax is:
 
@@ -119,19 +142,36 @@ ORDER BY score DESC LIMIT 10;
 ----
 
 
-[[cypher-projections]]
-=== Projection via Cypher Queries
+=== Cypher projection
 
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Then use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
+If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
+Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
 
-You can also return a property value or weight (according to your config) in addition to the id's from these statements.
+Relationships described in the relationship-statement will only be projected if both source and target nodes are described in the node-statement.
+All other relationships that don't have both source and target nodes described in node-statement will be ignored in projection.
+
+We can also return a property value or weight (according to our config) in addition to the id's from these statements.
+
+Cypher projection allows us to be more expressive in describing our subgraph we want to analyse, but might take longer to project the graph with more complex cypher queries. 
+
 
 [source,cypher]
 ----
 CALL algo.pageRank(
 'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target, count(*) as weight',
+'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+{graph:'cypher', iterations:5, write: true});
+----
+
+Cypher projection can also be used to project a virtual (non-stored) graph. 
+Here is an example of how to project an undirected graph of people who visited the same web page and run Louvain community detection algorithm on it using the number of common visited web pages between pairs of people as relationship weight.
+
+[source,cypher]
+----
+CALL algo.louvain(
+'MATCH (p:Person) RETURN id(p) as id',
+'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person) 
+RETURN id(p1) as source, id(p2) as target, count(*) as weight',
 {graph:'cypher', iterations:5, write: true});
 ----
 

@@ -196,7 +196,7 @@ YIELD nodeId, community - yields a community to each node id
 | community | int | community id
 |===
 
-== Cypher loading
+== Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -245,15 +245,15 @@ ifdef::implementation[]
 
 _Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity. 
 
-- [ ] single threaded implementation
-- [ ] tests
+- [x] single threaded implementation
+- [x] tests
 - [ ] edge case tests
-- [ ] implement procedure
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
+- [x] implement procedure
+- [x] simple benchmark 
+- [x] benchmark on bigger graphs
+- [x] parallelization
 - [ ] evaluation
-- [ ] documentation
+- [x] documentation
 
 == Details
 

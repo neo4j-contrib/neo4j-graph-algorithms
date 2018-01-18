@@ -202,7 +202,7 @@ YIELD nodeId, setId - yields a setId to each node id
 | nodeId | int | node id
 | setId | int | partition id
 |===
-== Cypher loading
+== Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -267,10 +267,10 @@ _Connected Components_ or _UnionFind_ basically finds sets of connected nodes wh
 - [x] single threaded implementation
 - [x] tests
 - [x] simple benchmark 
-- [ ] implement procedure
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
+- [x] implement procedure
+- [x] benchmark on bigger graphs
+- [x] parallelization
+- [x] evaluation
 
 ## Requirements
 

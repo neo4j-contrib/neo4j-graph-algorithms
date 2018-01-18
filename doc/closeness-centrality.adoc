@@ -151,7 +151,7 @@ YIELD nodeId, centrality - yields centrality for each node
 | centrality | float | closeness centrality weight 
 |===
 
-== Cypher loading
+== Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -164,15 +164,17 @@ include::scripts/closeness-centrality.cypher[tag=cypher-loading]
 
 == Versions 
 
-We support the following versions of the betweenness centrality algorithm:
+We support the following versions of the closeness centrality algorithm:
 
 * [x] directed, unweighted
 
 * [ ] directed, weighted
 
-* [ ] undirected, unweighted
+* [x] undirected, unweighted
 
-* [ ] undirected, weighted 
+** Only with cypher projection
+
+* [ ] undirected, weighted  
 
 
 == References

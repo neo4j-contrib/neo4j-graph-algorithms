@@ -172,7 +172,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 
 |===
 
-== Cypher loading
+== Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -180,10 +180,7 @@ Set `graph:'cypher'` in the config.
 
 [source,cypher]
 ----
-CALL algo.triangleCount('MATCH (p:Person) RETURN id(p) as id',
-'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source,id(p2) as target',
-{concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'}) 
-yield loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+include::scripts/triangle-count.cypher[tag=cypher-loading]
 ----
 == Versions 
 
@@ -217,15 +214,15 @@ ifdef::implementation[]
 
 :leveloffset: +1
 
-- [ ] single threaded implementation
-- [ ] tests
+- [x] single threaded implementation
+- [x] tests
 - [ ] edge case tests
-- [ ] implement procedure
-- [ ] simple benchmark 
-- [ ] benchmark on bigger graphs
-- [ ] parallelization
-- [ ] evaluation
-- [ ] documentation
+- [x] implement procedure
+- [x] simple benchmark 
+- [x] benchmark on bigger graphs
+- [x] parallelization
+- [x] evaluation
+- [x] documentation
 
 == Details
 
