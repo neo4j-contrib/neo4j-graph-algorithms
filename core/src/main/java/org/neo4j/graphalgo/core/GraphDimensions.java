@@ -23,6 +23,10 @@ import org.neo4j.graphalgo.core.utils.StatementTask;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.StatementConstants;
+import org.neo4j.kernel.impl.store.id.IdGenerator;
+import org.neo4j.kernel.impl.store.id.IdGeneratorFactory;
+import org.neo4j.kernel.impl.store.id.IdType;
+import org.neo4j.kernel.impl.util.UnsatisfiedDependencyException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class GraphDimensions extends StatementTask<GraphDimensions, RuntimeException> {
@@ -110,11 +114,31 @@ public final class GraphDimensions extends StatementTask<GraphDimensions, Runtim
                 ? StatementConstants.NO_SUCH_PROPERTY_KEY
                 : readOp.propertyKeyGetForName(setup.nodePropertyName);
         nodeCount = readOp.countsForNode(labelId);
-        allNodesCount = readOp.nodesGetCount();
+        allNodesCount = getHighestPossibleNodeCount(readOp);
         maxRelCount = Math.max(
-                readOp.countsForRelationshipWithoutTxState(labelId, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], ReadOperations.ANY_LABEL),
-                readOp.countsForRelationshipWithoutTxState(ReadOperations.ANY_LABEL, relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0], labelId)
+                readOp.countsForRelationshipWithoutTxState(
+                        labelId,
+                        relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0],
+                        ReadOperations.ANY_LABEL),
+                readOp.countsForRelationshipWithoutTxState(
+                        ReadOperations.ANY_LABEL,
+                        relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0],
+                        labelId)
         );
         return this;
+    }
+
+    private long getHighestPossibleNodeCount(ReadOperations readOp) {
+        try {
+            IdGeneratorFactory idGeneratorFactory = resolve(IdGeneratorFactory.class);
+            if (idGeneratorFactory != null) {
+                final IdGenerator idGenerator = idGeneratorFactory.get(IdType.NODE);
+                if (idGenerator != null) {
+                    return idGenerator.getHighId();
+                }
+            }
+        } catch (IllegalArgumentException | UnsatisfiedDependencyException ignored) {
+        }
+        return readOp.nodesGetCount();
     }
 }
