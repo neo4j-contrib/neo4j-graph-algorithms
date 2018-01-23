@@ -18,15 +18,15 @@ Closeness centrality is defined as the total number of relationships separating 
 
 The algorithm operates as follows:
 
-* for each pair of nodes in the network calculate the length of the shortest path from one to the other (geodesic distance).
-* for each node sums the total distance from the node to all other nodes.
+* calculate the shortest path for each for each pair of nodes in the graph
+* for each node sum the total distance from the node to all other nodes.
 
 The greater the *raw closeness centrality*, the longer it takes for information originating at random points in the graph to arrive at the node.
 We could also interpret closeness as the potential ability of a node to reach all other nodes as quickly as possible.
 
 It is important to note that *raw closeness centrality* is an inverse measure of centrality.
 i.e. nodes with smaller scores that are the most central.
-Our algorithms returns a *normalized closeness centrality* score where nodes with a higher score are more central.
+Our algorithm returns a *normalized closeness centrality* score where nodes with a higher score are more central.
 // end::explanation[]
 
 == When to use it / use-cases
