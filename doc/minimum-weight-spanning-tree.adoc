@@ -1,8 +1,6 @@
 = Minimum Weight Spanning Tree
 
 // tag::introduction[]
-
-
 A _Minimum Weight Spanning Tree_ (MST) is a subgraph that contains all the nodes from the original graph and the set of relationships that connect the nodes together with the minimum possible weight.
 Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node.
 The K-Means variant can be used to detect clusters in the graph.
