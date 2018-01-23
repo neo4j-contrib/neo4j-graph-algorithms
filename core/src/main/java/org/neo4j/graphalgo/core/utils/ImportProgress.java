@@ -45,7 +45,7 @@ public final class ImportProgress {
         this.tracker = tracker;
         this.nodeCount = nodeCount;
         long relOperations = (loadIncoming ? maxRelCount : 0) + (loadOutgoing ? maxRelCount : 0);
-        long relFactor = BitUtil.nearbyPowerOfTwo(relOperations / nodeCount);
+        long relFactor = nodeCount > 0 ? BitUtil.nearbyPowerOfTwo(relOperations / nodeCount) : 0;
         relationProgressShift = Long.numberOfTrailingZeros(relFactor);
         approxOperations = nodeCount + (nodeCount << relationProgressShift);
         progressMask = (BitUtil.nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
