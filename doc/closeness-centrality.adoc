@@ -1,13 +1,16 @@
 = Closeness Centrality
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, that measures the nearness (as opposite from the distance) from a node to all other nodes. 
-Nodes having a high closeness score have the shortest distances to all other nodes.
+// tag::introduction[]
+The _Closeness Centrality_ of a node measures the distance from that node to all other nodes.
+Nodes with a high closeness score have the shortest distances to all other nodes.
 Closeness centrality is based on the idea that nodes with short distance to other nodes can spread information very productively through the network.
 This is important for the availability of knowledge and resources.
+// end::introduction[]
 
 
 == History, Explanation
 
+// tag::explanation[]
 Sabidussi (1966) described the sum of the shortest path distances from one node to every other node as the node’s farness. 
 Freeman (1979) used this idea to define closeness centrality of a node as the inverse of Sabidussi’s farness.
 Closeness centrality is defined as the total number of relationships separating a node from all others along the shortest possible paths. 
@@ -20,10 +23,11 @@ Nodes having a high closeness centrality are nearby all other nodes and have adv
 It is important to note that *raw closeness centrality* is an inverse measure of centrality in that it is nodes with smaller scores that are the most central.
 On the other hand *normalized closeness centrality* is not an inverse measure, as nodes with higher centrality score are more central. 
 Our algorithm returns *normalized closeness centrality* score.
-
+// end::explanation[]
 
 == When to use it / use-cases
 
+// tag::use-case[]
 As an example, one can consider identifying the location within a city where to place a new public service, so that it is easily accessible for everyone. 
 Similarly, identifying central people that have ideal social network location for the purpose of information dissemination or network influence. 
 In such kind of applications, the nodes who can access the entire network faster need to be selected.
@@ -33,11 +37,15 @@ For closeness centrality in directed networks, we split the concept into in-clos
 and out-closeness. 
 The in-closeness variable measures the extent to which a node is easily reached by others, as in there are short directed paths from others to the node. 
 The out-closeness variable measures the extent to which a node can easily reach others, as in the paths going from the node to all others are relatively short. 
-Closeness centrality makes sense whenever direct access is important, such as access to information, opinion formation, spread of disease and adoption of new technology. 
+Closeness centrality makes sense whenever direct access is important, such as access to information, opinion formation, spread of disease and adoption of new technology.
+// end::use-case[]
 
 == Constraints / when not to use it
 
-Unfortunately, when the graph is unconnected, closeness centrality appears to be useless because the distance between two vertices belonging to different components is infinite by convention, which makes the sum in 2 infinite too and therefore its inverse equal to zero. For every vertex of such a graph, there is always another vertex belonging to another component: indices of all vertices of the graph are therefore useless and the calculation of the index is limited to the largest component, omitting the roles played by individuals of other components.[1]
+// tag::constraint[]
+Unfortunately, when the graph is unconnected, closeness centrality appears to be useless because the distance between two vertices belonging to different components is infinite by convention, which makes the sum in 2 infinite too and therefore its inverse equal to zero.
+For every vertex of such a graph, there is always another vertex belonging to another component: indices of all vertices of the graph are therefore useless and the calculation of the index is limited to the largest component, omitting the roles played by individuals of other components.[1]
+// end::constraint[]
 
 == Algorithm explanation on simple sample graph
 
@@ -179,6 +187,7 @@ We support the following versions of the closeness centrality algorithm:
 
 == References
 
+// tag::references[]
 * [1]  https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
 
 * https://toreopsahl.com/2010/03/20/closeness-centrality-in-networks-with-disconnected-components/
@@ -190,6 +199,7 @@ We support the following versions of the closeness centrality algorithm:
 * http://qualquant.org/wp-content/uploads/networks/2008%201-7-3.pdf
 
 * https://www.andrew.cmu.edu/user/andersok/Katharine_A._Anderson/Social_Economic_and_Information_Networks_files/CentralitySlides.pdf
+// end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
