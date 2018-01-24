@@ -18,23 +18,13 @@
  */
 package org.neo4j.graphalgo.algo;
 
-import org.junit.*;
-import org.neo4j.graphalgo.KSpanningTreeProc;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 import org.neo4j.graphalgo.TriangleProc;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
-
-import java.util.HashSet;
-
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  *
