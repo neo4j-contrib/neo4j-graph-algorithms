@@ -20,7 +20,6 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,13 +33,11 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.io.fs.FileUtils;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.TokenWriteOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -142,7 +139,7 @@ public class MultiStepColoringTest {
                     final long temp = op.nodeCreate();
                     try {
                         op.relationshipCreate(rIdx, node, temp);
-                    } catch (RelationshipTypeIdNotFoundKernelException | EntityNotFoundException e) {
+                    } catch (EntityNotFoundException e) {
                         throw new RuntimeException(e);
                     }
                     node = temp;
@@ -150,7 +147,7 @@ public class MultiStepColoringTest {
                 try {
                     // build circle
                     op.relationshipCreate(rIdx, node, start);
-                } catch (RelationshipTypeIdNotFoundKernelException | EntityNotFoundException e) {
+                } catch (EntityNotFoundException e) {
                     throw new RuntimeException(e);
                 }
                 tx.success();
