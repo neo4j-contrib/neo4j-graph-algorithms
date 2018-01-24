@@ -22,6 +22,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
 import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
@@ -36,6 +38,7 @@ import org.neo4j.procedure.*;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.Stream;
 
 /**
@@ -188,37 +191,79 @@ public class TriangleProc {
             clusteringCoefficients = triangleCount.getCoefficients();
         }
 
-        if (configuration.isWriteFlag()) {
-            try (ProgressTimer timer = builder.timeWrite()) {
-                final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
-                final Exporter exporter = Exporter.of(api, graph)
-                        .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
-                        .build();
-                if (coefficientProperty.isPresent()) {
-                    exporter.write(
-                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
-                            triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE,
-                            coefficientProperty.get(),
-                            clusteringCoefficients,
-                            DoubleArrayTranslator.INSTANCE
-                    );
-                } else {
-                    exporter.write(
-                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
-                            triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE
-                    );
-                }
-            }
-        }
+        write(graph, triangleCount, configuration, terminationFlag);
 
         builder.withNodeCount(graph.nodeCount())
                 .withTriangleCount(triangleCount.getTriangleCount())
                 .withAverageClusteringCoefficient(triangleCount.getAverageCoefficient());
 
         return Stream.of(builder.build());
+    }
+
+    /**
+     * writeback method for "algo.triangleCount"
+     * @param graph the graph
+     * @param algorithm Impl. of TriangleCountAlgorithm
+     * @param configuration configuration wrapper
+     * @param flag termination flag
+     */
+    private void write(Graph graph, TriangleCountAlgorithm algorithm, ProcedureConfiguration configuration, TerminationFlag flag) {
+        if (!configuration.isWriteFlag()) {
+            return;
+        }
+        final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
+
+        final Exporter exporter = Exporter.of(api, graph)
+                .withLog(log)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(), flag)
+                .build();
+
+        if (algorithm instanceof HugeTriangleCount) {
+            if (coefficientProperty.isPresent()) {
+                // huge with coefficients
+                final DoubleArray coefficients = ((HugeTriangleCount) algorithm).getCoefficients();
+                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        PagedAtomicIntegerArray.Translator.INSTANCE,
+                        coefficientProperty.get(),
+                        coefficients,
+                        DoubleArray.Translator.INSTANCE
+                );
+            } else {
+                // huge without coefficients
+                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        PagedAtomicIntegerArray.Translator.INSTANCE
+                );
+            }
+        } else if (algorithm instanceof TriangleCountQueue){
+
+            if (coefficientProperty.isPresent()) {
+                // nonhuge with coefficients
+                final double[] coefficients = ((TriangleCountQueue) algorithm).getCoefficients();
+                final AtomicIntegerArray triangles = ((TriangleCountQueue) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        AtomicIntArrayTranslator.INSTANCE,
+                        coefficientProperty.get(),
+                        coefficients,
+                        DoubleArrayTranslator.INSTANCE
+                );
+            } else {
+                // nonhuge without coefficients
+                final AtomicIntegerArray triangles = ((TriangleCountQueue) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        AtomicIntArrayTranslator.INSTANCE
+                );
+            }
+        }
     }
 
     @Procedure(value = "algo.triangleCount.forkJoin", mode = Mode.WRITE)
