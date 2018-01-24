@@ -41,7 +41,7 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
     private AtomicIntegerArray triangles;
 
     Graph graph;
-    int nodeCount;
+    final int nodeCount;
 
     TriangleCountBase(Graph graph) {
         this.graph = graph;

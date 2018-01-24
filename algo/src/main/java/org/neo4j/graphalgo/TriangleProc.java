@@ -216,7 +216,7 @@ public class TriangleProc {
 
         builder.withNodeCount(graph.nodeCount())
                 .withTriangleCount(triangleCount.getTriangleCount())
-                .withAverageClusteringCoefficient(triangleCount.getCoefficients());
+                .withAverageClusteringCoefficient(triangleCount.getAverageCoefficient());
 
         return Stream.of(builder.build());
     }
