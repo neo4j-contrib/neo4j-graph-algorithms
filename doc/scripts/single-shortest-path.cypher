@@ -61,6 +61,8 @@ RETURN nodeCount, loadDuration, evalDuration, writeDuration
 
 CALL algo.allShortestPaths.stream('cost',{nodeQuery:'Loc',defaultValue:1.0})
 YIELD sourceNodeId, targetNodeId, distance
+WITH sourceNodeId, targetNodeId, distance 
+WHERE algo.isFinite(distance) = true
 RETURN sourceNodeId, targetNodeId, distance LIMIT 20
 
 // end::all-pairs-sample-graph[]
