@@ -77,6 +77,11 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 
 ==== All pairs shortest paths
 
+This algorithm finds shortest paths between all pairs of nodes in the graph.
+Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
+In this scenario algorithm will return `Infinity` value as a result between these pairs of nodes.
+
+Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
 
 .Running algorithm and streaming results
 [source,cypher]
