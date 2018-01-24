@@ -26,7 +26,7 @@ import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
 import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.impl.*;
+import org.neo4j.graphalgo.impl.triangle.*;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -86,7 +86,7 @@ public class TriangleProc {
     @Procedure("algo.triangleCount.stream")
     @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
-    public Stream<TriangleCountBase.Result> triangleCountQueueStream(
+    public Stream<TriangleCountAlgorithm.Result> triangleCountQueueStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -106,7 +106,7 @@ public class TriangleProc {
                 .withDirection(TriangleCountBase.D)
                 .load(configuration.getGraphImpl());
 
-        return new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
+        return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
@@ -158,7 +158,7 @@ public class TriangleProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCountQueue triangleCount;
+        final TriangleCountAlgorithm triangleCount;
         final double[] clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
@@ -181,11 +181,11 @@ public class TriangleProc {
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
-                    .withTerminationFlag(terminationFlag)
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
-            clusteringCoefficients = triangleCount.getClusteringCoefficients();
+            clusteringCoefficients = triangleCount.getCoefficients();
         }
 
         if (configuration.isWriteFlag()) {
@@ -216,7 +216,7 @@ public class TriangleProc {
 
         builder.withNodeCount(graph.nodeCount())
                 .withTriangleCount(triangleCount.getTriangleCount())
-                .withAverageClusteringCoefficient(triangleCount.getAverageClusteringCoefficient());
+                .withAverageClusteringCoefficient(triangleCount.getCoefficients());
 
         return Stream.of(builder.build());
     }
