@@ -191,7 +191,11 @@ public class TriangleProc {
             clusteringCoefficients = triangleCount.getCoefficients();
         }
 
-        write(graph, triangleCount, configuration, terminationFlag);
+        if (configuration.isWriteFlag()) {
+            try (ProgressTimer timer = builder.timeWrite()) {
+                write(graph, triangleCount, configuration, terminationFlag);
+            }
+        }
 
         builder.withNodeCount(graph.nodeCount())
                 .withTriangleCount(triangleCount.getTriangleCount())
@@ -208,9 +212,7 @@ public class TriangleProc {
      * @param flag termination flag
      */
     private void write(Graph graph, TriangleCountAlgorithm algorithm, ProcedureConfiguration configuration, TerminationFlag flag) {
-        if (!configuration.isWriteFlag()) {
-            return;
-        }
+
         final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
 
         final Exporter exporter = Exporter.of(api, graph)
