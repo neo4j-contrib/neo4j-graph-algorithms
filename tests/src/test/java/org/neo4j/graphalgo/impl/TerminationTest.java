@@ -80,7 +80,7 @@ public class TerminationTest {
                 .filter(thx -> thx.lastTransactionIdWhenStarted() == txId)
                 .forEach(thx -> {
                     System.out.println("terminating transaction " + txId);
-                    thx.markForTermination(Status.Transaction.Terminated);
+                    thx.markForTermination(Status.Transaction.TransactionMarkedAsFailed);
                 });
     }
 
@@ -105,6 +105,7 @@ public class TerminationTest {
     // execute query as usual but also submits a termination thread which kills the tx after a timeout
     private void executeAndKill(String query, long killTimeout, Result.ResultVisitor<? extends Exception> visitor) {
         final ArrayList<Runnable> runnables = new ArrayList<>();
+
         // add query runnable
         runnables.add(() -> {
             try {
@@ -114,6 +115,7 @@ public class TerminationTest {
                 throw new RuntimeException(e);
             }
         });
+
         // add killer runnable
         runnables.add(() -> {
             try {
@@ -123,6 +125,7 @@ public class TerminationTest {
             }
             terminateTransaction(findQueryTxId(query));
         });
+
         // submit
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
