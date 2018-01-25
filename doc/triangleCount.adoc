@@ -1,11 +1,13 @@
 = Community detection: Triangle Counting / Clustering Coefficient
 
+// tag::introduction[]
 Triangle counting is a community detection graph algorithm which is used to determine the number of triangles passing through each node in the graph. A node is part of a triangle when it has two linked nodes with an relationship between. 
 The triangle is a three-node subgraph, where every two nodes are connected.[1] 
-
+// end::introduction[]
 
 == History, Explanation
 
+// tag::explanation[]
 Counting the number of triangles in a graph is a fundamental problem with various applications. 
 The problem has been studied before from a theoretic point of view. 
 It can be seen as a special case of counting given length cycles. 
@@ -15,9 +17,11 @@ For example, the so-called clustering coefficient is frequently quoted as an imp
 The local clustering coefficient of a node v is defined as the likeliness that two neighbors u and w of v are also connected, while the clustering coefficient of a graph is just the normalized sum of the clustering coefficient of its nodes. 
 Accordingly, its computation involves counting the number of triangles. 
 Similarly the transitivity coefficient of a graph, which is just three times the number of triangles divided by the number of triples (paths of length two) in the graph is sometimes considered.[2] 
+// end::explanation[]
 
 == When to use it / use-cases
 
+// tag::use-case[]
 Finding patterns in large scale graphs, with millions and billions of edges is attracting increasing interest, with numerous applications in computer network security (intrusion detection, spamming), in web applications (community detection, blog analysis) in social networks (facebook, linkedin, for link prediction), and many more. 
 One of the operations of interest in such a setting is the estimation of the clustering coefficient and the transitivity ratio, which effectively translates to the number of triangles in the graph, or the number of triangles that a node participates in.
 It is known that in social networks there is a higher than-random number of triangles. 
@@ -27,8 +31,13 @@ More-than-expected number of triangles also appear in biological networks,such a
 A very recent work https://pdfs.semanticscholar.org/110b/55a017f52abfedca220036ea129d84b7cadc.pdf[[5\]] shows that the distribution of the local number of triangles can be used to create successful spam filters and also provide useful features to assess content quality in social networks. 
 In http://www.pnas.org/content/99/9/5825.full.pdf[[6\]] the distribution of triangles is used to uncover hidden thematic structure in the World Wide Web. 
 Therefore, counting triangles is a significant problem in graph mining, with several important applications.[3]
+// end::use-case[]
 
 == Constraints / when not to use it
+
+// tag::constraint[]
+
+// end::constraint[]
 
 == Algorithm explanation on simple sample graph
 
@@ -190,6 +199,7 @@ We support the following versions of the triangle count algorithms:
 
 == References
 
+// tag::references[]
 * [1] https://www.infoq.com/articles/apache-spark-graphx
 
 * [2] http://i11www.iti.kit.edu/extra/publications/sw-fclt-05_t.pdf
@@ -203,7 +213,7 @@ We support the following versions of the triangle count algorithms:
 * [6] http://www.pnas.org/content/99/9/5825.full.pdf
 
 * [7] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-6-270?site=bmcbioinformatics.biomedcentral.com
-
+// end::references[]
 
 
 ifdef::implementation[]
