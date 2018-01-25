@@ -91,7 +91,7 @@ task versions {
         if (algosVersion != null) {
             def version = [ neo4j : neo4jRelease, version : algosVersion, 
                             url : "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/" + algosVersion,
-                            jar: "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/${algosVersion}/algos-${algosVersion}-all.jar" ]
+                            jar: "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/${algosVersion}/graph-algorithms-algo-${algosVersion}.jar" ]
             versions.add(version)
         }
     }
