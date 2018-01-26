@@ -15,6 +15,25 @@ In this scenario the algorithm will return `Infinity` value as a result between 
 
 Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
 
+== When to use it / use-cases
+
+// tag::use-case[]
+
+The all pairs shortest path algorithm has found uses in the following areas:
+
+* urban planning and simulation http://web.mit.edu/urban_or_book/www/book/[[1]]
+* datacenter network design https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[[2]]
+* traffic routing
+
+// end::use-case[]
+
+== Constraints / when not to use it
+
+// tag::constraint[]
+
+// end::constraint[]
+
+
 == Algorithm explanation on simple sample graph
 
 image::{img}/sssp.png[]
@@ -68,6 +87,11 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
 
 ifdef::implementation[]
 // tag::implementation[]
+
+== References
+
+* [1] http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^] - Richard C. Larson and Amedeo R. Odoni
+* [2] https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[REWIRE: An optimization-based framework for unstructured data center network design^] - Andrew R. Curtis, Tommy Carpenter, Mustafa Elsheikh, Alejandro López-Ortiz, S. Keshav
 
 
 == Implementation Details
