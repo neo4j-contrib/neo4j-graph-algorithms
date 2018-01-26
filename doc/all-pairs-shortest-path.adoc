@@ -1,0 +1,94 @@
+= All Pairs Shortest Path
+
+// tag::introduction[]
+_All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph.
+An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
+// end::introduction[]
+
+== History, Explanation
+
+// tag::explanation[]
+This algorithm finds shortest paths between all pairs of nodes in the graph.
+Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
+In this scenario algorithm will return `Infinity` value as a result between these pairs of nodes.
+// end::explanation[]
+
+Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
+
+== Algorithm explanation on simple sample graph
+
+image::{img}/sssp.png[]
+
+.Create sample graph
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
+----
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
+----
+
+For now only single-source shortest path support loading the relationship as undirected, but we can use cypher loading to help us solve this.
+Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship.
+
+We do not have to save this reversed relationship, we can project it using *cypher loading*.
+Note that relationship query does not specify direction of the relationship.
+This is applicable to all other algorithms, that use *cypher loading*.
+
+.Running all pairs shortest path treating the graph as undirected
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
+----
+
+== When to use it / use-cases
+
+// tag::use-case[]
+
+// end::use-case[]
+
+== Constraints / when not to use it
+
+// tag::constraint[]
+
+// end::constraint[]
+
+
+== Implementations
+
+`algo.allShortestPaths.stream`
+
+- find shortest paths between all pairs of nodes
+- returns a stream of source-target node to distance tuples for each pair of nodes
+- writeback not supported
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
+
+ifdef::implementation[]
+// tag::implementation[]
+
+
+== Implementation Details
+
+:leveloffset: +1
+
+== Details
+
+=== algo.allShortestPaths.stream
+
+- returns a stream of source-target node to distance tuples for each pair of nodes
+- Since all nodeId's have already been ordered by the idMapping we can use an integer
+ instead of a queue which just count's up for each startNodeId as long as it is
+ < nodeCount.
+- Each thread tries to take one int from the counter at one time and starts its computation on it.
+- The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.
+- Due to the high memory footprint the result set would have we emit each result into
+ a blocking queue. The result stream takes elements from the queue while the workers
+ add elements to it.
+- The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
+- writeback not supported!
+
+// end::implementation[]
+endif::implementation[]
