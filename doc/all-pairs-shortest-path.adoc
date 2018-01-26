@@ -1,7 +1,7 @@
 = All Pairs Shortest Path
 
 // tag::introduction[]
-_All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph.
+_All Pairs Shortest Path_ calculates the shortest weight path between all pairs of nodes.
 An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
 // end::introduction[]
 
@@ -10,7 +10,7 @@ An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
 // tag::explanation[]
 This algorithm finds shortest paths between all pairs of nodes in the graph.
 Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
-In this scenario algorithm will return `Infinity` value as a result between these pairs of nodes.
+In this scenario the algorithm will return `Infinity` value as a result between these pairs of nodes.
 // end::explanation[]
 
 Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
