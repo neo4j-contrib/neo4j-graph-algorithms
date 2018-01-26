@@ -196,6 +196,7 @@ We support the following versions of the shortest path algorithms:
 
 == References
 
+// tag::references[]
 * [1] http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[Effect of travel time and distance on freeway usage^]
 
 * http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
@@ -205,7 +206,7 @@ We support the following versions of the shortest path algorithms:
 * https://arxiv.org/pdf/1604.02113v1.pdf
 
 * https://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf
-
+// end::references[]
 
 
 ifdef::implementation[]
