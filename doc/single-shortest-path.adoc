@@ -27,7 +27,7 @@ It found uses in urban planning http://onlinepubs.trb.org/Onlinepubs/hrbbulletin
 The most common usage of the single source shortest path algorithm is finding directions between physical locations.
 Web mapping websites such as MapQuest or Google Maps use it to provide driving directions.
 
-It has found uses in several other areas including:
+It has also found uses in several other areas including:
 
 * Telecommunications and networking
 * Operations research - plant and facility layout, robotics, transportation, and VLSI design.
