@@ -25,6 +25,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.MSClosenessCentrality;
+import org.neo4j.graphalgo.impl.DangalchevClosenessCentrality;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 /**
@@ -85,6 +86,41 @@ public class ClosenessCentralityIntegrationTest_546 {
     }
 
     @Test
+    public void test547_residual() throws Exception {
+
+        String importQuery =
+                "CREATE (alice:Person{id:\"Alice\"}),\n" +
+                        "       (michael:Person{id:\"Michael\"}),\n" +
+                        "       (karin:Person{id:\"Karin\"}),\n" +
+                        "       (chris:Person{id:\"Chris\"}),\n" +
+                        "       (will:Person{id:\"Will\"}),\n" +
+                        "       (mark:Person{id:\"Mark\"})\n" +
+                        "CREATE (michael)<-[:KNOWS]-(karin),\n" +
+                        "       (michael)-[:KNOWS]->(chris),\n" +
+                        "       (will)-[:KNOWS]->(michael),\n" +
+                        "       (mark)<-[:KNOWS]-(michael),\n" +
+                        "       (mark)-[:KNOWS]->(will),\n" +
+                        "       (alice)-[:KNOWS]->(michael),\n" +
+                        "       (will)-[:KNOWS]->(chris),\n" +
+                        "       (chris)-[:KNOWS]->(karin);";
+
+        db.execute(importQuery);
+
+        final Graph graph = new GraphLoader(db, Pools.DEFAULT)
+                .withLabel("Person")
+                .withRelationshipType("KNOWS")
+                .asUndirected(true)
+                .load(HugeGraphFactory.class);
+
+        System.out.println("547 Dangalchev:");
+        new DangalchevClosenessCentrality(graph, 2, Pools.DEFAULT)
+                .compute()
+                .resultStream()
+                .forEach(this::print);
+
+    }
+
+    @Test
     public void test546() throws Exception {
 
         String importQuery =
@@ -116,7 +152,43 @@ public class ClosenessCentralityIntegrationTest_546 {
 
     }
 
+    @Test
+    public void test546_residual() throws Exception {
+
+        String importQuery =
+                "CREATE (nAlice:User {id:'Alice'})\n" +
+                        ",(nBridget:User {id:'Bridget'})\n" +
+                        ",(nCharles:User {id:'Charles'})\n" +
+                        ",(nMark:User {id:'Mark'})\n" +
+                        ",(nMichael:User {id:'Michael'})\n" +
+                        "CREATE (nAlice)-[:FRIEND]->(nBridget)\n" +
+                        ",(nAlice)<-[:FRIEND]-(nBridget)\n" +
+                        ",(nAlice)-[:FRIEND]->(nCharles)\n" +
+                        ",(nAlice)<-[:FRIEND]-(nCharles)\n" +
+                        ",(nMark)-[:FRIEND]->(nMichael)\n" +
+                        ",(nMark)<-[:FRIEND]-(nMichael);";
+
+        db.execute(importQuery);
+
+        final Graph graph = new GraphLoader(db, Pools.DEFAULT)
+                .withLabel("Person")
+                .withRelationshipType("KNOWS")
+                .asUndirected(true)
+                .load(HugeGraphFactory.class);
+
+        System.out.println("546 Dangalchev:");
+        new DangalchevClosenessCentrality(graph, 2, Pools.DEFAULT)
+                .compute()
+                .resultStream()
+                .forEach(this::print);
+
+    }
+
     private void print(MSClosenessCentrality.Result result) {
+        System.out.printf("%s | %.3f%n", name(result.nodeId), result.centrality);
+    }
+
+    private void print(DangalchevClosenessCentrality.Result result) {
         System.out.printf("%s | %.3f%n", name(result.nodeId), result.centrality);
     }
 }

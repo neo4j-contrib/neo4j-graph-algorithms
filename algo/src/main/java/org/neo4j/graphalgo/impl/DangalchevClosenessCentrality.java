@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
@@ -27,40 +28,38 @@ import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.function.LongToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Normalized Closeness Centrality
+ * Dangalchev Closeness Centrality
  *
  * @author mknblch
  */
-public class ResidualClosenessCentrality extends Algorithm<ResidualClosenessCentrality> {
+public class DangalchevClosenessCentrality extends Algorithm<DangalchevClosenessCentrality> {
 
     private Graph graph;
-    private AtomicIntegerArray farness;
+    private AtomicDoubleArray farness;
 
     private final int concurrency;
     private final ExecutorService executorService;
     private final int nodeCount;
 
-    public ResidualClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
+    public DangalchevClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
-        farness = new AtomicIntegerArray(nodeCount);
+        farness = new AtomicDoubleArray(nodeCount);
     }
 
-    public ResidualClosenessCentrality compute() {
+    public DangalchevClosenessCentrality compute() {
 
         final ProgressLogger progressLogger = getProgressLogger();
 
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             int len = sourceNodeIds.size();
-            farness.addAndGet(nodeId, len * depth);
+            farness.add(nodeId, len * 1.0 / Math.pow(2, depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
 
@@ -71,41 +70,32 @@ public class ResidualClosenessCentrality extends Algorithm<ResidualClosenessCent
     }
 
     public Stream<Result> resultStream() {
-        final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
-    }
-
-    public LongToIntFunction farness() {
-        return (i) -> farness.get((int) i);
+                        farness.get(nodeId)));
     }
 
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
                 farness,
-                (PropertyTranslator.OfDouble<AtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get((int) nodeId), k));
+                (PropertyTranslator.OfDouble<AtomicDoubleArray>)
+                        (data, nodeId) -> data.get((int) nodeId));
     }
 
     @Override
-    public ResidualClosenessCentrality me() {
+    public DangalchevClosenessCentrality me() {
         return this;
     }
 
     @Override
-    public ResidualClosenessCentrality release() {
+    public DangalchevClosenessCentrality release() {
         graph = null;
         farness = null;
         return this;
     }
 
-    static double centrality(int f, double k) {
-        return f > 0 ? k / (double) f : 0D;
-    }
 
     /**
      * Result class used for streaming
