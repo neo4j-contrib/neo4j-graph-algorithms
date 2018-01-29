@@ -28,11 +28,17 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphalgo.impl.triangle.TriangleCountAlgorithm;
+import org.neo4j.graphalgo.impl.triangle.TriangleCountForkJoin;
+import org.neo4j.graphalgo.impl.triangle.TriangleCountQueue;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
@@ -99,6 +105,7 @@ public class TriangleCountExpTest {
                     .withRelationshipType(RELATIONSHIP)
                     .withoutRelationshipWeights()
                     .withoutNodeWeights()
+                    .withDirection(Direction.BOTH)
                     .withSort(true)
                     .asUndirected(true)
                     .load(graphImpl);
@@ -108,26 +115,27 @@ public class TriangleCountExpTest {
 
     @Test
     public void testQueue() {
-        final TriangleCountQueue algo = new TriangleCountQueue(graph, Pools.DEFAULT, 1);
+
+        final TriangleCountAlgorithm algo = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, 1);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("took " + l + "ms"))) {
             algo.compute();
         }
         assertEquals(TRIANGLE_COUNT, algo.getTriangleCount());
         assertTriangles(algo.getTriangles());
-        assertClusteringCoefficient(algo.getClusteringCoefficients());
-        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
+        assertCoefficients(algo.getCoefficients());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageCoefficient(), 0.001);
     }
 
     @Test
     public void testQueueParallel() {
-        final TriangleCountQueue algo = new TriangleCountQueue(graph, Pools.DEFAULT, 4);
+        final TriangleCountAlgorithm algo = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, 4);
         try (ProgressTimer start = ProgressTimer.start(l -> System.out.println("took " + l + "ms"))) {
             algo.compute();
         }
         assertEquals(TRIANGLE_COUNT, algo.getTriangleCount());
         assertTriangles(algo.getTriangles());
-        assertClusteringCoefficient(algo.getClusteringCoefficients());
-        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
+        assertCoefficients(algo.getCoefficients());
+        assertEquals(EXPECTED_COEFFICIENT, algo.getAverageCoefficient(), 0.001);
     }
 
     @Test
@@ -154,7 +162,15 @@ public class TriangleCountExpTest {
         assertEquals(EXPECTED_COEFFICIENT, algo.getAverageClusteringCoefficient(), 0.001);
     }
 
-    private void assertTriangles(AtomicIntegerArray triangles) {
+    private void assertTriangles(Object triangles) {
+        if (triangles instanceof PagedAtomicIntegerArray) {
+            assertTriangle((PagedAtomicIntegerArray) triangles);
+        } else if (triangles instanceof AtomicIntegerArray){
+            assertTriangle((AtomicIntegerArray) triangles);
+        }
+    }
+
+    private void assertTriangle(AtomicIntegerArray triangles) {
         final int centerMapped = graph.toMappedNodeId(centerId);
         assertEquals(TRIANGLE_COUNT, triangles.get(centerMapped));
         for (int i = 0; i < triangles.length(); i++) {
@@ -162,6 +178,27 @@ public class TriangleCountExpTest {
                 continue;
             }
             assertEquals(2, triangles.get(i));
+        }
+    }
+
+    private void assertTriangle(PagedAtomicIntegerArray triangles) {
+        final int centerMapped = graph.toMappedNodeId(centerId);
+        assertEquals(TRIANGLE_COUNT, triangles.get(centerMapped));
+        for (int i = 0; i < triangles.size(); i++) {
+            if (i == centerMapped) {
+                continue;
+            }
+            assertEquals(2, triangles.get(i));
+        }
+    }
+
+    private void assertCoefficients(Object coefficients) {
+        if (coefficients instanceof double[]) {
+            assertClusteringCoefficient((double[]) coefficients);
+        } else if (coefficients instanceof PagedAtomicDoubleArray) {
+            assertClusteringCoefficient((PagedAtomicDoubleArray) coefficients);
+        } else if (coefficients instanceof AtomicDoubleArray){
+            assertClusteringCoefficient((AtomicDoubleArray) coefficients);
         }
     }
 
@@ -178,6 +215,16 @@ public class TriangleCountExpTest {
     private void assertClusteringCoefficient(AtomicDoubleArray coefficients) {
         final int centerMapped = graph.toMappedNodeId(centerId);
         for (int i = 0; i < coefficients.length(); i++) {
+            if (i == centerMapped) {
+                continue;
+            }
+            assertEquals(EXPECTED_COEFFICIENT, coefficients.get(i), 0.01);
+        }
+    }
+
+    private void assertClusteringCoefficient(PagedAtomicDoubleArray coefficients) {
+        final int centerMapped = graph.toMappedNodeId(centerId);
+        for (int i = 0; i < coefficients.size(); i++) {
             if (i == centerMapped) {
                 continue;
             }
