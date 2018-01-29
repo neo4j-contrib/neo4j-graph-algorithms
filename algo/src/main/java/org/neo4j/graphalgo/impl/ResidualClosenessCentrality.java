@@ -70,7 +70,6 @@ public class ResidualClosenessCentrality extends Algorithm<ResidualClosenessCent
         return this;
     }
 
-    @Override
     public Stream<Result> resultStream() {
         final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
@@ -79,12 +78,10 @@ public class ResidualClosenessCentrality extends Algorithm<ResidualClosenessCent
                         centrality(farness.get(nodeId), k)));
     }
 
-    @Override
     public LongToIntFunction farness() {
         return (i) -> farness.get((int) i);
     }
 
-    @Override
     public void export(final String propertyName, final Exporter exporter) {
         final double k = nodeCount - 1;
         exporter.write(

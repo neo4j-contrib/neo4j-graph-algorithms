@@ -57,7 +57,7 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
     public HarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            inverseFarness.add(nodeId, sourceNodeIds.size() * (1.0 / depth));
+            inverseFarness.add(nodeId, sourceNodeIds.size() * Math.pow(2, depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
         new MultiSourceBFS(graph, graph, Direction.BOTH, consumer)
@@ -69,7 +69,7 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
+                        centrality(nodeId)));
     }
 
     public void export(final String propertyName, final Exporter exporter) {
@@ -77,7 +77,7 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
                 propertyName,
                 inverseFarness,
                 (PropertyTranslator.OfDouble<AtomicDoubleArray>)
-                        (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
+                        (data, nodeId) -> data.get((int) nodeId));
     }
 
     @Override
@@ -92,12 +92,15 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
         return this;
     }
 
-    public final double[] exportToArray() {
+    public final double[] toArray() {
         return resultStream()
                 .limit(Integer.MAX_VALUE)
                 .mapToDouble(r -> r.centrality)
                 .toArray();
     }
 
+    private double centrality(int index) {
+        return inverseFarness.get(index);
+    }
 
 }
