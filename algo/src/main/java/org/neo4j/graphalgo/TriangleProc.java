@@ -22,11 +22,13 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
 import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.impl.*;
+import org.neo4j.graphalgo.impl.triangle.*;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -36,6 +38,7 @@ import org.neo4j.procedure.*;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.Stream;
 
 /**
@@ -86,7 +89,7 @@ public class TriangleProc {
     @Procedure("algo.triangleCount.stream")
     @Description("CALL algo.triangleCount.stream(label, relationship, {concurrency:8}) " +
             "YIELD nodeId, triangles - yield nodeId, number of triangles")
-    public Stream<TriangleCountBase.Result> triangleCountQueueStream(
+    public Stream<TriangleCountAlgorithm.Result> triangleCountQueueStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -106,7 +109,7 @@ public class TriangleProc {
                 .withDirection(TriangleCountBase.D)
                 .load(configuration.getGraphImpl());
 
-        return new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
+        return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
@@ -158,7 +161,7 @@ public class TriangleProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final Graph graph;
-        final TriangleCountQueue triangleCount;
+        final TriangleCountAlgorithm triangleCount;
         final double[] clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
@@ -181,44 +184,88 @@ public class TriangleProc {
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = new TriangleCountQueue(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
-                    .withTerminationFlag(terminationFlag)
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
-            clusteringCoefficients = triangleCount.getClusteringCoefficients();
+            clusteringCoefficients = triangleCount.getCoefficients();
         }
 
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
-                final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
-                final Exporter exporter = Exporter.of(api, graph)
-                        .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
-                        .build();
-                if (coefficientProperty.isPresent()) {
-                    exporter.write(
-                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
-                            triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE,
-                            coefficientProperty.get(),
-                            clusteringCoefficients,
-                            DoubleArrayTranslator.INSTANCE
-                    );
-                } else {
-                    exporter.write(
-                            configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
-                            triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE
-                    );
-                }
+                write(graph, triangleCount, configuration, terminationFlag);
             }
         }
 
         builder.withNodeCount(graph.nodeCount())
                 .withTriangleCount(triangleCount.getTriangleCount())
-                .withAverageClusteringCoefficient(triangleCount.getAverageClusteringCoefficient());
+                .withAverageClusteringCoefficient(triangleCount.getAverageCoefficient());
 
         return Stream.of(builder.build());
+    }
+
+    /**
+     * writeback method for "algo.triangleCount"
+     * @param graph the graph
+     * @param algorithm Impl. of TriangleCountAlgorithm
+     * @param configuration configuration wrapper
+     * @param flag termination flag
+     */
+    private void write(Graph graph, TriangleCountAlgorithm algorithm, ProcedureConfiguration configuration, TerminationFlag flag) {
+
+        final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
+
+        final Exporter exporter = Exporter.of(api, graph)
+                .withLog(log)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(), flag)
+                .build();
+
+        if (algorithm instanceof HugeTriangleCount) {
+            if (coefficientProperty.isPresent()) {
+                // huge with coefficients
+                final DoubleArray coefficients = ((HugeTriangleCount) algorithm).getCoefficients();
+                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        PagedAtomicIntegerArray.Translator.INSTANCE,
+                        coefficientProperty.get(),
+                        coefficients,
+                        DoubleArray.Translator.INSTANCE
+                );
+            } else {
+                // huge without coefficients
+                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        PagedAtomicIntegerArray.Translator.INSTANCE
+                );
+            }
+        } else if (algorithm instanceof TriangleCountQueue){
+
+            if (coefficientProperty.isPresent()) {
+                // nonhuge with coefficients
+                final double[] coefficients = ((TriangleCountQueue) algorithm).getCoefficients();
+                final AtomicIntegerArray triangles = ((TriangleCountQueue) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        AtomicIntArrayTranslator.INSTANCE,
+                        coefficientProperty.get(),
+                        coefficients,
+                        DoubleArrayTranslator.INSTANCE
+                );
+            } else {
+                // nonhuge without coefficients
+                final AtomicIntegerArray triangles = ((TriangleCountQueue) algorithm).getTriangles();
+                exporter.write(
+                        configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
+                        triangles,
+                        AtomicIntArrayTranslator.INSTANCE
+                );
+            }
+        }
     }
 
     @Procedure(value = "algo.triangleCount.forkJoin", mode = Mode.WRITE)

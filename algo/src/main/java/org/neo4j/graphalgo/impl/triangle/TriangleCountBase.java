@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.triangle;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.atomic.AtomicInteger;
