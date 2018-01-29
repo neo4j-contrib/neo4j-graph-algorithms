@@ -18,38 +18,21 @@
  */
 package org.neo4j.graphalgo.algo;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.AdditionalMatchers;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.neo4j.graphalgo.BetweennessCentralityProc;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.impl.MSClosenessCentrality;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
-
 
 /**
  *
  * @author mknblch
  */
-@RunWith(MockitoJUnitRunner.class)
 public class ClosenessCentralityIntegrationTest_546 {
 
     @ClassRule
@@ -108,6 +91,6 @@ public class ClosenessCentralityIntegrationTest_546 {
     }
 
     private void print(MSClosenessCentrality.Result result) {
-        System.out.println(name(result.nodeId) + ": " + result.centrality);
+        System.out.printf("%s | %.3f%n", name(result.nodeId), result.centrality);
     }
 }
