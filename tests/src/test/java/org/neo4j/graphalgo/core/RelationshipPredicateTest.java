@@ -9,7 +9,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -49,7 +48,6 @@ public class RelationshipPredicateTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{"Heavy", HeavyGraphFactory.class},
-                new Object[]{"Light", LightGraphFactory.class},
                 new Object[]{"Huge", HugeGraphFactory.class},
                 new Object[]{"View", GraphViewFactory.class}
         );
