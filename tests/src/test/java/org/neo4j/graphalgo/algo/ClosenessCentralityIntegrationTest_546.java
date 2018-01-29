@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -35,31 +36,8 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
  */
 public class ClosenessCentralityIntegrationTest_546 {
 
-    @ClassRule
-    public static ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
-
-    @BeforeClass
-    public static void setupGraph() throws KernelException {
-
-        final String importQuery =
-                "CREATE (alice:Person{id:\"Alice\"}),\n" +
-                "       (michael:Person{id:\"Michael\"}),\n" +
-                "       (karin:Person{id:\"Karin\"}),\n" +
-                "       (chris:Person{id:\"Chris\"}),\n" +
-                "       (will:Person{id:\"Will\"}),\n" +
-                "       (mark:Person{id:\"Mark\"})\n" +
-                "CREATE (michael)<-[:KNOWS]-(karin),\n" +
-                "       (michael)-[:KNOWS]->(chris),\n" +
-                "       (will)-[:KNOWS]->(michael),\n" +
-                "       (mark)<-[:KNOWS]-(michael),\n" +
-                "       (mark)-[:KNOWS]->(will),\n" +
-                "       (alice)-[:KNOWS]->(michael),\n" +
-                "       (will)-[:KNOWS]->(chris),\n" +
-                "       (chris)-[:KNOWS]->(karin);";
-
-        db.execute(importQuery);
-
-    }
+    @Rule
+    public ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
 
     private String name(long id) {
         String[] name = {""};
@@ -75,7 +53,25 @@ public class ClosenessCentralityIntegrationTest_546 {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test547() throws Exception {
+
+        String importQuery =
+                "CREATE (alice:Person{id:\"Alice\"}),\n" +
+                        "       (michael:Person{id:\"Michael\"}),\n" +
+                        "       (karin:Person{id:\"Karin\"}),\n" +
+                        "       (chris:Person{id:\"Chris\"}),\n" +
+                        "       (will:Person{id:\"Will\"}),\n" +
+                        "       (mark:Person{id:\"Mark\"})\n" +
+                        "CREATE (michael)<-[:KNOWS]-(karin),\n" +
+                        "       (michael)-[:KNOWS]->(chris),\n" +
+                        "       (will)-[:KNOWS]->(michael),\n" +
+                        "       (mark)<-[:KNOWS]-(michael),\n" +
+                        "       (mark)-[:KNOWS]->(will),\n" +
+                        "       (alice)-[:KNOWS]->(michael),\n" +
+                        "       (will)-[:KNOWS]->(chris),\n" +
+                        "       (chris)-[:KNOWS]->(karin);";
+
+        db.execute(importQuery);
 
         final Graph graph = new GraphLoader(db, Pools.DEFAULT)
                 .withLabel("Person")
@@ -83,6 +79,39 @@ public class ClosenessCentralityIntegrationTest_546 {
                 .asUndirected(true)
                 .load(HugeGraphFactory.class);
 
+        System.out.println();
+        new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
+                .compute()
+                .resultStream()
+                .forEach(this::print);
+
+    }
+
+    @Test
+    public void test546() throws Exception {
+
+        String importQuery =
+                "CREATE (nAlice:User {id:'Alice'})\n" +
+                        ",(nBridget:User {id:'Bridget'})\n" +
+                        ",(nCharles:User {id:'Charles'})\n" +
+                        ",(nMark:User {id:'Mark'})\n" +
+                        ",(nMichael:User {id:'Michael'})\n" +
+                        "CREATE (nAlice)-[:FRIEND]->(nBridget)\n" +
+                        ",(nAlice)<-[:FRIEND]-(nBridget)\n" +
+                        ",(nAlice)-[:FRIEND]->(nCharles)\n" +
+                        ",(nAlice)<-[:FRIEND]-(nCharles)\n" +
+                        ",(nMark)-[:FRIEND]->(nMichael)\n" +
+                        ",(nMark)<-[:FRIEND]-(nMichael);";
+
+        db.execute(importQuery);
+
+        final Graph graph = new GraphLoader(db, Pools.DEFAULT)
+                .withLabel("Person")
+                .withRelationshipType("KNOWS")
+                .asUndirected(true)
+                .load(HugeGraphFactory.class);
+
+        System.out.println();
         new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
                 .compute()
                 .resultStream()
