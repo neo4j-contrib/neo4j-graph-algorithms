@@ -18,8 +18,6 @@
  */
 package org.neo4j.graphalgo.algo;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
@@ -27,7 +25,6 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.MSClosenessCentrality;
-import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 /**
@@ -79,7 +76,7 @@ public class ClosenessCentralityIntegrationTest_546 {
                 .asUndirected(true)
                 .load(HugeGraphFactory.class);
 
-        System.out.println();
+        System.out.println("547:");
         new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
                 .compute()
                 .resultStream()
@@ -111,7 +108,7 @@ public class ClosenessCentralityIntegrationTest_546 {
                 .asUndirected(true)
                 .load(HugeGraphFactory.class);
 
-        System.out.println();
+        System.out.println("546:");
         new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
                 .compute()
                 .resultStream()
