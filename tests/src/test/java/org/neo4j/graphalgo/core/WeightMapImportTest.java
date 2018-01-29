@@ -28,7 +28,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
@@ -52,7 +51,6 @@ public class WeightMapImportTest {
     public static Collection<Object[]> data() {
         return Arrays.<Object[]>asList(
                 new Object[]{HeavyGraphFactory.class, "heavy"},
-                new Object[]{LightGraphFactory.class, "light"},
                 new Object[]{HugeGraphFactory.class, "huge"},
                 new Object[]{GraphViewFactory.class, "view"}
         );

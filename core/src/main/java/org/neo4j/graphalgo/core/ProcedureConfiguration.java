@@ -25,7 +25,6 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.lightweight.LightGraph;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.loadgraph.LoadGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
@@ -290,7 +289,7 @@ public class ProcedureConfiguration {
             case HeavyCypherGraphFactory.TYPE:
                 return HeavyCypherGraphFactory.class;
             case LightGraph.TYPE:
-                return LightGraphFactory.class;
+                return HeavyGraphFactory.class;
             case GraphView.TYPE:
                 return GraphViewFactory.class;
             case HugeGraph.TYPE:
@@ -386,9 +385,6 @@ public class ProcedureConfiguration {
         }
         if (HeavyCypherGraphFactory.class.isAssignableFrom(cls)) {
             return "cypher";
-        }
-        if (LightGraphFactory.class.isAssignableFrom(cls)) {
-            return "light";
         }
         if (GraphViewFactory.class.isAssignableFrom(cls)) {
             return "kernel";
