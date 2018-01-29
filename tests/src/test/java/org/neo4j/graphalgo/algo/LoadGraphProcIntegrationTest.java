@@ -18,7 +18,10 @@
  */
 package org.neo4j.graphalgo.algo;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,15 +35,12 @@ import org.neo4j.graphalgo.core.loadgraph.LoadGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -71,8 +71,7 @@ public class LoadGraphProcIntegrationTest {
         return Arrays.asList(
                 new Object[]{"heavy"},
                 new Object[]{"huge"},
-                new Object[]{"kernel"},
-                new Object[]{"light"}
+                new Object[]{"kernel"}
         );
     }
 
@@ -148,7 +147,6 @@ public class LoadGraphProcIntegrationTest {
             });
         } catch (QueryExecutionException qee) {
             switch (graph) {
-                case LightGraph.TYPE :
                 case GraphView.TYPE :
                 case HugeGraph.TYPE :
                     assertEquals(true, qee.getMessage().contains("The graph algorithm only supports these graph types"));

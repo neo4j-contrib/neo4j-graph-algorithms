@@ -31,7 +31,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.shortestpath.SingleSourceShortestPathDijkstra;
@@ -393,7 +392,6 @@ public class AllShortestPaths427Test {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "Heavy"},
-                new Object[]{LightGraphFactory.class, "Light"},
                 new Object[]{HugeGraphFactory.class, "Huge"},
                 new Object[]{GraphViewFactory.class, "Kernel"}
         );

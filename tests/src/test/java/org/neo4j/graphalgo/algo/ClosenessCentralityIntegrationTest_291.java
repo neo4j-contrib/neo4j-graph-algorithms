@@ -25,14 +25,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.ClosenessCentralityProc;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -44,7 +42,7 @@ import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.LongToIntFunction;
@@ -65,7 +63,6 @@ public class ClosenessCentralityIntegrationTest_291 {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "Heavy"},
-                new Object[]{LightGraphFactory.class, "Light"},
                 new Object[]{HugeGraphFactory.class, "Huge"},
                 new Object[]{GraphViewFactory.class, "Kernel"}
         );
