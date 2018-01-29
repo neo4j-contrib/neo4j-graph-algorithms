@@ -16,21 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.triangle;
 
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
-import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
+import sun.security.x509.AVA;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * TriangleCount counts the number of triangles in the Graph as well
@@ -38,9 +42,13 @@ import java.util.concurrent.atomic.LongAdder;
  *
  * @author mknblch
  */
-public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCountQueue> {
+public class TriangleCountQueue extends Algorithm<TriangleCountQueue> implements TriangleCountAlgorithm {
 
+    private final Graph graph;
     private ExecutorService executorService;
+    private final int nodeCount;
+    private final AtomicIntegerArray triangles;
+    private final AtomicInteger visitedNodes;
     private final int concurrency;
     private final Direction direction;
     private final AtomicInteger queue;
@@ -48,12 +56,15 @@ public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCoun
     private double averageClusteringCoefficient;
 
     public TriangleCountQueue(Graph graph, ExecutorService executorService, int concurrency) {
-        super(graph);
+        this.graph = graph;
         this.executorService = executorService;
         this.concurrency = concurrency;
         triangleCount = new LongAdder();
-        direction = graph instanceof HugeGraph ? Direction.OUTGOING : Direction.BOTH;
+        direction = Direction.BOTH;
         queue = new AtomicInteger();
+        this.nodeCount = Math.toIntExact(graph.nodeCount());
+        triangles = new AtomicIntegerArray(nodeCount);
+        visitedNodes = new AtomicInteger();
     }
 
     @Override
@@ -62,57 +73,59 @@ public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCoun
     }
 
     @Override
-    double coefficient(final int node) {
-        return calculateCoefficient(node, direction);
-    }
-
-    @Override
-    public double[] getClusteringCoefficients() {
-        final double[] coefficient = new double[nodeCount];
-        double sum = 0;
-        for (int i = 0; i < nodeCount; i++) {
-            final double c = calculateCoefficient(i, direction);
-            coefficient[i] = c;
-            sum += c;
-        }
-        averageClusteringCoefficient = sum / nodeCount;
-        return coefficient;
-    }
-
-    @Override
-    public final double getAverageClusteringCoefficient() {
+    public double getAverageCoefficient() {
         return averageClusteringCoefficient;
     }
 
     @Override
+    public AtomicIntegerArray getTriangles() {
+        return triangles;
+    }
+
+    @Override
+    public double[] getCoefficients() {
+        final double[] array = new double[nodeCount];
+        final double[] adder = new double[]{0.0};
+        for (int i = 0; i < nodeCount; i++) {
+            final double c = TriangleCountAlgorithm.calculateCoefficient(triangles.get(i), graph.degree(i, direction));
+            array[i] = c;
+            adder[0] += c;
+        }
+        averageClusteringCoefficient = adder[0] / nodeCount;
+        return array;
+    }
+
+    @Override
+    public Stream<Result> resultStream() {
+        return IntStream.range(0, Math.toIntExact(nodeCount))
+                .mapToObj(i -> new Result(
+                        graph.toOriginalNodeId(i),
+                        triangles.get(i),
+                        TriangleCountAlgorithm.calculateCoefficient(triangles.get(i), graph.degree(i, direction))));
+    }
+
+
+    @Override
+    public TriangleCountQueue me() {
+        return this;
+    }
+
+    @Override
     public TriangleCountQueue release() {
-        super.release();
         executorService = null;
         return this;
     }
 
     @Override
-    void runCompute() {
+    public TriangleCountQueue compute() {
         queue.set(0);
         triangleCount.reset();
         averageClusteringCoefficient = 0.0;
-
         // create tasks
-        final Collection<? extends Runnable> tasks;
-        if (graph instanceof HugeGraph) {
-            HugeGraph hugeGraph = (HugeGraph) graph;
-            tasks = ParallelUtil.tasks(concurrency, () -> new HugeTask(hugeGraph));
-        } else {
-            tasks = ParallelUtil.tasks(concurrency, Task::new);
-        }
-
+        final Collection<? extends Runnable> tasks = ParallelUtil.tasks(concurrency, Task::new);
         // run
         ParallelUtil.run(tasks, executorService);
-    }
-
-    @Override
-    void onTriangle() {
-        triangleCount.increment();
+        return this;
     }
 
     private class Task implements Runnable {
@@ -123,7 +136,7 @@ public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCoun
             final TerminationFlag flag = getTerminationFlag();
             final int[] head = new int[1];
             while ((head[0] = queue.getAndIncrement()) < nodeCount) {
-                graph.forEachRelationship(head[0], D, (s, t, r) -> {
+                graph.forEachRelationship(head[0], direction, (s, t, r) -> {
                     if (t > s) {
                         nodes.push(t);
                     }
@@ -131,38 +144,20 @@ public class TriangleCountQueue extends TriangleCountBase<double[], TriangleCoun
                 });
                 while (!nodes.isEmpty()) {
                     final int node = nodes.pop();
-                    graph.forEachRelationship(node, D, (s, t, r) -> {
-                        if (t > s && graph.exists(t, head[0], D)) {
-                            exportTriangle(head[0], s, t);
+                    graph.forEachRelationship(node, direction, (s, t, r) -> {
+                        if (t > s && graph.exists(t, head[0], direction)) {
+                            triangles.incrementAndGet(head[0]);
+                            triangles.incrementAndGet(s);
+                            triangles.incrementAndGet(t);
+                            triangleCount.increment();
+
                         }
                         return flag.running();
                     });
                 }
-                nodeVisited();
+                getProgressLogger().logProgress(visitedNodes.incrementAndGet(), nodeCount);
             }
         }
     }
 
-    private class HugeTask implements Runnable, IntersectionConsumer {
-
-        private HugeRelationshipIntersect hg;
-
-        HugeTask(HugeGraph graph) {
-            hg = graph.intersectionCopy();
-        }
-
-        @Override
-        public void run() {
-            int node;
-            while ((node = queue.getAndIncrement()) < nodeCount && running()) {
-                hg.intersectAll(node, this);
-                nodeVisited();
-            }
-        }
-
-        @Override
-        public void accept(final long nodeA, final long nodeB, final long nodeC) {
-            exportTriangle((int) nodeA, (int) nodeB, (int) nodeC);
-        }
-    }
 }

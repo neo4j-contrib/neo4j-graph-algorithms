@@ -26,9 +26,9 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.impl.triangle.TriangleCountQueue;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -119,7 +119,7 @@ public class ClusteringCoefficientTest {
                 new TriangleCountQueue(graph, Pools.DEFAULT, 4)
                         .compute();
 
-        assertArrayEquals(EXPECTED, algo.getClusteringCoefficients(), 0.01);
-        assertEquals(0.827, algo.getAverageClusteringCoefficient(), 0.01);
+        assertArrayEquals(EXPECTED, algo.getCoefficients(), 0.01);
+        assertEquals(0.827, algo.getAverageCoefficient(), 0.01);
     }
 }
