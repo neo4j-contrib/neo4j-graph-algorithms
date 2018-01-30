@@ -148,7 +148,7 @@ public class LouvainProc {
                 .load(graphImpl);
     }
 
-    private <V> void write(Graph graph, V communities, ProcedureConfiguration configuration) {
+    private void write(Graph graph, Object communities, ProcedureConfiguration configuration) {
         log.debug("Writing results");
         final Exporter exporter = Exporter.of(api, graph)
                 .withLog(log)
