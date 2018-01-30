@@ -27,7 +27,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.IntDoubleMapTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.ShortestPaths;
 import org.neo4j.graphalgo.results.ShortestPathResult;
 import org.neo4j.graphdb.Direction;
@@ -128,7 +128,7 @@ public class ShortestPathsProc {
                         .write(
                                 configuration.getWriteProperty(DEFAULT_TARGET_PROPERTY),
                                 shortestPaths,
-                                IntDoubleMapTranslator.INSTANCE
+                                Translators.INT_DOUBLE_MAP_TRANSLATOR
                         );
             });
         }

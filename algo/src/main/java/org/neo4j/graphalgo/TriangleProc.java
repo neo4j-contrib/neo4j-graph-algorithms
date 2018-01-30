@@ -24,10 +24,8 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
-import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
-import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.triangle.*;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -251,10 +249,10 @@ public class TriangleProc {
                 exporter.write(
                         configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                         triangles,
-                        AtomicIntArrayTranslator.INSTANCE,
+                        Translators.ATOMIC_INTEGER_ARRAY_TRANSLATOR,
                         coefficientProperty.get(),
                         coefficients,
-                        DoubleArrayTranslator.INSTANCE
+                        Translators.DOUBLE_ARRAY_TRANSLATOR
                 );
             } else {
                 // nonhuge without coefficients
@@ -262,7 +260,7 @@ public class TriangleProc {
                 exporter.write(
                         configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                         triangles,
-                        AtomicIntArrayTranslator.INSTANCE
+                        Translators.ATOMIC_INTEGER_ARRAY_TRANSLATOR
                 );
             }
         }
@@ -322,16 +320,16 @@ public class TriangleProc {
                     exporter.write(
                             configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                             triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE,
+                            Translators.ATOMIC_INTEGER_ARRAY_TRANSLATOR,
                             coefficientProperty.get(),
                             clusteringCoefficients,
-                            AtomicDoubleArrayTranslator.INSTANCE
+                            Translators.ATOMIC_DOUBLE_ARRAY_TRANSLATOR
                     );
                 } else {
                     exporter.write(
                             configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                             triangleCount.getTriangles(),
-                            AtomicIntArrayTranslator.INSTANCE
+                            Translators.ATOMIC_INTEGER_ARRAY_TRANSLATOR
                     );
                 }
             }

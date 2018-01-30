@@ -33,7 +33,7 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.OptionalIntArrayTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.impl.scc.SCCAlgorithm;
@@ -197,7 +197,7 @@ public class StronglyConnectedComponentsProc {
                     .write(
                             configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                             tarjan.getConnectedComponents(),
-                            OptionalIntArrayTranslator.INSTANCE
+                            Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                     ));
         }
 
@@ -296,7 +296,7 @@ public class StronglyConnectedComponentsProc {
                 .write(
                         configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                         connectedComponents,
-                        OptionalIntArrayTranslator.INSTANCE
+                        Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                 );
 
     }
@@ -375,7 +375,7 @@ public class StronglyConnectedComponentsProc {
                     .write(
                             configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                             connectedComponents,
-                            OptionalIntArrayTranslator.INSTANCE
+                            Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                     ));
         }
 
