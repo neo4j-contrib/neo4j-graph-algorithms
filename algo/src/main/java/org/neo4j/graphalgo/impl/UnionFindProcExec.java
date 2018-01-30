@@ -28,9 +28,7 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
-import org.neo4j.graphalgo.core.write.DisjointSetStructTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.HugeDisjointSetStructTranslator;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -214,7 +212,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                         CONFIG_CLUSTER_PROPERTY,
                         DEFAULT_CLUSTER_PROPERTY),
                 struct,
-                DisjointSetStructTranslator.INSTANCE);
+                DisjointSetStruct.Translator.INSTANCE);
     }
 
     private void write(
@@ -226,7 +224,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                         CONFIG_CLUSTER_PROPERTY,
                         DEFAULT_CLUSTER_PROPERTY),
                 struct,
-                HugeDisjointSetStructTranslator.INSTANCE);
+                PagedDisjointSetStruct.Translator.INSTANCE);
     }
 
 }

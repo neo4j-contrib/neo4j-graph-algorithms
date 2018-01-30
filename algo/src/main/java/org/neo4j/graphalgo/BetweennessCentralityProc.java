@@ -22,9 +22,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
-import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.betweenness.*;
 import org.neo4j.graphalgo.results.BetweennessCentralityProcResult;
 import org.neo4j.graphdb.Direction;
@@ -210,7 +209,7 @@ public class BetweennessCentralityProc {
                         .withLog(log)
                         .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                         .build()
-                        .write(writeProperty, centrality, AtomicDoubleArrayTranslator.INSTANCE);
+                        .write(writeProperty, centrality, Translators.ATOMIC_DOUBLE_ARRAY_TRANSLATOR);
             });
         }
         bc.release();
@@ -262,7 +261,7 @@ public class BetweennessCentralityProc {
                     .write(
                             writeProperty,
                             centrality,
-                            DoubleArrayTranslator.INSTANCE
+                            Translators.DOUBLE_ARRAY_TRANSLATOR
                     )
             );
         }
@@ -314,7 +313,7 @@ public class BetweennessCentralityProc {
                         .withLog(log)
                         .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                         .build()
-                        .write(writeProperty, centrality, AtomicDoubleArrayTranslator.INSTANCE);
+                        .write(writeProperty, centrality, Translators.ATOMIC_DOUBLE_ARRAY_TRANSLATOR);
             });
         }
         bc.release();
