@@ -168,6 +168,5 @@ public class LouvainProc {
                     (LongArray) communities,
                     LongArray.Translator.INSTANCE);
         }
-
     }
 }
