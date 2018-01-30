@@ -252,8 +252,8 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId) -> {
                     readLock.lock();
                     final long targetCommunity = communityIds.get(targetNodeId);
-                    readLock.unlock();
                     final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
+                    readLock.unlock();
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
                         bestGain = gain;
