@@ -60,6 +60,10 @@ include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
 
 include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
 
+=== All Pairs Shortest Path
+
+include::all-pairs-shortest-path.adoc[leveloffset=2,tags=implementation]
+
 === Triangle Count
 
 include::triangleCount.adoc[leveloffset=2,tags=implementation]

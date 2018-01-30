@@ -1,39 +1,47 @@
-= All Pairs- and Single Source - Shortest Path
+= Single Source Shortest Path
 
-A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. 
-
-_All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm. 
+// tag::introduction[]
+The _Single Source Shortest Path_ algorithm calculates the shortest weight path between a pair of nodes.
+A common algorithm used is Dijkstra.
+// end::introduction[]
 
 == History, Explanation
 
-Path finding, in particular searching in a maze, belongs to the classical graph problems, and the classical references are Wiener [1873], Lucas [1882] (describing a method due to C.P. Tr´emaux), and Tarry [1895] – see Biggs, Lloyd, and Wilson [1976]. 
-They form the basis for depth-first search techniques.
-Path problems were also studied at the beginning of the 1950’s in the context of ‘alternate routing’, that is, finding a second shortest route if the shortest route is blocked. 
-This applies to freeway usage (Trueblood [1952]), but also to telephone call routing. 
-At that time making long-distance calls in the U.S.A. was automatized, and alternate routes for telephone calls over the U.S. telephone network nation-wide should be found automatically.
+// tag::explanation[]
+Path finding has a long history and is considered to be one of the classical graph problems.
+It has been researched as far back as the 19th century.
+Classical references are Wiener [1873], Lucas [1882] (describing a method due to C.P. Tr´emaux), and Tarry [1895] – see Biggs, Lloyd, and Wilson [1976].
 
-Dijkstra thought about the shortest path problem when working at the Mathematical Center in Amsterdam in 1956 as a programmer to demonstrate capabilities of a new computer called ARMAC. 
-His objective was to choose both a problem as well as an answer (that would be produced by computer) that non-computing people could understand. 
-He designed the shortest path algorithm and later implemented it for ARMAC for a slightly simplified transportation map of 64 cities in the Netherlands. 
+Dijkstra thought about the shortest path problem when working as a programmer at the Mathematical Center in Amsterdam in 1956 to demonstrate the capabilities of the new ARMAC computer.
+His wanted to choose both a problem and an answer (that would be produced by computer) that non-computing people could understand.
+He designed what is now known as Dijkstra's algorithm and later implemented it on the ARMAC for a slightly simplified transportation map of 64 cities in the Netherlands.
 
+It gained prominence in the early 1950s in the context of ‘alternate routing’
+i.e. finding a second shortest route if the shortest route is blocked.
+It found uses in urban planning http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[[1]] as well as telephone call routing.
+// end::explanation[]
 
 == When to use it / use-cases
 
-Shortest path algorithms are applied to automatically find directions between physical locations, such as driving directions on web mapping websites like MapQuest or Google Maps. 
+// tag::use-case[]
+The most common usage of the single source shortest path algorithm is finding directions between physical locations.
+Web mapping websites such as MapQuest or Google Maps use it to provide driving directions.
 
-If one represents a nondeterministic abstract machine as a graph where nodes describe states and relationships describe possible transitions, shortest path algorithms can be used to find an optimal sequence of choices to reach a certain goal state, or to establish lower bounds on the time needed to reach a given state. 
-For example, if nodes represent the states of a puzzle like a Rubik's Cube and each directed relationship corresponds to a single move or turn, shortest path algorithms can be used to find a solution that uses the minimum possible number of moves.
+It has also found uses in several other areas including:
 
-In a networking or telecommunications mindset, this shortest path problem is sometimes called the min-delay path problem and usually tied with a widest path problem. 
-For example, the algorithm may seek the shortest (min-delay) widest path, or widest shortest (min-delay) path.
+* Telecommunications and networking
+* Operations research - plant and facility layout, robotics, transportation, and VLSI design.
+* Social networks - find the degrees of separation between people
+* IP routing - find the https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^]
 
-Other applications, often studied in operations research, include plant and facility layout, robotics, transportation, and VLSI design.
+// end::use-case[]
 
 == Constraints / when not to use it
 
-Dijkstra does not support negative weights as it relies on one simple fact: if all weights are non-negative, adding an edge can never make a path shorter. 
-That's why picking the shortest candidate edge (local optimality) always ends up being correct (global optimality).
-If that is not the case (we have negative weights), the frontier of candidate edges does not send the right signals; a cheap edge might lure you down a path with positive weights while an expensive one hides a path with negative weights.
+// tag::constraint[]
+Dijkstra does not support negative weights.
+The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
+// end::constraint[]
 
 == Algorithm explanation on simple sample graph
 
@@ -73,28 +81,6 @@ include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph]
 [source,cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph] 
-----
-
-==== All pairs shortest paths
-
-
-.Running algorithm and streaming results
-[source,cypher]
-----
-include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph] 
-----
-
-For now only single-source shortest path support loading the relationship as undirected, but we can use cypher loading to help us solve this.
-Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship. 
-
-We do not have to save this reversed relationship, we can project it using *cypher loading*.
-Note that relationship query does not specify direction of the relationship. 
-This is applicable to all other algorithms, that use *cypher loading*.
-
-.Running all pairs shortest path treating the graph as undirected
-[source,cypher]
-----
-include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph] 
 ----
 
 == Example Usage
@@ -208,14 +194,10 @@ We support the following versions of the shortest path algorithms:
 - Dijkstra single source shortest path algorithm
 - if initialized with an non-existing weight-property it will treat the graph as unweighted
 
-`algo.allShortestPaths.stream`
-
-- find shortest paths between all pairs of nodes
-- returns a stream of source-target node to distance tuples for each pair of nodes
-- writeback not supported
-- if initialized with an non-existing weight-property it will treat the graph as unweighted
-
 == References
+
+// tag::references[]
+* [1] http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[Effect of travel time and distance on freeway usage^]
 
 * http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
 
@@ -224,6 +206,8 @@ We support the following versions of the shortest path algorithms:
 * https://arxiv.org/pdf/1604.02113v1.pdf
 
 * https://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf
+// end::references[]
+
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -268,7 +252,6 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 
 - Performance tests on different dataset sizes / level of concurrency
 
-
 == Details
 
 
@@ -298,20 +281,6 @@ TODO naming!?
 - returns minimum distance to *all other nodes*
 - if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
  the number of nodes to reach the target
-
-=== algo.allShortestPaths.stream
-
-- returns a stream of source-target node to distance tuples for each pair of nodes
-- Since all nodeId's have already been ordered by the idMapping we can use an integer
- instead of a queue which just count's up for each startNodeId as long as it is
- < nodeCount.
-- Each thread tries to take one int from the counter at one time and starts its computation on it.
-- The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.
-- Due to the high memory footprint the result set would have we emit each result into
- a blocking queue. The result stream takes elements from the queue while the workers
- add elements to it.
-- The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
-- writeback not supported!
 
 // end::implementation[]
 endif::implementation[]

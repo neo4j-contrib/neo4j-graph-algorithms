@@ -28,8 +28,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
@@ -102,7 +100,6 @@ public class DegreesTest {
 
         return Arrays.<Object[]>asList(
                 new Object[]{HeavyGraphFactory.class, "heavy"},
-                new Object[]{LightGraphFactory.class, "light"},
                 new Object[]{HugeGraphFactory.class, "huge"}
         );
     }

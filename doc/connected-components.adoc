@@ -30,6 +30,10 @@ Connected components have other practical use cases, for example, if we are anal
 
 == Constraints / when not to use it
 
+// tag::constraint[]
+
+// end::constraint[]
+
 == Algorithm explanation on simple sample graph
 
 Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph between those vertices. 

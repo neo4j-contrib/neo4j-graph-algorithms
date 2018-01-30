@@ -25,6 +25,10 @@ The SCC algorithms can be used to find such groups and suggest the commonly like
 
 == Constraints / when not to use it
 
+// tag::constraint[]
+
+// end::constraint[]
+
 == Algorithm explanation on simple sample graph
 
 image::{img}/strongly_connected_components.png[]

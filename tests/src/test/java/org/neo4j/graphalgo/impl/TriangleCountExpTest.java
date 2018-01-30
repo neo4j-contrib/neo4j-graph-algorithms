@@ -27,7 +27,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
@@ -72,8 +71,7 @@ public class TriangleCountExpTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "Heavy"},
-                new Object[]{HugeGraphFactory.class, "Huge"},
-                new Object[]{LightGraphFactory.class, "Light"}
+                new Object[]{HugeGraphFactory.class, "Huge"}
         );
     }
 
