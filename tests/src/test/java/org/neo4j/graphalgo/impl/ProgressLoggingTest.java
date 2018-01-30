@@ -27,7 +27,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.IntArrayTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -141,7 +141,7 @@ public class ProgressLoggingTest {
                 .write(
                         "test",
                         ints,
-                        IntArrayTranslator.INSTANCE
+                        Translators.INT_ARRAY_TRANSLATOR
                 );
 
         System.out.println(buffer);

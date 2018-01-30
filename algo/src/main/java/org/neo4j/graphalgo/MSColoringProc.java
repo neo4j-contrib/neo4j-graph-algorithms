@@ -23,8 +23,8 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.core.write.AtomicIntArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.results.UnionFindResult;
 import org.neo4j.graphdb.Direction;
@@ -133,7 +133,7 @@ public class MSColoringProc {
                 .write(
                         configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
                         struct,
-                        AtomicIntArrayTranslator.INSTANCE
+                        Translators.ATOMIC_INTEGER_ARRAY_TRANSLATOR
                 );
     }
 }

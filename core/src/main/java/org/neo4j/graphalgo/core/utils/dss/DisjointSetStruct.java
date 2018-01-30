@@ -23,6 +23,7 @@ import com.carrotsearch.hppc.IntIntScatterMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
 import org.neo4j.graphalgo.api.IdMapping;
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -350,4 +351,15 @@ public final class DisjointSetStruct {
             this.setId = setId;
         }
     }
+
+    public final static class Translator implements PropertyTranslator.OfInt<DisjointSetStruct> {
+
+        public static final PropertyTranslator<DisjointSetStruct> INSTANCE = new Translator();
+
+        @Override
+        public int toInt(final DisjointSetStruct data, final long nodeId) {
+            return data.findNoOpt((int) nodeId);
+        }
+    }
+
 }

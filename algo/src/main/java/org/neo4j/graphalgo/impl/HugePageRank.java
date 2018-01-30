@@ -28,9 +28,9 @@ import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 
@@ -713,7 +713,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             exporter.write(
                     propertyName,
                     result,
-                    DoubleArrayTranslator.INSTANCE);
+                    Translators.DOUBLE_ARRAY_TRANSLATOR);
         }
 
         @Override

@@ -27,9 +27,9 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -580,7 +580,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         public void export(
                 final String propertyName,
                 final Exporter exporter) {
-            exporter.write(propertyName, result, DoubleArrayTranslator.INSTANCE);
+            exporter.write(propertyName, result, Translators.DOUBLE_ARRAY_TRANSLATOR);
         }
     }
 }
