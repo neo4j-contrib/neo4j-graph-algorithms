@@ -29,7 +29,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.IntArrayTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.louvain.*;
 import org.neo4j.graphalgo.results.LouvainResult;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -158,14 +158,16 @@ public class LouvainProc {
                 .build();
 
         if (communities instanceof int[]) {
-
+            exporter.write(
+                    configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                    (int[]) communities,
+                    Translators.INT_ARRAY_TRANSLATOR);
         } else if (communities instanceof LongArray) {
-
+            exporter.write(
+                    configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                    (LongArray) communities,
+                    LongArray.Translator.INSTANCE);
         }
-        exporter.write(
-                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
-                communities,
-                IntArrayTranslator.INSTANCE
-        );
+
     }
 }

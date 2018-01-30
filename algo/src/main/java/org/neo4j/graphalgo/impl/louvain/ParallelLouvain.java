@@ -164,7 +164,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
                         new Result(idMapping.toOriginalNodeId(i), communityIds[i]));
     }
 
-    public LongArray getCommunityIds() {
+    public int[] getCommunityIds() {
         return communityIds;
     }
 
@@ -172,7 +172,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         return iterations;
     }
 
-    public int getCommunityCount() {
+    public long getCommunityCount() {
         final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
         for (int i = 0; i < communityIds.length; i++) {
             bitSet.put(communityIds[i]);

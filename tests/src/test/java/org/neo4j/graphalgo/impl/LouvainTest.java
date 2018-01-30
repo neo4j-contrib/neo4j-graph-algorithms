@@ -28,10 +28,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
@@ -188,7 +190,7 @@ public class LouvainTest {
     @Test
     public void testUnweightedSequential() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new Louvain(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
+        final LouvainAlgorithm louvain = new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.EMPTY,1, MAX_ITERATIONS)
                 .compute();
 
         printCommunities(louvain);

@@ -29,7 +29,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.IntArrayTranslator;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphalgo.results.LabelPropagationStats;
 import org.neo4j.graphdb.Direction;
@@ -180,7 +180,7 @@ public final class LabelPropagationProc {
                     .write(
                             partitionKey,
                             labels,
-                            IntArrayTranslator.INSTANCE
+                            Translators.INT_ARRAY_TRANSLATOR
                 );
         }
     }

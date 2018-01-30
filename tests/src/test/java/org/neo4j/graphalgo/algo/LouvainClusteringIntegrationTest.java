@@ -235,11 +235,11 @@ public class LouvainClusteringIntegrationTest {
     }
 
 
-    public int getClusterId(String nodeName) {
+    public long getClusterId(String nodeName) {
 
-        int id[] = {0};
+        long id[] = {0};
         DB.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
-            id[0] = (int) row.getNode("n").getProperty("community");
+            id[0] = (long) row.getNode("n").getProperty("community")
             return true;
         });
         return id[0];
