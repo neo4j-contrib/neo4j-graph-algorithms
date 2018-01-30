@@ -50,8 +50,6 @@ public class LouvainProc {
     public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
     public static final String DEFAULT_CLUSTER_PROPERTY = "community";
 
-    public static final int DEFAULT_ITERATIONS = 5;
-
     @Context
     public GraphDatabaseAPI api;
 

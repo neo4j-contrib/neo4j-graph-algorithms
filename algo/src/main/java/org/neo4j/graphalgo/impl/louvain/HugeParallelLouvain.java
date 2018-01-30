@@ -45,20 +45,59 @@ import java.util.stream.Stream;
  */
 public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implements LouvainAlgorithm {
 
-    private final ExecutorService executorService;
+    /**
+     * pool
+     */
+    private ExecutorService executorService;
+    /**
+     * number of threads to use
+     */
     private final int concurrency;
+    /**
+     * node cound
+     */
     private final long nodeCount;
-    private final HugeGraph graph;
+    /**
+     * graph
+     */
+    private HugeGraph graph;
+    /**
+     * incrementing node counter
+     */
     private final AtomicLong queue;
+    /**
+     * R&W Locks
+     */
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    /**
+     * task array for parallel execution
+     */
     private final ArrayList<Task> tasks = new ArrayList<>();
+    /**
+     * memory tracker
+     */
     private final AllocationTracker tracker;
-    private DoubleArray sTot;
+    /**
+     * community weight. Sum of degrees of nodes
+     * within a cluster
+     */
+    private DoubleArray communityWeights;
+    /**
+     * pre calculated values
+     */
     private double m2, mq2;
-
-    private final LongArray communityIds; // node to community mapping
+    /**
+     * node to community id mapping
+     */
+    private LongArray communityIds;
+    /**
+     * number of iterations so far
+     */
     private int iterations;
+    /**
+     * maximum number of iterations
+     */
     private final int maxIterations;
 
     public HugeParallelLouvain(HugeGraph graph,
@@ -72,12 +111,16 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
         this.concurrency = concurrency;
         this.maxIterations = maxIterations;
         communityIds = LongArray.newArray(nodeCount, tracker);
-        sTot = DoubleArray.newArray(nodeCount, tracker);
+        communityWeights = DoubleArray.newArray(nodeCount, tracker);
         this.queue = new AtomicLong(0);
         this.tracker = tracker;
 
     }
 
+    /**
+     * cluster id's until either max iterations is reached or no further
+     * changes could improve modularity
+     */
     public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
@@ -96,6 +139,10 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
 
     @Override
     public HugeParallelLouvain release() {
+        graph = null;
+        executorService = null;
+        communityIds = null;
+        communityWeights = null;
         return this;
     }
 
@@ -110,10 +157,15 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
         final LongAdder adder = new LongAdder();
         ParallelUtil.iterateParallelHuge(executorService, nodeCount, concurrency, node -> {
             final int d = graph.degree(node, Direction.OUTGOING);
-            sTot.set(node, d);
+            communityWeights.set(node, d);
             adder.add(d);
         });
-        m2 = adder.intValue() * 4.0; // 2m //
+        /**
+         * we can iterate over outgoing rels only because
+         * the graph should be treated as undirected and
+         * therefore have to multiply m by 4 instead of 2
+         */
+        m2 = adder.intValue() * 4.0; // 2m
         mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
@@ -127,8 +179,8 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
         writeLock.lock();
         try {
             final long index = communityIds.get(node);
-            sTot.add(index, -d);
-            sTot.add(targetCommunity, d);
+            communityWeights.add(index, -d);
+            communityWeights.add(targetCommunity, d);
             // update communityIds
             communityIds.set(node, targetCommunity);
         } finally {
@@ -194,7 +246,7 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
                 bestGain = 0.0;
                 readLock.lock();
                 final long sourceCommunity = bestCommunity = communityIds.get(node);
-                final double mSource = (sTot.get(sourceCommunity) * graph.degree(node, Direction.OUTGOING)) / mq2;
+                final double mSource = (communityWeights.get(sourceCommunity) * graph.degree(node, Direction.OUTGOING)) / mq2;
                 readLock.unlock();
 
                 graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId) -> {

@@ -58,8 +58,7 @@ public class PagedSimpleBitSet extends PagedDataStructure<SimpleBitSet> {
     }
 
     /**
-     * this _ hurts
-     * @return
+     * this hurts
      */
     public long _size() {
         long size = 0;
