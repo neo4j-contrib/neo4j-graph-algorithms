@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.IntArrayTranslator;
 import org.neo4j.graphalgo.impl.louvain.*;
@@ -82,7 +83,9 @@ public class LouvainProc {
 
         builder.withNodeCount(graph.nodeCount());
 
-        final LouvainAlgorithm louvain = louvain(graph, configuration);
+        final LouvainAlgorithm louvain = LouvainAlgorithm.instance(graph, configuration)
+                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         // evaluation
         try (ProgressTimer timer = builder.timeEval()) {
@@ -114,7 +117,9 @@ public class LouvainProc {
                 .overrideRelationshipTypeOrQuery(relationship);
 
         // evaluation
-        return louvain(graph(configuration), configuration)
+        return LouvainAlgorithm.instance(graph(configuration), configuration)
+                .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
+                .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
                 .resultStream();
 
@@ -145,39 +150,22 @@ public class LouvainProc {
                 .load(graphImpl);
     }
 
-    public LouvainAlgorithm louvain(Graph graph, ProcedureConfiguration config) {
-
-        if (graph instanceof HugeGraph) {
-            if (config.hasWeightProperty()) {
-                return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                        .withProgressLogger(ProgressLogger.wrap(log, "ModularityCommunityDetection"))
-                        .withTerminationFlag(TerminationFlag.wrap(transaction));
-            }
-            return new Louvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS))
-                    .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
-                    .withTerminationFlag(TerminationFlag.wrap(transaction));
-        }
-
-        return new ParallelLouvain(graph,
-                graph,
-                graph,
-                Pools.DEFAULT,
-                config.getConcurrency(),
-                config.getIterations(DEFAULT_ITERATIONS))
-                .withProgressLogger(ProgressLogger.wrap(log, "Louvain(deprecated)"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction));
-    }
-
-    private void write(Graph graph, int[] communities, ProcedureConfiguration configuration) {
+    private <V> void write(Graph graph, V communities, ProcedureConfiguration configuration) {
         log.debug("Writing results");
-        Exporter.of(api, graph)
+        final Exporter exporter = Exporter.of(api, graph)
                 .withLog(log)
                 .parallel(Pools.DEFAULT, configuration.getConcurrency(), TerminationFlag.wrap(transaction))
-                .build()
-                .write(
-                        configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
-                        communities,
-                        IntArrayTranslator.INSTANCE
-                );
+                .build();
+
+        if (communities instanceof int[]) {
+
+        } else if (communities instanceof LongArray) {
+
+        }
+        exporter.write(
+                configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),
+                communities,
+                IntArrayTranslator.INSTANCE
+        );
     }
 }

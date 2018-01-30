@@ -56,4 +56,17 @@ public class PagedSimpleBitSet extends PagedDataStructure<SimpleBitSet> {
             this.pages[i].clear();
         }
     }
+
+    /**
+     * this _ hurts
+     * @return
+     */
+    public long _size() {
+        long size = 0;
+        final int pages = numPages(capacity());
+        for (int i = 0; i < pages; i++) {
+            size += this.pages[i].size();
+        }
+        return size;
+    }
 }

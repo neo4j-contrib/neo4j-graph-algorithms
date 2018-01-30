@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.impl.louvain;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -30,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
@@ -170,7 +170,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     }
 
     @Override
-    public int[] getCommunityIds() {
+    public LongArray getCommunityIds() {
         return nodeCommunity;
     }
 

@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.impl.louvain;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -180,7 +181,7 @@ public class WeightedLouvain extends Algorithm<WeightedLouvain> implements Louva
     }
 
     @Override
-    public int getCommunityCount() {
+    public long getCommunityCount() {
         final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
         for (int i = 0; i < nodeCount; i++) {
             bitSet.put(nodeCommunity[i]);

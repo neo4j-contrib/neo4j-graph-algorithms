@@ -23,6 +23,7 @@ import org.neo4j.graphalgo.core.write.AtomicDoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 
 import java.util.Arrays;
+import java.util.function.IntToLongFunction;
 import java.util.function.LongSupplier;
 
 public final class LongArray extends PagedDataStructure<long[]> {
@@ -88,6 +89,13 @@ public final class LongArray extends PagedDataStructure<long[]> {
     public void fill(long value) {
         for (long[] page : pages) {
             Arrays.fill(page, value);
+        }
+    }
+
+
+    public void setAll(IntToLongFunction gen) {
+        for (long[] page : pages) {
+            Arrays.setAll(page, gen);
         }
     }
 
