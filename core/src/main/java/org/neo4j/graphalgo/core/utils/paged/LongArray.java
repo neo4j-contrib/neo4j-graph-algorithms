@@ -90,10 +90,10 @@ public final class LongArray extends PagedDataStructure<long[]> {
         }
     }
 
-
     public void setAll(IntToLongFunction gen) {
-        for (long[] page : pages) {
-            Arrays.setAll(page, gen);
+        for (int i = 0; i < pages.length; i++) {
+            final int t = i;
+            Arrays.setAll(pages[t], j -> gen.applyAsLong(t * pageSize + j));
         }
     }
 

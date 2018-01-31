@@ -96,7 +96,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() {
-        final String cypher = "CALL algo.louvain('', '') " +
+        final String cypher = "CALL algo.louvain('', '', {concurrency:1}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         DB.execute(cypher).accept(row -> {
