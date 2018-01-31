@@ -1087,20 +1087,20 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition',concurrency:4}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0,concurrency:4}) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain(label:String, relationship:String, {weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain.stream(label:String, relationship:String, {weightProperty:'propertyName', defaultValue:1.0, concurrency:4) YIELD nodeId, community - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition',concurrency:4}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0,concurrency:4}) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.queue</code></p></td>
@@ -1159,22 +1159,6 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.betweenness.sampled(label:String, relationship:String, {strategy:'random', probability:double, maxDepth:5, direction:'out',write:true, writeProperty:'centrality', stats:true, concurrency:4}) YIELD loadMillis, computeMillis, writeMillis, nodes, minCentrality, maxCentrality, sumCentrality - yields status of evaluation</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.mst</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.mst(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree.minimum</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree.minimum(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree.maximum</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree.maximum(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc(label:String, relationship:String, config:Map&lt;String, Object&gt;) YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize</code></p></td>
 </tr>
@@ -1213,6 +1197,22 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.scc.forwardBackward.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.scc.forwardBackward.stream(long startNodeId, label:String, relationship:String, {write:true, concurrency:4}) YIELD nodeId, partition</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.mst</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.mst(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree.minimum</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree.minimum(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.spanningTree.maximum</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.spanningTree.maximum(label:String, relationshipType:String, weightProperty:String, startNodeId:long, {writeProperty:String}) YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.graph.load</code></p></td>
@@ -1263,20 +1263,20 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoinMerge</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition', concurrency:4}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoinMerge.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, concurrency:4}) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.isFinite</code></p></td>
@@ -8382,7 +8382,7 @@ $(document).ready(function() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-01-31 14:07:53 UTC
+Last updated 2018-01-31 14:44:29 UTC
 </div>
 </div>
 </body>
