@@ -105,6 +105,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
+    @Ignore("Ignoring until Paul has implemented deduplication logic")
     public void shouldLoadWeightedRelationshipsNodesForNonExistingStringTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType("foo")
@@ -114,6 +115,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
+    @Ignore("Ignoring until Paul has implemented deduplication logic")
     public void shouldLoadWeightedRelationshipsNodesForNonExistingTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType(RelationshipType.withName("foo"))
@@ -123,7 +125,6 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
-    @Ignore("Ignoring until Paul has implemented deduplication logic")
     public void shouldLoadDefaultWeightForNonExistingProperty() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipWeightsFromProperty("foo", 13.37)
