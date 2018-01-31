@@ -1263,20 +1263,20 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Double{label:'labelName', relationship:'relationshipName', defaultValue:1.0, write:true, writeProperty:'sssp'}) YIELD loadDuration, evalDuration, writeDuration, nodeCount</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoinMerge</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition', concurrency:4}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoinMerge.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0, concurrency:4}) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition'}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'propertyName', threshold:0.42, defaultValue:1.0) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.isFinite</code></p></td>
@@ -8382,7 +8382,7 @@ $(document).ready(function() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-01-31 10:53:48 UTC
+Last updated 2018-01-31 13:17:59 UTC
 </div>
 </div>
 </body>
