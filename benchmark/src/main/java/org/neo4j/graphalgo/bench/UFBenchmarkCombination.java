@@ -28,11 +28,6 @@ import static org.neo4j.graphalgo.impl.UnionFindAlgo.NOTHING;
 
 public enum UFBenchmarkCombination {
 
-    LIGHT_QUEUE(GraphImpl.LIGHT, UnionFindAlgo.QUEUE),
-    LIGHT_FORK_JOIN(GraphImpl.LIGHT, UnionFindAlgo.FORK_JOIN),
-    LIGHT_FJ_MERGE(GraphImpl.LIGHT, UnionFindAlgo.FJ_MERGE),
-    LIGHT_SEQ(GraphImpl.LIGHT, UnionFindAlgo.SEQ),
-
     HEAVY_QUEUE(GraphImpl.HEAVY, UnionFindAlgo.QUEUE),
     HEAVY_FORK_JOIN(GraphImpl.HEAVY, UnionFindAlgo.FORK_JOIN),
     HEAVY_FJ_MERGE(GraphImpl.HEAVY, UnionFindAlgo.FJ_MERGE),

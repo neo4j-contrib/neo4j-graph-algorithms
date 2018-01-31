@@ -58,7 +58,7 @@ public class TriangleCountBenchmark {
     @Param({"true", "false"})
     private boolean parallel;
 
-    @Param({"LIGHT", "HEAVY", "HUGE"})
+    @Param({"HEAVY", "HUGE"})
     GraphImpl graph;
 
     private int concurrency;

@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class PageRankBenchmarkLdbc {
 
-    @Param({"LIGHT", "HEAVY", "HUGE"})
+    @Param({"HEAVY", "HUGE"})
     GraphImpl graph;
 
     @Param({"true", "false"})
