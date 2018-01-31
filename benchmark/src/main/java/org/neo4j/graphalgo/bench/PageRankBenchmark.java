@@ -57,7 +57,7 @@ public class PageRankBenchmark {
     @Param({"5", "20", "100"})
     int iterations;
 
-    @Param({"LIGHT", "HEAVY", "VIEW", "HUGE"})
+    @Param({"HEAVY", "VIEW", "HUGE"})
     GraphImpl impl;
 
     private GraphDatabaseAPI db;
