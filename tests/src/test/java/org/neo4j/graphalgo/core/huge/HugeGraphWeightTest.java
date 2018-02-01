@@ -26,6 +26,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 import org.neo4j.graphalgo.core.utils.paged.PageUtil;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.api.DataWriteOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.TokenWriteOperations;
@@ -70,7 +71,7 @@ public final class HugeGraphWeightTest {
     }
 
     private void mkDb(final int nodes, final int relsPerNode) {
-        db.executeAndCommit(__ -> {
+        db.executeAndCommit((GraphDatabaseService __) -> {
             try (Statement st = db.statement()) {
                 TokenWriteOperations token = st.tokenWriteOperations();
                 int type = token.relationshipTypeGetOrCreateForName("TYPE");
