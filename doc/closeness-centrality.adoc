@@ -11,7 +11,7 @@ This is important for the availability of knowledge and resources.
 == History, Explanation
 
 // tag::explanation[]
-Sabidussi (1966) described the sum of the shortest path distances from one node to every other node as the node’s farness. 
+Sabidussi (1966) described the sum of the shortest path distances from one node to every other node as the node’s farness.
 Freeman (1979) used this idea to define closeness centrality of a node as the inverse of Sabidussi’s farness.
 
 Closeness centrality is defined as the total number of relationships separating a node from all others along the shortest possible paths.
@@ -19,14 +19,23 @@ Closeness centrality is defined as the total number of relationships separating 
 The algorithm operates as follows:
 
 * calculate the shortest path for each for each pair of nodes in the graph
-* for each node sum the total distance from the node to all other nodes.
+* for each node sum the distance from the node to all other nodes based on those shortest paths
 
-The greater the *raw closeness centrality*, the longer it takes for information originating at random points in the graph to arrive at the node.
+The *raw closeness centrality* for a node is then calculated using the following formula:
+
+`raw closeness centrality(node) = 1 / sum(distance from node to all other nodes)`
+
+The greater the raw closeness centrality, the longer it takes for information originating at random points in the graph to arrive at the node.
 We could also interpret closeness as the potential ability of a node to reach all other nodes as quickly as possible.
 
-It is important to note that *raw closeness centrality* is an inverse measure of centrality.
+It is important to note that raw closeness centrality is an inverse measure of centrality.
 i.e. nodes with smaller scores that are the most central.
 Our algorithm returns a *normalized closeness centrality* score where nodes with a higher score are more central.
+
+The formula for *normalized closeness centrality* is as follows:
+
+`normalized closeness centrality(node) = (number of nodes - 1) / sum(distance from node to all other nodes)`
+
 // end::explanation[]
 
 == When to use it / use-cases
@@ -111,9 +120,9 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.closeness(label:String, relationship:String, 
-{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4}) 
-YIELD nodes,loadMillis, computeMillis, writeMillis 
+CALL algo.closeness(label:String, relationship:String,
+{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4})
+YIELD nodes,loadMillis, computeMillis, writeMillis
 - calculates closeness centrality and potentially writes back
 ----
 
@@ -145,7 +154,7 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4}) 
+CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4})
 YIELD nodeId, centrality - yields centrality for each node
 ----
 
@@ -164,7 +173,7 @@ YIELD nodeId, centrality - yields centrality for each node
 |===
 | name | type | description
 | node | long | node id
-| centrality | float | closeness centrality weight 
+| centrality | float | closeness centrality weight
 |===
 
 == Cypher projection
@@ -178,7 +187,7 @@ Set `graph:'cypher'` in the config.
 include::scripts/closeness-centrality.cypher[tag=cypher-loading]
 ----
 
-== Versions 
+== Versions
 
 We support the following versions of the closeness centrality algorithm:
 
@@ -190,7 +199,7 @@ We support the following versions of the closeness centrality algorithm:
 
 ** Only with cypher projection
 
-* [ ] undirected, weighted  
+* [ ] undirected, weighted
 
 
 == References
@@ -217,7 +226,7 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. 
+_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph.
 Thus the more central a node is, the closer it is to all other nodes.
 
 == Details

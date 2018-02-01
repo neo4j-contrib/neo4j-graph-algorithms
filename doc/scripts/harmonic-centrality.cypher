@@ -14,7 +14,9 @@ CREATE (a)-[:LINK]->(b),
 // tag::stream-sample-graph[]
 
 CALL algo.harmonic.stream('Node', 'LINKS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20;
+RETURN nodeId,centrality
+ORDER BY centrality DESC
+LIMIT 20;
 
 // end::stream-sample-graph[]
 
