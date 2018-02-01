@@ -2740,18 +2740,30 @@ Freeman (1979) used this idea to define closeness centrality of a node as the in
 <p>calculate the shortest path for each for each pair of nodes in the graph</p>
 </li>
 <li>
-<p>for each node sum the total distance from the node to all other nodes.</p>
+<p>for each node sum the distance from the node to all other nodes based on those shortest paths</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>The greater the <strong>raw closeness centrality</strong>, the longer it takes for information originating at random points in the graph to arrive at the node.
+<p>The <strong>raw closeness centrality</strong> for a node is then calculated using the following formula:</p>
+</div>
+<div class="paragraph">
+<p><code>raw closeness centrality(node) = 1 / sum(distance from node to all other nodes)</code></p>
+</div>
+<div class="paragraph">
+<p>The greater the raw closeness centrality, the longer it takes for information originating at random points in the graph to arrive at the node.
 We could also interpret closeness as the potential ability of a node to reach all other nodes as quickly as possible.</p>
 </div>
 <div class="paragraph">
-<p>It is important to note that <strong>raw closeness centrality</strong> is an inverse measure of centrality.
+<p>It is important to note that raw closeness centrality is an inverse measure of centrality.
 i.e. nodes with smaller scores that are the most central.
 Our algorithm returns a <strong>normalized closeness centrality</strong> score where nodes with a higher score are more central.</p>
+</div>
+<div class="paragraph">
+<p>The formula for <strong>normalized closeness centrality</strong> is as follows:</p>
+</div>
+<div class="paragraph">
+<p><code>normalized closeness centrality(node) = (number of nodes - 1) / sum(distance from node to all other nodes)</code></p>
 </div>
 </div>
 <div class="sect3">
@@ -3133,30 +3145,46 @@ Set <code>graph:'cypher'</code> in the config.</p>
 <div class="sect2">
 <h3 id="_harmonic_centrality"><a class="link" href="#_harmonic_centrality">Harmonic Centrality</a></h3>
 <div class="paragraph">
-<p>The harmonic mean has been known since the time of Pythagoras and Plato as the mean expressing “harmonious and tuneful ratios”, and later has been employed by musicians to formalize the diatonic scale, and by architects as paradigm for beautiful proportions.[1]</p>
+<p>Closeness centrality works best on connected graphs - results may be confused if there are multiple connected components.</p>
 </div>
 <div class="paragraph">
-<p>Social network analysis is a rapid expanding interdisciplinary field, growing from work of sociologists, physicists, historians, mathematicians, political scientists, etc.
-Some methods have been commonly accepted in spite of defects, perhaps because of the rareness of synthetic work like (Freeman, 1978; Faust &amp; Wasserman, 1992).
-Harmonic centrality was proposed as an alternative index of closeness centrality defined on undirected networks.
-Results show its computation on real cases are identical to those of the closeness centrality index, with same computational complexity and we give some interpretations.
-An important property is its use in the case of unconnected networks.[2]</p>
+<p>Harmonic centrality (also known as 'valued centrality') is a variant of closeness centrality that addresses this problem.
+As with many of the centrality algorithms, it originates from the field of social network analysis.</p>
 </div>
 <div class="sect3">
 <h4 id="_history_explanation_4"><a class="link" href="#_history_explanation_4">History, Explanation</a></h4>
 <div class="paragraph">
-<p>Main problem of closeness centrality lies in the presence of pairs of unreachable nodes.
-We get inspiration from Marchiori and Latora [1]: faced with the problem of providing a sensible notion of “average shortest path” for a generic directed network, they propose to replace the average distance with the harmonic mean of all distances (i.e., the n(n − 1) distances between every pair of distinct nodes).
-Indeed, in case a large number of pairs of nodes are not reachable, the average of finite distances can be misleading: a graph might have a very low average distance while it is almost completely disconnected (e.g., a perfect matching has average distance 1/2).
-The harmonic mean has the useful property of handling ∞ cleanly.
-For example, the harmonic mean of distances of a perfect matching is n − 1: in fact, for every node there is exactly another node at a non-infinite distance, and its distance is 1; so the sum of the inverse of all distances is n, making the harmonic average equal to n(n − 1)/n = n − 1.
-In general, for each graph-theoretical notion based on arithmetic averaging or maximization there is an equivalent notion based on the harmonic mean.
-If we consider closeness the reciprocal of a denormalized average of distances, it is natural to consider also the reciprocal of a denormalized harmonic mean of distances.[3]</p>
+<p>Harmonic centrality was proposed by Marchiori and Latora [1] while trying to come up with a sensible notion of "average shortest path".
+They suggested replacing the average distance calculation from the closeness centrality algorithm with the harmonic mean of all distances.</p>
 </div>
 <div class="paragraph">
-<p>The difference with might seem minor, but actually it is a radical change.
-Harmonic centrality is strongly correlated to closeness centrality in simple networks, but naturally also accounts for nodes y that cannot reach x.
-Thus, it can be fruitfully applied to graphs that are not strongly connected.[3]</p>
+<p>The algorithm operates as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>calculate the shortest path for each for each pair of nodes in the graph</p>
+</li>
+<li>
+<p>for each node determine the distance from the node to all other nodes based on those shortest paths</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <strong>raw harmonic centrality</strong> for a node is then calculated using the following formula:</p>
+</div>
+<div class="paragraph">
+<p><code>raw harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself)</code></p>
+</div>
+<div class="paragraph">
+<p>As with closeness centrality we can also calculate a <strong>normalized harmonic centrality</strong> with the following formula:</p>
+</div>
+<div class="paragraph">
+<p><code>normalized harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself) / (number of nodes - 1)</code></p>
+</div>
+<div class="paragraph">
+<p>The advantage of harmonic centrality is that ∞ are handled cleanly.
+Harmonic centrality and closeness centrality will often come up with similar results, but harmonic centrality can handle graphs that aren&#8217;t connected. [3]</p>
 </div>
 <div class="paragraph">
 <p>Harmonic centrality was proposed independently by Dekker (2005)[4], using the name "valued centrality," and by Rochat (2009)[2].</p>
@@ -3165,11 +3193,11 @@ Thus, it can be fruitfully applied to graphs that are not strongly connected.[3]
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases_4"><a class="link" href="#_when_to_use_it_use_cases_4">When to use it / use-cases</a></h4>
 <div class="paragraph">
-<p>Because harmonic centrality was proposed as an alternative to closeness centrality, they have similar use cases.
-As an example, one can consider identifying the location within a city where to place a new public service, so that it is easily accessible for everyone.
-Similarly, identifying central people that have ideal social network location for the purpose of information dissemination or network influence.
-In such kind of applications, the nodes who can access the entire network faster need to be selected.
-As mentioned above it can be fruitfully applied to graphs that are not connected.</p>
+<p>Harmonic centrality was proposed as an alternative to closeness centrality, and therefore has similar use cases.</p>
+</div>
+<div class="paragraph">
+<p>For example, we might use it if we&#8217;re trying to identify where in the city to place a new public service so that it&#8217;s easily accessible for residents.
+If we&#8217;re trying to spread a message on social media we could use the algorithm to find the key influencers that can help us achieve our goal.</p>
 </div>
 </div>
 <div class="sect3">
@@ -3200,7 +3228,9 @@ CREATE (a)-[:LINK]-&gt;(b),
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.harmonic.stream('Node', 'LINKS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20;
+RETURN nodeId,centrality
+ORDER BY centrality DESC
+LIMIT 20;
 
 - yields centrality for each node</code></pre>
 </div>
@@ -3477,7 +3507,7 @@ Set <code>graph:'cypher'</code> in the config.</p>
 <p>[1] <a href="https://arxiv.org/pdf/cond-mat/0008357.pdf" class="bare">https://arxiv.org/pdf/cond-mat/0008357.pdf</a></p>
 </li>
 <li>
-<p>[2] https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?</p>
+<p>[2] https://infoscience.epfl.ch/record/200525/files/ENASNA09.pdf?</p>
 </li>
 <li>
 <p>[3] <a href="https://arxiv.org/pdf/1308.2140.pdf" class="bare">https://arxiv.org/pdf/1308.2140.pdf</a></p>
@@ -8382,7 +8412,7 @@ $(document).ready(function() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-01-31 14:44:29 UTC
+Last updated 2018-02-01 09:23:35 UTC
 </div>
 </div>
 </body>
