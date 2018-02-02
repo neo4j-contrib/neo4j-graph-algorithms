@@ -23,7 +23,6 @@ These algorithms determine the importance of distinct nodes in a network.
 * Page Rank (`algo.pageRank`)
 * Betweenness Centrality (`algo.betweenness`)
 * Closeness Centrality (`algo.closeness`)
-* Harmonic Centrality (`algo.harmonic`)
 
 === Community Detection
 

@@ -55,8 +55,8 @@ public class DangalchevCentralityProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure(value = "algo.dangalchev.stream")
-    @Description("CALL algo.dangalchev.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
+    @Procedure(value = "algo.closeness.dangalchev.stream")
+    @Description("CALL algo.closeness.dangalchev.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<DangalchevClosenessCentrality.Result> dangalchevStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -86,8 +86,8 @@ public class DangalchevCentralityProc {
         return algo.resultStream();
     }
 
-    @Procedure(value = "algo.dangalchev", mode = Mode.WRITE)
-    @Description("CALL algo.dangalchev(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
+    @Procedure(value = "algo.closeness.dangalchev", mode = Mode.WRITE)
+    @Description("CALL algo.closeness.dangalchev(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
     public Stream<CentralityProcResult> dangalchev(
             @Name(value = "label", defaultValue = "") String label,

@@ -55,8 +55,8 @@ public class HarmonicCentralityProc {
     @Context
     public KernelTransaction transaction;
 
-    @Procedure(value = "algo.harmonic.stream")
-    @Description("CALL algo.harmonic.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
+    @Procedure(value = "algo.closeness.harmonic.stream")
+    @Description("CALL algo.closeness.harmonic.stream(label:String, relationship:String{concurrency:4}) YIELD nodeId, centrality - yields centrality for each node")
     public Stream<HarmonicCentrality.Result> harmonicStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -86,8 +86,8 @@ public class HarmonicCentralityProc {
         return algo.resultStream();
     }
 
-    @Procedure(value = "algo.harmonic", mode = Mode.WRITE)
-    @Description("CALL algo.harmonic(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
+    @Procedure(value = "algo.closeness.harmonic", mode = Mode.WRITE)
+    @Description("CALL algo.closeness.harmonic(label:String, relationship:String, {write:true, writeProperty:'centrality, concurrency:4'}) YIELD " +
             "loadMillis, computeMillis, writeMillis, nodes] - yields evaluation details")
     public Stream<CentralityProcResult> harmonic(
             @Name(value = "label", defaultValue = "") String label,
