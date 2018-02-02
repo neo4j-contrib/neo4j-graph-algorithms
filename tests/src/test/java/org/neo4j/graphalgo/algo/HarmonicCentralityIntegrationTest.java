@@ -102,7 +102,7 @@ public class HarmonicCentralityIntegrationTest {
     @Test
     public void testHarmonicStream() throws Exception {
 
-        db.execute("CALL algo.harmonic.stream('Node', 'TYPE') YIELD nodeId, centrality")
+        db.execute("CALL algo.closeness.harmonic.stream('Node', 'TYPE') YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept(
                             row.getNumber("nodeId").longValue(),
@@ -117,7 +117,7 @@ public class HarmonicCentralityIntegrationTest {
     @Test
     public void testHugeHarmonicStream() throws Exception {
 
-        db.execute("CALL algo.harmonic.stream('Node', 'TYPE', {graph:'huge'}) YIELD nodeId, centrality")
+        db.execute("CALL algo.closeness.harmonic.stream('Node', 'TYPE', {graph:'huge'}) YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept(
                             row.getNumber("nodeId").longValue(),
@@ -131,7 +131,7 @@ public class HarmonicCentralityIntegrationTest {
     @Test
     public void testHarmonicWrite() throws Exception {
 
-        db.execute("CALL algo.harmonic('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.closeness.harmonic('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
@@ -154,7 +154,7 @@ public class HarmonicCentralityIntegrationTest {
     @Test
     public void testHugeHarmonicWrite() throws Exception {
 
-        db.execute("CALL algo.harmonic('','', {write:true, stats:true, writeProperty:'centrality', graph:'huge'}) YIELD " +
+        db.execute("CALL algo.closeness.harmonic('','', {write:true, stats:true, writeProperty:'centrality', graph:'huge'}) YIELD " +
                 "nodes, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));

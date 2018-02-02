@@ -106,7 +106,7 @@ public class DangalchevCentralityIntegrationTest {
     @Test
     public void testClosenessStream() throws Exception {
 
-        db.execute("CALL algo.dangalchev.stream('Node', 'TYPE') YIELD nodeId, centrality")
+        db.execute("CALL algo.closeness.dangalchev.stream('Node', 'TYPE') YIELD nodeId, centrality")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     consumer.accept(
                             row.getNumber("nodeId").longValue(),
@@ -120,7 +120,7 @@ public class DangalchevCentralityIntegrationTest {
     @Test
     public void testClosenessWrite() throws Exception {
 
-        db.execute("CALL algo.dangalchev('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
+        db.execute("CALL algo.closeness.dangalchev('','', {write:true, stats:true, writeProperty:'centrality'}) YIELD " +
                 "nodes, loadMillis, computeMillis, writeMillis")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));

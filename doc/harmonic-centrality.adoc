@@ -108,7 +108,7 @@ of each cell and multiply by 1/(n-1)
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.harmonic(label:String, relationship:String,
+CALL algo.closeness.harmonic(label:String, relationship:String,
 {write:true, writeProperty:'centrality',graph:'heavy', concurrency:4})
 YIELD nodes,loadMillis, computeMillis, writeMillis
 - calculates closeness centrality and potentially writes back
@@ -142,7 +142,7 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.harmonic.stream(label:String, relationship:String,{concurrency:4})
+CALL algo.closeness.harmonic.stream(label:String, relationship:String,{concurrency:4})
 YIELD nodeId, centrality - yields centrality for each node
 ----
 

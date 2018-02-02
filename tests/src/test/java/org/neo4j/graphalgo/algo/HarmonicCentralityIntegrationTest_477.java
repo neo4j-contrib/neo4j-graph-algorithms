@@ -78,7 +78,7 @@ public class HarmonicCentralityIntegrationTest_477 {
     @Test
     public void testLoad() throws Exception {
 
-        String cypher = "CALL algo.harmonic.stream(\n" +
+        String cypher = "CALL algo.closeness.harmonic.stream(\n" +
                 "'MATCH (u:Person) RETURN id(u) as id\n" +
                 "','\n" +
                 "MATCH (u1:Person)-[k:KNOWS]-(u2:Person) \n" +

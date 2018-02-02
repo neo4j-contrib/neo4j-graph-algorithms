@@ -13,7 +13,7 @@ CREATE (a)-[:LINK]->(b),
 
 // tag::stream-sample-graph[]
 
-CALL algo.harmonic.stream('Node', 'LINKS') YIELD nodeId, centrality
+CALL algo.closeness.harmonic.stream('Node', 'LINKS') YIELD nodeId, centrality
 RETURN nodeId,centrality
 ORDER BY centrality DESC
 LIMIT 20;
@@ -22,14 +22,14 @@ LIMIT 20;
 
 // tag::write-sample-graph[]
 
-CALL algo.harmonic('Node', 'LINK', {writeProperty:'centrality'}) 
+CALL algo.closeness.harmonic('Node', 'LINK', {writeProperty:'centrality'})
 YIELD nodes,loadMillis, computeMillis, writeMillis;
 
 // end::write-sample-graph[]
 
 // tag::cypher-loading[]
 
-CALL algo.harmonic(
+CALL algo.closeness.harmonic(
   'MATCH (p:Node) RETURN id(p) as id',
   'MATCH (p1:Node)-[:LINK]-(p2:Node) RETURN id(p1) as source, id(p2) as target',
   {graph:'cypher', writeProperty: 'centrality'}
