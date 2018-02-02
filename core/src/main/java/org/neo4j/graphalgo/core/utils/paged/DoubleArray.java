@@ -56,6 +56,12 @@ public final class DoubleArray extends PagedDataStructure<double[]> {
         return ret;
     }
 
+    public void add(long index, double value) {
+        final int pageIndex = pageIndex(index);
+        final int indexInPage = indexInPage(index);
+        pages[pageIndex][indexInPage] += value;
+    }
+
     public void fill(double value) {
         for (double[] page : pages) {
             Arrays.fill(page, value);
