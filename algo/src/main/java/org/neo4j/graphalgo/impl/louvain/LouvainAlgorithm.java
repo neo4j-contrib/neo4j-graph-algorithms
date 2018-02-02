@@ -18,6 +18,15 @@
  */
 package org.neo4j.graphalgo.impl.louvain;
 
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
+
 import java.util.stream.Stream;
 
 /**
@@ -25,22 +34,28 @@ import java.util.stream.Stream;
  */
 public interface LouvainAlgorithm {
 
+    int DEFAULT_ITERATIONS = 5;
+
     LouvainAlgorithm compute();
 
-    int[] getCommunityIds();
+    <V> V getCommunityIds();
 
     int getIterations();
 
-    int getCommunityCount() ;
+    long getCommunityCount() ;
 
     Stream<Result> resultStream();
+
+    LouvainAlgorithm withProgressLogger(ProgressLogger progressLogger);
+
+    LouvainAlgorithm withTerminationFlag(TerminationFlag terminationFlag);
 
     class Result {
 
         public final long nodeId;
         public final long community;
 
-        public Result(long nodeId, int community) {
+        public Result(long nodeId, long community) {
             this.nodeId = nodeId;
             this.community = community;
         }
@@ -52,5 +67,23 @@ public interface LouvainAlgorithm {
                     ", community=" + community +
                     '}';
         }
+    }
+
+    static LouvainAlgorithm instance(Graph graph, ProcedureConfiguration config) {
+
+        if (graph instanceof HugeGraph) {
+            if (config.hasWeightProperty()) {
+                return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS));
+            }
+
+            return new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.create(), config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS));
+        }
+
+        return new ParallelLouvain(graph,
+                graph,
+                graph,
+                Pools.DEFAULT,
+                config.getConcurrency(),
+                config.getIterations(DEFAULT_ITERATIONS));
     }
 }

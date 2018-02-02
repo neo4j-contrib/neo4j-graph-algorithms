@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 public final class ParallelUtil {
@@ -797,6 +798,26 @@ public final class ParallelUtil {
             final int end = Math.min(size, start + batchSize);
             futures.add(executorService.submit(() -> {
                 for (int j = start; j < end; j++) {
+                    consumer.accept(j);
+                }
+            }));
+        }
+        awaitTermination(futures);
+    }
+
+
+    public static void iterateParallelHuge(
+            ExecutorService executorService,
+            long size,
+            int concurrency,
+            LongConsumer consumer) {
+        final List<Future<?>> futures = new ArrayList<>();
+        final long batchSize = threadSize(concurrency, size);
+        for (long i = 0; i < size; i += batchSize) {
+            final long start = i;
+            final long end = Math.min(size, start + batchSize);
+            futures.add(executorService.submit(() -> {
+                for (long j = start; j < end; j++) {
                     consumer.accept(j);
                 }
             }));

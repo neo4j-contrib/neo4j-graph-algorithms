@@ -19,24 +19,23 @@
 package org.neo4j.graphalgo.impl.louvain;
 
 
-import org.neo4j.graphalgo.api.Degrees;
-import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
-import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
+import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
@@ -44,45 +43,84 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class ParallelLouvain extends Algorithm<ParallelLouvain> implements LouvainAlgorithm {
+public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implements LouvainAlgorithm {
 
-    private final ExecutorService executorService;
+    /**
+     * pool
+     */
+    private ExecutorService executorService;
+    /**
+     * number of threads to use
+     */
     private final int concurrency;
-    private final int nodeCount;
-    private RelationshipIterator relationshipIterator;
-    private IdMapping idMapping;
-    private Degrees degrees;
-    private final AtomicInteger queue;
+    /**
+     * node cound
+     */
+    private final long nodeCount;
+    /**
+     * graph
+     */
+    private HugeGraph graph;
+    /**
+     * incrementing node counter
+     */
+    private final AtomicLong queue;
+    /**
+     * R&W Locks
+     */
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    /**
+     * task array for parallel execution
+     */
     private final ArrayList<Task> tasks = new ArrayList<>();
-    private double[] sTot;
+    /**
+     * memory tracker
+     */
+    private final AllocationTracker tracker;
+    /**
+     * community weight. Sum of degrees of nodes
+     * within a cluster
+     */
+    private DoubleArray communityWeights;
+    /**
+     * pre calculated values
+     */
     private double m2, mq2;
-
-    private final int[] communityIds; // node to community mapping
+    /**
+     * node to community id mapping
+     */
+    private LongArray communityIds;
+    /**
+     * number of iterations so far
+     */
     private int iterations;
+    /**
+     * maximum number of iterations
+     */
     private final int maxIterations;
 
-    public ParallelLouvain(IdMapping idMapping,
-                           RelationshipIterator relationshipIterator,
-                           Degrees degrees,
-                           ExecutorService executorService,
-                           int concurrency,
-                           int maxIterations) {
-
-        this.idMapping = idMapping;
-        nodeCount = Math.toIntExact(idMapping.nodeCount());
-        this.relationshipIterator = relationshipIterator;
-        this.degrees = degrees;
+    public HugeParallelLouvain(HugeGraph graph,
+                               ExecutorService executorService,
+                               AllocationTracker tracker,
+                               int concurrency,
+                               int maxIterations) {
+        this.graph = graph;
+        nodeCount = graph.nodeCount();
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.maxIterations = maxIterations;
-        communityIds = new int[nodeCount];
-        sTot = new double[nodeCount];
-        this.queue = new AtomicInteger(0);
+        communityIds = LongArray.newArray(nodeCount, tracker);
+        communityWeights = DoubleArray.newArray(nodeCount, tracker);
+        this.queue = new AtomicLong(0);
+        this.tracker = tracker;
 
     }
 
+    /**
+     * cluster id's until either max iterations is reached or no further
+     * changes could improve modularity
+     */
     public LouvainAlgorithm compute() {
         reset();
         for (this.iterations = 0; this.iterations < maxIterations; this.iterations++) {
@@ -100,8 +138,11 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
     }
 
     @Override
-    public ParallelLouvain release() {
-        relationshipIterator = null;
+    public HugeParallelLouvain release() {
+        graph = null;
+        executorService = null;
+        communityIds = null;
+        communityWeights = null;
         return this;
     }
 
@@ -112,15 +153,19 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
             tasks.add(new Task());
         }
 
-        Arrays.setAll(communityIds, i -> i);
-
+        communityIds.setAll(i -> i);
         final LongAdder adder = new LongAdder();
-        ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, node -> {
-            final int d = degrees.degree(node, Direction.BOTH);
-            sTot[node] = d;
+        ParallelUtil.iterateParallelHuge(executorService, nodeCount, concurrency, node -> {
+            final int d = graph.degree(node, Direction.OUTGOING);
+            communityWeights.set(node, d);
             adder.add(d);
         });
-        m2 = adder.intValue() * 4.0; // 2m //
+        /**
+         * we can iterate over outgoing rels only because
+         * the graph should be treated as undirected and
+         * therefore have to multiply m by 4 instead of 2
+         */
+        m2 = adder.intValue() * 4.0; // 2m
         mq2 = 2.0 * Math.pow(adder.intValue(), 2.0); // 2m^2
     }
 
@@ -129,15 +174,15 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      * @param node nodeId
      * @param targetCommunity communityId
      */
-    private void assign(int node, int targetCommunity) { // TODO sync
-        final int d = degrees.degree(node, Direction.BOTH);
-
+    private void assign(long node, long targetCommunity) {
+        final int d = graph.degree(node, Direction.OUTGOING);
         writeLock.lock();
         try {
-            sTot[communityIds[node]] -= d;
-            sTot[targetCommunity] += d;
+            final long index = communityIds.get(node);
+            communityWeights.add(index, -d);
+            communityWeights.add(targetCommunity, d);
             // update communityIds
-            communityIds[node] = targetCommunity;
+            communityIds.set(node, targetCommunity);
         } finally {
             writeLock.unlock();
         }
@@ -146,10 +191,10 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
      /**
      * @return kiIn
      */
-    private int kIIn(int node, int targetCommunity) {
+    private int kIIn(long node, long targetCommunity) {
         int[] sum = {0}; // {ki, ki_in}
-        relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-            if (targetCommunity == communityIds[targetNodeId]) {
+        graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId) -> {
+            if (targetCommunity == communityIds.get(targetNodeId)) {
                 sum[0]++;
             }
             return true;
@@ -159,12 +204,12 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
     }
 
     public Stream<Result> resultStream() {
-        return IntStream.range(0, nodeCount)
+        return LongStream.range(0, nodeCount)
                 .mapToObj(i ->
-                        new Result(idMapping.toOriginalNodeId(i), communityIds[i]));
+                        new Result(graph.toOriginalNodeId(i), communityIds.get(i)));
     }
 
-    public int[] getCommunityIds() {
+    public LongArray getCommunityIds() {
         return communityIds;
     }
 
@@ -173,15 +218,15 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
     }
 
     public long getCommunityCount() {
-        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
-        for (int i = 0; i < communityIds.length; i++) {
-            bitSet.put(communityIds[i]);
+        final PagedSimpleBitSet bitSet = PagedSimpleBitSet.newBitSet(nodeCount, tracker);
+        for (long i = 0; i < communityIds.size(); i++) {
+            bitSet.put(communityIds.get(i));
         }
-        return bitSet.size();
+        return bitSet._size();
     }
 
     @Override
-    public ParallelLouvain me() {
+    public HugeParallelLouvain me() {
         return this;
     }
 
@@ -189,7 +234,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
 
         private boolean changes = false;
         private double bestGain;
-        private int bestCommunity;
+        private long bestCommunity;
         private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         private final TerminationFlag flag = getTerminationFlag();
         private final ProgressLogger logger = getProgressLogger();
@@ -197,16 +242,16 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         @Override
         public void run() {
             changes = false;
-            for (int node; (node = queue.getAndIncrement()) < nodeCount && flag.running(); ) {
+            for (long node; (node = queue.getAndIncrement()) < nodeCount && flag.running(); ) {
                 bestGain = 0.0;
                 readLock.lock();
-                final int sourceCommunity = bestCommunity = communityIds[node];
-                final double mSource = (sTot[sourceCommunity] * degrees.degree(node, Direction.BOTH)) / mq2;
+                final long sourceCommunity = bestCommunity = communityIds.get(node);
+                final double mSource = (communityWeights.get(sourceCommunity) * graph.degree(node, Direction.OUTGOING)) / mq2;
                 readLock.unlock();
 
-                relationshipIterator.forEachRelationship(node, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId) -> {
                     readLock.lock();
-                    final int targetCommunity = communityIds[targetNodeId];
+                    final long targetCommunity = communityIds.get(targetNodeId);
                     final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     readLock.unlock();
                     if (gain > bestGain) {
