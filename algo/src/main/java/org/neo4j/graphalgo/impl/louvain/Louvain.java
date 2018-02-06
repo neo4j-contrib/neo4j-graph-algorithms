@@ -27,7 +27,6 @@ public class Louvain extends Algorithm<Louvain> {
 
     private double m;
     private final double[] s_tot;
-    private final double[] s_in;
     private final double[] ki;
     private final double[] w;
     private final int[] community;
@@ -40,7 +39,8 @@ public class Louvain extends Algorithm<Louvain> {
         w = new double[nodeCount];
         community = new int[nodeCount];
         s_tot = new double[nodeCount];
-        s_in = new double[nodeCount];
+
+        init();
     }
 
     private void init() {
@@ -55,55 +55,46 @@ public class Louvain extends Algorithm<Louvain> {
             return true;
         });
 
+        Arrays.setAll(s_tot, i -> ki[i]);
     }
 
     private void initPartition() {
-        Arrays.setAll(s_tot, i -> ki[i]);
-        Arrays.fill(s_in, 0.);
     }
 
     public Louvain compute() {
 
         final int[] bestPartition = new int[nodeCount];
+        Arrays.setAll(bestPartition, i -> i);
+
         final int[] bestCommunity = {-1};
         final double[] bestGain = {.0};
         final double[] bestShared = {.0};
-
         final boolean[] imp = {false};
 
-        do {
-            // do while improvement
+        do { // do while improvement
+            System.arraycopy(bestPartition, 0, community, 0, nodeCount);
             imp[0] = false;
-
             graph.forEachNode(node -> {
-
-                final int nodeCommunity = community[node];
+                final int nodeCommunity = bestPartition[node];
                 bestCommunity[0] = nodeCommunity;
                 bestPartition[0] = -1;
                 bestShared[0] = weightIntoCom(node, community[node]);
-
-                s_in[nodeCommunity] -= 2 * (bestShared[0] + w[node]);
                 s_tot[nodeCommunity] -= ki[node];
                 community[node] = -1;
-
                 forEachNeighborPerCommunityOnce(node, (t, c) -> {
-                    final double shared_links = weightIntoCom(node, c);
-                    final double gain = 2. * shared_links - s_tot[c] * ki[node] / m;
-
-                    if (gain > bestGain[0]) {
-                        bestGain[0] = gain;
+                    final double s = weightIntoCom(node, c);
+                    final double g = 2. * s - s_tot[c] * ki[node] / m;
+                    if (g > bestGain[0]) {
+                        bestGain[0] = g;
                         bestCommunity[0] = c;
-                        bestShared[0] = shared_links;
-                        bestPartition[node] = c;
+                        bestShared[0] = s;
                     }
                 });
+                final int best = bestCommunity[0];
+                s_tot[best] += ki[node];
+                bestPartition[node] = best;
+                if (best != nodeCommunity) imp[0] = true;
 
-                s_in[bestCommunity[0]] += 2 * (bestShared[0] + w[node]);
-                s_tot[bestCommunity[0]] += ki[node];
-
-                if (bestCommunity[0] != nodeCommunity) {
-                    imp[0] = true;
-                }
                 return true;
             });
         } while (imp[0]);
