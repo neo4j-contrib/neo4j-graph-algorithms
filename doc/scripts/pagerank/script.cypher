@@ -13,7 +13,28 @@ MERGE (p1)-[:LINKS]->(p2)
 // tag::algorithm[]
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD node, score
-RETURN node,score
+RETURN node.name,score
 ORDER BY score DESC
-LIMIT 20
 // end::algorithm[]
+
+// tag::result[]
+╒═════════╤═════════╕
+│"page"   │"score"  │
+╞═════════╪═════════╡
+│"Home"   │1.6409935│
+├─────────┼─────────┤
+│"About"  │0.614712 │
+├─────────┼─────────┤
+│"Product"│0.614712 │
+├─────────┼─────────┤
+│"Links"  │0.614712 │
+├─────────┼─────────┤
+│"Site A" │0.25438  │
+├─────────┼─────────┤
+│"Site B" │0.25438  │
+├─────────┼─────────┤
+│"Site C" │0.25438  │
+├─────────┼─────────┤
+│"Site D" │0.25438  │
+└─────────┴─────────┘
+// end::result[]
