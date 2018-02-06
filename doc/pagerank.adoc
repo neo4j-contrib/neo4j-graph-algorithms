@@ -1,40 +1,41 @@
 = Page Rank
 
 // tag::introduction[]
-PageRank is Google's popular search algorithm.
-PageRank counts the number and quality of links to a page to determine an estimate of how important the website is.
-The underlying assumption is that more important websites are likely to receive more links from other websites.
+PageRank is named after Google co-founder Larry Page and is used to rank websites in Google's search results.
+It counts the number and quality of links to a page to determine an estimate of how important a page is.
+The underlying assumption is that more important pages are likely to receive more links from other pages.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-In order to measure the relative importance of web pages, Sergey Brin and Larry Page proposed PageRank, a method for computing a ranking for every web page based on the graph of the web.
-PageRank has applications in search, browsing, and traffic estimation.
-
 PageRank is defined in the original Google paper as follows:
 
-____
-We assume page A has pages T1...Tn which point to it (i.e., are citations). The parameter d is a damping factor which can be set between 0 and 1. We usually set d to 0.85. Also C(A) is defined as the number of links going out of page A. The PageRank of a page A is given as follows:
-
-
+```
 PR(A) = (1-d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn))
-____
+```
 
-Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.
+where
+
+* we assume that a page A has pages T1...Tn which point to it (i.e., are citations).
+* d is a damping factor which can be set between 0 and 1. It is usually set to 0.85.
+* `C(A)` is defined as the number of links going out of page A.
+
+The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be one.
 
 The underlying mathematics of PageRank has to do with random walks on networks, akin to how random surfers propagate through a network.
 Random surfers follow links, but occasionally teleport to random vertices.
 The PageRank of a node is the probability it is visited by a random surfer with teleportation.
+
 PageRank is now widely recognized as a way of detecting central nodes in a network.
 // end::explanation[]
 
 == When to use it / use-cases
 
 // tag::use-case[]
-The mathematics of PageRank are entirely general and apply to any graph or network in any domain.
+PageRank can be applied to any graph or network in any domain.
 PageRank is regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation.
-It's even used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.
+It's also used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.
 
 These are some other notable uses:
 
@@ -46,13 +47,11 @@ These are some other notable uses:
 
 * In lexical semantics it has been used to perform Word Sense Disambiguation, Semantic similarity, and to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity http://nmis.isti.cnr.it/sebastiani/Publications/ACL07.pdf[[2\]].
 
-* In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment http://news.bbc.co.uk/2/hi/8238462.stm[[3\]].
-
 * For the analysis of protein networks in biology PageRank is also a useful tool https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com[[6\]].
 
 * PageRank has been used to quantify the scientific impact of researchers http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf[[5\]].
 The underlying citation and collaboration networks are used in conjunction with PageRank algorithm to come up with a ranking system for individual publications that propagates to individual authors.
-The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index and addresses many of the drawbacks exhibited by h-index.
+
 // end::use-case[]
 
 == Constraints / when not to use it
