@@ -29,8 +29,8 @@ public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterab
     /**
      * release resources which are not part of the result or IdMapping
      */
-    default void release() {
-    }
+    default void release() {}
+
     String getType();
 
     void canRelease(boolean canRelease);
