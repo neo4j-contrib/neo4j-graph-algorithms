@@ -221,5 +221,5 @@ _Label Propagation_ is a graph partitioning algorithm already implemented in cur
 
 - adapt existing procedure to algorithm api
 
-// tag::implementation[]
+// end::implementation[]
 endif::implementation[]
