@@ -9,7 +9,7 @@
 
 == Introduction
 
-include::../readme.adoc[tags=readme,leveloffset=1]
+include::../../readme.adoc[tags=readme,leveloffset=1]
 
 
 == Yelp
@@ -21,7 +21,7 @@ include::yelp-intro.adoc[leveloffset=1]
 [[table-all]]
 [separator=¦,opts=header,cols="1m,5m"]
 |===
-include::../target/generated-documentation/org.neo4j.graphalgo.csv[]
+include::../../target/generated-documentation/org.neo4j.graphalgo.csv[]
 |===
 
 include::algorithms.adoc[leveloffset=1]
