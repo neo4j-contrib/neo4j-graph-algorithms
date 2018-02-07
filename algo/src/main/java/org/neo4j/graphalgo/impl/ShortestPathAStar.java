@@ -25,7 +25,8 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
 	
 	private Graph graph;
 	private final int nodeCount;
-    private IntDoubleMap costs;
+    private IntDoubleMap gCosts;
+    private IntDoubleMap fCosts;
     private double totalCost;
     private IntPriorityQueue openNodes;
     private IntIntMap path;
@@ -39,10 +40,11 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     		this.graph = graph;
     		this.dbService = dbService;
         nodeCount = Math.toIntExact(graph.nodeCount());
-        costs = new IntDoubleScatterMap(nodeCount);
+        gCosts = new IntDoubleScatterMap(nodeCount);
+        fCosts = new IntDoubleScatterMap(nodeCount);
         openNodes = SharedIntPriorityQueue.min(
                 nodeCount,
-                costs,
+                fCosts,
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         closedNodes = new SimpleBitSet(nodeCount);
@@ -57,12 +59,18 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     public ShortestPathAStar compute(long startNode, long goalNode, Direction direction) {
         reset();
         int _startNode = graph.toMappedNodeId(startNode);
+        double _startlLat = getNodeCoordinate(_startNode, "latitude");
+        double _startLon = getNodeCoordinate(_startNode, "longitude");
         int _goalNode = graph.toMappedNodeId(goalNode);
-        costs.put(_startNode, 0.0);
+        double _goalLat = getNodeCoordinate(_goalNode, "latitude");
+		double _goalLon = getNodeCoordinate(_goalNode, "longitude");
+		double _heuristic = computeHeuristic(_startlLat, _startLon, _goalLat, _goalLon);
+        gCosts.put(_startNode, 0.0);
+        fCosts.put(_startNode, _heuristic);
         openNodes.add(_startNode, 0.0);
-        run(_goalNode, direction);
+        run(_goalNode, _goalLat, _goalLon, direction);
         if (path.containsKey(_goalNode)) {
-        		totalCost = costs.get(_goalNode);
+        		totalCost = gCosts.get(_goalNode);
         		int node = _goalNode;
         		while (node != PATH_END) {
                 shortestPath.addFirst(node);
@@ -72,23 +80,21 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         return this;
     }
     
-    private void run(int goalNodeId, Direction direction) {
-    		double goalNodeLat = getNodeCoordinate(goalNodeId, "latitude");
-    		double goalNodeLon = getNodeCoordinate(goalNodeId, "longitude");
+    private void run(int goalNodeId, double goalLat, double goalLon, Direction direction) {
         while (!openNodes.isEmpty() && running()) {
             int currentNodeId = openNodes.pop();
             if (currentNodeId == goalNodeId) {
                 return;
             }
             closedNodes.put(currentNodeId);
-            double currentNodeCost = this.costs.getOrDefault(currentNodeId, Double.MAX_VALUE);
+            double currentNodeCost = this.gCosts.getOrDefault(currentNodeId, Double.MAX_VALUE);
             graph.forEachRelationship(
             		currentNodeId,
             		direction,
             		(source, target, relationshipId, weight) -> {
             			double neighbourLat = getNodeCoordinate(target, "latitude");
             			double neighbourLon = getNodeCoordinate(target, "longitude");
-            			double heuristic = computeHeuristic(neighbourLat, neighbourLon, goalNodeLat, goalNodeLon);
+            			double heuristic = computeHeuristic(neighbourLat, neighbourLon, goalLat, goalLon);
             			updateCosts(source, target, weight + currentNodeCost, heuristic);
             			if (!closedNodes.contains(target)) {
             				openNodes.add(target, 0);
@@ -119,9 +125,10 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     }
     
     private void updateCosts(int source, int target, double newCost, double heuristic) {
-        double oldCost = costs.getOrDefault(target, Double.MAX_VALUE);
+        double oldCost = gCosts.getOrDefault(target, Double.MAX_VALUE);
         if (newCost < oldCost) {
-            costs.put(target, newCost + heuristic);
+            gCosts.put(target, newCost);
+            fCosts.put(target, newCost + heuristic);
             path.put(target, source);
         }
     }
@@ -129,7 +136,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     private void reset() {
         closedNodes.clear();
         openNodes.clear();
-        costs.clear();
+        gCosts.clear();
         path.clear();
         shortestPath.clear();
         totalCost = NO_PATH_FOUND;
@@ -137,7 +144,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     
     public Stream<Result> resultStream() {
         return StreamSupport.stream(shortestPath.spliterator(), false)
-                .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), costs.get(cursor.value)));
+                .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), gCosts.get(cursor.value)));
     }
 
     public IntArrayDeque getFinalPath() {
@@ -160,7 +167,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     @Override
     public ShortestPathAStar release() {
         graph = null;
-        costs = null;
+        gCosts = null;
         openNodes = null;
         path = null;
         shortestPath = null;
