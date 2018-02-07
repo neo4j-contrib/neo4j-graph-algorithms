@@ -113,14 +113,31 @@ html {
     inputs.file sourceFile
     outputs.dir outputDir
 
-    def libraryLinks =
-"""\
-Operations_Manual=${crossReferenceBase['operations-manual']}/ \
-Developer_Manual=${crossReferenceBase['developer-manual']}/ \
-OGM_Manual=${crossReferenceBase['ogm-manual']}/ \
-Java_Reference=${crossReferenceBase['java-reference']}/ \
-REST_Docs=${crossReferenceBase['rest-docs']}/ \
-"""
+    def libraryLinks = [
+        "Operations_Manual=${crossReferenceBase['operations-manual']}",
+        "Developer_Manual=${crossReferenceBase['developer-manual']}/",
+        "OGM_Manual=${crossReferenceBase['ogm-manual']}/",
+        "Java_Reference=${crossReferenceBase['java-reference']}/",
+        "REST_Docs=${crossReferenceBase['rest-docs']}/",
+    ].join(" ")
+    def scripts = [
+        '//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/addon/runmode/runmode.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/cypher/cypher.min.js',
+        'javascript/colorize.js',
+        'javascript/tabs-for-chunked.js',
+        'javascript/mp-nav.js',
+    ].join(" ")
+    def styles = [
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css',
+        '//fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,600,300italic',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/theme/neo.min.css',
+        'css/chunked-base.css',
+        'css/extra.css'
+    ].join(" ")
 
     stylesheet "classpath:xsl/custom/xhtml5/chunk.xsl"
     input sourceFile
@@ -131,16 +148,24 @@ REST_Docs=${crossReferenceBase['rest-docs']}/ \
         "chunk.section.depth": "0",
         "html.ext": ".html",
         "make.clean.html": "1",
+        "chunker.output.method": "html",
+        "chunker.output.indent": "yes",
         "use.id.as.dirname": "1",
         "neo.documentation.library.links": libraryLinks,
         "generate.toc": "''",
         "header.rule": "0",
         "neo.search": "1",
+        "html.script": scripts,
+        "html.stylesheet": styles
     ])
     doLast {
         copy {
             from(docbook.outputDir) {
                 include 'images/**'
+            }
+            from(projectDir) {
+                include 'javascript/**'
+                include 'css/**'
             }
             into outputDir
         }
