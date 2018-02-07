@@ -37,3 +37,4 @@ bin
 *diag*.png
 *.jfr
 /ldbc_sf001_p006_neo4j31.tgz
+devenv.local
