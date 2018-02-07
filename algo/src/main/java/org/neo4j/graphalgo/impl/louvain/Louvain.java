@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.impl.louvain;
 
-import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.IntDoubleScatterMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
@@ -9,16 +7,12 @@ import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
-import java.util.function.IntBinaryOperator;
+import java.util.function.IntConsumer;
 
 /**
  * @author mknblch
  */
 public class Louvain extends Algorithm<Louvain> {
-
-    interface TargetCommunity {
-        void apply(int node, int community);
-    }
 
     public static final Direction D = Direction.OUTGOING;
     private final Graph graph;
@@ -28,7 +22,6 @@ public class Louvain extends Algorithm<Louvain> {
     private double m;
     private final double[] s_tot;
     private final double[] ki;
-    private final double[] w;
     private final int[] community;
 
 
@@ -36,7 +29,6 @@ public class Louvain extends Algorithm<Louvain> {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         ki = new double[nodeCount];
-        w = new double[nodeCount];
         community = new int[nodeCount];
         s_tot = new double[nodeCount];
 
@@ -80,8 +72,8 @@ public class Louvain extends Algorithm<Louvain> {
                 bestPartition[0] = -1;
                 bestShared[0] = weightIntoCom(node, community[node]);
                 s_tot[nodeCommunity] -= ki[node];
-                community[node] = -1;
-                forEachNeighborPerCommunityOnce(node, (t, c) -> {
+                bestPartition[node] = -1;
+                forEachConnectedCommunity(node, c -> {
                     final double s = weightIntoCom(node, c);
                     final double g = 2. * s - s_tot[c] * ki[node] / m;
                     if (g > bestGain[0]) {
@@ -113,8 +105,7 @@ public class Louvain extends Algorithm<Louvain> {
         return shared[0];
     }
 
-
-    private void forEachNeighborPerCommunityOnce(int node, TargetCommunity consumer) {
+    private void forEachConnectedCommunity(int node, IntConsumer consumer) {
         final SimpleBitSet visited = new SimpleBitSet(nodeCount);
         graph.forEachRelationship(node, D, (s, t, r) -> {
             final int c = community[t];
@@ -122,7 +113,7 @@ public class Louvain extends Algorithm<Louvain> {
                 return true;
             }
             visited.put(c);
-            consumer.apply(t, c);
+            consumer.accept(c);
             return true;
         });
     }
