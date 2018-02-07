@@ -84,6 +84,7 @@ include::connected-components.adoc[leveloffset=2,tags=implementation]
 
 include::strongly-connected-components.adoc[leveloffset=2,tags=implementation]
 
+ifdef::backend-html5[]
 ++++
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
@@ -94,3 +95,4 @@ $(document).ready(function() {
 } );
 </script>
 ++++
+endif::[]
