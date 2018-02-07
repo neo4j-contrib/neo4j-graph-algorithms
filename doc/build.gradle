@@ -1,0 +1,123 @@
+buildscript {
+    ext {
+        asciidoctorjVersion = '1.5.6'
+        asciidoctorjPdfVersion = '1.5.0-alpha.16'
+        asciidoctorjDiagramVersion = '1.5.4.1'
+        asciidoctorGroovyDslVersion = '1.0.0.Alpha2'
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.asciidoctor:asciidoctorj:$asciidoctorjVersion"
+        classpath "org.asciidoctor:asciidoctorj-pdf:$asciidoctorjPdfVersion"
+        classpath "org.asciidoctor:asciidoctorj-diagram:$asciidoctorjDiagramVersion"
+        classpath "org.asciidoctor:asciidoctorj-groovy-dsl:$asciidoctorGroovyDslVersion"
+    }
+}
+
+plugins {
+    id 'base'
+}
+
+
+ext {
+    asciidoctorAttributes = [
+        'common': [
+            'doctype'            : 'book',
+            'icons'              : 'font',
+            'attribute-missing'  : 'warn',
+        ],
+        'html': [
+            'stylesdir'          : 'css',
+            'linkcss'            : '',
+        ],
+        'pdf': [
+            'source-highlighter': 'rouge',
+            'toc'               : '',
+            'showlinks'         : '',
+            'nonhtmloutput'     : '',
+            'allow-uri-read'    : '',
+        ]
+    ]
+}
+
+def getAsciidoctor() {
+    if (!project.hasProperty('adoc')) {
+        ext.adoc = org.asciidoctor.Asciidoctor.Factory.create()
+        asciidoctor.requireLibrary("asciidoctor-diagram")
+    }
+    ext.adoc
+}
+
+
+task html {
+    description 'Build HTML'
+    ext.sourceDir = "$projectDir/asciidoc"
+    ext.sourceFile = new File("$sourceDir/index.adoc")
+    ext.outputDir = "$buildDir/html"
+    inputs.dir sourceDir
+    outputs.dir outputDir
+    doLast {
+        def attrs = asciidoctorAttributes.common + asciidoctorAttributes.html + [
+            'imagesdir' : 'images',
+        ]
+        def opts = org.asciidoctor.OptionsBuilder.options()
+                .backend('html5')
+                .safe(org.asciidoctor.SafeMode.UNSAFE)
+                .toDir(new File(outputDir))
+                .mkDirs(true)
+                .attributes(attrs)
+        getAsciidoctor().convertFile(sourceFile, opts.get())
+    }
+    doLast {
+        copy {
+            from(sourceDir) {
+                include 'images/**'
+            }
+            into outputDir
+        }
+    }
+}
+
+task pdf {
+    description 'Build PDF.'
+    ext.sourceDir = "$projectDir/asciidoc"
+    ext.sourceFile = new File("${sourceDir}/index.adoc")
+    ext.outputDir = "$buildDir/pdf"
+    ext.outputFilename = "neo4j-graph-algorithms.pdf"
+    ext.outputFile = "$outputDir/$outputFilename"
+    ext.imagesOutDir = "$outputDir/images"
+    ext.imagesDir = "images"
+    inputs.dir sourceDir
+    outputs.dir outputDir
+    doFirst {
+        copy {
+            from (projectDir) {
+                include 'images/*'
+            }
+            into(outputDir)
+        }
+    }
+    doLast {
+        // asciidoctor-diagram 1.5.4.1 breaks asciidoctor-pdf: using OptionsBuilder#toFile() (-o, --out-file), the file path
+        // is created as a directory, and 'imagesoutdir' is resolved wrongly.
+        // Work around by using #toDir (-D, --destination-dir) and manually renaming the output file.
+        // See https://github.com/asciidoctor/asciidoctor-pdf/issues/842
+        def attrs = asciidoctorAttributes.common + asciidoctorAttributes.pdf + [
+            'imagesdir'    : imagesDir.toString(),
+            'imagesoutdir' : imagesOutDir.toString(),
+        ]
+        def opts = org.asciidoctor.OptionsBuilder.options()
+                .backend('pdf')
+                .safe(org.asciidoctor.SafeMode.UNSAFE)
+                // .toFile(new File(outputFile))            // workaround
+                .toDir(new File(outputDir))                 // workaround
+                .mkDirs(true)
+                .attributes(attrs)
+        getAsciidoctor().convertFile(sourceFile, opts.get())
+        file("$outputDir/index.pdf").renameTo(outputFile)   // workaround
+    }
+}
+
+// vim: set fdm=expr:
