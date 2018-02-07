@@ -45,7 +45,7 @@ The algorithm assumes that adding a relationship to a path can never make a path
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/sssp.png[]
+image::sssp.png[]
 
 .Create sample graph
 [source,cypher]

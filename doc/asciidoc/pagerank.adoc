@@ -71,7 +71,7 @@ You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[[7\]
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/pagerank.png[]
+image::pagerank.png[]
 
 .Create sample graph
 [source,cypher]

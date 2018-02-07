@@ -22,7 +22,7 @@ Ulrik Brandes' http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.11.2024&
 
 == When to use it / use-cases
 
-image::{img}/betweenness_centrality.png[]
+image::betweenness_centrality.png[]
 
 // tag::use-case[]
 _Betweenness centrality_ is useful for finding nodes that serve as a bridge from one part of a graph to another.

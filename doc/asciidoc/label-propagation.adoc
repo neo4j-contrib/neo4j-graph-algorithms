@@ -58,7 +58,7 @@ For a more accurate finding of communities, Jaccard’s index is used to aggrega
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/label_propagation.png[]
+image::label_propagation.png[]
 
 .Create sample graph
 [source,cypher]

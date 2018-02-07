@@ -31,7 +31,7 @@ The SCC algorithms can be used to find such groups and suggest the commonly like
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/strongly_connected_components.png[]
+image::strongly_connected_components.png[]
 
 A directed graph is strongly connected if there is a path between all pairs of vertices. 
 This algorithms treats the graph as directed, so the direction of the relationship is important and strongly connected compoment exists only if there are relationships between nodes in both direction. 

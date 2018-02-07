@@ -50,7 +50,7 @@ If we're trying to spread a message on social media we could use the algorithm t
 
 == Algorithm explanation on simple sample graph
 
-// image::{img}/harmonic_centrality.png[]
+// image::harmonic_centrality.png[]
 
 
 .Create sample graph
