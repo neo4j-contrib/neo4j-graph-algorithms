@@ -1,4 +1,4 @@
-= Neo4j Graph Algorithms User Guide
+= The Neo4j Graph Algorithms User Guide v{docs-version}
 :toc: left
 :experimental:
 :sectid:
