@@ -102,8 +102,6 @@ public class Louvain extends Algorithm<Louvain> {
         return this;
     }
 
-
-
     private double weightIntoCom(int node, int com) {
         final double[] shared = {.0};
         graph.forEachRelationship(node, D, (s, t, r) -> {
