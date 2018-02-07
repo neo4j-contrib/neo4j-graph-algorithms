@@ -20,8 +20,16 @@ plugins {
     id 'base'
 }
 
+if (!project.hasProperty('graphAlgoVersion')) { ext.graphAlgoVersion = '3.2.9.0' }
 
 ext {
+    versionParts = graphAlgoVersion.split('-')
+    versions = [
+        'graphAlgo' : graphAlgoVersion,
+        'graphAlgoDocs' : versionParts[0].split('\\.')[0..1].join('.'),
+    ]
+    if (1 < versionParts.size()) { versions.graphAlgoDocs += '-preview' }
+
     asciidoctorAttributes = [
         'common': [
             'doctype'            : 'book',
@@ -49,12 +57,11 @@ def getAsciidoctor() {
     ext.adoc
 }
 
-
 task html {
     description 'Build HTML'
     ext.sourceDir = "$projectDir/asciidoc"
     ext.sourceFile = new File("$sourceDir/index.adoc")
-    ext.outputDir = "$buildDir/html"
+    ext.outputDir = "$buildDir/html/${versions.graphAlgoDocs}"
     inputs.dir sourceDir
     outputs.dir outputDir
     doLast {
@@ -84,12 +91,12 @@ task pdf {
     ext.sourceDir = "$projectDir/asciidoc"
     ext.sourceFile = new File("${sourceDir}/index.adoc")
     ext.outputDir = "$buildDir/pdf"
-    ext.outputFilename = "neo4j-graph-algorithms.pdf"
+    ext.outputFilename = "neo4j-graph-algorithms-${versions.graphAlgoDocs}.pdf"
     ext.outputFile = "$outputDir/$outputFilename"
     ext.imagesDir = "$outputDir/images"
     ext.imagesOutDir = imagesDir
     inputs.dir sourceDir
-    outputs.dir outputDir
+    outputs.file outputFile
     doFirst {
         copy {
             from (projectDir) {
