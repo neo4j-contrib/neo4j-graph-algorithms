@@ -37,7 +37,6 @@ ext {
             'toc'               : '',
             'showlinks'         : '',
             'nonhtmloutput'     : '',
-            'allow-uri-read'    : '',
         ]
     ]
 }
@@ -72,7 +71,7 @@ task html {
     }
     doLast {
         copy {
-            from(sourceDir) {
+            from(projectDir) {
                 include 'images/**'
             }
             into outputDir
@@ -87,8 +86,8 @@ task pdf {
     ext.outputDir = "$buildDir/pdf"
     ext.outputFilename = "neo4j-graph-algorithms.pdf"
     ext.outputFile = "$outputDir/$outputFilename"
-    ext.imagesOutDir = "$outputDir/images"
-    ext.imagesDir = "images"
+    ext.imagesDir = "$outputDir/images"
+    ext.imagesOutDir = imagesDir
     inputs.dir sourceDir
     outputs.dir outputDir
     doFirst {

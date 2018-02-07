@@ -42,7 +42,7 @@ That means that the direction of the relationships in our graph have no influenc
 We have two implementations of connected components algorithm. 
 First implementations treats the graph as unweighted and the second version is weighted, where you can define the threshold of the weight above which relationships are created. 
 
-image::{img}/connected_components.png[]
+image::connected_components.png[]
 
 .Create sample graph
 [source,cypher]
