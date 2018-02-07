@@ -47,6 +47,7 @@ ext {
             'nonhtmloutput'     : '',
         ]
     ]
+    distDir = "$buildDir/distributions"
 }
 
 def getAsciidoctor() {
@@ -84,6 +85,17 @@ task html {
             into outputDir
         }
     }
+}
+
+task packageHtml(type: Tar, dependsOn: html) {
+    description 'Package HTML for distribution.'
+    baseName 'graph-algorithms'
+    extension 'tar.gz'
+    version versions.graphAlgoDocs
+    compression = Compression.GZIP
+    from { html }
+    into "$baseName/$version"
+    destinationDir file(distDir)
 }
 
 task pdf {
