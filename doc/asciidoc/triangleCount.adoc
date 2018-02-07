@@ -39,7 +39,7 @@ Triangle counting has gained popularity in many other domains including:
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/triangle_count.png[]
+image::triangle_count.png[]
 
 
 .Create sample graph
