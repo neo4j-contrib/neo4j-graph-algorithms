@@ -4,6 +4,7 @@ buildscript {
         asciidoctorjPdfVersion = '1.5.0-alpha.16'
         asciidoctorjDiagramVersion = '1.5.4.1'
         asciidoctorGroovyDslVersion = '1.0.0.Alpha2'
+        catalogDir = "$projectDir/docbook/catalog"
     }
     repositories {
         jcenter()
@@ -13,11 +14,16 @@ buildscript {
         classpath "org.asciidoctor:asciidoctorj-pdf:$asciidoctorjPdfVersion"
         classpath "org.asciidoctor:asciidoctorj-diagram:$asciidoctorjDiagramVersion"
         classpath "org.asciidoctor:asciidoctorj-groovy-dsl:$asciidoctorGroovyDslVersion"
+        classpath 'net.sf.docbook:docbook-xsl:1.79.1:ns-resources@zip'
+        classpath fileTree(dir: "${rootProject.projectDir}/lib", include: '*.jar')
+        classpath files(catalogDir)
     }
 }
 
 plugins {
     id 'base'
+    id 'org.neo4j.doc.build.saxon' version '1.0-alpha01'
+    id 'org.neo4j.doc.build.docbook' version '1.0-alpha01'
 }
 
 if (!project.hasProperty('graphAlgoVersion')) { ext.graphAlgoVersion = '3.2.9.0' }
@@ -50,6 +56,15 @@ ext {
             'showlinks'         : '',
             'nonhtmloutput'     : '',
         ]
+    ]
+    docsBaseUri = "https://neo4j.com/docs"
+    crossReferenceBase = [ // We have no strategy for cross references; always link to current.
+            'operations-manual' : "${docsBaseUri}/operations-manual/current",
+            'developer-manual'  : "${docsBaseUri}/developer-manual/current",
+            'java-reference'    : "${docsBaseUri}/java-reference/current",
+            'rest-docs'         : "${docsBaseUri}/rest-docs/current",
+            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
+            'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
     ]
     asciidocSourceDir = "$projectDir/asciidoc"
     distDir = "$buildDir/distributions"
@@ -90,11 +105,53 @@ task docbook {
     }
 }
 
-task html {
+html {
+    dependsOn docbook
+    ext.sourceDir = docbook.outputDir
+    ext.sourceFile = "$sourceDir/index.xml"
+    ext.outputDir = "$buildDir/html/${versions.graphAlgoDocs}"
+    inputs.file sourceFile
+    outputs.dir outputDir
+
+    def libraryLinks =
+"""\
+Operations_Manual=${crossReferenceBase['operations-manual']}/ \
+Developer_Manual=${crossReferenceBase['developer-manual']}/ \
+OGM_Manual=${crossReferenceBase['ogm-manual']}/ \
+Java_Reference=${crossReferenceBase['java-reference']}/ \
+REST_Docs=${crossReferenceBase['rest-docs']}/ \
+"""
+
+    stylesheet "classpath:xsl/custom/xhtml5/chunk.xsl"
+    input sourceFile
+
+    // Stylesheet parameters
+    parameters ([
+        "base.dir": "${outputDir}",
+        "chunk.section.depth": "0",
+        "html.ext": ".html",
+        "make.clean.html": "1",
+        "use.id.as.dirname": "1",
+        "neo.documentation.library.links": libraryLinks,
+        "generate.toc": "''",
+        "header.rule": "0",
+        "neo.search": "1",
+    ])
+    doLast {
+        copy {
+            from(docbook.outputDir) {
+                include 'images/**'
+            }
+            into outputDir
+        }
+    }
+}
+
+task asciidoctorHtml {
     description 'Build HTML'
     ext.sourceDir = asciidocSourceDir
     ext.sourceFile = file("$sourceDir/index.adoc")
-    ext.outputDir = "$buildDir/html/${versions.graphAlgoDocs}"
+    ext.outputDir = "$buildDir/asciidoctor-html/${versions.graphAlgoDocs}"
     inputs.dir sourceDir
     outputs.dir outputDir
     doLast {
