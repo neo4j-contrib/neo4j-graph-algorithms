@@ -44,7 +44,7 @@ These algorithms help find the shortest path or evaluate the availability and qu
 // end::algorithms[]
 
 These procedures work either on the whole graph or on a subgraph filtered by label and relationship-type.
-You can also use link:#cypher-projections[filtering and projection using Cypher queries].
+You can also use link:#cypher-projection[filtering and projection using Cypher queries].
 
 *We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case.
 Also please note things that are missing from the installation instructions or documentation.
@@ -141,6 +141,7 @@ ORDER BY score DESC LIMIT 10;
 ----
 
 
+[[cypher-projection]]
 === Cypher projection
 
 If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
