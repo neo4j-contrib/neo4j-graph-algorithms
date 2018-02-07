@@ -41,6 +41,7 @@ ext {
             'doctype'            : 'book',
             'icons'              : 'font',
             'attribute-missing'  : 'warn',
+            'docs-version'       : versions.graphAlgoDocs,
         ],
         'docbook': [
             'imagesdir'          : 'images',
@@ -122,12 +123,15 @@ html {
     ].join(" ")
     def scripts = [
         '//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js',
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js',
         '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.js',
         '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/addon/runmode/runmode.min.js',
         '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/cypher/cypher.min.js',
         'javascript/colorize.js',
         'javascript/tabs-for-chunked.js',
         'javascript/mp-nav.js',
+        'javascript/versionswitcher.js',
+        'javascript/version.js',
     ].join(" ")
     def styles = [
         '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
