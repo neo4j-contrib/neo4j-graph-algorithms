@@ -91,7 +91,7 @@ public class ShortestPathAStarTest {
 		List<Double> actualDistance = new ArrayList<Double>(); 
         db.execute(
                 "MATCH (start:Node{name:'SINGAPORE'}), (end:Node{name:'CHIBA'}) " +
-                        "CALL algo.shortestPath.astar(start, end, 'cost') " +
+                        "CALL algo.shortestPath.astar.stream(start, end, 'cost') " +
                         "YIELD nodeId, cost RETURN nodeId, cost ")
                 .accept(row -> {
                     long nodeId = row.getNumber("nodeId").longValue();

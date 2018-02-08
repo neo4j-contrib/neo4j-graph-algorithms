@@ -159,8 +159,8 @@ public class ShortestPathProc {
         return Stream.of(builder.build());
     }
     
-    @Procedure("algo.shortestPath.astar")
-    @Description("CALL algo.shortestPath.astar(startNode:Node, endNode:Node, weightProperty:String" +
+    @Procedure("algo.shortestPath.astar.stream")
+    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, weightProperty:String" +
     		"{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
     		"YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathAStar.Result> astarStream(
