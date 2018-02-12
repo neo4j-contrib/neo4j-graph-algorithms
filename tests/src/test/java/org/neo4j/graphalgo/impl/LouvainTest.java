@@ -20,8 +20,6 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,6 +35,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
+import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
@@ -157,6 +156,19 @@ public class LouvainTest {
     public void testWeightedSequential() throws Exception {
         setup(unidirectional);
         final LouvainAlgorithm louvain = new WeightedLouvain(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
+                .compute();
+
+        printCommunities(louvain);
+        System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
+        assertWeightedCommunities(louvain);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
+    }
+
+    @Test
+    public void testWeightedSequentialLouvain() throws Exception {
+        setup(unidirectional);
+        final LouvainAlgorithm louvain = new Louvain(graph, 100)
                 .compute();
 
         printCommunities(louvain);

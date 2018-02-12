@@ -1,44 +1,51 @@
 package org.neo4j.graphalgo.impl.louvain;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.core.sources.ShuffledNodeIterator;
+import org.neo4j.graphalgo.core.utils.Pointer;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static org.neo4j.graphalgo.core.utils.Pointer.*;
 
 /**
+ * sequential weighted undirected louvain
+ *
  * @author mknblch
  */
-public class Louvain extends Algorithm<Louvain> {
+public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     public static final Direction D = Direction.OUTGOING;
-    private final Graph graph;
 
+    private Graph graph;
     private final int nodeCount;
-
     private double m;
-    private final double[] s_tot;
-    private final double[] ki;
+    private double[] sTot;
+    private double[] ki;
     private final int[] community;
+    private final int maxIterations;
+    private int iterations = 0;
 
-
-    public Louvain(Graph graph) {
+    public Louvain(Graph graph, int maxIterations) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
+        this.maxIterations = maxIterations;
         ki = new double[nodeCount];
         community = new int[nodeCount];
-        s_tot = new double[nodeCount];
+        sTot = new double[nodeCount];
 
         init();
     }
 
     private void init() {
-
-        Arrays.setAll(community, i -> i);
-
         forEachRelation((s, t, r) -> {
             final double w = graph.weightOf(s, t);
             m += w;
@@ -46,58 +53,72 @@ public class Louvain extends Algorithm<Louvain> {
             ki[t] += w;
             return true;
         });
-
-        Arrays.setAll(s_tot, i -> ki[i]);
-    }
-
-    private void initPartition() {
+        Arrays.setAll(sTot, i -> ki[i]);
     }
 
     public Louvain compute() {
-
-        final int[] bestPartition = new int[nodeCount];
-        Arrays.setAll(bestPartition, i -> i);
-
-        final int[] bestCommunity = {-1};
-        final double[] bestGain = {.0};
-        final double[] bestShared = {.0};
-        final boolean[] imp = {false};
-
-        do { // do while improvement
-            System.arraycopy(bestPartition, 0, community, 0, nodeCount);
-            imp[0] = false;
-            graph.forEachNode(node -> {
-                final int nodeCommunity = bestPartition[node];
-                bestCommunity[0] = nodeCommunity;
-                bestPartition[0] = -1;
-                bestShared[0] = weightIntoCom(node, community[node]);
-                s_tot[nodeCommunity] -= ki[node];
-                bestPartition[node] = -1;
-                forEachConnectedCommunity(node, c -> {
-                    final double s = weightIntoCom(node, c);
-                    final double g = 2. * s - s_tot[c] * ki[node] / m;
-                    if (g > bestGain[0]) {
-                        bestGain[0] = g;
-                        bestCommunity[0] = c;
-                        bestShared[0] = s;
+        final int[] lCommunity = new int[nodeCount];
+        Arrays.setAll(lCommunity, i -> i);
+        final IntPointer bestCommunity = Pointer.wrap(-1);
+        final DoublePointer bestGain = Pointer.wrap(.0);
+        final BoolPointer imp = Pointer.wrap(true);
+        final NodeIterator rndIter = new ShuffledNodeIterator(graph, nodeCount);
+        for (; iterations < maxIterations && imp.v; iterations++) {
+            System.arraycopy(lCommunity, 0, this.community, 0, nodeCount);
+            imp.v = false;
+            rndIter.forEachNode(node -> {
+                final int nodeCommunity = lCommunity[node];
+                bestCommunity.v = nodeCommunity;
+                sTot[nodeCommunity] -= ki[node];
+                lCommunity[node] = -1;
+                bestGain.v = .0;
+                forEachConnectedCommunity(lCommunity, node, c -> {
+                    final double s = weightIntoCom(lCommunity, node, c);
+                    final double g = 2. * s - sTot[c] * ki[node] / m;
+                    if (g > bestGain.v) {
+                        bestGain.v = g;
+                        bestCommunity.v = c;
                     }
                 });
-                final int best = bestCommunity[0];
-                s_tot[best] += ki[node];
-                bestPartition[node] = best;
-                if (best != nodeCommunity) imp[0] = true;
-
+                final int best = bestCommunity.v;
+                sTot[best] += ki[node];
+                lCommunity[node] = best;
+                imp.v |= best != nodeCommunity;
                 return true;
             });
-        } while (imp[0]);
-
+        }
         return this;
     }
 
-    private double weightIntoCom(int node, int com) {
+    @Override
+    public int[] getCommunityIds() {
+        return community;
+    }
+
+    @Override
+    public int getIterations() {
+        return iterations;
+    }
+
+    @Override
+    public long getCommunityCount() {
+        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
+        for (int i = 0; i < nodeCount; i++) {
+            bitSet.put(community[i]);
+        }
+        return bitSet.size();
+    }
+
+    @Override
+    public Stream<Result> resultStream() {
+        return IntStream.range(0, nodeCount)
+                .mapToObj(i -> new Result(graph.toOriginalNodeId(i), community[i]));
+    }
+
+    private double weightIntoCom(int[] communities, int node, int c) {
         final double[] shared = {.0};
         graph.forEachRelationship(node, D, (s, t, r) -> {
-            if (community[t] == com) {
+            if (communities[t] == c) {
                 shared[0] += graph.weightOf(s, t);
             }
             return true;
@@ -105,10 +126,10 @@ public class Louvain extends Algorithm<Louvain> {
         return shared[0];
     }
 
-    private void forEachConnectedCommunity(int node, IntConsumer consumer) {
+    private void forEachConnectedCommunity(int[] communities, int node, IntConsumer consumer) {
         final SimpleBitSet visited = new SimpleBitSet(nodeCount);
         graph.forEachRelationship(node, D, (s, t, r) -> {
-            final int c = community[t];
+            final int c = communities[t];
             if (visited.contains(c)) {
                 return true;
             }
@@ -132,6 +153,9 @@ public class Louvain extends Algorithm<Louvain> {
 
     @Override
     public Louvain release() {
-        return null;
+        graph = null;
+        sTot = null;
+        ki = null;
+        return this;
     }
 }
