@@ -2,8 +2,9 @@ package org.neo4j.graphalgo.impl.louvain;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.NodeIterator;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.sources.ShuffledNodeIterator;
+import org.neo4j.graphalgo.core.utils.Pointer;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -14,13 +15,15 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * sequential weighted undirected louvain
+ * sequential weighted undirected modularity based community detection
+ * (first phase of louvain algo)
  *
  * @author mknblch
  */
 public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     public static final Direction D = Direction.OUTGOING;
+    public static final int EMPTY = -1;
 
     private Graph graph;
     private final int nodeCount;
@@ -29,13 +32,11 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     private double[] ki;
     private final int[] community;
     private final int maxIterations;
-
     private int iterations;
     private int bestCommunity;
     private double bestGain;
     private boolean improvement;
     private final SimpleBitSet visited;
-
 
     public Louvain(Graph graph, int maxIterations) {
         this.graph = graph;
@@ -48,6 +49,9 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         init();
     }
 
+    /**
+     * init ki, sTot & m
+     */
     private void init() {
         for (int node = 0; node < nodeCount; node++) {
             graph.forEachRelationship(node, D, (s, t, r) -> {
@@ -62,7 +66,12 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         Arrays.setAll(community, i -> i);
     }
 
+    /**
+     * compute first phase louvain
+     * @return
+     */
     public Louvain compute() {
+        final ProgressLogger progressLogger = getProgressLogger();
         improvement = true;
         iterations = 0;
         final NodeIterator rndIter = new ShuffledNodeIterator(graph, nodeCount);
@@ -70,32 +79,41 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
             improvement = false;
             rndIter.forEachNode(node -> {
                 improvement |= compute(node);
+                progressLogger.logProgress(node, nodeCount, () -> String.format("Iteration %d", iterations));
                 return true;
             });
         }
+        progressLogger.logDone();
         return this;
     }
 
+    /**
+     * calc mod-gain for a node and move it into its best community
+     * @param node node id
+     * @return true if the node moved into another community
+     */
     private boolean compute(int node) {
-        final int nodeCommunity = community[node];
-        bestCommunity = nodeCommunity;
-        sTot[nodeCommunity] -= ki[node];
-        community[node] = -1;
+        final int currentCommunity = bestCommunity = community[node];
+        sTot[currentCommunity] -= ki[node];
+        community[node] = EMPTY;
         bestGain = .0;
         forEachConnectedCommunity(node, c -> {
-            final double s = weightIntoCom(node, c);
-            final double g = 2. * s - sTot[c] * ki[node] / m;
+            final double g = 2. * weightIntoCom(node, c) - sTot[c] * ki[node] / m;
             if (g > bestGain) {
                 bestGain = g;
                 bestCommunity = c;
             }
         });
-        final int best = bestCommunity;
-        sTot[best] += ki[node];
-        community[node] = best;
-        return best != nodeCommunity;
+        sTot[bestCommunity] += ki[node];
+        community[node] = bestCommunity;
+        return bestCommunity != currentCommunity;
     }
 
+    /**
+     * run consumer of each connected community once
+     * @param node node id
+     * @param consumer community id consumer
+     */
     private void forEachConnectedCommunity(int node, IntConsumer consumer) {
         visited.clear();
         graph.forEachRelationship(node, D, (s, t, r) -> {
@@ -109,27 +127,45 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         });
     }
 
+    /**
+     * sum weights from node into community c
+     * @param node node id
+     * @param c community id
+     * @return sum of weights from node into community c
+     */
     private double weightIntoCom(int node, int c) {
-        final double[] shared = {.0};
+        final Pointer.DoublePointer p = Pointer.wrap(.0);
         graph.forEachRelationship(node, D, (s, t, r) -> {
             if (community[t] == c) {
-                shared[0] += graph.weightOf(s, t);
+                p.v += graph.weightOf(s, t);
             }
             return true;
         });
-        return shared[0];
+        return p.v;
     }
 
+    /**
+     * get communities
+     * @return node-id to community id mapping
+     */
     @Override
     public int[] getCommunityIds() {
         return community;
     }
 
+    /**
+     * number of iterations until convergence
+     * @return number of iterations
+     */
     @Override
     public int getIterations() {
         return iterations;
     }
 
+    /**
+     * calculate number of communities
+     * @return community count
+     */
     @Override
     public long getCommunityCount() {
         final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
@@ -139,17 +175,28 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         return bitSet.size();
     }
 
+    /**
+     * return a stream of nodeId-CommunityId tuples
+     * @return result tuple stream
+     */
     @Override
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(i -> new Result(graph.toOriginalNodeId(i), community[i]));
     }
 
+    /**
+     * @return this
+     */
     @Override
     public Louvain me() {
         return this;
     }
 
+    /**
+     * release structures
+     * @return this
+     */
     @Override
     public Louvain release() {
         graph = null;
