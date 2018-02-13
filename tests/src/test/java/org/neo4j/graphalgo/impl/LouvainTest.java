@@ -38,6 +38,7 @@ import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
+import org.neo4j.graphalgo.serialize.TestProgressLogger;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
@@ -169,6 +170,7 @@ public class LouvainTest {
     public void testWeightedSequentialLouvain() throws Exception {
         setup(unidirectional);
         final LouvainAlgorithm louvain = new Louvain(graph, 100)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute();
 
         printCommunities(louvain);

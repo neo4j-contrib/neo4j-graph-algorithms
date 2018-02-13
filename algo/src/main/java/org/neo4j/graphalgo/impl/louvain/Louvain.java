@@ -27,8 +27,9 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     private Graph graph;
     private final int nodeCount;
-    private double m;
+    private double m, m2;
     private double[] sTot;
+    private double[] sIn;
     private double[] ki;
     private final int[] community;
     private final int maxIterations;
@@ -36,6 +37,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     private int bestCommunity;
     private double bestGain;
     private boolean improvement;
+    private double bestWeight;
     private final SimpleBitSet visited;
 
     public Louvain(Graph graph, int maxIterations) {
@@ -45,6 +47,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         ki = new double[nodeCount];
         community = new int[nodeCount];
         sTot = new double[nodeCount];
+        sIn = new double[nodeCount];
         visited = new SimpleBitSet(nodeCount);
         init();
     }
@@ -62,8 +65,10 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
                 return true;
             });
         }
-        Arrays.setAll(sTot, i -> ki[i]);
+        System.arraycopy(ki, 0, sTot, 0, nodeCount);
         Arrays.setAll(community, i -> i);
+        Arrays.fill(sIn, 0.);
+        m2 = 2 * m;
     }
 
     /**
@@ -78,33 +83,52 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         for (; iterations < maxIterations && improvement; iterations++) {
             improvement = false;
             rndIter.forEachNode(node -> {
-                improvement |= compute(node);
-                progressLogger.logProgress(node, nodeCount, () -> String.format("Iteration %d", iterations));
+                improvement |= move(node);
+                progressLogger.logProgress(node, nodeCount - 1, () -> String.format("Iteration %d", iterations));
                 return true;
             });
+            if (!improvement) {
+                progressLogger.logProgress(1.0, () -> "No further modularity improvement");
+            } else {
+                progressLogger.logProgress(1.0, () -> "New modularity: " + modularity());
+            }
+
         }
         progressLogger.logDone();
         return this;
     }
 
+    public double modularity() {
+        final Pointer.DoublePointer q = Pointer.wrap(0.);
+        for (int k = 0; k < nodeCount; k++) {
+            q.v += (sIn[k] / m2) - (Math.pow(sTot[k] / m2, 2.0));
+        }
+        return q.v;
+    }
+
     /**
-     * calc mod-gain for a node and move it into its best community
+     * calc mod-gain for a node and move it into the best community
      * @param node node id
      * @return true if the node moved into another community
      */
-    private boolean compute(int node) {
+    private boolean move(int node) {
         final int currentCommunity = bestCommunity = community[node];
         sTot[currentCommunity] -= ki[node];
+        sIn[currentCommunity] -= 2. * weightIntoCom(node, currentCommunity);
         community[node] = EMPTY;
         bestGain = .0;
+        bestWeight = .0;
         forEachConnectedCommunity(node, c -> {
-            final double g = 2. * weightIntoCom(node, c) - sTot[c] * ki[node] / m;
+            final double wic = weightIntoCom(node, c);
+            final double g = 2. * wic - sTot[c] * ki[node] / m;
             if (g > bestGain) {
                 bestGain = g;
                 bestCommunity = c;
+                bestWeight = wic;
             }
         });
         sTot[bestCommunity] += ki[node];
+        sIn[bestCommunity] += 2. * bestWeight;
         community[node] = bestCommunity;
         return bestCommunity != currentCommunity;
     }
@@ -201,6 +225,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     public Louvain release() {
         graph = null;
         sTot = null;
+        sIn = null;
         ki = null;
         return this;
     }
