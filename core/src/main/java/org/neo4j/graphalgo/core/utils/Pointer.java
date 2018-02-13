@@ -37,10 +37,10 @@ public class Pointer {
         }
     }
 
-    public static class GPointer<G>  {
+    public static class GenericPointer<G>  {
         public G v;
 
-        public GPointer(G v) {
+        public GenericPointer(G v) {
             this.v = v;
         }
     }
@@ -61,7 +61,7 @@ public class Pointer {
         return new DoublePointer(v);
     }
 
-    public static <G> GPointer wrap(G v) {
-        return new GPointer<>(v);
+    public static <T> GenericPointer wrap(T v) {
+        return new GenericPointer<>(v);
     }
 }

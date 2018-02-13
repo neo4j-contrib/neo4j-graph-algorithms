@@ -12,20 +12,11 @@ import java.util.function.IntPredicate;
 public class ShuffledNodeIterator implements NodeIterator {
 
     private final NodeIterator iterator;
-    private final Random random;
-
     private final int shuffleSize;
 
     public ShuffledNodeIterator(NodeIterator iterator, int shuffleSize) {
         this.iterator = iterator;
         this.shuffleSize = shuffleSize;
-        this.random = new Random();
-    }
-
-    public ShuffledNodeIterator(NodeIterator iterator, int shuffleSize, long seed) {
-        this.iterator = iterator;
-        this.shuffleSize = shuffleSize;
-        this.random = new Random(seed);
     }
 
     @Override
@@ -40,7 +31,11 @@ public class ShuffledNodeIterator implements NodeIterator {
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        return new ShuffledIterAdapter(iterator.nodeIterator(), shuffleSize);
+        return new ShuffledIterAdapter(iterator.nodeIterator(), shuffleSize, System.currentTimeMillis());
+    }
+
+    public PrimitiveIntIterator nodeIterator(long seed) {
+        return new ShuffledIterAdapter(iterator.nodeIterator(), shuffleSize, seed);
     }
 
     private class ShuffledIterAdapter implements PrimitiveIntIterator {
@@ -48,10 +43,12 @@ public class ShuffledNodeIterator implements NodeIterator {
         private final PrimitiveIntIterator parent;
         private final int[] data;
         private int offset = 0;
+        private final Random random;
 
-        private ShuffledIterAdapter(PrimitiveIntIterator parent, int rndSize) {
+        private ShuffledIterAdapter(PrimitiveIntIterator parent, int rndSize, long seed) {
             this.parent = parent;
             this.data = new int[rndSize];
+            this.random = new Random(seed);
         }
 
         @Override
@@ -62,7 +59,7 @@ public class ShuffledNodeIterator implements NodeIterator {
             while (parent.hasNext() && offset < data.length) {
                 data[offset++] = parent.next();
             }
-            shuffle(data, offset);
+            shuffle();
             return offset > 0;
         }
 
@@ -70,16 +67,15 @@ public class ShuffledNodeIterator implements NodeIterator {
         public int next() {
             return data[--offset];
         }
-    }
 
-    private void shuffle(int[] a, int length) {
-        random.nextInt();
-        int t;
-        for (int i = 0; i < length; i++) {
-            int change = i + random.nextInt(length - i);
-            t = a[i];
-            a[i] = a[change];
-            a[change] = t;
+        private void shuffle() {
+            int t, rnd;
+            for (int i = 0; i < offset; i++) {
+                rnd = i + random.nextInt(offset - i);
+                t = data[i];
+                data[i] = data[rnd];
+                data[rnd] = t;
+            }
         }
     }
 }
