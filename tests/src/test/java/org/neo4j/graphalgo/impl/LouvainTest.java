@@ -169,7 +169,8 @@ public class LouvainTest {
     @Test
     public void testWeightedSequentialLouvain() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new Louvain(graph, 100, Pools.DEFAULT, 6)
+        final LouvainAlgorithm louvain =
+                new Louvain(graph, 100, Pools.DEFAULT, 6, AllocationTracker.EMPTY)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute();
 
