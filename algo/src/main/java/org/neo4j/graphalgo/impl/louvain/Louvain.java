@@ -30,8 +30,8 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
      * only outgoing directions are visited since the graph itself has to
      * be loaded as undirected.
      */
-    public static final Direction D = Direction.OUTGOING;
-
+    private static final Direction D = Direction.OUTGOING;
+    private static final int SHUFFLE_BUFFER_SIZE = 256;
     private static final int NONE = -1;
     private static final double MINIMUM_MODULARITY = Double.NEGATIVE_INFINITY; // -1.0;
 
@@ -56,11 +56,11 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeIterator = new ShuffledNodeIterator(graph, nodeCount);
+        this.nodeIterator = new ShuffledNodeIterator(graph, SHUFFLE_BUFFER_SIZE);
         ki = new double[nodeCount];
         communities = new int[nodeCount];
-        // (1x double + 2x int) * N
-        tracker.add(16 * nodeCount);
+        // (1x double + 1x int) * N
+        tracker.add(12 * nodeCount);
     }
 
     /**
@@ -213,7 +213,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         this.pool = null;
         this.communities = null;
         this.ki = null;
-        tracker.remove(16 * nodeCount);
+        tracker.remove(12 * nodeCount);
         return this;
     }
 
@@ -258,10 +258,15 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
             final int denominator = nodeCount * concurrency;
             nodeIterator.forEachNode(node -> {
                 improvement.v |= move(node);
-                progressLogger.logProgress(counter.getAndIncrement(), denominator, () -> String.format("Iteration %d", iterations));
+                progressLogger.logProgress(
+                        counter.getAndIncrement(),
+                        denominator,
+                        () -> String.format("Iteration %d", iterations));
                 return true;
             });
-            this.q = improvement.v ? modularity() : MINIMUM_MODULARITY;
+            if (improvement.v) {
+                this.q = modularity();
+            }
         }
 
         /**
@@ -317,7 +322,6 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
             });
         }
 
-
         /**
          * calc graph modularity
          */
@@ -328,7 +332,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
                 final int c = localCommunities[k];
                 if (!bitSet.contains(c)) {
                     bitSet.put(c);
-                    q += (sIn[c] / m2) - (Math.pow(sTot[c] / m2, 2.0));
+                    q += (sIn[c] / m2) - (Math.pow(sTot[c] / m2, 2.));
                 }
             }
             return q;

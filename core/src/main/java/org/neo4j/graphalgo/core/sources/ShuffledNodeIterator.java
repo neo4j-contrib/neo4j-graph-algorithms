@@ -7,6 +7,8 @@ import java.util.Random;
 import java.util.function.IntPredicate;
 
 /**
+ * NodeIterator adapter with randomized order
+ *
  * @author mknblch
  */
 public class ShuffledNodeIterator implements NodeIterator {
@@ -31,7 +33,7 @@ public class ShuffledNodeIterator implements NodeIterator {
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        return new ShuffledIterAdapter(iterator.nodeIterator(), shuffleSize, System.currentTimeMillis());
+        return new ShuffledIterAdapter(iterator.nodeIterator(), shuffleSize, System.nanoTime());
     }
 
     public PrimitiveIntIterator nodeIterator(long seed) {
@@ -59,7 +61,7 @@ public class ShuffledNodeIterator implements NodeIterator {
             while (parent.hasNext() && offset < data.length) {
                 data[offset++] = parent.next();
             }
-            shuffle();
+            shuffle(data, offset, random);
             return offset > 0;
         }
 
@@ -68,14 +70,15 @@ public class ShuffledNodeIterator implements NodeIterator {
             return data[--offset];
         }
 
-        private void shuffle() {
-            int t, rnd;
-            for (int i = 0; i < offset; i++) {
-                rnd = i + random.nextInt(offset - i);
-                t = data[i];
-                data[i] = data[rnd];
-                data[rnd] = t;
-            }
+    }
+
+    private static void shuffle(int[] data, int length, Random rnd) {
+        int t, r;
+        for (int i = 0; i < length; i++) {
+            r = i + rnd.nextInt(length - i);
+            t = data[i];
+            data[i] = data[r];
+            data[r] = t;
         }
     }
 }
