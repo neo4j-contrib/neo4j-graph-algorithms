@@ -55,7 +55,7 @@ If the graph has no weights or all relationships have the same weight then any s
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/mst.png[]
+image::mst.png[]
 
 
 .Create sample graph
@@ -76,7 +76,7 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-minst-grap
 
 .Results
 
-image::{img}/minst_result.png[]
+image::minst_result.png[]
 
 
 Maximum weighted tree spanning algorithm is similar to the mininum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
@@ -90,7 +90,7 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-maxst-grap
 ----
 
 
-image::{img}/maxst_result.png[]
+image::maxst_result.png[]
 
 === k-Spanning tree
 

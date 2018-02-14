@@ -1,0 +1,257 @@
+buildscript {
+    ext {
+        asciidoctorjVersion = '1.5.6'
+        asciidoctorjPdfVersion = '1.5.0-alpha.16'
+        asciidoctorjDiagramVersion = '1.5.4.1'
+        asciidoctorGroovyDslVersion = '1.0.0.Alpha2'
+        catalogDir = "$projectDir/docbook/catalog"
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.asciidoctor:asciidoctorj:$asciidoctorjVersion"
+        classpath "org.asciidoctor:asciidoctorj-pdf:$asciidoctorjPdfVersion"
+        classpath "org.asciidoctor:asciidoctorj-diagram:$asciidoctorjDiagramVersion"
+        classpath "org.asciidoctor:asciidoctorj-groovy-dsl:$asciidoctorGroovyDslVersion"
+        classpath 'net.sf.docbook:docbook-xsl:1.79.1:ns-resources@zip'
+        classpath fileTree(dir: "${rootProject.projectDir}/lib", include: '*.jar')
+        classpath files(catalogDir)
+    }
+}
+
+plugins {
+    id 'base'
+    id 'org.neo4j.doc.build.saxon' version '1.0-alpha01'
+    id 'org.neo4j.doc.build.docbook' version '1.0-alpha01'
+}
+
+if (!project.hasProperty('graphAlgoVersion')) { ext.graphAlgoVersion = '3.2.9.0' }
+
+ext {
+    versionParts = graphAlgoVersion.split('-')
+    versions = [
+        'graphAlgo' : graphAlgoVersion,
+        'graphAlgoDocs' : versionParts[0].split('\\.')[0..1].join('.'),
+    ]
+    if (1 < versionParts.size()) { versions.graphAlgoDocs += '-preview' }
+
+    asciidoctorAttributes = [
+        'common': [
+            'doctype'            : 'book',
+            'icons'              : 'font',
+            'attribute-missing'  : 'warn',
+            'docs-version'       : versions.graphAlgoDocs,
+        ],
+        'docbook': [
+            'imagesdir'          : 'images',
+        ],
+        'html': [
+            'stylesdir'          : 'css',
+            'linkcss'            : '',
+            'imagesdir'          : 'images',
+        ],
+        'pdf': [
+            'source-highlighter': 'rouge',
+            'toc'               : '',
+            'showlinks'         : '',
+            'nonhtmloutput'     : '',
+        ]
+    ]
+    docsBaseUri = "https://neo4j.com/docs"
+    crossReferenceBase = [ // We have no strategy for cross references; always link to current.
+            'operations-manual' : "${docsBaseUri}/operations-manual/current",
+            'developer-manual'  : "${docsBaseUri}/developer-manual/current",
+            'java-reference'    : "${docsBaseUri}/java-reference/current",
+            'rest-docs'         : "${docsBaseUri}/rest-docs/current",
+            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
+            'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
+    ]
+    asciidocSourceDir = "$projectDir/asciidoc"
+    distDir = "$buildDir/distributions"
+}
+
+def getAsciidoctor() {
+    if (!project.hasProperty('adoc')) {
+        ext.adoc = org.asciidoctor.Asciidoctor.Factory.create()
+        asciidoctor.requireLibrary("asciidoctor-diagram")
+    }
+    ext.adoc
+}
+
+task docbook {
+    description 'Build DocBook.'
+    ext.sourceDir = asciidocSourceDir
+    ext.sourceFile = file("$sourceDir/index.adoc")
+    ext.outputDir = "$buildDir/docbook/${versions.graphAlgoDocs}"
+    inputs.dir sourceDir
+    outputs.dir outputDir
+    doLast {
+        def attrs = asciidoctorAttributes.common + asciidoctorAttributes.docbook
+        def opts = org.asciidoctor.OptionsBuilder.options()
+                .backend('docbook5')
+                .safe(org.asciidoctor.SafeMode.UNSAFE)
+                .toDir(file(outputDir))
+                .mkDirs(true)
+                .attributes(attrs)
+        getAsciidoctor().convertFile(sourceFile, opts.get())
+    }
+    doLast {
+        copy {
+            from(projectDir) {
+                include 'images/**'
+            }
+            into outputDir
+        }
+    }
+}
+
+html {
+    dependsOn docbook
+    ext.sourceDir = docbook.outputDir
+    ext.sourceFile = "$sourceDir/index.xml"
+    ext.outputDir = "$buildDir/html/${versions.graphAlgoDocs}"
+    inputs.file sourceFile
+    outputs.dir outputDir
+
+    def libraryLinks = [
+        "Operations_Manual=${crossReferenceBase['operations-manual']}",
+        "Developer_Manual=${crossReferenceBase['developer-manual']}/",
+        "OGM_Manual=${crossReferenceBase['ogm-manual']}/",
+        "Java_Reference=${crossReferenceBase['java-reference']}/",
+        "REST_Docs=${crossReferenceBase['rest-docs']}/",
+    ].join(" ")
+    def scripts = [
+        '//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js',
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/addon/runmode/runmode.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/cypher/cypher.min.js',
+        'javascript/colorize.js',
+        'javascript/tabs-for-chunked.js',
+        'javascript/mp-nav.js',
+        'javascript/versionswitcher.js',
+        'javascript/version.js',
+    ].join(" ")
+    def styles = [
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css',
+        '//fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,600,300italic',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/theme/neo.min.css',
+        'css/chunked-base.css',
+        'css/extra.css'
+    ].join(" ")
+
+    stylesheet "classpath:xsl/custom/xhtml5/chunk.xsl"
+    input sourceFile
+
+    // Stylesheet parameters
+    parameters ([
+        "base.dir": "${outputDir}",
+        "chunk.section.depth": "0",
+        "html.ext": ".html",
+        "make.clean.html": "1",
+        "chunker.output.method": "html",
+        "chunker.output.indent": "yes",
+        "use.id.as.dirname": "1",
+        "neo.documentation.library.links": libraryLinks,
+        "generate.toc": "''",
+        "header.rule": "0",
+        "neo.search": "1",
+        "html.script": scripts,
+        "html.stylesheet": styles
+    ])
+    doLast {
+        copy {
+            from(docbook.outputDir) {
+                include 'images/**'
+            }
+            from(projectDir) {
+                include 'javascript/**'
+                include 'css/**'
+            }
+            into outputDir
+        }
+    }
+}
+
+task asciidoctorHtml {
+    description 'Build HTML'
+    ext.sourceDir = asciidocSourceDir
+    ext.sourceFile = file("$sourceDir/index.adoc")
+    ext.outputDir = "$buildDir/asciidoctor-html/${versions.graphAlgoDocs}"
+    inputs.dir sourceDir
+    outputs.dir outputDir
+    doLast {
+        def attrs = asciidoctorAttributes.common + asciidoctorAttributes.html
+        def opts = org.asciidoctor.OptionsBuilder.options()
+                .backend('html5')
+                .safe(org.asciidoctor.SafeMode.UNSAFE)
+                .toDir(file(outputDir))
+                .mkDirs(true)
+                .attributes(attrs)
+        getAsciidoctor().convertFile(sourceFile, opts.get())
+    }
+    doLast {
+        copy {
+            from(projectDir) {
+                include 'images/**'
+            }
+            into outputDir
+        }
+    }
+}
+
+task packageHtml(type: Tar, dependsOn: html) {
+    description 'Package HTML for distribution.'
+    baseName 'graph-algorithms'
+    extension 'tar.gz'
+    version versions.graphAlgoDocs
+    compression = Compression.GZIP
+    from { html }
+    into "$baseName/$version"
+    destinationDir file(distDir)
+}
+
+task pdf {
+    description 'Build PDF.'
+    ext.sourceDir = asciidocSourceDir
+    ext.sourceFile = file("$sourceDir/index.adoc")
+    ext.outputDir = "$buildDir/pdf"
+    ext.outputFilename = "neo4j-graph-algorithms-${versions.graphAlgoDocs}.pdf"
+    ext.outputFile = "$outputDir/$outputFilename"
+    ext.imagesDir = "$outputDir/images"
+    ext.imagesOutDir = imagesDir
+    inputs.dir sourceDir
+    outputs.file outputFile
+    doFirst {
+        copy {
+            from (projectDir) {
+                include 'images/*'
+            }
+            into(outputDir)
+        }
+    }
+    doLast {
+        // asciidoctor-diagram 1.5.4.1 breaks asciidoctor-pdf: using OptionsBuilder#toFile() (-o, --out-file), the file path
+        // is created as a directory, and 'imagesoutdir' is resolved wrongly.
+        // Work around by using #toDir (-D, --destination-dir) and manually renaming the output file.
+        // See https://github.com/asciidoctor/asciidoctor-pdf/issues/842
+        def attrs = asciidoctorAttributes.common + asciidoctorAttributes.pdf + [
+            'imagesdir'    : imagesDir.toString(),
+            'imagesoutdir' : imagesOutDir.toString(),
+        ]
+        def opts = org.asciidoctor.OptionsBuilder.options()
+                .backend('pdf')
+                .safe(org.asciidoctor.SafeMode.UNSAFE)
+                // .toFile(file(outputFile))                // workaround
+                .toDir(file(outputDir))                     // workaround
+                .mkDirs(true)
+                .attributes(attrs)
+        getAsciidoctor().convertFile(sourceFile, opts.get())
+        file("$outputDir/index.pdf").renameTo(outputFile)   // workaround
+    }
+}
+
+// vim: set fdm=expr:

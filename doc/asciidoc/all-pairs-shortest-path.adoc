@@ -36,7 +36,7 @@ The all pairs shortest path algorithm has found uses in the following areas:
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/sssp.png[]
+image::sssp.png[]
 
 .Create sample graph
 [source,cypher]

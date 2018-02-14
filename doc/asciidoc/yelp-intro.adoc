@@ -31,7 +31,7 @@ We also do not need the actual text, but only meta-data about them e.g. who wrot
 
 == Graph Model
 
-image::{img}/yelp_graph_model.png[]
+image::yelp_graph_model.png[]
 
 Graph consist of nodes labeled User, that can have a FRIEND relationship with other users. Users also write reviews and tips about businesses. We store all the meta-data ( location of business etc.) as properties of nodes except for categories of the businesses, which are represented by separate nodes labeled Category.
 

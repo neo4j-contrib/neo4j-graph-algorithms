@@ -58,7 +58,7 @@ For a more accurate finding of communities, Jaccard’s index is used to aggrega
 
 == Algorithm explanation on simple sample graph
 
-image::{img}/label_propagation.png[]
+image::label_propagation.png[]
 
 .Create sample graph
 [source,cypher]
@@ -221,5 +221,5 @@ _Label Propagation_ is a graph partitioning algorithm already implemented in cur
 
 - adapt existing procedure to algorithm api
 
-// tag::implementation[]
+// end::implementation[]
 endif::implementation[]
