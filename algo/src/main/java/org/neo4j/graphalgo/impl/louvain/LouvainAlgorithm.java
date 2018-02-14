@@ -73,7 +73,7 @@ public interface LouvainAlgorithm {
 
         if (graph instanceof HugeGraph) {
             if (config.hasWeightProperty()) {
-                return new Louvain(graph, config.getIterations(DEFAULT_ITERATIONS));
+                return new Louvain(graph, config.getIterations(DEFAULT_ITERATIONS), Pools.DEFAULT, config.getConcurrency());
             }
 
             return new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.create(), config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS));
