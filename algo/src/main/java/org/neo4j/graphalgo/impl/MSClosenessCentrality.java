@@ -120,5 +120,13 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
             this.nodeId = nodeId;
             this.centrality = centrality;
         }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "nodeId=" + nodeId +
+                    ", centrality=" + centrality +
+                    '}';
+        }
     }
 }

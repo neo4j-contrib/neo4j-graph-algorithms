@@ -20,6 +20,8 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongSet;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,10 +30,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
@@ -138,30 +143,6 @@ public class LouvainTest {
         }
     }
 
-
-    private void assertUnion(String[] nodeNames, int[] communityIds) {
-        int current = -1;
-        for (String name : nodeNames) {
-            if (!nameMap.containsKey(name)) {
-                throw new IllegalArgumentException("unknown node name: " + name);
-            }
-            final int id = nameMap.get(name);
-            if (current == -1) {
-                current = communityIds[id];
-            } else {
-                assertEquals("Node " + name + " belongs to wrong community " + communityIds[id], current, communityIds[id]);
-            }
-        }
-    }
-
-    private void assertDisjoint(String[] nodeNames, int[] communityIds) {
-        final IntSet set = new IntHashSet();
-        for (String name : nodeNames) {
-            final int communityId = communityIds[nameMap.get(name)];
-            assertTrue("Node " + name + " belongs to wrong community " + communityId, set.add(communityId));
-        }
-    }
-
     public void printCommunities(LouvainAlgorithm louvain) {
         try (Transaction transaction = DB.beginTx()) {
             louvain.resultStream()
@@ -188,7 +169,7 @@ public class LouvainTest {
     @Test
     public void testUnweightedSequential() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new Louvain(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
+        final LouvainAlgorithm louvain = new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.EMPTY,1, MAX_ITERATIONS)
                 .compute();
 
         printCommunities(louvain);
@@ -225,5 +206,41 @@ public class LouvainTest {
         assertUnion(new String[]{"b", "e"}, louvain.getCommunityIds());
     }
 
+    private void assertUnion(String[] nodeNames, Object values) {
+        final int[] communityIds = toIntArray(values);
+        int current = -1;
+        for (String name : nodeNames) {
+            if (!nameMap.containsKey(name)) {
+                throw new IllegalArgumentException("unknown node name: " + name);
+            }
+            final int id = nameMap.get(name);
+            if (current == -1) {
+                current = communityIds[id];
+            } else {
+                assertEquals("Node " + name + " belongs to wrong community " + communityIds[id], current, communityIds[id]);
+            }
+        }
+    }
 
+    private void assertDisjoint(String[] nodeNames, Object values) {
+        final int[] communityIds = toIntArray(values);
+        final IntSet set = new IntHashSet();
+        for (String name : nodeNames) {
+            final int communityId = communityIds[nameMap.get(name)];
+            assertTrue("Node " + name + " belongs to wrong community " + communityId, set.add(communityId));
+        }
+    }
+
+    public static int[] toIntArray(Object communityIds) {
+        if (communityIds instanceof LongArray) {
+            final LongArray array = (LongArray) communityIds;
+            final long size = array.size();
+            final int[] data = new int[Math.toIntExact(size)];
+            for (int i = 0; i < size; i++) {
+                data[i] = Math.toIntExact(array.get(i));
+            }
+            return data;
+        }
+        return (int[]) communityIds;
+    }
 }

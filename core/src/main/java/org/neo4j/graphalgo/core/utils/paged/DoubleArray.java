@@ -18,6 +18,8 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
+import org.neo4j.graphalgo.core.write.PropertyTranslator;
+
 import java.util.Arrays;
 
 public final class DoubleArray extends PagedDataStructure<double[]> {
@@ -54,9 +56,26 @@ public final class DoubleArray extends PagedDataStructure<double[]> {
         return ret;
     }
 
+    public void add(long index, double value) {
+        final int pageIndex = pageIndex(index);
+        final int indexInPage = indexInPage(index);
+        pages[pageIndex][indexInPage] += value;
+    }
+
     public void fill(double value) {
         for (double[] page : pages) {
             Arrays.fill(page, value);
         }
     }
+
+    public static class Translator implements PropertyTranslator.OfDouble<DoubleArray> {
+
+        public static final PropertyTranslator<DoubleArray> INSTANCE = new Translator();
+
+        @Override
+        public double toDouble(final DoubleArray data, final long nodeId) {
+            return data.get(nodeId);
+        }
+    }
+
 }

@@ -1,0 +1,216 @@
+= Harmonic Centrality
+
+// tag::introduction[]
+Closeness centrality works best on connected graphs - results may be confused if there are multiple connected components.
+
+Harmonic centrality (also known as 'valued centrality') is a variant of closeness centrality that addresses this problem.
+As with many of the centrality algorithms, it originates from the field of social network analysis.
+// end::introduction[]
+
+
+== History, Explanation
+
+// tag::explanation[]
+Harmonic centrality was proposed by Marchiori and Latora [1] while trying to come up with a sensible notion of "average shortest path".
+They suggested replacing the average distance calculation from the closeness centrality algorithm with the harmonic mean of all distances.
+
+The algorithm operates as follows:
+
+* calculate the shortest path for each for each pair of nodes in the graph
+* for each node determine the distance from the node to all other nodes based on those shortest paths
+
+The *raw harmonic centrality* for a node is then calculated using the following formula:
+
+`raw harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself)`
+
+As with closeness centrality we can also calculate a *normalized harmonic centrality* with the following formula:
+
+`normalized harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself) / (number of nodes - 1)`
+
+The advantage of harmonic centrality is that ∞ are handled cleanly.
+Harmonic centrality and closeness centrality will often come up with similar results, but harmonic centrality can handle graphs that aren't connected. [3]
+
+Harmonic centrality was proposed independently by Dekker (2005)[4], using the name "valued centrality," and by Rochat (2009)[2].
+// end::explanation[]
+
+== When to use it / use-cases
+
+// tag::use-case[]
+Harmonic centrality was proposed as an alternative to closeness centrality, and therefore has similar use cases.
+
+For example, we might use it if we're trying to identify where in the city to place a new public service so that it's easily accessible for residents.
+If we're trying to spread a message on social media we could use the algorithm to find the key influencers that can help us achieve our goal.
+// end::use-case[]
+
+== Constraints / when not to use it
+
+// tag::constraint[]
+
+// end::constraint[]
+
+== Algorithm explanation on simple sample graph
+
+// image::harmonic_centrality.png[]
+
+
+.Create sample graph
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=create-sample-graph]
+----
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=stream-sample-graph]
+- yields centrality for each node
+----
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=write-sample-graph]
+- calculates closeness centrality and potentially writes back
+----
+
+Calculation:
+
+k = N-1 = 4
+
+     A     B     C     D     E
+ ---|-----------------------------
+ A  | 0     1     2     -     -    // distance between each pair of nodes
+ B  | 1     0     1     -     -    // or infinite if no path exists
+ C  | 2     1     0     -     -
+ D  | -     -     -     0     1
+ E  | -     -     -     1     0
+ ---|------------------------------
+ A  | 0     1    1/2    0     0    // inverse
+ B  | 1     0     1     0     0
+ C  |1/2    1     0     0     0
+ D  | 0     0     0     0     1
+ E  | 0     0     0     1     0
+ ---|------------------------------
+sum |1.5    2    1.5    1     1
+ ---|------------------------------
+ *k |0.37  0.5  0.37  0.25  0.25
+
+instead of calculating the farness we sum the inverse
+of each cell and multiply by 1/(n-1)
+
+
+
+== Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.closeness.harmonic(label:String, relationship:String,
+{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4})
+YIELD nodes,loadMillis, computeMillis, writeMillis
+- calculates closeness centrality and potentially writes back
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
+| write | boolean | true | yes | if result should be written back as node property
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| writeProperty | string | 'centrality' | yes | property name written back to
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodes | int | number of nodes considered
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+
+
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.closeness.harmonic.stream(label:String, relationship:String,{concurrency:4})
+YIELD nodeId, centrality - yields centrality for each node
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph, if null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
+| concurrency | int | available CPUs | yes | number of concurrent threads
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| node | long | node id
+| centrality | float | closeness centrality weight
+|===
+
+== Cypher projection
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
+----
+
+== Versions
+
+We support the following versions of the harmonic centrality algorithm:
+
+* [*] undirected, unweighted
+
+* [ ] undirected, weighted
+
+
+== References
+
+// tag::references[]
+* [1] https://arxiv.org/pdf/cond-mat/0008357.pdf
+
+* [2] \https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
+
+* [3] https://arxiv.org/pdf/1308.2140.pdf
+
+* [4] https://www.cmu.edu/joss/content/articles/volume6/dekker/index.html
+// end::references[]
+
+
+
+ifdef::implementation[]
+// tag::implementation[]
+
+== Implementation Details
+
+...
+
+== Details
+
+- use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
+- MSBFS gives depth and number of sources.
+- in this scheme the farness can be calculated as follows
+
+ inverseFarness(v) = inverseFarness(v) + numberOfSources(v) * (1/depth(v))
+
+// end::implementation[]
+endif::implementation[]

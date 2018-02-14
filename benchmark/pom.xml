@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.neo4j</groupId>
         <artifactId>graph-algorithms-parent</artifactId>
-        <version>3.2.5.2</version>
+        <version>3.2.9.0</version>
     </parent>
 
     <artifactId>graph-algorithms-benchmark</artifactId>
@@ -105,17 +105,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-           <plugin>
-               <groupId>org.asciidoctor</groupId>
-               <artifactId>asciidoctor-maven-plugin</artifactId>
-               <version>1.5.3</version>
-               <executions>
-                   <execution>
-                       <id>generate-docs</id>
-                       <phase/>
-                   </execution>
-               </executions>
             </plugin>
         </plugins>
     </build>

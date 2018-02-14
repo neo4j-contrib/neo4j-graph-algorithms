@@ -26,7 +26,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -44,7 +43,6 @@ public final class DirectionFilteringTest extends RandomGraphTestCase {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
                 new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
     }

@@ -96,7 +96,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void test() {
-        final String cypher = "CALL algo.louvain('', '') " +
+        final String cypher = "CALL algo.louvain('', '', {concurrency:1}) " +
                 "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
 
         DB.execute(cypher).accept(row -> {
@@ -235,11 +235,11 @@ public class LouvainClusteringIntegrationTest {
     }
 
 
-    public int getClusterId(String nodeName) {
+    public Object getClusterId(String nodeName) {
 
-        int id[] = {0};
+        Object id[] = {0};
         DB.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
-            id[0] = (int) row.getNode("n").getProperty("community");
+            id[0] = row.getNode("n").getProperty("community");
             return true;
         });
         return id[0];

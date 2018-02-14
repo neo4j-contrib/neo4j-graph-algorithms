@@ -25,8 +25,8 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.write.DoubleArrayTranslator;
 import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.ShortestPathDeltaStepping;
 import org.neo4j.graphalgo.results.DeltaSteppingProcResult;
 import org.neo4j.graphdb.Direction;
@@ -146,7 +146,7 @@ public class ShortestPathDeltaSteppingProc {
                     .write(
                             configuration.get(WRITE_PROPERTY, DEFAULT_TARGET_PROPERTY),
                             shortestPaths,
-                            DoubleArrayTranslator.INSTANCE
+                            Translators.DOUBLE_ARRAY_TRANSLATOR
                     ));
         }
 

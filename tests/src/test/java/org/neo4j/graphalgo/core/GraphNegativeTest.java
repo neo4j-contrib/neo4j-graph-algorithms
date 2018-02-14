@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -29,7 +30,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationshipCursor;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
@@ -60,7 +60,6 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"},
                 new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
@@ -106,6 +105,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
+    @Ignore("Ignoring until Paul has implemented deduplication logic")
     public void shouldLoadWeightedRelationshipsNodesForNonExistingStringTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType("foo")
@@ -115,6 +115,7 @@ public final class GraphNegativeTest extends RandomGraphTestCase {
     }
 
     @Test
+    @Ignore("Ignoring until Paul has implemented deduplication logic")
     public void shouldLoadWeightedRelationshipsNodesForNonExistingTypes() {
         final Graph graph = new GraphLoader(RandomGraphTestCase.db)
                 .withRelationshipType(RelationshipType.withName("foo"))

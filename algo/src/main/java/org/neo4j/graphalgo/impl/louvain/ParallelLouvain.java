@@ -25,6 +25,7 @@ import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -171,7 +172,7 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
         return iterations;
     }
 
-    public int getCommunityCount() {
+    public long getCommunityCount() {
         final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
         for (int i = 0; i < communityIds.length; i++) {
             bitSet.put(communityIds[i]);

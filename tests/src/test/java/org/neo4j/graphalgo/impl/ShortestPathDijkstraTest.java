@@ -28,7 +28,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.lightweight.LightGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
@@ -96,7 +95,6 @@ public final class ShortestPathDijkstraTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{LightGraphFactory.class, "LightGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"},
                 new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );

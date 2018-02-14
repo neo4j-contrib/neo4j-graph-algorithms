@@ -43,6 +43,10 @@ public abstract class StatementApi {
                 .resolveDependency(ThreadToStatementContextBridge.class);
     }
 
+    protected <T> T resolve(Class<T> dependency) {
+        return api.getDependencyResolver().resolveDependency(dependency);
+    }
+
     public final <T, E extends Exception> T applyInTransaction(Function<T, E> fun)
     throws E {
         try (final Transaction tx = api.beginTx();

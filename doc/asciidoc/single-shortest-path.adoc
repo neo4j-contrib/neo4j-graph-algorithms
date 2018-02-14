@@ -1,0 +1,286 @@
+= Single Source Shortest Path
+
+// tag::introduction[]
+The _Single Source Shortest Path_ algorithm calculates the shortest weight path between a pair of nodes.
+A common algorithm used is Dijkstra.
+// end::introduction[]
+
+== History, Explanation
+
+// tag::explanation[]
+Path finding has a long history and is considered to be one of the classical graph problems.
+It has been researched as far back as the 19th century.
+Classical references are Wiener [1873], Lucas [1882] (describing a method due to C.P. Tr´emaux), and Tarry [1895] – see Biggs, Lloyd, and Wilson [1976].
+
+Dijkstra thought about the shortest path problem when working as a programmer at the Mathematical Center in Amsterdam in 1956 to demonstrate the capabilities of the new ARMAC computer.
+His wanted to choose both a problem and an answer (that would be produced by computer) that non-computing people could understand.
+He designed what is now known as Dijkstra's algorithm and later implemented it on the ARMAC for a slightly simplified transportation map of 64 cities in the Netherlands.
+
+It gained prominence in the early 1950s in the context of ‘alternate routing’
+i.e. finding a second shortest route if the shortest route is blocked.
+It found uses in urban planning http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[[1]] as well as telephone call routing.
+// end::explanation[]
+
+== When to use it / use-cases
+
+// tag::use-case[]
+The most common usage of the single source shortest path algorithm is finding directions between physical locations.
+Web mapping websites such as MapQuest or Google Maps use it to provide driving directions.
+
+It has also found uses in several other areas including:
+
+* Telecommunications and networking
+* Operations research - plant and facility layout, robotics, transportation, and VLSI design.
+* Social networks - find the degrees of separation between people
+* IP routing - find the https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^]
+
+// end::use-case[]
+
+== Constraints / when not to use it
+
+// tag::constraint[]
+Dijkstra does not support negative weights.
+The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
+// end::constraint[]
+
+== Algorithm explanation on simple sample graph
+
+image::sssp.png[]
+
+.Create sample graph
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
+----
+
+=== Dijkstra single source shortest path algorithm
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]                
+----
+
+.Running algorithm and writing back results 
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]  
+----
+
+=== Delta stepping algorithm
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph] 
+----
+
+.Running algorithm and writing back results 
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph] 
+----
+
+== Example Usage
+
+== Syntax
+
+.Running algorithm and writing back results
+[source,cypher]
+----
+CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp',direction:'OUTGOING'})
+YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| startNode  | node | null | no | start node
+| endNode | node | null | no | end node
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| write | boolean | true | yes | if result should be written back as node property
+| writeProperty | string | 'sssp' | yes | property name written back to the node sequence of the node in the path
+| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| name | type | description
+| nodeCount | int | number of nodes considered
+| totalCost | float | sum of all weights along the path
+| loadMillis | int | milliseconds for loading data
+| evalMillis | int | milliseconds for running the algorithm
+| writeMillis | int | milliseconds for writing result data back
+|===
+
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, direction:'OUTGOING'})
+ YIELD nodeId, cost
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| startNode  | node | null | no | start node
+| endNode | node | null | no | end node
+| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
+| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| cost | int | cost it takes to get from start node to specific node 
+|===
+
+== Versions 
+
+We support the following versions of the shortest path algorithms:
+
+* [x] directed, unweighted:  
+
+** direction: 'OUTGOING' or INCOMING, weightProperty: null
+
+* [x] directed, weighted 
+
+** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
+
+* [x] undirected, unweighted
+
+** direction: 'BOTH', weightProperty: null
+
+* [x] undirected, weighted 
+
+** direction: 'BOTH', weightProperty: 'cost'
+
+== Implementations
+
+`algo.shortestPath`
+
+- specify start and end node, find the shortest path between them
+- Dijkstra single source shortest path algorithm
+- there may be more then one shortest path, algo returns only one
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
+
+`algo.shortestPath.deltaStepping`
+
+- specify start node, find the shortest paths to all other nodes
+- parallel non-negative single source shortest path algorithm for weighted graphs
+- It can be tweaked using the delta-parameter which controls the grade of concurrency.
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
+ 
+`algo.shortestPaths` 
+
+- specify start node, find the shortest paths to all other nodes
+- Dijkstra single source shortest path algorithm
+- if initialized with an non-existing weight-property it will treat the graph as unweighted
+
+== References
+
+// tag::references[]
+* [1] http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[Effect of travel time and distance on freeway usage^]
+
+* http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
+
+* http://www.math.ias.edu/~pooyahat/Dijkstra.pdf
+
+* https://arxiv.org/pdf/1604.02113v1.pdf
+
+* https://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf
+// end::references[]
+
+
+ifdef::implementation[]
+// tag::implementation[]
+
+== Implementation Details
+
+:leveloffset: +1
+// copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/80
+
+A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. _All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm. 
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple benchmark 
+- [x] implement procedure
+- [ ] benchmark on bigger graphs
+- [ ] parallelization
+- [ ] evaluation
+
+## Requirements
+
+`(Outgoing)RelationshipIterator` & `Weights`
+
+## Data structured involved
+
+- An int-based Fibonacci Heap which implements an efficient priority queue. 
+- Different Container for Costs / visited state / paths
+
+## ToDo
+
+### benchmark
+
+Implement benchmark on big graph
+
+### parallelization
+
+Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each thread for a different node. An easy approach for _Single Source SP_ may use two threads. One starting at the start-node, one at the end-node. The first wins. [More](https://www.cs.rice.edu/~vs3/comp422/lecture-notes/comp422-lec24-s08-v2.pdf)
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency
+
+== Details
+
+
+=== algo.shortestPath
+
+- Dijkstra single source shortest path algorithm
+- The algorithm computes a shortest path on weighted graphs
+ between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
+ in the path
+- there may be more then one shortest path, algo returns only one
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
+ terms of count of nodes in the path.
+ 
+ 
+=== algo.shortestPaths
+
+- Dijkstra single source shortest path algorithm
+- returns minimum distance to *all other nodes*
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in terms of count of nodes in the path.
+
+
+=== algo.shortestPath.deltaStepping
+
+TODO naming!?
+- parallel non-negative single source shortest path algorithm for weighted graphs
+- It can be tweaked using the delta-parameter which controls the grade of concurrency.
+- returns minimum distance to *all other nodes*
+- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
+ the number of nodes to reach the target
+
+// end::implementation[]
+endif::implementation[]

@@ -1,0 +1,97 @@
+= The Neo4j Graph Algorithms User Guide v{docs-version}
+:toc: left
+:experimental:
+:sectid:
+:sectlinks:
+:toclevels: 2
+:env-docs: true
+
+== Introduction
+
+include::../../readme.adoc[tags=readme,leveloffset=1]
+
+
+== Yelp
+
+include::yelp-intro.adoc[leveloffset=1]
+
+== Overview of Algorithm Procedures
+
+[[table-all]]
+[separator=¦,opts=header,cols="1m,5m"]
+|===
+include::../../target/generated-documentation/org.neo4j.graphalgo.csv[]
+|===
+
+include::algorithms.adoc[leveloffset=1]
+
+== Implementers Section
+
+include::algo-procedures-api.adoc[leveloffset=2]
+
+// include::developer-api.adoc[leveloffset=2]
+
+include::implementers.adoc[leveloffset=2]
+
+:implementation:
+
+=== PageRank
+
+include::pagerank.adoc[leveloffset=2,tags=implementation]
+
+=== Betweenness Centrality
+
+include::betweenness-centrality.adoc[leveloffset=2,tags=implementation]
+
+=== Closeness Centrality
+
+include::closeness-centrality.adoc[leveloffset=2,tags=implementation]
+
+=== Harmonic Centrality
+
+include::harmonic-centrality.adoc[leveloffset=2,tags=implementation]
+
+=== Minimum Weight Spanning Tree
+
+include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
+
+=== Single Shortest Path
+
+include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
+
+=== All Pairs Shortest Path
+
+include::all-pairs-shortest-path.adoc[leveloffset=2,tags=implementation]
+
+=== Triangle Count
+
+include::triangleCount.adoc[leveloffset=2,tags=implementation]
+
+=== Label Propagation
+
+include::label-propagation.adoc[leveloffset=2,tags=implementation]
+
+=== Louvain
+
+include::louvain.adoc[leveloffset=2,tags=implementation]
+
+=== Weakly Connected Components
+
+include::connected-components.adoc[leveloffset=2,tags=implementation]
+
+=== Strongly Connected Components
+
+include::strongly-connected-components.adoc[leveloffset=2,tags=implementation]
+
+ifdef::backend-html5[]
+++++
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#table-all').DataTable();
+} );
+</script>
+++++
+endif::[]
