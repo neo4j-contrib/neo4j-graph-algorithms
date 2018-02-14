@@ -46,10 +46,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     private int[] communities;
     private double[] ki;
     private int iterations;
-
     private double q = MINIMUM_MODULARITY;
-
-
     private AtomicInteger counter = new AtomicInteger(0);
 
     public Louvain(Graph graph, int maxIterations, ExecutorService pool, int concurrency, AllocationTracker tracker) {
@@ -115,7 +112,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
             }
             // memorize current modularity
             this.q = candidate.q;
-            // sync all tasks with out best candidate for the next round
+            // sync all tasks with the best candidate for the next round
             sync(candidate, tasks);
             progressLogger.logDone(() -> String.format("Iteration %d led to a modularity %.4f", iterations, q));
         }
@@ -167,7 +164,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
     }
 
     /**
-     * number of iterations until convergence
+     * number of iterations
      * @return number of iterations
      */
     @Override
@@ -177,7 +174,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     /**
      * calculate number of communities
-     * @return localCommunities count
+     * @return community count
      */
     @Override
     public long getCommunityCount() {
@@ -232,7 +229,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         private double q = MINIMUM_MODULARITY;
 
         /**
-         * initially the task copies the initial community-structure
+         * at creation the task copies the community-structure
          * and initializes its helper arrays
          */
         public Task() {
