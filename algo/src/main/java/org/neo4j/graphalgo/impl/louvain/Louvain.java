@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     public static final Direction D = Direction.OUTGOING;
-    public static final int EMPTY = -1;
+    public static final int NONE = -1;
 
     private Graph graph;
     private final int nodeCount;
@@ -82,16 +82,16 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         final NodeIterator rndIter = new ShuffledNodeIterator(graph, nodeCount);
         for (; iterations < maxIterations && improvement; iterations++) {
             improvement = false;
+            final Pointer.IntPointer counter = Pointer.wrap(0);
             rndIter.forEachNode(node -> {
                 improvement |= move(node);
-                progressLogger.logProgress(node, nodeCount - 1, () -> String.format("Iteration %d", iterations));
+                progressLogger.logProgress(counter.v++, nodeCount, () -> String.format("Iteration %d", iterations));
                 return true;
             });
-            if (!improvement) {
-                progressLogger.logProgress(1.0, () -> "No further modularity improvement");
-            } else {
-                progressLogger.logProgress(1.0, () -> "New modularity: " + modularity());
-            }
+            progressLogger.logProgress(1.0,
+                    () -> improvement ?
+                            "graph modularity: " + modularity() :
+                            "no further improvement in modularity");
 
         }
         progressLogger.logDone();
@@ -100,10 +100,21 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
 
     public double modularity() {
         final Pointer.DoublePointer q = Pointer.wrap(0.);
-        for (int k = 0; k < nodeCount; k++) {
+        forEachCommunity(k -> {
             q.v += (sIn[k] / m2) - (Math.pow(sTot[k] / m2, 2.0));
-        }
+        });
         return q.v;
+    }
+
+    private void forEachCommunity(IntConsumer consumer) {
+        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
+        for (int i = 0; i < nodeCount; i++) {
+            final int c = community[i];
+            if (!bitSet.contains(c)) {
+                consumer.accept(c);
+                bitSet.put(c);
+            }
+        }
     }
 
     /**
@@ -115,7 +126,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         final int currentCommunity = bestCommunity = community[node];
         sTot[currentCommunity] -= ki[node];
         sIn[currentCommunity] -= 2. * weightIntoCom(node, currentCommunity);
-        community[node] = EMPTY;
+        community[node] = NONE;
         bestGain = .0;
         bestWeight = .0;
         forEachConnectedCommunity(node, c -> {
