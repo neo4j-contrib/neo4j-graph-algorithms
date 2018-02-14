@@ -1,4 +1,4 @@
-package org.neo4j.graphalgo.serialize;
+package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 

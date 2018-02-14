@@ -38,7 +38,7 @@ import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
-import org.neo4j.graphalgo.serialize.TestProgressLogger;
+import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
