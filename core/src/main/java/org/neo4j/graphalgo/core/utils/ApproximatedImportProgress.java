@@ -27,12 +27,17 @@ public final class ApproximatedImportProgress implements ImportProgress {
 
     private final ProgressLogger progressLogger;
     private final AllocationTracker tracker;
+
     private final long nodeCount;
-    private final long approxOperations;
-    private final long progressMask;
-    private final int relationProgressShift;
+    private final int relPerNodeShift;
+    private final long nodeBasedOperations;
+    private final long nodeProgressMask;
+
+    private final long relBasedOperations;
+    private final long relMask;
 
     private final AtomicLong nodeProgress;
+    private final AtomicLong relProgress;
 
     public ApproximatedImportProgress(
             ProgressLogger progressLogger,
@@ -46,36 +51,55 @@ public final class ApproximatedImportProgress implements ImportProgress {
         this.nodeCount = nodeCount;
         long relOperations = (loadIncoming ? maxRelCount : 0) + (loadOutgoing ? maxRelCount : 0);
         long relFactor = nodeCount > 0 ? BitUtil.nearbyPowerOfTwo(relOperations / nodeCount) : 0;
-        relationProgressShift = Long.numberOfTrailingZeros(relFactor);
-        approxOperations = nodeCount + (nodeCount << relationProgressShift);
-        progressMask = (BitUtil.nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
+        relPerNodeShift = Long.numberOfTrailingZeros(relFactor);
+        nodeBasedOperations = nodeCount + (nodeCount << relPerNodeShift);
+        nodeProgressMask = (BitUtil.nearbyPowerOfTwo(nodeCount) >>> 6) - 1;
+
+        relBasedOperations = nodeCount + relOperations;
+        relMask = (BitUtil.nearbyPowerOfTwo(relOperations) >>> 6) - 1;
+
         nodeProgress = new AtomicLong();
+        relProgress = new AtomicLong();
     }
 
     @Override
-    public void nodeProgress() {
+    public void nodeImported() {
         long nodes = nodeProgress.incrementAndGet();
-        if ((nodes & progressMask) == 0) {
+        if ((nodes & nodeProgressMask) == 0) {
             progressLogger.logProgress(
                     nodes,
-                    approxOperations,
+                    nodeBasedOperations,
                     tracker);
         }
     }
 
     @Override
-    public void relProgress() {
+    public void allRelationshipsPerNodeImported() {
         long nodes = nodeProgress.incrementAndGet();
-        if ((nodes & progressMask) == 0) {
+        if ((nodes & nodeProgressMask) == 0) {
             progressLogger.logProgress(
-                    (nodes << relationProgressShift) + nodeCount,
-                    approxOperations,
+                    (nodes << relPerNodeShift) + nodeCount,
+                    nodeBasedOperations,
+                    tracker);
+        }
+    }
+
+    @Override
+    public void relationshipBatchImported(long numImported) {
+        long before = relProgress.getAndAdd(numImported);
+        long after = before + numImported;
+
+        if ((after & relMask) < (before & relMask)) {
+            progressLogger.logProgress(
+                    after,
+                    relBasedOperations,
                     tracker);
         }
     }
 
     @Override
     public void resetForRelationships() {
-        nodeProgress.set(0);
+        long nodes = nodeProgress.getAndSet(0);
+        relProgress.set(nodes);
     }
 }

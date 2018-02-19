@@ -50,15 +50,89 @@ public final class HugeGraphFactory extends GraphFactory {
         return importGraph();
     }
 
-
     private HugeGraph importGraph() {
+        GraphDimensions dimensions = this.dimensions;
+        log.info(
+                "Importing up to %d nodes and up to %d relationships",
+                dimensions.nodeCount(),
+                dimensions.maxRelCount());
         int concurrency = setup.concurrency();
         AllocationTracker tracker = setup.tracker;
         HugeWeightMapping weights = hugeWeightMapping(tracker, dimensions.relWeightId(), setup.relationDefaultWeight);
         HugeIdMap mapping = loadHugeIdMap(tracker);
-        HugeGraph graph = loadRelationships(dimensions, mapping, weights, concurrency, tracker, progress);
+        HugeGraph graph = loadSeq(dimensions, tracker, mapping, weights, concurrency);
         progressLogger.logDone(tracker);
         return graph;
+    }
+
+    private HugeGraph loadSeq(
+            GraphDimensions dimensions,
+            AllocationTracker tracker,
+            HugeIdMap mapping,
+            HugeWeightMapping weights,
+            int concurrency) {
+        return loadSeq2(dimensions, tracker, mapping, weights, concurrency);
+//        return loadRelationships(dimensions, mapping, weights, concurrency, tracker, progress);
+//        return loadBogusRelationships(mapping, weights, tracker);
+    }
+
+    private HugeGraph loadSeq2(
+            GraphDimensions dimensions,
+            AllocationTracker tracker,
+            HugeIdMap mapping,
+            HugeWeightMapping weights,
+            int concurrency) {
+        final long nodeCount = dimensions.hugeNodeCount();
+        HugeLongArray outOffsets = null;
+        ByteArray outAdjacency = null;
+        HugeLongArray inOffsets = null;
+        ByteArray inAdjacency = null;
+        if (setup.loadAsUndirected) {
+            outOffsets = HugeLongArray.newArray(nodeCount, tracker);
+            outAdjacency = ByteArray.newArray(0, tracker);
+        } else {
+            if (setup.loadOutgoing) {
+                outOffsets = HugeLongArray.newArray(nodeCount, tracker);
+                outAdjacency = ByteArray.newArray(0, tracker);
+            }
+            if (setup.loadIncoming) {
+                inOffsets = HugeLongArray.newArray(nodeCount, tracker);
+                inAdjacency = ByteArray.newArray(0, tracker);
+            }
+        }
+
+        final ScanningRelationshipImporter importer = ScanningRelationshipImporter.create(
+                dimensions, setup, api, progress, mapping,
+                outOffsets, outAdjacency, inOffsets, inAdjacency,
+                threadPool, concurrency);
+        if (importer != null) {
+            importer.run();
+        }
+
+        return new HugeGraphImpl(
+                tracker,
+                mapping,
+                weights,
+                inAdjacency,
+                outAdjacency,
+                inOffsets,
+                outOffsets
+        );
+    }
+
+    private HugeGraph loadBogusRelationships(
+            HugeIdMap mapping,
+            HugeWeightMapping weights,
+            AllocationTracker tracker) {
+        return new HugeGraphImpl(
+                tracker,
+                mapping,
+                weights,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     private HugeGraph loadRelationships(
@@ -287,6 +361,7 @@ public final class HugeGraphFactory extends GraphFactory {
                         load = new ReadIncoming(transaction, inOffsets, inAllocator, relationId, visitIn);
                     }
                 }
+
                 if (load != null) {
                     loader = load;
                 } else {
@@ -303,7 +378,7 @@ public final class HugeGraphFactory extends GraphFactory {
                     if (nodeCursor.next()) {
                         loader.load(nodeCursor, nodeId);
                     }
-                    progress.relProgress();
+                    progress.allRelationshipsPerNodeImported();
                 }
             }
         }

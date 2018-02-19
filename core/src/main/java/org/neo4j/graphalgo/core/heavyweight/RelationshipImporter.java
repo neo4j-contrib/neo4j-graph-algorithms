@@ -104,7 +104,7 @@ final class RelationshipImporter extends StatementAction {
                 if (nodeCursor.next()) {
                     loader.load(nodeCursor, nodeId);
                 }
-                progress.relProgress();
+                progress.allRelationshipsPerNodeImported();
             }
         }
     }

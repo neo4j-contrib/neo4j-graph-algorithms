@@ -142,6 +142,10 @@ public final class ByteArray extends PagedDataStructure<byte[]> {
             offset = DeltaEncoding.encodeVLong(i, array, offset);
         }
 
+        public void addVLongs(long[] values, int length) {
+            offset = DeltaEncoding.encodeVLongs(values, length, array, offset);
+        }
+
         void grow(byte[][] pages) {
             this.pages = pages;
         }

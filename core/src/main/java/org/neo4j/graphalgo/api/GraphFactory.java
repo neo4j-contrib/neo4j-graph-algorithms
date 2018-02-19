@@ -54,9 +54,8 @@ public abstract class GraphFactory {
     protected final GraphSetup setup;
     protected final GraphDimensions dimensions;
     protected final ImportProgress progress;
-
-    protected Log log;
-    protected ProgressLogger progressLogger;
+    protected final Log log;
+    protected final ProgressLogger progressLogger;
 
     public GraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         this.threadPool = setup.executor;
@@ -70,8 +69,8 @@ public abstract class GraphFactory {
                 setup.tracker,
                 dimensions.hugeNodeCount(),
                 dimensions.maxRelCount(),
-                setup.loadIncoming,
-                setup.loadOutgoing);
+                setup.loadIncoming || setup.loadAsUndirected,
+                setup.loadOutgoing || setup.loadAsUndirected);
     }
 
     public abstract Graph build();

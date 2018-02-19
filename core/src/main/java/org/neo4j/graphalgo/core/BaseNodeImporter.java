@@ -42,11 +42,16 @@ public abstract class BaseNodeImporter<T> extends StatementFunction<T> {
         final T mapping = newNodeMap(nodeCount);
         ReadHelper.readNodes(transaction.cursors(), transaction.dataRead(), labelId, (nodeId) -> {
             addNodeId(mapping, nodeId);
-            progress.nodeProgress();
+            progress.nodeImported();
         });
         finish(mapping);
         progress.resetForRelationships();
         return mapping;
+    }
+
+    @Override
+    public String threadName() {
+        return "node-importer";
     }
 
     protected abstract T newNodeMap(long nodeCount);
