@@ -18,53 +18,51 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
-public final class SparseLongArray extends PagedDataStructure<long[]> {
+import java.util.Arrays;
 
-    public static final long NOT_FOUND = -1L;
+public final class SparseLongArray {
 
-    private static final PageAllocator.Factory<long[]> ALLOCATOR_FACTORY =
-            PageAllocator.ofArray(long[].class);
+    private static final long NOT_FOUND = -1L;
 
-    public static long estimateMemoryUsage(long size) {
-        return ALLOCATOR_FACTORY.estimateMemoryUsage(
-                size,
-                SparseLongArray.class);
-    }
+    private static final int PAGE_SHIFT = 12;
+    private static final int PAGE_SIZE = 1 << PAGE_SHIFT;
+    private static final long PAGE_MASK = (long) (PAGE_SIZE - 1);
+    private static final long PAGE_SIZE_IN_BYTES = MemoryUsage.sizeOfLongArray(PAGE_SIZE);
+
+    private final long capacity;
+    private final long[][] pages;
+    private final AllocationTracker tracker;
 
     public static SparseLongArray newArray(
             long size,
             AllocationTracker tracker) {
-        int numPages = PageUtil.numPagesFor(size, ALLOCATOR_FACTORY.pageSize());
-        return fromPages(size, new long[numPages][], tracker);
+        int numPages = PageUtil.numPagesFor(size, PAGE_SHIFT, (int) PAGE_MASK);
+        long capacity = PageUtil.capacityFor(numPages, PAGE_SHIFT);
+        long[][] pages = new long[numPages][];
+        tracker.add(MemoryUsage.shallowSizeOfInstance(SparseLongArray.class));
+        tracker.add(MemoryUsage.sizeOfObjectArray(numPages));
+        return new SparseLongArray(capacity, pages, tracker);
     }
 
-    public static SparseLongArray fromPages(
-            long capacity,
-            long[][] pages,
-            AllocationTracker tracker) {
-        return new SparseLongArray(
-                capacity,
-                pages,
-                ALLOCATOR_FACTORY.newAllocator(tracker));
-    }
-
-    private SparseLongArray(
-            long capacity,
-            long[][] pages,
-            PageAllocator<long[]> pageAllocator) {
-        super(capacity, pages, pageAllocator);
+    private SparseLongArray(long capacity, long[][] pages, AllocationTracker tracker) {
+        this.capacity = capacity;
+        this.pages = pages;
+        this.tracker = tracker;
     }
 
     public long get(long index) {
-        assert index < capacity();
+        assert index < capacity;
         final int pageIndex = pageIndex(index);
-        final int indexInPage = indexInPage(index);
         long[] page = pages[pageIndex];
-        return page == null ? NOT_FOUND : (page[indexInPage] & Long.MAX_VALUE);
+        if (page != null) {
+            final int indexInPage = indexInPage(index);
+            return page[indexInPage];
+        }
+        return NOT_FOUND;
     }
 
     public void set(long index, long value) {
-        assert index < capacity();
+        assert index < capacity;
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         long[] page = pages[pageIndex];
@@ -76,10 +74,28 @@ public final class SparseLongArray extends PagedDataStructure<long[]> {
     }
 
     public boolean contains(long index) {
-        assert index < capacity();
+        assert index < capacity;
         final int pageIndex = pageIndex(index);
-        final int indexInPage = indexInPage(index);
         long[] page = pages[pageIndex];
-        return page != null && page[indexInPage] != 0;
+        if (page != null) {
+            final int indexInPage = indexInPage(index);
+            return page[indexInPage] != NOT_FOUND;
+        }
+        return false;
+    }
+
+    private int pageIndex(long index) {
+        return (int) (index >>> PAGE_SHIFT);
+    }
+
+    private int indexInPage(long index) {
+        return (int) (index & PAGE_MASK);
+    }
+
+    private long[] allocateNewPage() {
+        tracker.add(PAGE_SIZE_IN_BYTES);
+        final long[] page = new long[PAGE_SIZE];
+        Arrays.fill(page, NOT_FOUND);
+        return page;
     }
 }
