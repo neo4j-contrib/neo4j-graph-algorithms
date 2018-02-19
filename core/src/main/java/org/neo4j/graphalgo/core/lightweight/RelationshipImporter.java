@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.IdCombiner;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -51,8 +52,7 @@ class RelationshipImporter implements RelationshipVisitor<EntityNotFoundExceptio
             int[] relationId,
             Direction direction,
             IntArray.BulkAdder bulkAdder,
-            WeightMapping weights,
-            IdCombiner combiner) {
+            WeightMapping weights) {
         if (weights instanceof WeightMap) {
             return new WithWeights(
                     mapping,
@@ -61,7 +61,6 @@ class RelationshipImporter implements RelationshipVisitor<EntityNotFoundExceptio
                     readOp,
                     direction,
                     (WeightMap) weights,
-                    combiner,
                     bulkAdder);
         } else {
             return new RelationshipImporter(
@@ -159,12 +158,11 @@ class RelationshipImporter implements RelationshipVisitor<EntityNotFoundExceptio
                 ReadOperations readOp,
                 Direction direction,
                 WeightMap weights,
-                IdCombiner combiner,
                 IntArray.BulkAdder bulkAdder) {
             super(readOp, mapping, offsets, relationId, direction, bulkAdder);
             this.weights = weights;
             this.weightId = weights.propertyId();
-            this.idCombiner = combiner;
+            this.idCombiner = RawValues.combiner(direction);
         }
 
         @Override

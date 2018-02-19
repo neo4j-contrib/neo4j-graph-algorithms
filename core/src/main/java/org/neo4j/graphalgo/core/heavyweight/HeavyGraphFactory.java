@@ -71,6 +71,12 @@ public class HeavyGraphFactory extends GraphFactory {
 
         int concurrency = setup.concurrency();
         final int nodeCount = dimensions.nodeCount();
+        final AdjacencyMatrix matrix = new AdjacencyMatrix(
+                nodeCount,
+                setup.loadIncoming && !setup.loadAsUndirected,
+                setup.loadOutgoing || setup.loadAsUndirected,
+                setup.sort || setup.loadAsUndirected,
+                false);
         int actualBatchSize = ParallelUtil.adjustBatchSize(
                 nodeCount,
                 concurrency,
@@ -87,16 +93,16 @@ public class HeavyGraphFactory extends GraphFactory {
                         actualBatchSize,
                         offset,
                         idMap,
+                        matrix,
                         nodeIds,
                         relWeights,
                         nodeWeights,
-                        nodeProps,
-                        setup.sort
+                        nodeProps
                 ),
                 threadPool);
 
         final Graph graph = buildCompleteGraph(
-                nodeCount,
+                matrix,
                 idMap,
                 relWeights,
                 nodeWeights,
@@ -108,7 +114,7 @@ public class HeavyGraphFactory extends GraphFactory {
     }
 
     private Graph buildCompleteGraph(
-            int nodeCount,
+            final AdjacencyMatrix matrix,
             final IdMap idMap,
             final Supplier<WeightMapping> relWeightsSupplier,
             final Supplier<WeightMapping> nodeWeightsSupplier,
@@ -116,15 +122,16 @@ public class HeavyGraphFactory extends GraphFactory {
             Collection<RelationshipImporter> tasks) {
         if (tasks.size() == 1) {
             RelationshipImporter importer = tasks.iterator().next();
-            return importer.toGraph(idMap);
+            final Graph graph = importer.toGraph(idMap, matrix);
+            importer.release();
+            return graph;
         }
 
-        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, setup.sort);
         final WeightMapping relWeights = relWeightsSupplier.get();
         final WeightMapping nodeWeights = nodeWeightsSupplier.get();
         final WeightMapping nodeProps = nodePropsSupplier.get();
         for (RelationshipImporter task : tasks) {
-            task.writeInto(matrix, relWeights, nodeWeights, nodeProps);
+            task.writeInto(relWeights, nodeWeights, nodeProps);
             task.release();
         }
 
