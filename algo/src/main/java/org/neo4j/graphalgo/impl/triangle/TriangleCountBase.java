@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  */
 public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Coeff, Self>> extends Algorithm<Self> {
 
-    public static final Direction D = Direction.BOTH;
+    public static final Direction D = Direction.OUTGOING;
 
     private final AtomicInteger visitedNodes;
     private AtomicIntegerArray triangles;
