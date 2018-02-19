@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.impl.spanningTrees.Prim;
 import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
@@ -35,8 +36,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -95,11 +96,10 @@ public class PrimTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return Collections.singleton(new Object[]{HugeGraphFactory.class, "Huge"});
-//        return Arrays.asList(
-//                new Object[]{HeavyGraphFactory.class, "Heavy"},
-//                new Object[]{HugeGraphFactory.class, "Huge"}
-//        );
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "Heavy"},
+                new Object[]{HugeGraphFactory.class, "Huge"}
+        );
     }
 
 

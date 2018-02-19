@@ -57,7 +57,7 @@ public class TriangleCountQueue extends Algorithm<TriangleCountQueue> implements
         this.executorService = executorService;
         this.concurrency = concurrency;
         triangleCount = new LongAdder();
-        direction = Direction.BOTH;
+        direction = Direction.OUTGOING;
         queue = new AtomicInteger();
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         triangles = new AtomicIntegerArray(nodeCount);

@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
-@Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
+@Fork(value = 1, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
 @Warmup(iterations = 5)
 @Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
@@ -56,10 +56,7 @@ public class GraphLoadLdbc {
     @Param({"true", "false"})
     boolean parallel;
 
-    @Param({"true", "false"})
-    boolean undirected;
-
-    @Param({"IN", "OUT", "NONE", "BOTH"})
+    @Param({"IN", "IN_SORT", "OUT", "OUT_SORT", "BOTH", "BOTH_SORT", "UNDIRECTED", "NONE"})
     DirectionParam dir;
 
     @Param({"", "length"})
@@ -77,13 +74,9 @@ public class GraphLoadLdbc {
     @Setup
     public void setup() throws IOException {
         db = LdbcDownloader.openDb(graphId);
-        loader = new GraphLoader(db)
+        loader = dir.apply(new GraphLoader(db)
                 .withOptionalRelationshipWeightsFromProperty(weightProp.isEmpty() ? null : weightProp, 1.0)
-                .withOptionalLabel(label.isEmpty() ? null : label)
-                .withDirection(dir.direction);
-        if (undirected) {
-            loader.asUndirected(true);
-        }
+                .withOptionalLabel(label.isEmpty() ? null : label));
         if (parallel) {
             loader.withExecutorService(Pools.DEFAULT);
         }
