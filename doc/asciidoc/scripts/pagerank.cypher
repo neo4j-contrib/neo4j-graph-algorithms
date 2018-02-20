@@ -25,7 +25,8 @@ CREATE (home)-[:LINKS]->(about)
 
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD node, score
-RETURN node,score order by score desc limit 20
+RETURN node.name AS page,score
+ORDER BY score DESC
 
 // end::stream-sample-graph[]
 
