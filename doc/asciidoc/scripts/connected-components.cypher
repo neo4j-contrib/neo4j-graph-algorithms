@@ -17,8 +17,10 @@ CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
 
 CALL algo.unionFind.stream('User', 'FRIEND', {}) 
 YIELD nodeId,setId
-RETURN nodeId,setId
-LIMIT 20;
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId
 
 // end::unweighted-stream-sample-graph[]
 
@@ -32,7 +34,11 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
 // tag::weighted-stream-sample-graph[]
 
 CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
-YIELD nodeId,setId;
+YIELD nodeId,setId
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId
 
 // end::weighted-stream-sample-graph[]
 

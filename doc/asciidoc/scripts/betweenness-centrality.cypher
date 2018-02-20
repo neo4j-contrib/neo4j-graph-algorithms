@@ -17,8 +17,13 @@ CREATE (nAlice)-[:MANAGE]->(nBridget)
 // tag::stream-sample-graph[]
 
 CALL algo.betweenness.stream('User','MANAGE',{direction:'out'}) 
-YIELD nodeId, centrality 
-RETURN nodeId,centrality order by centrality desc limit 20;
+YIELD nodeId, centrality
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user,centrality
+ORDER BY centrality DESC
+LIMIT 20;
 
 // end::stream-sample-graph[]
 
