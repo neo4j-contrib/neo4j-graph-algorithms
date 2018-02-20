@@ -19,6 +19,15 @@ CREATE (nAlice)-[:FOLLOW]->(nBridget)
 
 // end::create-sample-graph[]
 
+// tag:stream-sample-graph[]
+
+CALL algo.scc.stream('User','FOLLOW')
+YIELD nodeId, partition
+MATCH (u:User) WHERE id(u) = nodeId
+RETURN u.id AS name, partition
+
+// end::stream-sample-graph[]
+
 // tag::write-sample-graph[]
 
 CALL algo.scc('User','FOLLOW', {write:true,partitionProperty:'partition'})
@@ -29,7 +38,9 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize;
 // tag::get-largest-component[]
 
 MATCH (u:User)
-RETURN u.partition as partition,count(*) as size_of_partition ORDER by size_of_partition DESC LIMIT 1
+RETURN u.partition as partition,count(*) as size_of_partition
+ORDER by size_of_partition DESC
+LIMIT 1
 
 // end::get-largest-component[]
 
