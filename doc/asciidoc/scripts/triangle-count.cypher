@@ -20,13 +20,13 @@ CREATE (michael)-[:KNOWS]->(karin),
 // tag::stream-triples[]
 
 CALL algo.triangle.stream('Person','KNOWS') 
-yield nodeAId,nodeBId,nodeCId
+yield nodeA,nodeB,nodeC
 
-MATCH (nodeA:Person) WHERE id(nodeA) = nodeAId
-MATCH (nodeB:Person) WHERE id(nodeB) = nodeBId
-MATCH (nodeC:Person) WHERE id(nodeC) = nodeCId
+MATCH (a:Person) WHERE id(a) = nodeA
+MATCH (b:Person) WHERE id(b) = nodeB
+MATCH (c:Person) WHERE id(c) = nodeC
 
-RETURN nodeA.id AS nodeA, nodeB.id AS nodeB, nodeC.id AS nodeC
+RETURN a.id AS nodeA, b.id AS nodeB, c.id AS nodeC
 
 // end::stream-triples[]
 
