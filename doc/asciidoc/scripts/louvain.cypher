@@ -20,7 +20,11 @@ CREATE (nAlice)-[:FRIEND]->(nBridget)
 
 CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
-RETURN nodeId, community LIMIT 20;
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user, community
+LIMIT 20;
 
 // end::stream-sample-graph[]
 
