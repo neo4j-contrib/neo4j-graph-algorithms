@@ -19,7 +19,7 @@ CREATE (nAlice)-[:FOLLOW]->(nBridget)
 
 // end::create-sample-graph[]
 
-// tag:stream-sample-graph[]
+// tag::stream-sample-graph[]
 
 CALL algo.scc.stream('User','FOLLOW')
 YIELD nodeId, partition
