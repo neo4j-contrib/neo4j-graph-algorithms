@@ -22,7 +22,9 @@ CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}),
 MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.shortestPath.stream(start, end, 'cost') 
 YIELD nodeId, cost
-RETURN nodeId, cost LIMIT 20
+MATCH (other:Loc) WHERE id(other) = nodeId
+RETURN other.name AS name, cost
+LIMIT 20
 
 // end::single-pair-stream-sample-graph[]
 
@@ -63,7 +65,12 @@ CALL algo.allShortestPaths.stream('cost',{nodeQuery:'Loc',defaultValue:1.0})
 YIELD sourceNodeId, targetNodeId, distance
 WITH sourceNodeId, targetNodeId, distance 
 WHERE algo.isFinite(distance) = true
-RETURN sourceNodeId, targetNodeId, distance LIMIT 20
+
+MATCH (source:Loc) WHERE id(source) = sourceNodeId
+MATCH (target:Loc) WHERE id(target) = targetNodeId
+
+RETURN source.name AS source, target.name AS target, distance
+LIMIT 20
 
 // end::all-pairs-sample-graph[]
 
