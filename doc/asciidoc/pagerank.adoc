@@ -1,14 +1,26 @@
-= Page Rank
+= PageRank
 
 // tag::introduction[]
-PageRank is named after Google co-founder Larry Page and is used to rank websites in Google's search results.
-It counts the number and quality of links to a page to determine an estimate of how important a page is.
-The underlying assumption is that more important pages are likely to receive more links from other pages.
+PageRank is widely recognized as a way of detecting influential nodes in a graph.
+It is different to other centrality algorithms because the influence of a node depends on the influence of its neighbours.
+
+The underlying mathematics of PageRank is based on random walks on networks.
+We can think of a random walk as the way that a person might manually traverse a graph.
+We start from any node and then either follow one of its relationships to another node or "teleport" to another node in the graph and continue our exploration.
+The PageRank of a node is the probability that it is visited during this random walk.
+More influential nodes will be visited more often.
+
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
+PageRank is named after Google co-founder Larry Page and is used to rank websites in Google's search results.
+It counts the number and quality of links to a page to determine an estimate of how important a page is.
+The underlying assumption is that more important pages are likely to receive more links from other pages.
+// end::explanation[]
+
+// tag::formula[]
 PageRank is defined in the original Google paper as follows:
 
 ```
@@ -22,42 +34,27 @@ where
 * `C(A)` is defined as the number of links going out of page A.
 
 The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be one.
-
-The underlying mathematics of PageRank has to do with random walks on networks, akin to how random surfers propagate through a network.
-Random surfers follow links, but occasionally teleport to random vertices.
-The PageRank of a node is the probability it is visited by a random surfer with teleportation.
-
-PageRank is now widely recognized as a way of detecting central nodes in a network.
-// end::explanation[]
+// end::formula[]
 
 == When to use it / use-cases
 
 // tag::use-case[]
-PageRank can be applied to any graph or network in any domain.
-PageRank is regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation.
-It's also used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.
+PageRank can be applied across a wide range of domains.
+These are some notable use cases:
 
-These are some other notable uses:
+* Personalized PageRank is used by Twitter to present users with recommendations of other accounts that they may wish to follow. The algorithm is run over a graph containing shared interests and common connections. Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf[WTF: The Who to Follow Service at Twitter^].
 
-* In neuroscience, the PageRank of a neuron in a neural network has been found to correlate with its relative firing rate.
+* PageRank has been used to rank public spaces or streets to predict traffic flow and human movement in these areas. The algorithm is run over a graph of intersections connected by roads and the PageRank score reflects the tendency of people to park, or end their journey, on each street. This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf[Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study^].
 
-* Personalized PageRank is used by Twitter to present users with other accounts they may wish to follow https://web.stanford.edu/class/msande233/handouts/lecture8.pdf[[4\]].
+* PageRank can be used as part of an anomalty or fraud detection system in the healthcare and insurance industries. It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
 
-* PageRank has been used to rank spaces or streets to predict how many pedestrians or vehicles come to individual spaces or streets.
-
-* In lexical semantics it has been used to perform Word Sense Disambiguation, Semantic similarity, and to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity http://nmis.isti.cnr.it/sebastiani/Publications/ACL07.pdf[[2\]].
-
-* For the analysis of protein networks in biology PageRank is also a useful tool https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com[[6\]].
-
-* PageRank has been used to quantify the scientific impact of researchers http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf[[5\]].
-The underlying citation and collaboration networks are used in conjunction with PageRank algorithm to come up with a ranking system for individual publications that propagates to individual authors.
-
+There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
 
 == Constraints / when not to use it
 
 // tag::constraint[]
-There are some major limitations of the PageRank algorithm.
+There are some things to be aware of when using the Page Rank algorithm.
 
 * Spider traps - if there are no links from within the group to outside the groups then the group of pages is a spider trap.
 
@@ -65,7 +62,7 @@ There are some major limitations of the PageRank algorithm.
 
 * Dead-ends and Dangling links - Dead-ends occurs when pages have no out links. If a page contains a link to another page which has no out links, the link would be known as a dangling link. [1]
 
-You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[[7\]] for more.
+You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google Pagerank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
 == Algorithm explanation on simple sample graph
@@ -93,6 +90,7 @@ include::scripts/pagerank.cypher[tag=write-sample-graph]
 ----
 
 
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -106,9 +104,12 @@ include::scripts/pagerank.cypher[tag=write-sample-graph]
 | Site C | 0.328
 | Site D | 0.328
 |===
+// end::stream-sample-graph-result[]
 
+// tag::stream-sample-graph-explanation[]
 As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
-We can also observe that its not only the number of incoming links is important, but also the importance of the pages that link to us.
+We can also see that it's not only the number of incoming links that is important, but also the importance of those pages.
+// end::stream-sample-graph-explanation[]
 
 == Example Usage
 
