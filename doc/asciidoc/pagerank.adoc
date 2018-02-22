@@ -6,7 +6,7 @@ It is different to other centrality algorithms because the influence of a node d
 
 The underlying mathematics of PageRank is based on random walks on networks.
 We can think of a random walk as the way that a person might manually traverse a graph.
-We start from any node and then either follow one of its relationships to another node or "teleport" to another node in the graph and continue our exploration.
+We start from any node and then either follow one of its relationships to another node or jump to another node in the graph and continue our exploration.
 The PageRank of a node is the probability that it is visited during this random walk.
 More influential nodes will be visited more often.
 
@@ -46,7 +46,7 @@ These are some notable use cases:
 
 * PageRank has been used to rank public spaces or streets to predict traffic flow and human movement in these areas. The algorithm is run over a graph of intersections connected by roads and the PageRank score reflects the tendency of people to park, or end their journey, on each street. This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf[Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study^].
 
-* PageRank can be used as part of an anomalty or fraud detection system in the healthcare and insurance industries. It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
+* PageRank can be used as part of an anomaly or fraud detection system in the healthcare and insurance industries. It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
 
 There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
