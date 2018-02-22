@@ -108,7 +108,7 @@ include::scripts/pagerank.cypher[tag=write-sample-graph]
 
 // tag::stream-sample-graph-explanation[]
 As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
-We can also see that it's not only the number of incoming links that is important, but also the importance of those pages.
+We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
 // end::stream-sample-graph-explanation[]
 
 == Example Usage
