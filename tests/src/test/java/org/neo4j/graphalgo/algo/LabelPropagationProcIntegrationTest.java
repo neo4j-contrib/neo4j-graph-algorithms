@@ -203,6 +203,23 @@ public class LabelPropagationProcIntegrationTest {
         }
     }
 
+    @Test
+    public void shouldStreamResults() {
+        // this one deliberately tests the streaming and non streaming versions against each other to check we get the same results
+        // we intentionally start with no labels defined for any nodes (hence partitionProperty = {lpa, lpa2})
+
+        runQuery("CALL algo.labelPropagation(null, null, 'OUTGOING', {iterations: 20, partitionProperty: 'lpa'})", row -> {});
+
+        String query = "CALL algo.labelPropagation.stream(null, null, {iterations: 20, direction: 'OUTGOING', partitionProperty: 'lpa2'}) " +
+                "YIELD nodeId, label " +
+                "MATCH (node) WHERE id(node) = nodeId " +
+                "RETURN node.id AS id, id(node) AS internalNodeId, node.lpa AS partition, label";
+
+        runQuery(query, row -> {
+            assertEquals(row.getNumber("partition").intValue(), row.getNumber("label").intValue());
+        });
+    }
+
     private void runQuery(String query, Map<String,  Object> params) {
         runQuery(query, params, row -> {});
     }
