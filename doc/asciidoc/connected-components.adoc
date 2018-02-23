@@ -76,12 +76,12 @@ include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 | Doug | 4
 | Mark | 4 
 |===
-// tag::unweighted-stream-sample-graph-result[]
+// end::unweighted-stream-sample-graph-result[]
 
 // tag::unweighted-stream-sample-graph-explanation[]
 We have two distinct group of users that have no link between them.
 The first group contains Alice, Charles, and Bridget, while the second group contains Michael, Doug, and Mark.
-// tag::unweighted-stream-sample-graph-explanation[]
+// end::unweighted-stream-sample-graph-explanation[]
 
 .We can also easily check the number and size of partitions using cypher.
 [source,cypher]
