@@ -38,9 +38,10 @@ Connected components have other practical use cases, for example, if we are anal
 
 Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph between those vertices. 
 A connected component of an undirected graph is a maximal connected subgraph of the graph. 
-That means that the direction of the relationships in our graph have no influence as we treat our graph as undirected. 
-We have two implementations of connected components algorithm. 
-First implementations treats the graph as unweighted and the second version is weighted, where you can define the threshold of the weight above which relationships are created. 
+That means that the direction of the relationships in our graph have are ignored - we treat the graph as undirected.
+
+We have two implementations of connected components algorithm.
+The first treats the graph as unweighted and the second treats it as weighted, where you can define the threshold of the weight above which relationships are included.
 
 image::connected_components.png[]
 
@@ -62,6 +63,8 @@ include::scripts/connected-components.cypher[tag=unweighted-stream-sample-graph]
 ----
 include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 ----
+
+// tag::unweighted-stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -73,10 +76,12 @@ include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 | Doug | 4
 | Mark | 4 
 |===
+// tag::unweighted-stream-sample-graph-result[]
 
-Results show us, that we have two distinct group of users that have no link between them. First group has members Alice,Charles,Bridget and the second group are Michael,Doug,Mark.
-
-
+// tag::unweighted-stream-sample-graph-explanation[]
+We have two distinct group of users that have no link between them.
+The first group contains Alice, Charles, and Bridget, while the second group contains Michael, Doug, and Mark.
+// tag::unweighted-stream-sample-graph-explanation[]
 
 .We can also easily check the number and size of partitions using cypher.
 [source,cypher]
@@ -85,7 +90,7 @@ include::scripts/connected-components.cypher[tag=check-results-sample-graph]
 ----
 === Weighted version:
 
-If you define the property that holds the weight(weightProperty) and the threshold,it means the nodes are only connected, if the threshold on the weight of the relationship is high enough otherwise the relationship is thrown away.
+If you define the property that holds the weight(weightProperty) and the threshold, it means the nodes are only connected, if the threshold on the weight of the relationship is high enough otherwise the relationship is thrown away.
 
 .Running algorithm and streaming results
 [source,cypher]
@@ -98,6 +103,7 @@ include::scripts/connected-components.cypher[tag=weighted-stream-sample-graph]
 include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 ----
 
+// tag::weighted-stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -109,8 +115,11 @@ include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 | Doug | 4
 | Mark | 4 
 |===
+// end::weighted-stream-sample-graph-result[]
 
-We can observe, that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship was thrown away and regarded as not existing. 
+// tag::weighted-stream-sample-graph-explanation[]
+In this case we can see that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship is ignored by the algorithm and Bridget ends up in her own component.
+// end::weighted-stream-sample-graph-explanation[]
 
 == Example Usage
 
