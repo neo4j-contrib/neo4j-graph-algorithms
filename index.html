@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.3">
-<title>Neo4j Graph Algorithms User Guide</title>
+<title>The Neo4j Graph Algorithms User Guide v{docs-version}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -419,7 +419,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Neo4j Graph Algorithms User Guide</h1>
+<h1>The Neo4j Graph Algorithms User Guide v{docs-version}</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -552,7 +552,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="paragraph">
 <p>These procedures work either on the whole graph or on a subgraph filtered by label and relationship-type.
-You can also use <a href="#cypher-projections">filtering and projection using Cypher queries</a>.</p>
+You can also use <a href="#cypher-projection">filtering and projection using Cypher queries</a>.</p>
 </div>
 <div class="paragraph">
 <p><strong>We&#8217;d love your feedback</strong>, so please try out these algorithms and let us know how well they work for your use-case.
@@ -645,7 +645,7 @@ ORDER BY score DESC LIMIT 10;</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection"><a class="link" href="#_cypher_projection">Cypher projection</a></h4>
+<h4 id="cypher-projection"><a class="link" href="#cypher-projection">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
 Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use <code>graph:'cypher'</code> in the config.</p>
@@ -783,7 +783,7 @@ We also do not need the actual text, but only meta-data about them e.g. who wrot
 <h3 id="_graph_model"><a class="link" href="#_graph_model">Graph Model</a></h3>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/yelp_graph_model.png" alt="yelp graph model">
+<img src="images/yelp_graph_model.png" alt="yelp graph model">
 </div>
 </div>
 <div class="paragraph">
@@ -1084,20 +1084,20 @@ MERGE (p1)-[s:SIMILAR_REVIEWS]-(p2) SET s.weight = cosineSimilarity"
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0, write:'true', writeProperty:'sssp'}) YIELD nodeId, cost, loadMillis, evalMillis, writeMillis - yields nodeCount, totalCost, loadMillis, evalMillis, writeMillis</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain(label:String, relationship:String, {weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain.stream</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain.stream(label:String, relationship:String, {weightProperty:'propertyName', defaultValue:1.0, concurrency:4) YIELD nodeId, community - yields a setId to each node id</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind(label:String, relationship:String, {property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition',concurrency:4}) YIELD nodes, setCount, loadMillis, computeMillis, writeMillis</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.forkJoin.stream</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.unionFind.stream(label:String, relationship:String, {property:'propertyName', threshold:0.42, defaultValue:1.0,concurrency:4}) YIELD nodeId, setId - yields a setId to each node id</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain(label:String, relationship:String, {weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4}) YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.louvain.stream</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL algo.louvain.stream(label:String, relationship:String, {weightProperty:'propertyName', defaultValue:1.0, concurrency:4) YIELD nodeId, community - yields a setId to each node id</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>algo.unionFind.queue</code></p></td>
@@ -1325,45 +1325,54 @@ Whenever possible we&#8217;ve applied these optimizations.</p>
 <div class="sect2">
 <h3 id="_page_rank"><a class="link" href="#_page_rank">Page Rank</a></h3>
 <div class="paragraph">
-<p>PageRank is Google&#8217;s popular search algorithm.
-PageRank counts the number and quality of links to a page to determine an estimate of how important the website is.
-The underlying assumption is that more important websites are likely to receive more links from other websites.</p>
+<p>PageRank is named after Google co-founder Larry Page and is used to rank websites in Google&#8217;s search results.
+It counts the number and quality of links to a page to determine an estimate of how important a page is.
+The underlying assumption is that more important pages are likely to receive more links from other pages.</p>
 </div>
 <div class="sect3">
 <h4 id="_history_explanation"><a class="link" href="#_history_explanation">History, Explanation</a></h4>
 <div class="paragraph">
-<p>In order to measure the relative importance of web pages, Sergey Brin and Larry Page proposed PageRank, a method for computing a ranking for every web page based on the graph of the web.
-PageRank has applications in search, browsing, and traffic estimation.</p>
-</div>
-<div class="paragraph">
 <p>PageRank is defined in the original Google paper as follows:</p>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p>We assume page A has pages T1&#8230;&#8203;Tn which point to it (i.e., are citations). The parameter d is a damping factor which can be set between 0 and 1. We usually set d to 0.85. Also C(A) is defined as the number of links going out of page A. The PageRank of a page A is given as follows:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>PR(A) = (1-d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn))</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>PR(A) = (1-d) + d (PR(T1)/C(T1) + &#8230;&#8203; + PR(Tn)/C(Tn))</p>
+<p>where</p>
 </div>
-</blockquote>
+<div class="ulist">
+<ul>
+<li>
+<p>we assume that a page A has pages T1&#8230;&#8203;Tn which point to it (i.e., are citations).</p>
+</li>
+<li>
+<p>d is a damping factor which can be set between 0 and 1. It is usually set to 0.85.</p>
+</li>
+<li>
+<p><code>C(A)</code> is defined as the number of links going out of page A.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
-<p>Note that the PageRanks form a probability distribution over web pages, so the sum of all web pages' PageRanks will be one.</p>
+<p>The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be one.</p>
 </div>
 <div class="paragraph">
 <p>The underlying mathematics of PageRank has to do with random walks on networks, akin to how random surfers propagate through a network.
 Random surfers follow links, but occasionally teleport to random vertices.
-The PageRank of a node is the probability it is visited by a random surfer with teleportation.
-PageRank is now widely recognized as a way of detecting central nodes in a network.</p>
+The PageRank of a node is the probability it is visited by a random surfer with teleportation.</p>
+</div>
+<div class="paragraph">
+<p>PageRank is now widely recognized as a way of detecting central nodes in a network.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_when_to_use_it_use_cases"><a class="link" href="#_when_to_use_it_use_cases">When to use it / use-cases</a></h4>
 <div class="paragraph">
-<p>The mathematics of PageRank are entirely general and apply to any graph or network in any domain.
+<p>PageRank can be applied to any graph or network in any domain.
 PageRank is regularly used in bibliometrics, social and information network analysis, and for link prediction and recommendation.
-It&#8217;s even used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.</p>
+It&#8217;s also used for systems analysis of road networks, as well as biology, chemistry, neuroscience, and physics.</p>
 </div>
 <div class="paragraph">
 <p>These are some other notable uses:</p>
@@ -1383,15 +1392,11 @@ It&#8217;s even used for systems analysis of road networks, as well as biology, 
 <p>In lexical semantics it has been used to perform Word Sense Disambiguation, Semantic similarity, and to automatically rank WordNet synsets according to how strongly they possess a given semantic property, such as positivity or negativity <a href="http://nmis.isti.cnr.it/sebastiani/Publications/ACL07.pdf">[2]</a>.</p>
 </li>
 <li>
-<p>In any ecosystem, a modified version of PageRank may be used to determine species that are essential to the continuing health of the environment <a href="http://news.bbc.co.uk/2/hi/8238462.stm">[3]</a>.</p>
-</li>
-<li>
 <p>For the analysis of protein networks in biology PageRank is also a useful tool <a href="https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-15-204?site=bmcbioinformatics.biomedcentral.com">[6]</a>.</p>
 </li>
 <li>
 <p>PageRank has been used to quantify the scientific impact of researchers <a href="http://ilpubs.stanford.edu:8090/422/1/1999-66.pdf">[5]</a>.
-The underlying citation and collaboration networks are used in conjunction with PageRank algorithm to come up with a ranking system for individual publications that propagates to individual authors.
-The new index known as pagerank-index (Pi) is demonstrated to be fairer compared to h-index and addresses many of the drawbacks exhibited by h-index.</p>
+The underlying citation and collaboration networks are used in conjunction with PageRank algorithm to come up with a ranking system for individual publications that propagates to individual authors.</p>
 </li>
 </ul>
 </div>
@@ -1422,7 +1427,7 @@ The new index known as pagerank-index (Pi) is demonstrated to be fairer compared
 <h4 id="_algorithm_explanation_on_simple_sample_graph"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/pagerank.png" alt="pagerank">
+<img src="images/pagerank.png" alt="pagerank">
 </div>
 </div>
 <div class="listingblock">
@@ -1453,7 +1458,8 @@ CREATE (home)-[:LINKS]-&gt;(about)
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD node, score
-RETURN node,score order by score desc limit 20</code></pre>
+RETURN node.name AS page,score
+ORDER BY score DESC</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -1785,7 +1791,7 @@ YIELD node, score - calculates page rank and streams results</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_2"><a class="link" href="#_cypher_projection_2">Cypher projection</a></h4>
+<h4 id="_cypher_projection"><a class="link" href="#_cypher_projection">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Don&#8217;t forget to set <code>graph:'cypher'</code> in the config.</p>
@@ -1894,7 +1900,7 @@ Ulrik Brandes' <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1
 <h4 id="_when_to_use_it_use_cases_2"><a class="link" href="#_when_to_use_it_use_cases_2">When to use it / use-cases</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/betweenness_centrality.png" alt="betweenness centrality">
+<img src="images/betweenness_centrality.png" alt="betweenness centrality">
 </div>
 </div>
 <div class="paragraph">
@@ -1974,7 +1980,12 @@ CREATE (nAlice)-[:MANAGE]-&gt;(nBridget)
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.betweenness.stream('User','MANAGE',{direction:'out'})
 YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20;</code></pre>
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user,centrality
+ORDER BY centrality DESC
+LIMIT 20;</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -2564,7 +2575,7 @@ YIELD nodeId, centrality - yields centrality for each node</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_3"><a class="link" href="#_cypher_projection_3">Cypher projection</a></h4>
+<h4 id="_cypher_projection_2"><a class="link" href="#_cypher_projection_2">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -2804,7 +2815,7 @@ This means that we&#8217;ll end up with an infinite closeness centrality score w
 <h4 id="_algorithm_explanation_on_simple_sample_graph_3"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_3">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/closeness_centrality.png" alt="closeness centrality">
+<img src="images/closeness_centrality.png" alt="closeness centrality">
 </div>
 </div>
 <div class="listingblock">
@@ -2828,8 +2839,14 @@ CREATE (a)-[:LINK]-&gt;(b),
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.closeness.stream('Node', 'LINKS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20;
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.closeness.stream('Node', 'LINK')
+YIELD nodeId, centrality
+
+MATCH (n:Node) WHERE id(n) = nodeId
+
+RETURN n.id AS node, centrality
+ORDER BY centrality DESC
+limit 20;
 
 - yields centrality for each node</code></pre>
 </div>
@@ -3076,7 +3093,7 @@ YIELD nodeId, centrality - yields centrality for each node</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_4"><a class="link" href="#_cypher_projection_4">Cypher projection</a></h4>
+<h4 id="_cypher_projection_3"><a class="link" href="#_cypher_projection_3">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -3211,11 +3228,6 @@ If we&#8217;re trying to spread a message on social media we could use the algor
 </div>
 <div class="sect3">
 <h4 id="_algorithm_explanation_on_simple_sample_graph_4"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_4">Algorithm explanation on simple sample graph</a></h4>
-<div class="imageblock">
-<div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/harmonic_centrality.png" alt="harmonic centrality">
-</div>
-</div>
 <div class="listingblock">
 <div class="title">Create sample graph</div>
 <div class="content">
@@ -3472,7 +3484,7 @@ YIELD nodeId, centrality - yields centrality for each node</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_5"><a class="link" href="#_cypher_projection_5">Cypher projection</a></h4>
+<h4 id="_cypher_projection_4"><a class="link" href="#_cypher_projection_4">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -3599,7 +3611,7 @@ If the graph has no weights or all relationships have the same weight then any s
 <h4 id="_algorithm_explanation_on_simple_sample_graph_5"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_5">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/mst.png" alt="mst">
+<img src="images/mst.png" alt="mst">
 </div>
 </div>
 <div class="listingblock">
@@ -3632,7 +3644,7 @@ RETURN loadMillis,computeMillis,writeMillis, effectiveNodeCount;</code></pre>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/minst_result.png" alt="minst result">
+<img src="images/minst_result.png" alt="minst result">
 </div>
 <div class="title">Figure 1. Results</div>
 </div>
@@ -3650,7 +3662,7 @@ RETURN loadMillis,computeMillis,writeMillis, effectiveNodeCount;</code></pre>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/maxst_result.png" alt="maxst result">
+<img src="images/maxst_result.png" alt="maxst result">
 </div>
 </div>
 <div class="sect4">
@@ -4097,7 +4109,7 @@ The algorithm assumes that adding a relationship to a path can never make a path
 <h4 id="_algorithm_explanation_on_simple_sample_graph_6"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_6">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/sssp.png" alt="sssp">
+<img src="images/sssp.png" alt="sssp">
 </div>
 </div>
 <div class="listingblock">
@@ -4118,15 +4130,17 @@ The algorithm assumes that adding a relationship to a path can never make a path
        (e)-[:RAIL {cost:20}]-&gt;(f);</code></pre>
 </div>
 </div>
-<div class="sect5">
-<h6 id="_dijkstra_single_source_shortest_path_algorithm"><a class="link" href="#_dijkstra_single_source_shortest_path_algorithm">Dijkstra single source shortest path algorithm</a></h6>
+<div class="sect4">
+<h5 id="_dijkstra_single_source_shortest_path_algorithm"><a class="link" href="#_dijkstra_single_source_shortest_path_algorithm">Dijkstra single source shortest path algorithm</a></h5>
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.shortestPath.stream(start, end, 'cost')
 YIELD nodeId, cost
-RETURN nodeId, cost LIMIT 20</code></pre>
+MATCH (other:Loc) WHERE id(other) = nodeId
+RETURN other.name AS name, cost
+LIMIT 20</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -4139,8 +4153,8 @@ RETURN writeMillis,loadMillis,nodeCount,totalCost</code></pre>
 </div>
 </div>
 </div>
-<div class="sect5">
-<h6 id="_delta_stepping_algorithm"><a class="link" href="#_delta_stepping_algorithm">Delta stepping algorithm</a></h6>
+<div class="sect4">
+<h5 id="_delta_stepping_algorithm"><a class="link" href="#_delta_stepping_algorithm">Delta stepping algorithm</a></h5>
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
@@ -4579,7 +4593,7 @@ In this scenario the algorithm will return <code>Infinity</code> value as a resu
 <h4 id="_algorithm_explanation_on_simple_sample_graph_7"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_7">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/sssp.png" alt="sssp">
+<img src="images/sssp.png" alt="sssp">
 </div>
 </div>
 <div class="listingblock">
@@ -4607,7 +4621,12 @@ In this scenario the algorithm will return <code>Infinity</code> value as a resu
 YIELD sourceNodeId, targetNodeId, distance
 WITH sourceNodeId, targetNodeId, distance
 WHERE algo.isFinite(distance) = true
-RETURN sourceNodeId, targetNodeId, distance LIMIT 20</code></pre>
+
+MATCH (source:Loc) WHERE id(source) = sourceNodeId
+MATCH (target:Loc) WHERE id(target) = targetNodeId
+
+RETURN source.name AS source, target.name AS target, distance
+LIMIT 20</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4719,7 +4738,7 @@ It is often used as part of the computation of network indices such as the clust
 <h4 id="_algorithm_explanation_on_simple_sample_graph_8"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_8">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/triangle_count.png" alt="triangle count">
+<img src="images/triangle_count.png" alt="triangle count">
 </div>
 </div>
 <div class="listingblock">
@@ -4745,7 +4764,13 @@ CREATE (michael)-[:KNOWS]-&gt;(karin),
 <div class="title">returns a stream of triples with nodeIds for each triangle.</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.triangle.stream('Person','KNOWS')
-yield nodeA,nodeB,nodeC;</code></pre>
+yield nodeA,nodeB,nodeC
+
+MATCH (a:Person) WHERE id(a) = nodeA
+MATCH (b:Person) WHERE id(b) = nodeB
+MATCH (c:Person) WHERE id(c) = nodeC
+
+RETURN a.id AS nodeA, b.id AS nodeB, c.id AS nodeC</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -5068,7 +5093,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_6"><a class="link" href="#_cypher_projection_6">Cypher projection</a></h4>
+<h4 id="_cypher_projection_5"><a class="link" href="#_cypher_projection_5">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -5205,7 +5230,7 @@ For a more accurate finding of communities, Jaccard’s index is used to aggrega
 <h4 id="_algorithm_explanation_on_simple_sample_graph_9"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_9">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/label_propagation.png" alt="label propagation">
+<img src="images/label_propagation.png" alt="label propagation">
 </div>
 </div>
 <div class="listingblock">
@@ -5468,7 +5493,7 @@ partitionProperty - simple label propagation kernel</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_7"><a class="link" href="#_cypher_projection_7">Cypher projection</a></h4>
+<h4 id="_cypher_projection_6"><a class="link" href="#_cypher_projection_6">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -5674,7 +5699,7 @@ This can be a severe problem because, in the presence of a large number of high 
 <h4 id="_algorithm_explanation_on_simple_sample_graph_10"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_10">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/louvain.png" alt="louvain">
+<img src="images/louvain.png" alt="louvain">
 </div>
 </div>
 <div class="listingblock">
@@ -5700,7 +5725,11 @@ CREATE (nAlice)-[:FRIEND]-&gt;(nBridget)
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
-RETURN nodeId, community LIMIT 20;</code></pre>
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user, community
+LIMIT 20;</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -5981,7 +6010,7 @@ YIELD nodeId, community - yields a community to each node id</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_8"><a class="link" href="#_cypher_projection_8">Cypher projection</a></h4>
+<h4 id="_cypher_projection_7"><a class="link" href="#_cypher_projection_7">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -6089,7 +6118,7 @@ First implementations treats the graph as unweighted and the second version is w
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/connected_components.png" alt="connected components">
+<img src="images/connected_components.png" alt="connected components">
 </div>
 </div>
 <div class="listingblock">
@@ -6114,7 +6143,10 @@ CREATE (nAlice)-[:FRIEND{weight:0.5}]-&gt;(nBridget)
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind.stream('User', 'FRIEND', {})
 YIELD nodeId,setId
-RETURN nodeId,setId LIMIT 20;</code></pre>
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -6171,7 +6203,8 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;</code></pre>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (u:User)
 RETURN u.partition as partition,count(*) as size_of_partition
-ORDER by size_of_partition DESC LIMIT 20;</code></pre>
+ORDER by size_of_partition DESC
+LIMIT 20;</code></pre>
 </div>
 </div>
 </div>
@@ -6183,14 +6216,18 @@ ORDER by size_of_partition DESC LIMIT 20;</code></pre>
 <div class="listingblock">
 <div class="title">Running algorithm and streaming results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0})
-YIELD nodeId,setId;</code></pre>
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
+YIELD nodeId,setId
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">Running algorithm and writing back results</div>
 <div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition",weightProperty:'weight', defaultValue:0.0, threshold:1.0})
+<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition",weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
 YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;</code></pre>
 </div>
 </div>
@@ -6264,7 +6301,8 @@ Let&#8217;s now check the size of top 20 components to get a better picture</p>
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL algo.unionFind.stream('User', 'FRIEND', {})
 YIELD nodeId,setId
 RETURN setId,count(*) as size_of_component
-ORDER BY size_of_component LIMIT 20;</code></pre>
+ORDER BY size_of_component
+LIMIT 20;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6517,7 +6555,7 @@ YIELD nodeId, setId - yields a setId to each node id</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_9"><a class="link" href="#_cypher_projection_9">Cypher projection</a></h4>
+<h4 id="_cypher_projection_8"><a class="link" href="#_cypher_projection_8">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -6644,7 +6682,7 @@ The SCC algorithms can be used to find such groups and suggest the commonly like
 <h4 id="_algorithm_explanation_on_simple_sample_graph_12"><a class="link" href="#_algorithm_explanation_on_simple_sample_graph_12">Algorithm explanation on simple sample graph</a></h4>
 <div class="imageblock">
 <div class="content">
-<img src="https://github.com/neo4j-contrib/neo4j-graph-algorithms/raw/3.2/doc/img/strongly_connected_components.png" alt="strongly connected components">
+<img src="images/strongly_connected_components.png" alt="strongly connected components">
 </div>
 </div>
 <div class="paragraph">
@@ -6725,7 +6763,9 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize;<
 <div class="title">Find the largest partition</div>
 <div class="content">
 <pre class="highlight"><code class="language-cypher" data-lang="cypher">MATCH (u:User)
-RETURN u.partition as partition,count(*) as size_of_partition ORDER by size_of_partition DESC LIMIT 1</code></pre>
+RETURN u.partition as partition,count(*) as size_of_partition
+ORDER by size_of_partition DESC
+LIMIT 1</code></pre>
 </div>
 </div>
 </div>
@@ -6938,7 +6978,7 @@ YIELD nodeId, partition - yields a partition to each node id</code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_cypher_projection_10"><a class="link" href="#_cypher_projection_10">Cypher projection</a></h4>
+<h4 id="_cypher_projection_9"><a class="link" href="#_cypher_projection_9">Cypher projection</a></h4>
 <div class="paragraph">
 <p>If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
@@ -8417,7 +8457,7 @@ $(document).ready(function() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-02-08 15:22:05 UTC
+Last updated 2018-02-23 08:44:04 UTC
 </div>
 </div>
 </body>
