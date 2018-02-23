@@ -91,6 +91,7 @@ include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 
 // tag::stream-sample-graph-explanation[]
 We can see that Alice is the main broker in this network and Charles is a minor broker.
+The others don't have any influence because all the shortest paths between pairs of people go via Alice or Charles.
 // end::stream-sample-graph-explanation[]
 
 include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
