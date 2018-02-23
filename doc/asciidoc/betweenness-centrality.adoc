@@ -1,36 +1,32 @@
 = Betweenness Centrality
 
 // tag::introduction[]
-_Betweenness Centrality_ is a measure of centrality in a graph based on calculating geodesic (shortest) paths between nodes.
-There is at least one shortest path between every pair of nodes in a connected graph.
-The shortest path can be based on the number of relationships that the path passes through in an unweighted network or the sum of the weights of the relationships in a weighted network.
+_Betweenness Centrality_ is a way of detecting the amount of influence a node has over the flow of information in a graph.
 
-The betweenness centrality for each node is the number of these shortest paths that pass through that node.
-The nodes that most frequently lie on these shortest paths are will have a higher betweenness centrality score.
+image::../images/betweenness_centrality.png[]
+
+It is often used to find nodes that serve as a bridge from one part of a graph to another.
+In the above example Alice is the main connection in the graph.
+If Alice is removed all connections in the graph would be cut off.
+This makes Alice "important" because she ensures that no nodes are isolated.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-The original idea behind betweenness centrality was introduced by J. M. Anthonisse in his 1971 paper http://oai.cwi.nl/oai/asset/9791/9791A.pdf[The rush in a directed graph^].
-Anthonisse defined the _rush_ in a graph as the amount a node in a network has to intermediate between other nodes.
+The betweenness centrality algorithm calculates the shortest (weighted) path between every pair of nodes in a connected graph using a breadth-first search algorithm.
+Each node receives a score based on the number of these shortest paths that pass through the node.
+Nodes that most frequently lie on these shortest paths are will have a higher betweenness centrality score.
 
-Linton Freeman gave the first formal definition of betweenness centrality as one of the “three distinct intuitive conceptions of centrality” in his paper http://moreno.ss.uci.edu/23.pdf[A Set of Measures of Centrality Based on Betweenness^].
-It is calculated by a breath-first search algorithm that computes the shortest paths from every node to all other nodes.
-Ulrik Brandes' http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.11.2024&rep=rep1&type=pdf[Faster Algorithm for Betweenness Centrality^] is often used to make the calculation.
+The algorithm was given its first formal definition by Linton Freeman in his 1971 paper http://moreno.ss.uci.edu/23.pdf[A Set of Measures of Centrality Based on Betweenness^].
+It was considered to be one of the "three distinct intuitive conceptions of centrality".
 // end::explanation[]
 
 == When to use it / use-cases
 
-image::betweenness_centrality.png[]
-
 // tag::use-case[]
 _Betweenness centrality_ is useful for finding nodes that serve as a bridge from one part of a graph to another.
 As a result, it is a rudimentary measure of the control that a node exerts over the flow throughout the graph.
-
-In the above example Alice is the main connection in the graph.
-If Alice is removed all connections in the graph would be cut off.
-This makes Alice “important” because she ensures that no nodes are isolated.
 
 The betweenness score for a node can be non intuitive.
 The node may have low degree, be connected to others that have low degree, and even be a long way from others on average, yet still have high betweenness.
@@ -53,7 +49,7 @@ It has founds uses in a variety of different domains [1] including:
 
 // tag::constraint[]
 Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
-It therefore doesn't give us a perfect view of the most influential nodes in a graph, but rather a good approximation. [4]
+It therefore doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation. [4]
 // end::constraint[]
 
 == Algorithm explanation on simple sample graph
@@ -79,6 +75,7 @@ include::scripts/betweenness-centrality.cypher[tag=stream-sample-graph]
 include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 ----
 
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -90,8 +87,11 @@ include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 | Doug | 0
 | Mark | 0 
 |===
+// end::stream-sample-graph-result[]
 
+// tag::stream-sample-graph-explanation[]
 We can see that Alice is the main broker in this network and Charles is a minor broker.
+// end::stream-sample-graph-explanation[]
 
 include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
 
