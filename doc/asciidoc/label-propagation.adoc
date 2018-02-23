@@ -1,25 +1,23 @@
 = Community detection: Label Propagation
 
 // tag::introduction[]
-_Label Propagation_ (LPA) is an algorithm for finding communities in near linear time http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[[1\]].
+_Label Propagation_ (LPA) is a fast algorithm for finding communities in a graph.
 It detects these communities using network structure alone as its guide and requires neither a pre-defined objective function nor prior information about the communities.
 
-Community detection is an important methodology for understanding the organization of various real-world networks and has applications in problems as diverse as consensus formation in social communities or the identification of functional modules in biochemical networks.
+One interesting feature of LPA is that we can give nodes preliminary labels to narrow down the range of solutions generated.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-Many community detection algorithms have been proposed and utilized with varying degrees of effectiveness in community detection research.
+LPA is a relatively new algorithm and was only proposed by https://arxiv.org/pdf/0709.2938.pdf[Raghavan et al.^] in 2007.
 
-The idea of label flooding through a network originated from the L-shell method proposed by Bagrow and Bollt. (2005) https://arxiv.org/pdf/cond-mat/0412482.pdf[[2\]]
-The main idea behind LPA is to propagate the labels of node throughout the network and form communities through the process of label propagation.
-The intuition of label flooding is that a single label can quickly become dominant in a densely connected group of nodes whereas it has trouble crossing a sparsely connected region.
-Labels will get trapped inside a densely connected group of nodes.
-Based on the idea of local trapping of labels, the author proposed a local community detection method where a node is initialized with a label which propagates step by step through the neighbours until the end of the community is reached.
+It works by propagating labels throughout the network and forming communities based on this process of label propagation.
+The intuition behind the algorithm is that a single label can quickly become dominant in a densely connected group of nodes, but will have trouble crossing a sparsely connected region.
+Labels will get trapped inside a densely connected group of nodes and those nodes that end up with the same label when the algorithms finishes can be considered part of the same community.
+// end::explanation[]
 
-LPA, which was first proposed by Raghavan et al. (2007) https://arxiv.org/pdf/0709.2938.pdf[[3\]], uses unique identifiers of nodes as labels and propagates the labels based on an agreement with the majority of the neighbour nodes.
-
+// tag::formula[]
 The algorithm works as follows:
 
 * Every node is initialized with a unique label (an identifier)
@@ -30,7 +28,7 @@ The algorithm works as follows:
 As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label.
 At the end of the propagation only a few labels will remain - most will have disappeared.
 Nodes that have the same label at convergence are said to belong to the same community.
-// end::explanation[]
+// end::formula[]
 
 == When to use it / use-cases
 
@@ -50,9 +48,9 @@ LPA is such an algorithm and requires neither a pre-defined objective function n
 == Constraints / when not to use it
 
 // tag::constraint[]
-In contrast with other algorithms label propagation can result in different community structures from the same initial condition.
-The range of solutions can be narrowed if some nodes are given preliminary labels while others are held unlabelled.
-Consequently, unlabelled nodes will be more likely to adapt to the labelled ones.
+In contrast with other algorithms label propagation can result in different community structures.
+The range of solutions can be narrowed if some nodes are given preliminary labels while others are unlabelled.
+Unlabelled nodes will be more likely to adapt to the labelled ones.
 For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[3]
 // end::constraint[]
 
@@ -72,6 +70,7 @@ include::scripts/label-propagation.cypher[tag=create-sample-graph]
 include::scripts/label-propagation.cypher[tag=write-sample-graph]
 ----
 
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -83,8 +82,13 @@ include::scripts/label-propagation.cypher[tag=write-sample-graph]
 | Doug | 4
 | Mark | 4
 |===
+// end::stream-sample-graph-result[]
 
+// tag::stream-sample-graph-explanation[]
 Our algorithm found two communities with 3 members each.
+Visually it seems clear that Michael, Bridget, and Alice belong together, as do Doug and Mark.
+Only Charles doesn't strongly fit into either side but ends up with Doug and Mark.
+// end::stream-sample-graph-explanation[]
 
 === Using pre-defined labels
 

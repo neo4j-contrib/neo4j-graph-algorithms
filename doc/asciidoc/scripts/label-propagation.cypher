@@ -19,6 +19,13 @@ CREATE (nAlice)-[:FOLLOW]->(nBridget)
 
 // end::create-sample-graph[]
 
+// tag::stream-sample-graph[]
+
+CALL algo.labelPropagation.stream("User", "FOLLOW",
+  {direction: "OUTGOING", iterations: 10})
+
+// end::stream-sample-graph[]
+
 // tag::write-sample-graph[]
 
 CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING',
