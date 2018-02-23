@@ -14,7 +14,7 @@ This makes Alice "important" because she ensures that no nodes are isolated.
 == History, Explanation
 
 // tag::explanation[]
-The betweenness centrality algorithm calculates the shortest (weighted) path between every pair of nodes in a connected graph using a breadth-first search algorithm.
+The betweenness centrality algorithm calculates the shortest (weighted) path between every pair of nodes in a connected graph using the breadth-first search algorithm.
 Each node receives a score based on the number of these shortest paths that pass through the node.
 Nodes that most frequently lie on these shortest paths are will have a higher betweenness centrality score.
 
@@ -25,14 +25,6 @@ It was considered to be one of the "three distinct intuitive conceptions of cent
 == When to use it / use-cases
 
 // tag::use-case[]
-_Betweenness centrality_ is useful for finding nodes that serve as a bridge from one part of a graph to another.
-As a result, it is a rudimentary measure of the control that a node exerts over the flow throughout the graph.
-
-The betweenness score for a node can be non intuitive.
-The node may have low degree, be connected to others that have low degree, and even be a long way from others on average, yet still have high betweenness.
-Consider a node A that lies on a bridge between two groups of nodes within a network.
-Since any path between nodes in different groups must go through this bridge, node A acquires high betweenness even though it is not well connected within either group.
-
 _Betweenness Centrality_ has wide applicability in network theory.
 It represents the degree to which nodes stand between each other.
 It has founds uses in a variety of different domains [1] including:
@@ -50,6 +42,10 @@ It has founds uses in a variety of different domains [1] including:
 // tag::constraint[]
 Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
 It therefore doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation. [4]
+
+For large graphs exact centrality computation isn't practical.
+The fastest known algorithm for exactly computing betweenness of all the nodes requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
+Instead we can use an approximation algorithm that works with a subset of nodes.
 // end::constraint[]
 
 == Algorithm explanation on simple sample graph
