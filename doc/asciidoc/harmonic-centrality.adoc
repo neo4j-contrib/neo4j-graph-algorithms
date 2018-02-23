@@ -1,12 +1,9 @@
 = Harmonic Centrality
 
 // tag::introduction[]
-Closeness centrality works best on connected graphs - results may be confused if there are multiple connected components.
-
-Harmonic centrality (also known as 'valued centrality') is a variant of closeness centrality that addresses this problem.
+Harmonic centrality (also known as 'valued centrality') is a variant of closeness centrality that was invented to solve the problem the original formula had when dealing with unconnected graphs.
 As with many of the centrality algorithms, it originates from the field of social network analysis.
 // end::introduction[]
-
 
 == History, Explanation
 
@@ -14,12 +11,12 @@ As with many of the centrality algorithms, it originates from the field of socia
 Harmonic centrality was proposed by Marchiori and Latora [1] while trying to come up with a sensible notion of "average shortest path".
 They suggested replacing the average distance calculation from the closeness centrality algorithm with the harmonic mean of all distances.
 
-The algorithm operates as follows:
+The algorithm is very similar to closeness centrality, but rather than summing the distances of a node to all other nodes it sums the inverse of those distances.
+This lets it deal with infinite values.
+// end::explanation[]
 
-* calculate the shortest path for each for each pair of nodes in the graph
-* for each node determine the distance from the node to all other nodes based on those shortest paths
-
-The *raw harmonic centrality* for a node is then calculated using the following formula:
+// tag::formula[]
+The *raw harmonic centrality* for a node is calculated using the following formula:
 
 `raw harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself)`
 
@@ -27,11 +24,8 @@ As with closeness centrality we can also calculate a *normalized harmonic centra
 
 `normalized harmonic centrality(node) = sum(1 / distance from node to every other node excluding itself) / (number of nodes - 1)`
 
-The advantage of harmonic centrality is that ∞ are handled cleanly.
-Harmonic centrality and closeness centrality will often come up with similar results, but harmonic centrality can handle graphs that aren't connected. [3]
-
-Harmonic centrality was proposed independently by Dekker (2005)[4], using the name "valued centrality," and by Rochat (2009)[2].
-// end::explanation[]
+In this formula ∞ values are handled cleanly.
+// end::formula[]
 
 == When to use it / use-cases
 
