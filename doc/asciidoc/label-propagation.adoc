@@ -49,10 +49,9 @@ LPA is such an algorithm and requires neither a pre-defined objective function n
 == Constraints / when not to use it
 
 // tag::constraint[]
-In contrast with other algorithms label propagation can result in different community structures.
+In contrast with other algorithms label propagation can result in different community structures when run multiple times on the same graph.
 The range of solutions can be narrowed if some nodes are given preliminary labels while others are unlabelled.
-Unlabelled nodes will be more likely to adapt to the labelled ones.
-For a more accurate finding of communities, Jaccard’s index is used to aggregate multiple community structures, containing all important information.[3]
+Unlabelled nodes will be more likely to adapt the preliminary labels.
 // end::constraint[]
 
 == Algorithm explanation on simple sample graph
