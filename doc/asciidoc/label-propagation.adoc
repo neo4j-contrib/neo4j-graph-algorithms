@@ -11,8 +11,8 @@ One interesting feature of LPA is that we can give nodes preliminary labels to n
 
 // tag::explanation[]
 LPA is a relatively new algorithm and was only proposed by https://arxiv.org/pdf/0709.2938.pdf[Raghavan et al.^] in 2007.
-
 It works by propagating labels throughout the network and forming communities based on this process of label propagation.
+
 The intuition behind the algorithm is that a single label can quickly become dominant in a densely connected group of nodes, but will have trouble crossing a sparsely connected region.
 Labels will get trapped inside a densely connected group of nodes and those nodes that end up with the same label when the algorithms finishes can be considered part of the same community.
 // end::explanation[]
