@@ -80,6 +80,25 @@ include::scripts/closeness-centrality.cypher[tag=write-sample-graph]
 - calculates closeness centrality and potentially writes back
 ----
 
+// tag::stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | centrality weight
+| C | 0.6666666666666666
+| B | 0.5714285714285714
+| D | 0.5714285714285714
+| A | 0.4
+| E | 0.4
+|===
+// end::stream-sample-graph-result[]
+
+// tag::stream-sample-graph-explanation[]
+"C" is the best connected node in this graph although B and D aren't far behind.
+"A" and "E" don't have close ties to many other nodes so their scores are lower.
+A score of 1 would indicate that a node has a direct connection to all other nodes.
+// end::stream-sample-graph-explanation[]
+
 Calculation:
 
 
