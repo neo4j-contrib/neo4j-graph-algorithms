@@ -5,6 +5,7 @@ _Label Propagation_ (LPA) is a fast algorithm for finding communities in a graph
 It detects these communities using network structure alone as its guide and doesn't require a pre-defined objective function or prior information about the communities.
 
 One interesting feature of LPA is that we can give nodes preliminary labels to narrow down the range of solutions generated.
+This means that it can be used as semi-supervised way of finding communities where we hand-pick some initial communities.
 // end::introduction[]
 
 == History, Explanation
@@ -100,8 +101,6 @@ In our example graph we saved them as property _predefined_label_.
 Algorithm first checks if there is a _predefined label_ assigned to the node and loads it, if there is one.
 If there isn't one it assigns the node new unique label(node id are used).
 Using this preliminary set of labels (identifiers) it then sequentially updates each node's label to a new one, which is the most frequent label among its neighbors at every label propagation step(iteration).
-
-Can be used as semi-supervised way of finding communities, where we hand-pick some initial communities.
 
 .Running algorithm with pre-defined labels
 [source,cypher]
