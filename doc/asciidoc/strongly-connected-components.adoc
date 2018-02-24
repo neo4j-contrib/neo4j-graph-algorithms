@@ -1,14 +1,14 @@
 = Community detection: Strongly Connected Components
 
 // tag::introduction[]
-The _Strongly Connected Components_ (SCC) algorithm partitions nodes in a directed graph into connected components (groups) where nodes that fall into the same component are reachable from each other in both directions.
+The _Strongly Connected Components_ (SCC) algorithm finds sets of connected nodes in a directed graph where each node is reachable in both directions from any other node in the same set.
 It is often used early in a graph analysis process to help us get an idea of how our graph is structured.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-SCC is one of the earliest graph algorithms and the first linear-time algorithm was created by Tarjan in 1972.
+SCC is one of the earliest graph algorithms and the first linear-time algorithm was described by Tarjan in 1972.
 Decomposing a directed graph into its strongly connected components is a classic application of the depth-first search algorithm.
 // end::explanation[]
 
