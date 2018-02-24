@@ -1,17 +1,15 @@
 = Community detection: Strongly Connected Components
 
 // tag::introduction[]
-_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. 
-The strongly connected components  of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.There are several algorithms to compute the SCC.
+The _Strongly Connected Components_ (SCC) algorithm partitions nodes in a directed graph into connected components (groups) where nodes that fall into the same component are reachable from each other in both directions.
+It is often used early in a graph analysis process to help us get an idea of how our graph is structured.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-Decomposing a directed graph into its strongly connected components is a classic application of depth-first search. 
-The problem of finding connected components is at the heart of many graph application. 
-Generally speaking, the connected components of the graph correspond to different classes of objects. 
-The first linear-time algorithm for strongly connected components is due to Tarjan (1972).
+SCC is one of the earliest graph algorithms and the first linear-time algorithm was created by Tarjan in 1972.
+Decomposing a directed graph into its strongly connected components is a classic application of the depth-first search algorithm.
 // end::explanation[]
 
 == When to use it / use-cases
@@ -34,7 +32,8 @@ The SCC algorithms can be used to find such groups and suggest the commonly like
 image::strongly_connected_components.png[]
 
 A directed graph is strongly connected if there is a path between all pairs of vertices. 
-This algorithms treats the graph as directed, so the direction of the relationship is important and strongly connected compoment exists only if there are relationships between nodes in both direction. 
+This algorithm treats the graph as directed, which means that the direction of the relationship is important.
+A strongly connected component only exists if there are relationships between nodes in both direction.
 
 .Create sample graph
 [source,cypher]
