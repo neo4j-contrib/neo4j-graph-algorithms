@@ -1,20 +1,16 @@
 = Community detection: Connected Components
 
 // tag::introduction[]
-_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. 
-In graph theory, a connected component of an undirected graph is a subgraph in which any two vertices are connected to each other by paths, and which is connected to no additional vertices in the graph.
+The _Connected Components_ or _UnionFind_ algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
+It differs from the SCC algorithm because it only needs a path to exist between pairs of nodes in one direction, whereas SCC needs a path to exist in both directions.
+As with SCC, UnionFind is often used early in an analysis to understand a graph's structure.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-The _Connected Components_ of a graph represent, in general terms, the pieces of the graph. 
-Two vertices are in the same component of graph if and only if there is some path between them.
-
-Finding connected components is at the heart of many graph applications. 
-For example, consider the problem of identifying partitions in a set of items. 
-We can represent each item by a node and add an edge between each pair of items that are deemed similar. 
-The connected components of this graph correspond to different classes of items.
+The algorithm was first described by Bernard A. Galler and Michael J. Fischer in 1964.
+The components in a graph are computed using either the breadth-first search or depth-first search algorithms.
 // end::explanation[]
 
 == When to use it / use-cases
