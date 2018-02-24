@@ -1,0 +1,69 @@
+= Degree Centrality
+
+// tag::introduction[]
+Degree Centrality is the simplest of all the centrality algorithms.
+It measures the number of incoming and outgoing relationships from a node.
+
+The algorithm can help us find popular nodes in a graph.
+// end::introduction[]
+
+== History, Explanation
+
+// tag::explanation[]
+Degree Centrality was proposed by Linton C. Freeman in his 1979 paper http://leonidzhukov.net/hse/2014/socialnetworks/papers/freeman79-centrality.pdf[Centrality in Social Networks Conceptual Clarification^].
+While the algorithm can be used to find the popularity of individual nodes, it is often used as part of a global analysis where we calculate the minimum degree, maximum degree, mean degree, and standard deviation across the whole graph.
+
+// end::explanation[]
+
+
+== When to use it / use-cases
+
+
+// tag::use-case[]
+
+// end::use-case[]
+
+== Constraints / when not to use it
+
+
+// tag::constraint[]
+
+
+// end::constraint[]
+
+== Algorithm explanation on simple sample graph
+
+.Create sample graph
+[source,cypher]
+----
+include::scripts/degree-centrality.cypher[tag=create-sample-graph]
+----
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/degree-centrality.cypher[tag=stream-sample-graph]
+- yields centrality for each node
+----
+
+// tag::stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| name | following | followers
+| Alice | 3 | 0
+| Bridget | 1 | 1
+| Charles | 1 | 1
+| Doug | 0 | 5
+| Mark | 2 | 0
+| Michael | 1 | 1
+|===
+// end::stream-sample-graph-result[]
+
+// tag::stream-sample-graph-explanation[]
+
+We can see that Doug is the most popular user in our imaginary Twitter graph with 5 followers - all other users follow him but he doesn't follow anybody back.
+In the real Twitter network celebrities have very high follower counts but tend to follow very few back people.
+We could therefore consider Doug a celebrity!
+
+// end::stream-sample-graph-explanation[]
