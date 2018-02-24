@@ -50,6 +50,7 @@ include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
 
 ----
 
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -61,8 +62,13 @@ include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
 | Doug | 2
 | Mark | 2 
 |===
+// end::stream-sample-graph-result[]
 
-We can see that we have 2 strongly connected components in our sample graph. The first and biggest component has members Alice,Bridget,Michael and the second component has Doug and Mark. 
+// tag::stream-sample-graph-explanation[]
+We can see that we have 2 strongly connected components in our sample graph.
+The first and biggest component has members Alice, Bridget, and Michael, while the second component has Doug and Mark.
+Charles doesn't fit into either of these components because there isn't an outgoing relationship from that node to any of the others.
+// end::stream-sample-graph-explanation[]
 
 .Find the largest partition
 [source,cypher]
