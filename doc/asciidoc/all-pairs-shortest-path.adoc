@@ -1,13 +1,16 @@
 = All Pairs Shortest Path
 
 // tag::introduction[]
-_All Pairs Shortest Path_ calculates the shortest weight path between all pairs of nodes.
-An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
+_All Pairs Shortest Path_ (APSP) calculates the shortest (weighted) path between all pairs of nodes.
+This algorithm has optimisations that make it quicker than calling the SSSP algorithm for every pair of nodes in the graph.
+
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
+Floyd Warshall and Parallel Johnson are the most common APSP algorithms.
+
 This algorithm finds shortest paths between all pairs of nodes in the graph.
 Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
 In this scenario the algorithm will return `Infinity` value as a result between these pairs of nodes.
@@ -49,6 +52,31 @@ include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
 ----
+
+// tag::all-pairs-stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| source | target | cost
+| A | F | 100
+| C | F | 90
+| B | F | 90
+| A | E | 80
+| C | E | 70
+| B | E | 80
+| A | B | 50
+| D | F | 50
+| A | C | 50
+| A | D | 50
+
+|===
+
+// end::all-pairs-stream-sample-graph-result[]
+
+// tag::all-pairs-stream-sample-graph-explanation[]
+This query returned the top 10 pairs of nodes that are the furthest away from each other.
+"F" and "E" seem to be quite distant from the others.
+// end::all-pairs-stream-sample-graph-explanation[]
 
 For now only single-source shortest path support loading the relationship as undirected, but we can use cypher loading to help us solve this.
 Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship.

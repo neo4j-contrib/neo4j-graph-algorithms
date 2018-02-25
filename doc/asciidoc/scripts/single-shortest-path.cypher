@@ -67,9 +67,11 @@ WHERE algo.isFinite(distance) = true
 
 MATCH (source:Loc) WHERE id(source) = sourceNodeId
 MATCH (target:Loc) WHERE id(target) = targetNodeId
+WITH source, target, distance WHERE source <> target
 
 RETURN source.name AS source, target.name AS target, distance
-LIMIT 20
+ORDER BY distance DESC
+LIMIT 10
 
 // end::all-pairs-sample-graph[]
 
