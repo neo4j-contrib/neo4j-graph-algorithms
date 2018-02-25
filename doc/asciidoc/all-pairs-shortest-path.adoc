@@ -9,9 +9,6 @@ This algorithm has optimisations that make it quicker than calling the SSSP algo
 == History, Explanation
 
 // tag::explanation[]
-Floyd Warshall and Parallel Johnson are the most common APSP algorithms.
-
-This algorithm finds shortest paths between all pairs of nodes in the graph.
 Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
 In this scenario the algorithm will return `Infinity` value as a result between these pairs of nodes.
 // end::explanation[]
