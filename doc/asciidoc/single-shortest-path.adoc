@@ -68,6 +68,24 @@ include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph
 include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]  
 ----
 
+// tag::single-pair-stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | cost
+| A | 0
+| D | 50
+| E | 80
+| F | 100
+|===
+
+// end::single-pair-stream-sample-graph-result[]
+
+// tag::single-pair-stream-sample-graph-explanation[]
+The quickest route takes us from "A" to "F" via "D" and "E" at a total cost of 100.
+We first go by rail from "A" to "D" at a cost of 50, from "D" to "E" by road for an additional 30, and finally from "E" to "F" by rail for an additional 20.
+// end::single-pair-stream-sample-graph-explanation[]
+
 === Delta stepping algorithm
 
 
