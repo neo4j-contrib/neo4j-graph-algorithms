@@ -3,7 +3,7 @@
 // tag::introduction[]
 The _Single Source Shortest Path_ (SSSP) algorithm calculates the shortest (weighted) path between a pair of nodes.
 Dijkstra's algorithm is the most well known one in this category.
-SSSP is a real time graph algorithm - it can be used as part of the normal user flow in a web or mobile application.
+SSSP is a real time graph algorithm and can be used as part of the normal user flow in a web or mobile application.
 // end::introduction[]
 
 == History, Explanation
@@ -14,8 +14,8 @@ It gained prominence in the early 1950s in the context of â€˜alternate routingâ€
 i.e. finding a second shortest route if the shortest route is blocked.
 
 Dijkstra came up with his algorithm in 1956 while trying to come up with something to show off the new ARMAC computers.
-He needed to find a problem and solution that people not familiar with computing would be able to understand.
-He designed what is now known as Dijkstra's algorithm and later implemented it for a slightly simplified transportation map of 64 cities in the Netherlands.
+He needed to find a problem and solution that people not familiar with computing would be able to understand and designed what is now known as Dijkstra's algorithm.
+He later implemented it for a slightly simplified transportation map of 64 cities in the Netherlands.
 // end::explanation[]
 
 == When to use it / use-cases
