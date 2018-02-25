@@ -1,0 +1,3599 @@
+= Asciidoctor PDF Theming Guide
+Dan Allen <https://github.com/mojavelinux[@mojavelinux]>
+// Settings:
+:idprefix:
+:idseparator: -
+:toc: preamble
+ifndef::env-github[:icons: font]
+ifdef::env-github[]
+:outfilesuffix: .adoc
+:!toc-title:
+:caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
+:warning-caption: :warning:
+endif::[]
+:window: _blank
+// Aliases:
+:conum-guard-yaml: #
+ifndef::icons[:conum-guard-yaml: # #]
+ifdef::backend-pdf[:conum-guard-yaml: # #]
+
+////
+Topics remaining to document:
+* line height and line height length (and what that all means)
+* title page layout / title page images (logo & background)
+* document that unicode escape sequences can be used inside double-quoted strings
+////
+
+[.lead]
+The theming system in Asciidoctor PDF is used to control the layout and styling of the PDF file Asciidoctor PDF generates from AsciiDoc.
+This document describes how the theming system works, how to define a custom theme in YAML and how to activate the theme when running Asciidoctor PDF.
+
+IMPORTANT: If you're using a custom theme, you're expected to bring your own fonts or declare the fonts from the default theme.
+If you don't declare your own fonts, the built-in PDF (afm) fonts will be used, which only support WINANSI characters (similar to Basic Latin).
+
+toc::[]
+
+== Language Overview
+
+The theme language in Asciidoctor PDF is based on the http://en.wikipedia.org/wiki/YAML[YAML] data format and incorporates many concepts from CSS and SASS.
+Therefore, if you have a background in web design, the theme language should be immediately familiar to you.
+
+Like CSS, themes have both selectors and properties.
+Selectors are the component you want to style.
+The properties are the style elements of that component that can be styled.
+All selector names are implicit (e.g., `heading`), so you customize the theme primarily by manipulating pre-defined property values (e.g., `font_size`).
+
+[NOTE]
+====
+The theme language in Asciidoctor PDF supports a limited subset of the properties from CSS.
+Some of these properties have different names from those found in CSS.
+
+* Underscores (`_`) can be used in place of hyphens (`-`) for all property names in the theme language.
+* Instead of separate properties for font weight and font style, the theme language combines these settings in the `font_style` property (allowed values: `normal`, `bold`, `italic` and `bold_italic`).
+* The `text_align` property from CSS is the `align` property in the theme language.
+* The `color` property from CSS is the `font_color` property in the theme language.
+====
+
+A theme (or style) is described in a YAML-based data format and stored in a dedicated theme file.
+YAML is a human-friendly data format that resembles CSS and helps to describe the theme.
+The theme language adds some extra features to YAML, such as variables, basic math, measurements and color values.
+These enhancements will be explained in detail in later sections.
+
+The theme file must be named _<name>-theme.yml_, where `<name>` is the name of the theme.
+
+Here's an example of a basic theme file:
+
+.basic-theme.yml
+[source,yaml]
+----
+page:
+  layout: portrait
+  margin: [0.75in, 1in, 0.75in, 1in]
+  size: Letter
+base:
+  font_color: #333333
+  font_family: Times-Roman
+  font_size: 12
+  line_height_length: 17
+  line_height: $base_line_height_length / $base_font_size
+vertical_spacing: $base_line_height_length
+heading:
+  font_color: #262626
+  font_size: 17
+  font_style: bold
+  line_height: 1.2
+  margin_bottom: $vertical_spacing
+link:
+  font_color: #002FA7
+outline_list:
+  indent: $base_font_size * 1.5
+----
+
+When creating a new theme, you only have to define the keys you want to override from the base theme, which is loaded prior to loading your custom theme.
+All the available keys are documented in <<Keys>>.
+The converter uses the information from the theme map to help construct the PDF.
+
+[TIP]
+====
+Instead of creating a theme from scratch, another option is to download the https://github.com/asciidoctor/asciidoctor-pdf/blob/master/data/themes/default-theme.yml[default-theme.yml] file from the source repository.
+Save the file using a unique name (e.g., _custom-theme.yml_) and start hacking on it.
+
+Alternatively, you can snag the file from your local installation using the following command:
+
+ $ ASCIIDOCTOR_PDF_DIR=`gem contents asciidoctor-pdf --show-install-dir`;\
+   cp "$ASCIIDOCTOR_PDF_DIR/data/themes/default-theme.yml" custom-theme.yml
+====
+
+Keys may be nested to an arbitrary depth to eliminate redundant prefixes (an approach inspired by SASS).
+Once the theme is loaded, all keys are flattened into a single map of qualified keys.
+Nesting is simply a shorthand way of organizing the keys.
+In the end, a theme is just a map of key/value pairs.
+
+Nested keys are adjoined to their parent key with an underscore (`_`).
+This means the selector part (e.g., `link`) is combined with the property name (e.g., `font_color`) into a single, qualified key (e.g., `link_font_color`).
+
+For example, let's assume we want to set the base (i.e., global) font size and color.
+These keys may be written longhand:
+
+[source,yaml]
+----
+base_font_color: #333333
+base_font_family: Times-Roman
+base_font_size: 12
+----
+
+Or, to avoid having to type the prefix `base_` multiple times, the keys may be written hierarchically:
+
+[source,yaml]
+----
+base:
+  font_color: #333333
+  font_family: Times-Roman
+  font_size: 12
+----
+
+Or even:
+
+[source,yaml]
+----
+base:
+  font:
+    color: #333333
+    family: Times-Roman
+    size: 12
+----
+
+Each level of nesting must be indented by two more spaces of indentation than the parent level.
+Also note the presence of the colon after each key name.
+
+== Values
+
+The value of a key may be one of the following types:
+
+* String
+  - Font family name (e.g., Roboto)
+  - Font style (normal, bold, italic, bold_italic)
+  - Alignment (left, center, right, justify)
+  - Color as hex string (e.g., #ffffff)
+  - Image path
+  - Enumerated type (where specified)
+  - Text content (where specified)
+* Null (clears any previously assigned value)
+  - _empty_ (i.e., no value specified)
+  - null
+  - ~
+* Number (integer or float) with optional units (default unit is points)
+* Array
+  - Color as RGB array (e.g., [51, 51, 51])
+  - Color CMYK array (e.g., [50, 100, 0, 0])
+  - Margin (e.g., [1in, 1in, 1in, 1in])
+  - Padding (e.g., [1in, 1in, 1in, 1in])
+* Variable reference (e.g., $base_font_color)
+* Math expression
+
+Note that keys almost always require a value of a specific type, as documented in <<Keys>>.
+
+=== Inheritance
+
+Like CSS, inheritance is a principle feature in the Asciidoctor PDF theme language.
+For many of the properties, if a key is not specified, the key inherits the value applied to the parent content in the content hierarchy.
+This behavior saves you from having to specify properties unless you want to override the inherited value.
+
+The following keys are inherited:
+
+* font_family
+* font_color
+* font_size
+* font_style
+* text_transform
+* line_height (currently some exceptions)
+* margin_bottom (if not specified, defaults to $vertical_spacing)
+
+.Heading Inheritance
+****
+Headings inherit starting from a specific heading level (e.g., `heading_h2_font_size`), then to the heading category (e.g., `heading_font_size`), then directly to the base value (e.g., `base_font_size`).
+Any setting from an enclosing context, such as a sidebar, is skipped.
+****
+
+=== Variables
+
+To save you from having to type the same value in your theme over and over, or to allow you to base one value on another, the theme language supports variables.
+Variables consist of the key name preceded by a dollar sign (`$`) (e.g., `$base_font_size`).
+Any qualified key that has already been defined can be referenced in the value of another key.
+(In order words, as soon as the key is assigned, it's available to be used as a variable).
+
+IMPORTANT: Variables are defined from top to bottom (i.e., in document order).
+Therefore, a variable must be defined before it is referenced.
+In other words, the path the variable refers to must be *above* the usage of that variable.
+
+For example, once the following line is processed,
+
+[source,yaml]
+----
+base:
+  font_color: #333333
+----
+
+the variable `$base_font_color` will be available for use in subsequent lines and will resolve to `#333333`.
+
+Let's say you want to make the font color of the sidebar title the same as the heading font color.
+Just assign the value `$heading_font_color` to the `$sidebar_title_font_color`.
+
+[source,yaml]
+----
+heading:
+  font_color: #191919
+sidebar:
+  title:
+    font_color: $heading_font_color
+----
+
+You can also use variables in math expressions to use one value to build another.
+This is commonly done to set font sizes proportionally.
+It also makes it easy to test different values very quickly.
+
+[source,yaml]
+----
+base:
+  font_size: 12
+  font_size_large: $base_font_size * 1.25
+  font_size_small: $base_font_size * 0.85
+----
+
+We'll cover more about math expressions later.
+
+==== Custom Variables
+
+You can define arbitrary key names to make custom variables.
+This is one way to group reusable values at the top of your theme file.
+If you are going to do this, it's recommended that you organize the keys under a custom namespace, such as `brand`.
+
+For instance, here's how you can define your brand colors:
+
+[source,yaml,subs=attributes+]
+----
+brand:
+  primary: #E0162B {conum-guard-yaml} <1>
+  secondary: '#FFFFFF' {conum-guard-yaml} <2>
+  alert: '0052A5' {conum-guard-yaml} <3>
+----
+<1> To align with CSS, you may add a `+#+` in front of the hex color value.
+A YAML preprocessor is used to ensure the value is not treated as a comment as it would normally be the case in YAML.
+<2> You may put quotes around the CSS-style hex value to make it friendly to a YAML editor or validation tool.
+<3> The leading `+#+` on a hex value is entirely optional.
+However, we recommend that you always use either a leading `+#+` or surrounding quotes (or both) to prevent YAML from mangling the value.
+
+You can now use these custom variables later in the theme file:
+
+[source,yaml]
+----
+base:
+  font_color: $brand_primary
+----
+
+=== Math Expressions & Functions
+
+The theme language supports basic math operations to support calculated values.
+Like programming languages, multiple and divide take precedence over add and subtract.
+
+The following table lists the supported operations and the corresponding operator for each.
+
+[width=25%]
+|===
+|Operation |Operator
+
+|multiply
+|*
+
+|divide
+|/
+
+|add
+|+
+
+|subtract
+|-
+|===
+
+IMPORTANT: Operators must always be surrounded by a space on either side (e.g., 2 + 2, not 2+2).
+
+Here's an example of a math expression with fixed values.
+
+[source,yaml]
+----
+conum:
+  line_height: 4 / 3
+----
+
+Variables may be used in place of numbers anywhere in the expression:
+
+[source,yaml]
+----
+base:
+  font_size: 12
+  font_size_large: $base_font_size * 1.25
+----
+
+Values used in a math expression are automatically coerced to a float value before the operation.
+If the result of the expression is an integer, the value is coerced to an integer afterwards.
+
+IMPORTANT: Numeric values less than 1 must have a 0 before the decimal point (e.g., 0.85).
+
+The theme language also supports several functions for rounding the result of a math expression.
+The following functions may be used if they surround the whole value or expression for a key.
+
+round(...):: Rounds the number to the nearest half integer.
+floor(...):: Rounds the number up to the next integer.
+ceil(...):: Rounds the number down the previous integer.
+
+You might use these functions in font size calculations so that you get more exact values.
+
+[source,yaml]
+----
+base:
+  font_size: 12.5
+  font_size_large: ceil($base_font_size * 1.25)
+----
+
+=== Measurement Units
+
+Several of the keys require a value in points (pt), the unit of measure for the PDF canvas.
+A point is defined as 1/72 of an inch.
+If you specify a number without any units, the units defaults to pt.
+
+However, us humans like to think in real world units like inches (in), centimeters (cm), or millimeters (mm).
+You can let the theme do this conversion for you automatically by adding a unit notation next to any number.
+
+The following units are supported:
+
+[width=25%]
+|===
+|Unit |Suffix
+
+|Centimeter
+|cm
+
+|Inches
+|in
+
+|Millimeter
+|mm
+
+|Percentage^[1]^
+|%, vw, or vh
+
+|Points
+|pt (default)
+|===
+
+. A percentage with the % unit is calculated relative to the width or height of the content area.
+Viewport-relative percentages (vw or vh units) are calculated as a percentage of the page width or height, respectively.
+Currently, percentage units can only be used for placing elements on the title page or for setting the width of a block image.
+
+IMPORTANT: Numbers with more than two digits should be written as a float (e.g., 100.0), a math expression (e.g, 1 * 100), or with a unit (e.g., 100pt).
+Otherwise, the value may be misinterpreted as a hex color (e.g., '100') and could cause the converter to crash.
+
+Here's an example of how you can use inches to define the page margins:
+
+[source,yaml]
+----
+page:
+  margin: [0.75in, 1in, 0.75in, 1in]
+----
+
+The order of elements in a measurement array is the same as it is in CSS:
+
+. top
+. right
+. bottom
+. left
+
+=== Alignments
+
+The align subkey is used to align text and images within the parent container.
+
+==== Text Alignments
+
+Text can be aligned as follows:
+
+* left
+* center
+* right
+* justify (stretched to each edge)
+
+==== Image Alignments
+
+Images can be aligned as follows:
+
+* left
+* center
+* right
+
+=== Font Styles
+
+In most cases, whereever you can specify a custom font family, you can also specify a font style.
+These two settings are combined to locate the font to use.
+
+The following font styles are recognized:
+
+* normal (no style)
+* italic
+* bold
+* bold_italic
+
+=== Text Transforms
+
+Many places where font properties can be specified, a case transformation can be applied to the text.
+The following transforms are recognized:
+
+* uppercase
+* lowercase
+* none (clears an inherited value)
+
+[CAUTION#transform-unicode-letters]
+====
+Since Ruby 2.4, Ruby has built-in support for transforming the case of any letter defined by Unicode.
+
+If you're using Ruby < 2.4, and the text you want to transform contains characters beyond the Basic Latin character set (e.g., an accented character), you must install either the `activesupport` or the `unicode` gem in order for those characters to be transformed.
+
+ $ gem install activesupport
+
+or
+
+ $ gem install unicode
+====
+
+// Additional transforms, such as capitalize, may be added in the future.
+
+=== Colors
+
+The theme language supports color values in three formats:
+
+Hex:: A string of 3 or 6 characters with an optional leading `#`, optional surrounding quotes or both.
+RGB:: An array of numeric values ranging from 0 to 255.
+CMYK:: An array of numeric values ranging from 0 to 1 or from 0% to 100%.
+Transparent:: The special value `transparent` indicates that a color should not be used.
+
+==== Hex
+
+The hex color value is likely most familiar to web developers.
+The value must be either 3 or 6 characters (case insensitive) with an optional leading hash (`#`), optional surrounding quotes or both.
+
+To align with CSS, you may add a `+#+` in front of the hex color value.
+A YAML preprocessor is used to ensure the value is not treated as a comment as it would normally be the case in YAML.
+
+You also may put quotes around the CSS-style hex value to make it friendly to a YAML editor or validation tool.
+In this case, the leading `+#+` on a hex value is entirely optional.
+
+Regardless, we recommend that you always use either a leading `+#+` or surrounding quotes (or both) to prevent YAML from mangling the value.
+
+The following are all equivalent values for the color red:
+
+[cols="8*m"]
+|===
+|#ff0000
+|#FF0000
+|'ff0000'
+|'FF0000'
+|#f00
+|#F00
+|'f00'
+|'F00'
+|===
+
+Here's how a hex color value appears in the theme file:
+
+[source,yaml]
+----
+base:
+  font_color: #ff0000
+----
+
+==== RGB
+
+An RGB array value must be three numbers ranging from 0 to 255.
+The values must be separated by commas and be surrounded by square brackets.
+
+NOTE: An RGB array is automatically converted to a hex string internally, so there's no difference between ff0000 and [255, 0, 0].
+
+Here's how to specify the color red in RGB:
+
+* [255, 0, 0]
+
+Here's how a RGB color value appears in the theme file:
+
+[source,yaml]
+----
+base:
+  font_color: [255, 0, 0]
+----
+
+==== CMYK
+
+A CMYK array value must be four numbers ranging from 0 and 1 or from 0% to 100%.
+The values must be separated by commas and be surrounded by square brackets.
+
+Unlike the RGB array, the CMYK array _is not_ converted to a hex string internally.
+PDF has native support for CMYK colors, so you can preserve the original color values in the final PDF.
+
+Here's how to specify the color red in CMYK:
+
+* [0, 0.99, 1, 0]
+* [0, 99%, 100%, 0]
+
+Here's how a CMYK color value appears in the theme file:
+
+[source,yaml]
+----
+base:
+  font_color: [0, 0.99, 1, 0]
+----
+
+==== Transparent
+
+It's possible to specify no color by assigning the special value `transparent`, as shown here:
+
+[source,yaml]
+----
+base:
+  background_color: transparent
+----
+
+=== Images
+
+An image is specified either as a bare image path or as an inline image macro as found in the AsciiDoc syntax.
+Images are currently resolved relative to the value of the `pdf-stylesdir` attribute.
+
+The following image types (and corresponding file extensions) are supported:
+
+* PNG (.png)
+* JPEG (.jpg)
+* SVG (.svg)
+
+CAUTION: The GIF format (.gif) is not supported.
+
+Here's how an image is specified in the theme file as a bare image path:
+
+[source,yaml]
+----
+title_page:
+  background_image: title-cover.png
+----
+
+Here's how the image is specified using the inline image macro:
+
+[source,yaml]
+----
+title_page:
+  background_image: image:title-cover.png[]
+----
+
+Like in the AsciiDoc syntax, the inline image macro allows you to supply set the width of the image and the alignment:
+
+[source,yaml]
+----
+title_page:
+  logo_image: image:logo.png[width=250,align=center] 
+----
+
+=== Quoted String
+
+Some of the keys accept a quoted string as text content.
+The final segment of these keys is always named `content`.
+
+A content key accepts a string value.
+It's usually best to quote the string or use the http://symfony.com/doc/current/components/yaml/yaml_format.html#strings[YAML multi-line string syntax].
+
+Text content may be formatted using a subset of inline HTML.
+You can use the well-known elements such as `<strong>`, `<em>`, `<code>`, `<a>`, `<sub>`, `<sup>`, `<del>`, and `<span>`.
+The `<span>` element supports the `style` attribute, which you can use to specify the `color`, `font-weight`, and `font-style` CSS properties.
+You can also use the `rgb` attribute on the `<color>` element to change the color or the `name` and `size` attributes on the `<font>` element to change the font properties.
+If you need to add an underline or strikethrough decoration to the text, you can assign the `underline` or `line-through` to the `class` attribute on any aforementioned element.
+
+Here's an example of using formatting in the content of the menu caret:
+
+[source,yaml]
+----
+menu_caret_content: " <font size=\"1.15em\"><color rgb=\"#b12146\">\u203a</color></font> "
+----
+
+NOTE: The string must be double quoted in order to use a Unicode escape code like `\u203a`.
+
+Additionally, normal substitutions are applied to the value of content keys for <<Running Content (Header & Footer),running content>>, so you can use most AsciiDoc inline formatting (e.g., `+*strong*+` or `+{attribute-name}+`) in the values of those keys.
+
+== Fonts
+
+You can select from <<built-in-afm-fonts,built-in PDF fonts>>, <<bundled-fonts,fonts bundled with Asciidoctor PDF>> or <<custom-fonts,custom fonts>> loaded from TrueType font (TTF) files.
+If you want to use custom fonts, you must first declare them in your theme file.
+
+IMPORTANT: Asciidoctor has no challenge working with Unicode.
+In fact, it prefers Unicode and considers the entire range.
+However, once you convert to PDF, you have to meet the font requirements of PDF in order to preserve Unicode characters.
+There's nothing Asciidoctor can do to convince PDF to work with extended characters without the right fonts in play.
+
+=== Built-In (AFM) Fonts
+
+The names of the built-in fonts (for general-purpose text) are as follows:
+
+[width=33.33%]
+|===
+|Font Name |Font Family
+
+|Helvetica
+|sans-serif
+
+|Times-Roman
+|serif
+
+|Courier
+|monospace
+|===
+
+Using a built-in font requires no additional files.
+You can use the key anywhere a `font_family` property is accepted in the theme file.
+For example:
+
+[source,yaml]
+----
+base:
+  font_family: Times-Roman
+----
+
+However, when you use a built-in font, the characters you can use in your document are limited to the characters in the WINANSI (http://en.wikipedia.org/wiki/Windows-1252[Windows-1252]) code set.
+WINANSI includes most of the characters needed for writing in Western languages (English, French, Spanish, etc).
+For anything outside of that, PDF is BYOF (Bring Your Own Font).
+
+Even though the built-in fonts require the content to be encoded in WINANSI, _you still type your AsciiDoc document in UTF-8_.
+Asciidoctor PDF encodes the content into WINANSI when building the PDF.
+
+.WINANSI Encoding Behavior
+****
+When using the built-in PDF (AFM) fonts on a block of content in your AsciiDoc document, any character that cannot be encoded to WINANSI is replaced with a logic "`not`" glyph (`&#172;`) and you'll see the following warning in your console:
+
+ The following text could not be fully converted to the Windows-1252 character set:
+ | <string with unknown glyph>
+
+This behavior differs from the default behavior in Prawn, which simply crashes.
+
+For more information about how Prawn handles character encodings for built-in fonts, see https://github.com/prawnpdf/prawn/blob/master/CHANGELOG.md#vastly-improved-handling-of-encodings-for-pdf-built-in-afm-fonts[this note in the Prawn CHANGELOG].
+****
+
+=== Bundled Fonts
+
+Asciidoctor PDF bundles several fonts that are used by the default theme.
+You can also use these fonts in your custom theme by simply declaring them.
+These fonts provide more characters than the built-in PDF fonts, but still only a subset of UTF-8 (to reduce the size of the gem).
+
+The family name of the fonts bundled with Asciidoctor PDF are as follows:
+
+http://www.google.com/get/noto/#/family/noto-serif[Noto Serif]::
+A serif font that can be styled as normal, italic, bold or bold_italic.
+
+http://mplus-fonts.osdn.jp/mplus-outline-fonts/design/index-en.html#mplus_1mn[M+ 1mn]::
+A monospaced font that maps different thicknesses to the styles normal, italic, bold and bold_italic.
+Also provides the circuled numbers used in callouts.
+
+http://mplus-fonts.osdn.jp/mplus-outline-fonts/design/index-en.html#mplus_1p[M+ 1p Fallback]::
+A sans-serif font that provides a very complete set of Unicode glyphs.
+Cannot be styled as italic, bold or bold_italic.
+Used as the fallback font.
+
+CAUTION: At the time of this writing, you cannot use the bundled fonts if you change the value of the `pdf-fontsdir` attribute (and thus define your own custom fonts).
+This limitation may be lifted in the future.
+
+=== Custom Fonts
+
+The limited character set of WINANSI, or the bland look of the built-in fonts, may motivate you to load your own font.
+Custom fonts can enhance the look of your PDF theme substantially.
+
+To start, you need to find a collection of TTF file of the font you want to use.
+A collection typically consists of all four styles of a font:
+
+* normal
+* italic
+* bold
+* bold_italic
+
+You'll need all four styles to support AsciiDoc content properly.
+_Asciidoctor PDF cannot italicize a font dynamically like a browser can, so you need the italic style._
+
+Once you've obtained the TTF files, put them into a directory in your project where you want to store the fonts.
+It's recommended that you name them consistently so it's easier to type the names in the theme file.
+
+Let's assume the name of the font is https://github.com/google/roboto/tree/master/out/RobotoTTF[Roboto].
+Name the files as follows:
+
+* roboto-normal.ttf (_originally Roboto-Regular.ttf_)
+* roboto-italic.ttf (_originally Roboto-Italic.ttf_)
+* roboto-bold.ttf (_originally Roboto-Bold.ttf_)
+* roboto-bold_italic.ttf (_originally Roboto-BoldItalic.ttf_)
+
+Next, declare the font under the `font_catalog` key at the top of your theme file, giving it a unique key (e.g., `Roboto`).
+
+[source,yaml]
+----
+font:
+  catalog:
+    Roboto:
+      normal: roboto-normal.ttf
+      italic: roboto-italic.ttf
+      bold: roboto-bold.ttf
+      bold_italic: roboto-bold_italic.ttf
+----
+
+You can use the key that you assign to the font in the font catalog anywhere the `font_family` property is accepted in the theme file.
+For instance, to use the Roboto font for all headings, you'd use:
+
+[source,yaml]
+----
+heading:
+  font_family: Roboto
+----
+
+When you execute Asciidoctor PDF, you need to specify the directory where the fonts reside using the `pdf-fontsdir` attribute:
+
+ $ asciidoctor-pdf -a pdf-style=basic-theme.yml -a pdf-fontsdir=path/to/fonts document.adoc
+
+WARNING: Currently, all fonts referenced by the theme need to be present in the directory specified by the `pdf-fontsdir` attribute.
+
+When Asciidoctor PDF creates the PDF, it only embeds the glyphs from the font that are needed to render the characters present in the document.
+In other words, Asciidoctor PDF automatically subsets the font.
+However, if you're storing the fonts in a repository, you may want to subset the font (for instance, by using FontForge) to reduce the space the font occupies in that storage.
+This is simply a personal preference.
+
+You can add any number of fonts to the catalog.
+Each font must be assigned a unique key, as shown here:
+
+[source,yaml]
+----
+font:
+  catalog:
+    Roboto:
+      normal: roboto-normal.ttf
+      italic: roboto-italic.ttf
+      bold: roboto-bold.ttf
+      bold_italic: roboto-bold_italic.ttf
+    Roboto Light:
+      normal: roboto-light-normal.ttf
+      italic: roboto-light-italic.ttf
+      bold: roboto-light-bold.ttf
+      bold_italic: roboto-light-bold_italic.ttf
+----
+
+TIP: Text in SVGs will use the font catalog from your theme.
+We recommend that you match the font key to the name of the font seen by the operating system.
+This will allow you to use the same font names (aka families) in both your graphics program and Asciidoctor PDF.
+
+=== Fallback Fonts
+
+If a TrueType font is missing a character needed to render the document, such as a special symbol, you can have Asciidoctor PDF look for the character in a fallback font.
+You only need to specify a single fallback font, typically one that provides a full set of symbols.
+
+IMPORTANT: The fallback font is only used when the primary font is a TrueType font (i.e., TTF, DFont, TTC).
+Any glyph missing from an AFM font is simply replaced with the "`not`" glyph (`&#172;`).
+
+CAUTION: Using the fallback font slows down PDF generation slightly because it has to analyze every single character.
+It's use is not recommended for large documents.
+Instead, it's best to select primary fonts that have all the characters you need.
+Keep in mind that the default theme currently uses a fallback font, though this may change in the future.
+
+Like with other custom fonts, you first need to declare the fallback font.
+Let's choose https://github.com/android/platform_frameworks_base/blob/master/data/fonts/DroidSansFallback.ttf[Droid Sans Fallback].
+You can map all the styles to a single font file (since bold and italic don't usually make sense for symbols).
+
+[source,yaml]
+----
+font:
+  catalog:
+    Roboto:
+      normal: roboto-normal.ttf
+      italic: roboto-italic.ttf
+      bold: roboto-bold.ttf
+      bold_italic: roboto-bold_italic.ttf
+    DroidSansFallback:
+      normal: droid-sans-fallback.ttf
+      italic: droid-sans-fallback.ttf
+      bold: droid-sans-fallback.ttf
+      bold_italic: droid-sans-fallback.ttf
+----
+
+Next, add the key name to the `fallbacks` key under the `font_catalog` key.
+The `fallbacks` key accepts an array of values, meaning you can specify more than one fallback font.
+However, we recommend using a single fallback font, if possible, as shown here:
+
+[source,yaml]
+----
+font:
+  catalog:
+    Roboto:
+      normal: roboto-normal.ttf
+      italic: roboto-italic.ttf
+      bold: roboto-bold.ttf
+      bold_italic: roboto-bold_italic.ttf
+    DroidSansFallback:
+      normal: droid-sans-fallback.ttf
+      italic: droid-sans-fallback.ttf
+      bold: droid-sans-fallback.ttf
+      bold_italic: droid-sans-fallback.ttf
+  fallbacks:
+    - DroidSansFallback
+----
+
+TIP: If you are using more than one fallback font, add additional lines to the `fallbacks` key.
+
+Of course, make sure you've configured your theme to use your custom font:
+
+[source,yaml]
+----
+base:
+  font_family: Roboto
+----
+
+That's it!
+Now you're covered.
+If your custom font is missing a glyph, Asciidoctor PDF will look in your fallback font.
+You don't need to reference the fallback font anywhere else in your theme file.
+
+== Keys
+
+This section lists all the keys that are available when creating a custom theme.
+The keys are organized by category.
+Each category represents a common prefix under which the keys are typically nested.
+
+TIP: Keys can be nested wherever an underscore (`_`) appears in the name.
+This nested structure is for organizational purposes only.
+All keys are flatted when the theme is loaded (e.g., `align` nested under `base` becomes `base_align`).
+
+The converter uses the values of these keys to control how most elements are arranged and styled in the PDF.
+The default values listed in this section get inherited from the https://github.com/asciidoctor/asciidoctor-pdf/blob/master/data/themes/base-theme.yml[base theme].
+
+IMPORTANT: The https://github.com/asciidoctor/asciidoctor-pdf/blob/master/data/themes/default-theme.yml[default theme] has a different set of values which are not shown in this guide.
+
+When creating a theme, all keys are optional.
+Required keys are provided by the base theme.
+Therefore, you only have to declare keys that you want to override.
+
+[#keys-page]
+=== Page
+
+The keys in this category control the size, margins and background of each page (i.e., canvas).
+We recommended that you define this category before all other categories.
+
+NOTE: The background of the title page can be styled independently.
+See <<Title Page>> for details.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-page]*Key Prefix:* <<key-prefix-page,page>>
+
+|background_color^[1]^
+|<<colors,Color>> +
+(default: #ffffff)
+|page:
+  background_color: #fefefe
+
+|background_image^[1]^
+|Inline image macro^[2]^ +
+(default: _not set_)
+|page:
+  background_image: +image:page-bg.png[]+
+
+|layout
+|portrait {vbar} landscape +
+(default: portrait)
+|page:
+  layout: landscape
+
+|margin
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 36)
+|page:
+  margin: [0.5in, 0.67in, 1in, 0.67in]
+
+|margin_inner^[3]^
+|<<measurement-units,Measurement>> +
+(default: 48)
+|page:
+  margin_inner: 0.75in
+
+|margin_outer^[3]^
+|<<measurement-units,Measurement>> +
+(default: 24)
+|page:
+  margin_outer: 0.59in
+
+|size
+|https://github.com/prawnpdf/pdf-core/blob/0.6.0/lib/pdf/core/page_geometry.rb#L16-L68[Named size^] {vbar} <<measurement-units,Measurement[width,height]>> +
+(default: A4)
+|page:
+  size: Letter
+|===
+
+. Page background images are automatically scaled to fit within the bounds of the page.
++
+NOTE: Page backgrounds do not currently work when using AsciidoctorJ PDF.
+This limitation is due to a bug in Prawn 1.3.1.
+The limitation will remain until AsciidoctorJ PDF upgrades to Prawn 2.x (an upgrade that is waiting on AsciidoctorJ to migrate to JRuby 9000).
+For more details, see http://discuss.asciidoctor.org/Asciidoctor-YAML-style-file-for-PDF-and-maven-td3849.html[this thread].
+. Target may be an absolute path or a path relative to the value of the `pdf-stylesdir` attribute.
+. The margins for `recto` (right-hand, odd-numbered) and `verso` (left-hand, even-numbered) pages are calculated automatically from the margin_inner and margin_outer values.
+These margins and used when the value `prepress` is assigned to the `media` document attribute.
+
+[#keys-base]
+=== Base
+
+The keys in this category provide generic theme settings and are often referenced throughout the theme file as variables.
+We recommended that you define this category after the page category and before all other categories.
+
+NOTE: While it's common to define additional keys in this category (e.g., `base_border_radius`) to keep your theme DRY, we recommend using <<Custom Variables,custom variables>> instead.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-base]*Key Prefix:* <<key-prefix-base,base>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: left)
+|base:
+  align: justify
+
+|border_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|base:
+  border_color: #eeeeee
+
+// border_radius is variable, not an official key
+//|border_radius
+//|<<values,Number>>
+//|base:
+//  border_radius: 4
+
+|border_width
+|<<values,Number>> +
+(default: 0.5)
+|base:
+  border_width: 0.5
+
+|font_color
+|<<colors,Color>> +
+(default: #000000)
+|base:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: Helvetica)
+|base:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: 12)
+|base:
+  font_size: 10.5
+
+// font_size_large is a variable, not an official key
+//|font_size_large
+//|<<values,Number>>
+//|base:
+//  font_size_large: 13
+
+|font_size_min
+|<<values,Number>> +
+(default: 9)
+|base:
+  font_size_min: 6
+
+// font_size_small is a variable, not an official key
+//|font_size_small
+//|<<values,Number>>
+//|base:
+//  font_size_small: 9
+
+|font_style
+|<<font-styles,Font style>> +
+(default: normal)
+|base:
+  font_style: normal
+
+|text_transform^[1]^
+|none +
+(default: none)
+|base:
+  text_transform: none
+
+|line_height_length^[2]^
+|<<values,Number>> +
+(default: 13.8)
+|base:
+  line_height_length: 12
+
+|line_height^[2]^
+|<<values,Number>> +
+(default: 1.15)
+|base:
+  line_height: >
+    $base_line_height_length /
+    $base_font_size
+|===
+
+. The `text_transform` key cannot be set globally.
+Therefore, this key should not be used.
+The value of `none` is implicit and is documented here for completeness.
+. You should set one of `line_height` or `line_height_length`, then derive the value of the other using a calculation as these are correlated values.
+For instance, if you set `line_height_length`, then use `$base_line_height_length / $base_font_size` as the value of `line_height`.
+
+[#keys-vertical-spacing]
+=== Vertical Spacing
+
+The keys in this category control the general spacing between elements where a more specific setting is not designated.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+|vertical_spacing
+|<<values,Number>> +
+(default: 12)
+|vertical_spacing: 10
+|===
+
+[#keys-link]
+=== Link
+
+The keys in this category are used to style hyperlink text.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-link]*Key Prefix:* <<key-prefix-link,link>>
+
+|font_color
+|<<colors,Color>> +
+(default: #0000ee)
+|link:
+  font_color: #428bca
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|link:
+  font_family: Roboto
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|link:
+  font_size: 9
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|link:
+  font_style: italic
+
+|text_decoration
+|none {vbar} underline {vbar} line-through +
+(default: none)
+|link:
+  text_decoration: underline
+|===
+
+[#keys-literal]
+=== (Inline) Literal
+
+The keys in this category are used for inline monospaced text in prose and table cells.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-literal]*Key Prefix:* <<key-prefix-literal,literal>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|literal:
+  font_color: #b12146
+
+|font_family
+|<<fonts,Font family name>> +
+(default: Courier)
+|literal:
+  font_family: M+ 1mn
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|literal:
+  font_size: 12
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|literal:
+  font_style: bold
+|===
+
+[#keys-heading]
+=== Heading
+
+The keys in this category control the style of most headings, including part titles, chapter titles, sections titles, the table of contents title and discrete headings.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-heading]*Key Prefix:* <<key-prefix-heading,heading>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: $base_align)
+|heading:
+  align: center
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|heading:
+  font_color: #222222
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $base_font_family)
+|heading:
+  font_family: Noto Serif
+
+// NOTE: heading_font_size is overridden by h<n>_font_size in base theme
+//|font_size
+//|<<values,Number>> +
+//(default: $base_font_size)
+//|heading:
+//  font_size: 18
+
+|font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|heading:
+  font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|heading:
+  text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: 1.15)
+|heading:
+  line_height: 1.2
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 4)
+|heading:
+  margin_top: $vertical_spacing * 0.2
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 12)
+|heading:
+  margin_bottom: 9.6
+
+3+|[#key-prefix-heading-level]*Key Prefix:* <<key-prefix-heading-level,heading_h<n> >>^[1]^
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: $heading_align)
+|heading:
+  h2_align: center
+
+|font_color
+|<<colors,Color>> +
+(default: $heading_font_color)
+|heading:
+  h2_font_color: [0, 99%, 100%, 0]
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $heading_font_family)
+|heading:
+  h4_font_family: Roboto
+
+|font_size^[1]^
+|<<values,Number>> +
+(default: <1>=24; <2>=18; <3>=16; <4>=14; <5>=12; <6>=10)
+|heading:
+  h6_font_size: $base_font_size * 1.7
+
+|font_style
+|<<font-styles,Font style>> +
+(default: $heading_font_style)
+|heading:
+  h3_font_style: bold_italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: $heading_text_transform)
+|heading:
+  text_transform: lowercase
+|===
+
+. `<n>` is a number ranging from 1 to 6, representing each of the six heading levels.
+. A font size is assigned to each heading level by the base theme.
+If you want the font size of a specific level to be inherited, you must assign the value `null` (or `~` for short).
+
+[#keys-title-page]
+=== Title Page
+
+The keys in this category control the style of the title page as well as the arrangement and style of the elements on it.
+
+TIP: The title page can be disabled from the document by setting the `notitle` attribute in the AsciiDoc document header.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-title-page]*Key Prefix:* <<key-prefix-title-page,title_page>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: center)
+|title_page:
+  align: right
+
+|background_color^[1]^
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  background_color: #eaeaea
+
+|background_image^[1]^
+|Inline image macro^[2]^ +
+(default: _not set_)
+|title_page:
+  +background_image: image:title.png[]+
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|title_page:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|title_page:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|title_page:
+  font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|title_page:
+  text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: 1.15)
+|title_page:
+  line_height: 1
+
+3+|[#key-prefix-title-page-logo]*Key Prefix:* <<key-prefix-title-page-logo,title_page_logo>>
+
+|align
+|<<image-alignments,Image alignment>> +
+(default: _inherit_)
+|title_page:
+  logo:
+    align: right
+
+|image
+|Inline image macro^[2]^ +
+(default: _not set_)
+|title_page:
+  logo:
+    +image: image:logo.png[pdfwidth=25%]+
+
+|top
+|Percentage^[3]^ +
+(default: 10%)
+|title_page:
+  logo:
+    top: 25%
+
+3+|[#key-prefix-title-page-title]*Key Prefix:* <<key-prefix-title-page-title,title_page_title>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  title:
+    font_color: #999999
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|title_page:
+  title:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: 18)
+|title_page:
+  title:
+    font_size: $heading_h1_font_size
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|title_page:
+  title:
+    font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|title_page:
+  title:
+    text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: $heading_line_height)
+|title_page:
+  title:
+    line_height: 0.9
+
+|top
+|Percentage^[3]^ +
+(default: 40%)
+|title_page:
+  title:
+    top: 55%
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  title:
+    margin_top: 13.125
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  title:
+    margin_bottom: 5
+
+3+|[#key-prefix-title-page-subtitle]*Key Prefix:* <<key-prefix-title-page-subtitle,title_page_subtitle>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  subtitle:
+    font_color: #181818
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|title_page:
+  subtitle:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: 14)
+|title_page:
+  subtitle:
+    font_size: $heading_h3_font_size
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|title_page:
+  subtitle:
+    font_style: bold_italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|title_page:
+  subtitle:
+    text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: $heading_line_height)
+|title_page:
+  subtitle:
+    line_height: 1
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  subtitle:
+    margin_top: 13.125
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  subtitle:
+    margin_bottom: 5
+
+3+|[#key-prefix-authors]*Key Prefix:* <<key-prefix-authors,title_page_authors>>
+
+|delimiter
+|<<quoted-string,Quoted string>> +
+(default: ', ')
+|title_page:
+  revision:
+    delimiter: '; '
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  authors:
+    font_color: #181818
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|title_page:
+  authors:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|title_page:
+  authors:
+    font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|title_page:
+  authors:
+    font_style: bold_italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|title_page:
+  authors:
+    text_transform: uppercase
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 12)
+|title_page:
+  authors:
+    margin_top: 13.125
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  authors:
+    margin_bottom: 5
+
+3+|[#key-prefix-revision]*Key Prefix:* <<key-prefix-revision,title_page_revision>>
+
+|delimiter
+|<<quoted-string,Quoted string>> +
+(default: ', ')
+|title_page:
+  revision:
+    delimiter: ': '
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|title_page:
+  revision:
+    font_color: #181818
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|title_page:
+  revision:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|title_page:
+  revision:
+    font_size: $base_font_size_small
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|title_page:
+  revision:
+    font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|title_page:
+  revision:
+    text_transform: uppercase
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  revision:
+    margin_top: 13.125
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 0)
+|title_page:
+  revision:
+    margin_bottom: 5
+|===
+
+. Page background images are automatically scaled to fit within the bounds of the page.
++
+NOTE: Page backgrounds do not currently work when using AsciidoctorJ PDF.
+This limitation is due to a bug in Prawn 1.3.1.
+The limitation will remain until AsciidoctorJ PDF upgrades to Prawn 2.x (an upgrade that is waiting on AsciidoctorJ to migrate to JRuby 9000).
+For more details, see http://discuss.asciidoctor.org/Asciidoctor-YAML-style-file-for-PDF-and-maven-td3849.html[this thread].
+. Target may be an absolute path or a path relative to the value of the `pdf-stylesdir` attribute.
+. Percentage unit can be % (relative to content height) or vh (relative to page height).
+
+[#keys-prose]
+=== Prose
+
+The keys in this category control the spacing around paragraphs (paragraph blocks, paragraph content of a block, and other prose content).
+Typically, all the margin is placed on the bottom.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-prose]*Key Prefix:* <<key-prefix-prose,prose>>
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|prose:
+  margin_top: 0
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 12)
+|prose:
+  margin_bottom: $vertical_spacing
+|===
+
+[#keys-block]
+=== Block
+
+The keys in this category control the spacing around block elements when a more specific setting is not designated.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-block]*Key Prefix:* <<key-prefix-block,block>>
+
+//|padding
+//|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>>
+//|block:
+//  padding: [12, 15, 12, 15]
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|block:
+  margin_top: 6
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: 12)
+|block:
+  margin_bottom: 6
+|===
+
+Block styles are applied to the following block types:
+
+[cols="3*a",grid=none,frame=none]
+|===
+|
+* admonition
+* example
+* quote
+|
+* verse
+* sidebar
+* image
+|
+* listing
+* literal
+* table
+|===
+
+[#keys-caption]
+=== Caption
+
+The keys in this category control the arrangement and style of block captions.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-caption]*Key Prefix:* <<key-prefix-caption,caption>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: left)
+|caption:
+  align: left
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|caption:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|caption:
+  font_family: M+ 1mn
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|caption:
+  font_size: 11
+
+|font_style
+|<<font-styles,Font style>> +
+(default: italic)
+|caption:
+  font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|caption:
+  text_transform: uppercase
+
+|margin_inside
+|<<measurement-units,Measurement>> +
+(default: 4)
+|caption:
+  margin_inside: 3
+
+|margin_outside
+|<<measurement-units,Measurement>> +
+(default: 0)
+|caption:
+  margin_outside: 0
+|===
+
+[#keys-code]
+=== Code
+
+The keys in this category are used to control the style of literal, listing and source blocks.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-code]*Key Prefix:* <<key-prefix-code,code>>
+
+|background_color
+|<<colors,Color>> +
+(default: _not set_)
+|code:
+  background_color: #f5f5f5
+
+|border_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|code:
+  border_color: #cccccc
+
+|border_radius
+|<<values,Number>> +
+(default: _not set_)
+|code:
+  border_radius: 4
+
+|border_width
+|<<values,Number>> +
+(default: 0.5)
+|code:
+  border_width: 0.75
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|code:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: Courier)
+|code:
+  font_family: M+ 1mn
+
+|font_size
+|<<values,Number>> +
+(default: 10.5)
+|code:
+  font_size: 11
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|code:
+  font_style: italic
+
+|line_height
+|<<values,Number>> +
+(default: 1.2)
+|code:
+  line_height: 1.25
+
+|line_gap^[1]^
+|<<values,Number>> +
+(default: 0)
+|code:
+  line_gap: 3.8
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 9)
+|code:
+  padding: 11
+|===
+. The line_gap is used to tune the height of the background color applied to a span of block text highlighted using Rouge.
+
+[#keys-callout-numbers]
+=== Callout Numbers
+
+The keys in this category are used to control the style of callout numbers (conums) inside verbatim blocks and in callout lists (colists).
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-conum]*Key Prefix:* <<key-prefix-conum,conum>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|conum:
+  font_color: #b12146
+
+|font_family^[1,2]^
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|conum:
+  font_family: M+ 1mn
+
+|font_size^[2]^
+|<<values,Number>> +
+(default: _inherit_)
+|conum:
+  font_size: $base_font_size
+
+|font_style^[2]^
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|conum:
+  font_style: normal
+
+|line_height^[2]^
+|<<values,Number>> +
+(default: 1.15)
+|conum:
+  line_height: 4 / 3
+|===
+
+. Currently, the font must contain the circle numbers starting at glyph U+2460.
+. font_family, font_size, font_style, and line_height are only used for markers in a colist.
+These properties are inherited for conums inside a verbatim block.
+
+[#keys-menu]
+=== Menu
+
+The keys in this category apply to the menu label (generated from the inline menu macro).
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-menu]*Key Prefix:* <<key-prefix-menu,menu>>
+
+|caret_content
+|<<quoted-string,Quoted string>> +
+(default: " \u203a ")
+|menu:
+  caret_content: ' > '
+|===
+
+[#keys-blockquote]
+=== Blockquote
+
+The keys in this category control the arrangement and style of quote blocks.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-blockquote]*Key Prefix:* <<key-prefix-blockquote,blockquote>>
+
+|border_width^[1]^
+|<<values,Number>> +
+(default: 4)
+|blockquote:
+  border_width: 5
+
+|border_color^[1]^
+|<<colors,Color>> +
+(default: #eeeeee)
+|blockquote:
+  border_color: #eeeeee
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|blockquote:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|blockquote:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|blockquote:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|blockquote:
+  font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|blockquote:
+  text_transform: uppercase
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: [6, 12, -6, 14])
+|blockquote:
+  padding: [5, 10, -5, 12]
+
+3+|[#key-prefix-blockquote-cite]*Key Prefix:* <<key-prefix-blockquote-cite,blockquote_cite>>
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|blockquote:
+  cite:
+    font_size: 9
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|blockquote:
+  cite:
+    font_color: #999999
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|blockquote:
+  cite:
+    font_family: Noto Serif
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|blockquote:
+  cite:
+    font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|blockquote:
+  cite:
+    text_transform: uppercase
+|===
+
+. Only applies to the left side.
+
+[#keys-sidebar]
+=== Sidebar
+
+The keys in this category control the arrangement and style of sidebar blocks.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-sidebar]*Key Prefix:* <<key-prefix-sidebar,sidebar>>
+
+|background_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|sidebar:
+  background_color: #eeeeee
+
+|border_color
+|<<colors,Color>> +
+(default: _not set_)
+|sidebar:
+  border_color: #ffffff
+
+|border_radius
+|<<values,Number>> +
+(default: _not set_)
+|sidebar:
+  border_radius: 4
+
+|border_width
+|<<values,Number>> +
+(default: _not set_)
+|sidebar:
+  border_width: 0.5
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|sidebar:
+  font_color: #262626
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|sidebar:
+  font_family: M+ 1p
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|sidebar:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|sidebar:
+  font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|sidebar:
+  text_transform: uppercase
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: [12, 12, 0, 12])
+|sidebar:
+  padding: [12, 15, 0, 15]
+
+3+|[#key-prefix-sidebar-title]*Key Prefix:* <<key-prefix-sidebar-title,sidebar_title>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: center)
+|sidebar:
+  title:
+    align: center
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|sidebar:
+  title:
+    font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|sidebar:
+  title:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|sidebar:
+  title:
+    font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|sidebar:
+  title:
+    font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|sidebar:
+  title:
+    text_transform: uppercase
+|===
+
+[#keys-example]
+=== Example
+
+The keys in this category control the arrangement and style of example blocks.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-example]*Key Prefix:* <<key-prefix-example,example>>
+
+|background_color
+|<<colors,Color>> +
+(default: #ffffff)
+|example:
+  background_color: #fffef7
+
+|border_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|example:
+  border_color: #eeeeee
+
+|border_radius
+|<<values,Number>> +
+(default: _not set_)
+|example:
+  border_radius: 4
+
+|border_width
+|<<values,Number>> +
+(default: 0.5)
+|example:
+  border_width: 0.75
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|example:
+  font_color: #262626
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|example:
+  font_family: M+ 1p
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|example:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|example:
+  font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|example:
+  text_transform: uppercase
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: [12, 12, 0, 12])
+|example:
+  padding: [15, 15, 0, 15]
+|===
+
+[#keys-admonition]
+=== Admonition
+
+The keys in this category control the arrangement and style of admonition blocks and the icon used for each admonition type.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-admonition]*Key Prefix:* <<key-prefix-admonition,admonition>>
+
+|column_rule_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|admonition:
+  column_rule_color: #aa0000
+
+|column_rule_style
+|solid {vbar} double {vbar} dashed {vbar} dotted +
+(default: solid)
+|admonition:
+  column_rule_style: double
+
+|column_rule_width
+|<<values,Number>> +
+(default: 0.5)
+|admonition:
+  column_rule_width: 0.5
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|admonition:
+  font_color: #999999
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|admonition:
+  font_family: Noto Sans
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|admonition:
+  font_size: $base_font_size_large
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|admonition:
+  font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|admonition:
+  text_transform: none
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: [0, 12, 0, 12])
+|admonition:
+  padding: [0, 12, 0, 12]
+
+3+|[#key-prefix-admonition-label]*Key Prefix:* <<key-prefix-admonition-label,admonition_label>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: center)
+|admonition:
+  label:
+    align: center
+
+|min_width
+|<<measurement-units,Measurement>> +
+(default: _not set_)
+|admonition:
+  label:
+    min_width: 48
+
+|padding^[1]^
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: $admonition_padding)
+|admonition:
+  padding: [0, 12, 0, 12]
+
+|vertical_align
+|top {vbar} middle {vbar} bottom +
+(default: middle)
+|admonition:
+  label:
+    vertical_align: top
+
+3+|*Key Prefix:* admonition_label, admonition_label_<name>^[2]^
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|admonition:
+  label:
+    font_color: #262626
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|admonition:
+  label:
+    font_family: M+ 1p
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|admonition:
+  label:
+    font_size: 12
+
+|font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|admonition:
+  label:
+    font_style: bold_italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: uppercase)
+|admonition:
+  label:
+    text_transform: lowercase
+
+3+|[#key-prefix-admonition-icon]*Key Prefix:* <<key-prefix-admonition-icon,admonition_icon_<name> >>^[2]^
+
+|name
+|<icon set>-<icon name>^[3]^ +
+(default: _not set_)
+|admonition:
+  icon:
+    tip:
+      name: fa-fire
+
+|stroke_color
+|<<colors,Color>> +
+(default: caution=#bf3400; important=#bf0000; note=#19407c; tip=#111111; warning=#bf6900)
+|admonition:
+  icon:
+    important:
+      stroke_color: ff0000
+
+|size
+|<<values,Number>> +
+(default: 24)
+|admonition:
+  icon:
+    note:
+      size: 24
+|===
+
+. The top and bottom padding values are ignored on admonition_label_padding.
+. `<name>` can be `note`, `tip`, `warning`, `important`, or `caution`.
+The subkeys in the icon category cannot be flattened (e.g., `tip_name: fa-lightbulb-o` is not valid syntax).
+. Required.
+See the `.yml` files in the https://github.com/jessedoyle/prawn-icon/tree/master/data/fonts[prawn-icon repository] for a list of valid icon names.
+The prefix (e.g., `fa-`) determines which font set to use.
+
+[#keys-image]
+=== Image
+
+The keys in this category control the arrangement of block images.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-image]*Key Prefix:* <<key-prefix-image,image>>
+
+|align
+|<<image-alignments,Image alignment>> +
+(default: left)
+|image:
+  align: left
+
+|width^[1]^
+|<<measurement-units,Measurement>> +
+(default: _not set_)
+|image:
+  width: 100%
+|===
+
+. Only applies to block images.
+If specified, this value takes precedence over the value of the `width` attribute on the image macro, but not over the value of the `pdfwidth` attribute.
+
+[#keys-lead]
+=== Lead
+
+The keys in this category control the styling of lead paragraphs.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-lead]*Key Prefix:* <<key-prefix-lead,lead>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|lead:
+  font_color: #262626
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|lead:
+  font_family: M+ 1p
+
+|font_size
+|<<values,Number>> +
+(default: 13.5)
+|lead:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|lead:
+  font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|lead:
+  text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: 1.4)
+|lead:
+  line_height: 1.4
+|===
+
+[#keys-abstract]
+=== Abstract
+
+The keys in this category control the arrangement and style of the abstract.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-abstract]*Key Prefix:* <<key-prefix-abstract,abstract>>
+
+|font_color
+|<<colors,Color>> +
+(default: $base_font_color)
+|abstract:
+  font_color: #5c6266
+
+|font_size
+|<<values,Number>> +
+(default: 13.5)
+|abstract:
+  font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: $base_font_style)
+|abstract:
+  font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: $base_text_transform)
+|abstract:
+  text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: 1.4)
+|abstract:
+  line_height: 1.4
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 0)
+|abstract:
+  padding: [0, 12, 0, 12]
+
+3+|[#key-prefix-abstract-title]*Key Prefix:* <<key-prefix-abstract-title,abstract_title>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: center)
+|abstract:
+  title:
+    align: center
+
+|font_color
+|<<colors,Color>> +
+(default: $base_font_color)
+|abstract:
+  title:
+    font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $base_font_family)
+|abstract:
+  title:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: $base_font_size)
+|abstract:
+  title:
+    font_size: 13
+
+|font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|abstract:
+  title:
+    font_style: bold
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: $base_text_transform)
+|abstract:
+  title:
+    text_transform: uppercase
+|===
+
+[#keys-thematic-break]
+=== Thematic Break
+
+The keys in this category control the style of thematic breaks (aka horizontal rules).
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-thematic-break]*Key Prefix:* <<key-prefix-thematic-break,thematic_break>>
+
+|border_color
+|<<colors,Color>> +
+(default: #eeeeee)
+|thematic_break:
+  border_color: #eeeeee
+
+|border_style
+|solid {vbar} double {vbar} dashed {vbar} dotted +
+(default: solid)
+|thematic_break:
+  border_style: dashed
+
+|border_width
+|<<measurement-units,Measurement>> +
+(default: 0.5)
+|thematic_break:
+  border_width: 0.5
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|thematic_break:
+  margin_top: 6
+
+|margin_bottom
+|<<measurement-units,Measurement>> +
+(default: $vertical_spacing)
+|thematic_break:
+  margin_bottom: 18
+|===
+
+[#keys-description-list]
+=== Description List
+
+The keys in this category control the arrangement and style of definition list items (terms and descriptions).
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-description-list]*Key Prefix:* <<key-prefix-description-list,description_list>>
+
+|term_font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|description_list:
+  term_font_style: italic
+
+|term_spacing
+|<<measurement-units,Measurement>> +
+(default: 4)
+|description_list:
+  term_spacing: 5
+
+|description_indent
+|<<values,Number>> +
+(default: 30)
+|description_list:
+  description_indent: 15
+|===
+
+[#keys-outline-list]
+=== Outline List
+
+The keys in this category control the arrangement and style of outline list items.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-outline-list]*Key Prefix:* <<key-prefix-outline-list,outline_list>>
+
+|indent
+|<<measurement-units,Measurement>> +
+(default: 30)
+|outline_list:
+  indent: 40
+
+|item_spacing
+|<<measurement-units,Measurement>> +
+(default: 6)
+|outline_list:
+  item_spacing: 4
+
+|marker_font_color^[1]^
+|<<colors,Color>> +
+(default: _inherit_)
+|outline_list:
+  marker_font_color: #3c763d 
+|===
+
+. Controls the color of the bullet glyph that marks items in unordered lists and the number for items in ordered lists.
+
+[#keys-table]
+=== Table
+
+The keys in this category control the arrangement and style of tables and table cells.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-table]*Key Prefix:* <<key-prefix-table,table>>
+
+|background_color
+|<<colors,Color>> +
+(default: transparent)
+|table:
+  background_color: #ffffff
+
+|border_color
+|<<colors,Color>> +
+(default: #000000)
+|table:
+  border_color: #dddddd
+
+|border_style
+|solid {vbar} dashed {vbar} dotted +
+(default: solid)
+|table:
+  border_style: solid
+
+|border_width
+|<<values,Number>> +
+(default: 0.5)
+|table:
+  border_width: 0.5
+
+|caption_side
+|top {vbar} bottom +
+(default: top)
+|table:
+  caption_side: bottom
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|table:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|table:
+  font_family: Helvetica
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|table:
+  font_size: 9.5
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|table:
+  font_style: italic
+
+|grid_color
+|<<colors,Color>> +
+(default: $table_border_color)
+|table:
+  grid_color: #eeeeee
+
+|grid_style
+|solid {vbar} dashed {vbar} dotted +
+(default: solid)
+|table:
+  grid_style: dashed
+
+|grid_width
+|<<values,Number>> +
+(default: $table_border_width)
+|table:
+  grid_width: 0.5
+
+3+|[#key-prefix-table-head]*Key Prefix:* <<key-prefix-table-head,table_head>>
+
+//|align
+//|<<text-alignments,Text alignment>> +
+//(default: _inherit_)
+//|table:
+//  head:
+//    align: center
+
+|background_color
+|<<colors,Color>> +
+(default: $table_background_color)
+|table:
+  head:
+    background_color: #f0f0f0
+
+|font_color
+|<<colors,Color>> +
+(default: $table_font_color)
+|table:
+  head:
+    font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $table_font_family)
+|table:
+  head:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: $table_font_size)
+|table:
+  head:
+    font_size: 10
+
+|font_style
+|<<font-styles,Font style>> +
+(default: bold)
+|table:
+  head:
+    font_style: normal
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|table:
+  head:
+    text_transform: uppercase
+
+3+|[#key-prefix-table-body]*Key Prefix:* <<key-prefix-table-body,table_body>>
+
+|background_color
+|<<colors,Color>> +
+(default: $table_background_color)
+|table:
+  body:
+    background_color: #fdfdfd
+
+|stripe_background_color^[1]^
+|<<colors,Color>> +
+(default: #eeeeee)
+|table:
+  body:
+    stripe_background_color: #efefef
+
+3+|[#key-prefix-table-foot]*Key Prefix:* <<key-prefix-table-foot,table_foot>>
+
+|background_color
+|<<colors,Color>> +
+(default: $table_background_color)
+|table:
+  foot:
+    background_color: #f0f0f0
+
+|font_color
+|<<colors,Color>> +
+(default: $table_font_color)
+|table:
+  foot:
+    font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $table_font_family)
+|table:
+  foot:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: $table_font_size)
+|table:
+  foot:
+    font_size: 10
+
+|font_style
+|<<font-styles,Font style>> +
+(default: normal)
+|table:
+  foot:
+    font_style: italic
+
+//deprecated
+//3+|[#key-prefix-table-row]*Key Prefix:* <<key-prefix-table-row,table_<parity>_row>>^[1]^
+//
+//|background_color
+//|<<colors,Color>> +
+//(default: $table_background_color)
+//|table:
+//  even_row:
+//    background_color: #f9f9f9
+
+3+|[#key-prefix-table-cell]*Key Prefix:* <<key-prefix-table-cell,table_cell>>
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 2)
+|table:
+  cell:
+    padding: 3
+
+3+|[#key-prefix-table-header-cell]*Key Prefix:* <<key-prefix-table-header-cell,table_header_cell>>
+
+//|align
+//|<<text-alignments,Text alignment>> +
+//(default: $table_head_align)
+//|table:
+//  header_cell:
+//    align: center
+
+|background_color
+|<<colors,Color>> +
+(default: $table_head_background_color)
+|table:
+  header_cell:
+    background_color: #f0f0f0
+
+|font_color
+|<<colors,Color>> +
+(default: $table_head_font_color)
+|table:
+  header_cell:
+    font_color: #1a1a1a
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $table_head_font_family)
+|table:
+  header_cell: 
+    font_family: Noto Sans
+
+|font_size
+|<<values,Number>> +
+(default: $table_head_font_size)
+|table:
+  header_cell:
+    font_size: 12
+
+|font_style
+|<<font-styles,Font style>> +
+(default: $table_head_font_style)
+|table:
+  header_cell:
+    font_style: italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: $table_head_text_transform)
+|table:
+  header_cell:
+    text_transform: uppercase
+|===
+. Applied to even rows by default; controlled using `stripes` attribute (even, odd, all, none) on table.
+//. `<parity>` can be `odd` (odd rows) or `even` (even rows).
+
+[#keys-table-of-contents]
+=== Table of Contents (TOC)
+
+The keys in this category control the arrangement and style of the table of contents.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-toc]*Key Prefix:* <<key-prefix-toc,toc>>
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|toc:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|toc:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|toc:
+  font_size: 9
+
+|font_style
+|<<font-styles,Font style>> +
+// QUESTION why is the default not inherited?
+(default: normal)
+|toc:
+  font_style: bold
+
+|text_decoration
+|none {vbar} underline +
+(default: none)
+|toc:
+  text_decoration: underline
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|toc:
+  text_transform: uppercase
+
+|line_height
+|<<values,Number>> +
+(default: 1.4)
+|toc:
+  line_height: 1.5
+
+|indent
+|<<measurement-units,Measurement>> +
+(default: 15)
+|toc:
+  indent: 20
+
+|margin_top
+|<<measurement-units,Measurement>> +
+(default: 0)
+|toc:
+  margin_top: 0
+
+3+|[#key-prefix-toc-level]*Key Prefix:* <<key-prefix-toc-level,toc_h<n> >>^[1]^
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|toc:
+  h3_font_color: #999999
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|toc:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|toc:
+  font_size: 9
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|toc:
+  font_style: italic
+
+|text_decoration
+|none {vbar} underline +
+(default: _inherit_)
+|toc:
+  text_decoration: none
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: _inherit_)
+|toc:
+  text_transform: uppercase
+
+3+|[#key-prefix-toc-title]*Key Prefix:* <<key-prefix-toc-title,toc_title>>
+
+|align
+|<<text-alignments,Text alignment>> +
+(default: $heading_h2_align)
+|toc:
+  title:
+    align: right
+
+|font_color
+|<<colors,Color>> +
+(default: $heading_h2_font_color)
+|toc:
+  title:
+    font_color: #aa0000
+
+|font_family
+|<<fonts,Font family name>> +
+(default: $heading_h2_font_family)
+|toc:
+  title:
+    font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: $heading_h2_font_size)
+|toc:
+  title:
+    font_size: 18
+
+|font_style
+|<<font-styles,Font style>> +
+(default: $heading_h2_font_style)
+|toc:
+  title:
+    font_style: bold_italic
+
+|text_transform
+|<<text-transforms,Text transform>> +
+(default: $heading_h2_text_transform)
+|sidebar:
+  title:
+    text_transform: uppercase
+
+3+|[#key-prefix-toc-dot-leader]*Key Prefix:* <<key-prefix-toc-dot-leader,toc_dot_leader>>
+
+|content
+|<<quoted-string,Quoted string>> +
+(default: '. ')
+|toc:
+  dot_leader:
+    content: ". "
+
+|font_color^[2]^
+|<<colors,Color>> +
+(default: _inherit_)
+|toc:
+  dot_leader:
+    font_color: #999999
+
+|font_style^[2]^
+|<<font-styles,Font style>> +
+(default: normal)
+|toc:
+  dot_leader:
+    font_style: bold
+
+|levels^[3]^
+|all {vbar} none {vbar} Integers (space-separated) +
+(default: all)
+|toc:
+  dot_leader:
+    levels: 2 3
+|===
+
+. `<n>` is a number ranging from 1 to 6, representing each of the six heading levels.
+. The dot leader inherits all font properties except `font_style` from the root `toc` category.
+. 0-based levels (e.g., part = 0, chapter = 1).
+Dot leaders are only shown for the specified levels.
+If value is not specified, dot leaders are shown for all levels.
+
+[#keys-running-content]
+=== Running Content (Header & Footer)
+
+The keys in this category control the arrangement and style of running header and footer content.
+
+[cols="3,4,5l"]
+|===
+|Key |Value Type |Example
+
+3+|[#key-prefix-header]*Key Prefix:* <<key-prefix-header,header>>
+
+|background_color^[1]^
+|<<colors,Color>> +
+(default: _not set_)
+|header:
+  background_color: #eeeeee
+
+|border_color
+|<<colors,Color>> +
+(default: _not set_)
+|header:
+  border_color: #dddddd
+
+|border_style
+|solid {vbar} double {vbar} dashed {vbar} dotted +
+(default: solid)
+|header:
+  border_style: dashed
+
+|border_width
+|<<measurement-units,Measurement>> +
+(default: $base_border_width)
+|header:
+  border_width: 0.25
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|header:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|header:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|header:
+  font_size: 9
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|header:
+  font_style: italic
+
+|height^[2]^
+|<<measurement-units,Measurement>> +
+(default: _not set_)
+|header:
+  height: 0.75in
+
+|line_height
+|<<values,Number>> +
+(default: $base_line_height)
+|header:
+  line_height: 1.2
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 0)
+|header:
+  padding: [0, 3, 0, 3]
+
+|image_vertical_align
+|top {vbar} middle {vbar} bottom {vbar} <<measurement-units,Measurement>> +
+(default: _not set_)
+|header:
+  image_vertical_align: 4
+
+|vertical_align
+|top {vbar} middle {vbar} bottom +
+(default: middle)
+|header:
+  vertical_align: center
+
+|<side>_columns^[3]^
+|Column specs triple +
+(default: _not set_)
+|header:
+  recto:
+    columns: <25% =50% >25%
+
+|<side>_<position>_content^[3,4]^
+|<<quoted-string,Quoted string>> +
+(default: '\{page-number}')
+|header:
+  recto:
+    left:
+      content: '\{page-number}'
+
+3+|[#key-prefix-footer]*Key Prefix:* <<key-prefix-footer,footer>>
+
+|background_color^[1]^
+|<<colors,Color>> +
+(default: _not set_)
+|footer:
+  background_color: #eeeeee
+
+|border_color
+|<<colors,Color>> +
+(default: _not set_)
+|footer:
+  border_color: #dddddd
+
+|border_style
+|solid {vbar} double {vbar} dashed {vbar} dotted +
+(default: solid)
+|footer:
+  border_style: dashed
+
+|border_width
+|<<measurement-units,Measurement>> +
+(default: $base_border_width)
+|footer:
+  border_width: 0.25
+
+|font_color
+|<<colors,Color>> +
+(default: _inherit_)
+|footer:
+  font_color: #333333
+
+|font_family
+|<<fonts,Font family name>> +
+(default: _inherit_)
+|footer:
+  font_family: Noto Serif
+
+|font_size
+|<<values,Number>> +
+(default: _inherit_)
+|footer:
+  font_size: 9
+
+|font_style
+|<<font-styles,Font style>> +
+(default: _inherit_)
+|footer:
+  font_style: italic
+
+|height^[2]^
+|<<measurement-units,Measurement>> +
+(default: _not set_)
+|footer:
+  height: 0.75in
+
+|line_height
+|<<values,Number>> +
+(default: $base_line_height)
+|footer:
+  line_height: 1.2
+
+|padding
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>> +
+(default: 0)
+|footer:
+  padding: [0, 3, 0, 3]
+
+|image_vertical_align
+|top {vbar} middle {vbar} bottom {vbar} <<measurement-units,Measurement>> +
+(default: _not set_)
+|footer:
+  image_vertical_align: 4
+
+|vertical_align
+|top {vbar} middle {vbar} bottom +
+(default: middle)
+|footer:
+  vertical_align: top
+
+|<side>_columns^[3]^
+|Column specs triple +
+(default: _not set_)
+|footer:
+  verso:
+    columns: <50% =0% <50%
+
+|<side>_<position>_content^[3,4]^
+|<<quoted-string,Quoted string>> +
+(default: '\{page-number}')
+|footer:
+  verso:
+    center:
+      content: '\{page-number}'
+|===
+. The background color spans the width of the page, as does the border when a background color is specified.
+. If the height is not set, the running content at this periphery is disabled.
+. `<side>` can be `recto` (right-hand, odd-numbered pages) or `verso` (left-hand, even-numbered pages).
+Where the page sides fall in relation to the physical or printed page number is controlled using the `pdf-folio-placement` attribute (except when `media=prepress`, which implies `physical`).
+. `<position>` can be `left`, `center` or `right`.
+
+IMPORTANT: You must define a height for the running header or footer, respectively, or it will not be shown.
+
+If you define running header and footer content in your theme, you can still disable this content per document by setting the `noheader` and `nofooter` attributes in the AsciiDoc document header, respectively.
+
+If content is not specified for the running footer, the page number (i.e., `\{page-number}`) is shown on the left on verso pages and the right on recto pages.
+You can disable this behavior by defining the attribute `nofooter` in the AsciiDoc document header or by defining the key `footer_<side>_content: none` in the theme.
+
+TIP: Although not listed in the table above, you can control the font properties used for running content for each column position on each page side (e.g., `footer_<side>_<position>_font_color`).
+For example, you can set the font color used for the right-hand column on recto pages by setting `footer_recto_right_font_color: 6CC644`.
+
+==== Attribute References
+
+You can use _any_ attribute defined in your AsciiDoc document (such as `doctitle`) in the content of the running header and footer.
+In addition, the following attributes are also available when defining the content keys in the footer:
+
+* page-count
+* page-number
+* document-title
+* document-subtitle
+* part-title
+* chapter-title
+* section-title
+* section-or-chapter-title
+
+You can also built-in AsciiDoc text replacements like `+(C)+`, numeric character references like `+&#169;+` and inline formatting (e.g., bold, italic, monospace).
+
+Here's an example that shows how attributes and replacements can be used in the running footer:
+
+[source,yaml]
+----
+header:
+  height: 0.75in
+  line_height: 1
+  recto:
+    center:
+      content: '(C) ACME -- v{revnumber}, {docdate}'
+  verso:
+    center:
+      content: $header_recto_center_content
+footer:
+  height: 0.75in
+  line_height: 1
+  recto:
+    right:
+      content: '{section-or-chapter-title} | *{page-number}*'
+  verso:
+    left:
+      content: '*{page-number}* | {chapter-title}'
+----
+
+You can split the content value across multiple lines using YAML's multiline string syntax.
+In this case, the single quotes around the string are not necessary.
+To force a hard line break in the output, add `{sp}+` to the end of the line in normal AsciiDoc fashion.
+
+[source,yaml]
+----
+footer:
+  height: 0.75in
+  line_height: 1.2
+  recto:
+    right:
+      content: |
+        Section Title - Page Number +
+        {section-or-chapter-title} - {page-number}
+  verso:
+    left:
+      content: |
+        Page Number - Chapter Title +
+        {page-number} - {chapter-title}
+----
+
+TIP: You can use most AsciiDoc inline formatting in the values of these keys.
+For instance, to make the text bold, surround it in asterisks (as shown above).
+One exception to this rule are inline images, which are described in the next section.
+
+==== Images
+
+You can add an image to the running header or footer using the AsciiDoc inline image syntax.
+Note that the image must be the whole value for a given position (left, center or right).
+It cannot be combined with text.
+
+Here's an example of how to use an image in the running header (which also applies for the footer).
+
+[source,yaml,subs=attributes+]
+----
+header:
+  height: 0.75in
+  image_vertical_align: 2 {conum-guard-yaml} <1>
+  recto:
+    center:
+      content: image:footer-logo.png[width=80]
+  verso:
+    center:
+      content: $header_recto_center_content
+----
+<1> You can use the `footer_vertical_align` attribute to slighly nudge the image up or down.
+
+CAUTION: By default, the image must fit in the allotted space for the running header or footer.
+Otherwise, you will run into layout issues.
+Adjust the width attribute accordingly using the `pdfwidth` attribute.
+Alternatively, you can set the `fit` attribute to `scale-down` (e.g., `fit=scale-down`) to reduce the image size to fit in the available space or `contain` (e.g., `fit=contain`) to resize the image to the maximum size that will fit.
+
+== Applying Your Theme
+
+After creating a theme, you'll need to tell Asciidoctor PDF where to find it.
+This is done using AsciiDoc attributes.
+
+There are three AsciiDoc attributes that tell Asciidoctor PDF how to locate and apply your theme.
+
+pdf-stylesdir:: The directory where the theme file is located.
+_Specifying an absolute path is recommended._
++
+If you use images in your theme, image paths are resolved relative to this directory.
+
+pdf-style:: The name of the YAML theme file to load.
+If the name ends with `.yml`, it's assumed to be the complete name of a file.
+Otherwise, `-theme.yml` is appended to the name to make the file name (i.e., `<name>-theme.yml`).
+
+pdf-fontsdir:: The directory where the fonts used by your theme, if any, are located.
+_Specifying an absolute path is recommended._
+
+Let's assume that you've put your theme files inside a directory named `resources` with the following layout:
+
+....
+document.adoc
+resources/
+  themes/
+    basic-theme.yml
+  fonts/
+    roboto-normal.ttf
+    roboto-italic.ttf
+    roboto-bold.ttf
+    roboto-bold_italic.ttf
+....
+
+Here's how you'd load your theme when calling Asciidoctor PDF:
+
+ $ asciidoctor-pdf -a pdf-stylesdir=resources/themes -a pdf-style=basic -a pdf-fontsdir=resources/fonts
+
+If all goes well, Asciidoctor PDF should run without an error or warning.
+
+NOTE: You only need to specify the `pdf-fontsdir` if you are using custom fonts in your theme.
+
+You can skip setting the `pdf-stylesdir` attribute and just pass the absolute path of your theme file to the `pdf-style` attribute.
+
+ $ asciidoctor-pdf -a pdf-style=resources/themes/basic-theme.yml -a pdf-fontsdir=resources/fonts
+
+However, in this case, image paths in your theme won't be resolved properly.
+
+Paths are resolved relative to the current directory.
+However, in the future, this may change so that paths are resolved relative to the base directory (typically the document's directory).
+Therefore, it's recommend that you specify absolute paths for now to future-proof your configuration.
+
+  $ asciidoctor-pdf -a pdf-stylesdir=/path/to/resources/themes -a pdf-style=basic -a pdf-fontsdir=/path/to/resources/fonts
+
+As usual, you can also use build tools like Maven and Gradle to build a themed PDF.
+The only thing you need to add to an existing build is the attributes mentioned above.
+
+* https://github.com/asciidoctor/asciidoctor-maven-examples/tree/master/asciidoctor-pdf-with-theme-example[Maven Example]
+* https://github.com/asciidoctor/asciidoctor-gradle-examples/tree/master/asciidoc-to-pdf-with-theme-example[Gradle Example]
+
+== Theme-Related Document Attributes
+
+There are various settings in the theme you control using document attributes.
+These settings override equivalent keys defined in the theme file, where applicable.
+
+[cols="2,3,6l"]
+|===
+|Attribute |Value Type |Example
+
+|autofit-option
+|flag (default: _not set_)
+|:autofit-option:
+
+|chapter-label
+|string (default: Chapter)
+|:chapter-label: Chapitre
+
+|<face>-cover-image^[1]^
+|path^[2]^ {vbar} image macro^[3]^ +
+(format can be image or PDF)
+|+:front-cover-image: image:front-cover.pdf[]+
+
+|media
+|screen {vbar} print {vbar} prepress
+|:media: prepress
+
+|page-background-image^[4]^
+|path^[2]^ {vbar} image macro^[3]^
+|+:page-background-image: image:bg.jpg[]+
+
+|pagenums^[5]^
+|flag (default: _set_)
+|:pagenums:
+
+|pdf-page-layout
+|portrait {vbar} landscape
+|:pdf-page-layout: landscape
+
+|pdf-page-margin
+|<<measurement-units,Measurement>> {vbar} <<measurement-units,Measurement[top,right,bottom,left]>>
+|:pdf-page-margin: [1in, 0.5in]
+
+|pdf-page-size
+|https://github.com/prawnpdf/pdf-core/blob/0.6.0/lib/pdf/core/page_geometry.rb#L16-L68[Named size^] {vbar} <<measurement-units,Measurement[width, height]>>
+|:pdf-page-size: 6in x 9in
+
+|pdf-folio-placement
+|virtual {vbar} virtual-inverted {vbar} physical {vbar} physical-inverted
+|:pdf-folio-placement: physical
+
+|pdfmark^[6]^
+|flag (default: _not set_)
+|:pdfmark:
+
+|text-alignment^[7]^
+|<<text-alignments,Text alignment>>
+|:text-alignment: left
+
+|title-logo-image
+|path^[2]^ {vbar} image macro^[3]^
+|+:title-logo-image: image:logo.png[top=25%, align=center, pdfwidth=0.5in]+
+
+|title-page-background-image
+|path^[2]^ {vbar} image macro^[3]^
+|+:title-page-background-image: image:title-bg.jpg[]+
+|===
+
+. `<face>` can be `front` or `back`.
+. The path is resolved relative to base_dir.
+. The target of the image macro is resolved relative to `imagesdir`.
+. Page background images are automatically scaled to fit within the bounds of the page.
++
+NOTE: Page backgrounds do not currently work when using AsciidoctorJ PDF.
+This limitation is due to a bug in Prawn 1.3.1.
+The limitation will remain until AsciidoctorJ PDF upgrades to Prawn 2.x (an upgrade that is waiting on AsciidoctorJ to migrate to JRuby 9000).
+For more details, see http://discuss.asciidoctor.org/Asciidoctor-YAML-style-file-for-PDF-and-maven-td3849.html[this thread].
+. Controls whether the `page-number` attribute is accessible to the running header and footer content specified in the theme file.
+Use the `noheader` and `nofooter` attributes to disable the running header and footer, respectively, from the document.
+. Enables generation of the http://milan.kupcevic.net/ghostscript-ps-pdf/#marks[pdfmark] file, which contains metadata that is fed to Ghostscript when optimizing the PDF file.
+. _(Experimental)_ The `text-alignment` document attribute is intended as a simple way to toggle text justification.
+The value of this attribute overrides the `base_align` key set by the theme.
+For more fine-grained control, you should customize using the theme.
+
+== Publishing Mode
+
+Asciidoctor PDF provides the following features to assist with publishing:
+
+* Double-sided (mirror) page margins
+* Automatic facing pages
+
+These features are activated when you set the `media` attribute to `prepress` in the header of your AsciiDoc document or from the CLI or API.
+The following sections describe the behaviors that this setting activates.
+
+=== Double-Sided Page Margins
+
+The page margins for the recto (right-hand, odd-numbered) and verso (left-hand, even-numbered) pages are automatically calculated by replacing the side page margins with the values of the `page_margin_inner` and `page_margin_outer` keys.
+
+For example, let's assume you've defined the following settings in your theme:
+
+[source,yaml]
+----
+page:
+  margin: [0.5in, 0.67in, 0.67in, 0.67in]
+  margin_inner: 0.75in
+  margin_outer: 0.59in
+----
+
+The page margins for the recto and verso pages will be resolved as follows:
+
+recto page margin:: [0.5in, *0.59in*, 0.67in, *0.75in*]
+verso page margin:: [0.5in, *0.75in*, 0.67in, *0.59in*]
+
+The page margins alternate between recto and verso.
+The first page in the document is a recto page.
+
+=== Automatic Facing Pages
+
+When converting the book doctype using the prepress media setting, a blank page will be inserted when necessary to ensure the following elements start on a recto page:
+
+* Title page
+* Table of contents
+* First page of body
+* Parts and chapters
+
+Other "`facing`" pages may be added in the future.
+
+It's possible to disable the automatic facing feature for a given part or chapter.
+This can be done by adding the nonfacing option to the section node.
+When the nonfacing option is present, the part or chapter title will be placed on the following page.
+
+[source,asciidoc]
+----
+[%nonfacing]
+= Minor Chapter
+
+content
+----
+
+For documents that use the article doctype, Asciidoctor PDF incorrectly places the document title and table of contents on their own pages.
+This can result in the page numbering and the page facing to be out of sync.
+As a workaround, Asciidoctor PDF inserts a blank page, if necessary, to ensure the first page of body content is a recto-facing page.
+
+You can check on the status of this defect by following https://github.com/asciidoctor/asciidoctor-pdf/issues/95[issue #95].
+
+== Source Highlighting Theme
+
+You can define and apply your own source highlighting theme to source blocks when using Rouge as the source highlighter.
+This section explains how.
+
+A custom theme for Rouge is defined using a Ruby class.
+Start by creating a Ruby source file to define your theme.
+Name the file according to the name of your theme and put the file in a folder of your choice (e.g., [.path]_rouge_themes/custom.rb_).
+The name of the Ruby class doesn't matter, though it's customary to name it according to the name of the theme as well.
+
+.rouge_themes/custom.rb
+[source,ruby]
+----
+require 'rouge' unless defined? ::Rouge.version
+
+module Rouge; module Themes
+  class Custom < CSSTheme
+    name 'custom'
+
+    style Comment,           fg: '#008800', italic: true
+    style Error,             fg: '#a61717', bg: '#e3d2d2'
+    style Str,               fg: '#0000ff'
+    style Str::Char,         fg: '#800080'
+    style Num,               fg: '#0000ff'
+    style Keyword,           fg: '#000080', bold: true
+    style Operator::Word,    bold: true
+    style Name::Tag,         fg: '#000080', bold: true
+    style Name::Attribute,   fg: '#ff0000'
+    style Generic::Deleted,  fg: '#000000', bg: '#ffdddd', inline_block: true, extend: true
+    style Generic::Inserted, fg: '#000000', bg: '#ddffdd', inline_block: true, extend: true
+    style Text, {}
+  end
+end; end
+----
+
+Each style declaration accepts the following properties:
+
+* `fg` - sets the foreground (text) color
+* `bg` - sets the background color
+* `bold` - change the font weight to bold
+* `italic` - change the font style to italic
+* `underline` - add an underline to the text
+* `inline_block` - fill the background color to the height of the line (Asciidoctor PDF only)
+* `extend` - extend the background color to the end of the line for a line-oriented match (Asciidoctor PDF only)
+
+Colors are defined using hexidecimal format (e.g., #ff0000 for red).
+
+Use the `Text` token to set the background color of the source block and the default text color.
+
+The complete list of tokens can be found in the https://github.com/jneen/rouge/blob/master/lib/rouge/token.rb[token.rb] file from Rouge.
+Refer to the https://github.com/jneen/rouge/tree/master/lib/rouge/themes[bundled themes] to find more examples.
+
+Once you've defined your theme, you need to enable it use it using the `rouge-style` document attribute, which you specify in the document header or via the Asciidoctor CLI or API.
+
+[source,asciidoc]
+----
+:source-highlighter: rouge
+:rouge-style: custom
+----
+
+Finally, you need to active your theme by requiring the theme file when you invoke Asciidoctor.
+
+ $ asciidoctor -r ./rouge_themes/custom.rb sample.adoc
+
+You should now see that the source code is highlighted to your liking.
+For more information about source highlighting with Rouge, refer to the http://rouge.jneen.net/[Rouge project page].
+
+////
+== Resources for Extending Asciidoctor PDF
+
+* http://www.sitepoint.com/hackable-pdf-typesetting-in-ruby-with-prawn[Hackable PDF typesetting in Ruby with Prawn]
+////
