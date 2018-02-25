@@ -24,7 +24,6 @@ CALL algo.shortestPath.stream(start, end, 'cost')
 YIELD nodeId, cost
 MATCH (other:Loc) WHERE id(other) = nodeId
 RETURN other.name AS name, cost
-LIMIT 20
 
 // end::single-pair-stream-sample-graph[]
 
