@@ -1,19 +1,20 @@
 // tag::create-sample-graph[]
 
-CREATE (alice:Person{id:"Alice"}),
-       (michael:Person{id:"Michael"}),
-       (karin:Person{id:"Karin"}),
-       (chris:Person{id:"Chris"}),
-       (will:Person{id:"Will"}),
-       (mark:Person{id:"Mark"})
-CREATE (michael)-[:KNOWS]->(karin),
-       (michael)-[:KNOWS]->(chris),
-       (will)-[:KNOWS]->(michael),
-       (mark)-[:KNOWS]->(michael),
-       (mark)-[:KNOWS]->(will),
-       (alice)-[:KNOWS]->(michael),
-       (will)-[:KNOWS]->(chris),
-       (chris)-[:KNOWS]->(karin);
+MERGE (alice:Person{id:"Alice"})
+MERGE (michael:Person{id:"Michael"})
+MERGE (karin:Person{id:"Karin"})
+MERGE (chris:Person{id:"Chris"})
+MERGE (will:Person{id:"Will"})
+MERGE (mark:Person{id:"Mark"})
+
+MERGE (michael)-[:KNOWS]->(karin)
+MERGE (michael)-[:KNOWS]->(chris)
+MERGE (will)-[:KNOWS]->(michael)
+MERGE (mark)-[:KNOWS]->(michael)
+MERGE (mark)-[:KNOWS]->(will)
+MERGE (alice)-[:KNOWS]->(michael)
+MERGE (will)-[:KNOWS]->(chris)
+MERGE (chris)-[:KNOWS]->(karin);
 
 // end::create-sample-graph[]
 
