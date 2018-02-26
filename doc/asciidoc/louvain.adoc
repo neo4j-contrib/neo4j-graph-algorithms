@@ -113,6 +113,7 @@ include::scripts/louvain.cypher[tag=stream-sample-graph]
 include::scripts/louvain.cypher[tag=write-sample-graph]
 ----
 
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
@@ -124,6 +125,11 @@ include::scripts/louvain.cypher[tag=write-sample-graph]
 | Doug | 4
 | Mark | 4 
 |===
+// end::stream-sample-graph-result[]
+
+// tag::stream-sample-graph-explanation[]
+
+// end::stream-sample-graph-explanation[]
 
 == Example Usage
 
