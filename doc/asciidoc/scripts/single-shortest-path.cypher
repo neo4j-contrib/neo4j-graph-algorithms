@@ -1,18 +1,23 @@
 // tag::create-sample-graph[]
 
-CREATE (a:Loc{name:'A'}), (b:Loc{name:'B'}), (c:Loc{name:'C'}), 
-       (d:Loc{name:'D'}), (e:Loc{name:'E'}), (f:Loc{name:'F'}),
-       (a)-[:ROAD {cost:50}]->(b),
-       (a)-[:ROAD {cost:50}]->(c),
-       (a)-[:ROAD {cost:100}]->(d),
-       (a)-[:RAIL {cost:50}]->(d),
-       (b)-[:ROAD {cost:40}]->(d),
-       (c)-[:ROAD {cost:40}]->(d),
-       (c)-[:ROAD {cost:80}]->(e),
-       (d)-[:ROAD {cost:30}]->(e),
-       (d)-[:ROAD {cost:80}]->(f),
-       (e)-[:ROAD {cost:40}]->(f),
-       (e)-[:RAIL {cost:20}]->(f);
+MERGE (a:Loc {name:'A'})
+MERGE (b:Loc {name:'B'})
+MERGE (c:Loc {name:'C'})
+MERGE (d:Loc {name:'D'})
+MERGE (e:Loc {name:'E'})
+MERGE (f:Loc {name:'F'})
+
+MERGE (a)-[:ROAD {cost:50}]->(b)
+MERGE (a)-[:ROAD {cost:50}]->(c)
+MERGE (a)-[:ROAD {cost:100}]->(d)
+MERGE (a)-[:RAIL {cost:50}]->(d)
+MERGE (b)-[:ROAD {cost:40}]->(d)
+MERGE (c)-[:ROAD {cost:40}]->(d)
+MERGE (c)-[:ROAD {cost:80}]->(e)
+MERGE (d)-[:ROAD {cost:30}]->(e)
+MERGE (d)-[:ROAD {cost:80}]->(f)
+MERGE (e)-[:ROAD {cost:40}]->(f)
+MERGE (e)-[:RAIL {cost:20}]->(f);
 
 // end::create-sample-graph[]
 

@@ -1,13 +1,14 @@
 // tag::create-sample-graph[]
 
-CREATE (a:Node{id:"A"}),
-       (b:Node{id:"B"}),
-       (c:Node{id:"C"}),
-       (d:Node{id:"D"}),
-       (e:Node{id:"E"})
-CREATE (a)-[:LINK]->(b),
-       (b)-[:LINK]->(c),
-       (d)-[:LINK]->(e);
+MERGE (a:Node{id:"A"})
+MERGE (b:Node{id:"B"})
+MERGE (c:Node{id:"C"})
+MERGE (d:Node{id:"D"})
+MERGE (e:Node{id:"E"})
+
+MERGE (a)-[:LINK]->(b)
+MERGE (b)-[:LINK]->(c)
+MERGE (d)-[:LINK]->(e);
 
 // end::create-sample-graph[]
 

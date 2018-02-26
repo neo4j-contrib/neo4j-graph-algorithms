@@ -7,6 +7,7 @@ MERGE (d:Place {id:"D"})
 MERGE (e:Place {id:"E"})
 MERGE (f:Place {id:"F"})
 MERGE (g:Place {id:"G"})
+
 MERGE (d)-[:LINK {cost:4}]->(b)
 MERGE (d)-[:LINK {cost:6}]->(e)
 MERGE (b)-[:LINK {cost:1}]->(a)
