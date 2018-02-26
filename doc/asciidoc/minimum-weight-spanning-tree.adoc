@@ -106,7 +106,7 @@ F and G aren't included because they're unreachable from D.
 // end::write-sample-minst-graph-explanation[]
 
 
-Maximum weighted tree spanning algorithm is similar to the mininum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
+Maximum weighted tree spanning algorithm is similar to the minimum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
 
 
 .Running maximum spanning tree algorithm and writing back results 
