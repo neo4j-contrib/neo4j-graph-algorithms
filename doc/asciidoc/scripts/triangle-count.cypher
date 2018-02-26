@@ -43,7 +43,11 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 // tag::triangle-stream-sample-graph[]
 
 CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4}) 
-YIELD nodeId, triangles;
+YIELD nodeId, triangles, coefficient
+
+MATCH (p:Person) WHERE id(p) = nodeId
+
+RETURN p.id AS name, triangles, coefficient
 
 // end::triangle-stream-sample-graph[]
 
