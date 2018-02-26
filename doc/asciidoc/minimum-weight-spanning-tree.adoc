@@ -1,38 +1,28 @@
 = Minimum Weight Spanning Tree
 
 // tag::introduction[]
-A _Minimum Weight Spanning Tree_ (MST) is a subgraph that contains all the nodes from the original graph and the set of relationships that connect the nodes together with the minimum possible weight.
-Our current approach uses _Prim's Algorithm_ to calculate the MST starting at a given node.
-The K-Means variant can be used to detect clusters in the graph.
+The _Minimum Weight Spanning Tree_ (MST) starts from a given node and finds all its reachable nodes and the set of relationships that connect the nodes together with the minimum possible weight.
+_Prim's algorithm_ is one of the simplest and best-known minimum spanning tree algorithms.
+The K-Means variant of this algorithm can be used to detect clusters in the graph.
 // end::introduction[]
 
 == History, Explanation
 
 // tag::explanation[]
-In graph theory, a tree is a way of connecting all the nodes together, so that there is exactly one path from a node to any other node in the tree.
-If the graph represents cities connected by roads, one could select a number of roads, so that each city can be reached from every other, but that there is no more than one way to travel from one city to another.
-
-Most of the time, graphs are weighted; each connection between two cities has a weight: It might cost something to travel on a given road, or one connection may be longer than the other, this means it takes more time to travel on that connection. 
-
-A graph might have more than one minimum spanning tree.
-In a graph where all the relationships have the same weight, every tree is a minimum spanning tree.
-If all the relationships have different weights there is exactly one minimal spanning tree.
-
-Czech scientist Otakar Borůvka developed the first known algorithm for finding a minimum spanning tree in 1926, while trying to find an efficient electricity network for Moravia.
-This algorithm is known as Borůvka's algorithm.
-
-Prim's algorithm (sometimes known as the Jarník-Prim algorithm) is one of the simplest and best-known minimum spanning tree algorithms. 
-It is similar to Dijkstra's algorithm, but rather than minimizing the total length of a path ending at each relationship we minimize the length of each relationship individually.
+The first known algorithm for finding a minimum spanning tree was developed by the Czech scientist Otakar Borůvka in 1926, while trying to find an efficient electricity network for Moravia.
+Prim's algorithm was invented by Jarnik in 1930 and rediscovered by Prim in 1957.
+It is similar to Dijkstra's shortest path algorithm but, rather than minimizing the total length of a path ending at each relationship, it minimizes the length of each relationship individually.
 Unlike Dijkstra's, Prim's can tolerate negative-weight relationships.
-It is optimal for dense graphs.
+// end::explanation[]
 
+// tag::formula[]
 The algorithm operates as follows:
 
-* start with a trivial tree containing only one node (and no relationship). It does not matter which node is chosen.
+* start with a tree containing only one node (and no relationships).
 * select the minimal-weight relationship coming from that node and add it to our tree.
-* repeatedly choose a minimal-weight relationship that joins any node in the tree to one not in the tree, adding the new relationship and node to our tree. Such a relationship will always exist when the tree is incomplete because otherwise the partially built tree would be an isolated component but we know the graph consists of a single connected component.
+* repeatedly choose a minimal-weight relationship that joins any node in the tree to one not in the tree, adding the new relationship and node to our tree.
 * when there are no more nodes to add, the tree we have built is a minimum spanning tree.
-// end::explanation[]
+// end::formula[]
 
 == When to use it / use-cases
 
@@ -101,8 +91,8 @@ To find all pairs of nodes included in our minimum spanning tree run the followi
 // end::write-sample-minst-graph-result[]
 
 // tag::write-sample-minst-graph-explanation[]
-The minimum spanning tree contains D, B, A, C, and E.
-F and G aren't included because they're unreachable from D.
+The minimum spanning tree excludes the relationship with cost 6 from "D" to "E" and the one with cost 3 from "B" to "C".
+Nodes "F" and "G" aren't included because they're unreachable from "D".
 // end::write-sample-minst-graph-explanation[]
 
 
