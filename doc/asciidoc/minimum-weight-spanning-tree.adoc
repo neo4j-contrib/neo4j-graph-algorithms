@@ -74,9 +74,36 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-minst-grap
 
 ----
 
+
+.Querying minimum spanning tree
+[source,cypher]
+----
+include::scripts/minimum-weight-spanning-tree.cypher[tag=query-sample-minst-graph]
+
+----
+
 .Results
 
 image::minst_result.png[]
+
+To find all pairs of nodes included in our minimum spanning tree run the following query:
+
+// tag::write-sample-minst-graph-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| source | destination | cost
+| D | B | 4
+| B | A | 1
+| A | C | 2
+| C | E | 5
+|===
+// end::write-sample-minst-graph-result[]
+
+// tag::write-sample-minst-graph-explanation[]
+The minimum spanning tree contains D, B, A, C, and E.
+F and G aren't included because they're unreachable from D.
+// end::write-sample-minst-graph-explanation[]
 
 
 Maximum weighted tree spanning algorithm is similar to the mininum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
