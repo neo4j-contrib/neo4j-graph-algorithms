@@ -54,6 +54,21 @@ include::scripts/triangle-count.cypher[tag=create-sample-graph]
 include::scripts/triangle-count.cypher[tag=stream-triples]
 ----
 
+// tag::stream-triples-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| nodeA | nodeB | nodeC
+| Will | Michael | Chris
+| Will | Mark | Michael
+| Michael | Karin | Chris
+|===
+// end::stream-triples-result[]
+
+// tag::stream-triples-explanation[]
+We can see that there are `KNOWS` triangles containing Will, Michael, and Chris, Will, Mark, and Michael, and Michael, Karin, and Chris.
+This means that everybody in the triangle knows each other.
+// end::triangle-stream-triples-explanation[]
 
 .counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
 [source,cypher]
@@ -66,6 +81,7 @@ include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
 ----
 include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 ----
+
 
 == Example Usage
 
