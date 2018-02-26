@@ -2,57 +2,48 @@
 
 
 // tag::introduction[]
-The _Louvain_ method of community detection is an algorithm for detecting communities in networks that relies upon a heuristic for maximizing the modularity.
-Communities are groups of nodes within a network that are more densely connected to one another than to other nodes. 
-A typical heuristic would be modularity, which quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are compared to how connected they would be in a random network.
+The _Louvain_ method of community detection is an algorithm for detecting communities in networks.
+It maximizes a modularity score for each community, where the modularity quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are compared to how connected they would be in a random network.
 
-The method consists of repeated application of two steps. 
-The first step is a "greedy" assignment of nodes to communities, favoring local optimizations of modularity. 
-The second step is the definition of a new coarse-grained network based on the communities found in the first step.
-These two steps are repeated until no further modularity-increasing reassignments of communities are possible.
-
-The _Louvain_ method achieves modularities comparable to pre-existing algorithms, typically in less time, so it enables the study of much larger networks.
-It also reveals a hierarchy of communities at different scales, and this hierarchical perspective can be useful for understanding the global functioning of a network.
-While there are pitfalls to interpreting the community structure uncovered by the Louvain Method, these difficulties are shared by all modularity optimization algorithms.[2]
+The _Louvain_ algorithm is one of the fastest modularity based algorithms and works well with large graphs.
+It also reveals a hierarchy of communities at different scales, which can be useful for understanding the global functioning of a network.
 // end::introduction[]
-
-Link to the https://arxiv.org/pdf/0803.0476.pdf[original paper][1]
 
 == History, Explanation
 
 // tag::explanation[]
-A fairly common feature of complex networks is that they consist of sets of nodes that interact more with one another than with nodes outside the set. 
-Social networks, for instance, might consist of tightly knit communities of friends with rarer friendship ties between different communities. 
-In protein interaction networks, certain groups of proteins interact with one another more frequently than they do with proteins in other groups. 
-If you map out a network of projects going on in a large company, certain projects will likely have more conceptual overlap and mutual dependency than others.
+The https://arxiv.org/pdf/0803.0476.pdf[Louvain algorithm^] was proposed in 2008 by authors from the University of Louvain.
 
-In 1962, H.A. Simon proposed that this type of community structure might be a defining characteristic of complex systems, or at least those like the protein interaction network, in which many interacting constituent elements adaptively organize to achieve some higher-order function (e.g., the functioning of an organism). 
-His reasoning was that individual actors have a much higher chance of collectively achieving a higher-order function if that function can be iteratively achieved by constructing intermediate stable forms (also called communities or modules) that achieve simpler functions. 
-The first-order intermediate forms would be communities in terms of the original nodes, but then interactions between these first-order communities could generate second-order communities that accomplish somewhat more complicated functions, and so on. 
-In this way, a hierarchical structure can emerge in complex adaptive systems. 
-However, even when there isn't necessarily adaptive pressure towards achieving some higher-order function (as in the case of some social networks), community structure is a common observed feature of complex networks.
+The method consists of repeated application of two steps.
+The first step is a "greedy" assignment of nodes to communities, favoring local optimizations of modularity.
+The second step is the definition of a new coarse-grained network based on the communities found in the first step.
+These two steps are repeated until no further modularity-increasing reassignments of communities are possible.
 
+// end::explanation[]
+
+
+// tag::formula[]
 The algorithm is initialized with each node in its own community.
 
 In the first stage we iterate through each of the nodes in the network.
-For each node, we consider the change in modularity if we remove the node from its current community and place it in the community of one of its neighbors. 
+We take each node, remove it from its current community and replace it in the community of ones of its neighbors.
 We compute the modularity change for each of the node's neighbors. 
-If none of these modularity changes are positive, we keep the node in its current community. 
-If some of the modularity changes are positive, we move the node into the community where the modularity change is most positive.
+If none of these modularity changes are positive, the node stays in its current community.
+If some of the modularity changes are positive, the node moves into the community where the modularity change is most positive.
 Ties are resolved arbitrarily.
 We repeat this process for each node until one pass through all nodes yields no community assignment changes.
 
 The second stage in the Louvain Method uses the communities that were discovered in the community reassignment stage to define a new coarse-grained network.
 In this network the newly discovered communities are the nodes.
-The edge weight between the nodes representing two communities is the sum of the edge weights between the constituent, lower-level nodes of each community.
-The links within each community generate self-loops in the new, coarse-grained network.
+The relationship weight between the nodes representing two communities is the sum of the relationship weights between the lower-level nodes of each community.
 
 The rest of the Louvain Method consists of repeated application of stages 1 and 2. 
 By applying stage 1 (the community reassignment phase) to the coarse-grained graph, we find a second tier of communities of communities of nodes.
 Then, in the next application of stage 2, we define a new coarse-grained graph at this higher-level of the hierarchy.
 We keep going like this until an application of stage 1 yields no reassignments.
-At that point repeated application of stages 1 and 2 will not yield any more modularity-optimizing changes, so the process is complete.[2]
-// end::explanation[]
+At that point repeated application of stages 1 and 2 will not yield any more modularity-optimizing changes, so the process is complete.
+// end::formula[]
+
 
 == When to use it / use-cases
 
@@ -128,7 +119,9 @@ include::scripts/louvain.cypher[tag=write-sample-graph]
 // end::stream-sample-graph-result[]
 
 // tag::stream-sample-graph-explanation[]
-
+Our algorithm found two communities with 3 members each.
+Mark, Doug, and Charles are all friends with each other, as are Bridget, Alice, and Michael.
+Charles is the only one who has friends in both communities but he has more in community 4 so he fits better in that one.
 // end::stream-sample-graph-explanation[]
 
 == Example Usage

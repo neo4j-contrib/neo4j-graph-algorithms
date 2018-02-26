@@ -23,7 +23,8 @@ YIELD nodeId, community
 
 MATCH (user:User) WHERE id(user) = nodeId
 
-RETURN user.id AS user, community;
+RETURN user.id AS user, community
+ORDER BY community;
 
 // end::stream-sample-graph[]
 
