@@ -6,6 +6,7 @@ MERGE (nCharles:User {id:'Charles'})
 MERGE (nDoug:User {id:'Doug'})
 MERGE (nMark:User {id:'Mark'})
 MERGE (nMichael:User {id:'Michael'})
+
 MERGE (nAlice)-[:FRIEND]->(nBridget)
 MERGE (nAlice)-[:FRIEND]->(nCharles)
 MERGE (nMark)-[:FRIEND]->(nDoug)

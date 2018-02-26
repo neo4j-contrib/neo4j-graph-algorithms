@@ -1,21 +1,22 @@
 // tag::create-sample-graph[]
 
-CREATE (nAlice:User {id:'Alice',predefined_label:52})
-,(nBridget:User {id:'Bridget',predefined_label:21})
-,(nCharles:User {id:'Charles',predefined_label:43})
-,(nDoug:User {id:'Doug',predefined_label:21})
-,(nMark:User {id:'Mark',predefined_label: 19})
-,(nMichael:User {id:'Michael', predefined_label: 52})
-CREATE (nAlice)-[:FOLLOW]->(nBridget)
-,(nAlice)-[:FOLLOW]->(nCharles)
-,(nMark)-[:FOLLOW]->(nDoug)
-,(nBridget)-[:FOLLOW]->(nMichael)
-,(nDoug)-[:FOLLOW]->(nMark)
-,(nMichael)-[:FOLLOW]->(nAlice)
-,(nAlice)-[:FOLLOW]->(nMichael)
-,(nBridget)-[:FOLLOW]->(nAlice)
-,(nMichael)-[:FOLLOW]->(nBridget)
-,(nCharles)-[:FOLLOW]->(nDoug);
+MERGE (nAlice:User {id:'Alice'}) SET nAlice.predefined_label=52
+MERGE (nBridget:User {id:'Bridget'}) SET nBridget.predefined_label=21
+MERGE (nCharles:User {id:'Charles'}) SET nCharles.predefined_label=43
+MERGE (nDoug:User {id:'Doug'}) SET nDoug.predefined_label=21
+MERGE (nMark:User {id:'Mark'}) SET nMark.predefined_label=19
+MERGE (nMichael:User {id:'Michael'}) SET nMichael.predefined_label=52
+
+MERGE (nAlice)-[:FOLLOW]->(nBridget)
+MERGE (nAlice)-[:FOLLOW]->(nCharles)
+MERGE (nMark)-[:FOLLOW]->(nDoug)
+MERGE (nBridget)-[:FOLLOW]->(nMichael)
+MERGE (nDoug)-[:FOLLOW]->(nMark)
+MERGE (nMichael)-[:FOLLOW]->(nAlice)
+MERGE (nAlice)-[:FOLLOW]->(nMichael)
+MERGE (nBridget)-[:FOLLOW]->(nAlice)
+MERGE (nMichael)-[:FOLLOW]->(nBridget)
+MERGE (nCharles)-[:FOLLOW]->(nDoug);
 
 // end::create-sample-graph[]
 

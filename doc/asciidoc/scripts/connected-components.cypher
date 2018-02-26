@@ -1,15 +1,16 @@
 // tag::create-sample-graph[]
 
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
-,(nAlice)-[:FRIEND{weight:4}]->(nCharles)
-,(nMark)-[:FRIEND{weight:1}]->(nDoug)
-,(nMark)-[:FRIEND{weight:2}]->(nMichael);
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:FRIEND {weight:0.5}]->(nBridget)
+MERGE (nAlice)-[:FRIEND {weight:4}]->(nCharles)
+MERGE (nMark)-[:FRIEND {weight:1}]->(nDoug)
+MERGE (nMark)-[:FRIEND {weight:2}]->(nMichael);
 
 // end::create-sample-graph[]
 
