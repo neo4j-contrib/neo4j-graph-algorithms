@@ -26,8 +26,29 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>1.5.3</version>
+                <version>1.5.6</version>
                 <inherited>false</inherited>
+                <configuration>
+                    <backend>html5</backend>
+                    <imagesDir>images</imagesDir>
+                    <sourceDirectory>${basedir}/asciidoc</sourceDirectory>
+                    <sourceDocumentName>index.adoc</sourceDocumentName>
+                    <outputDirectory>${basedir}/target/docs</outputDirectory>
+                    <attributes>
+                        <neo4j-version>${project.version}</neo4j-version>
+                        <source-highlighter>coderay</source-highlighter>
+                        <coderay-css>style</coderay-css>
+                    </attributes>
+                    <requires>
+                        <require>asciidoctor-diagram</require>
+                    </requires>
+                    <resources>
+                        <resource>
+                            <directory>${basedir}/images</directory>
+                            <targetPath>${basedir}/target/docs/${docsversion}/images</targetPath>
+                        </resource>
+                    </resources>
+                </configuration>
                 <executions>
                     <execution>
                         <id>generate-docs</id>
@@ -37,21 +58,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <backend>html5</backend>
-                    <imagesDir>images</imagesDir>
-                    <sourceDirectory>${basedir}/asciidoc</sourceDirectory>
-                    <sourceDocumentName>index.adoc</sourceDocumentName>
-                    <outputDirectory>${basedir}/target/docs</outputDirectory>
-                    <attributes>
-                        <neo4j-version>${project.version}</neo4j-version>
-                    </attributes>
-                    <requires>
-                        <require>asciidoctor-diagram</require>
-                    </requires>
-                    <source-highlighter>coderay</source-highlighter>
-                    <coderay-css>style</coderay-css>
-                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
