@@ -1,39 +1,48 @@
 == Yelp Open Dataset
 
-https://www.yelp.com/[Yelp.com] has been running https://www.yelp.com/dataset/challenge[Yelp Dataset challenge] for about five years now. 
+// tag::intro[]
+https://www.yelp.com/[Yelp.com] has been running https://www.yelp.com/dataset/challenge[Yelp Dataset challenge] since 2013.
 It is a competition that encourages people to explore and research Yelp's open dataset, which contains almost 5 million reviews from over 1.1 million users on over 150,000 businesses from 12 metropolitan areas in the tenth round of the challenge. 
 Over the years the dataset has become very popular with https://scholar.google.com/scholar?q=citation%3A+Yelp+Dataset&btnG=&hl=en&as_sdt=0%2C5[hundreds of academic paper] written about it.
 It has well-structured and highly relational data and is therefore a great showcase for Neo4j and graph algorithms on a realistic dataset. 
-We will show how to use graph algorithms on a social network of friends and how to create and analyse an inferred graph (for example, projecting a review co-occurence graph or similarity between users based on their reviews).
+// end::intro[]
 
+We will show how to use graph algorithms on a social network of friends and how to create and analyse an inferred graph (for example, projecting a review co-occurence graph or similarity between users based on their reviews).
 Check out also https://www.yelp.com/dataset/challenge/winners[past winners and their work].   
 
 
 == Data
 
-You can   https://www.yelp.com/dataset/download[get the dataset] by filling out their form.
-Download the data in JSON format. 
-We will use https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases[APOC plugin] to help us with importing and batching data in Neo4j.
-There are 6 JSON files available (https://www.yelp.com/dataset/documentation/json[detailed documentation]). 
-Photos and checkins are not the topic of our analysis, so they will not be imported.
-From the other files we will import a knowledge graph of Yelp's world, that contains data about:
+// tag::data-explanation[]
+The dataset contains:
 
- - 156639 businesses
- - 1005693 tips from users about businesses 
- - 4736897 reviews of businesses by users 
- - 9489337 users total 
- - 35444850 friend relationships
- 
+ - 156,639 businesses
+ - 1,005,693 tips from users about businesses
+ - 4,736,897 reviews of businesses by users
+ - 9,489,337 users total
+ - 35,444,850 friend relationships
+// end::data-explanation[]
+
+// tag::data-download[]
+You can https://www.yelp.com/dataset/download[download the dataset in JSON format] by filling out a form on Yelp's website.
+There are 6 JSON files available (https://www.yelp.com/dataset/documentation/json[detailed documentation]).
+We'll ignore the photos and checkins files since they aren't the topic of our analysis.
+// end::data-download[]
+
+We'll create a knowledge graph from the rest of the files and will use the https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases[APOC plugin] to help us with importing and batching data in Neo4j.
 Depending on your setup import might take some time as _user.json_ contains data about a 10 million person social network of friends.
 While _review.json_ is even bigger in size, it is mostly made up of text representing the actual review, so the import will be faster.
-We also do not need the actual text, but only meta-data about them e.g. who wrote the review and how he rated a certain business, so the text will not be imported.   
-
+We also do not need the actual text, but only meta-data about them e.g. who wrote the review and how he rated a certain business, so the text will not be imported.
 
 == Graph Model
 
 image::yelp_graph_model.png[]
 
-Graph consist of nodes labeled User, that can have a FRIEND relationship with other users. Users also write reviews and tips about businesses. We store all the meta-data ( location of business etc.) as properties of nodes except for categories of the businesses, which are represented by separate nodes labeled Category.
+// tag::model-explanation[]
+Our graph contains `User` labelled nodes that can have a `FRIEND` relationship with other users.
+Users also write reviews and tips about businesses.
+We will store all the meta-data ( location of business etc.) as properties of nodes except for categories of the businesses, which are represented by separate nodes labeled `Category`.
+// end::model-explanation[]
 
 Graph model always depends on the application we have in mind for it.
 Our application is to analyse ( inferred ) networks with graph algorithms.
