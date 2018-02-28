@@ -41,7 +41,7 @@ image::yelp_graph_model.png[]
 // tag::model-explanation[]
 Our graph contains `User` labelled nodes that can have a `FRIEND` relationship with other users.
 Users also write reviews and tips about businesses.
-We will store all the meta-data ( location of business etc.) as properties of nodes except for categories of the businesses, which are represented by separate nodes labeled `Category`.
+We will store all the meta-data as properties of nodes except for categories of the businesses, which are represented by separate nodes labeled `Category`.
 // end::model-explanation[]
 
 Graph model always depends on the application we have in mind for it.
