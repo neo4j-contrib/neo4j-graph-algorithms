@@ -19,8 +19,13 @@
 package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.ProcedureConstants;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
@@ -73,9 +78,14 @@ public class TriangleProc {
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withoutRelationshipWeights()
                 .withoutNodeWeights()
+                .withSort(true)
+                .asUndirected(true)
                 .init(log, label, relationship, configuration)
                 .withDirection(TriangleCountBase.D)
-                .load(configuration.getGraphImpl());
+                .load(configuration.getGraphImpl(
+                        HeavyGraph.TYPE,
+                        HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
+                ));
 
         final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleStream"))
@@ -105,7 +115,10 @@ public class TriangleProc {
                 .asUndirected(true)
                 .init(log, label, relationship, configuration)
                 .withDirection(TriangleCountBase.D)
-                .load(configuration.getGraphImpl());
+                .load(configuration.getGraphImpl(
+                        HeavyGraph.TYPE,
+                        HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
+                ));
 
         return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
@@ -136,7 +149,10 @@ public class TriangleProc {
                 .asUndirected(true)
                 .init(log, label, relationship, configuration)
                 .withDirection(TriangleCountBase.D)
-                .load(configuration.getGraphImpl());
+                .load(configuration.getGraphImpl(
+                        HeavyGraph.TYPE,
+                        HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
+                ));
 
         return new TriangleCountForkJoin(
                 graph,
@@ -177,7 +193,10 @@ public class TriangleProc {
                     .asUndirected(true)
                     .init(log, label, relationship, configuration)
                     .withDirection(TriangleCountBase.D)
-                    .load(configuration.getGraphImpl());
+                    .load(configuration.getGraphImpl(
+                            HeavyGraph.TYPE,
+                            HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
+                    ));
         }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
@@ -294,7 +313,10 @@ public class TriangleProc {
                     .asUndirected(true)
                     .init(log, label, relationship, configuration)
                     .withDirection(TriangleCountBase.D)
-                    .load(configuration.getGraphImpl());
+                    .load(configuration.getGraphImpl(
+                            HeavyGraph.TYPE,
+                            HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
+                    ));
         }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);

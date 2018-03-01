@@ -22,7 +22,6 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -112,10 +111,7 @@ public class HeavyGraph implements Graph, NodeWeights, NodeProperties, Relations
 
     @Override
     public double weightOf(final int sourceNodeId, final int targetNodeId) {
-        long relId = container.isBoth
-                ? RawValues.combineSorted(sourceNodeId, targetNodeId)
-                : RawValues.combineIntInt(sourceNodeId, targetNodeId);
-        return relationshipWeights.get(relId);
+        return relationshipWeights.get(sourceNodeId, targetNodeId);
     }
 
     @Override

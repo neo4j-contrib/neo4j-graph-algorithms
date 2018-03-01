@@ -29,14 +29,10 @@ import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.StatementTask;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.impl.api.RelationshipVisitor;
-import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.function.Supplier;
@@ -44,22 +40,19 @@ import java.util.function.Supplier;
 
 final class RelationshipImporter extends StatementTask<Void, EntityNotFoundException> {
 
-    private final boolean sort;
-    private IdMap idMap;
     private final PrimitiveIntIterable nodes;
+    private final GraphSetup setup;
+    private final ImportProgress progress;
+    private final int[] relationId;
+
+    private final int nodeSize;
+    private final int nodeOffset;
+
+    private IdMap idMap;
+    private AdjacencyMatrix matrix;
     private WeightMapping relWeights;
     private WeightMapping nodeWeights;
     private WeightMapping nodeProps;
-    private final ImportProgress progress;
-    private final int[] relationId;
-    private final boolean loadIncoming;
-    private final boolean loadOutgoing;
-
-    private AdjacencyMatrix matrix;
-    private final int nodeOffset;
-    private int currentNodeCount;
-
-    private int sourceGraphId;
 
     RelationshipImporter(
             GraphDatabaseAPI api,
@@ -69,26 +62,23 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             int batchSize,
             int nodeOffset,
             IdMap idMap,
+            AdjacencyMatrix matrix,
             PrimitiveIntIterable nodes,
             Supplier<WeightMapping> relWeights,
             Supplier<WeightMapping> nodeWeights,
-            Supplier<WeightMapping> nodeProps,
-            boolean sort) {
+            Supplier<WeightMapping> nodeProps) {
         super(api);
-        int nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
-        this.progress = progress;
+        this.matrix = matrix;
+        this.nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
         this.nodeOffset = nodeOffset;
+        this.progress = progress;
         this.idMap = idMap;
         this.nodes = nodes;
+        this.setup = setup;
         this.relWeights = relWeights.get();
         this.nodeWeights = nodeWeights.get();
         this.nodeProps = nodeProps.get();
         this.relationId = dimensions.relationId();
-        loadIncoming = setup.loadIncoming;
-        loadOutgoing = setup.loadOutgoing;
-        this.matrix = new AdjacencyMatrix(nodeSize, loadIncoming, loadOutgoing, setup.sort);
-        this.currentNodeCount = 0;
-        this.sort = sort;
     }
 
     @Override
@@ -96,243 +86,98 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         return String.format(
                 "[Heavy] RelationshipImport (%d..%d)",
                 nodeOffset,
-                nodeOffset + matrix.capacity());
+                nodeOffset + nodeSize);
     }
 
     @Override
     public Void apply(final Statement statement) throws EntityNotFoundException {
         final ReadOperations readOp = statement.readOperations();
-        final boolean loadIncoming = this.loadIncoming;
-        final boolean loadOutgoing = this.loadOutgoing;
-
-        RelationshipVisitor<EntityNotFoundException> visitOutgoing = null;
-        RelationshipVisitor<EntityNotFoundException> visitIncoming = null;
-        boolean shouldLoadWeights = relWeights instanceof WeightMap;
-        boolean isBoth = loadIncoming && loadOutgoing;
-        if (loadOutgoing) {
-            if (shouldLoadWeights) {
-                final WeightMap weights = (WeightMap) this.relWeights;
-                visitOutgoing = ((relationshipId, typeId, startNodeId, endNodeId) ->
-                        visitOutgoingWithWeight(
-                                readOp,
-                                isBoth,
-                                sourceGraphId,
-                                weights,
-                                relationshipId,
-                                endNodeId));
-            } else {
-                visitOutgoing = ((relationshipId, typeId, startNodeId, endNodeId) -> visitOutgoing(endNodeId));
-            }
-        }
-        if (loadIncoming) {
-            if (shouldLoadWeights) {
-                final WeightMap weights = (WeightMap) this.relWeights;
-                visitIncoming = ((relationshipId, typeId, startNodeId, endNodeId) ->
-                        visitIncomingWithWeight(
-                                readOp,
-                                isBoth,
-                                sourceGraphId,
-                                weights,
-                                relationshipId,
-                                startNodeId));
-            } else {
-                visitIncoming = ((relationshipId, typeId, startNodeId, endNodeId) -> visitIncoming(startNodeId));
-            }
-        }
-
+        final RelationshipLoader loader = prepare(readOp);
         PrimitiveIntIterator iterator = nodes.iterator();
-        int nodeOffset = this.nodeOffset;
-        int nodeCount = 0;
         while (iterator.hasNext()) {
             final int nodeId = iterator.next();
             final long sourceNodeId = idMap.toOriginalNodeId(nodeId);
-            this.sourceGraphId = nodeId - nodeOffset;
-            nodeCount++;
-            readNode(
-                    readOp,
-                    sourceNodeId,
-                    sourceGraphId,
-                    matrix,
-                    loadIncoming,
-                    loadOutgoing,
-                    visitOutgoing,
-                    visitIncoming,
-                    nodeWeights,
-                    nodeProps,
-                    relationId
-            );
+            loader.load(sourceNodeId, nodeId);
             progress.relProgress();
         }
-        this.currentNodeCount = nodeCount;
         return null;
     }
 
-    private void readNode(
-            ReadOperations readOp,
-            long sourceNodeId,
-            int localNodeId,
-            AdjacencyMatrix matrix,
-            boolean loadIncoming,
-            boolean loadOutgoing,
-            RelationshipVisitor<EntityNotFoundException> visitOutgoing,
-            RelationshipVisitor<EntityNotFoundException> visitIncoming,
-            WeightMapping nodeWeights,
-            WeightMapping nodeProps,
-            int[] relationType) throws EntityNotFoundException {
+    private RelationshipLoader prepare(final ReadOperations readOp) {
+        final RelationshipLoader loader;
+        if (setup.loadAsUndirected) {
+            loader = prepareUndirected(readOp);
+        } else {
+            loader = prepareDirected(readOp);
+        }
+
+        if (this.nodeWeights instanceof WeightMap) {
+            WeightMap nodeWeights = (WeightMap) this.nodeWeights;
+
+            if (this.nodeProps instanceof WeightMap) {
+                WeightMap nodeProps = (WeightMap) this.nodeProps;
+                return new ReadWithNodeWeightsAndProps(loader, nodeWeights, nodeProps);
+            }
+            return new ReadWithNodeWeights(loader, nodeWeights);
+        }
+        if (this.nodeProps instanceof WeightMap) {
+            WeightMap nodeProps = (WeightMap) this.nodeProps;
+            return new ReadWithNodeWeights(loader, nodeProps);
+        }
+
+        return loader;
+    }
+
+    private RelationshipLoader prepareDirected(final ReadOperations readOp) {
+        final boolean loadIncoming = setup.loadIncoming;
+        final boolean loadOutgoing = setup.loadOutgoing;
+        final boolean sort = setup.sort;
+        final boolean shouldLoadWeights = relWeights instanceof WeightMap;
+
+        RelationshipLoader loader = null;
         if (loadOutgoing) {
-            readOutgoing(readOp, visitOutgoing, sourceNodeId, localNodeId, matrix, relationType);
+            final VisitRelationship visitor;
+            if (shouldLoadWeights) {
+                visitor = new VisitOutgoingWithWeight(readOp, idMap, sort, (WeightMap) this.relWeights);
+            } else {
+                visitor = new VisitOutgoingNoWeight(idMap, sort);
+            }
+            loader = new ReadOutgoing(readOp, matrix, relationId, visitor);
         }
         if (loadIncoming) {
-            readIncoming(readOp, visitIncoming, sourceNodeId, localNodeId, matrix, relationType);
-        }
-        if (nodeWeights instanceof WeightMap) {
-            final WeightMap weights = (WeightMap) nodeWeights;
-            readNodeWeight(readOp, sourceNodeId, localNodeId, weights, weights.propertyId());
-        }
-        if (nodeProps instanceof WeightMap) {
-            final WeightMap weights = (WeightMap) nodeProps;
-            readNodeWeight(readOp, sourceNodeId, localNodeId, weights, weights.propertyId());
-        }
-    }
-
-    private void readOutgoing(
-            ReadOperations readOp,
-            RelationshipVisitor<EntityNotFoundException> visit,
-            long sourceNodeId,
-            int localNodeId,
-            AdjacencyMatrix matrix,
-            int[] relationType) throws EntityNotFoundException {
-        final int outDegree;
-        final RelationshipIterator rels;
-        if (relationType == null) {
-            outDegree = readOp.nodeGetDegree(sourceNodeId, Direction.OUTGOING);
-            rels = readOp.nodeGetRelationships(sourceNodeId, Direction.OUTGOING);
-        } else {
-            outDegree = readOp.nodeGetDegree(sourceNodeId, Direction.OUTGOING, relationType[0]);
-            rels = readOp.nodeGetRelationships(sourceNodeId, Direction.OUTGOING, relationType);
-        }
-
-        matrix.armOut(localNodeId, outDegree);
-        while (rels.hasNext()) {
-            final long relId = rels.next();
-            rels.relationshipVisit(relId, visit);
-        }
-        if (sort) {
-            matrix.sortOutgoing(localNodeId);
-        }
-    }
-
-    private void readIncoming(
-            ReadOperations readOp,
-            RelationshipVisitor<EntityNotFoundException> visit,
-            long sourceNodeId,
-            int localNodeId,
-            AdjacencyMatrix matrix,
-            int[] relationType) throws EntityNotFoundException {
-        final int outDegree;
-        final RelationshipIterator rels;
-        if (relationType == null) {
-            outDegree = readOp.nodeGetDegree(sourceNodeId, Direction.INCOMING);
-            rels = readOp.nodeGetRelationships(sourceNodeId, Direction.INCOMING);
-        } else {
-            outDegree = readOp.nodeGetDegree(sourceNodeId, Direction.INCOMING, relationType[0]);
-            rels = readOp.nodeGetRelationships(sourceNodeId, Direction.INCOMING, relationType);
-        }
-
-        matrix.armIn(localNodeId, outDegree);
-        while (rels.hasNext()) {
-            final long relId = rels.next();
-            rels.relationshipVisit(relId, visit);
-        }
-        if (sort) {
-            matrix.sortIncoming(localNodeId);
-        }
-    }
-
-    private void readNodeWeight(
-            ReadOperations readOp,
-            long sourceNodeId,
-            int sourceGraphId,
-            WeightMap weights,
-            int propertyId)  {
-        try {
-            Object value = readOp.nodeGetProperty(sourceNodeId, propertyId);
-            if (value != null) {
-                weights.set(sourceGraphId, value);
+            final VisitRelationship visitor;
+            if (shouldLoadWeights) {
+                visitor = new VisitIncomingWithWeight(readOp, idMap, sort, (WeightMap) this.relWeights);
+            } else {
+                visitor = new VisitIncomingNoWeight(idMap, sort);
             }
-        } catch (EntityNotFoundException ignored) {
+            if (loader != null) {
+                ReadOutgoing readOutgoing = (ReadOutgoing) loader;
+                loader = new ReadBoth(readOutgoing, visitor);
+            } else {
+                loader = new ReadIncoming(readOp, matrix, relationId, visitor);
+            }
         }
+        if (loader == null) {
+            loader = new ReadNothing(readOp, matrix, relationId);
+        }
+        return loader;
     }
 
-    private int visitOutgoing(long endNodeId) {
-        final int targetGraphId = idMap.get(endNodeId);
-        if (targetGraphId != -1) {
-            matrix.addOutgoing(sourceGraphId, targetGraphId);
+    private RelationshipLoader prepareUndirected(final ReadOperations readOp) {
+        final VisitRelationship visitorIn;
+        final VisitRelationship visitorOut;
+        if (relWeights instanceof WeightMap) {
+            visitorIn = new VisitIncomingNoWeight(idMap, true);
+            visitorOut = new VisitUndirectedOutgoingWithWeight(readOp, idMap, true, (WeightMap) this.relWeights);
+        } else {
+            visitorIn = new VisitIncomingNoWeight(idMap, true);
+            visitorOut = new VisitOutgoingNoWeight(idMap, true);
         }
-        return targetGraphId;
+        return new ReadUndirected(readOp, matrix, relationId, visitorOut, visitorIn);
     }
 
-    private int visitOutgoingWithWeight(
-            ReadOperations readOp,
-            boolean isBoth,
-            int sourceGraphId,
-            WeightMap weights,
-            long relationshipId,
-            long endNodeId) throws EntityNotFoundException {
-        final int targetGraphId = visitOutgoing(endNodeId);
-        if (targetGraphId != -1) {
-            visitWeight(readOp, isBoth, sourceGraphId, targetGraphId, weights, relationshipId);
-        }
-        return targetGraphId;
-    }
-
-    private int visitIncoming(long startNodeId) {
-        final int startGraphId = idMap.get(startNodeId);
-        if (startGraphId != -1) {
-            matrix.addIncoming(startGraphId, sourceGraphId);
-        }
-        return startGraphId;
-    }
-
-    private int visitIncomingWithWeight(
-            ReadOperations readOp,
-            boolean isBoth,
-            int sourceGraphId,
-            WeightMap weights,
-            long relationshipId,
-            long startNodeId) throws EntityNotFoundException {
-        final int targetGraphId = visitIncoming(startNodeId);
-        if (targetGraphId != -1) {
-            visitWeight(readOp, isBoth, sourceGraphId, targetGraphId, weights, relationshipId);
-        }
-        return targetGraphId;
-    }
-
-    private void visitWeight(
-            ReadOperations readOp,
-            boolean isBoth,
-            int sourceGraphId,
-            int targetGraphId,
-            WeightMap weights,
-            long relationshipId) throws EntityNotFoundException {
-        Object value = readOp.relationshipGetProperty(relationshipId, weights.propertyId());
-        if (value == null) {
-            return;
-        }
-        double defaultValue = weights.defaultValue();
-        double doubleValue = RawValues.extractValue(value, defaultValue);
-        if (Double.compare(doubleValue, defaultValue) == 0) {
-            return;
-        }
-
-        long relId = isBoth
-                ? RawValues.combineSorted(sourceGraphId, targetGraphId)
-                : RawValues.combineIntInt(sourceGraphId, targetGraphId);
-
-        weights.put(relId, doubleValue);
-    }
-
-    Graph toGraph(final IdMap idMap) {
+    Graph toGraph(final IdMap idMap, final AdjacencyMatrix matrix) {
         return new HeavyGraph(
                 idMap,
                 matrix,
@@ -342,14 +187,12 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
     }
 
     void writeInto(
-            AdjacencyMatrix matrix,
             WeightMapping relWeights,
             WeightMapping nodeWeights,
             WeightMapping nodeProps) {
-        matrix.addMatrix(this.matrix, nodeOffset, currentNodeCount);
-        combineMaps(relWeights, this.relWeights, nodeOffset);
-        combineMaps(nodeWeights, this.nodeWeights, nodeOffset);
-        combineMaps(nodeProps, this.nodeProps, nodeOffset);
+        combineMaps(relWeights, this.relWeights);
+        combineMaps(nodeWeights, this.nodeWeights);
+        combineMaps(nodeProps, this.nodeProps);
     }
 
     void release() {
@@ -360,7 +203,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         this.nodeProps = null;
     }
 
-    private void combineMaps(WeightMapping global, WeightMapping local, int offset) {
+    private void combineMaps(WeightMapping global, WeightMapping local) {
         if (global instanceof WeightMap && local instanceof WeightMap) {
             WeightMap localWeights = (WeightMap) local;
             final LongDoubleMap localMap = localWeights.weights();
@@ -368,7 +211,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
             final LongDoubleMap globalMap = globalWeights.weights();
 
             for (LongDoubleCursor cursor : localMap) {
-                globalMap.put(cursor.key + offset, cursor.value);
+                globalMap.put(cursor.key, cursor.value);
             }
         }
     }

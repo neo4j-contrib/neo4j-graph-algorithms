@@ -53,7 +53,6 @@ public class GraphView implements Graph {
     private final ThreadToStatementContextBridge contextBridge;
     private final GraphDatabaseAPI db;
 
-    private final Direction direction;
     private final double propertyDefaultWeight;
     private int relationTypeId;
     private int nodeCount;
@@ -61,17 +60,14 @@ public class GraphView implements Graph {
     private int labelId;
     private final IdMapping idMapping;
 
-    public GraphView(
+    GraphView(
             GraphDatabaseAPI db,
-            Direction direction,
             String label,
             String relation,
             String propertyName,
             double propertyDefaultWeight) {
         this.db = db;
-        contextBridge = db.getDependencyResolver()
-                .resolveDependency(ThreadToStatementContextBridge.class);
-        this.direction = direction;
+        contextBridge = db.getDependencyResolver().resolveDependency(ThreadToStatementContextBridge.class);
         this.propertyDefaultWeight = propertyDefaultWeight;
 
         withinTransaction(read -> {
@@ -139,7 +135,7 @@ public class GraphView implements Graph {
                 };
 
                 if (direction == Direction.BOTH) {
-                    iterate(read, originalNodeId, visitor, Direction.INCOMING, Direction.OUTGOING);
+                    iterate(read, originalNodeId, visitor, Direction.OUTGOING, Direction.INCOMING);
                 } else {
                     iterate(read, originalNodeId, visitor, direction);
                 }
@@ -247,11 +243,7 @@ public class GraphView implements Graph {
 
                     }
                 };
-                if (this.direction == Direction.BOTH) {
-                    iterate(read, sourceId, visitor, Direction.OUTGOING, Direction.INCOMING);
-                } else {
-                    iterate(read, sourceId, visitor, this.direction);
-                }
+                iterate(read, sourceId, visitor, Direction.OUTGOING);
                 return nodeWeight[0];
             });
         } catch (EntityNotFoundException e) {

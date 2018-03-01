@@ -66,7 +66,7 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
                 : new TriangleTask(0, nodeCount);
         triangleCount = pool.invoke(countTask);
         CoefficientTask coefficientTask = new CoefficientTask(
-                graph instanceof HugeGraph ? Direction.OUTGOING : Direction.BOTH,
+                Direction.OUTGOING,
                 0,
                 nodeCount);
         averageClusteringCoefficient = pool.invoke(coefficientTask);

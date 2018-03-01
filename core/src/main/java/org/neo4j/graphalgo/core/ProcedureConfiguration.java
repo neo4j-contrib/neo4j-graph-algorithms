@@ -269,13 +269,14 @@ public class ProcedureConfiguration {
         return Directions.fromString(getDirectionName(defaultDirection.name()));
     }
 
+    public String getGraphName(String defaultValue) {
+        return getString(ProcedureConstants.GRAPH_IMPL_PARAM, defaultValue);
+    }
+
     public Class<? extends GraphFactory> getGraphImpl() {
         return getGraphImpl(ProcedureConstants.DEFAULT_GRAPH_IMPL);
     }
 
-    public String getGraphName(String defaultValue) {
-        return  getString(ProcedureConstants.GRAPH_IMPL_PARAM,defaultValue);
-    }
     /**
      * return the Graph-Implementation Factory class
      *
@@ -309,7 +310,6 @@ public class ProcedureConfiguration {
         return name != null && !name.trim().isEmpty() && !RESERVED.contains(name.trim().toLowerCase());
     }
 
-    @SafeVarargs
     public final Class<? extends GraphFactory> getGraphImpl(
             String defaultImpl,
             String ... alloweds) {

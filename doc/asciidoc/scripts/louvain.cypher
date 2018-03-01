@@ -1,18 +1,19 @@
 // tag::create-sample-graph[]
 
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FRIEND]->(nBridget)
-,(nAlice)-[:FRIEND]->(nCharles)
-,(nMark)-[:FRIEND]->(nDoug)
-,(nBridget)-[:FRIEND]->(nMichael)
-,(nCharles)-[:FRIEND]->(nMark)
-,(nAlice)-[:FRIEND]->(nMichael)
-,(nCharles)-[:FRIEND]->(nDoug);
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:FRIEND]->(nBridget)
+MERGE (nAlice)-[:FRIEND]->(nCharles)
+MERGE (nMark)-[:FRIEND]->(nDoug)
+MERGE (nBridget)-[:FRIEND]->(nMichael)
+MERGE (nCharles)-[:FRIEND]->(nMark)
+MERGE (nAlice)-[:FRIEND]->(nMichael)
+MERGE (nCharles)-[:FRIEND]->(nDoug);
 
 // end::create-sample-graph[]
 
@@ -20,7 +21,11 @@ CREATE (nAlice)-[:FRIEND]->(nBridget)
 
 CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
-RETURN nodeId, community LIMIT 20;
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user, community
+ORDER BY community;
 
 // end::stream-sample-graph[]
 

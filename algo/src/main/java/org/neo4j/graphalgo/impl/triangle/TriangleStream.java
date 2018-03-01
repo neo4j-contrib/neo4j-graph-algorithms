@@ -46,7 +46,7 @@ import java.util.stream.StreamSupport;
  */
 public class TriangleStream extends Algorithm<TriangleStream> {
 
-    public static final Direction D = Direction.BOTH;
+    public static final Direction D = Direction.OUTGOING;
     private Graph graph;
     private ExecutorService executorService;
     private final AtomicInteger queue;
@@ -173,7 +173,7 @@ public class TriangleStream extends Algorithm<TriangleStream> {
             while (!nodes.isEmpty()) {
                 final int node = nodes.pop();
                 graph.forEachRelationship(node, D, (s, t, r) -> {
-                    if (t > s && graph.exists(t, nodeId, Direction.BOTH)) {
+                    if (t > s && graph.exists(t, nodeId, D)) {
                         emit(nodeId, s, t);
                     }
                     return running();

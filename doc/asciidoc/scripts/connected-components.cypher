@@ -1,15 +1,16 @@
 // tag::create-sample-graph[]
 
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
-,(nAlice)-[:FRIEND{weight:4}]->(nCharles)
-,(nMark)-[:FRIEND{weight:1}]->(nDoug)
-,(nMark)-[:FRIEND{weight:2}]->(nMichael);
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:FRIEND {weight:0.5}]->(nBridget)
+MERGE (nAlice)-[:FRIEND {weight:4}]->(nCharles)
+MERGE (nMark)-[:FRIEND {weight:1}]->(nDoug)
+MERGE (nMark)-[:FRIEND {weight:2}]->(nMichael);
 
 // end::create-sample-graph[]
 
@@ -17,7 +18,10 @@ CREATE (nAlice)-[:FRIEND{weight:0.5}]->(nBridget)
 
 CALL algo.unionFind.stream('User', 'FRIEND', {}) 
 YIELD nodeId,setId
-RETURN nodeId,setId LIMIT 20;
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId
 
 // end::unweighted-stream-sample-graph[]
 
@@ -30,14 +34,18 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
 
 // tag::weighted-stream-sample-graph[]
 
-CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
-YIELD nodeId,setId;
+CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
+YIELD nodeId,setId
+
+MATCH (u:User) WHERE id(u) = nodeId
+
+RETURN u.id AS user, setId
 
 // end::weighted-stream-sample-graph[]
 
 // tag::weighted-write-sample-graph[]
 
-CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition",weightProperty:'weight', defaultValue:0.0, threshold:1.0}) 
+CALL algo.unionFind('User', 'FRIEND', {write:true, partitionProperty:"partition",weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
 YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
 
 // end::weighted-write-sample-graph[]
@@ -46,7 +54,8 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
 
 MATCH (u:User)
 RETURN u.partition as partition,count(*) as size_of_partition 
-ORDER by size_of_partition DESC LIMIT 20; 
+ORDER by size_of_partition DESC
+LIMIT 20;
 
 // end::check-results-sample-graph[]
 
@@ -63,7 +72,8 @@ RETURN count(distinct setId) as count_of_components;
 CALL algo.unionFind.stream('User', 'FRIEND', {}) 
 YIELD nodeId,setId
 RETURN setId,count(*) as size_of_component
-ORDER BY size_of_component LIMIT 20;
+ORDER BY size_of_component
+LIMIT 20;
 
 // end::top-20-component-yelp[]
 

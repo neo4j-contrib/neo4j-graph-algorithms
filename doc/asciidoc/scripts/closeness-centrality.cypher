@@ -1,25 +1,32 @@
 // tag::create-sample-graph[]
 
-CREATE (a:Node{id:"A"}),
-       (b:Node{id:"B"}),
-       (c:Node{id:"C"}),
-       (d:Node{id:"D"}),
-       (e:Node{id:"E"})
-CREATE (a)-[:LINK]->(b),
-       (b)-[:LINK]->(a),
-       (b)-[:LINK]->(c),
-       (c)-[:LINK]->(b),
-       (c)-[:LINK]->(d),
-       (d)-[:LINK]->(c),
-       (d)-[:LINK]->(e),
-       (e)-[:LINK]->(d);
+MERGE (a:Node{id:"A"})
+MERGE (b:Node{id:"B"})
+MERGE (c:Node{id:"C"})
+MERGE (d:Node{id:"D"})
+MERGE (e:Node{id:"E"})
+
+MERGE (a)-[:LINK]->(b)
+MERGE (b)-[:LINK]->(a)
+MERGE (b)-[:LINK]->(c)
+MERGE (c)-[:LINK]->(b)
+MERGE (c)-[:LINK]->(d)
+MERGE (d)-[:LINK]->(c)
+MERGE (d)-[:LINK]->(e)
+MERGE (e)-[:LINK]->(d);
 
 // end::create-sample-graph[]
 
 // tag::stream-sample-graph[]
 
-CALL algo.closeness.stream('Node', 'LINKS') YIELD nodeId, centrality
-RETURN nodeId,centrality order by centrality desc limit 20;
+CALL algo.closeness.stream('Node', 'LINK')
+YIELD nodeId, centrality
+
+MATCH (n:Node) WHERE id(n) = nodeId
+
+RETURN n.id AS node, centrality
+ORDER BY centrality DESC
+limit 20;
 
 // end::stream-sample-graph[]
 

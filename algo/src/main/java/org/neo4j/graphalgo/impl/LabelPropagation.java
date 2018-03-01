@@ -51,6 +51,16 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
     private long ranIterations;
     private boolean didConverge;
 
+    public static class StreamResult {
+        public final long nodeId;
+        public final long label;
+
+        public StreamResult(long nodeId, long label) {
+            this.nodeId = nodeId;
+            this.label = label;
+        }
+    }
+
     public LabelPropagation(
             HeavyGraph graph,
             int batchSize,
