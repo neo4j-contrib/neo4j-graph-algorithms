@@ -1,8 +1,8 @@
 
 // tag::influential-hotel-reviewers-intro[]
-Let's find all users who have reviewed more than 5 different hotels.
+We want to find the influential hotel reviewers on Yelp and can start by finding all users who have reviewed more than 5 different hotels.
 We'll then find the social network between those users and work out which users sit at the centre of that network.
-This should reveal the most influential hotel reviewers.
+This should reveal the most influential people.
 
 The following query will execute the page rank algorithm over users that reviewed hotels and add a `hotelPageRank` property to each of those users.
 // end::influential-hotel-reviewers-intro[]
