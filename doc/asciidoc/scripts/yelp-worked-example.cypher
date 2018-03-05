@@ -1,11 +1,13 @@
 
 // tag::hotel-reviewers-pagerank[]
 CALL algo.pageRank(
-    "MATCH (u:User)-[:WROTE]->()-[:REVIEWS]->()-[:IN_CATEGORY]->(:Category {name: 'Hotels'})
+    "MATCH (u:User)-[:WROTE]->()-[:REVIEWS]->()-[:IN_CATEGORY]->
+           (:Category {name: 'Hotels'})
      WITH u, count(*) AS reviews
      WHERE reviews > 5
      RETURN id(u) AS id",
-    "MATCH (u1:User)-[:WROTE]->()-[:REVIEWS]->()-[:IN_CATEGORY]->(:Category {name: 'Hotels'})
+    "MATCH (u1:User)-[:WROTE]->()-[:REVIEWS]->()-[:IN_CATEGORY]->
+           (:Category {name: 'Hotels'})
      MATCH (u1)-[:FRIENDS]->(u2)
      WHERE id(u1) < id(u2)
      RETURN id(u1) AS source, id(u2) AS target",
@@ -20,8 +22,8 @@ WHERE u.hotelPageRank > 0
 WITH u
 ORDER BY u.hotelPageRank DESC
 LIMIT 5
-RETURN u.name AS user,
-       u.hotelPageRank AS pageRank,
+RETURN u.name AS name,
+       apoc.math.round(u.hotelPageRank,2) AS pageRank,
        size((u)-[:WROTE]->()-[:REVIEWS]->()-[:IN_CATEGORY]->
             (:Category {name: "Hotels"})) AS hotelReviews,
        size((u)-[:WROTE]->()) AS totalReviews,
@@ -35,9 +37,11 @@ RETURN u.name AS user,
 
 MATCH (b:Business {name: "Caesars Palace Las Vegas Hotel & Casino"})
       <-[:REVIEWS]-(review)-[:WROTE]-(user)
-RETURN user.name AS user, user.hotelPageRank AS pageRank, review.stars AS stars
+RETURN user.name AS name,
+       apoc.math.round(user.hotelPageRank,2) AS pageRank,
+       review.stars AS stars
 ORDER BY user.hotelPageRank DESC
-LIMIT 10
+LIMIT 5
 
 
 // end::caesars[]
