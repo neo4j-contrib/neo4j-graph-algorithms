@@ -1,0 +1,34 @@
+
+// tag::influential-hotel-reviewers-intro[]
+Let's find all users who have reviewed more than 5 different hotels.
+We'll then find the social network between those users and work out which users sit at the centre of that network.
+This should reveal the most influential hotel reviewers.
+
+The following query will execute the page rank algorithm over users that reviewed hotels and add a `hotelPageRank` property to each of those users.
+// end::influential-hotel-reviewers-intro[]
+
+// tag::top-reviewers-result[]
+.Results
+[opts="header",cols="1,1,1,1,1"]
+|===
+| name | pageRank | hotelReviews | totalReviews | friends
+| Jason | 17.933360000000004 | 7 | 60 | 5159
+| Jamie | 14.586502	| 8	| 41 | 688
+| Jeremy |	11.567820500000002 | 6 | 28 | 6164
+| Lori | 9.9049655 | 6 | 39 | 4518
+| Connie |	7.9822229999999985 | 7 | 51 | 5336
+|===
+// end::top-reviewers-result[]
+
+// tag::caesars-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| name | pageRank | stars
+| Jason    | 17.933360000000004 | 3
+| Amanda   | 7.282366999999998  | 4
+| J        | 6.879636999999999  | 4
+| Michelle | 4.7261875          | 4
+| Pasquale | 4.5782025000000015 | 3
+|===
+// end::caesars-result[]
