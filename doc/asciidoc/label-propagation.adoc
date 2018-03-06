@@ -64,6 +64,12 @@ image::label_propagation.png[]
 include::scripts/label-propagation.cypher[tag=create-sample-graph]
 ----
 
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/label-propagation.cypher[tag=stream-sample-graph]
+----
+
 .Running algorithm and writing back results
 [source,cypher]
 ----
@@ -149,6 +155,36 @@ partitionProperty - simple label propagation kernel
 | weightProperty | string | property name that contains weight
 | partitionProperty | string | property name written back to
 | write | boolean | true | yes | if result was written back as node property
+|===
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.labelPropagation.stream(label:String, relationship:String, {iterations:1,
+weightProperty:'weight', partitionProperty:'partition', concurrency:4, direction:'OUTGOING'}) 
+YIELD nodeId, label
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| label  | string | null | yes | label to load from the graph. If null load all nodes
+| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
+| direction | string | 'OUTGOING' | yes | relationship-direction to use in the algorithm
+| concurrency | int | available CPUs | yes | number of concurrent threads
+| iterations | int | 1 | yes | the maximum number of iterations to run
+| weightProperty | string | 'weight' | yes | property name of node and/or relationship that contain weight. Must be numeric.
+| partitionProperty | string | 'partition' | yes | property name written back the partition of the graph in which the node reside, can be used to define initial set of labels (must be a number)
+| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| label | int | community id
 |===
 
 == Cypher projection
