@@ -16,21 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl.harmonic;
+package org.neo4j.graphalgo.impl.closeness;
 
-import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphalgo.impl.msbfs.HugeBfsConsumer;
-import org.neo4j.graphalgo.impl.msbfs.HugeMultiSourceBFS;
+import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
+import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
-import java.util.stream.LongStream;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -38,69 +37,57 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class HugeHarmonicCentrality extends Algorithm<HugeHarmonicCentrality> implements HarmonicCentralityAlgorithm {
+public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements HarmonicCentralityAlgorithm {
 
-    private HugeGraph graph;
-    private final AllocationTracker allocationTracker;
-    private PagedAtomicDoubleArray inverseFarness;
-    private ExecutorService executorService;
+    private Graph graph;
+    private final AtomicDoubleArray inverseFarness;
     private final int concurrency;
-    private final long nodeCount;
+    private ExecutorService executorService;
+    private final int nodeCount;
 
-    public HugeHarmonicCentrality(HugeGraph graph, AllocationTracker allocationTracker, int concurrency, ExecutorService executorService) {
+    public HarmonicCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
-        this.allocationTracker = allocationTracker;
+        nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
-        nodeCount = graph.nodeCount();
-        inverseFarness = PagedAtomicDoubleArray.newArray(nodeCount, allocationTracker);
+        inverseFarness = new AtomicDoubleArray(nodeCount);
     }
 
-    public HugeHarmonicCentrality compute() {
+    public HarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
-        final HugeBfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            final double len = sourceNodeIds.size();
-            inverseFarness.add(nodeId, len * (1.0 / depth));
+        final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
+            inverseFarness.add(nodeId, sourceNodeIds.size() * (1.0 / depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
-
-        new HugeMultiSourceBFS(
-                graph,
-                graph,
-                Direction.BOTH,
-                consumer,
-                allocationTracker)
+        new MultiSourceBFS(graph, graph, Direction.BOTH, consumer)
                 .run(concurrency, executorService);
-
         return this;
     }
 
     public Stream<Result> resultStream() {
-        return LongStream.range(0, nodeCount)
+        return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        inverseFarness.get(nodeId) / (double)(nodeCount - 1)));
+                        inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
     }
 
     public void export(final String propertyName, final Exporter exporter) {
         exporter.write(
                 propertyName,
                 inverseFarness,
-                (PropertyTranslator.OfDouble<PagedAtomicDoubleArray>)
+                (PropertyTranslator.OfDouble<AtomicDoubleArray>)
                         (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
     }
 
     @Override
-    public HugeHarmonicCentrality me() {
+    public HarmonicCentrality me() {
         return this;
     }
 
     @Override
-    public HugeHarmonicCentrality release() {
+    public HarmonicCentrality release() {
         graph = null;
         executorService = null;
-        inverseFarness.release();
-        inverseFarness = null;
         return this;
     }
 
@@ -110,5 +97,6 @@ public class HugeHarmonicCentrality extends Algorithm<HugeHarmonicCentrality> im
                 .mapToDouble(r -> r.centrality)
                 .toArray();
     }
+
 
 }
