@@ -30,7 +30,7 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
 
     public abstract ME compute();
 
-    public abstract LongToIntFunction farness();
+    public abstract <V> V getCentrality();
 
     public abstract void export(String propertyName, Exporter exporter);
 
@@ -41,12 +41,12 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
                 .toArray();
     }
 
-    static double centrality(int farness, long componentSize, long nodeCount, boolean wassermanFaust) {
-        if (farness == 0) {
+    static double centrality(long farness, long componentSize, long nodeCount, boolean wassermanFaust) {
+        if (farness == 0L) {
             return 0.;
         }
         if (wassermanFaust) {
-            return componentSize / ((double) farness) * (farness) / (nodeCount - 1.);
+            return (componentSize / ((double) farness)) * (farness / (nodeCount - 1.));
         }
         return componentSize / ((double) farness);
     }

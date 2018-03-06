@@ -26,6 +26,7 @@ import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.LongToIntFunction;
@@ -77,16 +78,21 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
     }
 
     @Override
+    public double[] getCentrality() {
+        final double[] cc = new double[nodeCount];
+        Arrays.parallelSetAll(cc, i -> centrality(farness.get(i),
+                component.get(i),
+                nodeCount,
+                wassermanFaust));
+        return cc;
+    }
+
+    @Override
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
                         centrality(farness.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust)));
-    }
-
-    @Override
-    public LongToIntFunction farness() {
-        return (i) -> farness.get((int) i);
     }
 
     @Override
