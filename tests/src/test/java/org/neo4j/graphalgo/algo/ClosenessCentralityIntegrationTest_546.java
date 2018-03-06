@@ -78,7 +78,7 @@ public class ClosenessCentralityIntegrationTest_546 {
                 .load(HugeGraphFactory.class);
 
         System.out.println("547:");
-        new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
+        new MSClosenessCentrality(graph, 2, Pools.DEFAULT, false)
                 .compute()
                 .resultStream()
                 .forEach(this::print);
@@ -145,7 +145,7 @@ public class ClosenessCentralityIntegrationTest_546 {
                 .load(HugeGraphFactory.class);
 
         System.out.println("546:");
-        new MSClosenessCentrality(graph, 2, Pools.DEFAULT)
+        new MSClosenessCentrality(graph, 2, Pools.DEFAULT, false)
                 .compute()
                 .resultStream()
                 .forEach(this::print);

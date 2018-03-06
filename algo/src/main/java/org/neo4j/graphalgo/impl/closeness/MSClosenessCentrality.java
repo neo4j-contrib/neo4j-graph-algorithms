@@ -41,43 +41,47 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
 
     private Graph graph;
     private AtomicIntegerArray farness;
+    private AtomicIntegerArray component;
 
     private final int concurrency;
     private final ExecutorService executorService;
     private final int nodeCount;
 
-    public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
+    private final boolean wassermanFaust;
+
+    public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService, boolean wassermanFaust) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
+        this.wassermanFaust = wassermanFaust;
         farness = new AtomicIntegerArray(nodeCount);
+        component = new AtomicIntegerArray(nodeCount);
     }
 
     @Override
     public MSClosenessCentrality compute() {
 
         final ProgressLogger progressLogger = getProgressLogger();
-
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             int len = sourceNodeIds.size();
             farness.addAndGet(nodeId, len * depth);
+            while (sourceNodeIds.hasNext()) {
+                component.incrementAndGet(sourceNodeIds.next());
+            }
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
-
         new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
                 .run(concurrency, executorService);
-
         return this;
     }
 
     @Override
     public Stream<Result> resultStream() {
-        final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
+                        centrality(farness.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust)));
     }
 
     @Override
@@ -87,12 +91,12 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
 
     @Override
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
                 farness,
                 (PropertyTranslator.OfDouble<AtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get((int) nodeId), k));
+                        (data, nodeId) ->
+                                centrality(farness.get((int) nodeId), component.get((int) nodeId), nodeCount, wassermanFaust));
     }
 
     @Override
@@ -105,6 +109,16 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
         graph = null;
         farness = null;
         return this;
+    }
+
+    private static double centrality(int farness, int componentSize, int nodeCount, boolean wassermanFaust) {
+        if (farness <= 1) {
+            return 0.;
+        }
+        if (wassermanFaust) {
+            return componentSize / (farness - 1.) * (farness - 1.) / (nodeCount - 1.);
+        }
+        return componentSize / (farness - 1.);
     }
 
     /**

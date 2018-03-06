@@ -101,7 +101,7 @@ public class ClosenessCentralityProc {
             algo = new MSClosenessCentrality(
                     graph,
                     concurrency,
-                    Pools.DEFAULT);
+                    Pools.DEFAULT, false);
         }
         return algo;
     }

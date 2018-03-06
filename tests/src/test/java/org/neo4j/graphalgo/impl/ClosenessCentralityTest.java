@@ -117,7 +117,7 @@ public class ClosenessCentralityTest {
     @Test
     public void testGetCentrality() throws Exception {
 
-        final double[] centrality = new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        final double[] centrality = new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
                 .compute()
                 .exportToArray();
 
@@ -129,7 +129,7 @@ public class ClosenessCentralityTest {
 
         final double[] centrality = new double[(int) graph.nodeCount()];
 
-        new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
                 .compute()
                 .resultStream()
                 .forEach(r -> centrality[graph.toMappedNodeId(r.nodeId)] = r.centrality);
