@@ -41,7 +41,13 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
                 .toArray();
     }
 
-    static double centrality(int f, double k) {
-        return f > 0 ? k / (double) f : 0D;
+    static double centrality(int farness, long componentSize, long nodeCount, boolean wassermanFaust) {
+        if (farness == 0) {
+            return 0.;
+        }
+        if (wassermanFaust) {
+            return componentSize / ((double) farness) * (farness) / (nodeCount - 1.);
+        }
+        return componentSize / ((double) farness);
     }
 }

@@ -142,7 +142,7 @@ public class ClosenessCentralityTest {
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
             final double[] centrality =
-                    new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+                    new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
                             .compute()
                             .exportToArray();
 
@@ -157,7 +157,7 @@ public class ClosenessCentralityTest {
 
             final double[] centrality = new double[(int) graph.nodeCount()];
 
-            new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+            new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
                     .compute()
                     .resultStream()
                     .forEach(r -> centrality[graph.toMappedNodeId(r.nodeId)] = r.centrality);

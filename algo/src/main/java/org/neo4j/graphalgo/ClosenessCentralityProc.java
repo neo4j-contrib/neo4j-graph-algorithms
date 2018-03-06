@@ -76,7 +76,10 @@ public class ClosenessCentralityProc {
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
-        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker, graph, configuration.getConcurrency());
+        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker,
+                graph,
+                configuration.getConcurrency(),
+                configuration.get("improved", Boolean.FALSE));
         algo
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
@@ -88,7 +91,8 @@ public class ClosenessCentralityProc {
     private MSBFSCCAlgorithm<?> newAlgo(
             final AllocationTracker tracker,
             final Graph graph,
-            final int concurrency) {
+            final int concurrency,
+            final boolean wassermanFaust) {
         final MSBFSCCAlgorithm<?> algo;
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
@@ -96,12 +100,12 @@ public class ClosenessCentralityProc {
                     hugeGraph,
                     tracker,
                     concurrency,
-                    Pools.DEFAULT);
+                    Pools.DEFAULT, wassermanFaust);
         } else {
             algo = new MSClosenessCentrality(
                     graph,
                     concurrency,
-                    Pools.DEFAULT, false);
+                    Pools.DEFAULT, wassermanFaust);
         }
         return algo;
     }
@@ -134,7 +138,10 @@ public class ClosenessCentralityProc {
 
         builder.withNodeCount(graph.nodeCount());
 
-        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker, graph, concurrency);
+        final MSBFSCCAlgorithm<?> algo = newAlgo(tracker,
+                graph,
+                concurrency,
+                configuration.get("improved", Boolean.FALSE));
         algo
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
                 .withTerminationFlag(terminationFlag);

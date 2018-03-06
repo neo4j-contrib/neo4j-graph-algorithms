@@ -42,23 +42,28 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
 
     private HugeGraph graph;
     private PagedAtomicIntegerArray farness;
+    private PagedAtomicIntegerArray component;
 
     private final int concurrency;
     private final ExecutorService executorService;
     private final long nodeCount;
     private final AllocationTracker tracker;
 
+    private final boolean wassermanFaust;
+
     public HugeMSClosenessCentrality(
             HugeGraph graph,
             AllocationTracker tracker,
             int concurrency,
-            ExecutorService executorService) {
+            ExecutorService executorService, boolean wassermanFaust) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
         this.concurrency = concurrency;
         this.executorService = executorService;
         this.tracker = tracker;
+        this.wassermanFaust = wassermanFaust;
         farness = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
+        component = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
     }
 
     @Override
@@ -69,6 +74,9 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
         final HugeBfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             int len = sourceNodeIds.size();
             farness.add(nodeId, len * depth);
+            while (sourceNodeIds.hasNext()) {
+                component.add(sourceNodeIds.next(), 1);
+            }
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
 
@@ -85,12 +93,11 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
 
     @Override
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
                 farness,
                 (PropertyTranslator.OfDouble<PagedAtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get(nodeId), k));
+                        (data, nodeId) -> centrality(data.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust));
     }
 
     @Override
@@ -100,11 +107,11 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
 
     @Override
     public Stream<MSClosenessCentrality.Result> resultStream() {
-        final double k = nodeCount - 1;
         return LongStream.range(0L, nodeCount)
                 .mapToObj(nodeId -> new MSClosenessCentrality.Result(
                         graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
+                        centrality(farness.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust)
+                ));
     }
 
     @Override

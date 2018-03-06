@@ -111,16 +111,6 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
         return this;
     }
 
-    private static double centrality(int farness, int componentSize, int nodeCount, boolean wassermanFaust) {
-        if (farness <= 1) {
-            return 0.;
-        }
-        if (wassermanFaust) {
-            return componentSize / (farness - 1.) * (farness - 1.) / (nodeCount - 1.);
-        }
-        return componentSize / (farness - 1.);
-    }
-
     /**
      * Result class used for streaming
      */

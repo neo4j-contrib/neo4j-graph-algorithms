@@ -110,7 +110,7 @@ public class ClosenessCentralityIntegrationTest_291 {
         MSBFSCCAlgorithm<?> algo;
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
-            algo = new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, 4, Pools.DEFAULT);
+            algo = new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, 4, Pools.DEFAULT, false);
         } else {
             algo = new MSClosenessCentrality(graph, 4, Pools.DEFAULT, false);
         }
