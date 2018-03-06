@@ -1,0 +1,34 @@
+
+// tag::influential-hotel-reviewers-intro[]
+We want to find the influential hotel reviewers on Yelp and can start by finding all users who have reviewed more than 5 different hotels.
+We'll then find the social network between those users and work out which users sit at the centre of that network.
+This should reveal the most influential people.
+
+The following query will execute the page rank algorithm over users that reviewed hotels and add a `hotelPageRank` property to each of those users.
+// end::influential-hotel-reviewers-intro[]
+
+// tag::top-reviewers-result[]
+.Results
+[opts="header",cols="1,1,1,1,1"]
+|===
+| name | pageRank | hotelReviews | totalReviews | friends
+| Jason | 17.93 | 7 | 60 | 5159
+| Jamie | 14.59	| 8	| 41 | 688
+| Jeremy |	11.57 | 6 | 28 | 6164
+| Lori | 9.9 | 6 | 39 | 4518
+| Connie |	7.98 | 7 | 51 | 5336
+|===
+// end::top-reviewers-result[]
+
+// tag::caesars-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| name | pageRank | stars
+| Jason    | 17.93 | 3
+| Amanda   | 7.28  | 4
+| J        | 6.88  | 4
+| Michelle | 4.73          | 4
+| Pasquale | 4.58 | 3
+|===
+// end::caesars-result[]

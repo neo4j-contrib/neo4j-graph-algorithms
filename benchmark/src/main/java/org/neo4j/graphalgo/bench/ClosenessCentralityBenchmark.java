@@ -50,7 +50,7 @@ public class ClosenessCentralityBenchmark {
 
     public static final RelationshipType RELATIONSHIP_TYPE = RelationshipType.withName("TYPE");
 
-    @Param({"LIGHT", "HEAVY", "HUGE"})
+    @Param({"HEAVY", "HUGE"})
     public GraphImpl graph;
 
     @Param({"30"})

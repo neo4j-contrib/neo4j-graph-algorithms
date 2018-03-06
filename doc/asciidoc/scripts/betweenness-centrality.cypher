@@ -1,24 +1,30 @@
 // tag::create-sample-graph[]
 
-CREATE (nAlice:User {id:'Alice'})
-,(nBridget:User {id:'Bridget'})
-,(nCharles:User {id:'Charles'})
-,(nDoug:User {id:'Doug'})
-,(nMark:User {id:'Mark'})
-,(nMichael:User {id:'Michael'})
-CREATE (nAlice)-[:MANAGE]->(nBridget)
-,(nAlice)-[:MANAGE]->(nCharles)
-,(nAlice)-[:MANAGE]->(nDoug)
-,(nMark)-[:MANAGE]->(nAlice)
-,(nCharles)-[:MANAGE]->(nMichael);
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:MANAGE]->(nBridget)
+MERGE (nAlice)-[:MANAGE]->(nCharles)
+MERGE (nAlice)-[:MANAGE]->(nDoug)
+MERGE (nMark)-[:MANAGE]->(nAlice)
+MERGE (nCharles)-[:MANAGE]->(nMichael);
 
 // end::create-sample-graph[]
 
 // tag::stream-sample-graph[]
 
 CALL algo.betweenness.stream('User','MANAGE',{direction:'out'}) 
-YIELD nodeId, centrality 
-RETURN nodeId,centrality order by centrality desc limit 20;
+YIELD nodeId, centrality
+
+MATCH (user:User) WHERE id(user) = nodeId
+
+RETURN user.id AS user,centrality
+ORDER BY centrality DESC
+LIMIT 20;
 
 // end::stream-sample-graph[]
 

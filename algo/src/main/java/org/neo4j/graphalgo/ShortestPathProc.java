@@ -29,6 +29,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.impl.ShortestPathAStar;
 import org.neo4j.graphalgo.impl.ShortestPathDijkstra;
 import org.neo4j.graphalgo.results.DijkstraResult;
 import org.neo4j.graphdb.Direction;
@@ -157,6 +158,33 @@ public class ShortestPathProc {
 
         return Stream.of(builder.build());
     }
+    
+    @Procedure("algo.shortestPath.astar.stream")
+    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, weightProperty:String" +
+    		"{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
+    		"YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
+    public Stream<ShortestPathAStar.Result> astarStream(
+    			@Name("startNode") Node startNode,
+            @Name("endNode") Node endNode,
+            @Name("propertyName") String propertyName,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    	
+    		ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+    		
+    		final Direction direction = configuration.getDirection(Direction.BOTH);
+    		
+    		final Graph graph = new GraphLoader(api, Pools.DEFAULT)
+    				.init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
+    				.withOptionalRelationshipWeightsFromProperty(propertyName, configuration.getWeightPropertyDefaultValue(1.0))
+    				.withDirection(direction)
+    				.load(configuration.getGraphImpl());
+    		
+    		return new ShortestPathAStar(graph, api)
+    				.withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(AStar)"))
+    				.withTerminationFlag(TerminationFlag.wrap(transaction))
+    				.compute(startNode.getId(), endNode.getId(), direction)
+    				.resultStream();
+        }
 
     private static final class DequeMapping implements IdMapping {
         private final IdMapping mapping;

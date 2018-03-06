@@ -20,9 +20,6 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -32,12 +29,14 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
+import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -51,6 +50,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * (a)-(b)---(e)-(f)
@@ -113,15 +113,12 @@ public class LouvainTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-
-        return Arrays.<Object[]>asList(
-//                new Object[]{HeavyGraphFactory.class, "heavy"},
-//                new Object[]{LightGraphFactory.class, "light"},
-//                new Object[]{GraphViewFactory.class, "view"},
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "heavy"},
                 new Object[]{HugeGraphFactory.class, "huge"}
         );
     }
-    
+
     private void setup(String cypher) {
         DB.execute(cypher);
         graph = new GraphLoader(DB)
@@ -167,7 +164,20 @@ public class LouvainTest {
     }
 
     @Test
+    public void testWeightedParallel() throws Exception {
+        setup(unidirectional);
+        final LouvainAlgorithm louvain = new WeightedLouvain(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY, MAX_ITERATIONS)
+                .compute();
+        assumeTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
+        printCommunities(louvain);
+        System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
+        assertCommunities(louvain);
+    }
+
+    @Test
     public void testUnweightedSequential() throws Exception {
+        assumeTrue(graph instanceof HugeGraph);
         setup(unidirectional);
         final LouvainAlgorithm louvain = new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.EMPTY,1, MAX_ITERATIONS)
                 .compute();
@@ -179,13 +189,12 @@ public class LouvainTest {
         assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
-
-    @Ignore("unpredictable due to lack of monotonicity")
     @Test
     public void testUnweightedParallel() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new WeightedLouvain(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY, MAX_ITERATIONS)
+        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT,Pools.DEFAULT_CONCURRENCY, MAX_ITERATIONS)
                 .compute();
+
         printCommunities(louvain);
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());

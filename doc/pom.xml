@@ -30,17 +30,8 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>1.5.3</version>
+                <version>1.5.6</version>
                 <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>generate-docs</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>process-asciidoc</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <backend>html5</backend>
                     <imagesDir>images</imagesDir>
@@ -50,13 +41,28 @@
                     <attributes>
                         <docs-version>${docsversion}</docs-version>
                         <neo4j-version>${project.version}</neo4j-version>
+                        <source-highlighter>coderay</source-highlighter>
+                        <coderay-css>style</coderay-css>
                     </attributes>
                     <requires>
                         <require>asciidoctor-diagram</require>
                     </requires>
-                    <source-highlighter>coderay</source-highlighter>
-                    <coderay-css>style</coderay-css>
+                    <resources>
+                        <resource>
+                            <directory>${basedir}/images</directory>
+                            <targetPath>${basedir}/target/docs/${docsversion}/images</targetPath>
+                        </resource>
+                    </resources>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-docs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>

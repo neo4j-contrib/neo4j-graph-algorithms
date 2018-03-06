@@ -18,17 +18,59 @@
  */
 package org.neo4j.graphalgo.bench;
 
+import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphdb.Direction;
 
-public enum DirectionParam {
-    IN(Direction.INCOMING),
-    OUT(Direction.OUTGOING),
-    BOTH(Direction.BOTH),
-    NONE(null);
+import java.util.function.Function;
 
-    final Direction direction;
+public enum DirectionParam implements Function<GraphLoader, GraphLoader> {
 
-    DirectionParam(Direction direction) {
-        this.direction = direction;
+    IN {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.INCOMING);
+        }
+    },
+    IN_SORT {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.INCOMING).withSort(true);
+        }
+    },
+    OUT {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.OUTGOING);
+        }
+    },
+    OUT_SORT {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.OUTGOING).withSort(true);
+        }
+    },
+    BOTH {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.BOTH);
+        }
+    },
+    BOTH_SORT {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(Direction.BOTH).withSort(true);
+        }
+    },
+    UNDIRECTED {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.asUndirected(true).withDirection(Direction.BOTH).withSort(true);
+        }
+    },
+    NONE {
+        @Override
+        public GraphLoader apply(final GraphLoader graphLoader) {
+            return graphLoader.withDirection(null);
+        }
     }
 }
