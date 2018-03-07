@@ -49,7 +49,6 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
      * be loaded as undirected.
      */
     private static final Direction D = Direction.OUTGOING;
-    private static final int SHUFFLE_BUFFER_SIZE = 256;
     private static final int NONE = -1;
     private static final double MINIMUM_MODULARITY = Double.NEGATIVE_INFINITY; // -1.0;
 
@@ -74,7 +73,7 @@ public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeIterator = new ShuffledNodeIterator(graph, SHUFFLE_BUFFER_SIZE);
+        this.nodeIterator = new ShuffledNodeIterator(nodeCount);
         ki = new double[nodeCount];
         communities = new int[nodeCount];
         // (1x double + 1x int) * N

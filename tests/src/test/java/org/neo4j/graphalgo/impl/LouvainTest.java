@@ -112,12 +112,10 @@ public class LouvainTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-//        return Arrays.asList(
-//                new Object[]{HeavyGraphFactory.class, "heavy"},
-//                new Object[]{HugeGraphFactory.class, "huge"}
-//        );
-
-        return Collections.singletonList(new Object[]{HugeGraphFactory.class, "huge"});
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "heavy"},
+                new Object[]{HugeGraphFactory.class, "huge"}
+        );
     }
 
     private void setup(String cypher) {
@@ -165,10 +163,10 @@ public class LouvainTest {
     }
 
     @Test
-    public void testWeightedSequentialLouvain() throws Exception {
+    public void testWeightedLouvain() throws Exception {
         setup(unidirectional);
         final LouvainAlgorithm louvain =
-                new Louvain(graph, 100, Pools.DEFAULT, 6, AllocationTracker.EMPTY)
+                new Louvain(graph, 100, Pools.DEFAULT, 3, AllocationTracker.EMPTY)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute();
 
