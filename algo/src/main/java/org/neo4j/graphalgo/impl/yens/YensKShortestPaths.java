@@ -64,31 +64,17 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 .ifPresent(paths::add);
 
         for (int k = 1; k < maxPaths && paths.size() >= k; k++) {
-            System.out.println("k = " + k);
             final WeightedPath basePath = paths.get(k - 1);
-
             if (basePath == null) {
                 return;
             }
-
-            System.out.println("basePath = " + basePath);
-
             for (int i = 0; i < basePath.size() - 1; i++) {
                 final int spurNode = basePath.node(i);
-
-                System.out.println("spurNode = " + spurNode);
-
                 final WeightedPath rootPath = basePath.pathTo(i);
-                System.out.println("rootPath = " + rootPath);
-
-
                 for (Iterator<WeightedPath> iterator = paths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    System.out.println(" comparing to p = " + p + " to index " + i);
                     if (p.equalsTo(rootPath, i)) {
-                        final long edge = p.edge(i);
-                        System.out.println(" disabling Edge " + RawValues.getHead(edge) + "-" + RawValues.getTail(edge));
-                        edgeBlackList.add(edge);
+                        edgeBlackList.add(p.edge(i));
                     }
                 }
                 rootPath.forEachDo(rootPathNode -> {
@@ -98,19 +84,11 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 });
                 final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal);
                 if (!spurPathOpt.isPresent()) {
-                    System.out.println(" inner dijkstra did not found a new path");
                     break;
                 }
-
                 final WeightedPath spurPath = spurPathOpt.get();
-                System.out.println("spurPath = " + spurPath);
-
                 final WeightedPath newPath = WeightedPath.concat(rootPath, spurPath);
-
-                System.out.println("newPath: " + newPath.toString());
-
                 priorityQueue.add(newPath);
-
                 nodeBlackList.clear();
                 edgeBlackList.clear();
             }

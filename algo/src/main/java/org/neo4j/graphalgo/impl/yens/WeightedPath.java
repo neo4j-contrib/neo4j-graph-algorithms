@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl.yens;
 
 import org.apache.lucene.util.ArrayUtil;
+import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.RawValues;
 
@@ -56,6 +57,14 @@ public class WeightedPath {
         for (int i = 0; i < offset; i++) {
             consumer.accept(nodes[i]);
         }
+    }
+
+    public double getCost(RelationshipWeights weights) {
+        final double[] sum = {0.};
+        forEachEdge((a, b) -> {
+            sum[0] += weights.weightOf(a, b);
+        });
+        return sum[0];
     }
 
     public WeightedPath pathTo(int end) {
