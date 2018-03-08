@@ -97,7 +97,7 @@ public class YensDebugTest {
         final YensKShortestPaths yens = new YensKShortestPaths(graph).compute(
                 getNode("a").getId(),
                 getNode("g").getId(),
-                Direction.OUTGOING                7,
+                Direction.OUTGOING,
                 5);
 
         final List<WeightedPath> paths = yens.getPaths();
