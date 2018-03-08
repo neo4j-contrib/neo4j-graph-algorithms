@@ -106,7 +106,7 @@ public class YensTest {
                 getNode("a").getId(),
                 getNode("f").getId(),
                 Direction.BOTH,
-                7);
+                5);
 
         final List<WeightedPath> paths = yens.getPaths();
 
@@ -120,7 +120,7 @@ public class YensTest {
 
         verify(mock, times(2)).accept(eq(3.0, DELTA));
         verify(mock, times(1)).accept(eq(4.0, DELTA));
-        verify(mock, times(4)).accept(eq(5.0, DELTA));
+        verify(mock, times(2)).accept(eq(5.0, DELTA));
     }
 
     private static Node getNode(String name) {

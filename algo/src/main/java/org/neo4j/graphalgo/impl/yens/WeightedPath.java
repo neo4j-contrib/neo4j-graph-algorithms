@@ -92,7 +92,7 @@ public class WeightedPath {
             throw new ArrayIndexOutOfBoundsException();
         }
         final WeightedPath path = new WeightedPath();
-        System.arraycopy(nodes, 0, path.nodes, 0, end);
+        System.arraycopy(nodes, 0, path.nodes, 0, end + 1);
         path.offset = end;
         return path;
     }

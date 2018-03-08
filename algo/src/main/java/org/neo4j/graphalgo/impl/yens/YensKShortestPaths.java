@@ -19,10 +19,7 @@
 package org.neo4j.graphalgo.impl.yens;
 
 import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.procedures.IntProcedure;
-import com.carrotsearch.hppc.procedures.LongProcedure;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.impl.Algorithm;
@@ -40,20 +37,20 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     private Dijkstra dijkstra;
 
     private Graph graph;
-    private List<WeightedPath> paths;
-    private PriorityQueue<WeightedPath> priorityQueue;
+    private List<WeightedPath> A;
+    private PriorityQueue<WeightedPath> B;
     private ProgressLogger progressLogger;
 
     public YensKShortestPaths(Graph graph) {
         this.graph = graph;
         progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
-        paths = new ArrayList<>();
-        priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
+        A = new ArrayList<>();
+        B = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
     }
 
     public List<WeightedPath> getPaths() {
-        return paths;
+        return A;
     }
 
     /**
@@ -70,7 +67,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         return this;
     }
 
-    private void yens(long startNode, long goalNode, Direction direction, int maxPaths) {
+    private void yens(long startNode, long goalNode, Direction direction, int K) {
         final IntScatterSet nodeBlackList = new IntScatterSet();
         final LongScatterSet edgeBlackList = new LongScatterSet();
         final int goal = graph.toMappedNodeId(goalNode);
@@ -80,17 +77,18 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                         !nodeBlackList.contains(t) &&
                         !edgeBlackList.contains(RawValues.combineIntInt(s, t)))
                 .compute(graph.toMappedNodeId(startNode), goal)
-                .ifPresent(paths::add);
+                .ifPresent(A::add);
 
-        for (int k = 1; k < maxPaths && paths.size() >= k; k++) {
-            final WeightedPath basePath = paths.get(k - 1);
-            if (basePath == null) {
-                return;
-            }
+        for (int k = 1; k < K; k++) { // && paths.size() >= k; k++) {
+            final WeightedPath basePath = A.get(k - 1);
+            System.out.println("k = " + k);
+            System.out.println("basePath = " + basePath);
+
             for (int i = 0; i < basePath.size() - 1; i++) {
                 final int spurNode = basePath.node(i);
                 final WeightedPath rootPath = basePath.pathTo(i);
-                for (Iterator<WeightedPath> iterator = paths.iterator(); iterator.hasNext(); ) {
+                System.out.println("  rootPath = " + rootPath);
+                for (Iterator<WeightedPath> iterator = A.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
                     if (p.equalsTo(rootPath, i)) {
                         edgeBlackList.add(p.edge(i));
@@ -107,14 +105,16 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 }
                 final WeightedPath spurPath = spurPathOpt.get();
                 final WeightedPath newPath = WeightedPath.concat(rootPath, spurPath);
-                priorityQueue.add(newPath);
+                B.add(newPath);
                 nodeBlackList.clear();
                 edgeBlackList.clear();
             }
-            if (priorityQueue.isEmpty()) {
-                return;
+            if (B.isEmpty()) {
+                break;
             }
-            paths.add(priorityQueue.remove());
+            final WeightedPath remove = B.remove();
+            System.out.println("remove = " + remove);
+            A.add(remove);
         }
     }
 
@@ -127,8 +127,8 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     public YensKShortestPaths release() {
         graph = null;
         dijkstra = null;
-        paths = null;
-        priorityQueue = null;
+        A = null;
+        B = null;
         return this;
     }
 
