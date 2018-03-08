@@ -75,6 +75,7 @@ public class YensWikiTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
+                .withDirection(Direction.BOTH)
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .load(HeavyGraphFactory.class);
 
@@ -95,13 +96,13 @@ public class YensWikiTest {
         final YensKShortestPaths yens = new YensKShortestPaths(graph).compute(
                 getNode("c").getId(),
                 getNode("h").getId(),
-                Direction.BOTH,
+                Direction.OUTGOING,
                 3);
 
         final List<WeightedPath> paths = yens.getPaths();
-
         for (int i = 0; i < paths.size(); i++) {
             final WeightedPath weightedPath = paths.get(i);
+            System.out.println(weightedPath + " = " + weightedPath.getCost(graph));
             assertArrayEquals(EXPECTED[i], weightedPath.toArray());
         }
 
