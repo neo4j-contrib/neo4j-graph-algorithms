@@ -4,6 +4,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -40,10 +41,11 @@ import static org.mockito.Mockito.verify;
 public class YensTest {
 
     public static final double DELTA = 0.001;
+
     @ClassRule
     public static ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
 
-    private static HeavyGraph graph;
+    private static Graph graph;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {

@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.impl.yens;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.carrotsearch.hppc.procedures.LongProcedure;
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
@@ -12,7 +13,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.*;
 
 /**
- * Yens Algorithm for computing K shortest Paths
+ * Yens Algorithm for computing k-shortest-paths
  *
  * @author mknobloch
  */
@@ -20,12 +21,12 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
 
     private Dijkstra dijkstra;
 
-    private HeavyGraph graph;
+    private Graph graph;
     private List<WeightedPath> paths;
     private PriorityQueue<WeightedPath> priorityQueue;
     private ProgressLogger progressLogger;
 
-    public YensKShortestPaths(HeavyGraph graph) {
+    public YensKShortestPaths(Graph graph) {
         this.graph = graph;
         progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
