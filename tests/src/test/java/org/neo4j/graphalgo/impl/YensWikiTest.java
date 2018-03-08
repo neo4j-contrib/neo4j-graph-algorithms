@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
@@ -14,6 +15,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +38,9 @@ public class YensWikiTest {
         new int[]{0, 2, 3, 4, 5},
     };
 
-    private static GraphDatabaseAPI db;
+    @ClassRule
+    public static ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
+
     private static HeavyGraph graph;
 
     @BeforeClass
@@ -61,15 +65,7 @@ public class YensWikiTest {
                         " (f)-[:TYPE {cost:1.0}]->(h),\n" +
                         " (g)-[:TYPE {cost:2.0}]->(h)";
 
-        db = (GraphDatabaseAPI)
-                new TestGraphDatabaseFactory()
-                        .newImpermanentDatabaseBuilder()
-                        .newGraphDatabase();
-
-        try (Transaction tx = db.beginTx()) {
-            db.execute(cypher);
-            tx.success();
-        }
+        db.execute(cypher);
 
         graph = (HeavyGraph) new GraphLoader(db)
                 .withAnyRelationshipType()
