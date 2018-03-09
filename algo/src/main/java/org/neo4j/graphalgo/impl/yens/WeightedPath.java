@@ -47,7 +47,7 @@ public class WeightedPath {
     }
 
     public void append(int nodeId) {
-        nodes = ArrayUtil.grow(nodes, offset + 1);
+        nodes = ArrayUtil.grow(nodes, offset + offset / 3);
         nodes[offset++] = nodeId;
     }
 
