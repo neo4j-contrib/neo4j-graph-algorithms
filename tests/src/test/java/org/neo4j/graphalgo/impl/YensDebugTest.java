@@ -87,7 +87,6 @@ public class YensDebugTest {
                 .withoutNodeProperties()
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .withDirection(Direction.BOTH)
-                .asUndirected(true)
                 .load(HeavyGraphFactory.class);
     }
 
@@ -97,7 +96,7 @@ public class YensDebugTest {
         final YensKShortestPaths yens = new YensKShortestPaths(graph).compute(
                 getNode("a").getId(),
                 getNode("g").getId(),
-                Direction.OUTGOING,
+                Direction.BOTH,
                 5);
 
         final List<WeightedPath> paths = yens.getPaths();

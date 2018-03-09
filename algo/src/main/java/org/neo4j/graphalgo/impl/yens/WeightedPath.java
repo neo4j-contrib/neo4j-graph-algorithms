@@ -43,7 +43,13 @@ public class WeightedPath {
     private int offset = 0;
 
     public WeightedPath() {
-        nodes = new int[10];
+        this(new int[10], 0);
+    }
+
+
+    public WeightedPath(int[] data, int offset) {
+        nodes = data;
+        this.offset = offset;
     }
 
     public void append(int nodeId) {
@@ -91,10 +97,7 @@ public class WeightedPath {
         if (end > size()) {
             throw new ArrayIndexOutOfBoundsException();
         }
-        final WeightedPath path = new WeightedPath();
-        System.arraycopy(nodes, 0, path.nodes, 0, end + 1);
-        path.offset = end;
-        return path;
+        return new WeightedPath(Arrays.copyOf(nodes, end), end);
     }
 
     public long edge(int i) {
@@ -142,11 +145,10 @@ public class WeightedPath {
 
     public static WeightedPath concat(WeightedPath head, WeightedPath tail) {
         final int off = head.size() + tail.size();
-        final WeightedPath path = new WeightedPath();
-        System.arraycopy(head.nodes, 0, path.nodes, 0, head.size());
-        System.arraycopy(tail.nodes, 0, path.nodes, head.size(), tail.size());
-        path.offset = off;
-        return path;
+        final int[] data = new int[off];
+        System.arraycopy(head.nodes, 0, data, 0, head.size());
+        System.arraycopy(tail.nodes, 0, data, head.size(), tail.size());
+        return new WeightedPath(data, off);
     }
 
     public static double getCosts(Graph graph, WeightedPath path) {
