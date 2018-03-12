@@ -31,13 +31,12 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.*;
 import org.neo4j.graphalgo.impl.multistepscc.MultistepSCC;
 import org.neo4j.graphalgo.impl.scc.SCCAlgorithm;
-import org.neo4j.graphalgo.impl.scc.SCCIterativeTarjan;
 import org.neo4j.graphalgo.impl.scc.SCCTarjan;
 import org.neo4j.graphalgo.impl.scc.SCCTunedTarjan;
 import org.neo4j.graphalgo.results.SCCResult;
@@ -271,7 +270,7 @@ public class StronglyConnectedComponentsProc {
     private void write(ProcedureConfiguration configuration, Graph graph, TerminationFlag terminationFlag, SCCAlgorithm tarjan) {
 
         if (graph instanceof HugeGraph) {
-            final LongArray connectedComponents = tarjan.getConnectedComponents();
+            final HugeLongArray connectedComponents = tarjan.getConnectedComponents();
             graph.release();
             tarjan.release();
             Exporter.of(api, graph)
@@ -281,7 +280,7 @@ public class StronglyConnectedComponentsProc {
                     .write(
                             configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
                             connectedComponents,
-                            LongArray.Translator.INSTANCE
+                            HugeLongArray.Translator.INSTANCE
                     );
             return;
         }
