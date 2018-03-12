@@ -3,36 +3,94 @@ package org.neo4j.graphalgo.core.utils.paged;
 /**
  * @author mknblch
  */
-public class PagedLongStack {
+public class PagedLongStack extends PagedDataStructure<long[]> {
 
-    private final HugeLongArray array;
-    private long offset;
+    private static final PageAllocator.Factory<long[]> ALLOCATOR_FACTORY =
+            PageAllocator.ofArray(long[].class);
 
-    public PagedLongStack(long size, AllocationTracker tracker) {
-        array = HugeLongArray.newArray(size, tracker);
+    public PagedLongStack(long initialSize, AllocationTracker tracker) {
+        this(Math.max(1L, initialSize), ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
+    private PagedLongStack(long initialSize, PageAllocator<long[]> allocator) {
+        super(initialSize, allocator);
+        clear();
+    }
+
+    private long size;
+    private int pageIndex;
+    private int pageTop;
+    private int pageLimit;
+    private long[] currentPage;
+
     public void clear() {
-        offset = 0;
+        size = 0L;
+        pageTop = -1;
+        pageIndex = 0;
+        currentPage = pages[0];
+        pageLimit = currentPage.length;
     }
 
     public void push(long value) {
-        array.set(offset++, value);
+        int pageTop = ++this.pageTop;
+        if (pageTop >= pageLimit) {
+            pageTop = nextPage();
+        }
+        ++size;
+        currentPage[pageTop] = value;
     }
 
     public long pop() {
-        return array.get(--offset);
+        int pageTop = this.pageTop;
+        if (pageTop < 0) {
+            pageTop = previousPage();
+        }
+        --this.pageTop;
+        --size;
+        return currentPage[pageTop];
     }
 
     public long peek() {
-        return array.get(offset - 1);
+        return currentPage[pageTop];
     }
 
     public boolean isEmpty() {
-        return offset == 0;
+        return size == 0L;
     }
 
+    @Override
     public long size() {
-        return offset;
+        return size;
+    }
+
+    @Override
+    public long release() {
+        long released = super.release();
+        size = 0L;
+        pageTop = 0;
+        pageIndex = 0;
+        pageLimit = 0;
+        currentPage = null;
+        return released;
+    }
+
+    private int nextPage() {
+        int pageIndex = ++this.pageIndex;
+        if (pageIndex >= pages.length) {
+            grow(capacityFor(pageIndex + 1));
+        }
+        currentPage = pages[pageIndex];
+        pageLimit = currentPage.length;
+        return pageTop = 0;
+    }
+
+    private int previousPage() {
+        int pageIndex = this.pageIndex;
+        --pageIndex;
+        // let it throw
+        currentPage = pages[pageIndex];
+        pageLimit = currentPage.length;
+        this.pageIndex = pageIndex;
+        return pageTop = pageLimit - 1;
     }
 }
