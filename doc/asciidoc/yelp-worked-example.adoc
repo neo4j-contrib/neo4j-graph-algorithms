@@ -32,3 +32,16 @@ The following query will execute the page rank algorithm over users that reviewe
 | Pasquale | 4.58 | 3
 |===
 // end::caesars-result[]
+
+
+// tag::eda-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| label | count
+| "Business" |174567
+| "Category" | 1293
+| "User"    | 1326101
+| "Review"  | 5261669
+|===
+// end::eda-result[]
