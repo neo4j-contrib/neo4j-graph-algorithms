@@ -101,7 +101,7 @@ public class WeightedPath {
     }
 
     public long edge(int i) {
-        return RawValues.combineIntInt(nodes[i], nodes[i + 1]);
+        return RawValues.combineIntInt(nodes[i - 1], nodes[i]);
     }
 
     public void clear() {
@@ -128,6 +128,9 @@ public class WeightedPath {
     }
 
     public boolean equalsTo(WeightedPath other, int length) {
+        if (length == 0) {
+            return false;
+        }
         if (size() < length) {
             return false;
         }

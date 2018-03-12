@@ -46,7 +46,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
         A = new ArrayList<>();
-        B = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
+        B = new PriorityQueue<>(Comparator.comparingDouble(o -> -WeightedPath.getCosts(graph, o)));
     }
 
     public List<WeightedPath> getPaths() {
@@ -79,19 +79,32 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 .compute(graph.toMappedNodeId(startNode), goal)
                 .ifPresent(A::add);
 
-        for (int k = 1; k < K; k++) { // && paths.size() >= k; k++) {
-            final WeightedPath basePath = A.get(k - 1);
+        for (int k = 1; k < K; k++) {
+            final WeightedPath basePath = A.get(k-1);
             System.out.println("k = " + k);
             System.out.println("basePath = " + basePath);
 
+//            for (int i = basePath.size()-1; i >= 0; i--) {
             for (int i = 0; i < basePath.size() - 1; i++) {
                 final int spurNode = basePath.node(i);
+                System.out.println("i = " + i);
                 final WeightedPath rootPath = basePath.pathTo(i);
                 System.out.println("  rootPath = " + rootPath);
                 for (Iterator<WeightedPath> iterator = A.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    if (p.equalsTo(rootPath, i)) {
-                        edgeBlackList.add(p.edge(i));
+                    if (rootPath.equalsTo(p, i)) {
+//                    if (p.equalsTo(rootPath, i)) {
+
+                        System.out.println("'" + p.pathTo(i) + "' is equal to '" + rootPath.pathTo(i) + "'");
+
+                        final long edge = p.edge(i);
+
+                        System.out.println("Blacklisting " +
+                                RawValues.getHead(edge) + " -> " +
+                                RawValues.getTail(edge)
+                        );
+
+                        edgeBlackList.add(edge);
                     }
                 }
                 rootPath.forEachDo(rootPathNode -> {
