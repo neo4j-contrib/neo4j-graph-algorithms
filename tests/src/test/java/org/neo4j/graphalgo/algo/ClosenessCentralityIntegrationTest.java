@@ -132,6 +132,9 @@ public class ClosenessCentralityIntegrationTest {
 
         db.execute("MATCH (n) WHERE exists(n.centrality) RETURN id(n) as id, n.centrality as centrality")
                 .accept(row -> {
+                    System.out.println(
+                            row.getNumber("id").longValue() + " " +
+                            row.getNumber("centrality").doubleValue());
                     consumer.accept(
                             row.getNumber("id").longValue(),
                             row.getNumber("centrality").doubleValue());
@@ -142,8 +145,7 @@ public class ClosenessCentralityIntegrationTest {
     }
 
     private void verifyMock() {
-        verify(consumer, times(1)).accept(eq(centerNodeId), eq(2.0));
-        verify(consumer, times(5)).accept(anyLong(), eq(1.0));
-        verify(consumer, times(5)).accept(anyLong(), AdditionalMatchers.eq(0.47, 0.1));
+        verify(consumer, times(1)).accept(eq(centerNodeId), eq(1.0));
+        verify(consumer, times(10)).accept(anyLong(), AdditionalMatchers.eq(0.58, 0.1));
     }
 }

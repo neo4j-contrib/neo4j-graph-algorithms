@@ -16,117 +16,87 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.closeness;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.msbfs.BfsConsumer;
 import org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.function.LongToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Normalized Closeness Centrality
+ * Harmonic Centrality Algorithm
  *
  * @author mknblch
  */
-public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentrality> {
+public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements HarmonicCentralityAlgorithm {
 
     private Graph graph;
-    private AtomicIntegerArray farness;
-
+    private final AtomicDoubleArray inverseFarness;
     private final int concurrency;
-    private final ExecutorService executorService;
+    private ExecutorService executorService;
     private final int nodeCount;
 
-    public MSClosenessCentrality(Graph graph, int concurrency, ExecutorService executorService) {
+    public HarmonicCentrality(Graph graph, int concurrency, ExecutorService executorService) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
-        farness = new AtomicIntegerArray(nodeCount);
+        inverseFarness = new AtomicDoubleArray(nodeCount);
     }
 
-    @Override
-    public MSClosenessCentrality compute() {
-
+    public HarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
-
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
-            int len = sourceNodeIds.size();
-            farness.addAndGet(nodeId, len * depth);
+            inverseFarness.add(nodeId, sourceNodeIds.size() * (1.0 / depth));
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
-
-        new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
+        new MultiSourceBFS(graph, graph, Direction.BOTH, consumer)
                 .run(concurrency, executorService);
-
         return this;
     }
 
-    @Override
     public Stream<Result> resultStream() {
-        final double k = nodeCount - 1;
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
                         graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
+                        inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
     }
 
-    @Override
-    public LongToIntFunction farness() {
-        return (i) -> farness.get((int) i);
-    }
-
-    @Override
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
-                farness,
-                (PropertyTranslator.OfDouble<AtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get((int) nodeId), k));
+                inverseFarness,
+                (PropertyTranslator.OfDouble<AtomicDoubleArray>)
+                        (data, nodeId) -> data.get((int) nodeId) / (double) (nodeCount - 1));
     }
 
     @Override
-    public MSClosenessCentrality me() {
+    public HarmonicCentrality me() {
         return this;
     }
 
     @Override
-    public MSClosenessCentrality release() {
+    public HarmonicCentrality release() {
         graph = null;
-        farness = null;
+        executorService = null;
         return this;
     }
 
-    /**
-     * Result class used for streaming
-     */
-    public static final class Result {
-
-        public final long nodeId;
-
-        public final double centrality;
-
-        public Result(long nodeId, double centrality) {
-            this.nodeId = nodeId;
-            this.centrality = centrality;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "nodeId=" + nodeId +
-                    ", centrality=" + centrality +
-                    '}';
-        }
+    public final double[] exportToArray() {
+        return resultStream()
+                .limit(Integer.MAX_VALUE)
+                .mapToDouble(r -> r.centrality)
+                .toArray();
     }
+
+
 }

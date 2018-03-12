@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.closeness;
 
 import org.neo4j.graphalgo.core.write.Exporter;
+import org.neo4j.graphalgo.impl.Algorithm;
 
 import java.util.function.LongToIntFunction;
 import java.util.stream.Stream;
@@ -29,7 +30,7 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
 
     public abstract ME compute();
 
-    public abstract LongToIntFunction farness();
+    public abstract <V> V getCentrality();
 
     public abstract void export(String propertyName, Exporter exporter);
 
@@ -40,7 +41,13 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
                 .toArray();
     }
 
-    static double centrality(int f, double k) {
-        return f > 0 ? k / (double) f : 0D;
+    static double centrality(long farness, long componentSize, long nodeCount, boolean wassermanFaust) {
+        if (farness == 0L) {
+            return 0.;
+        }
+        if (wassermanFaust) {
+            return (componentSize / ((double) farness)) * (farness / (nodeCount - 1.));
+        }
+        return componentSize / ((double) farness);
     }
 }
