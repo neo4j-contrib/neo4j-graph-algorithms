@@ -56,3 +56,13 @@ YIELD value
 RETURN label, value.count as count
 
 // end::eda[]
+
+// tag::eda-rels[]
+
+CALL db.relationshipTypes()
+YIELD relationshipType
+CALL apoc.cypher.run("MATCH ()-[:" + `relationshipType` + "]->() RETURN count(*) as count", null)
+YIELD value
+RETURN relationshipType, value.count AS count
+
+// end::eda-rels[]
