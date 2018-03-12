@@ -46,3 +46,13 @@ LIMIT 5
 
 
 // end::caesars[]
+
+// tag::eda[]
+
+CALL db.labels()
+YIELD label
+CALL apoc.cypher.run("MATCH (:`"+label+"`) RETURN count(*) as count", null)
+YIELD value
+RETURN label, value.count as count
+
+// end::eda[]
