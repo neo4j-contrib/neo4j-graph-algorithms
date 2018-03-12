@@ -21,22 +21,15 @@ package org.neo4j.graphalgo.impl;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.AdditionalMatchers;
-import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.impl.harmonic.HarmonicCentrality;
-import org.neo4j.graphalgo.impl.harmonic.HugeHarmonicCentrality;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
+import org.neo4j.graphalgo.impl.closeness.HugeHarmonicCentrality;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
-
-import java.util.Collection;
-import java.util.Collections;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.*;

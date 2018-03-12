@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.closeness;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
@@ -42,23 +43,28 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
 
     private HugeGraph graph;
     private PagedAtomicIntegerArray farness;
+    private PagedAtomicIntegerArray component;
 
     private final int concurrency;
     private final ExecutorService executorService;
     private final long nodeCount;
     private final AllocationTracker tracker;
 
+    private final boolean wassermanFaust;
+
     public HugeMSClosenessCentrality(
             HugeGraph graph,
             AllocationTracker tracker,
             int concurrency,
-            ExecutorService executorService) {
+            ExecutorService executorService, boolean wassermanFaust) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
         this.concurrency = concurrency;
         this.executorService = executorService;
         this.tracker = tracker;
+        this.wassermanFaust = wassermanFaust;
         farness = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
+        component = PagedAtomicIntegerArray.newArray(nodeCount, this.tracker);
     }
 
     @Override
@@ -69,6 +75,9 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
         final HugeBfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
             int len = sourceNodeIds.size();
             farness.add(nodeId, len * depth);
+            while (sourceNodeIds.hasNext()) {
+                component.add(sourceNodeIds.next(), 1);
+            }
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
 
@@ -84,27 +93,33 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
     }
 
     @Override
+    public DoubleArray getCentrality() {
+        final DoubleArray cc = DoubleArray.newArray(nodeCount, tracker);
+        for (int i = 0; i < nodeCount; i++) {
+            cc.set(i, centrality(farness.get(i),
+                    component.get(i),
+                    nodeCount,
+                    wassermanFaust));
+        }
+        return cc;
+    }
+
+    @Override
     public void export(final String propertyName, final Exporter exporter) {
-        final double k = nodeCount - 1;
         exporter.write(
                 propertyName,
                 farness,
                 (PropertyTranslator.OfDouble<PagedAtomicIntegerArray>)
-                        (data, nodeId) -> centrality(data.get(nodeId), k));
-    }
-
-    @Override
-    public LongToIntFunction farness() {
-        return farness::get;
+                        (data, nodeId) -> centrality(data.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust));
     }
 
     @Override
     public Stream<MSClosenessCentrality.Result> resultStream() {
-        final double k = nodeCount - 1;
         return LongStream.range(0L, nodeCount)
                 .mapToObj(nodeId -> new MSClosenessCentrality.Result(
                         graph.toOriginalNodeId(nodeId),
-                        centrality(farness.get(nodeId), k)));
+                        centrality(farness.get(nodeId), component.get(nodeId), nodeCount, wassermanFaust)
+                ));
     }
 
     @Override
