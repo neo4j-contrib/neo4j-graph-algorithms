@@ -16,28 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core.sources;
+package org.neo4j.graphalgo;
 
-import org.neo4j.graphalgo.api.IncomingRelationshipIterator;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.core.utils.container.RelationshipContainer;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 
+import java.util.function.Supplier;
 
 /**
- * Adapter class for RelationshipContainer -> IncomingRelationIterator
- *
  * @author mknblch
  */
-public class IncomingRelationshipAdapter implements IncomingRelationshipIterator {
+public class TestProgressLogger implements ProgressLogger {
 
-    private final RelationshipContainer container;
+    public static final ProgressLogger INSTANCE = new TestProgressLogger();
 
-    public IncomingRelationshipAdapter(RelationshipContainer container) {
-        this.container = container;
+    @Override
+    public void logProgress(double percentDone, Supplier<String> msg) {
+        System.out.printf("%.0f%% (%s)%n", percentDone * 100, msg.get());
     }
 
     @Override
-    public void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
-        container.forEach(nodeId, consumer);
+    public void logDone(Supplier<String> msg) {
+        System.out.println(msg.get());
     }
 }

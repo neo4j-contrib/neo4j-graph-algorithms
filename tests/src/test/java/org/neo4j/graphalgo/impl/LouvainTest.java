@@ -35,18 +35,17 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
+import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
 import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
 import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
+import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -164,15 +163,18 @@ public class LouvainTest {
     }
 
     @Test
-    public void testWeightedParallel() throws Exception {
+    public void testWeightedLouvain() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain = new WeightedLouvain(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY, MAX_ITERATIONS)
+        final LouvainAlgorithm louvain =
+                new Louvain(graph, 100, Pools.DEFAULT, 3, AllocationTracker.EMPTY)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute();
-        assumeTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
+
         printCommunities(louvain);
         System.out.println("louvain.getRuns() = " + louvain.getIterations());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
-        assertCommunities(louvain);
+        assertWeightedCommunities(louvain);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
     }
 
     @Test

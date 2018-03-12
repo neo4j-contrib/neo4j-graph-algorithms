@@ -207,8 +207,8 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
                 relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     readLock.lock();
                     final int targetCommunity = communityIds[targetNodeId];
-                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     readLock.unlock();
+                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
                         bestGain = gain;
