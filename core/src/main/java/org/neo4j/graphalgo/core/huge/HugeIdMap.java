@@ -25,7 +25,7 @@ import org.neo4j.graphalgo.api.HugeIdMapping;
 import org.neo4j.graphalgo.api.HugeNodeIterator;
 import org.neo4j.graphalgo.core.utils.LazyBatchCollection;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.core.utils.paged.PageUtil;
 import org.neo4j.graphalgo.core.utils.paged.SparseLongArray;
 
@@ -44,24 +44,15 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
     static final int PAGE_SIZE = PageUtil.pageSizeFor(Long.BYTES);
 
     private long nextGraphId;
-    private LongArray graphIds;
+    private HugeLongArray graphIds;
     private SparseLongArray nodeToGraphIds;
 
     /**
      * initialize the map with maximum node capacity
      */
     HugeIdMap(long capacity, long fullCapacity, AllocationTracker tracker) {
-        graphIds = LongArray.newArray(capacity, tracker);
+        graphIds = HugeLongArray.newArray(capacity, tracker);
         nodeToGraphIds = SparseLongArray.newArray(fullCapacity, tracker);
-    }
-
-    HugeIdMap(
-            long capacity,
-            LongArray denseGraphMap,
-            SparseLongArray sparseOriginalMap) {
-        nextGraphId = capacity;
-        graphIds = denseGraphMap;
-        nodeToGraphIds = sparseOriginalMap;
     }
 
     void add(long longValue) {

@@ -25,7 +25,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -90,7 +90,7 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
     /**
      * node to community id mapping
      */
-    private LongArray communityIds;
+    private HugeLongArray communityIds;
     /**
      * number of iterations so far
      */
@@ -110,7 +110,7 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.maxIterations = maxIterations;
-        communityIds = LongArray.newArray(nodeCount, tracker);
+        communityIds = HugeLongArray.newArray(nodeCount, tracker);
         communityWeights = DoubleArray.newArray(nodeCount, tracker);
         this.queue = new AtomicLong(0);
         this.tracker = tracker;
@@ -209,7 +209,7 @@ public class HugeParallelLouvain extends Algorithm<HugeParallelLouvain> implemen
                         new Result(graph.toOriginalNodeId(i), communityIds.get(i)));
     }
 
-    public LongArray getCommunityIds() {
+    public HugeLongArray getCommunityIds() {
         return communityIds;
     }
 

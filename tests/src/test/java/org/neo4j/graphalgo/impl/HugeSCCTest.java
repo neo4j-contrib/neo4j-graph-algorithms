@@ -18,8 +18,6 @@
  */
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,7 +26,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.impl.scc.HugeSCCIterativeTarjan;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -120,7 +118,7 @@ public class HugeSCCTest {
                 .getConnectedComponents());
     }
 
-    private void assertCC(LongArray connectedComponents) {
+    private void assertCC(HugeLongArray connectedComponents) {
         assertBelongSameSet(connectedComponents,
                 getMappedNodeId("a"),
                 getMappedNodeId("b"),
@@ -135,7 +133,7 @@ public class HugeSCCTest {
                 getMappedNodeId("i"));
     }
 
-    private static void assertBelongSameSet(LongArray data, Integer... expected) {
+    private static void assertBelongSameSet(HugeLongArray data, Integer... expected) {
         // check if all belong to same set
         final long needle = data.get(expected[0]);
         for (int i : expected) {
