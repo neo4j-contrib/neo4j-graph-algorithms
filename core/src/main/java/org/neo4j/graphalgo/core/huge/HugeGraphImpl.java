@@ -29,7 +29,7 @@ import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -85,8 +85,8 @@ public class HugeGraphImpl implements HugeGraph {
     private HugeWeightMapping weights;
     private ByteArray inAdjacency;
     private ByteArray outAdjacency;
-    private LongArray inOffsets;
-    private LongArray outOffsets;
+    private HugeLongArray inOffsets;
+    private HugeLongArray outOffsets;
     private ByteArray.DeltaCursor empty;
     private ByteArray.DeltaCursor inCache;
     private ByteArray.DeltaCursor outCache;
@@ -98,8 +98,8 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeWeightMapping weights,
             final ByteArray inAdjacency,
             final ByteArray outAdjacency,
-            final LongArray inOffsets,
-            final LongArray outOffsets) {
+            final HugeLongArray inOffsets,
+            final HugeLongArray outOffsets) {
         this.idMapping = idMapping;
         this.tracker = tracker;
         this.weights = weights;
@@ -366,7 +366,7 @@ public class HugeGraphImpl implements HugeGraph {
         return adjacency != null ? adjacency.newCursor() : null;
     }
 
-    private int degree(long node, LongArray offsets, ByteArray array) {
+    private int degree(long node, HugeLongArray offsets, ByteArray array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
@@ -377,7 +377,7 @@ public class HugeGraphImpl implements HugeGraph {
     private ByteArray.DeltaCursor cursor(
             long node,
             ByteArray.DeltaCursor reuse,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {

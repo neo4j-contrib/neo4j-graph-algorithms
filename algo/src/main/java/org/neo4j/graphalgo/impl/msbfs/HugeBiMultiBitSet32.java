@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.impl.msbfs;
 
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.IntArray;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 
 import java.util.Arrays;
 
@@ -29,8 +29,8 @@ final class HugeBiMultiBitSet32 {
     private static final long AUX_MASK = 0xFFFFFFFF00000000L;
     private static final long DEF_MASK = 0x00000000FFFFFFFFL;
 
-    private final LongArray bits;
-    private final LongArray.Cursor cursor;
+    private final HugeLongArray bits;
+    private final HugeLongArray.Cursor cursor;
 
     /**
      * Creates a new bit set for {@code nodeCount} nodes.
@@ -39,7 +39,7 @@ final class HugeBiMultiBitSet32 {
      */
     HugeBiMultiBitSet32(long nodeCount, AllocationTracker tracker) {
         try {
-            bits = LongArray.newArray(nodeCount, tracker);
+            bits = HugeLongArray.newArray(nodeCount, tracker);
             cursor = bits.newCursor();
         } catch (OutOfMemoryError e) {
             IllegalArgumentException iae =
@@ -103,7 +103,7 @@ final class HugeBiMultiBitSet32 {
      * If there aren't any nodes that have any bit set (all sets are empty), return -2.
      */
     long nextSetNodeId(long fromNodeId) {
-        final LongArray.Cursor cursor = bits.cursor(fromNodeId, this.cursor);
+        final HugeLongArray.Cursor cursor = bits.cursor(fromNodeId, this.cursor);
         long n = fromNodeId;
         while (cursor.next()) {
             final long[] array = cursor.array;
@@ -169,7 +169,7 @@ final class HugeBiMultiBitSet32 {
      */
     boolean copyInto(final HugeMultiBitSet32 target) {
         boolean didCopy = false;
-        final LongArray.Cursor cursor = bits.cursor(0, this.cursor);
+        final HugeLongArray.Cursor cursor = bits.cursor(0, this.cursor);
         final IntArray.BulkAdder bulkAdder = target.bulkAdder();
         while (cursor.next()) {
             final long[] array = cursor.array;

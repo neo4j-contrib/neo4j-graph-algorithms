@@ -22,18 +22,18 @@ import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 
 class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     private ByteArray adjacency;
-    private LongArray offsets;
+    private HugeLongArray offsets;
     private ByteArray.DeltaCursor empty;
     private ByteArray.DeltaCursor cache;
     private ByteArray.DeltaCursor cacheA;
     private ByteArray.DeltaCursor cacheB;
 
-    HugeGraphIntersectImpl(final ByteArray adjacency, final LongArray offsets) {
+    HugeGraphIntersectImpl(final ByteArray adjacency, final HugeLongArray offsets) {
         assert adjacency != null;
         assert offsets != null;
         this.adjacency = adjacency;
@@ -57,7 +57,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     @Override
     public void intersectAll(long nodeIdA, IntersectionConsumer consumer) {
-        LongArray offsets = this.offsets;
+        HugeLongArray offsets = this.offsets;
         ByteArray adjacency = this.adjacency;
 
         ByteArray.DeltaCursor mainCursor = cursor(nodeIdA, cache, offsets, adjacency);
@@ -104,7 +104,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
         }
     }
 
-    private int degree(long node, LongArray offsets, ByteArray array) {
+    private int degree(long node, HugeLongArray offsets, ByteArray array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
@@ -115,7 +115,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
     private ByteArray.DeltaCursor cursor(
             long node,
             ByteArray.DeltaCursor reuse,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {
