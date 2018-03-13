@@ -1,7 +1,56 @@
 
+// tag::eda-hotels-intro[]
+It's always good fun reading hotel reviews so we're going to focus on businesses in that sector.
+We can find out how many businesses there are in this category by running the following query:
+// end::eda-hotels-intro[]
+
+// tag::eda-hotels-intro-result[]
+
+// end::eda-hotels-intro-result[]
+
+// tag::eda-hotels-reviews[]
+
+How many reviews will we be working with?
+
+// end::eda-hotels-reviews[]
+
+// tag::eda-hotels-reviews-result[]
+.Results
+[opts="header",cols="1"]
+|===
+| count
+| 183759
+|===
+// end::eda-hotels-reviews-result[]
+
+// tag::eda-hotels-most-reviewed[]
+Which are the most reviewed hotels and how well have they been reviewed?
+// end::eda-hotels-most-reviewed[]
+
+// tag::eda-hotels-most-reviewed-result[]
+.Results
+[opts="header",cols="1,1,1,1,1"]
+|===
+| business | numberOfReviews | averageRating
+ARIA Resort & Casino | 3794 | 3.513178703215603
+The Cosmopolitan of Las Vegas | 3772 | 3.8711558854718953
+Luxor Hotel and Casino Las Vegas | 3623 | 2.6279326524979183
+MGM Grand Hotel | 3445 | 2.9944847605224894
+The Venetian Las Vegas | 3103 | 3.926522719948437
+Flamingo Las Vegas Hotel & Casino | 2942 | 2.478585995921139
+Bellagio Hotel | 2781 | 3.7144911902193454
+Mandalay Bay Resort & Casino | 2688 | 3.2674851190476213
+Planet Hollywood Las Vegas Resort & Casino | 2682 | 3.0514541387024545
+Monte Carlo Hotel And Casino | 2506 | 2.636472466081398
+|===
+
+// end::eda-hotels-most-reviewed-result[]
+
 // tag::influential-hotel-reviewers-intro[]
-We want to find the influential hotel reviewers on Yelp and can start by finding all users who have reviewed more than 5 different hotels.
-We'll then find the social network between those users and work out which users sit at the centre of that network.
+One way we can do this is to order reviews based on the influence of the reviewer on Yelp.
+
+We'll start by finding users who have reviewed more than 5 hotels.
+After that we'll find the social network between those users and work out which users sit at the centre of that network.
 This should reveal the most influential people.
 
 The following query will execute the page rank algorithm over users that reviewed hotels and add a `hotelPageRank` property to each of those users.
