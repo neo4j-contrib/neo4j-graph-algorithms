@@ -1,3 +1,59 @@
+// tag::eda[]
+
+CALL db.labels()
+YIELD label
+CALL apoc.cypher.run("MATCH (:`"+label+"`) RETURN count(*) as count", null)
+YIELD value
+RETURN label, value.count as count
+
+// end::eda[]
+
+// tag::eda-rels[]
+
+CALL db.relationshipTypes()
+YIELD relationshipType
+CALL apoc.cypher.run("MATCH ()-[:" + `relationshipType` + "]->()
+                      RETURN count(*) as count", null)
+YIELD value
+RETURN relationshipType, value.count AS count
+
+// end::eda-rels[]
+
+// tag::eda-hotels[]
+
+MATCH (category {name: "Hotels"})
+RETURN size((category)<-[:IN_CATEGORY]-()) AS businesses
+
+// end::eda-hotels[]
+
+
+// tag::eda-hotels-cities[]
+
+MATCH (category {name: "Hotels"})<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(city)
+RETURN city.name AS city, count(*) as count
+ORDER BY count DESC
+LIMIT 10
+
+// end::eda-hotels-cities[]
+
+// tag::eda-hotels-reviews[]
+
+MATCH (:Review)-[:REVIEWS]->(:Business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
+RETURN count(*) AS count
+
+// end::eda-hotels-reviews[]
+
+
+// tag::eda-hotels-most-reviewed[]
+
+MATCH (review:Review)-[:REVIEWS]->(business:Business),
+      (business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
+WITH business, count(*) AS numberOfReviews, avg(review.stars) AS averageRating
+ORDER BY numberOfReviews DESC
+LIMIT 10
+RETURN business.name AS business, numberOfReviews, averageRating
+
+// end::eda-hotels-most-reviewed[]
 
 // tag::hotel-reviewers-pagerank[]
 CALL algo.pageRank(
@@ -45,24 +101,3 @@ LIMIT 5
 
 
 // end::caesars[]
-
-// tag::eda[]
-
-CALL db.labels()
-YIELD label
-CALL apoc.cypher.run("MATCH (:`"+label+"`) RETURN count(*) as count", null)
-YIELD value
-RETURN label, value.count as count
-
-// end::eda[]
-
-// tag::eda-rels[]
-
-CALL db.relationshipTypes()
-YIELD relationshipType
-CALL apoc.cypher.run("MATCH ()-[:" + `relationshipType` + "]->()
-                      RETURN count(*) as count", null)
-YIELD value
-RETURN relationshipType, value.count AS count
-
-// end::eda-rels[]
