@@ -32,16 +32,16 @@ Which are the most reviewed hotels and how well have they been reviewed?
 [opts="header",cols="1,1,1,1,1"]
 |===
 | business | numberOfReviews | averageRating
-ARIA Resort & Casino | 3794 | 3.513178703215603
-The Cosmopolitan of Las Vegas | 3772 | 3.8711558854718953
-Luxor Hotel and Casino Las Vegas | 3623 | 2.6279326524979183
-MGM Grand Hotel | 3445 | 2.9944847605224894
-The Venetian Las Vegas | 3103 | 3.926522719948437
-Flamingo Las Vegas Hotel & Casino | 2942 | 2.478585995921139
-Bellagio Hotel | 2781 | 3.7144911902193454
-Mandalay Bay Resort & Casino | 2688 | 3.2674851190476213
-Planet Hollywood Las Vegas Resort & Casino | 2682 | 3.0514541387024545
-Monte Carlo Hotel And Casino | 2506 | 2.636472466081398
+ARIA Resort & Casino | 3794 | 3.51
+The Cosmopolitan of Las Vegas | 3772 | 3.87
+Luxor Hotel and Casino Las Vegas | 3623 | 2.63
+MGM Grand Hotel | 3445 | 2.99
+The Venetian Las Vegas | 3103 | 3.93
+Flamingo Las Vegas Hotel & Casino | 2942 | 2.48
+Bellagio Hotel | 2781 | 3.71
+Mandalay Bay Resort & Casino | 2688 | 3.27
+Planet Hollywood Las Vegas Resort & Casino | 2682 | 3.05
+Monte Carlo Hotel And Casino | 2506 | 2.64
 |===
 
 // end::eda-hotels-most-reviewed-result[]
