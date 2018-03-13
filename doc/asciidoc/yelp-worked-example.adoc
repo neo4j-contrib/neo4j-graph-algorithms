@@ -36,7 +36,7 @@ Which are the most reviewed hotels and how well have they been reviewed?
 
 // tag::eda-hotels-most-reviewed-result[]
 .Results
-[opts="header",cols="1,1,1,1,1"]
+[opts="header",cols="1,1,1"]
 |===
 | business | numberOfReviews | averageRating
 |ARIA Resort & Casino | 3794 | 3.51
