@@ -16,6 +16,7 @@ GEM
       safe_yaml (~> 1.0.4)
       thread_safe (~> 0.3.6)
       treetop (= 1.5.3)
+    coderay (1.1.2)
     css_parser (1.6.0)
       addressable
     hashery (2.1.2)
@@ -52,7 +53,12 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  addressable
   asciidoctor-pdf
+  coderay
+  prawn
+  prawn-svg
+  prawn-templates
 
 BUNDLED WITH
-   1.14.6
+   1.16.1
