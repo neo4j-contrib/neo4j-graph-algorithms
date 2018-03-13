@@ -46,11 +46,14 @@ RETURN count(*) AS count
 
 // tag::eda-hotels-most-reviewed[]
 
-MATCH (review:Review)-[:REVIEWS]->(business:Business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
+MATCH (review:Review)-[:REVIEWS]->(business:Business),
+      (business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
 WITH business, count(*) AS numberOfReviews, avg(review.stars) AS averageRating
 ORDER BY numberOfReviews DESC
 LIMIT 10
-RETURN business.name AS business, numberOfReviews, apoc.math.round(averageRating,2) AS averageRating
+RETURN business.name AS business,
+       numberOfReviews,
+       apoc.math.round(averageRating,2) AS averageRating
 
 // end::eda-hotels-most-reviewed[]
 
