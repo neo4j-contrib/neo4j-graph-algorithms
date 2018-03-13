@@ -95,10 +95,13 @@ The following query will execute the page rank algorithm over users that reviewe
 [opts="header",cols="1,1"]
 |===
 | label | count
+| Area | 54
 | Business |174567
 | Category | 1293
-| User    | 1326101
+| City | 1093
+| Country | 17
 | Review  | 5261669
+| User    | 1326101
 |===
 // end::eda-result[]
 
@@ -107,9 +110,12 @@ The following query will execute the page rank algorithm over users that reviewe
 [opts="header",cols="1,1"]
 |===
 | label | count
-| IN_CATEGORY |667527
 | FRIENDS | 10645356
-| WROTE   | 5261669
+| IN_AREA | IN_AREA
+| IN_CATEGORY |667527
+| IN_CITY | 174566
+| IN_COUNTRY | 54
 | REVIEWS  | 5261669
+| WROTE   | 5261669
 |===
 // end::eda-rels-result[]
