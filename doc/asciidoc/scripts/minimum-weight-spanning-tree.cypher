@@ -21,7 +21,8 @@ MERGE (f)-[:LINK {cost:1}]->(g);
 // tag::write-sample-minst-graph[]
 
 MATCH (n:Place {id:"D"})
-CALL algo.spanningTree.minimum('Place', 'LINK', 'cost', id(n), {write:true, writeProperty:"MINST"})
+CALL algo.spanningTree.minimum('Place', 'LINK', 'cost', id(n),
+  {write:true, writeProperty:"MINST"})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 RETURN loadMillis, computeMillis, writeMillis, effectiveNodeCount;
 
@@ -42,7 +43,8 @@ RETURN startNode(rel).id AS source, endNode(rel).id AS destination, rel.cost AS 
 
 
 MATCH (n:Place{id:"D"}) 
-CALL algo.spanningTree.maximum('Place', 'LINK', 'cost', id(n), {write:true, writeProperty:"MAXST"})
+CALL algo.spanningTree.maximum('Place', 'LINK', 'cost', id(n),
+  {write:true, writeProperty:"MAXST"})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 RETURN loadMillis,computeMillis, writeMillis, effectiveNodeCount;
 
@@ -52,7 +54,8 @@ RETURN loadMillis,computeMillis, writeMillis, effectiveNodeCount;
 // tag::write-sample-kmaxst-graph[]
 
 MATCH (n:Place{id:"D"}) 
-CALL algo.spanningTree.kmax('Place', 'LINK', 'cost',id(n), 3, {writeProperty:"kmaxst"})
+CALL algo.spanningTree.kmax('Place', 'LINK', 'cost', id(n), 3,
+  {writeProperty:"kmaxst"})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 RETURN loadMillis,computeMillis,writeMillis, effectiveNodeCount;
 
@@ -61,7 +64,8 @@ RETURN loadMillis,computeMillis,writeMillis, effectiveNodeCount;
 // tag::write-sample-kminst-graph[]
 
 MATCH (n:Place{id:"D"}) 
-CALL algo.spanningTree.kmin('Place', 'LINK', 'cost',id(n), 3, {writeProperty:"kminst"})
+CALL algo.spanningTree.kmin('Place', 'LINK', 'cost',id(n), 3,
+  {writeProperty:"kminst"})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 RETURN loadMillis,computeMillis,writeMillis, effectiveNodeCount;
 
