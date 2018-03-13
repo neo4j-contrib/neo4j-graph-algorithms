@@ -37,7 +37,7 @@ RETURN u.name AS name,
 // tag::caesars[]
 
 MATCH (b:Business {name: "Caesars Palace Las Vegas Hotel & Casino"})
-      <-[:REVIEWS]-(review)-[:WROTE]-(user)
+MATCH (b)<-[:REVIEWS]-(review)<-[:WROTE]-(user)
 RETURN user.name AS name,
        apoc.math.round(user.hotelPageRank,2) AS pageRank,
        review.stars AS stars
