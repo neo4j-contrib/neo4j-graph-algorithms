@@ -19,12 +19,12 @@ RETURN relationshipType, value.count AS count
 
 // end::eda-rels[]
 
-// tag::eda-hotels[]
+// tag::eda-hotels-intro[]
 
 MATCH (category {name: "Hotels"})
 RETURN size((category)<-[:IN_CATEGORY]-()) AS businesses
 
-// end::eda-hotels[]
+// end::eda-hotels-intro[]
 
 
 // tag::eda-hotels-cities[]

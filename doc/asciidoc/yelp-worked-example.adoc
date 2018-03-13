@@ -6,11 +6,18 @@ We can find out how many businesses there are in this category by running the fo
 
 // tag::eda-hotels-intro-result[]
 
+.Results
+[opts="header",cols="1"]
+|===
+| businesses
+| 2683
+|===
+
 // end::eda-hotels-intro-result[]
 
 // tag::eda-hotels-reviews[]
 
-How many reviews will we be working with?
+How many reviews do hotels have?
 
 // end::eda-hotels-reviews[]
 
