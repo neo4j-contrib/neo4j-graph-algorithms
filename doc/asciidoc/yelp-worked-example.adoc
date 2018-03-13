@@ -36,9 +36,9 @@ Which are the most reviewed hotels and how well have they been reviewed?
 
 // tag::eda-hotels-most-reviewed-result[]
 .Results
-[opts="header",cols="1,1,1"]
+[opts="header",cols="2,1,1"]
 |===
-| business | numberOfReviews | averageRating
+| business | reviews | averageRating
 |ARIA Resort & Casino | 3794 | 3.51
 |The Cosmopolitan of Las Vegas | 3772 | 3.87
 |Luxor Hotel and Casino Las Vegas | 3623 | 2.63
