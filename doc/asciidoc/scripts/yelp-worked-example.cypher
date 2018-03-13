@@ -104,3 +104,18 @@ LIMIT 5
 
 
 // end::caesars[]
+
+// tag::category-groups[]
+
+CALL algo.labelPropagation.stream(
+  "MATCH (c:Category) RETURN id(c) AS id",
+  "MATCH (c1:Category)<-[:IN_CATEGORY]-()-[:IN_CATEGORY]->(c2:Category)
+   WHERE id(c1) < id(c2)
+   RETURN id(c1) AS source, id(c2) AS target, count(*) AS weight",
+   {graph: "cypher"})
+YIELD nodeId, label
+MATCH (c:Category) WHERE id(c) = nodeId
+MERGE (cg:CategoryGroup {name: "CategoryGroup " + label})
+MERGE (c)-[:IN_GROUP]->(cg)
+
+// end::category-groups[]
