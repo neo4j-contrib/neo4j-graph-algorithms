@@ -54,7 +54,7 @@ Which are the most reviewed hotels and how well have they been reviewed?
 // end::eda-hotels-most-reviewed-result[]
 
 // tag::influential-hotel-reviewers-intro[]
-One way we can do this is to order reviews based on the influence of the reviewer on Yelp.
+One way we can do this is by ordering reviews based on the influence of the reviewer on Yelp.
 
 We'll start by finding users who have reviewed more than 5 hotels.
 After that we'll find the social network between those users and work out which users sit at the centre of that network.
