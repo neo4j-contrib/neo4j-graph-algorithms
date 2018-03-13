@@ -61,7 +61,8 @@ RETURN label, value.count as count
 
 CALL db.relationshipTypes()
 YIELD relationshipType
-CALL apoc.cypher.run("MATCH ()-[:" + `relationshipType` + "]->() RETURN count(*) as count", null)
+CALL apoc.cypher.run("MATCH ()-[:" + `relationshipType` + "]->()
+                      RETURN count(*) as count", null)
 YIELD value
 RETURN relationshipType, value.count AS count
 
