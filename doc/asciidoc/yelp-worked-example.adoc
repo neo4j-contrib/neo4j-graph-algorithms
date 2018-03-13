@@ -1,7 +1,7 @@
 
 // tag::eda-hotels-intro[]
 It's always good fun reading hotel reviews so we're going to focus on businesses in that sector.
-We can find out how many businesses there are in this category by running the following query:
+We can find out how many businesses there are by running the following query:
 // end::eda-hotels-intro[]
 
 // tag::eda-hotels-intro-result[]
@@ -17,7 +17,7 @@ We can find out how many businesses there are in this category by running the fo
 
 // tag::eda-hotels-reviews[]
 
-How many reviews do hotels have?
+How many reviews do we have to work with?
 
 // end::eda-hotels-reviews[]
 
