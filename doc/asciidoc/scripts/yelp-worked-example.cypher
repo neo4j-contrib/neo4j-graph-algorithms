@@ -48,11 +48,11 @@ RETURN count(*) AS count
 
 MATCH (review:Review)-[:REVIEWS]->(business:Business),
       (business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
-WITH business, count(*) AS numberOfReviews, avg(review.stars) AS averageRating
+WITH business, count(*) AS reviews, avg(review.stars) AS averageRating
 ORDER BY numberOfReviews DESC
 LIMIT 10
 RETURN business.name AS business,
-       numberOfReviews,
+       reviews,
        apoc.math.round(averageRating,2) AS averageRating
 
 // end::eda-hotels-most-reviewed[]
