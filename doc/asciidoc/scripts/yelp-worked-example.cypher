@@ -21,7 +21,7 @@ RETURN relationshipType, value.count AS count
 
 // tag::eda-hotels-intro[]
 
-MATCH (category {name: "Hotels"})
+MATCH (category:Category {name: "Hotels"})
 RETURN size((category)<-[:IN_CATEGORY]-()) AS businesses
 
 // end::eda-hotels-intro[]
@@ -29,7 +29,7 @@ RETURN size((category)<-[:IN_CATEGORY]-()) AS businesses
 
 // tag::eda-hotels-cities[]
 
-MATCH (category {name: "Hotels"})<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(city)
+MATCH (category:Category {name: "Hotels"})<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(city)
 RETURN city.name AS city, count(*) as count
 ORDER BY count DESC
 LIMIT 10
