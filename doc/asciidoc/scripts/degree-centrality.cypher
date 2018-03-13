@@ -26,3 +26,11 @@ RETURN u.id AS name,
        size((u)<-[:FOLLOWS]-()) AS followers
 
 // end::stream-sample-graph[]
+
+
+// tag::write-sample-graph[]
+
+MATCH (u:User)
+set u.followers = size((u)<-[:FOLLOWS]-())
+
+// end::write-sample-graph[]
