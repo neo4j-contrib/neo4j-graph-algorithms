@@ -58,20 +58,20 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     
     public ShortestPathAStar compute(final long startNode, final long goalNode, final Direction direction) {
         reset();
-        final int _startNode = graph.toMappedNodeId(startNode);
-        final double _startlLat = getNodeCoordinate(_startNode, "latitude");
-        final double _startLon = getNodeCoordinate(_startNode, "longitude");
-        final int _goalNode = graph.toMappedNodeId(goalNode);
-        final double _goalLat = getNodeCoordinate(_goalNode, "latitude");
-		final double _goalLon = getNodeCoordinate(_goalNode, "longitude");
-		final double _heuristic = computeHeuristic(_startlLat, _startLon, _goalLat, _goalLon);
-        gCosts.put(_startNode, 0.0);
-        fCosts.put(_startNode, _heuristic);
-        openNodes.add(_startNode, 0.0);
-        run(_goalNode, _goalLat, _goalLon, direction);
-        if (path.containsKey(_goalNode)) {
-        		totalCost = gCosts.get(_goalNode);
-        		int node = _goalNode;
+        final int startNodeInternal = graph.toMappedNodeId(startNode);
+        final double startNodeLat = getNodeCoordinate(startNodeInternal, "latitude");
+        final double startNodeLon = getNodeCoordinate(startNodeInternal, "longitude");
+        final int goalNodeInternal = graph.toMappedNodeId(goalNode);
+        final double goalNodeLat = getNodeCoordinate(goalNodeInternal, "latitude");
+		final double goalNodeLon = getNodeCoordinate(goalNodeInternal, "longitude");
+		final double initialHeuristic = computeHeuristic(startNodeLat, startNodeLon, goalNodeLat, goalNodeLon);
+        gCosts.put(startNodeInternal, 0.0);
+        fCosts.put(startNodeInternal, initialHeuristic);
+        openNodes.add(startNodeInternal, 0.0);
+        run(goalNodeInternal, goalNodeLat, goalNodeLon, direction);
+        if (path.containsKey(goalNodeInternal)) {
+        		totalCost = gCosts.get(goalNodeInternal);
+        		int node = goalNodeInternal;
         		while (node != PATH_END) {
                 shortestPath.addFirst(node);
                 node = path.getOrDefault(node, PATH_END);
