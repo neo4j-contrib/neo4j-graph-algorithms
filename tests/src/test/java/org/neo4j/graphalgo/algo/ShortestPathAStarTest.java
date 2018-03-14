@@ -28,7 +28,7 @@ public class ShortestPathAStarTest {
 		 * 	    nG (1652NM) -> nH (2392NM) -> nX (2979NM)
 		 * Distance = 2979 NM
 		 * */
-        String createGraph =
+        final String createGraph =
                 "CREATE (nA:Node{name:'SINGAPORE', latitude:1.304444,longitude:103.717373})\n" +
                         "CREATE (nB:Node{name:'SINGAPORE STRAIT', latitude:1.1892, longitude:103.4689})\n" +
                         "CREATE (nC:Node{name:'WAYPOINT 68', latitude:8.83055556, longitude:111.8725})\n" +
@@ -83,12 +83,12 @@ public class ShortestPathAStarTest {
 	
 	@Test
     public void testAStarResult() throws Exception {
-		List<String> expectedNode = Arrays.asList("SINGAPORE", "SINGAPORE STRAIT", "WAYPOINT 68", 
+		final List<String> expectedNode = Arrays.asList("SINGAPORE", "SINGAPORE STRAIT", "WAYPOINT 68", 
 				"WAYPOINT 70", "WAYPOINT 74", "SOUTH CHINA SEA", "LUZON STRAIT", "WAYPOINT 87", "CHIBA");
-		List<Double> expectedDistance = Arrays.asList(0.0, 29.0, 723.0, 895.0, 996.0, 1353.0, 
+		final List<Double> expectedDistance = Arrays.asList(0.0, 29.0, 723.0, 895.0, 996.0, 1353.0, 
 				1652.0, 2392.0, 2979.0);
-		List<String> actualNode = new ArrayList<String>();
-		List<Double> actualDistance = new ArrayList<Double>(); 
+		final List<String> actualNode = new ArrayList<String>();
+		final List<Double> actualDistance = new ArrayList<Double>(); 
         db.execute(
                 "MATCH (start:Node{name:'SINGAPORE'}), (end:Node{name:'CHIBA'}) " +
                         "CALL algo.shortestPath.astar.stream(start, end, 'cost') " +
