@@ -2,13 +2,8 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.helpers.Exceptions;
 
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinTask;
-import java.util.stream.LongStream;
 
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
@@ -90,20 +85,6 @@ public final class HugeLongArrayTest extends RandomizedTest {
         final long freed = array.release();
 
         assertThat(freed, anyOf(is(expected), is(expected + 24)));
-    }
-
-    @Test
-    public void shouldStreamValues() {
-        int size = between(10, 20);
-        final long[] values = new long[size];
-        HugeLongArray array = newArray(size);
-        for (int i = 0; i < size; i++) {
-            final int value = between(42, 1337);
-            array.set(i, value);
-            values[i] = value;
-        }
-        final long[] actual = array.toStream().toArray();
-        assertArrayEquals(values, actual);
     }
 
     @Test
@@ -218,28 +199,6 @@ public final class HugeLongArrayTest extends RandomizedTest {
             assertEquals("negative index", e.getMessage());
         } catch (ArrayIndexOutOfBoundsException e) {
             // pass
-        }
-    }
-
-    @Test
-    public void shouldParallelStream() throws Throwable {
-        int size = between(500_000, 1_500_000);
-        HugeLongArray array = HugeLongArray.newPagedArray(size, AllocationTracker.EMPTY);
-        array.setAll(i -> i + 1L);
-
-        ForkJoinTask<Long> task = Pools.FJ_POOL.submit(() -> {
-            LongStream pStream = array.toStream().parallel();
-            assertTrue(pStream.isParallel());
-            return pStream.sum();
-        });
-        try {
-            long actual = task.get();
-            long sum = ((long) size * (long) (size + 1)) / 2L;
-            assertEquals(actual, sum);
-        } catch (ExecutionException e) {
-            throw Exceptions.rootCause(e);
-        } finally {
-            Pools.FJ_POOL.shutdownNow();
         }
     }
 
