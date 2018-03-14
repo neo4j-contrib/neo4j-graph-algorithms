@@ -3,14 +3,8 @@ package org.neo4j.graphalgo.core.utils.paged;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.function.IntToLongFunction;
-import java.util.function.LongConsumer;
 import java.util.function.LongUnaryOperator;
-import java.util.stream.LongStream;
-import java.util.stream.StreamSupport;
 
 /**
  * A long-indexable version of a primitive long array ({@code long[]}) that can contain more than 2 bn. elements.
@@ -147,16 +141,6 @@ public abstract class HugeLongArray {
     }
 
     /**
-     * Returns a {@link LongStream} of the underlying data.
-     * <p>
-     * The behavior is the same as for {@link Arrays#stream(long[])}.
-     */
-    public final LongStream toStream() {
-        final Spliterator.OfLong spliter = LongCursorSpliterator.of(this);
-        return StreamSupport.longStream(spliter, false);
-    }
-
-    /**
      * View of the underlying data, accessible as slices of {@code long[]} arrays.
      * The values are from {@code array[offset]} (inclusive) until {@code array[limit]} (exclusive).
      * The range might match complete array, but that isn't guaranteed.
@@ -200,75 +184,6 @@ public abstract class HugeLongArray {
         @Override
         public long toLong(final HugeLongArray data, final long nodeId) {
             return data.get(nodeId);
-        }
-    }
-
-    static final class LongCursorSpliterator implements Spliterator.OfLong {
-        private final Cursor cursor;
-        private final int characteristics;
-
-        static Spliterator.OfLong of(HugeLongArray array) {
-            Cursor cursor = array.cursor(0, array.newCursor());
-            if (cursor.next()) {
-                return new LongCursorSpliterator(cursor);
-            }
-            return Spliterators.emptyLongSpliterator();
-
-        }
-
-        private LongCursorSpliterator(Cursor cursor) {
-            this.cursor = cursor;
-            this.characteristics = Spliterator.ORDERED | Spliterator.IMMUTABLE;
-        }
-
-        @Override
-        public OfLong trySplit() {
-            final long[] array = cursor.array;
-            final int offset = cursor.offset;
-            final int limit = cursor.limit;
-            if (cursor.next()) {
-                return Spliterators.spliterator(array, offset, limit, characteristics);
-            }
-            return null;
-        }
-
-        @Override
-        public void forEachRemaining(LongConsumer action) {
-            do {
-                final long[] array = cursor.array;
-                final int offset = cursor.offset;
-                final int limit = cursor.limit;
-                for (int i = offset; i < limit; i++) {
-                    action.accept(array[i]);
-                }
-            } while (cursor.next());
-        }
-
-        @Override
-        public boolean tryAdvance(LongConsumer action) {
-            do {
-                final int index = cursor.offset++;
-                if (index < cursor.limit) {
-                    action.accept(cursor.array[index]);
-                    return true;
-                }
-            } while (cursor.next());
-            return false;
-        }
-
-        @Override
-        public long estimateSize() {
-            return Long.MAX_VALUE;
-        }
-
-        @Override
-        public int characteristics() {
-            return characteristics;
-        }
-
-        @Override
-        public Comparator<? super Long> getComparator() {
-            return null;
         }
     }
 
