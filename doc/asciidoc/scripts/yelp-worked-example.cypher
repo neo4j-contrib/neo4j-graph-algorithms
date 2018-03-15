@@ -137,3 +137,19 @@ ORDER BY count DESC
 LIMIT 10
 
 // end::lpa-hotels-vegas[]
+
+// tag::lpa-hotels-vegas-good-businesses[]
+
+MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory),
+      (otherCategory)<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(:City {name: "Las Vegas"})
+WITH otherCategory, count(*) AS count,
+     collect(business) AS businesses,
+     apoc.coll.avg(collect(business.averageStars)) AS categoryAverageStars
+ORDER BY count DESC
+LIMIT 10
+WITH otherCategory,
+     [business in businesses where business.averageStars >= categoryAverageStars] AS goodBusinesses
+return otherCategory.name AS otherCategory,
+       [business in goodBusinesses | business.name][toInteger(rand() * size(goodBusinesses))] AS business
+
+// end::lpa-hotels-vegas-good-businesses[]
