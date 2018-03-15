@@ -47,21 +47,20 @@ import java.util.concurrent.TimeUnit;
 public class MSBFSComparisonBenchmark {
 
     @Param({
-            "_1024_32",
+            "_1024_64",
             "_1024_128",
             "_1024_1024",
-            "_1024",
-            "_8192_32",
-            "_8192_128",
-//            "_8192_1024",
-//            "_8192_8192",
-//            "_8192",
-//            "_16384_32",
+
+            "_4096_64",
+            "_4096_128",
+            "_4096_1024",
+            "_4096_4096",
+
+//            "_16384_64",
 //            "_16384_128",
 //            "_16384_1024",
-//            "_16384_8192",
+//            "_16384_4096",
 //            "_16384_16384",
-//            "_16384"
     })
     public MSBFSSource source;
 
@@ -71,7 +70,7 @@ public class MSBFSComparisonBenchmark {
     }
 
     @Benchmark
-    public MsBFSAlgo _01_normal(Blackhole bh) throws Throwable {
+    public MsBFSAlgo default_msbfs(Blackhole bh) throws Throwable {
         MultiSourceBFS msbfs = new MultiSourceBFS(
                 source.nodes,
                 source.rels,
@@ -82,7 +81,7 @@ public class MSBFSComparisonBenchmark {
     }
 
     @Benchmark
-    public MsBFSAlgo _02_huge(Blackhole bh) throws Throwable {
+    public MsBFSAlgo huge_msbfs(Blackhole bh) throws Throwable {
         HugeMultiSourceBFS msbfs = new HugeMultiSourceBFS(
                 source.hugeNodes,
                 source.hugeRels,
