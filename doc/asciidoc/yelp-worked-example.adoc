@@ -119,3 +119,21 @@ The following query will execute the page rank algorithm over users that reviewe
 | WROTE   | 5261669
 |===
 // end::eda-rels-result[]
+
+// tag::lpa-hotels-result[]
+.Results
+[opts="header",cols="1"]
+|===
+| otherCategory
+| Bed & Breakfast
+| Private Jet Charter
+| Ski Resorts
+| Car Rental
+| RV Parks
+| Motorcycle Rental
+| Bus Rental
+| Scooter Tours
+| Historical Tours
+| Trains
+|===
+// end::lpa-hotels-result[]
