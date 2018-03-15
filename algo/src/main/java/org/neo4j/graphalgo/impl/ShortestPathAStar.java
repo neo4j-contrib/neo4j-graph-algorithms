@@ -20,7 +20,7 @@ import com.carrotsearch.hppc.IntIntScatterMap;
 
 public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
 	
-	private GraphDatabaseAPI dbService;
+	private final GraphDatabaseAPI dbService;
 	private static final int PATH_END = -1;
 	
 	private Graph graph;
@@ -32,11 +32,11 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     private IntIntMap path;
     private IntArrayDeque shortestPath;
     private SimpleBitSet closedNodes;
-    private ProgressLogger progressLogger;
+    private final ProgressLogger progressLogger;
 	
     public static final double NO_PATH_FOUND = -1.0;
     
-    public ShortestPathAStar(Graph graph, GraphDatabaseAPI dbService) {
+    public ShortestPathAStar(final Graph graph, final GraphDatabaseAPI dbService) {
     		this.graph = graph;
     		this.dbService = dbService;
         nodeCount = Math.toIntExact(graph.nodeCount());
@@ -52,26 +52,26 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         progressLogger = getProgressLogger();
     }
     
-    public ShortestPathAStar compute(long startNode, long goalNode) {
+    public ShortestPathAStar compute(final long startNode, final long goalNode) {
         return compute(startNode, goalNode, Direction.BOTH);
     }
     
-    public ShortestPathAStar compute(long startNode, long goalNode, Direction direction) {
+    public ShortestPathAStar compute(final long startNode, final long goalNode, final Direction direction) {
         reset();
-        int _startNode = graph.toMappedNodeId(startNode);
-        double _startlLat = getNodeCoordinate(_startNode, "latitude");
-        double _startLon = getNodeCoordinate(_startNode, "longitude");
-        int _goalNode = graph.toMappedNodeId(goalNode);
-        double _goalLat = getNodeCoordinate(_goalNode, "latitude");
-		double _goalLon = getNodeCoordinate(_goalNode, "longitude");
-		double _heuristic = computeHeuristic(_startlLat, _startLon, _goalLat, _goalLon);
-        gCosts.put(_startNode, 0.0);
-        fCosts.put(_startNode, _heuristic);
-        openNodes.add(_startNode, 0.0);
-        run(_goalNode, _goalLat, _goalLon, direction);
-        if (path.containsKey(_goalNode)) {
-        		totalCost = gCosts.get(_goalNode);
-        		int node = _goalNode;
+        final int startNodeInternal = graph.toMappedNodeId(startNode);
+        final double startNodeLat = getNodeCoordinate(startNodeInternal, "latitude");
+        final double startNodeLon = getNodeCoordinate(startNodeInternal, "longitude");
+        final int goalNodeInternal = graph.toMappedNodeId(goalNode);
+        final double goalNodeLat = getNodeCoordinate(goalNodeInternal, "latitude");
+		final double goalNodeLon = getNodeCoordinate(goalNodeInternal, "longitude");
+		final double initialHeuristic = computeHeuristic(startNodeLat, startNodeLon, goalNodeLat, goalNodeLon);
+        gCosts.put(startNodeInternal, 0.0);
+        fCosts.put(startNodeInternal, initialHeuristic);
+        openNodes.add(startNodeInternal, 0.0);
+        run(goalNodeInternal, goalNodeLat, goalNodeLon, direction);
+        if (path.containsKey(goalNodeInternal)) {
+        		totalCost = gCosts.get(goalNodeInternal);
+        		int node = goalNodeInternal;
         		while (node != PATH_END) {
                 shortestPath.addFirst(node);
                 node = path.getOrDefault(node, PATH_END);
@@ -80,7 +80,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         return this;
     }
     
-    private void run(int goalNodeId, double goalLat, double goalLon, Direction direction) {
+    private void run(final int goalNodeId, final double goalLat, final double goalLon, final Direction direction) {
         while (!openNodes.isEmpty() && running()) {
             int currentNodeId = openNodes.pop();
             if (currentNodeId == goalNodeId) {
@@ -105,27 +105,27 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         }
     }
     
-    private double computeHeuristic(double lat1, double lon1, double lat2, double lon2) {
+    private double computeHeuristic(final double lat1, final double lon1, final double lat2, final double lon2) {
     		final int earthRadius = 6371;
     		final double kmToNM = 0.539957;
-    		double latDistance = Math.toRadians(lat2 - lat1);
-    		double lonDistance = Math.toRadians(lon2 - lon1);
-    		double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+    		final double latDistance = Math.toRadians(lat2 - lat1);
+    		final double lonDistance = Math.toRadians(lon2 - lon1);
+    		final double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
     	            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
     	            * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-    	    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    	    double distance = earthRadius * c * kmToNM;
+    	    final double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    	    final double distance = earthRadius * c * kmToNM;
     	    return distance;
     }
     
-    private double getNodeCoordinate(int nodeId, String coordinateType) {
-    		long neo4jId = graph.toOriginalNodeId(nodeId);
-    		Node node = dbService.getNodeById(neo4jId);
+    private double getNodeCoordinate(final int nodeId, final String coordinateType) {
+    		final long neo4jId = graph.toOriginalNodeId(nodeId);
+    		final Node node = dbService.getNodeById(neo4jId);
     		return (double) node.getProperty(coordinateType);
     }
     
-    private void updateCosts(int source, int target, double newCost, double heuristic) {
-        double oldCost = gCosts.getOrDefault(target, Double.MAX_VALUE);
+    private void updateCosts(final int source, final int target, final double newCost, final double heuristic) {
+        final double oldCost = gCosts.getOrDefault(target, Double.MAX_VALUE);
         if (newCost < oldCost) {
             gCosts.put(target, newCost);
             fCosts.put(target, newCost + heuristic);
