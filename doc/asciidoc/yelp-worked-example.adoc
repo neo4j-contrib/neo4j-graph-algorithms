@@ -137,3 +137,20 @@ The following query will execute the page rank algorithm over users that reviewe
 | Trains
 |===
 // end::lpa-hotels-result[]
+
+// tag::lpa-hotels-vegas-result[]
+.Results
+[opts="header",cols="1"]
+|===
+| Event Planning & Services | 1608
+| Venues & Event Spaces    | 228
+| Insurance                | 211
+| Tours                    | 189
+| Transportation           | 176
+| Car Rental               | 160
+| Travel Services          | 96
+| Limos                    | 84
+| Resorts                  | 73
+| Airport Shuttles         | 52
+|===
+// end::lpa-hotels-vegas-result[]

@@ -124,5 +124,15 @@ MERGE (c)-[:IN_SUPER_CATEGORY]->(sc)
 // tag::lpa-hotels[]
 MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
 RETURN otherCategory.name AS otherCategory
-LIMIT 10
+LIMIT 5
 // end::lpa-hotels[]
+
+
+// tag::lpa-hotels-vegas[]
+MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
+RETURN otherCategory.name AS otherCategory,
+       size((otherCategory)<-[:IN_CATEGORY]-()-[:IN_CITY]->(:City {name: "Las Vegas"})) AS count
+ORDER BY count DESC
+LIMIT 10
+
+// end::lpa-hotels-vegas[]
