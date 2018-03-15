@@ -117,6 +117,6 @@ CALL algo.labelPropagation.stream(
 YIELD nodeId, label
 MATCH (c:Category) WHERE id(c) = nodeId
 MERGE (sc:SuperCategory {name: "SuperCategory-" + label})
-MERGE (c)-[:IN_SUPER_CATEGORY]->(cg)
+MERGE (c)-[:IN_SUPER_CATEGORY]->(sc)
 
 // end::lpa-super-category[]
