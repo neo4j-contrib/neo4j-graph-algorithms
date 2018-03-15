@@ -123,16 +123,20 @@ MERGE (c)-[:IN_SUPER_CATEGORY]->(sc)
 // end::lpa-super-category[]
 
 // tag::lpa-hotels[]
-MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
+MATCH (hotels:Category {name: "Hotels"}),
+      (hotels)-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
 RETURN otherCategory.name AS otherCategory
 LIMIT 5
 // end::lpa-hotels[]
 
 
 // tag::lpa-hotels-vegas[]
-MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
+
+MATCH (hotels:Category {name: "Hotels"}),
+      (hotels)-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
 RETURN otherCategory.name AS otherCategory,
-       size((otherCategory)<-[:IN_CATEGORY]-()-[:IN_CITY]->(:City {name: "Las Vegas"})) AS count
+       size((otherCategory)<-[:IN_CATEGORY]-()-[:IN_CITY]->
+            (:City {name: "Las Vegas"})) AS count
 ORDER BY count DESC
 LIMIT 10
 
@@ -140,16 +144,18 @@ LIMIT 10
 
 // tag::lpa-hotels-vegas-good-businesses[]
 
-MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory),
-      (otherCategory)<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(:City {name: "Las Vegas"})
+MATCH (hotels:Category {name: "Hotels"}),
+      (lasVegas:City {name: "Las Vegas"}),
+      (hotels)-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory),
+      (otherCategory)<-[:IN_CATEGORY]-(business)-[:IN_CITY]->(lasVegas)
 WITH otherCategory, count(*) AS count,
      collect(business) AS businesses,
      apoc.coll.avg(collect(business.averageStars)) AS categoryAverageStars
 ORDER BY count DESC
 LIMIT 10
 WITH otherCategory,
-     [business in businesses where business.averageStars >= categoryAverageStars] AS goodBusinesses
+     [b in businesses where b.averageStars >= categoryAverageStars] AS businesses
 return otherCategory.name AS otherCategory,
-       [business in goodBusinesses | business.name][toInteger(rand() * size(goodBusinesses))] AS business
+       [b in businesses | b.name][toInteger(rand() * size(businesses))] AS business
 
 // end::lpa-hotels-vegas-good-businesses[]
