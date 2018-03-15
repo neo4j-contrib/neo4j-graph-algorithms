@@ -56,6 +56,15 @@ public abstract class HugeLongArray {
     abstract public void or(long index, final long value);
 
     /**
+     * Computes the bit-wise AND ({@code &}) of the existing value and the provided value at the given index.
+     * If there was no previous value, the final result is set to the 0 ({@code x & 0 == 0}).
+     *
+     * @throws ArrayIndexOutOfBoundsException if the index is not within {@link #size()}
+     * @return the now current value after the operation
+     */
+    abstract public long and(long index, final long value);
+
+    /**
      * Adds ({@code +}) the existing value and the provided value at the given index and stored the result into the given index.
      * If there was no previous value, the final result is set to the provided value ({@code x + 0 == x}).
      *
@@ -76,6 +85,13 @@ public abstract class HugeLongArray {
      * The behavior is identical to {@link Arrays#fill(long[], long)}.
      */
     abstract public void fill(long value);
+
+    /**
+     * Copies the content of this array into the target array.
+     * <p>
+     * The behavior is identical to {@link System#arraycopy(Object, int, Object, int, int)}.
+     */
+    abstract public void copyTo(final HugeLongArray dest, long length);
 
     /**
      * Returns the length of this array.
@@ -102,16 +118,20 @@ public abstract class HugeLongArray {
     /**
      * Returns a new {@link Cursor} for this array. The cursor is not positioned and in an invalid state.
      * You must call {@link Cursor#next()} first to position the cursor to a valid state.
+     * Obtaining a {@link Cursor} for an empty array (where {@link #size()} returns {@code 0}) is undefined and
+     * might result in a {@link NullPointerException} or another {@link RuntimeException}.
      */
     abstract public Cursor newCursor();
 
     /**
-     * Resets the {@link Cursor} to a new position, beginning from the provided index until {@link #size()}.
+     * Resets the {@link Cursor} to range from index 0 until {@link #size()}.
      * The returned cursor is not positioned and in an invalid state.
      * You must call {@link Cursor#next()} first to position the cursor to a valid state.
      * The returned cursor might be the reference-same ({@code ==}) one as the provided one.
+     * Resetting the {@link Cursor} of an empty array (where {@link #size()} returns {@code 0}) is undefined and
+     * might result in a {@link NullPointerException} or another {@link RuntimeException}.
      */
-    abstract public Cursor cursor(long from, Cursor cursor);
+    abstract public Cursor cursor(Cursor cursor);
 
     /**
      * Creates a new array if the given size, tracking the memory requirements into the given {@link AllocationTracker}.
@@ -150,8 +170,13 @@ public abstract class HugeLongArray {
      */
     public static abstract class Cursor implements AutoCloseable {
 
+        /** the base for the index to get the global index */
+        public long base;
+        /** a slice of values currently being traversed */
         public long[] array;
-        public int offset;
+        /** the offset into the array */
+        public final int offset = 0;
+        /** the limit of the array, exclusive – the first index not to be contained */
         public int limit;
 
         Cursor() {
@@ -159,7 +184,7 @@ public abstract class HugeLongArray {
 
         /**
          * Try to load the next page and return the success of this load.
-         * Once the method returns {@code false}, this method will never return {@code true} again until the cursor is reset using {@link #cursor(long, Cursor)}.
+         * Once the method returns {@code false}, this method will never return {@code true} again until the cursor is reset using {@link #cursor(Cursor)}.
          * The cursor behavior is not defined and might be unusable and throw exceptions after this method returns {@code false}.
          *
          * @return true, iff the cursor is still valid on contains new data; false if there is no more data.
@@ -230,6 +255,12 @@ public abstract class HugeLongArray {
         }
 
         @Override
+        public long and(long index, final long value) {
+            assert index < size;
+            return page[(int) index] &= value;
+        }
+
+        @Override
         public void addTo(long index, long value) {
             assert index < size;
             page[(int) index] += value;
@@ -243,6 +274,38 @@ public abstract class HugeLongArray {
         @Override
         public void fill(long value) {
             Arrays.fill(page, value);
+        }
+
+        @Override
+        public void copyTo(HugeLongArray dest, long length) {
+            if (length > size) {
+                length = size;
+            }
+            if (length > dest.size()) {
+                length = dest.size();
+            }
+            if (dest instanceof SingleHugeLongArray) {
+                SingleHugeLongArray dst = (SingleHugeLongArray) dest;
+                System.arraycopy(page, 0, dst.page, 0, (int) length);
+                Arrays.fill(dst.page, (int) length, dst.size, 0L);
+            } else if (dest instanceof PagedHugeLongArray) {
+                PagedHugeLongArray dst = (PagedHugeLongArray) dest;
+                int start = 0;
+                int remaining = (int) length;
+                for (long[] dstPage : dst.pages) {
+                    int toCopy = Math.min(remaining, dstPage.length);
+                    if (toCopy == 0) {
+                        Arrays.fill(page, 0L);
+                    } else {
+                        System.arraycopy(page, start, dstPage, 0, toCopy);
+                        if (toCopy < dstPage.length) {
+                            Arrays.fill(dstPage, toCopy, dstPage.length, 0L);
+                        }
+                        start += toCopy;
+                        remaining -= toCopy;
+                    }
+                }
+            }
         }
 
         @Override
@@ -265,9 +328,9 @@ public abstract class HugeLongArray {
         }
 
         @Override
-        public Cursor cursor(final long from, final Cursor cursor) {
+        public Cursor cursor(final Cursor cursor) {
             assert cursor instanceof SingleCursor;
-            ((SingleCursor) cursor).init(from);
+            ((SingleCursor) cursor).init();
             return cursor;
         }
 
@@ -278,18 +341,12 @@ public abstract class HugeLongArray {
             private SingleCursor(final long[] page) {
                 super();
                 this.array = page;
+                this.base = 0L;
                 this.limit = page.length;
             }
 
-            private void init(long fromIndex) {
-                assert fromIndex >= 0 : "negative index";
-                if (fromIndex < limit) {
-                    offset = (int) fromIndex;
-                    exhausted = false;
-                } else {
-                    offset = limit;
-                    exhausted = true;
-                }
+            private void init() {
+                exhausted = false;
             }
 
             public final boolean next() {
@@ -303,9 +360,7 @@ public abstract class HugeLongArray {
             @Override
             public void close() {
                 array = null;
-                offset = 0;
                 limit = 0;
-
                 exhausted = true;
             }
         }
@@ -372,6 +427,14 @@ public abstract class HugeLongArray {
         }
 
         @Override
+        public long and(long index, final long value) {
+            assert index < size;
+            final int pageIndex = pageIndex(index);
+            final int indexInPage = indexInPage(index);
+            return pages[pageIndex][indexInPage] &= value;
+        }
+
+        @Override
         public void addTo(long index, long value) {
             assert index < size;
             final int pageIndex = pageIndex(index);
@@ -395,6 +458,49 @@ public abstract class HugeLongArray {
         }
 
         @Override
+        public void copyTo(HugeLongArray dest, long length) {
+            if (length > size) {
+                length = size;
+            }
+            if (length > dest.size()) {
+                length = dest.size();
+            }
+            if (dest instanceof SingleHugeLongArray) {
+                SingleHugeLongArray dst = (SingleHugeLongArray) dest;
+                int start = 0;
+                int remaining = (int) length;
+                for (long[] page : pages) {
+                    int toCopy = Math.min(remaining, page.length);
+                    if (toCopy == 0) {
+                        break;
+                    }
+                    System.arraycopy(page, 0, dst.page, start, toCopy);
+                    start += toCopy;
+                    remaining -= toCopy;
+                }
+                Arrays.fill(dst.page, start, dst.size, 0L);
+            } else if (dest instanceof PagedHugeLongArray) {
+                PagedHugeLongArray dst = (PagedHugeLongArray) dest;
+                int pageLen = Math.min(pages.length, dst.pages.length);
+                int lastPage = pageLen - 1;
+                long remaining = length;
+                for (int i = 0; i < lastPage; i++) {
+                    long[] page = pages[i];
+                    long[] dstPage = dst.pages[i];
+                    System.arraycopy(page, 0, dstPage, 0, page.length);
+                    remaining -= page.length;
+                }
+                if (remaining > 0) {
+                    System.arraycopy(pages[lastPage], 0, dst.pages[lastPage], 0, (int) remaining);
+                    Arrays.fill(dst.pages[lastPage], (int) remaining, dst.pages[lastPage].length, 0L);
+                }
+                for (int i = pageLen; i < dst.pages.length; i++) {
+                    Arrays.fill(dst.pages[i], 0L);
+                }
+            }
+        }
+
+        @Override
         public long size() {
             return size;
         }
@@ -414,9 +520,9 @@ public abstract class HugeLongArray {
         }
 
         @Override
-        public Cursor cursor(final long from, final Cursor cursor) {
+        public Cursor cursor(final Cursor cursor) {
             assert cursor instanceof PagedCursor;
-            ((PagedCursor) cursor).init(from);
+            ((PagedCursor) cursor).init();
             return cursor;
         }
 
@@ -429,8 +535,6 @@ public abstract class HugeLongArray {
         }
 
         private static final class PagedCursor extends Cursor {
-
-            private static final long[] EMPTY = new long[0];
 
             private long[][] pages;
             private int maxPage;
@@ -446,20 +550,12 @@ public abstract class HugeLongArray {
                 this.pages = pages;
             }
 
-            private void init(long fromIndex) {
-                assert fromIndex >= 0 : "negative index";
-                if (fromIndex < capacity) {
-                    fromPage = pageIndex(fromIndex);
-                    array = pages[fromPage];
-                    offset = indexInPage(fromIndex);
-                    limit = (int) Math.min(PAGE_SIZE, capacity);
-                    page = fromPage - 1;
-                } else {
-                    page = maxPage;
-                    array = EMPTY;
-                    offset = 0;
-                    limit = 0;
-                }
+            private void init() {
+                fromPage = 0;
+                array = pages[0];
+                base = 0L;
+                limit = (int) Math.min(PAGE_SIZE, capacity);
+                page = -1;
             }
 
             public final boolean next() {
@@ -470,8 +566,8 @@ public abstract class HugeLongArray {
                 if (current > maxPage) {
                     return false;
                 }
+                base += PAGE_SIZE;
                 array = pages[current];
-                offset = 0;
                 limit = array.length;
                 return true;
             }
@@ -479,10 +575,9 @@ public abstract class HugeLongArray {
             @Override
             public void close() {
                 array = null;
-                offset = 0;
-                limit = 0;
-
                 pages = null;
+                base = 0L;
+                limit = 0;
                 capacity = 0L;
                 maxPage = -1;
                 fromPage = -1;
