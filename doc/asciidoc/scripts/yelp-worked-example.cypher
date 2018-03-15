@@ -132,10 +132,10 @@ LIMIT 5
 // tag::lpa-hotels-vegas[]
 
 MATCH (hotels:Category {name: "Hotels"}),
+      (lasVegas:City {name: "Las Vegas"}),
       (hotels)-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
 RETURN otherCategory.name AS otherCategory,
-       size((otherCategory)<-[:IN_CATEGORY]-()-[:IN_CITY]->
-            (:City {name: "Las Vegas"})) AS count
+       size((otherCategory)<-[:IN_CATEGORY]-()-[:IN_CITY]->(lasVegas)) AS count
 ORDER BY count DESC
 LIMIT 10
 
