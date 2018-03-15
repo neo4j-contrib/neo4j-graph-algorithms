@@ -155,7 +155,7 @@ ORDER BY count DESC
 LIMIT 10
 WITH otherCategory,
      [b in businesses where b.averageStars >= categoryAverageStars] AS businesses
-return otherCategory.name AS otherCategory,
+RETURN otherCategory.name AS otherCategory,
        [b in businesses | b.name][toInteger(rand() * size(businesses))] AS business
 
 // end::lpa-hotels-vegas-good-businesses[]
