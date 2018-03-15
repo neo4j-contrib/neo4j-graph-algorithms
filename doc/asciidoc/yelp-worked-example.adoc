@@ -161,15 +161,15 @@ The following query will execute the page rank algorithm over users that reviewe
 [opts="header",cols="1,1"]
 |===
 | otherCategory | business
-|Event Planning & Services | Viva Las Vegastamps             |
-|Venues & Event Spaces     | VIP Golf Services               |
-|Insurance                 | Desert Shores Insurance Services|
-|Tours                    | Annie Bananie Las Vegas Tours  |
-|Transportation           | Sinderella Coach                |
-|Car Rental               | Hertz Rent A Car                |
-|Travel Services          | MW Travel Vegas                 |
-|Limos                    | Vegas Limousine Service         |
-|Resorts                  | Encore                          |
-|Airport Shuttles         | Presidential Limousine          |
+|Event Planning & Services | Viva Las Vegastamps
+|Venues & Event Spaces     | VIP Golf Services
+|Insurance                 | Desert Shores Insurance Services
+|Tours                    | Annie Bananie Las Vegas Tours
+|Transportation           | Sinderella Coach                
+|Car Rental               | Hertz Rent A Car                
+|Travel Services          | MW Travel Vegas                 
+|Limos                    | Vegas Limousine Service         
+|Resorts                  | Encore                          
+|Airport Shuttles         | Presidential Limousine          
 |===
 // end::lpa-hotels-vegas-good-businesses-result[]
