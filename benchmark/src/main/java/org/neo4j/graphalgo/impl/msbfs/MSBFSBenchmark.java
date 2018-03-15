@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.impl.msbfs;
 
+import org.neo4j.graphalgo.bench.RunSafely;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -42,25 +43,24 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class MSBFSBenchmark {
 
     @Param({
-            "_1024_32",
-            "_1024_128",
+//            "_1024_64",
+//            "_1024_128",
             "_1024_1024",
-            "_1024",
-            "_8192_32",
-            "_8192_128",
-            "_8192_1024",
-            "_8192_8192",
-            "_8192",
-//            "_16384_32",
+
+//            "_4096_64",
+//            "_4096_128",
+//            "_4096_1024",
+            "_4096_4096",
+
+//            "_16384_64",
 //            "_16384_128",
 //            "_16384_1024",
-//            "_16384_8192",
-//            "_16384_16384",
-//            "_16384"
+//            "_16384_4096",
+            "_16384_16384",
     })
     public MSBFSSource source;
 
@@ -77,19 +77,7 @@ public class MSBFSBenchmark {
                 Direction.OUTGOING,
                 consume(bh),
                 source.sources);
-        try {
-            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
-        } catch (StackOverflowError e) {
-            Throwable error = e;
-            Pools.DEFAULT.shutdownNow();
-            try {
-                Pools.DEFAULT.awaitTermination(10, TimeUnit.MINUTES);
-            } catch (InterruptedException e1) {
-                e1.addSuppressed(e);
-                error = e1;
-            }
-            throw error;
-        }
+        RunSafely.runSafe(() -> msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
         return msbfs;
     }
 
