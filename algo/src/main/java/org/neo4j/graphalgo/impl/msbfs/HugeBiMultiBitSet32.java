@@ -103,13 +103,16 @@ final class HugeBiMultiBitSet32 {
      * If there aren't any nodes that have any bit set (all sets are empty), return -2.
      */
     long nextSetNodeId(long fromNodeId) {
-        final HugeLongArray.Cursor cursor = bits.cursor(fromNodeId, this.cursor);
-        long n = fromNodeId;
+        final HugeLongArray.Cursor cursor = bits.cursor(this.cursor);
+        long n = 0L;
         while (cursor.next()) {
             final long[] array = cursor.array;
             final int offset = cursor.offset;
             final int limit = cursor.limit;
             for (int i = offset; i < limit; i++, n++) {
+                if (n < fromNodeId) {
+                    continue;
+                }
                 if (((int) array[i]) != 0) {
                     return n;
                 }
@@ -169,7 +172,7 @@ final class HugeBiMultiBitSet32 {
      */
     boolean copyInto(final HugeMultiBitSet32 target) {
         boolean didCopy = false;
-        final HugeLongArray.Cursor cursor = bits.cursor(0, this.cursor);
+        final HugeLongArray.Cursor cursor = bits.cursor(this.cursor);
         final IntArray.BulkAdder bulkAdder = target.bulkAdder();
         while (cursor.next()) {
             final long[] array = cursor.array;
