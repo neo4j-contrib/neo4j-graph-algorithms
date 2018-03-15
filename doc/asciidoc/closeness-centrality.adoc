@@ -33,17 +33,11 @@ The formula for *normalized closeness centrality* is as follows:
 == When to use it / use-cases
 
 // tag::use-case[]
-This algorithm is useful for finding the nodes that can access the entire network most quickly.
 
-We might use it if we're trying to identify where in the city to place a new public service so that it's easily accessible for residents.
-If we're trying to spread a message on social media we could use the algorithm to find the key influencers that can help us achieve our goal.
+* Closeness centrality is used to research organizational networks where individuals with high closeness centrality are in a favourable position to act independantly, control and acquire vital information and resources within the organization. One such study is [http://www.orgnet.com/MappingTerroristNetworks.pdf]Mapping Networks of Terrorist Cells by Valdis E. Krebs.
+* Closeness centrality can be intepreted as an estimated time of arrival of information flowing through telecommunications or package delivery network where information flows through shortest paths to a predefined target and networks where information spreads through all shortest paths simultaneously like infection spreading through a social network. Find more details in http://www.analytictech.com/borgatti/papers/centflow.pdf[Centrality and network flow] by Stephen P. Borgatti.
+* Closeness centrality has been used to estimate importance of words in a document based on graph-based keyphrase extraction process. This process is described by Florian Boudin in https://www.aclweb.org/anthology/I/I13/I13-1102.pdf[A Comparison of Centrality Measures for Graph-Based Keyphrase Extraction].
 
-This measure is preferable to degree centrality, because takes both indirected and direct connections into account.
-For closeness centrality in directed networks, we split the concept into in-closeness and out-closeness.
-The in-closeness variable measures the extent to which a node is easily reached by others
-i.e. paths from others to the node
-The out-closeness variable measures the extent to which a node can easily reach others
-i.e paths from the node to others
 // end::use-case[]
 
 == Constraints / when not to use it
