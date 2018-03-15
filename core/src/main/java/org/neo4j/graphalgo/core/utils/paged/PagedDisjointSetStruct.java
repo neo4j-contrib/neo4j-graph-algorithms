@@ -90,7 +90,7 @@ public final class PagedDisjointSetStruct {
             throw new IllegalArgumentException("Different Capacity");
         }
 
-        HugeLongArray.Cursor others = other.parent.cursor(0, other.parent.newCursor());
+        HugeLongArray.Cursor others = other.parent.cursor(other.parent.newCursor());
         long i = 0L;
         while (others.next()) {
             long[] array = others.array;
