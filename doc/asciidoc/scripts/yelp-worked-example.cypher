@@ -120,3 +120,9 @@ MERGE (sc:SuperCategory {name: "SuperCategory-" + label})
 MERGE (c)-[:IN_SUPER_CATEGORY]->(sc)
 
 // end::lpa-super-category[]
+
+// tag::lpa-hotels[]
+MATCH (:Category {name: "Hotels"})-[:IN_SUPER_CATEGORY]->()<-[:IN_SUPER_CATEGORY]-(otherCategory)
+RETURN otherCategory.name AS otherCategory
+LIMIT 10
+// end::lpa-hotels[]
