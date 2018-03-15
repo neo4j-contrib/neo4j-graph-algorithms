@@ -140,8 +140,9 @@ The following query will execute the page rank algorithm over users that reviewe
 
 // tag::lpa-hotels-vegas-result[]
 .Results
-[opts="header",cols="1"]
+[opts="header",cols="2,1"]
 |===
+| otherCategory | count
 | Event Planning & Services | 1608
 | Venues & Event Spaces    | 228
 | Insurance                | 211
@@ -157,17 +158,18 @@ The following query will execute the page rank algorithm over users that reviewe
 
 // tag::lpa-hotels-vegas-good-businesses-result[]
 .Results
-[opts="header",cols="1"]
+[opts="header",cols="1,1"]
 |===
-|Event Planning & Services |Viva Las Vegastamps             |
-|Venues & Event Spaces     |VIP Golf Services               |
-|Insurance                 |Desert Shores Insurance Services|
-|Tours                    |Annie Bananie Las Vegas Tours  |
-|Transportation           |Sinderella Coach                |
-|Car Rental               |Hertz Rent A Car                |
-|Travel Services          |MW Travel Vegas                 |
-|Limos                    |Vegas Limousine Service         |
-|Resorts                  |Encore                          |
-|Airport Shuttles         |Presidential Limousine          |
+| otherCategory | business
+|Event Planning & Services | Viva Las Vegastamps             |
+|Venues & Event Spaces     | VIP Golf Services               |
+|Insurance                 | Desert Shores Insurance Services|
+|Tours                    | Annie Bananie Las Vegas Tours  |
+|Transportation           | Sinderella Coach                |
+|Car Rental               | Hertz Rent A Car                |
+|Travel Services          | MW Travel Vegas                 |
+|Limos                    | Vegas Limousine Service         |
+|Resorts                  | Encore                          |
+|Airport Shuttles         | Presidential Limousine          |
 |===
 // end::lpa-hotels-vegas-good-businesses-result[]
