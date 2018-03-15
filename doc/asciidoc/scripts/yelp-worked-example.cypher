@@ -106,7 +106,7 @@ LIMIT 5
 
 // end::caesars[]
 
-// tag::category-groups[]
+// tag::lpa-super-category[]
 
 CALL algo.labelPropagation.stream(
   "MATCH (c:Category) RETURN id(c) AS id",
@@ -116,7 +116,7 @@ CALL algo.labelPropagation.stream(
    {graph: "cypher"})
 YIELD nodeId, label
 MATCH (c:Category) WHERE id(c) = nodeId
-MERGE (cg:CategoryGroup {name: "CategoryGroup " + label})
-MERGE (c)-[:IN_GROUP]->(cg)
+MERGE (sc:SuperCategory {name: "SuperCategory-" + label})
+MERGE (c)-[:IN_SUPER_CATEGORY]->(cg)
 
-// end::category-groups[]
+// end::lpa-super-category[]
