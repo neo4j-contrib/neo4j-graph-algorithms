@@ -27,7 +27,7 @@ The single source shortest path algorithm has found uses in several areas, inclu
 This is the most common usage, and web mapping tools such as MapQuest and Google Maps use the shortest path algorithm or a variant of it to provide driving directions.
 
 * Social networks can use the algorithm to find the degrees of separation between people.
-For example, when you view someone's profile on LinkedIn it will indicate how many people separate you in the connections graph as well as listing those mutual connections are.
+For example, when you view someone's profile on LinkedIn it will indicate how many people separate you in the connections graph as well as listing your mutual connections.
 
 * Telecommunications and networking
 
