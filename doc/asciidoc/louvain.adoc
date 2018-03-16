@@ -48,19 +48,11 @@ At that point repeated application of stages 1 and 2 will not yield any more mod
 == When to use it / use-cases
 
 // tag::use-case[]
-One of the applications reported in the original Louvain Method paper was a study of a large Belgian phone call network in which nodes represented customers and weighted links represented the number of phone calls between two customers over a six-month period. 
-The Louvain Method revealed a hierarchy of six levels of communities. 
-At the top level of this hierarchy, the communities representing more than 10,000 customers were strongly segregated by primary language. 
-All except one of these communities had an 85% or greater majority of either French or Dutch speakers. 
-The sole community with a more equitable distribution was positioned at the interface between French and Dutch clusters in the top-level coarse-grained network. 
 
-Since 2008 the Louvain Method has found a wide range of applications in analyzing real-world networks.
-Several of these can be found on https://perso.uclouvain.be/vincent.blondel/research/louvain.html[the website of the method]:
+* Louvain method has been proposed to provide recommendations for Reddit users to find similar subreddits based on the general user behavior. Find more details in http://snap.stanford.edu/class/cs224w-2014/projects2014/cs224w-16-final.pdf[Subreddit Recommendations within Reddit Communities].
+* Louvain method has been used to extract topics from online social platforms such as Twitter and Youtube based on the co-occurence graph of terms in documents as a part of Topic Modeling process. This process is described in http://www.lbd.dcc.ufmg.br/colecoes/sbsi/2016/047.pdf[Topic Modeling based on Louvain method in Online Social Networks].
+* Louvain method has been used to investigate human brain and find hiearchical community structures within brain's functional network. Study mentioned is https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[Hierarchical Modularity in Human Brain Functional Networks]
 
-- analysis of online social networks such as Twitter, LinkedIn, Flickr, Youtube, and LiveJournal
-- analysis of collaboration communities in citation networks
-- analysis of a network of retail transactions
-- study of https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[brain networks] using the Louvain Method [4]
 // end::use-case[]
 
 == Constraints / when not to use it
