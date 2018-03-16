@@ -21,14 +21,18 @@ He later implemented it for a slightly simplified transportation map of 64 citie
 == When to use it / use-cases
 
 // tag::use-case[]
-The most common usage of the single source shortest path algorithm is finding directions between physical locations.
-Web mapping websites such as MapQuest or Google Maps use it to provide driving directions.
+The single source shortest path algorithm has found uses in several areas, including:
 
-It has also found uses in several other areas including:
+* Finding directions between physical locations.
+This is the most common usage, and web mapping tools such as MapQuest and Google Maps use the shortest path algorithm or a variant of it to provide driving directions.
+
+* Social networks can use the algorithm to find the degrees of separation between people.
+For example, when you view someone's profile on LinkedIn it will indicate how many people separate you in the connections graph as well as listing those mutual connections are.
 
 * Telecommunications and networking
+
 * Operations research - plant and facility layout, robotics, transportation, and VLSI design.
-* Social networks - find the degrees of separation between people
+
 * IP routing - find the https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^]
 
 // end::use-case[]
