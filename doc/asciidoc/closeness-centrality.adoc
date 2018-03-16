@@ -34,9 +34,15 @@ The formula for *normalized closeness centrality* is as follows:
 
 // tag::use-case[]
 
-* Closeness centrality is used to research organizational networks where individuals with high closeness centrality are in a favourable position to act independantly, control and acquire vital information and resources within the organization. One such study is [http://www.orgnet.com/MappingTerroristNetworks.pdf]Mapping Networks of Terrorist Cells by Valdis E. Krebs.
-* Closeness centrality can be intepreted as an estimated time of arrival of information flowing through telecommunications or package delivery network where information flows through shortest paths to a predefined target and networks where information spreads through all shortest paths simultaneously like infection spreading through a social network. Find more details in http://www.analytictech.com/borgatti/papers/centflow.pdf[Centrality and network flow] by Stephen P. Borgatti.
-* Closeness centrality has been used to estimate importance of words in a document based on graph-based keyphrase extraction process. This process is described by Florian Boudin in https://www.aclweb.org/anthology/I/I13/I13-1102.pdf[A Comparison of Centrality Measures for Graph-Based Keyphrase Extraction].
+* Closeness centrality is used to research organizational networks where individuals with high closeness centrality are in a favourable position to act independently, control and acquire vital information and resources within the organization.
+One such study is [http://www.orgnet.com/MappingTerroristNetworks.pdf]Mapping Networks of Terrorist Cells by Valdis E. Krebs.
+
+* Closeness centrality can be interpreted as an estimated time of arrival of information flowing through telecommunications or package delivery networks where information flows through shortest paths to a predefined target.
+It can also be used in networks where information spreads through all shortest paths simultaneously such as infection spreading through a social network.
+Find more details in http://www.analytictech.com/borgatti/papers/centflow.pdf[Centrality and network flow] by Stephen P. Borgatti.
+
+* Closeness centrality has been used to estimate the importance of words in a document based on a graph-based keyphrase extraction process.
+This process is described by Florian Boudin in https://www.aclweb.org/anthology/I/I13/I13-1102.pdf[A Comparison of Centrality Measures for Graph-Based Keyphrase Extraction].
 
 // end::use-case[]
 
