@@ -137,6 +137,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         closedNodes.clear();
         openNodes.clear();
         gCosts.clear();
+        fCosts.clear();
         path.clear();
         shortestPath.clear();
         totalCost = NO_PATH_FOUND;
