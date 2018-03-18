@@ -186,7 +186,7 @@ public class ShortestPathProc {
     				.withTerminationFlag(TerminationFlag.wrap(transaction))
     				.compute(startNode.getId(), endNode.getId(), propertyKeyLat, propertyKeyLon, direction)
     				.resultStream();
-        }
+    }
 
     private static final class DequeMapping implements IdMapping {
         private final IdMapping mapping;
