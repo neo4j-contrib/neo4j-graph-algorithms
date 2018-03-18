@@ -52,10 +52,6 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         progressLogger = getProgressLogger();
     }
     
-//    public ShortestPathAStar compute(final long startNode, final long goalNode) {
-//        return compute(startNode, goalNode, Direction.BOTH);
-//    }
-    
     public ShortestPathAStar compute(final long startNode, final long goalNode, final String propertyKeyLat, final String propertyKeyLong, final Direction direction) {
         reset();
         final int startNodeInternal = graph.toMappedNodeId(startNode);
