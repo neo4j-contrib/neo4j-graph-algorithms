@@ -64,7 +64,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         gCosts.put(startNodeInternal, 0.0);
         fCosts.put(startNodeInternal, initialHeuristic);
         openNodes.add(startNodeInternal, 0.0);
-        run(goalNodeInternal, goalNodeLat, goalNodeLon, direction);
+        run(goalNodeInternal, direction);
         if (path.containsKey(goalNodeInternal)) {
         		totalCost = gCosts.get(goalNodeInternal);
         		int node = goalNodeInternal;
@@ -76,7 +76,9 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         return this;
     }
     
-    private void run(final int goalNodeId, final double goalLat, final double goalLon, final Direction direction) {
+    private void run(final int goalNodeId, final Direction direction) {
+    		final double goalLat = getNodeCoordinate(goalNodeId, "latitude");
+    		final double goalLon = getNodeCoordinate(goalNodeId, "longitude");
         while (!openNodes.isEmpty() && running()) {
             int currentNodeId = openNodes.pop();
             if (currentNodeId == goalNodeId) {
