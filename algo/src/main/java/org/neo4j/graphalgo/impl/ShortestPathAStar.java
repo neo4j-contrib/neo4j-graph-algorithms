@@ -168,6 +168,7 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
     public ShortestPathAStar release() {
         graph = null;
         gCosts = null;
+        fCosts = null;
         openNodes = null;
         path = null;
         shortestPath = null;
