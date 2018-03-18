@@ -52,18 +52,18 @@ public class ShortestPathAStar extends Algorithm<ShortestPathAStar> {
         progressLogger = getProgressLogger();
     }
     
-    public ShortestPathAStar compute(final long startNode, final long goalNode) {
-        return compute(startNode, goalNode, Direction.BOTH);
-    }
+//    public ShortestPathAStar compute(final long startNode, final long goalNode) {
+//        return compute(startNode, goalNode, Direction.BOTH);
+//    }
     
-    public ShortestPathAStar compute(final long startNode, final long goalNode, final Direction direction) {
+    public ShortestPathAStar compute(final long startNode, final long goalNode, final String propertyKeyLat, final String propertyKeyLong, final Direction direction) {
         reset();
         final int startNodeInternal = graph.toMappedNodeId(startNode);
-        final double startNodeLat = getNodeCoordinate(startNodeInternal, "latitude");
-        final double startNodeLon = getNodeCoordinate(startNodeInternal, "longitude");
+        final double startNodeLat = getNodeCoordinate(startNodeInternal, propertyKeyLat);
+        final double startNodeLon = getNodeCoordinate(startNodeInternal, propertyKeyLong);
         final int goalNodeInternal = graph.toMappedNodeId(goalNode);
-        final double goalNodeLat = getNodeCoordinate(goalNodeInternal, "latitude");
-		final double goalNodeLon = getNodeCoordinate(goalNodeInternal, "longitude");
+        final double goalNodeLat = getNodeCoordinate(goalNodeInternal, propertyKeyLat);
+		final double goalNodeLon = getNodeCoordinate(goalNodeInternal, propertyKeyLong);
 		final double initialHeuristic = computeHeuristic(startNodeLat, startNodeLon, goalNodeLat, goalNodeLon);
         gCosts.put(startNodeInternal, 0.0);
         fCosts.put(startNodeInternal, initialHeuristic);

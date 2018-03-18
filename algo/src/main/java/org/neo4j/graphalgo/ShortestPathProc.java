@@ -160,15 +160,15 @@ public class ShortestPathProc {
     }
     
     @Procedure("algo.shortestPath.astar.stream")
-    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, propertyKey1:String, propertyKey2:String" +
+    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, propertyKeyLat:String, propertyKeyLon:String" +
     		"weightProperty:String {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
     		"YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathAStar.Result> astarStream(
     			@Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
             @Name("propertyName") String propertyName,
-            @Name(value = "propertyKey1", defaultValue = "latitude") String propertyKey1,
-            @Name(value = "propertyKey2", defaultValue = "longitude") String propertyKey2,
+            @Name(value = "propertyKeyLat", defaultValue = "latitude") String propertyKeyLat,
+            @Name(value = "propertyKeyLon", defaultValue = "longitude") String propertyKeyLon,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
     	
     		ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
@@ -184,7 +184,7 @@ public class ShortestPathProc {
     		return new ShortestPathAStar(graph, api)
     				.withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(AStar)"))
     				.withTerminationFlag(TerminationFlag.wrap(transaction))
-    				.compute(startNode.getId(), endNode.getId(), direction)
+    				.compute(startNode.getId(), endNode.getId(), propertyKeyLat, propertyKeyLon, direction)
     				.resultStream();
         }
 
