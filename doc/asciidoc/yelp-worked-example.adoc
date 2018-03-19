@@ -111,7 +111,7 @@ The following query will execute the page rank algorithm over users that reviewe
 |===
 | label | count
 | FRIENDS | 10645356
-| IN_AREA | IN_AREA
+| IN_AREA | 1154
 | IN_CATEGORY |667527
 | IN_CITY | 174566
 | IN_COUNTRY | 54
