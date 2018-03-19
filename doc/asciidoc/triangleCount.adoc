@@ -14,7 +14,9 @@ It is often used as part of the computation of network indices such as the clust
 
 There are two types of clustering coefficient:
 
-* The *local clustering coefficient* of a node is the likelihood that its neighbours are also connected. The computation of this score involves triangle counting.
+* The *local clustering coefficient* of a node is the likelihood that its neighbours are also connected.
+The computation of this score involves triangle counting.
+
 * The *global clustering coefficient* is the normalized sum of those local clustering coefficients.
 
 The transitivity coefficient of a graph, which is just three times the number of triangles divided by the number of triples in the graph is sometimes used.[2]
@@ -23,9 +25,14 @@ The transitivity coefficient of a graph, which is just three times the number of
 == When to use it / use-cases
 
 // tag::use-case[]
-* Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam or non-spam content. This is described in http://chato.cl/papers/becchetti_2007_approximate_count_triangles.pdf[Efficient Semi-streaming Algorithms for Local Triangle Counting in Massive Graphs]
-* Clustering coefficient has been used to investigate community structure of Facebook's social graph where they found dense neighbourhoods of users in an otherwise sparse global graph. Find this study in https://arxiv.org/pdf/1111.4503.pdf[The Anatomy of the Facebook Social Graph]
-* Clustering coefficient has been proposed to help explore thematic structure of the web and detect communities of pages with a common topic based of the reciprocal links between them. Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncovers hidden thematic layers in the World Wide Web]
+* Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam or non-spam content.
+This is described in http://chato.cl/papers/becchetti_2007_approximate_count_triangles.pdf[Efficient Semi-streaming Algorithms for Local Triangle Counting in Massive Graphs].
+
+* Clustering coefficient has been used to investigate community structure of Facebook's social graph where they found dense neighbourhoods of users in an otherwise sparse global graph.
+Find this study in https://arxiv.org/pdf/1111.4503.pdf[The Anatomy of the Facebook Social Graph].
+
+* Clustering coefficient has been proposed to help explore thematic structure of the web and detect communities of pages with a common topic based on the reciprocal links between them.
+Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncovers hidden thematic layers in the World Wide Web].
 
 // end::use-case[]
 
