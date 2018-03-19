@@ -49,9 +49,10 @@ RETURN count(*) AS count
 // tag::eda-hotels-most-reviewed[]
 
 MATCH (review:Review)-[:REVIEWS]->(business:Business),
-      (business)-[:IN_CATEGORY]->(:Category {name:'Hotels'})
+      (business)-[:IN_CATEGORY]->(:Category {name:'Hotels'}),
+      (business)-[:IN_CITY]->(:City {name: "Las Vegas"})
 WITH business, count(*) AS reviews, avg(review.stars) AS averageRating
-ORDER BY numberOfReviews DESC
+ORDER BY reviews DESC
 LIMIT 10
 RETURN business.name AS business,
        reviews,
