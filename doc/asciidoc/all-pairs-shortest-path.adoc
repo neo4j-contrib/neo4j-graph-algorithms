@@ -19,11 +19,12 @@ Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` fu
 
 // tag::use-case[]
 
-The all pairs shortest path algorithm has found uses in the following areas:
+* The all pairs shortest path algorithm is used in urban service system problems related to the location of urban facilities or to the distribution or delivery of goods.
+One example of this is determining the traffic load expected on different segments of a transportation grid.
+You can read more in http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
 
-* urban planning and simulation http://web.mit.edu/urban_or_book/www/book/[[1]]
-* datacenter network design https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[[2]]
-* traffic routing
+* All pairs shortest path is used as part of the REWIRE data center design algorithm that finds a network with maximum bandwidth and minimal latency.
+There are more details about this approach in https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[REWIRE: An Optimization-based Framework for Data Center Network Design^]
 
 // end::use-case[]
 
