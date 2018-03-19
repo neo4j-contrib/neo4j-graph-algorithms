@@ -49,9 +49,14 @@ At that point repeated application of stages 1 and 2 will not yield any more mod
 
 // tag::use-case[]
 
-* Louvain method has been proposed to provide recommendations for Reddit users to find similar subreddits based on the general user behavior. Find more details in http://snap.stanford.edu/class/cs224w-2014/projects2014/cs224w-16-final.pdf[Subreddit Recommendations within Reddit Communities].
-* Louvain method has been used to extract topics from online social platforms such as Twitter and Youtube based on the co-occurence graph of terms in documents as a part of Topic Modeling process. This process is described in http://www.lbd.dcc.ufmg.br/colecoes/sbsi/2016/047.pdf[Topic Modeling based on Louvain method in Online Social Networks].
-* Louvain method has been used to investigate human brain and find hiearchical community structures within brain's functional network. Study mentioned is https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[Hierarchical Modularity in Human Brain Functional Networks]
+* Louvain method has been proposed to provide recommendations for Reddit users to find similar subreddits based on the general user behavior.
+Find more details in http://snap.stanford.edu/class/cs224w-2014/projects2014/cs224w-16-final.pdf[Subreddit Recommendations within Reddit Communities].
+
+* Louvain method has been used to extract topics from online social platforms such as Twitter and Youtube based on the co-occurence graph of terms in documents as a part of Topic Modeling process.
+This process is described in http://www.lbd.dcc.ufmg.br/colecoes/sbsi/2016/047.pdf[Topic Modeling based on Louvain method in Online Social Networks].
+
+* Louvain method has been used to investigate human brain and find hiearchical community structures within brain's functional network.
+Study mentioned is https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[Hierarchical Modularity in Human Brain Functional Networks].
 
 // end::use-case[]
 
