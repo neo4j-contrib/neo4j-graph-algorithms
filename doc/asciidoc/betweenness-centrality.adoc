@@ -25,9 +25,6 @@ It was considered to be one of the "three distinct intuitive conceptions of cent
 == When to use it / use-cases
 
 // tag::use-case[]
-_Betweenness Centrality_ has wide applicability in network theory.
-It represents the degree to which nodes stand between each other.
-It has founds uses in a variety of different domains [1] including:
 
 * Betweenness centrality is used to research the network flow in package delivery process or telecommunications network.
 These networks are characterized by traffic that has a known target and takes the shortest path possible.
