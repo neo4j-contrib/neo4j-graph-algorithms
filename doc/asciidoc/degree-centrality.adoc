@@ -21,6 +21,9 @@ While the algorithm can be used to find the popularity of individual nodes, it i
 
 // tag::use-case[]
 
+* Degree centrality is an important component of any attempt to determine the most important people on a social network.
+For example, in BrandWatch's https://www.brandwatch.com/blog/react-influential-men-and-women-2017/[most influential men and women on Twitter 2017^] the top 5 people in each category have over 40m followers each.
+
 // end::use-case[]
 
 == Constraints / when not to use it

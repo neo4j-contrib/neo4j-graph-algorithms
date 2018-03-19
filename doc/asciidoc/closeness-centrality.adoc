@@ -35,7 +35,7 @@ The formula for *normalized closeness centrality* is as follows:
 // tag::use-case[]
 
 * Closeness centrality is used to research organizational networks where individuals with high closeness centrality are in a favourable position to act independently, control and acquire vital information and resources within the organization.
-One such study is [http://www.orgnet.com/MappingTerroristNetworks.pdf]Mapping Networks of Terrorist Cells by Valdis E. Krebs.
+One such study is http://www.orgnet.com/MappingTerroristNetworks.pdf[Mapping Networks of Terrorist Cells by Valdis E. Krebs^].
 
 * Closeness centrality can be interpreted as an estimated time of arrival of information flowing through telecommunications or package delivery networks where information flows through shortest paths to a predefined target.
 It can also be used in networks where information spreads through all shortest paths simultaneously such as infection spreading through a social network.
