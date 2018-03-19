@@ -17,12 +17,16 @@ The components in a graph are computed using either the breadth-first search or 
 
 // tag::use-case[]
 
-* Testing whether a graph is connected is an essential preprocessing step for every graph algorithm.
+* Testing whether a graph is connected is an essential pre-processing step for every graph algorithm.
 Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be. 
 Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
 
 * Union Find can be used to keep track of clusters of database records as part of the de-duplication process - an important task in master data management applications.
-Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405[An efficient domain-independent algorithm for detecting approximately duplicate database records^]
+Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405[An efficient domain-independent algorithm for detecting approximately duplicate database records^].
+
+*  Weakly Connected Components can be used to analyse citation networks.
+One study uses WCC to work out how well connected the network is, and then to see whether the connectivity remains if 'hub' or 'authority' nodes are moved from the graph.
+Read more in https://pdfs.semanticscholar.org/a8e0/5f803312032569688005acadaa4d4abf0136.pdf[Characterizing and Mining Citation Graph of Computer Science Literature^].
 
 // end::use-case[]
 
