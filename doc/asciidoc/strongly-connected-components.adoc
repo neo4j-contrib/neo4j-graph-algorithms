@@ -23,11 +23,10 @@ Read more in http://journals.plos.org/plosone/article/file?id=10.1371/journal.po
 * SCC can be used to compute the connectivity of different network configurations when measuring routing performance in multihop wireless networks.
 Read more in https://dl.acm.org/citation.cfm?id=513803[Routing performance in the presence of unidirectional links in multihop wireless networks^]
 
-_SCC_ algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
+* _SCC_ algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
 In social networks, a group of people are generally strongly connected (For example, students of a class or any other common place). 
 Many people in these groups generally like some common pages or play common games. 
 The SCC algorithms can be used to find such groups and suggest the commonly liked pages or games to the people in the group who have not yet liked commonly liked a page or played a game.
-
 
 
 // end::use-case[]
