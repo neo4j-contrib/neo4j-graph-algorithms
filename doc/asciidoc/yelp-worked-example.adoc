@@ -31,7 +31,7 @@ How many reviews do we have to work with?
 // end::eda-hotels-reviews-result[]
 
 // tag::eda-hotels-most-reviewed[]
-Which are the most reviewed hotels and how well have they been reviewed?
+We might start by asking which are the most reviewed hotels and how well they've been rated.
 // end::eda-hotels-most-reviewed[]
 
 // tag::eda-hotels-most-reviewed-result[]
