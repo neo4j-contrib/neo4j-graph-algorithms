@@ -23,12 +23,10 @@ The transitivity coefficient of a graph, which is just three times the number of
 == When to use it / use-cases
 
 // tag::use-case[]
-Triangle counting has gained popularity in many other domains including:
+* Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam or non-spam content. This is described in http://chato.cl/papers/becchetti_2007_approximate_count_triangles.pdf[Efficient Semi-streaming Algorithms for Local Triangle Counting in Massive Graphs]
+* Clustering coefficient has been used to investigate community structure of Facebook's social graph where they found dense neighbourhoods of users in an otherwise sparse global graph. Find this study in https://arxiv.org/pdf/1111.4503.pdf[The Anatomy of the Facebook Social Graph]
+* Clustering coefficient has been proposed to help explore thematic structure of the web and detect communities of pages with a common topic based of the reciprocal links between them. Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncovers hidden thematic layers in the World Wide Web]
 
-* computer network security - intrusion detection and spamming
-* web applications - community detection and blog analysis
-* social network analysis - link prediction, spam filters, content quality control https://pdfs.semanticscholar.org/110b/55a017f52abfedca220036ea129d84b7cadc.pdf[[5\]]
-* biological networks - protein-protein interaction analysis https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-6-270?site=bmcbioinformatics.biomedcentral.com[[7\]]
 // end::use-case[]
 
 == Constraints / when not to use it
