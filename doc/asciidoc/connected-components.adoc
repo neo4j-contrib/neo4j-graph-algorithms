@@ -16,11 +16,14 @@ The components in a graph are computed using either the breadth-first search or 
 == When to use it / use-cases
 
 // tag::use-case[]
-Testing whether a graph is connected is an essential preprocessing step for every graph algorithm. 
+
+* Testing whether a graph is connected is an essential preprocessing step for every graph algorithm.
 Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be. 
 Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
 
-Connected components have other practical use cases, for example, if we are analysing a social network and we want to find all the disconnected groups of people that exist in our graph.
+* Union Find can be used to keep track of clusters of database records as part of the de-duplication process - an important task in master data management applications.
+Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405[An efficient domain-independent algorithm for detecting approximately duplicate database records^]
+
 // end::use-case[]
 
 
