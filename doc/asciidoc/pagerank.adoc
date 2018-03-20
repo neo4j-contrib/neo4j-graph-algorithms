@@ -42,11 +42,16 @@ The PageRanks form a probability distribution over web pages, which means that t
 PageRank can be applied across a wide range of domains.
 These are some notable use cases:
 
-* Personalized PageRank is used by Twitter to present users with recommendations of other accounts that they may wish to follow. The algorithm is run over a graph containing shared interests and common connections. Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf[WTF: The Who to Follow Service at Twitter^].
+* Personalized PageRank is used by Twitter to present users with recommendations of other accounts that they may wish to follow.
+The algorithm is run over a graph containing shared interests and common connections.
+Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf[WTF: The Who to Follow Service at Twitter^].
 
-* PageRank has been used to rank public spaces or streets to predict traffic flow and human movement in these areas. The algorithm is run over a graph of intersections connected by roads and the PageRank score reflects the tendency of people to park, or end their journey, on each street. This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf[Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study^].
+* PageRank has been used to rank public spaces or streets to predict traffic flow and human movement in these areas.
+The algorithm is run over a graph of intersections connected by roads and the PageRank score reflects the tendency of people to park, or end their journey, on each street.
+This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf[Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study^].
 
-* PageRank can be used as part of an anomaly or fraud detection system in the healthcare and insurance industries. It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
+* PageRank can be used as part of an anomaly or fraud detection system in the healthcare and insurance industries.
+It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
 
 There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
