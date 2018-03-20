@@ -147,7 +147,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         // data structures for merged information
         int nodeCount = nodes.idMap.size();
-        AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, false);
+        AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, false, setup.tracker);
         boolean hasRelationshipWeights = setup.shouldLoadRelationshipWeight();
         final WeightMap relWeights = newWeightMapping(hasRelationshipWeights, setup.relationDefaultWeight, nodeCount*ESTIMATED_DEGREE);
 
@@ -284,7 +284,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         int nodeCount = idMap.size();
         int capacity = batchSize == NO_BATCH ? nodeCount : batchSize;
 
-        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, false);
+        final AdjacencyMatrix matrix = new AdjacencyMatrix(nodeCount, false, setup.tracker);
 
         boolean hasRelationshipWeights = setup.shouldLoadRelationshipWeight();
         final WeightMap relWeights = newWeightMapping(hasRelationshipWeights, setup.relationDefaultWeight, capacity);
