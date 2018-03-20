@@ -65,8 +65,10 @@ There are some things to be aware of when using the Page Rank algorithm.
 
 * Rank sink - this occurs when a network of pages form an infinite cycle.
 
-* Dead-ends and Dangling links - Dead-ends occurs when pages have no out links. If a page contains a link to another page which has no out links, the link would be known as a dangling link. [1]
+* Dead-ends and Dangling links - Dead-ends occurs when pages have no out links.
+If a page contains a link to another page which has no out links, the link would be known as a dangling link.
 
+If you see unexpected results from running the algorithm it's worth doing some exploratory analysis of the graph to see if any of these problems are the cause.
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google Pagerank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
