@@ -27,13 +27,9 @@ The algorithm operates as follows:
 == When to use it / use-cases
 
 // tag::use-case[]
-Imagine a telecommunications company is trying to lay out cables in new neighborhood.
-If the company is only able to lay the cable along certain paths (e.g. along roads), we could derive a graph that represents the points connected by those paths.
-Some of those paths might be more expensive, because they are longer, or require the cable to be buried deeper; these paths would be represented by relationships with larger weights.
-A spanning tree for that graph would be a subset of those paths that has no cycles but still connects to every house; in fact several spanning trees might be possible.
-A minimum spanning tree would be the one with the lowest total cost, which would represent the least expensive path for laying the cable.
-
-There are also some indirect applications such as LDPC codes for error correction, image registration with Renyi entropy, learning salient features for real-time face verification, model locality of particle interactions in turbulent fluid flows and autoconfig protocol for Ethernet bridging to avoid cycles in a network.
+* Minimum spanning tree was applied to analyse airline and sea connections of Papua New Guinea and minimize the travel cost of exploring the country. It could be used to help design cheap tours that visit many destinations across the country. Research mentioned is http://www.dwu.ac.pg/en/images/Research_Journal/2010_Vol_12/1_Fitina_et_al_spanning_trees_for_travel_planning.pdf[An Application of Minimum Spanning Trees to Travel Planning].
+* Minimum spanning tree has been used to analyse and visualize correlations network of currencies based on the correlation between currency returns. This is described in https://www.nbs.sk/_img/Documents/_PUBLIK_NBS_FSR/Biatec/Rok2013/07-2013/05_biatec13-7_resovsky_EN.pdf[Minimum Spanning Tree Application in the Currency Market].
+* Minimum spanning tree has been shown to be a useful tool to trace the history of transmission of infection in an outbreak supported by exhaustive clinical research. Read more in the https://www.ncbi.nlm.nih.gov/pmc/articles/PMC516344/[Use of the Minimum Spanning Tree Model for Molecular Epidemiological Investigation of a Nosocomial Outbreak of Hepatitis C Virus Infection]
 // end::use-case[]
 
 == Constraints / when not to use it
