@@ -122,21 +122,4 @@ public class YensWikiTest {
 
     }
 
-    @Test
-    public void testDijkstra() throws Exception {
-
-        final Dijkstra dijkstra = new Dijkstra(graph);
-
-        final Optional<WeightedPath> path = dijkstra
-                .withDirection(Direction.BOTH)
-                .compute(graph.toMappedNodeId(getNode("c").getId()),
-                        graph.toMappedNodeId(getNode("h").getId()));
-
-        if (!path.isPresent()) {
-            fail();
-        }
-
-        assertArrayEquals(new int[]{0, 2, 3 ,5}, path.get().toArray());
-    }
-
 }
