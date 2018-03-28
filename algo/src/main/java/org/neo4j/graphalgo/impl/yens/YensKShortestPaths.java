@@ -80,14 +80,12 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 .ifPresent(A::add);
 
         for (int k = 1; k < K; k++) {
-            final WeightedPath basePath = A.get(k-1);
-            System.out.println("k = " + k);
+            final WeightedPath basePath = A.get(A.size() - 1);
             System.out.println("basePath = " + basePath);
 
 //            for (int i = basePath.size()-1; i >= 0; i--) {
             for (int i = 0; i < basePath.size() - 1; i++) {
                 final int spurNode = basePath.node(i);
-                System.out.println("i = " + i);
                 final WeightedPath rootPath = basePath.pathTo(i);
                 System.out.println("  rootPath = " + rootPath);
                 for (Iterator<WeightedPath> iterator = A.iterator(); iterator.hasNext(); ) {

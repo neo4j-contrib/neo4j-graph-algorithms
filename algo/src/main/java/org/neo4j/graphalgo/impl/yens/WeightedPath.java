@@ -65,6 +65,15 @@ public class WeightedPath {
         return offset;
     }
 
+    public boolean containsNode(int node) {
+        for (int i : nodes) {
+            if (i == node) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void forEach(IntPredicate consumer) {
         for (int i = 0; i < offset; i++) {
             if (!consumer.test(nodes[i])) {
