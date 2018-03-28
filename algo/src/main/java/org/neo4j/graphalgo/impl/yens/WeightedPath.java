@@ -35,15 +35,14 @@ import java.util.function.IntPredicate;
 public class WeightedPath {
 
     public interface EdgeConsumer {
-
         void accept(int sourceNode, int targetNode);
     }
 
-    private int[] nodes;
+    int[] nodes;
     private int offset = 0;
 
-    public WeightedPath() {
-        this(new int[10], 0);
+    public WeightedPath(int initialCapacity) {
+        this(new int[initialCapacity], 0);
     }
 
 
@@ -53,7 +52,7 @@ public class WeightedPath {
     }
 
     public void append(int nodeId) {
-        nodes = ArrayUtil.grow(nodes, offset + offset / 3);
+        nodes = ArrayUtil.grow(nodes, offset + 1);
         nodes[offset++] = nodeId;
     }
 
@@ -106,11 +105,11 @@ public class WeightedPath {
         if (end > size()) {
             throw new ArrayIndexOutOfBoundsException();
         }
-        return new WeightedPath(Arrays.copyOf(nodes, end), end);
+        return new WeightedPath(Arrays.copyOf(nodes, end + 1), end + 1);
     }
 
     public long edge(int i) {
-        return RawValues.combineIntInt(nodes[i - 1], nodes[i]);
+        return RawValues.combineIntInt(nodes[i], nodes[i + 1]);
     }
 
     public void clear() {
@@ -137,13 +136,10 @@ public class WeightedPath {
     }
 
     public boolean equalsTo(WeightedPath other, int length) {
-        if (length == 0) {
+        if (size() < length + 1) {
             return false;
         }
-        if (size() < length) {
-            return false;
-        }
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length + 1; i++) {
             if (nodes[i] != other.nodes[i]) {
                 return false;
             }
@@ -153,14 +149,6 @@ public class WeightedPath {
 
     public int[] toArray() {
         return Arrays.copyOf(nodes, offset);
-    }
-
-    public static WeightedPath concat(WeightedPath head, WeightedPath tail) {
-        final int off = head.size() + tail.size();
-        final int[] data = new int[off];
-        System.arraycopy(head.nodes, 0, data, 0, head.size());
-        System.arraycopy(tail.nodes, 0, data, head.size(), tail.size());
-        return new WeightedPath(data, off);
     }
 
     public static double getCosts(Graph graph, WeightedPath path) {

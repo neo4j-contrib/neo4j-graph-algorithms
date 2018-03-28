@@ -28,104 +28,116 @@ import org.neo4j.graphdb.Direction;
 import java.util.*;
 
 /**
- * Yens Algorithm for computing k-shortest-paths
+ * Yen's k-shortest-paths Algorithm
  *
- * @author mknobloch
+ * @author mknblch
  */
 public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
 
     private Dijkstra dijkstra;
-
     private Graph graph;
-    private List<WeightedPath> A;
-    private PriorityQueue<WeightedPath> B;
+    private List<WeightedPath> shortestPaths;
+    private PriorityQueue<WeightedPath> heap;
     private ProgressLogger progressLogger;
 
     public YensKShortestPaths(Graph graph) {
         this.graph = graph;
         progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
-        A = new ArrayList<>();
-        B = new PriorityQueue<>(Comparator.comparingDouble(o -> -WeightedPath.getCosts(graph, o)));
-    }
-
-    public List<WeightedPath> getPaths() {
-        return A;
+        shortestPaths = new ArrayList<>();
+        // TODO evaluate costs once!
+        heap = new PriorityQueue<>(Comparator.comparingDouble(o -> -WeightedPath.getCosts(graph, o)));
     }
 
     /**
-     * compute shortest path between startNode and goalNode
-     *
+     * retrieve the list of shortest paths
+     * @return
+     */
+    public List<WeightedPath> getPaths() {
+        return shortestPaths;
+    }
+
+    /**
+     * compute at most k shortest paths between startNode and goalNode
      * @return itself
      */
     public YensKShortestPaths compute(long startNode, long goalNode, int k) {
-        return compute(startNode, goalNode, Direction.BOTH, k);
+        return compute(startNode, goalNode, Direction.OUTGOING, k);
     }
 
+    /**
+     * compute at most k shortest paths between startNode and goalNode
+     * while using only supplied traversal direction
+     * @return itself
+     */
     public YensKShortestPaths compute(long startNode, long goalNode, Direction direction, int k) {
-        yens(startNode, goalNode, direction, k);
+        yens(k,
+                graph.toMappedNodeId(startNode),
+                graph.toMappedNodeId(goalNode),
+                direction);
         return this;
     }
 
-    private void yens(long startNode, long goalNode, Direction direction, int K) {
+    private void yens(int k, int start, int goal, Direction direction) {
         final IntScatterSet nodeBlackList = new IntScatterSet();
         final LongScatterSet edgeBlackList = new LongScatterSet();
-        final int goal = graph.toMappedNodeId(goalNode);
-
+        // clear result of previous execution
+        shortestPaths.clear();
+        // equip dijkstra with a node and edge filter and set its traversal direction
         dijkstra.withDirection(direction)
                 .withFilter((s, t, r) ->
                         !nodeBlackList.contains(t) &&
                         !edgeBlackList.contains(RawValues.combineIntInt(s, t)))
-                .compute(graph.toMappedNodeId(startNode), goal)
-                .ifPresent(A::add);
+                .compute(start, goal) // compute the best shortest path first
+                .ifPresent(shortestPaths::add);
 
-        for (int k = 1; k < K; k++) {
-            final WeightedPath basePath = A.get(A.size() - 1);
-            System.out.println("basePath = " + basePath);
+        if (shortestPaths.isEmpty()) {
+            // not a single path found
+            return;
+        }
 
-//            for (int i = basePath.size()-1; i >= 0; i--) {
+        // keep running until k elements have been found or no further shortest path is possible
+        for (int n = 1; n < k; n++) {
+            // retrieve head of the queue
+            final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
+            // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
             for (int i = 0; i < basePath.size() - 1; i++) {
+                // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
+                nodeBlackList.clear();
+                edgeBlackList.clear();
+                // Spur node is retrieved from the previous k-shortest path.
                 final int spurNode = basePath.node(i);
+                // The sequence of nodes from the source to the spur node of the previous k-shortest path.
                 final WeightedPath rootPath = basePath.pathTo(i);
-                System.out.println("  rootPath = " + rootPath);
-                for (Iterator<WeightedPath> iterator = A.iterator(); iterator.hasNext(); ) {
+                // check each of the known shortest paths
+                for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
                     if (rootPath.equalsTo(p, i)) {
-//                    if (p.equalsTo(rootPath, i)) {
-
-                        System.out.println("'" + p.pathTo(i) + "' is equal to '" + rootPath.pathTo(i) + "'");
-
-                        final long edge = p.edge(i);
-
-                        System.out.println("Blacklisting " +
-                                RawValues.getHead(edge) + " -> " +
-                                RawValues.getTail(edge)
-                        );
-
-                        edgeBlackList.add(edge);
+                        // blacklist the rels that are part of the previous shortest paths with the same root path.
+                        edgeBlackList.add(p.edge(i));
                     }
                 }
+                // blacklist node if node spurNode
                 rootPath.forEachDo(rootPathNode -> {
                     if (rootPathNode != spurNode) {
                         nodeBlackList.add(rootPathNode);
                     }
                 });
+                // Calculate the spur path from the spur node to the sink.
                 final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal);
+                // no path found, continue
                 if (!spurPathOpt.isPresent()) {
-                    break;
+                    continue;
                 }
-                final WeightedPath spurPath = spurPathOpt.get();
-                final WeightedPath newPath = WeightedPath.concat(rootPath, spurPath);
-                B.add(newPath);
-                nodeBlackList.clear();
-                edgeBlackList.clear();
+                // new candidate is the concatenation of rootPath and the spurPath.
+                heap.add(concat(rootPath, spurPathOpt.get()));
             }
-            if (B.isEmpty()) {
+            // no new candidates have been found.
+            if (heap.isEmpty()) {
                 break;
             }
-            final WeightedPath remove = B.remove();
-            System.out.println("remove = " + remove);
-            A.add(remove);
+            // add the best candidate (with lowest weight) to the result set.
+            shortestPaths.add(heap.remove());
         }
     }
 
@@ -138,9 +150,24 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     public YensKShortestPaths release() {
         graph = null;
         dijkstra = null;
-        A = null;
-        B = null;
+        shortestPaths = null;
+        heap = null;
         return this;
+    }
+
+    /**
+     * concatenates head and tail. due to the implementation we have
+     * a duplicate node at the end of head and start of tail. this
+     * is considered by the logic.
+     * @return concatenation of head and tail
+     */
+    private static WeightedPath concat(WeightedPath head, WeightedPath tail) {
+        final int off = head.size() + tail.size() - 1;
+        final int[] data = new int[off];
+        System.arraycopy(head.nodes, 0, data, 0, head.size());
+        System.arraycopy(tail.nodes, 1, data, head.size(), tail.size() - 1);
+        final WeightedPath weightedPath = new WeightedPath(data, off);
+        return weightedPath;
     }
 
     /**

@@ -37,6 +37,7 @@ import java.util.Optional;
 public class Dijkstra {
 
     private static final int PATH_END = -1;
+    public static final int INITIAL_CAPACITY = 64;
 
     private final Graph graph;
     private final int nodeCount;
@@ -120,7 +121,7 @@ public class Dijkstra {
             return Optional.empty();
         }
         int last = targetNode;
-        final WeightedPath resultPath = new WeightedPath();
+        final WeightedPath resultPath = new WeightedPath(INITIAL_CAPACITY);
         while (last != PATH_END) {
             resultPath.append(last);
             last = path.getOrDefault(last, PATH_END);
