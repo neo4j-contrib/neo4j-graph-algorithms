@@ -1,7 +1,7 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -27,7 +27,7 @@ abstract class RelationshipLoader {
 
     void readRelationship(
             VisitRelationship visit,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             Direction direction,
             long sourceNodeId,
@@ -53,7 +53,7 @@ abstract class RelationshipLoader {
     void readUndirected(
             VisitRelationship visitOut,
             VisitRelationship visitIn,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             long sourceNodeId,
             long localGraphId)
@@ -109,12 +109,12 @@ final class ReadNothing extends RelationshipLoader {
 
 final class ReadOutgoing extends RelationshipLoader {
     final VisitRelationship visitOutgoing;
-    final LongArray offsets;
+    final HugeLongArray offsets;
     final ByteArray.LocalAllocator allocator;
 
     ReadOutgoing(
             final ReadOperations readOp,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitOutgoing) {
@@ -132,12 +132,12 @@ final class ReadOutgoing extends RelationshipLoader {
 
 final class ReadIncoming extends RelationshipLoader {
     private final VisitRelationship visitIncoming;
-    private final LongArray offsets;
+    private final HugeLongArray offsets;
     private final ByteArray.LocalAllocator allocator;
 
     ReadIncoming(
             final ReadOperations readOp,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitIncoming) {
@@ -156,15 +156,15 @@ final class ReadIncoming extends RelationshipLoader {
 final class ReadBoth extends RelationshipLoader {
     private final VisitRelationship visitOutgoing;
     private final VisitRelationship visitIncoming;
-    private final LongArray inOffsets;
+    private final HugeLongArray inOffsets;
     private final ByteArray.LocalAllocator inAllocator;
-    private final LongArray outOffsets;
+    private final HugeLongArray outOffsets;
     private final ByteArray.LocalAllocator outAllocator;
 
     ReadBoth(
             final ReadOutgoing readOut,
             final VisitRelationship visitIncoming,
-            final LongArray inOffsets,
+            final HugeLongArray inOffsets,
             final ByteArray.LocalAllocator inAllocator) {
         super(readOut);
         this.visitOutgoing = readOut.visitOutgoing;
@@ -185,12 +185,12 @@ final class ReadBoth extends RelationshipLoader {
 final class ReadUndirected extends RelationshipLoader {
     private final VisitRelationship visitOutgoing;
     private final VisitRelationship visitIncoming;
-    private final LongArray offsets;
+    private final HugeLongArray offsets;
     private final ByteArray.LocalAllocator allocator;
 
     ReadUndirected(
             final ReadOperations readOp,
-            LongArray offsets,
+            HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitOutgoing,

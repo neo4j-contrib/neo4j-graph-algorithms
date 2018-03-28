@@ -76,10 +76,11 @@ import java.util.concurrent.TimeUnit;
 public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
 
     // how many sources can be traversed simultaneously
-    static final int OMEGA = 32;
+    static final int OMEGA = 64;
 
-    private final ThreadLocal<MultiBitSet32> visits;
-    private final ThreadLocal<BiMultiBitSet32> nextAndSeens;
+    private final ThreadLocal<long[]> visits;
+    private final ThreadLocal<long[]> nexts;
+    private final ThreadLocal<long[]> seens;
 
     private final IdMapping nodeIds;
     private final RelationshipIterator relationships;
@@ -104,8 +105,9 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
             Arrays.sort(this.startNodes);
         }
         nodeCount = Math.toIntExact(nodeIds.nodeCount());
-        this.visits = new VisitLocal(nodeCount);
-        this.nextAndSeens = new NextAndSeenLocal(nodeCount);
+        this.visits = new LocalLongArray(nodeCount);
+        this.nexts = new LocalLongArray(nodeCount);
+        this.seens = new LocalLongArray(nodeCount);
     }
 
     private MultiSourceBFS(
@@ -113,8 +115,10 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
             RelationshipIterator relationships,
             Direction direction,
             BfsConsumer perNodeAction,
-            ThreadLocal<MultiBitSet32> visits,
-            ThreadLocal<BiMultiBitSet32> nextAndSeens,
+            int nodeCount,
+            ThreadLocal<long[]> visits,
+            ThreadLocal<long[]> nexts,
+            ThreadLocal<long[]> seens,
             int... startNodes) {
         assert startNodes != null && startNodes.length > 0;
         this.nodeIds = nodeIds;
@@ -122,8 +126,10 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = startNodes;
+        this.nodeCount = nodeCount;
         this.visits = visits;
-        this.nextAndSeens = nextAndSeens;
+        this.nexts = nexts;
+        this.seens = seens;
     }
 
     private MultiSourceBFS(
@@ -131,19 +137,23 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
             RelationshipIterator relationships,
             Direction direction,
             BfsConsumer perNodeAction,
+            int nodeCount,
             int nodeOffset,
             int sourceNodeCount,
-            ThreadLocal<MultiBitSet32> visits,
-            ThreadLocal<BiMultiBitSet32> nextAndSeens) {
+            ThreadLocal<long[]> visits,
+            ThreadLocal<long[]> nexts,
+            ThreadLocal<long[]> seens) {
         this.nodeIds = nodeIds;
         this.relationships = relationships;
         this.direction = direction;
         this.perNodeAction = perNodeAction;
         this.startNodes = null;
+        this.nodeCount = nodeCount;
         this.nodeOffset = nodeOffset;
         this.sourceNodeCount = sourceNodeCount;
         this.visits = visits;
-        this.nextAndSeens = nextAndSeens;
+        this.nexts = nexts;
+        this.seens = seens;
     }
 
     /**
@@ -167,67 +177,6 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
                 executor);
     }
 
-    /**
-     * Runs MS-BFS, always single-threaded. Requires that there are at most
-     * 32 startNodes. If there are more, {@link #run(int, ExecutorService)} must be used.
-     */
-    @Override
-    public void run() {
-        assert sourceLength() <= OMEGA : "more than " + OMEGA + " sources not supported";
-
-        SourceNodes sourceNodes = startNodes != null
-                ? new SourceNodes(startNodes)
-                : new SourceNodes(nodeOffset, sourceNodeCount);
-
-        MultiBitSet32 visit = visits.get();
-        BiMultiBitSet32 nextAndSeen = nextAndSeens.get();
-
-        if (startNodes != null) {
-            nextAndSeen.setAuxBits(startNodes);
-            for (int i = 0; i < startNodes.length; i++) {
-                visit.setBit(startNodes[i], i);
-            }
-        } else {
-            nextAndSeen.setAuxBits(nodeOffset, sourceNodeCount);
-            for (int i = 0; i < sourceNodeCount; i++) {
-                visit.setBit(i + nodeOffset, i);
-            }
-        }
-
-        int depth = 0;
-
-        while (true) {
-            int nodeId = -1;
-            while ((nodeId = visit.nextSetNodeId(nodeId + 1)) >= 0) {
-                int nodeVisit = visit.get(nodeId);
-                assert nodeVisit != 0;
-                relationships.forEachRelationship(
-                        nodeId,
-                        direction,
-                        (src, tgt, rel) -> {
-                            nextAndSeen.union(tgt, nodeVisit);
-                            return true;
-                        });
-            }
-
-            depth++;
-            nodeId = -1;
-            // TODO: implement Direction-Optimized Traversal (4.1.2.)
-            while ((nodeId = nextAndSeen.nextSetNodeId(nodeId + 1)) >= 0) {
-                int D = nextAndSeen.unionDifference(nodeId);
-                if (D != 0) {
-                    sourceNodes.reset(D);
-                    perNodeAction.accept(nodeId, depth, sourceNodes);
-                }
-            }
-
-            if (!nextAndSeen.copyInto(visit)) {
-                // nothing more to visit, stop bfs
-                return;
-            }
-        }
-    }
-
     private int sourceLength() {
         if (startNodes != null) {
             return startNodes.length;
@@ -236,6 +185,137 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
             return nodeCount;
         }
         return sourceNodeCount;
+    }
+
+    /**
+     * Runs MS-BFS, always single-threaded. Requires that there are at most
+     * 64 startNodes. If there are more, {@link #run(int, ExecutorService)} must be used.
+     */
+    @Override
+    public void run() {
+        assert sourceLength() <= OMEGA : "more than " + OMEGA + " sources not supported";
+
+        int totalNodeCount = this.nodeCount;
+
+        long[] visitSet = visits.get();
+        long[] nextSet = nexts.get();
+        long[] seenSet = seens.get();
+
+        final SourceNodes sourceNodes;
+        if (startNodes == null) {
+            sourceNodes = prepareOffsetSources(visitSet, seenSet);
+        } else {
+            sourceNodes = prepareSpecifiedSources(visitSet, seenSet);
+        }
+
+        runLocalMsbfs(totalNodeCount, sourceNodes, visitSet, nextSet, seenSet);
+    }
+
+    private SourceNodes prepareOffsetSources(final long[] visitSet, final long[] seenSet) {
+        int localNodeCount = this.sourceNodeCount;
+        int nodeOffset = this.nodeOffset;
+        SourceNodes sourceNodes = new SourceNodes(nodeOffset, localNodeCount);
+
+        for (int i = 0; i < localNodeCount; ++i) {
+            seenSet[nodeOffset + i] = (1L << i);
+        }
+        for (int i = 0; i < localNodeCount; ++i) {
+            visitSet[nodeOffset + i] |= (1L << i);
+        }
+
+        return sourceNodes;
+    }
+
+    private SourceNodes prepareSpecifiedSources(final long[] visitSet, final long[] seenSet) {
+        assert isSorted(startNodes);
+
+        int[] startNodes = this.startNodes;
+        int localNodeCount = startNodes.length;
+        SourceNodes sourceNodes = new SourceNodes(startNodes);
+
+        for (int i = 0; i < localNodeCount; ++i) {
+            int nodeId = startNodes[i];
+            seenSet[nodeId] = (1L << i);
+            visitSet[nodeId] |= (1L << i);
+        }
+
+        return sourceNodes;
+    }
+
+    private void runLocalMsbfs(
+            int totalNodeCount,
+            SourceNodes sourceNodes,
+            long[] visitSet,
+            long[] nextSet,
+            long[] seenSet) {
+
+        int depth = 0;
+
+        while (true) {
+            for (int i = 0; i < totalNodeCount; ++i) {
+                if (visitSet[i] != 0L) {
+                    prepareNextVisit(visitSet[i], i, nextSet);
+                }
+            }
+
+            ++depth;
+
+            boolean hasNext = false;
+            long next;
+            for (int i = 0; i < totalNodeCount; ++i) {
+                if (nextSet[i] != 0L) {
+                    next = visitNext(i, seenSet, nextSet);
+                    if (next != 0L) {
+                        sourceNodes.reset(next);
+                        perNodeAction.accept(i, depth, sourceNodes);
+                        hasNext = true;
+                    }
+                }
+            }
+
+            if (!hasNext) {
+                return;
+            }
+
+            System.arraycopy(nextSet, 0, visitSet, 0, totalNodeCount);
+            Arrays.fill(nextSet, 0L);
+        }
+    }
+
+    private void prepareNextVisit(long nodeVisit, int nodeId, long[] nextSet) {
+        relationships.forEachRelationship(
+                nodeId,
+                direction,
+                (src, tgt, rel) -> {
+                    nextSet[tgt] |= nodeVisit;
+                    return true;
+                });
+    }
+
+    private void prepareNextVisit(long nodeVisit, int nodeId, long[] nextSet, long[] seenSet) {
+        relationships.forEachRelationship(
+                nodeId,
+                direction,
+                (src, tgt, rel) -> {
+                    long toVisit = nodeVisit & ~seenSet[tgt];
+                    if (toVisit != 0L) {
+                        nextSet[tgt] |= nodeVisit;
+                    }
+                    return true;
+                });
+    }
+
+    private long visitNext(int nodeId, long[] seenSet, long[] nextSet) {
+        long seen = seenSet[nodeId];
+        long next = nextSet[nodeId] &= ~seen;
+        seenSet[nodeId] |= next;
+        return next;
+    }
+
+    /* assert-only */ private boolean isSorted(int[] nodes) {
+        int[] copy = Arrays.copyOf(nodes, nodes.length);
+        Arrays.sort(copy);
+        return Arrays.equals(copy, nodes);
     }
 
     // lazily creates MS-BFS instances for OMEGA sized source chunks
@@ -250,10 +330,12 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
                             relationships,
                             direction,
                             perNodeAction,
+                            sourceLength,
                             from,
                             length,
                             visits,
-                            nextAndSeens
+                            nexts,
+                            seens
                     );
                 }
             };
@@ -268,8 +350,10 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
                         relationships,
                         direction,
                         perNodeAction,
+                        nodeCount,
                         visits,
-                        nextAndSeens,
+                        nexts,
+                        seens,
                         Arrays.copyOfRange(startNodes, from, from + length)
                 );
             }
@@ -295,7 +379,7 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
         private final int maxPos;
         private final int startPos;
         private final int offset;
-        private int sourceMask;
+        private long sourceMask;
         private int pos;
 
         private SourceNodes(int[] sourceNodes) {
@@ -319,7 +403,7 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
             fetchNext();
         }
 
-        void reset(int sourceMask) {
+        void reset(long sourceMask) {
             this.sourceMask = sourceMask;
             reset();
         }
@@ -338,12 +422,12 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
 
         @Override
         public int size() {
-            return Integer.bitCount(sourceMask);
+            return Long.bitCount(sourceMask);
         }
 
         private void fetchNext() {
             //noinspection StatementWithEmptyBody
-            while (++pos < maxPos && (sourceMask & (1 << pos)) == 0)
+            while (++pos < maxPos && (sourceMask & (1L << pos)) == 0L)
                 ;
         }
     }
@@ -388,29 +472,23 @@ public final class MultiSourceBFS implements Runnable, MsBFSAlgo {
         abstract MultiSourceBFS next(int from, int length);
     }
 
-    private static final class VisitLocal extends ThreadLocal<MultiBitSet32> {
-        private final int nodeCount;
+    private static final class LocalLongArray extends ThreadLocal<long[]> {
+        private final int size;
 
-        private VisitLocal(final int nodeCount) {
-            this.nodeCount = nodeCount;
+        private LocalLongArray(final int size) {
+            this.size = size;
         }
 
         @Override
-        protected MultiBitSet32 initialValue() {
-            return new MultiBitSet32(nodeCount);
-        }
-    }
-
-    private static final class NextAndSeenLocal extends ThreadLocal<BiMultiBitSet32> {
-        private final int nodeCount;
-
-        private NextAndSeenLocal(final int nodeCount) {
-            this.nodeCount = nodeCount;
+        protected long[] initialValue() {
+            return new long[size];
         }
 
         @Override
-        protected BiMultiBitSet32 initialValue() {
-            return new BiMultiBitSet32(nodeCount);
+        public long[] get() {
+            long[] values = super.get();
+            Arrays.fill(values, 0L);
+            return values;
         }
     }
 }

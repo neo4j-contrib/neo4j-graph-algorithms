@@ -25,7 +25,6 @@ import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -208,8 +207,8 @@ public class ParallelLouvain extends Algorithm<ParallelLouvain> implements Louva
                 relationshipIterator.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     readLock.lock();
                     final int targetCommunity = communityIds[targetNodeId];
-                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     readLock.unlock();
+                    final double gain = kIIn(sourceNodeId, targetCommunity) / m2 - mSource;
                     if (gain > bestGain) {
                         bestCommunity = targetCommunity;
                         bestGain = gain;

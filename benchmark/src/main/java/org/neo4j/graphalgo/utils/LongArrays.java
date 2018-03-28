@@ -1,7 +1,8 @@
 package org.neo4j.graphalgo.utils;
 
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
+import org.neo4j.graphalgo.core.utils.paged.NewHugeArrays;
 import org.neo4j.graphalgo.core.utils.paged.SparseLongArray;
 import org.neo4j.unsafe.impl.batchimport.cache.ChunkedHeapFactory;
 import org.neo4j.unsafe.impl.batchimport.cache.DynamicLongArray;
@@ -31,7 +32,8 @@ public class LongArrays {
     Distribution distribution;
 
     long[] primitive;
-    LongArray paged;
+    HugeLongArray paged;
+    HugeLongArray huge;
     SparseLongArray sparse;
     OffHeapLongArray offHeap;
     DynamicLongArray chunked;
@@ -40,6 +42,7 @@ public class LongArrays {
     public void setup() {
         primitive = createPrimitive(size, sparseness, distribution);
         paged = createPaged(primitive);
+        huge = createHuge(primitive);
         sparse = createSparse(primitive);
         offHeap = createOffHeap(primitive);
         chunked = createChunked(primitive);
@@ -71,8 +74,19 @@ public class LongArrays {
         return array;
     }
 
-    static LongArray createPaged(long[] values) {
-        final LongArray array = LongArray.newArray(values.length, AllocationTracker.EMPTY);
+    static HugeLongArray createPaged(long[] values) {
+        final HugeLongArray array = NewHugeArrays.newPagedArray(values.length, AllocationTracker.EMPTY);
+        for (int i = 0; i < values.length; i++) {
+            long value = values[i];
+            if (value >= 0) {
+                array.set(i, value);
+            }
+        }
+        return array;
+    }
+
+    static HugeLongArray createHuge(long[] values) {
+        final HugeLongArray array = HugeLongArray.newArray(values.length, AllocationTracker.EMPTY);
         for (int i = 0; i < values.length; i++) {
             long value = values[i];
             if (value >= 0) {

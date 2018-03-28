@@ -25,7 +25,6 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
 
 import java.util.stream.Stream;
 
@@ -73,7 +72,7 @@ public interface LouvainAlgorithm {
 
         if (graph instanceof HugeGraph) {
             if (config.hasWeightProperty()) {
-                return new WeightedLouvain(graph, Pools.DEFAULT, config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS));
+                return new Louvain(graph, config.getIterations(DEFAULT_ITERATIONS), Pools.DEFAULT, config.getConcurrency(), AllocationTracker.create());
             }
 
             return new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.create(), config.getConcurrency(), config.getIterations(DEFAULT_ITERATIONS));

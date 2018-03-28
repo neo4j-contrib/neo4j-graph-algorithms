@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.impl.scc;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.LongArray;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedLongStack;
 import org.neo4j.graphalgo.core.utils.paged.PagedSimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
@@ -52,9 +52,9 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
     private HugeGraph graph;
 
     private final long nodeCount;
-    private LongArray index;
+    private HugeLongArray index;
     private PagedSimpleBitSet visited;
-    private LongArray connectedComponents;
+    private HugeLongArray connectedComponents;
     private PagedLongStack stack;
     private PagedLongStack boundaries;
     private PagedLongStack todo;
@@ -66,10 +66,10 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
     public HugeSCCIterativeTarjan(HugeGraph graph, AllocationTracker tracker) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
-        index = LongArray.newArray(nodeCount, tracker);
+        index = HugeLongArray.newArray(nodeCount, tracker);
         stack = new PagedLongStack(nodeCount, tracker);
         boundaries = new PagedLongStack(nodeCount, tracker);
-        connectedComponents = LongArray.newArray(nodeCount, tracker);
+        connectedComponents = HugeLongArray.newArray(nodeCount, tracker);
         visited = PagedSimpleBitSet.newBitSet(nodeCount, tracker);
         todo = new PagedLongStack(nodeCount, tracker);
     }
@@ -104,7 +104,7 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
         return this;
     }
 
-    public LongArray getConnectedComponents() {
+    public HugeLongArray getConnectedComponents() {
         return connectedComponents;
     }
 

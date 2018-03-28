@@ -18,8 +18,8 @@
  */
 package org.neo4j.graphalgo.impl.msbfs;
 
+import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -29,10 +29,8 @@ import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.collection.Pair;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +70,9 @@ public final class MultiSourceBFSTest {
             "  (d)-[:BAR]->(f),\n" +
             "  (e)-[:BAR]->(c),\n" +
             "  (f)-[:BAR]->(d)\n";
+
+    @Rule
+    public ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
 
     @Test
     public void testPaperExample() {
@@ -233,7 +234,7 @@ public final class MultiSourceBFSTest {
     }
 
     @Test
-    public void testLarger() throws Exception {
+    public void testLarger() {
         final int nodeCount = 8192;
         final int sourceCount = 1024;
 
@@ -275,40 +276,24 @@ public final class MultiSourceBFSTest {
         }
     }
 
-    private static void withGraph(
+    private void withGraph(
             String cypher,
             Consumer<? super Graph> block) {
-        GraphDatabaseAPI db = TestDatabaseCreator.createTestDatabase();
-
-        try {
-            try (Transaction tx = db.beginTx()) {
-                db.execute(cypher).close();
-                tx.success();
-            }
-            block.accept(new GraphLoader(db).load(HeavyGraphFactory.class));
-        } finally {
-            db.shutdown();
-        }
+        db.execute(cypher).close();
+        block.accept(new GraphLoader(db).load(HeavyGraphFactory.class));
     }
 
-    private static void withGrid(
+    private void withGrid(
             Consumer<? super GraphBuilder<?>> build,
             Consumer<? super Graph> block) {
-        GraphDatabaseAPI db = TestDatabaseCreator.createTestDatabase();
-        try {
-            try (Transaction tx = db.beginTx()) {
-                DefaultBuilder graphBuilder = GraphBuilder.create(db)
-                        .setLabel("Foo")
-                        .setRelationship("BAR");
-
-                build.accept(graphBuilder);
-                Graph graph = new GraphLoader(db).load(HeavyGraphFactory.class);
-                block.accept(graph);
-                tx.success();
-            }
-        } finally {
-            db.shutdown();
-        }
+        db.executeAndCommit((dba) -> {
+            DefaultBuilder graphBuilder = GraphBuilder.create(db)
+                    .setLabel("Foo")
+                    .setRelationship("BAR");
+            build.accept(graphBuilder);
+        });
+        Graph graph = new GraphLoader(db).load(HeavyGraphFactory.class);
+        block.accept(graph);
     }
 
     private static BfsSources toList(

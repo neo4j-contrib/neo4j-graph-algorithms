@@ -21,6 +21,16 @@ MERGE (nMichael)-[:FOLLOWS]->(nDoug)
 // tag::stream-sample-graph[]
 
 MATCH (u:User)
-RETURN u.id AS name, SIZE((u)-[:FOLLOWS]->()) AS follows, SIZE((u)<-[:FOLLOWS]-()) AS followers
+RETURN u.id AS name,
+       size((u)-[:FOLLOWS]->()) AS follows,
+       size((u)<-[:FOLLOWS]-()) AS followers
 
 // end::stream-sample-graph[]
+
+
+// tag::write-sample-graph[]
+
+MATCH (u:User)
+set u.followers = size((u)<-[:FOLLOWS]-())
+
+// end::write-sample-graph[]

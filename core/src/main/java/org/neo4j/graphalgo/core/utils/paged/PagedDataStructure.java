@@ -78,7 +78,7 @@ public class PagedDataStructure<T> {
      * Return the size of this data structure. Indices up to {@code size}
      * have been filled with data.
      */
-    public final long size() {
+    public long size() {
         return size.get();
     }
 
