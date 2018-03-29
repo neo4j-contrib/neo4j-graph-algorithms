@@ -60,7 +60,7 @@ public class WeightedPath {
     /**
      * drop last element
      */
-    public void drop() {
+    public void dropTail() {
         offset--;
     }
 

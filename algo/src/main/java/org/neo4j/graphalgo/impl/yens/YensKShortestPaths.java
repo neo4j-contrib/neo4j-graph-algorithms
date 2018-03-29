@@ -46,7 +46,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
         // TODO evaluate costs once!
-        heap = new PriorityQueue<>(Comparator.comparingDouble(o -> -WeightedPath.getCosts(graph, o)));
+        heap = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
     }
 
     /**
@@ -103,9 +103,9 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
             System.out.println("basePath = " + basePath);
             // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
             for (int i = 0; i < basePath.size() - 1; i++) {
-                // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 nodeBlackList.clear();
                 edgeBlackList.clear();
+                // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 // Spur node is retrieved from the previous k-shortest path.
                 final int spurNode = basePath.node(i);
                 // The sequence of nodes from the source to the spur node of the previous k-shortest path.
@@ -114,7 +114,6 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 System.out.println("shortestPaths = " + shortestPaths);
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    System.out.printf("check p (%d) = %s%n", i, p);
                     if (rootPath.equalsTo(p, i + 1)) {
                         // blacklist the rels that are part of the previous shortest paths with the same root path.
                         final long edge = p.edge(i);
@@ -124,7 +123,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                         }
                     }
                 }
-                // blacklist node if node spurNode
+                // blacklist nodes in rootPath if not spurNode
                 rootPath.forEachDo(rootPathNode -> {
                     if (rootPathNode != spurNode) {
                         nodeBlackList.add(rootPathNode);
@@ -137,10 +136,13 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                     continue;
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
-                rootPath.drop();
+                rootPath.dropTail();
                 final WeightedPath concat = WeightedPath.concat(rootPath, spurPathOpt.get());
                 System.out.println(rootPath + " + " + spurPathOpt.get() + " = " + concat);
-                heap.add(concat);
+                if (!heap.contains(concat)) {
+
+                    heap.add(concat);
+                }
             }
             // no new candidates have been found.
             if (heap.isEmpty()) {
