@@ -102,10 +102,10 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
             final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
             System.out.println("basePath = " + basePath);
             // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
-            for (int i = 0; i < basePath.size() - 1; i++) {
+            for (int i = basePath.size() - 2; i >= 0; i--) {
+                // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 nodeBlackList.clear();
                 edgeBlackList.clear();
-                // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 // Spur node is retrieved from the previous k-shortest path.
                 final int spurNode = basePath.node(i);
                 // The sequence of nodes from the source to the spur node of the previous k-shortest path.
