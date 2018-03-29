@@ -22,6 +22,7 @@ import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
@@ -54,6 +55,13 @@ public class WeightedPath {
     public void append(int nodeId) {
         nodes = ArrayUtil.grow(nodes, offset + 1);
         nodes[offset++] = nodeId;
+    }
+
+    /**
+     * drop last element
+     */
+    public void drop() {
+        offset--;
     }
 
     public int node(int index) {
@@ -109,7 +117,7 @@ public class WeightedPath {
     }
 
     public long edge(int i) {
-        return RawValues.combineIntInt(nodes[i], nodes[i + 1]);
+        return RawValues.combineIntInt(Direction.OUTGOING, nodes[i], nodes[i + 1]);
     }
 
     public void clear() {
