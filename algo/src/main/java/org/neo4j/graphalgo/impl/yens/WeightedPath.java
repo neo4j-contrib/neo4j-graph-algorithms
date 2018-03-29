@@ -136,10 +136,13 @@ public class WeightedPath {
     }
 
     public boolean equalsTo(WeightedPath other, int length) {
-        if (size() < length + 1) {
+        if (length == 0) {
+            throw new IllegalArgumentException("length == 0");
+        }
+        if (size() < length || other.size() < length) {
             return false;
         }
-        for (int i = 0; i < length + 1; i++) {
+        for (int i = 0; i < length; i++) {
             if (nodes[i] != other.nodes[i]) {
                 return false;
             }
@@ -157,5 +160,13 @@ public class WeightedPath {
             costs[0] += graph.weightOf(s, t);
         });
         return costs[0];
+    }
+
+    public static WeightedPath concat(WeightedPath head, WeightedPath tail) {
+        final int off = head.size() + tail.size();
+        final int[] data = new int[off];
+        System.arraycopy(head.nodes, 0, data, 0, head.size());
+        System.arraycopy(tail.nodes, 0, data, head.size(), tail.size());
+        return new WeightedPath(data, off);
     }
 }

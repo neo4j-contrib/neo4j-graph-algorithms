@@ -100,6 +100,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         for (int n = 1; n < k; n++) {
             // retrieve head of the queue
             final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
+            System.out.println("basePath = " + basePath);
             // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
             for (int i = 0; i < basePath.size() - 1; i++) {
                 // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
@@ -112,9 +113,15 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 // check each of the known shortest paths
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    if (rootPath.equalsTo(p, i)) {
+                    if (p.size() >= i && rootPath.equalsTo(p, i)) {
                         // blacklist the rels that are part of the previous shortest paths with the same root path.
-                        edgeBlackList.add(p.edge(i));
+                        final long edge = p.edge(i);
+
+
+                        if (edgeBlackList.add(edge)) {
+
+                            System.out.println("blacklist: " + RawValues.getHead(p.edge(i)) + " -> " + RawValues.getTail(p.edge(i)));
+                        }
                     }
                 }
                 // blacklist node if node spurNode
@@ -130,13 +137,17 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                     continue;
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
-                heap.add(concat(rootPath, spurPathOpt.get()));
+                final WeightedPath concat = concat(rootPath, spurPathOpt.get());
+                System.out.println(rootPath + " + " + spurPathOpt.get() + " = " + concat);
+                heap.add(concat);
             }
             // no new candidates have been found.
             if (heap.isEmpty()) {
                 break;
             }
             // add the best candidate (with lowest weight) to the result set.
+            System.out.println(heap);
+            System.out.println("adding " + heap.peek());
             shortestPaths.add(heap.remove());
         }
     }
@@ -164,8 +175,8 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     private static WeightedPath concat(WeightedPath head, WeightedPath tail) {
         final int off = head.size() + tail.size() - 1;
         final int[] data = new int[off];
-        System.arraycopy(head.nodes, 0, data, 0, head.size());
-        System.arraycopy(tail.nodes, 1, data, head.size(), tail.size() - 1);
+        System.arraycopy(head.nodes, 0, data, 0, head.size() - 1);
+        System.arraycopy(tail.nodes, 0, data, head.size() - 1, tail.size());
         final WeightedPath weightedPath = new WeightedPath(data, off);
         return weightedPath;
     }
