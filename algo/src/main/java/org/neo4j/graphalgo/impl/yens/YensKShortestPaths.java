@@ -87,7 +87,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         dijkstra.withDirection(direction)
                 .withFilter((s, t, r) ->
                         !nodeBlackList.contains(t) &&
-                        !edgeBlackList.contains(RawValues.combineIntInt(Direction.OUTGOING, s, t)))
+                        !edgeBlackList.contains(RawValues.combineIntInt(s, t)))
                 .compute(start, goal) // compute the best shortest path first
                 .ifPresent(shortestPaths::add);
 
@@ -106,19 +106,18 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 nodeBlackList.clear();
                 edgeBlackList.clear();
-                System.out.println("iteration = " + i);
                 // Spur node is retrieved from the previous k-shortest path.
                 final int spurNode = basePath.node(i);
                 // The sequence of nodes from the source to the spur node of the previous k-shortest path.
                 final WeightedPath rootPath = basePath.pathTo(i);
-                // check each of the known shortest paths
+                // check each of th>e known shortest paths
+                System.out.println("shortestPaths = " + shortestPaths);
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    if (p.size() >= i && rootPath.equalsTo(p, i + 1)) {
+                    System.out.printf("check p (%d) = %s%n", i, p);
+                    if (rootPath.equalsTo(p, i + 1)) {
                         // blacklist the rels that are part of the previous shortest paths with the same root path.
                         final long edge = p.edge(i);
-
-
                         if (edgeBlackList.add(edge)) {
 
                             System.out.println("blacklist: " + RawValues.getHead(p.edge(i)) + " -> " + RawValues.getTail(p.edge(i)));
@@ -148,10 +147,11 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 break;
             }
             // add the best candidate (with lowest weight) to the result set.
-            System.out.println(heap);
+            System.out.println("heap = " + heap);
             System.out.println("adding " + heap.peek());
             shortestPaths.add(heap.remove());
             System.out.println();
+            heap.clear();
         }
     }
 

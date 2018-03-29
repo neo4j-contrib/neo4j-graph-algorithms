@@ -117,7 +117,7 @@ public class WeightedPath {
     }
 
     public long edge(int i) {
-        return RawValues.combineIntInt(Direction.OUTGOING, nodes[i], nodes[i + 1]);
+        return RawValues.combineIntInt(nodes[i], nodes[i + 1]);
     }
 
     public void clear() {
