@@ -33,17 +33,12 @@ Nodes that have the same label at convergence are said to belong to the same com
 
 == When to use it / use-cases
 
+
 // tag::use-case[]
-Community structure is considered one of the most interesting features in complex networks.
-Many real-world complex systems exhibit community structure, where individuals with similar properties form a community (partition).
-The identification of partitions in a network is important for understanding its structure.
 
-There are many algorithms that identify community structures in large-scale real-world networks and a lot of them require prior information about the number and size of communities.
-In complex networks this size of community is very difficult to calculate.
-With social networks, which are often huge and heterogeneous in nature, it is impossible to predict the number of initial communities.
-
-Algorithms that are able to detect communities from complex networks without having any knowledge about the number of communities or the size of communities are essential.
-LPA is such an algorithm and requires neither a pre-defined objective function nor prior information about the communities.
+* Label propagation has been used to assign polarity of tweets as a part of semantic analysis using seed labels from a classifier trained to detect positive and negative emoticons in combination with Twitter follower graph. Find more on this in https://dl.acm.org/citation.cfm?id=2140465[Twitter polarity classification with label propagation over lexical links and the follower graph]
+* Label propagation has been used to estimate potentially dangerous combinations of drugs to co-prescribe to a patient based on the chemical similarity and side effect profile of drugs. Study can be found in  https://www.nature.com/articles/srep12339[Label Propagation Prediction of Drug-Drug Interactions Based on Clinical Side Effects]
+* Label propagation has been used to infer features of utterances in a dialogue for a machine learning model to track user intention with the help of Wikidata knowledge graph of concepts and their relations. Get more details in https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.iwsds2017/papers/IWSDS2017_paper_12.pdf[Feature Inference Based on Label Propagation on Wikidata Graph for DST]
 // end::use-case[]
 
 == Constraints / when not to use it
@@ -96,15 +91,15 @@ Visually it seems clear that Michael, Bridget, and Alice belong together, as do 
 Only Charles doesn't strongly fit into either side but ends up with Doug and Mark.
 // end::stream-sample-graph-explanation[]
 
-=== Using pre-defined labels
+=== Using seed labels
 
 _At the beginning of the algorithm, every node is initialized with unique label (called as identifier) and the labels propagate through the network._
 
 It is possible to define preliminary labels (identifiers) of nodes using `partition` parameter.
 We need to save preliminary set of labels we would like to run the LPA algorithm with as a property of nodes (must be a number).
-In our example graph we saved them as property _predefined_label_.
-Algorithm first checks if there is a _predefined label_ assigned to the node and loads it, if there is one.
-If there isn't one it assigns the node new unique label(node id are used).
+In our example graph we saved them as property _seed_label_.
+Algorithm first checks if there is a _seed label_ assigned to the node and loads it, if there is one.
+If there isn't one it assigns the node new unique label(node id is used).
 Using this preliminary set of labels (identifiers) it then sequentially updates each node's label to a new one, which is the most frequent label among its neighbors at every label propagation step(iteration).
 
 .Running algorithm with pre-defined labels
