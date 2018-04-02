@@ -1,11 +1,11 @@
 // tag::create-sample-graph[]
 
-MERGE (nAlice:User {id:'Alice'}) SET nAlice.predefined_label=52
-MERGE (nBridget:User {id:'Bridget'}) SET nBridget.predefined_label=21
-MERGE (nCharles:User {id:'Charles'}) SET nCharles.predefined_label=43
-MERGE (nDoug:User {id:'Doug'}) SET nDoug.predefined_label=21
-MERGE (nMark:User {id:'Mark'}) SET nMark.predefined_label=19
-MERGE (nMichael:User {id:'Michael'}) SET nMichael.predefined_label=52
+MERGE (nAlice:User {id:'Alice'}) SET nAlice.seed_label=52
+MERGE (nBridget:User {id:'Bridget'}) SET nBridget.seed_label=21
+MERGE (nCharles:User {id:'Charles'}) SET nCharles.seed_label=43
+MERGE (nDoug:User {id:'Doug'}) SET nDoug.seed_label=21
+MERGE (nMark:User {id:'Mark'}) SET nMark.seed_label=19
+MERGE (nMichael:User {id:'Michael'}) SET nMichael.seed_label=52
 
 MERGE (nAlice)-[:FOLLOW]->(nBridget)
 MERGE (nAlice)-[:FOLLOW]->(nCharles)
@@ -39,7 +39,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitio
 // tag::write-existing-label-sample-graph[]
 
 CALL algo.labelPropagation('User', 'FOLLOW','OUTGOING',
-  {iterations:10,partitionProperty:'predefined_label', write:true})
+  {iterations:10,partitionProperty:'seed_label', write:true})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, partitionProperty;
 
 // end::write-existing-label-sample-graph[]
