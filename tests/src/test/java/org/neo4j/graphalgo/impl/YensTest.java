@@ -104,19 +104,15 @@ public class YensTest {
 
     @Test
     public void test() throws Exception {
-
         final YensKShortestPaths yens = new YensKShortestPaths(graph)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
-                .compute(id("a"), id("f"), 10);
+                .compute(id("a"), id("f"), 42);
         final List<WeightedPath> paths = yens.getPaths();
         final DoubleConsumer mock = mock(DoubleConsumer.class);
-
         for (int i = 0; i < paths.size(); i++) {
             final WeightedPath path = paths.get(i);
             mock.accept(path.getCost());
-            System.out.println(path + " = "  + path.getCost());
         }
-
         verify(mock, times(2)).accept(eq(3.0, DELTA));
         verify(mock, times(2)).accept(eq(4.0, DELTA));
         verify(mock, times(3)).accept(eq(5.0, DELTA));

@@ -47,8 +47,7 @@ public abstract class StatementApi {
         return api.getDependencyResolver().resolveDependency(dependency);
     }
 
-    public final <T, E extends Exception> T applyInTransaction(Function<T, E> fun)
-    throws E {
+    public final <T, E extends Exception> T applyInTransaction(Function<T, E> fun) throws E {
         try (final Transaction tx = api.beginTx();
              Statement statement = contextBridge.get()) {
             final T result = fun.apply(statement);
@@ -57,8 +56,7 @@ public abstract class StatementApi {
         }
     }
 
-    public final <E extends Exception> void acceptInTransaction(Consumer<E> fun)
-    throws E {
+    public final <E extends Exception> void acceptInTransaction(Consumer<E> fun) throws E {
         try (final Transaction tx = api.beginTx();
              Statement statement = contextBridge.get()) {
             fun.accept(statement);

@@ -18,7 +18,7 @@ public class WeightedPathTest {
         a.append(1);
         a.append(2);
         b.append(42);
-        final WeightedPath concat = WeightedPath.concat(a, b);
+        final WeightedPath concat = a.concat(b);
         assertArrayEquals(new int[]{0, 1, 2, 42}, concat.toArray());
     }
 
@@ -29,7 +29,7 @@ public class WeightedPathTest {
         a.append(0);
         a.append(1);
         a.append(2);
-        final WeightedPath concat = WeightedPath.concat(a, b);
+        final WeightedPath concat = a.concat(b);
         assertArrayEquals(new int[]{0, 1, 2}, concat.toArray());
     }
 
@@ -40,7 +40,7 @@ public class WeightedPathTest {
         a.append(0);
         a.append(1);
         a.append(2);
-        final WeightedPath concat = WeightedPath.concat(b, a);
+        final WeightedPath concat = b.concat(a);
         assertArrayEquals(new int[]{0, 1, 2}, concat.toArray());
     }
 

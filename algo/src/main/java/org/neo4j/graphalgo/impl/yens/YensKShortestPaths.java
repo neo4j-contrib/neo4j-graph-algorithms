@@ -49,7 +49,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         this.graph = graph;
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
-        candidates = new PriorityQueue<>(Comparator.comparingDouble(WeightedPath::getCost));
+        candidates = new PriorityQueue<>();
     }
 
     /**
@@ -78,7 +78,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 graph.toMappedNodeId(startNode),
                 graph.toMappedNodeId(goalNode),
                 direction);
-        getProgressLogger().logDone(() -> String.format("done.. found %d/%d paths", shortestPaths.size(), k));
+        getProgressLogger().log(String.format("done.. found %d/%d paths", shortestPaths.size(), k));
         return this;
     }
 
@@ -142,9 +142,15 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                     continue;
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
-                rootPath.dropTail();
-                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get())
-                        .evaluateAndSetCost(graph);
+
+//                rootPath.dropTail();
+//                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get())
+//                        .evaluateAndSetCost(graph);
+
+                final WeightedPath concatenation = rootPath
+                        .dropTail()
+                        .concat(spurPathOpt.get());
+
                 if (!candidates.contains(concatenation)) {
                     progressLogger.log(String.format("found candidate: %d nodes / %.2f weight",
                             concatenation.size(),
@@ -158,7 +164,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
             }
             // add the best candidate (with lowest weight) to the result set.
             final WeightedPath candidate = candidates.remove();
-            progressLogger.log(String.format("found next shorter path: %d nodes / %.2f weight",
+            progressLogger.log(String.format("found path: %d nodes / %.2f weight",
                     candidate.size(),
                     candidate.getCost()));
             shortestPaths.add(candidate);

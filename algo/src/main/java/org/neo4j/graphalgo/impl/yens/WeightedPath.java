@@ -24,6 +24,7 @@ import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.RawValues;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
@@ -38,9 +39,9 @@ public class WeightedPath {
         void accept(int sourceNode, int targetNode);
     }
 
-    int[] nodes;
+    private int[] nodes;
     private int offset = 0;
-    private double weight = 0;
+    private double weight = .0;
 
     public WeightedPath(int initialCapacity) {
         this(new int[initialCapacity], 0);
@@ -58,9 +59,11 @@ public class WeightedPath {
 
     /**
      * drop last element
+     * @return this
      */
-    public void dropTail() {
+    public WeightedPath dropTail() {
         offset--;
+        return this;
     }
 
     public int node(int index) {
@@ -191,19 +194,17 @@ public class WeightedPath {
 
     /**
      * concatenates another path to the and of this path
-     * @param other
      * @return this
      */
     public WeightedPath concat(WeightedPath other) {
-
+        nodes = ArrayUtil.grow(nodes, offset + other.size());
+        System.arraycopy(other.nodes, 0, nodes, offset, other.size());
+        offset += other.size();
+        this.weight += other.weight;
         return this;
     }
 
-    public static WeightedPath concat(WeightedPath head, WeightedPath tail) {
-        final int off = head.size() + tail.size();
-        final int[] data = new int[off];
-        System.arraycopy(head.nodes, 0, data, 0, head.size());
-        System.arraycopy(tail.nodes, 0, data, head.size(), tail.size());
-        return new WeightedPath(data, off);
+    public static Comparator<WeightedPath> comparator() {
+        return Comparator.comparingDouble(WeightedPath::getCost);
     }
 }
