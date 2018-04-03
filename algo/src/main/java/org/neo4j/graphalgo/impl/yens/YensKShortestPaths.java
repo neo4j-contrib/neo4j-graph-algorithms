@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
-import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
@@ -45,11 +44,9 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     private Graph graph;
     private List<WeightedPath> shortestPaths;
     private PriorityQueue<WeightedPath> candidates;
-    private ProgressLogger progressLogger;
 
     public YensKShortestPaths(Graph graph) {
         this.graph = graph;
-        progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
         candidates = new PriorityQueue<>(Comparator.comparingDouble(WeightedPath::getCost));
@@ -81,10 +78,12 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 graph.toMappedNodeId(startNode),
                 graph.toMappedNodeId(goalNode),
                 direction);
+        getProgressLogger().logDone(() -> String.format("done.. found %d/%d paths", shortestPaths.size(), k));
         return this;
     }
 
     private void yens(int k, int start, int goal, Direction direction) {
+        final ProgressLogger progressLogger = getProgressLogger();
         // blacklist container for dijkstra
         final IntScatterSet nodeBlackList = new IntScatterSet();
         final LongScatterSet edgeBlackList = new LongScatterSet();
@@ -104,6 +103,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
             return;
         }
         final WeightedPath shortestPath = shortestPathOpt.get();
+        shortestPaths.add(shortestPath);
         progressLogger.log(String.format("found shortest path: %d nodes / %.2f weight",
                 shortestPath.size(),
                 shortestPath.getCost()));
@@ -129,7 +129,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                         edgeBlackList.add(p.edge(i));
                     }
                 }
-                // blacklist nodes in rootPath if not spurNode
+                // blacklist nodes in rootPath if not spurNode to avoid cycles
                 rootPath.forEachDo(rootPathNode -> {
                     if (rootPathNode != spurNode) {
                         nodeBlackList.add(rootPathNode);
@@ -154,7 +154,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
             }
             // no new candidates have been found.
             if (candidates.isEmpty()) {
-                break;
+                return;
             }
             // add the best candidate (with lowest weight) to the result set.
             final WeightedPath candidate = candidates.remove();
@@ -178,25 +178,4 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         candidates = null;
         return this;
     }
-
-    /**
-     * Result DTO
-     */
-    public static class Result {
-
-        /**
-         * the neo4j node id
-         */
-        public final Long nodeId;
-        /**
-         * cost to reach the node from startNode
-         */
-        public final Double cost;
-
-        public Result(Long nodeId, Double cost) {
-            this.nodeId = nodeId;
-            this.cost = cost;
-        }
-    }
-
 }

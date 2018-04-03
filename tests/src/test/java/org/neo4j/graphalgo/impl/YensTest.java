@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.LongArrayList;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -105,6 +106,7 @@ public class YensTest {
     public void test() throws Exception {
 
         final YensKShortestPaths yens = new YensKShortestPaths(graph)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute(id("a"), id("f"), 10);
         final List<WeightedPath> paths = yens.getPaths();
         final DoubleConsumer mock = mock(DoubleConsumer.class);
