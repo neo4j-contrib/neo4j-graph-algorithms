@@ -24,20 +24,14 @@ import org.junit.Test;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.impl.yens.Dijkstra;
 import org.neo4j.graphalgo.impl.yens.WeightedPath;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
@@ -116,7 +110,7 @@ public class YensWikiTest {
         final List<WeightedPath> paths = yens.getPaths();
         for (int i = 0; i < paths.size(); i++) {
             final WeightedPath weightedPath = paths.get(i);
-            System.out.println(weightedPath + " = " + weightedPath.getCost(graph));
+            System.out.println(weightedPath + " = " + weightedPath.getCost());
 //            assertArrayEquals(EXPECTED[i], weightedPath.toArray());
         }
 

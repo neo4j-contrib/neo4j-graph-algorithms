@@ -22,7 +22,6 @@ import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipWeights;
 import org.neo4j.graphalgo.core.utils.RawValues;
-import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
@@ -41,11 +40,11 @@ public class WeightedPath {
 
     int[] nodes;
     private int offset = 0;
+    private double weight = 0;
 
     public WeightedPath(int initialCapacity) {
         this(new int[initialCapacity], 0);
     }
-
 
     public WeightedPath(int[] data, int offset) {
         nodes = data;
@@ -70,6 +69,11 @@ public class WeightedPath {
 
     public int size() {
         return offset;
+    }
+
+    public WeightedPath withWeight(double weight) {
+        this.weight = weight;
+        return this;
     }
 
     public boolean containsNode(int node) {
@@ -101,12 +105,16 @@ public class WeightedPath {
         }
     }
 
-    public double getCost(RelationshipWeights weights) {
-        final double[] sum = {0.};
+    public WeightedPath evaluateAndSetCost(RelationshipWeights weights) {
+        this.weight = 0.;
         forEachEdge((a, b) -> {
-            sum[0] += weights.weightOf(a, b);
+            this.weight += weights.weightOf(a, b);
         });
-        return sum[0];
+        return this;
+    }
+
+    public double getCost() {
+        return weight;
     }
 
     public WeightedPath pathTo(int end) {
@@ -124,12 +132,13 @@ public class WeightedPath {
         offset = 0;
     }
 
-    public void revert() {
+    public WeightedPath reverse() {
         for (int i = 0; i < offset / 2; i++) {
             int temp = nodes[i];
             nodes[i] = nodes[offset - 1 - i];
             nodes[offset - 1 - i] = temp;
         }
+        return this;
     }
 
     public String toString() {
@@ -180,12 +189,14 @@ public class WeightedPath {
         return result;
     }
 
-    public static double getCosts(Graph graph, WeightedPath path) {
-        double[] costs = {0.0};
-        path.forEachEdge((s, t) -> {
-            costs[0] += graph.weightOf(s, t);
-        });
-        return costs[0];
+    /**
+     * concatenates another path to the and of this path
+     * @param other
+     * @return this
+     */
+    public WeightedPath concat(WeightedPath other) {
+
+        return this;
     }
 
     public static WeightedPath concat(WeightedPath head, WeightedPath tail) {

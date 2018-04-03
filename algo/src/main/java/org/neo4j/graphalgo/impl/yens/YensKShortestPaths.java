@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
@@ -32,8 +33,9 @@ import java.util.*;
  *
  * The algorithm computes the k-shortest paths between start and goal node. due
  * to the workings of our weight logic we can either load the graph directed and
- * traverse incoming and outgoing directions or load it as undirected and traverse
- * outgoing relationships only. Direction.BOTH is not supported.
+ * traverse incoming or outgoing directions or load it as undirected and traverse
+ * outgoing relationships only. Direction.BOTH leads to incorrect results and is
+ * therefore not supported.
  *
  * @author mknblch
  */
@@ -50,8 +52,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         progressLogger = getProgressLogger();
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
-        // TODO evaluate costs once!
-        candidates = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
+        candidates = new PriorityQueue<>(Comparator.comparingDouble(WeightedPath::getCost));
     }
 
     /**
@@ -84,24 +85,29 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     }
 
     private void yens(int k, int start, int goal, Direction direction) {
+        // blacklist container for dijkstra
         final IntScatterSet nodeBlackList = new IntScatterSet();
         final LongScatterSet edgeBlackList = new LongScatterSet();
         // clear result of previous execution
         shortestPaths.clear();
         // equip dijkstra with a node and edge filter and set its traversal direction
-        dijkstra.withDirection(direction)
+        final Optional<WeightedPath> shortestPathOpt = dijkstra.withTerminationFlag(getTerminationFlag())
+                .withDirection(direction)
                 .withFilter((s, t, r) ->
+                        // set custom node filter
                         !nodeBlackList.contains(t) &&
+                        // and edge filter by combining the nodeIds into a long
                         !edgeBlackList.contains(RawValues.combineIntInt(s, t)))
-                .compute(start, goal) // compute the best shortest path first
-                .ifPresent(shortestPaths::add);
-
-        if (shortestPaths.isEmpty()) {
+                .compute(start, goal);// compute the best shortest path first
+        if (!shortestPathOpt.isPresent()) {
             // not a single path found
             return;
         }
-
-        // keep running until k elements have been found or no further shortest path is possible
+        final WeightedPath shortestPath = shortestPathOpt.get();
+        progressLogger.log(String.format("found shortest path: %d nodes / %.2f weight",
+                shortestPath.size(),
+                shortestPath.getCost()));
+        // keep running until k paths have been found or no further shortest path is possible
         for (int n = 1; n < k; n++) {
             // retrieve the last best shortest path
             final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
@@ -112,7 +118,9 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 // Spur node is retrieved from the previous k-shortest path.
                 final int spurNode = basePath.node(i);
                 // The sequence of nodes from the source to the spur node of the previous k-shortest path.
-                final WeightedPath rootPath = basePath.pathTo(i);
+                final WeightedPath rootPath = basePath
+                        .pathTo(i)
+                        .evaluateAndSetCost(graph);
                 // check each of the known shortest paths
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
@@ -135,8 +143,12 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
                 rootPath.dropTail();
-                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get());
+                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get())
+                        .evaluateAndSetCost(graph);
                 if (!candidates.contains(concatenation)) {
+                    progressLogger.log(String.format("found candidate: %d nodes / %.2f weight",
+                            concatenation.size(),
+                            concatenation.getCost()));
                     candidates.add(concatenation);
                 }
             }
@@ -145,7 +157,11 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 break;
             }
             // add the best candidate (with lowest weight) to the result set.
-            shortestPaths.add(candidates.remove());
+            final WeightedPath candidate = candidates.remove();
+            progressLogger.log(String.format("found next shorter path: %d nodes / %.2f weight",
+                    candidate.size(),
+                    candidate.getCost()));
+            shortestPaths.add(candidate);
         }
     }
 
@@ -161,21 +177,6 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         shortestPaths = null;
         candidates = null;
         return this;
-    }
-
-    /**
-     * concatenates head and tail. due to the implementation we have
-     * a duplicate node at the end of head and start of tail. this
-     * is considered by the logic.
-     * @return concatenation of head and tail
-     */
-    private static WeightedPath concat(WeightedPath head, WeightedPath tail) {
-        final int off = head.size() + tail.size() - 1;
-        final int[] data = new int[off];
-        System.arraycopy(head.nodes, 0, data, 0, head.size() - 1);
-        System.arraycopy(tail.nodes, 0, data, head.size() - 1, tail.size());
-        final WeightedPath weightedPath = new WeightedPath(data, off);
-        return weightedPath;
     }
 
     /**

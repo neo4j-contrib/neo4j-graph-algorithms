@@ -36,8 +36,10 @@ import java.util.Optional;
  */
 public class Dijkstra {
 
-    private static final int PATH_END = -1;
+    // initial weighted path capacity
     public static final int INITIAL_CAPACITY = 64;
+
+    private static final int PATH_END = -1;
 
     private final Graph graph;
     private final int nodeCount;
@@ -126,8 +128,9 @@ public class Dijkstra {
             resultPath.append(last);
             last = path.getOrDefault(last, PATH_END);
         }
-        resultPath.revert();
-        return Optional.of(resultPath);
+        return Optional.of(resultPath
+                .withWeight(costs.get(targetNode))
+                .reverse());
     }
 
     /**

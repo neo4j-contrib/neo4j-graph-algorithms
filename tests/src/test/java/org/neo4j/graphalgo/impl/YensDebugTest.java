@@ -105,8 +105,8 @@ public class YensDebugTest {
 
         for (int i = 0; i < paths.size(); i++) {
             final WeightedPath path = paths.get(i);
-            mock.accept(path.getCost(graph));
-            System.out.println(path + " = "  + path.getCost(graph));
+            mock.accept(path.getCost());
+            System.out.println(path + " = "  + path.getCost());
         }
     }
 

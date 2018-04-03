@@ -25,8 +25,6 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.impl.yens.Dijkstra;
@@ -113,8 +111,8 @@ public class YensTest {
 
         for (int i = 0; i < paths.size(); i++) {
             final WeightedPath path = paths.get(i);
-            mock.accept(path.getCost(graph));
-            System.out.println(path + " = "  + path.getCost(graph));
+            mock.accept(path.getCost());
+            System.out.println(path + " = "  + path.getCost());
         }
 
         verify(mock, times(2)).accept(eq(3.0, DELTA));
@@ -135,9 +133,11 @@ public class YensTest {
                 .withFilter(filter04325)
                 .compute(id("a"), id("f"));
         assertTrue(path.isPresent());
+        final WeightedPath weightedPath = path.get();
+        assertEquals(4., weightedPath.getCost(), DELTA);
         assertArrayEquals(
                 new int[]{id("a"), id("e"), id("d"), id("c"), id("f")},
-                path.get().toArray());
+                weightedPath.toArray());
     }
 
     @Test
@@ -152,14 +152,16 @@ public class YensTest {
                 .withFilter(filter01235)
                 .compute(id("a"), id("f"));
         assertTrue(path.isPresent());
+        final WeightedPath weightedPath = path.get();
+        assertEquals(4., weightedPath.getCost(), DELTA);
         assertArrayEquals(
                 new int[]{id("a"), id("b"), id("c"), id("d"), id("f")},
-                path.get().toArray());
+                weightedPath.toArray());
     }
 
     private static RelationshipConsumer filter(int... pairs) {
         if (pairs.length % 2 != 0) {
-            throw new IllegalArgumentException("Invalid count of pairs");
+            throw new IllegalArgumentException("Invalid count of pair elements");
         }
         final LongArrayList list = new LongArrayList(pairs.length / 2);
         for (int i = 0; i < pairs.length; i += 2) {
