@@ -45,6 +45,7 @@ public class WeightedPathExporter extends StatementApi {
     }
 
     private int getOrCreatePropertyId(String propertyName) {
+        System.out.println("create " + propertyName);
         try {
             return applyInTransaction(stmt -> stmt
                     .tokenWriteOperations()
@@ -55,6 +56,7 @@ public class WeightedPathExporter extends StatementApi {
     }
 
     private void export(int propertyId, WeightedPath path) {
+        System.out.println("exporting " + path + " as id " + propertyId);
         try {
             applyInTransaction(statement -> {
                 final DataWriteOperations op = statement.dataWriteOperations();

@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  */
 public class KShortestPathsProc {
 
-    public static final String DEFAULT_TARGET_PROPERTY = "path_";
+    public static final String DEFAULT_TARGET_PROPERTY = "PATH_";
     public static final String PREFIX_IDENTIFIER = "writePropertyPrefix";
 
     @Context
@@ -63,7 +63,7 @@ public class KShortestPathsProc {
     @Procedure(value = "algo.kShortestPaths", mode = Mode.WRITE)
     @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, k:int, weightProperty:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'OUT', defaultValue:1.0, write:'true', " +
-            PREFIX_IDENTIFIER + ":'path_'}) " +
+            PREFIX_IDENTIFIER + ":'PATH_'}) " +
             "YIELD resultCount, loadMillis, evalMillis, writeMillis - yields resultCount, loadMillis, evalMillis, writeMillis")
     public Stream<KspResult> dijkstra(
             @Name("startNode") Node startNode,

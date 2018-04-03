@@ -49,7 +49,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         this.graph = graph;
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
-        candidates = new PriorityQueue<>();
+        candidates = new PriorityQueue<>(WeightedPath.comparator());
     }
 
     /**
