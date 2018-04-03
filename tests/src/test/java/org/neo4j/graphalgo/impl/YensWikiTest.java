@@ -111,7 +111,7 @@ public class YensWikiTest {
                 getNode("c").getId(),
                 getNode("h").getId(),
                 Direction.OUTGOING,
-                3);
+                5);
 
         final List<WeightedPath> paths = yens.getPaths();
         for (int i = 0; i < paths.size(); i++) {

@@ -28,7 +28,12 @@ import org.neo4j.graphdb.Direction;
 import java.util.*;
 
 /**
- * Yen's k-shortest-paths Algorithm
+ * Yen's k-shortest-paths Algorithm.
+ *
+ * The algorithm computes the k-shortest paths between start and goal node. due
+ * to the workings of our weight logic we can either load the graph directed and
+ * traverse incoming and outgoing directions or load it as undirected and traverse
+ * outgoing relationships only. Direction.BOTH is not supported.
  *
  * @author mknblch
  */
@@ -100,7 +105,6 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         for (int n = 1; n < k; n++) {
             // retrieve head of the queue
             final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
-            System.out.println("basePath = " + basePath);
             // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
             for (int i = basePath.size() - 2; i >= 0; i--) {
                 // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
@@ -110,17 +114,12 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 final int spurNode = basePath.node(i);
                 // The sequence of nodes from the source to the spur node of the previous k-shortest path.
                 final WeightedPath rootPath = basePath.pathTo(i);
-                // check each of th>e known shortest paths
-                System.out.println("shortestPaths = " + shortestPaths);
+                // check each of the known shortest paths
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
                     if (rootPath.equalsTo(p, i + 1)) {
                         // blacklist the rels that are part of the previous shortest paths with the same root path.
-                        final long edge = p.edge(i);
-                        if (edgeBlackList.add(edge)) {
-
-                            System.out.println("blacklist: " + RawValues.getHead(p.edge(i)) + " -> " + RawValues.getTail(p.edge(i)));
-                        }
+                        edgeBlackList.add(p.edge(i));
                     }
                 }
                 // blacklist nodes in rootPath if not spurNode
@@ -138,9 +137,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 // new candidate is the concatenation of rootPath and the spurPath.
                 rootPath.dropTail();
                 final WeightedPath concat = WeightedPath.concat(rootPath, spurPathOpt.get());
-                System.out.println(rootPath + " + " + spurPathOpt.get() + " = " + concat);
                 if (!heap.contains(concat)) {
-
                     heap.add(concat);
                 }
             }
@@ -149,11 +146,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 break;
             }
             // add the best candidate (with lowest weight) to the result set.
-            System.out.println("heap = " + heap);
-            System.out.println("adding " + heap.peek());
             shortestPaths.add(heap.remove());
-            System.out.println();
-            heap.clear();
         }
     }
 

@@ -18,28 +18,32 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import com.carrotsearch.hppc.LongArrayList;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.impl.yens.Dijkstra;
 import org.neo4j.graphalgo.impl.yens.WeightedPath;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.TestGraphDatabaseFactory;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.DoubleConsumer;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -90,26 +94,21 @@ public class YensTest {
 
         db.execute(cypher);
 
-        graph = (HeavyGraph) new GraphLoader(db)
+        graph = new GraphLoader(db)
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
-                .withDirection(Direction.BOTH)
-                .load(HeavyGraphFactory.class);
+                .asUndirected(true)
+                .load(HugeGraphFactory.class);
     }
 
     @Test
     public void test() throws Exception {
 
-        final YensKShortestPaths yens = new YensKShortestPaths(graph).compute(
-                getNode("a").getId(),
-                getNode("f").getId(),
-                Direction.BOTH,
-                10);
-
+        final YensKShortestPaths yens = new YensKShortestPaths(graph)
+                .compute(id("a"), id("f"), 10);
         final List<WeightedPath> paths = yens.getPaths();
-
         final DoubleConsumer mock = mock(DoubleConsumer.class);
 
         for (int i = 0; i < paths.size(); i++) {
@@ -118,17 +117,63 @@ public class YensTest {
             System.out.println(path + " = "  + path.getCost(graph));
         }
 
-//        verify(mock, times(2)).accept(eq(3.0, DELTA));
-//        verify(mock, times(1)).accept(eq(4.0, DELTA));
-//        verify(mock, times(2)).accept(eq(5.0, DELTA));
+        verify(mock, times(2)).accept(eq(3.0, DELTA));
+        verify(mock, times(2)).accept(eq(4.0, DELTA));
+        verify(mock, times(3)).accept(eq(5.0, DELTA));
+        verify(mock, times(2)).accept(eq(8.0, DELTA));
     }
 
-    private static Node getNode(String name) {
+    @Test
+    public void test04325() throws Exception {
+        final RelationshipConsumer filter04325 = filter(
+                id("a"), id("f"),
+                id("e"), id("f"),
+                id("d"), id("f"),
+                id("a"), id("b"));
+        final Optional<WeightedPath> path = new Dijkstra(graph)
+                .withDirection(Direction.OUTGOING)
+                .withFilter(filter04325)
+                .compute(id("a"), id("f"));
+        assertTrue(path.isPresent());
+        assertArrayEquals(
+                new int[]{id("a"), id("e"), id("d"), id("c"), id("f")},
+                path.get().toArray());
+    }
+
+    @Test
+    public void test01235() throws Exception {
+        final RelationshipConsumer filter01235 = filter(
+                id("a"), id("f"),
+                id("b"), id("f"),
+                id("c"), id("f"),
+                id("a"), id("e"));
+        final Optional<WeightedPath> path = new Dijkstra(graph)
+                .withDirection(Direction.OUTGOING)
+                .withFilter(filter01235)
+                .compute(id("a"), id("f"));
+        assertTrue(path.isPresent());
+        assertArrayEquals(
+                new int[]{id("a"), id("b"), id("c"), id("d"), id("f")},
+                path.get().toArray());
+    }
+
+    private static RelationshipConsumer filter(int... pairs) {
+        if (pairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Invalid count of pairs");
+        }
+        final LongArrayList list = new LongArrayList(pairs.length / 2);
+        for (int i = 0; i < pairs.length; i += 2) {
+            list.add(RawValues.combineIntInt(pairs[i], pairs[i + 1]));
+        }
+        return (s, t, r) -> !list.contains(RawValues.combineIntInt(s, t));
+    }
+
+    private int id(String name) {
         final Node[] node = new Node[1];
         db.execute("MATCH (n:Node) WHERE n.name = '" + name + "' RETURN n").accept(row -> {
             node[0] = row.getNode("n");
             return false;
         });
-        return node[0];
+        return graph.toMappedNodeId(node[0].getId());
     }
 }

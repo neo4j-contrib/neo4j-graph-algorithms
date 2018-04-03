@@ -162,6 +162,24 @@ public class WeightedPath {
         return Arrays.copyOf(nodes, offset);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        WeightedPath that = (WeightedPath) o;
+
+        if (offset != that.offset) return false;
+        return Arrays.equals(nodes, that.nodes);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(nodes);
+        result = 31 * result + offset;
+        return result;
+    }
+
     public static double getCosts(Graph graph, WeightedPath path) {
         double[] costs = {0.0};
         path.forEachEdge((s, t) -> {
