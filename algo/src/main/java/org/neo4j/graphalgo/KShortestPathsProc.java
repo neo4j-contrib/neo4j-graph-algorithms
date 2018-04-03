@@ -103,6 +103,7 @@ public class KShortestPathsProc {
                             endNode.getId(),
                             direction,
                             Math.toIntExact(k));
+            builder.withResultCount(algorithm.getPaths().size());
         }
         // write
         if (configuration.isWriteFlag()) {
