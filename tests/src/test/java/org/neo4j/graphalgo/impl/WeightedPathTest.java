@@ -53,12 +53,12 @@ public class WeightedPathTest {
         b.append(0);
         b.append(1);
         b.append(2);
-        assertTrue(a.equalsTo(b, 2));
-        assertTrue(a.equalsTo(b, 1));
-        assertFalse(a.equalsTo(b, 3));
-        assertTrue(b.equalsTo(a, 2));
-        assertTrue(b.equalsTo(a, 1));
-        assertFalse(b.equalsTo(a, 3));
+        assertTrue(a.elementWiseEquals(b, 2));
+        assertTrue(a.elementWiseEquals(b, 1));
+        assertFalse(a.elementWiseEquals(b, 3));
+        assertTrue(b.elementWiseEquals(a, 2));
+        assertTrue(b.elementWiseEquals(a, 1));
+        assertFalse(b.elementWiseEquals(a, 3));
     }
 
     @Test

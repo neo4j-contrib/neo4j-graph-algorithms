@@ -42,7 +42,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
     private Dijkstra dijkstra;
     private Graph graph;
     private List<WeightedPath> shortestPaths;
-    private PriorityQueue<WeightedPath> heap;
+    private PriorityQueue<WeightedPath> candidates;
     private ProgressLogger progressLogger;
 
     public YensKShortestPaths(Graph graph) {
@@ -51,7 +51,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         dijkstra = new Dijkstra(graph);
         shortestPaths = new ArrayList<>();
         // TODO evaluate costs once!
-        heap = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
+        candidates = new PriorityQueue<>(Comparator.comparingDouble(o -> WeightedPath.getCosts(graph, o)));
     }
 
     /**
@@ -103,9 +103,8 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
 
         // keep running until k elements have been found or no further shortest path is possible
         for (int n = 1; n < k; n++) {
-            // retrieve head of the queue
+            // retrieve the last best shortest path
             final WeightedPath basePath = shortestPaths.get(shortestPaths.size() - 1);
-            // The spur node ranges from the first node to the next to last node in the previous k-shortest path.
             for (int i = basePath.size() - 2; i >= 0; i--) {
                 // we don't alter the graph therefore we clear the filters at the beginning of each iteration.
                 nodeBlackList.clear();
@@ -117,7 +116,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 // check each of the known shortest paths
                 for (Iterator<WeightedPath> iterator = shortestPaths.iterator(); iterator.hasNext(); ) {
                     final WeightedPath p = iterator.next();
-                    if (rootPath.equalsTo(p, i + 1)) {
+                    if (rootPath.elementWiseEquals(p, i + 1)) {
                         // blacklist the rels that are part of the previous shortest paths with the same root path.
                         edgeBlackList.add(p.edge(i));
                     }
@@ -128,7 +127,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                         nodeBlackList.add(rootPathNode);
                     }
                 });
-                // Calculate the spur path from the spur node to the sink.
+                // Calculate the spur path from the spur node to the goal node.
                 final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal);
                 // no path found, continue
                 if (!spurPathOpt.isPresent()) {
@@ -136,17 +135,17 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
                 rootPath.dropTail();
-                final WeightedPath concat = WeightedPath.concat(rootPath, spurPathOpt.get());
-                if (!heap.contains(concat)) {
-                    heap.add(concat);
+                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get());
+                if (!candidates.contains(concatenation)) {
+                    candidates.add(concatenation);
                 }
             }
             // no new candidates have been found.
-            if (heap.isEmpty()) {
+            if (candidates.isEmpty()) {
                 break;
             }
             // add the best candidate (with lowest weight) to the result set.
-            shortestPaths.add(heap.remove());
+            shortestPaths.add(candidates.remove());
         }
     }
 
@@ -160,7 +159,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
         graph = null;
         dijkstra = null;
         shortestPaths = null;
-        heap = null;
+        candidates = null;
         return this;
     }
 

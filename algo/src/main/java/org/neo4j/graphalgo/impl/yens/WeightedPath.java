@@ -143,7 +143,7 @@ public class WeightedPath {
         return buffer.toString();
     }
 
-    public boolean equalsTo(WeightedPath other, int length) {
+    public boolean elementWiseEquals(WeightedPath other, int length) {
         if (length == 0) {
             throw new IllegalArgumentException("length == 0");
         }
