@@ -90,3 +90,18 @@ graph:'cypher', defaultValue:1.0})
 
 
 // end::all-pairs-bidirected-graph[]
+
+
+// tag::cypher-loading[]
+
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost',{
+nodeQuery:'MATCH(n:Loc) WHERE not n.name = "c" RETURN id(n) as id',
+relationshipQuery:'MATCH(n:Loc)-[r:ROAD]->(m:Loc) RETURN id(n) as source, id(m) as target, r.cost as weight',
+graph:'cypher'}) 
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost
+
+// end::cypher-loading[]
+
+

@@ -99,6 +99,7 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 
 == Example Usage
 
+
 == Syntax
 
 .Running algorithm and writing back results
@@ -185,6 +186,17 @@ We support the following versions of the shortest path algorithms:
 * [x] undirected, weighted 
 
 ** direction: 'BOTH', weightProperty: 'cost'
+
+== Cypher projection
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=cypher-loading]
+----
 
 == Implementations
 
