@@ -37,14 +37,14 @@ import static org.junit.Assert.assertTrue;
 public final class IntMinPriorityQueueTest extends RandomizedTest {
 
     @Test
-    public void testIsEmpty() throws Exception {
+    public void testIsEmpty() {
         final int capacity = RandomizedTest.between(10, 20);
         final IntPriorityQueue queue = IntPriorityQueue.min(capacity);
         assertEquals(queue.size(), 0);
     }
 
     @Test
-    public void testClear() throws Exception {
+    public void testClear() {
         final int maxSize = RandomizedTest.between(3, 10);
         final IntPriorityQueue queue = IntPriorityQueue.min(maxSize);
         final int iterations = RandomizedTest.between(3, maxSize);
@@ -57,7 +57,7 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
     }
 
     @Test
-    public void testGrowing() throws Exception {
+    public void testGrowing() {
         final int maxSize = RandomizedTest.between(10, 20);
         final IntPriorityQueue queue = IntPriorityQueue.min(1);
         for (int i = 0; i < maxSize; i++) {
@@ -67,7 +67,7 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         final int iterations = RandomizedTest.between(5, 50);
         final IntPriorityQueue queue = IntPriorityQueue.min();
         int min = -1;
@@ -78,12 +78,13 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
                 minWeight = weight;
                 min = i;
             }
-            assertEquals(queue.add(i, weight), min);
+            queue.add(i, weight);
+            assertEquals(queue.top(), min);
         }
     }
 
     @Test
-    public void testAddAndPop() throws Exception {
+    public void testAddAndPop() {
         final IntPriorityQueue queue = IntPriorityQueue.min();
         final List<Pair<Integer, Double>> elements = new ArrayList<>();
 
@@ -96,7 +97,8 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
                 minWeight = weight;
                 min = i;
             }
-            assertEquals(queue.add(i, weight), min);
+            queue.add(i, weight);
+            assertEquals(queue.top(), min);
             elements.add(Pair.of(i, weight));
         }
 
@@ -123,6 +125,70 @@ public final class IntMinPriorityQueueTest extends RandomizedTest {
         }
 
         assertTrue(queue.isEmpty());
+    }
+
+    @Test
+    public void testUpdateDecreasing() {
+        final IntPriorityQueue queue = IntPriorityQueue.min();
+
+        final int iterations = RandomizedTest.between(5, 50);
+        double minWeight = Double.POSITIVE_INFINITY;
+        for (int i = 1; i <= iterations; i++) {
+            final double weight = exclusiveDouble(50d, 100d);
+            if (weight < minWeight) {
+                minWeight = weight;
+            }
+            queue.add(i, weight);
+        }
+
+        for (int i = iterations; i >= 1; i--) {
+            minWeight = Math.nextDown(minWeight);
+            queue.addCost(i, minWeight);
+            queue.update(i);
+            assertEquals(i, queue.top());
+        }
+    }
+
+    @Test
+    public void testUpdateIncreasing() {
+        final IntPriorityQueue queue = IntPriorityQueue.min();
+        final int iterations = RandomizedTest.between(5, 50);
+        for (int i = 1; i <= iterations; i++) {
+            queue.add(i, exclusiveDouble(50d, 100d));
+        }
+
+        final int top = queue.top();
+        for (int i = iterations + 1; i < iterations + 10; i++) {
+            queue.addCost(i, 1d);
+            queue.update(i);
+            assertEquals(top, queue.top());
+        }
+    }
+
+    @Test
+    public void testUpdateNotExisting() {
+        final IntPriorityQueue queue = IntPriorityQueue.min();
+
+        final int iterations = RandomizedTest.between(5, 50);
+        double maxWeight = Double.NEGATIVE_INFINITY;
+        for (int i = 1; i <= iterations; i++) {
+            final double weight = exclusiveDouble(50d, 100d);
+            if (weight > maxWeight) {
+                maxWeight = weight;
+            }
+            queue.add(i, weight);
+        }
+
+        int top = queue.top();
+        for (int i = iterations; i >= 1; i--) {
+            if (i == top) {
+                continue;
+            }
+            maxWeight = Math.nextUp(maxWeight);
+            queue.addCost(i, maxWeight);
+            queue.update(i);
+            assertEquals(top, queue.top());
+        }
     }
 
     private double exclusiveDouble(
