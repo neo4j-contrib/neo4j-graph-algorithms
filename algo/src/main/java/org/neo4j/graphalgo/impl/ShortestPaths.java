@@ -99,7 +99,7 @@ public class ShortestPaths extends Algorithm<ShortestPaths> {
                         final double targetCosts = this.costs.getOrDefault(target, Double.POSITIVE_INFINITY);
                         if (weight + sourceCosts < targetCosts) {
                             costs.put(target, weight + sourceCosts);
-                            queue.add(target, targetCosts);
+                            queue.set(target, targetCosts);
                         }
                         return true;
                     });

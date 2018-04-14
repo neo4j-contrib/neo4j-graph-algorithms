@@ -30,12 +30,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.kernel.api.exceptions.KernelException;
+import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
@@ -91,6 +86,24 @@ public final class ShortestPathDijkstraTest {
             "  (n5)-[:TYPE2 {cost:10}]->(n7),\n" +
             "  (n6)-[:TYPE2 {cost:1}]->(n7)\n";
 
+    private static final String DB_CYPHER_599 = "" +
+            "CREATE (n1:Label599 {id:\"1\"})\n" +
+            "CREATE (n2:Label599 {id:\"2\"})\n" +
+            "CREATE (n3:Label599 {id:\"3\"})\n" +
+            "CREATE (n4:Label599 {id:\"4\"})\n" +
+            "CREATE (n5:Label599 {id:\"5\"})\n" +
+            "CREATE (n6:Label599 {id:\"6\"})\n" +
+            "CREATE (n7:Label599 {id:\"7\"})\n" +
+            "CREATE\n" +
+            "  (n1)-[:TYPE599 {cost:0.5}]->(n2),\n" +
+            "  (n1)-[:TYPE599 {cost:5.0}]->(n3),\n" +
+            "  (n2)-[:TYPE599 {cost:0.5}]->(n5),\n" +
+            "  (n3)-[:TYPE599 {cost:2.0}]->(n4),\n" +
+            "  (n5)-[:TYPE599 {cost:0.5}]->(n6),\n" +
+            "  (n6)-[:TYPE599 {cost:0.5}]->(n3),\n" +
+            "  (n6)-[:TYPE599 {cost:23.0}]->(n7),\n" +
+            "  (n1)-[:TYPE599 {cost:5.0}]->(n4)";
+
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
@@ -104,9 +117,10 @@ public final class ShortestPathDijkstraTest {
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     @BeforeClass
-    public static void setupGraph() throws KernelException {
+    public static void setupGraph() {
         DB.execute(DB_CYPHER).close();
         DB.execute(DB_CYPHER2).close();
+        DB.execute(DB_CYPHER_599).close();
     }
 
     private Class<? extends GraphFactory> graphImpl;
@@ -120,7 +134,7 @@ public final class ShortestPathDijkstraTest {
     }
 
     @Test
-    public void test1() throws Exception {
+    public void test1() {
         final Label label = Label.label("Label1");
         RelationshipType type = RelationshipType.withName("TYPE1");
 
@@ -134,7 +148,7 @@ public final class ShortestPathDijkstraTest {
 
         final Graph graph = new GraphLoader(DB)
                 .withLabel(label)
-                .withRelationshipType("TYPE1")
+                .withRelationshipType(type)
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .withDirection(Direction.OUTGOING)
                 .load(graphImpl);
@@ -148,7 +162,7 @@ public final class ShortestPathDijkstraTest {
     }
 
     @Test
-    public void test2() throws Exception {
+    public void test2() {
         final Label label = Label.label("Label2");
         RelationshipType type = RelationshipType.withName("TYPE2");
         ShortestPath expected = expected(label, type,
@@ -160,7 +174,7 @@ public final class ShortestPathDijkstraTest {
 
         final Graph graph = new GraphLoader(DB)
                 .withLabel(label)
-                .withRelationshipType("TYPE2")
+                .withRelationshipType(type)
                 .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
                 .withDirection(Direction.OUTGOING)
                 .load(graphImpl);
@@ -173,8 +187,40 @@ public final class ShortestPathDijkstraTest {
         assertArrayEquals(nodeIds, path);
     }
 
+    /** @see <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/599">Issue #599</a> */
     @Test
-    public void testResultStream() throws Exception {
+    public void test599() {
+        Label label = Label.label("Label599");
+        RelationshipType type = RelationshipType.withName("TYPE599");
+        ShortestPath expected = expected(
+                label, type,
+                "id", "1", "id", "2", "id", "5",
+                "id", "6", "id", "3", "id", "4");
+
+        Graph graph = new GraphLoader(DB)
+                .withLabel(label)
+                .withRelationshipType(type)
+                .withRelationshipWeightsFromProperty("cost", Double.MAX_VALUE)
+                .withDirection(Direction.OUTGOING)
+                .load(graphImpl);
+
+        ShortestPathDijkstra shortestPathDijkstra = new ShortestPathDijkstra(graph);
+        shortestPathDijkstra.compute(
+                expected.nodeIds[0],
+                expected.nodeIds[expected.nodeIds.length - 1],
+                Direction.OUTGOING
+        );
+        long[] path = Arrays
+                .stream(shortestPathDijkstra.getFinalPath().toArray())
+                .mapToLong(graph::toOriginalNodeId)
+                .toArray();
+
+        assertArrayEquals(expected.nodeIds, path);
+        assertEquals(expected.weight, shortestPathDijkstra.getTotalCost(), 0.1);
+    }
+
+    @Test
+    public void testResultStream() {
         final Label label = Label.label("Label1");
         RelationshipType type = RelationshipType.withName("TYPE1");
         ShortestPath expected = expected(label, type,
