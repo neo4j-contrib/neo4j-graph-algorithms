@@ -77,26 +77,26 @@ This sample will explain the PageRank algorithm using a simple graph:
 
 image::pagerank.png[]
 
-.Create sample graph
+. Use the following to create a sample graph:
++
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=create-sample-graph]
 ----
-
-
-.Running algorithm and streaming results
++
+. Use the following to run the algorithm and stream results:
++
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=stream-sample-graph]
 ----
-
-
-.Running algorithm and writing back results
++
+. Use the following to run the algorithm and write back results:
++
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=write-sample-graph]
 ----
-
 
 // tag::stream-sample-graph-result[]
 .Results
