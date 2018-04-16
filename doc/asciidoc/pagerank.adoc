@@ -271,47 +271,46 @@ ifdef::implementation[]
 
 :leveloffset: +1
 
-_PageRank_ is Googles popular search algorithm.
+PageRank is the popular search algorithm built by Google.
+For more information, see the https://en.wikipedia.org/wiki/PageRank[PageRank page on Wikipedia].
 
-More: https://en.wikipedia.org/wiki/PageRank
+== Progress
 
-## Progress
+- [x] Single threaded implementation
+- [x] Tests
+- [x] Simple benchmark
+- [x] Implement procedure
+- [x] Benchmark on bigger graphs
+- [x] Parallelization
+- [x] Evaluation
 
-- [x] single threaded implementation
-- [x] tests
-- [x] simple benchmark
-- [x] implement procedure
-- [x] benchmark on bigger graphs
-- [x] parallelization
-- [x] evaluation
-
-## Requirements
+== Requirements
 
 - NodeIterator
-- Incoming Relationships
-- Outgoing Degrees
+- Incoming relationships
+- Outgoing degrees
 
-## Data structured involved
+== Data structured involved
 
 Our current approach needs one double array for storing ranks.
 
-## ToDo
+== ToDo
 
-### parallelization
+=== Parallelization
 
 One approach to parallelize _PageRank_ might be to partition the node into batches - one for each thread. Nonetheless we may need to sync them at the end of each iteration.
 
-### evaluation
+=== Evaluation
 
-- Performance tests on different dataset sizes / level of concurrency
+Performance tests on different dataset sizes / level of concurrency.
 
-## Future Improvements
+== Future Improvements
 
-- we might scale up the ranks to ints for faster multiplication.
+We might scale up the ranks to ints for faster multiplication.
 
 == Details
 
-Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]-
+Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]:
 
 - Each partition thread has its local array of only the nodes that it is responsible for,
 not for all nodes. Combined, all partitions hold all page rank scores for every node once.
