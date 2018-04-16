@@ -122,17 +122,18 @@ We can also see that it's not only the number of incoming links that is importan
 
 == Example usage
 
-We will run PageRank on Yelp's social network to find potential influencers.
+In this example we will run PageRank on Yelp's social network to find potential influencers.
 
 In the link:#_import[import section] we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
-Relationships in Neo4j always have a direction but in this domain the direction is irrelevant.
-If `Person A` is a `FRIEND` with `Person B` we can say that `Person B` is also a `FRIEND` with `Person A`.
+Relationships in Neo4j always have a direction, but in this domain the direction is irrelevant.
+If `Person A` is a `FRIEND` with `Person B`, we can say that `Person B` is also a `FRIEND` with `Person A`.
 
-The default label and relationship-type selection syntax won't work for us here because it will project a directed social network.
+The default label and relationship-type selection syntax won't work for us here, because it will project a directed social network.
 Instead, we can project our undirected social network using *Cypher loading*.
 We can also apply this approach to other algorithms that use *Cypher loading*.
 
-.Running algorithm on Yelp social network
+Use the following to run the PageRank algorithm on the Yelp social network:
+
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
@@ -140,7 +141,8 @@ include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
 
 == Syntax
 
-.running algorithm and writing back results
+Use the following to run the PageRank algorithm, and write back results:
+
 [source,cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String,
@@ -148,37 +150,38 @@ CALL algo.pageRank(label:String, relationship:String,
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 ----
 
-.parameters
+.Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| iterations | int | 20 | yes | how many iterations of page-rank to run
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
-| write | boolean | true | yes | if result should be written back as node property
-| writeProperty | string | 'pagerank' | yes | property name written back to
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| iterations | int | 20 | yes | How many iterations of PageRank to run
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
+| write | boolean | true | yes | Specify if the result should be written back as a node property
+| writeProperty | string | `pagerank` | yes | The property name written back to
+| graph | string | `heavy` | yes | Use `heavy` when describing the subset of the graph with label and relationship-type parameter. Use `cypher` for describing the subset with cypher node-statement and relationship-statement
 |===
 
-.results
+.Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodes | int | number of nodes considered
-| iterations | int | number of iterations run
-| dampingFactor | float | damping factor used
-| writeProperty | string | property name written back to
-| write | boolean | if result was written back as node property
-| loadMillis | int | milliseconds for loading data
-| computeMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
+| Name | Type | Description
+| nodes | int | The number of nodes considered
+| iterations | int | The number of iterations run
+| dampingFactor | float | The damping factor used
+| writeProperty | string | The property name written back to
+| write | boolean | Specify if result was written back as node property
+| loadMillis | int | Milliseconds for loading data
+| computeMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
 
 |===
 
 
-.running algorithm and streaming results
+Use the following to run the PageRank algorithm, and stream results:
+
 [source,cypher]
 ----
 CALL algo.pageRank.stream(label:String, relationship:String,
@@ -186,31 +189,31 @@ CALL algo.pageRank.stream(label:String, relationship:String,
 YIELD node, score - calculates page rank and streams results
 ----
 
-.parameters
+.Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
-| iterations | int | 20 | yes | how many iterations of page-rank to run
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
+| iterations | int | 20 | yes | Specify how many iterations of PageRank to run
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
+| graph | string | `heavy` | yes | Use `heavy` when describing the subset of the graph with label and relationship-type parameter. Use `cypher` for describing the subset with cypher node-statement and relationship-statement
 |===
 
-.results
-[opts="headers"]
+.Results
+[opts="header"]
 |===
-| name | type | description
-| node | long | node id
-| score | float | page-rank weight
+| Name | Type | Description
+| node | long | Node ID
+| score | float | PageRank weight
 |===
 
 
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Don't forget to set `graph:'cypher'` in the config.
+You must ensure that `graph:'cypher'` is set in the config:
 
 [source,cypher]
 ----
@@ -219,7 +222,7 @@ include::scripts/pagerank.cypher[tag=cypher-loading]
 
 == Versions
 
-We support the following versions of the pageRank algorithm:
+We support the following versions of the PageRank algorithm:
 
 * [x] directed, unweighted
 
@@ -231,6 +234,7 @@ We support the following versions of the pageRank algorithm:
 
 * [ ] undirected, weighted
 
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -256,6 +260,7 @@ We support the following versions of the pageRank algorithm:
 * [7] http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 // end::references[]
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
