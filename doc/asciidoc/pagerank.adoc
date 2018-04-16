@@ -35,7 +35,7 @@ where,
 The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be 1.
 // end::formula[]
 
-== Use-cases; when to use the PageRank algorithm
+== Use-cases - when to use the PageRank algorithm
 
 // tag::use-case[]
 PageRank can be applied across a wide range of domains.
@@ -55,7 +55,7 @@ It can help find doctors or providers that are behaving in an unusual manner and
 There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
 
-== Constraints; when not to use the PageRank algorithm
+== Constraints - when not to use the PageRank algorithm
 
 // tag::constraint[]
 There are some things to be aware of when using the Page Rank algorithm.
@@ -71,7 +71,9 @@ If you see unexpected results from running the algorithm it's worth doing some e
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google Pagerank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
-== Sample; explaining the PageRank algorithm using a simple graph
+== Sample
+
+This sample will explain the PageRank algorithm using a simple graph:
 
 image::pagerank.png[]
 
