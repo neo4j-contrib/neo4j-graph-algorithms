@@ -20,7 +20,7 @@ Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algori
 
 These algorithms determine the importance of distinct nodes in a network.
 
-* Page Rank (`algo.pageRank`)
+* PageRank (`algo.pageRank`)
 * Betweenness Centrality (`algo.betweenness`)
 * Closeness Centrality (`algo.closeness`)
 
@@ -107,7 +107,7 @@ We can project the graph we want to run algorithms on with either label and rela
 | stored   |    cypher projection     |   graph   |<-------------------
 |  graph   +------------------------->|           |
 +----------+                          +-----------+
-       
+
 ----
 
 Projected graph model is separate from Neo4j's stored graph model to allow fast cache for the topology of the graph containing only relevant nodes, relations and in addition the weights.
@@ -152,7 +152,7 @@ All other relationships that don't have both source and target nodes described i
 
 We can also return a property value or weight (according to our config) in addition to the id's from these statements.
 
-Cypher projection allows us to be more expressive in describing our subgraph we want to analyse, but might take longer to project the graph with more complex cypher queries. 
+Cypher projection allows us to be more expressive in describing our subgraph we want to analyse, but might take longer to project the graph with more complex cypher queries.
 
 
 [source,cypher]
@@ -163,14 +163,14 @@ CALL algo.pageRank(
 {graph:'cypher', iterations:5, write: true});
 ----
 
-Cypher projection can also be used to project a virtual (non-stored) graph. 
+Cypher projection can also be used to project a virtual (non-stored) graph.
 Here is an example of how to project an undirected graph of people who visited the same web page and run Louvain community detection algorithm on it using the number of common visited web pages between pairs of people as relationship weight.
 
 [source,cypher]
 ----
 CALL algo.louvain(
 'MATCH (p:Person) RETURN id(p) as id',
-'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person) 
+'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person)
 RETURN id(p1) as source, id(p2) as target, count(*) as weight',
 {graph:'cypher', iterations:5, write: true});
 ----
