@@ -23,6 +23,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Random;
+
 /**
  * RingBuilder creates a ring of nodes where each node is
  * connected to its successor while the last element of the
@@ -32,8 +34,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
  */
 public class RingBuilder extends GraphBuilder<RingBuilder> {
 
-    protected RingBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
-        super(api, label, relationship);
+    RingBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
+        super(api, label, relationship, random);
     }
 
     /**

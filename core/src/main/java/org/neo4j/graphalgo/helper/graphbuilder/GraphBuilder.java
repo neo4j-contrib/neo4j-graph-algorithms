@@ -26,6 +26,7 @@ import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelExce
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.HashSet;
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -41,13 +42,15 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     protected final HashSet<Node> nodes;
     protected final HashSet<Relationship> relationships;
-    protected final GraphDatabaseAPI api;
-    protected final TransactionWrapper tx;
+
+    private final GraphDatabaseAPI api;
+    private final TransactionWrapper tx;
+    private final Random random;
 
     protected Label label;
     protected RelationshipType relationship;
 
-    protected GraphBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
+    protected GraphBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
         this.api = api;
         this.label = label;
         this.relationship = relationship;
@@ -55,6 +58,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
         nodes = new HashSet<>();
         relationships = new HashSet<>();
         this.self = me();
+        this.random = random;
     }
 
     /**
@@ -177,7 +181,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return a new default builder
      */
     public DefaultBuilder newDefaultBuilder() {
-        return new DefaultBuilder(api, label, relationship);
+        return new DefaultBuilder(api, label, relationship, random);
     }
 
     /**
@@ -187,7 +191,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return a new ring builder
      */
     public RingBuilder newRingBuilder() {
-        return new RingBuilder(api, label, relationship);
+        return new RingBuilder(api, label, relationship, random);
     }
 
     /**
@@ -197,7 +201,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return the GridBuilder
      */
     public GridBuilder newGridBuilder() {
-        return new GridBuilder(api, label, relationship);
+        return new GridBuilder(api, label, relationship, random);
     }
 
     /**
@@ -207,7 +211,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return the LineBuilder
      */
     public LineBuilder newLineBuilder() {
-        return new LineBuilder(api, label, relationship);
+        return new LineBuilder(api, label, relationship, random);
     }
 
     /**
@@ -217,10 +221,15 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return the CompleteGraphBuilder
      */
     public CompleteGraphBuilder newCompleteGraphBuilder() {
-        return new CompleteGraphBuilder(api, label, relationship);
+        return new CompleteGraphBuilder(api, label, relationship, random);
+    }
+
+    protected double randomDouble() {
+        return random.nextDouble();
     }
 
     /**
+>>>>>>> a7b56859... Add test for larger triangle counting
      * return child instance for method chaining from methods of the abstract parent class
      *
      * @return self (child instance)
@@ -234,6 +243,21 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return a new default builder
      */
     public static DefaultBuilder create(GraphDatabaseAPI api) {
-        return new DefaultBuilder(api, null, null);
+        return new DefaultBuilder(api, null, null, RNGHolder.rng);
+    }
+
+    /**
+     * create a new default builder with a defined RNG
+     *
+     * @param api the neo4j api
+     * @param random the random number generator
+     * @return a new default builder
+     */
+    public static DefaultBuilder create(GraphDatabaseAPI api, Random random) {
+        return new DefaultBuilder(api, null, null, random);
+    }
+
+    private static final class RNGHolder {
+        static final Random rng = new Random();
     }
 }

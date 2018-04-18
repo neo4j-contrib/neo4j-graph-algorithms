@@ -24,6 +24,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Builds a complete graph where all nodes are interconnected
@@ -32,8 +33,8 @@ import java.util.ArrayList;
  */
 public class CompleteGraphBuilder extends GraphBuilder<CompleteGraphBuilder> {
 
-    protected CompleteGraphBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
-        super(api, label, relationship);
+    CompleteGraphBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
+        super(api, label, relationship, random);
     }
 
     public CompleteGraphBuilder createCompleteGraph(int nodeCount) {
@@ -68,7 +69,7 @@ public class CompleteGraphBuilder extends GraphBuilder<CompleteGraphBuilder> {
                     if (i == j) {
                         continue;
                     }
-                    if (Math.random() < connectedness) {
+                    if (randomDouble() < connectedness) {
                         createRelationship(nodes.get(i), nodes.get(j));
                     }
                 }
