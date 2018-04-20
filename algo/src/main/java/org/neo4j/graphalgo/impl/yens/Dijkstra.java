@@ -46,7 +46,6 @@ public class Dijkstra {
 
     private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
 
-    private final IntDoubleMap intermediateCosts;
     // node to cost map
     private final IntDoubleMap costs;
     // next node priority queue
@@ -70,7 +69,6 @@ public class Dijkstra {
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         visited = new BitSet(nodeCount);
-        intermediateCosts = new IntDoubleScatterMap();
     }
 
     /**
@@ -142,7 +140,6 @@ public class Dijkstra {
         queue.clear();
         path.clear();
         visited.clear();
-        intermediateCosts.clear();
         costs.put(source, 0.0);
         queue.add(source, 0.0);
         while (!queue.isEmpty() && terminationFlag.running()) {
@@ -167,7 +164,6 @@ public class Dijkstra {
                                 queue.add(target, 0);
                             }
                         }
-
                         return terminationFlag.running();
                     });
         }
