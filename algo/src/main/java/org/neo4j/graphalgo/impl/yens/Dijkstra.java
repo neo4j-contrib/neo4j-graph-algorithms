@@ -159,9 +159,9 @@ public class Dijkstra {
                         final boolean updateCosts = updateCosts(s, t, w + costs);
                         if (!visited.get(t)) {
                             if (updateCosts) {
-                                queue.update(target);
+                                queue.update(t);
                             } else {
-                                queue.add(target, 0);
+                                queue.add(t, w);
                             }
                         }
                         return terminationFlag.running();
