@@ -54,7 +54,7 @@ public class Dijkstra {
     // auxiliary path map
     private final IntIntMap path;
     // visited set
-    private final SimpleBitSet visited;
+    private final BitSet visited;
     // visited filter
     private RelationshipConsumer filter = (sourceNodeId, targetNodeId, relationId) -> true;
     // traverse direction
@@ -69,7 +69,7 @@ public class Dijkstra {
                 costs,
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
-        visited = new SimpleBitSet(nodeCount);
+        visited = new BitSet(nodeCount);
         intermediateCosts = new IntDoubleScatterMap();
     }
 
@@ -150,7 +150,7 @@ public class Dijkstra {
             if (node == target) {
                 return true;
             }
-            visited.put(node);
+            visited.set(node);
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
@@ -159,10 +159,15 @@ public class Dijkstra {
                             return true;
                         }
                         final double w = graph.weightOf(s, t);
-                        updateCosts(s, t, w,w + costs);
-                        if (!visited.contains(t)) {
-                            queue.add(t, 0);
+                        final boolean updateCosts = updateCosts(s, t, w + costs);
+                        if (!visited.get(t)) {
+                            if (updateCosts) {
+                                queue.update(target);
+                            } else {
+                                queue.add(target, 0);
+                            }
                         }
+
                         return terminationFlag.running();
                     });
         }
@@ -172,12 +177,14 @@ public class Dijkstra {
     /**
      * update cost map
      */
-    private void updateCosts(int source, int target, double weight, double newCosts) {
+    private boolean updateCosts(int source, int target, double newCosts) {
         double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
         if (newCosts < oldCosts) {
-            intermediateCosts.put(target, weight);
             costs.put(target, newCosts);
             path.put(target, source);
+            return oldCosts < Double.MAX_VALUE;
         }
+        return false;
     }
+
 }
