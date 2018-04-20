@@ -186,7 +186,9 @@ public class SimpleBitSet extends StampedLock implements PrimitiveIntIterable
 
     private void ensureCapacity( int arrayIndex )
     {
-        data = Arrays.copyOf( data, findNewLength( arrayIndex, data.length ) );
+        if (data.length <= arrayIndex) {
+            data = Arrays.copyOf( data, findNewLength( arrayIndex, data.length ) );
+        }
     }
 
     //

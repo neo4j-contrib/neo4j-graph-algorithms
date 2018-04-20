@@ -27,6 +27,8 @@ include::minimum-weight-spanning-tree.adoc[leveloffset=2]
 
 include::single-shortest-path.adoc[leveloffset=2]
 
+include::astar.adoc[leveloffset=2]
+
 include::all-pairs-shortest-path.adoc[leveloffset=2]
 
 include::triangleCount.adoc[leveloffset=2]

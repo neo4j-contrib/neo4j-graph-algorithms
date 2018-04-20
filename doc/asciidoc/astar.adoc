@@ -1,0 +1,168 @@
+= The A* Algorithm
+
+// tag::introduction[]
+
+The A* (pronounced “A-star”) algorithm improves on the classic Dijkstra algorithm.
+It  is  based  on  the  observation  that  some  searches  are informed, and  that  by  being informed we can make better choices over which paths to take through the graph.
+
+// end::introduction[]
+
+== History, Explanation
+
+// tag::explanation[]
+
+A* algorithm was first described in 1968 by Peter Hart, Nils Nilsson and Bertram Raphael[1]
+
+In A* we split the path cost into two parts: g(n), which is the cost of the path from the starting point to some node n; and h(n), which represents the estimated  cost  of the path from the node n to the destination node, as computed by a heuristic (an intelligent guess).
+The A* algorithm balances g(n) and h(n) as it iterates the graph, thereby ensuring that at each iteration it chooses the node with the lowest overall cost f(n) = g(n) + h(n).
+
+In our implementation geospatial distance is used as heurestic.
+
+// end::explanation[]
+
+== When to use it / use-cases
+
+// tag::use-case[]
+
+* A* algorithm can be used to find shortest paths between single pairs of locations where GPS coordinates are known.
+
+// end::use-case[]
+
+== Constraints / when not to use it
+
+// tag::constraint[]
+
+// end::constraint[]
+
+== Algorithm explanation on simple sample graph
+
+.Create sample graph
+[source,cypher]
+----
+include::scripts/astar.cypher[tag=create-sample-graph]
+----
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+include::scripts/astar.cypher[tag=stream-sample-graph]
+----
+
+// tag::stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| name | cost
+| King's Cross St. Pancras | 0
+| Euston | 2
+| Camden Town | 5
+| Kentish Town | 7 
+|===
+// end::stream-sample-graph-result[]
+
+== Syntax
+
+.Running algorithm and streaming results
+[source,cypher]
+----
+CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String, 
+propertyKeyLon:String, {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0})
+YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| name | type | default | optional | description
+| startNode  | node | null | no | start node
+| endNode | node | null | no | end node
+| weightProperty | string | null | yes | property name that contains weight
+| propertyKeyLat | string | null | no | property name that contains latitude coordinate
+| propertyKeyLon | string | null | no | property name that contains longitude coordinate
+| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
+| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
+| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
+| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+|===
+
+.Results
+[opts="headers"]
+|===
+| name | type | description
+| nodeId | int | node id
+| cost | int | cost it takes to get from start node to specific node 
+|===
+
+== Cypher projection
+
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+Can be also used to run algorithms on a virtual graph.
+Set `graph:'cypher'` in the config.
+
+[source,cypher]
+----
+include::scripts/astar.cypher[tag=cypher-loading]
+----
+
+== Versions 
+
+We support the following versions of the shortest path algorithms:
+
+* [x] directed, unweighted:  
+
+** direction: 'OUTGOING' or INCOMING, weightProperty: null
+
+* [x] directed, weighted 
+
+** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
+
+* [x] undirected, unweighted
+
+** direction: 'BOTH', weightProperty: null
+
+* [x] undirected, weighted 
+
+** direction: 'BOTH', weightProperty: 'cost'
+
+== Implementations
+
+`algo.shortestPath.astar.stream()`
+
+- implementation of A* heuristic function is for geospatial distances.
+
+== References
+
+// tag::references[]
+
+* [1]https://ieeexplore.ieee.org/document/4082128/[A Formal Basis for the Heuristic Determination of Minimum Cost Paths]
+
+// end::references[]
+
+ifdef::implementation[]
+// tag::implementation[]
+
+== Implementation Details
+
+:leveloffset: +1
+
+
+## Progress
+
+- [x] implement procedure
+- [x] tests
+- [x] relationship case tests
+- [x] simple benchmark 
+- [] benchmark on bigger graphs
+- [] parallelization
+- [] evaluation
+- [] documentation
+
+
+== Details
+
+=== algo.shortestPath.astar.stream()
+
+- implementation of A* heuristic function is for geospatial distances.
+
+// end::implementation[]
+endif::implementation[]

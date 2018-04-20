@@ -57,7 +57,13 @@ public abstract class SharedIntPriorityQueue extends IntPriorityQueue {
     }
 
     @Override
-    protected void addCost(final int element, final double cost) {
+    protected boolean addCost(final int element, final double cost) {
+        // does nothing, costs should be managed outside of this queue
+        return false;
+    }
+
+    @Override
+    protected void removeCost(final int element) {
         // does nothing, costs should be managed outside of this queue
     }
 

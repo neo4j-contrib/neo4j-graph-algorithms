@@ -160,8 +160,8 @@ public class ShortestPathProc {
     }
     
     @Procedure("algo.shortestPath.astar.stream")
-    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, propertyKeyLat:String, propertyKeyLon:String" +
-    		"weightProperty:String {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
+    @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String," +
+    		"propertyKeyLon:String, {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
     		"YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)")
     public Stream<ShortestPathAStar.Result> astarStream(
     			@Name("startNode") Node startNode,

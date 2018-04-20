@@ -46,19 +46,10 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     private int size = 0;
 
     /**
-     * Creates a new queue with an initial capacity of {@link #DEFAULT_CAPACITY}.
-     *
-     * @see #IntPriorityQueue(int)
-     */
-    protected IntPriorityQueue() {
-        this(DEFAULT_CAPACITY);
-    }
-
-    /**
      * Creates a new queue with the given capacity.
      * The queue dynamically grows to hold all elements.
      */
-    protected IntPriorityQueue(final int initialCapacity) {
+    IntPriorityQueue(final int initialCapacity) {
         final int heapSize;
         if (0 == initialCapacity) {
             // We allocate 1 extra to avoid if statement in top()
@@ -69,10 +60,6 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
             heapSize = initialCapacity + 1;
         }
         this.heap = new int[ArrayUtil.oversize(heapSize, Integer.BYTES)];
-    }
-
-    public double getCost(int node) {
-        return cost(node);
     }
 
     /**
@@ -87,8 +74,15 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
 
     /**
      * Adds the cost for the given element.
+     *
+     * @return true if the cost was changed, indicating that the node is already in the queue.
      */
-    protected abstract void addCost(int element, double cost);
+    protected abstract boolean addCost(int element, double cost);
+
+    /**
+     * remove given element from cost management
+     */
+    protected abstract void removeCost(int element);
 
     /**
      * Gets the cost for the given element.
@@ -96,29 +90,24 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     protected abstract double cost(int element);
 
     /**
-     * Optional callback for subclasses to get informed, when a value is removed
-     * from the heap. This method is only called from {@link #pop()}, not from
-     * {@link #clear()}.
-     */
-    protected void elementRemoved(int element) {
-        // empty default behavior
-    }
-
-    /**
      * Adds an int associated with the given weight to a queue in log(size) time.
      * <p>
      * NOTE: The default implementation does nothing with the cost parameter.
      * It is up to the implementation how the cost parameter is used.
-     *
-     * @return the new 'top' element in the queue.
      */
-    public final int add(int element, double cost) {
+    public final void add(int element, double cost) {
         addCost(element, cost);
         size++;
         ensureCapacityForInsert();
         heap[size] = element;
         upHeap(size);
-        return heap[1];
+    }
+
+    private void add(int element) {
+        size++;
+        ensureCapacityForInsert();
+        heap[size] = element;
+        upHeap(size);
     }
 
     /**
@@ -132,13 +121,6 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     }
 
     /**
-     * @return the costs of least element in constant time.
-     */
-    public final double topCost() {
-        return cost(top());
-    }
-
-    /**
      * Removes and returns the least element of the queue in log(size) time.
      *
      * @return the least element of the queue in log(size) time while removing it.
@@ -149,7 +131,7 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
             heap[1] = heap[size];    // move last to first
             size--;
             downHeap(1);           // adjust heap
-            elementRemoved(result);
+            removeCost(result);
             return result;
         } else {
             return -1;
@@ -171,17 +153,47 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
     }
 
     /**
-     * @return true iff there is currently at least one element stored in the queue.
-     */
-    public final boolean nonEmpty() {
-        return size != 0;
-    }
-
-    /**
      * Removes all entries from the queue.
      */
     public void clear() {
         size = 0;
+    }
+
+    /**
+     * Updates the heap because the cost of an element has changed, possibly from the outside.
+     * Cost is linear with the size of the queue.
+     */
+    public final void update(int element) {
+        int pos = findElementPosition(element);
+        if (pos != 0) {
+            if (!upHeap(pos) && pos < size) {
+                downHeap(pos);
+            }
+        }
+    }
+
+    public final void set(int element, double cost) {
+        if (addCost(element, cost)) {
+            update(element);
+        } else {
+            add(element);
+        }
+    }
+
+    private int findElementPosition(int element) {
+        final int limit = size + 1;
+        final int[] data = heap;
+        int i = 1;
+        for (; i <= limit - 4; i += 4) {
+            if (data[i] == element) return i;
+            if (data[i + 1] == element) return i + 1;
+            if (data[i + 2] == element) return i + 2;
+            if (data[i + 3] == element) return i + 3;
+        }
+        for (; i < limit; ++i) {
+            if (data[i] == element) return i;
+        }
+        return 0;
     }
 
     /**
@@ -290,13 +302,24 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
         }
 
         @Override
-        protected void addCost(int element, double cost) {
-            costs.put(element, cost);
+        protected boolean addCost(int element, double cost) {
+            return costs.put(element, cost) != 0d;
+        }
+
+        @Override
+        protected void removeCost(final int element) {
+            costs.remove(element);
         }
 
         @Override
         protected double cost(int element) {
             return costs.get(element);
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            costs.clear();
         }
 
         @Override

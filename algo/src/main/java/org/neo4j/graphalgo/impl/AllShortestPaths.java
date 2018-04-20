@@ -174,7 +174,7 @@ public class AllShortestPaths extends MSBFSASPAlgorithm<AllShortestPaths> {
                             final double targetDistance = weight + sourceDistance;
                             if (targetDistance < distance[target]) {
                                 distance[target] = targetDistance;
-                                queue.add(target, targetDistance);
+                                queue.set(target, targetDistance);
                             }
                             return true;
                         });

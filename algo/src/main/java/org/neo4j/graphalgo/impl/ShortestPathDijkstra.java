@@ -23,7 +23,6 @@ import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
-import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
 
 import java.util.stream.Stream;
@@ -51,8 +50,9 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     private IntIntMap path;
     // path map (stores the resulting shortest path)
     private IntArrayDeque finalPath;
+    private DoubleArrayDeque finalPathCosts;
     // visited set
-    private SimpleBitSet visited;
+    private BitSet visited;
     private final int nodeCount;
     // overall cost of the path
     private double totalCost;
@@ -61,14 +61,15 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
     public ShortestPathDijkstra(Graph graph) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
-        costs = new IntDoubleScatterMap(nodeCount);
+        costs = new IntDoubleScatterMap();
         queue = SharedIntPriorityQueue.min(
-                nodeCount,
+                IntPriorityQueue.DEFAULT_CAPACITY,
                 costs,
                 Double.MAX_VALUE);
-        path = new IntIntScatterMap(nodeCount);
-        visited = new SimpleBitSet(nodeCount);
+        path = new IntIntScatterMap();
+        visited = new BitSet();
         finalPath = new IntArrayDeque();
+        finalPathCosts = new DoubleArrayDeque();
         progressLogger = getProgressLogger();
     }
 
@@ -96,8 +97,13 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         int last = goal;
         while (last != PATH_END) {
             finalPath.addFirst(last);
+            finalPathCosts.addFirst(costs.get(last));
             last = path.getOrDefault(last, PATH_END);
         }
+        // destroy costs and path to remove the data for nodes that are not part of the graph
+        // since clear never downsizes the buffer array
+        costs.release();
+        path.release();
         return this;
     }
 
@@ -107,8 +113,9 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
      * @return stream of result DTOs
      */
     public Stream<Result> resultStream() {
+        double[] costs = finalPathCosts.buffer;
         return StreamSupport.stream(finalPath.spliterator(), false)
-                .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), costs.get(cursor.value)));
+                .map(cursor -> new Result(graph.toOriginalNodeId(cursor.value), costs[cursor.index]));
     }
 
     public IntArrayDeque getFinalPath() {
@@ -140,14 +147,18 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
                 return;
             }
 
-            visited.put(node);
+            visited.set(node);
             double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
                     direction, (source, target, relId, weight) -> {
-                        updateCosts(source, target, weight + costs);
-                        if (!visited.contains(target)) {
-                            queue.add(target, 0);
+                        boolean oldCostChanged = updateCosts(source, target, weight + costs);
+                        if (!visited.get(target)) {
+                            if (oldCostChanged) {
+                                queue.update(target);
+                            } else {
+                                queue.add(target, 0);
+                            }
                         }
                         return true;
                     });
@@ -155,12 +166,14 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
         }
     }
 
-    private void updateCosts(int source, int target, double newCosts) {
+    private boolean updateCosts(int source, int target, double newCosts) {
         double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
         if (newCosts < oldCosts) {
             costs.put(target, newCosts);
             path.put(target, source);
+            return oldCosts < Double.MAX_VALUE;
         }
+        return false;
     }
 
     @Override
