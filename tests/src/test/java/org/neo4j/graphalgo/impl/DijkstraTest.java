@@ -15,9 +15,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import java.util.Optional;
+
+import static org.junit.Assert.*;
 
 /**
  * Test for specialized dijkstra implementation with filters
@@ -118,6 +118,12 @@ public class DijkstraTest {
         assertEquals(5, weightedPath.size());
         assertTrue(weightedPath.containsNode(id("c")));
         assertTrue(weightedPath.containsNode(id("f")));
+    }
+
+    @Test
+    public void testMaxDepth() throws Exception {
+        assertTrue(dijkstra.compute(id("a"), id("d"), 4).isPresent());
+        assertFalse(dijkstra.compute(id("a"), id("d"), 3).isPresent());
     }
 
     private WeightedPath dijkstra(String from, String to) {

@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -58,6 +59,8 @@ public class Dijkstra {
     private RelationshipConsumer filter = (sourceNodeId, targetNodeId, relationId) -> true;
     // traverse direction
     private Direction direction = Direction.BOTH;
+    // iteration depth
+    private int[] depth;
 
 
     public Dijkstra(Graph graph) {
@@ -69,6 +72,7 @@ public class Dijkstra {
                 Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         visited = new BitSet(nodeCount);
+        depth = new int[nodeCount];
     }
 
     /**
@@ -117,7 +121,18 @@ public class Dijkstra {
      * @return an optional path
      */
     public Optional<WeightedPath> compute(int sourceNode, int targetNode) {
-        if (!dijkstra(sourceNode, targetNode, direction)) {
+        return compute(sourceNode, targetNode, Integer.MAX_VALUE);
+    }
+
+    /**
+     * compute shortest path from sourceNode to targetNode
+     * @param sourceNode mapped source node id
+     * @param targetNode mapped target node id
+     * @param maxDepth maximum traversal depth
+     * @return an optional path
+     */
+    public Optional<WeightedPath> compute(int sourceNode, int targetNode, int maxDepth) {
+        if (!dijkstra(sourceNode, targetNode, direction, maxDepth)) {
             return Optional.empty();
         }
         int last = targetNode;
@@ -135,15 +150,20 @@ public class Dijkstra {
      * calc path
      * @return true if a path has been found, false otherwise
      */
-    private boolean dijkstra(int source, int target, Direction direction) {
+    private boolean dijkstra(int source, int target, Direction direction, int maxDepth) {
         costs.clear();
         queue.clear();
         path.clear();
         visited.clear();
         costs.put(source, 0.0);
         queue.add(source, 0.0);
+        Arrays.fill(depth, 1);
         while (!queue.isEmpty() && terminationFlag.running()) {
             int node = queue.pop();
+            final int d = depth[node];
+            if (d >= maxDepth) {
+                continue;
+            }
             if (node == target) {
                 return true;
             }
@@ -158,6 +178,7 @@ public class Dijkstra {
                         final double w = graph.weightOf(s, t);
                         final boolean updateCosts = updateCosts(s, t, w + costs);
                         if (!visited.get(t)) {
+                            depth[t] = d + 1;
                             if (updateCosts) {
                                 queue.update(t);
                             } else {

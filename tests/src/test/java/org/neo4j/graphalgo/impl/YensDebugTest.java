@@ -97,7 +97,7 @@ public class YensDebugTest {
                 getNode("a").getId(),
                 getNode("g").getId(),
                 Direction.BOTH,
-                5);
+                5, 4);
 
         final List<WeightedPath> paths = yens.getPaths();
 

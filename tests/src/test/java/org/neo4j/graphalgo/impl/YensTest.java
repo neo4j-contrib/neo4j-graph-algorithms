@@ -106,7 +106,7 @@ public class YensTest {
     public void test() throws Exception {
         final YensKShortestPaths yens = new YensKShortestPaths(graph)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
-                .compute(id("a"), id("f"), 42);
+                .compute(id("a"), id("f"), Direction.OUTGOING, 42, 10);
         final List<WeightedPath> paths = yens.getPaths();
         final DoubleConsumer mock = mock(DoubleConsumer.class);
         for (int i = 0; i < paths.size(); i++) {

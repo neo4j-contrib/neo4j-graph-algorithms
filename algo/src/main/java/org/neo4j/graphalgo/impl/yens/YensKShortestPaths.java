@@ -62,27 +62,20 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
 
     /**
      * compute at most k shortest paths between startNode and goalNode
-     * @return itself
-     */
-    public YensKShortestPaths compute(long startNode, long goalNode, int k) {
-        return compute(startNode, goalNode, Direction.OUTGOING, k);
-    }
-
-    /**
-     * compute at most k shortest paths between startNode and goalNode
      * while using only supplied traversal direction
      * @return itself
      */
-    public YensKShortestPaths compute(long startNode, long goalNode, Direction direction, int k) {
+    public YensKShortestPaths compute(long startNode, long goalNode, Direction direction, int k, int maxDepth) {
         yens(k,
                 graph.toMappedNodeId(startNode),
                 graph.toMappedNodeId(goalNode),
-                direction);
+                direction,
+                maxDepth);
         getProgressLogger().log(String.format("done.. found %d/%d paths", shortestPaths.size(), k));
         return this;
     }
 
-    private void yens(int k, int start, int goal, Direction direction) {
+    private void yens(int k, int start, int goal, Direction direction, int maxDepth) {
         final ProgressLogger progressLogger = getProgressLogger();
         // blacklist container for dijkstra
         final IntScatterSet nodeBlackList = new IntScatterSet();
@@ -97,7 +90,7 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                         !nodeBlackList.contains(t) &&
                         // and edge filter by combining the nodeIds into a long
                         !edgeBlackList.contains(RawValues.combineIntInt(s, t)))
-                .compute(start, goal);// compute the best shortest path first
+                .compute(start, goal, maxDepth);// compute the best shortest path first
         if (!shortestPathOpt.isPresent()) {
             // not a single path found
             return;
@@ -136,21 +129,16 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                     }
                 });
                 // Calculate the spur path from the spur node to the goal node.
-                final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal);
+                final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal, maxDepth);
                 // no path found, continue
                 if (!spurPathOpt.isPresent()) {
                     continue;
                 }
                 // new candidate is the concatenation of rootPath and the spurPath.
-
-//                rootPath.dropTail();
-//                final WeightedPath concatenation = WeightedPath.concat(rootPath, spurPathOpt.get())
-//                        .evaluateAndSetCost(graph);
-
                 final WeightedPath concatenation = rootPath
                         .dropTail()
                         .concat(spurPathOpt.get());
-
+                // already found?
                 if (!candidates.contains(concatenation)) {
                     progressLogger.log(String.format("found candidate: %d nodes / %.2f weight",
                             concatenation.size(),
