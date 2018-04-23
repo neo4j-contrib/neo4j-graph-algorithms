@@ -14,6 +14,14 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 import static org.junit.Assert.assertEquals;
 
 /**
+ * Graph:
+ *
+ *            (0)
+ *          /  |  \
+ *       (4)--(5)--(1)
+ *         \  /  \ /
+ *         (3)---(2)
+ *
  * @author mknblch
  */
 public class YensKShortestPathsTest {
@@ -55,12 +63,15 @@ public class YensKShortestPathsTest {
                         "CALL algo.kShortestPaths(a, f, 42, 'cost') " +
                         "YIELD resultCount RETURN resultCount";
 
-
+        // 9 possible paths without loop
         DB.execute(cypher).accept(row -> {
             assertEquals(9, row.getNumber("resultCount").intValue());
             return true;
         });
 
+        /**
+         * 10 rels from source graph already in DB + 29 rels from 9 paths
+         */
         try (Transaction transaction = DB.beginTx()) {
             assertEquals(39, DB.getAllRelationships().stream().count());
             transaction.success();

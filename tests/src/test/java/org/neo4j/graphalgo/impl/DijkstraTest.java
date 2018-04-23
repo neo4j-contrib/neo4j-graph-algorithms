@@ -15,19 +15,17 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 /**
- * Test for specialized dijkstra implementation with filters
+ * Test for specialized dijkstra implementation with filters & maxDepth
  *
  *
  * Graph:
  *
  *     (b)   (e)
  *   2/ 1\ 2/ 1\
- * >(a)  (d)  (g)
+ * >(a)  (d)  ((g))
  *   1\ 2/ 1\ 2/
  *    (c)   (f)
  *
@@ -92,7 +90,7 @@ public class DijkstraTest {
     @Test
     public void testNoFilter() throws Exception {
         edgeBlackList.clear();
-        final WeightedPath weightedPath = dijkstra("a", "g");
+        final WeightedPath weightedPath = dijkstra();
         assertEquals(5, weightedPath.size());
         System.out.println("weightedPath = " + weightedPath);
     }
@@ -102,19 +100,18 @@ public class DijkstraTest {
         edgeBlackList.clear();
         edgeBlackList.add(RawValues.combineIntInt(id("a"), id("c")));
         edgeBlackList.add(RawValues.combineIntInt(id("d"), id("f")));
-        final WeightedPath weightedPath = dijkstra("a", "g");
+        final WeightedPath weightedPath = dijkstra();
         assertEquals(5, weightedPath.size());
         assertTrue(weightedPath.containsNode(id("b")));
         assertTrue(weightedPath.containsNode(id("e")));
     }
-
 
     @Test
     public void testFilterABDE() throws Exception {
         edgeBlackList.clear();
         edgeBlackList.add(RawValues.combineIntInt(id("a"), id("b")));
         edgeBlackList.add(RawValues.combineIntInt(id("d"), id("e")));
-        final WeightedPath weightedPath = dijkstra("a", "g");
+        final WeightedPath weightedPath = dijkstra();
         assertEquals(5, weightedPath.size());
         assertTrue(weightedPath.containsNode(id("c")));
         assertTrue(weightedPath.containsNode(id("f")));
@@ -126,8 +123,8 @@ public class DijkstraTest {
         assertFalse(dijkstra.compute(id("a"), id("d"), 3).isPresent());
     }
 
-    private WeightedPath dijkstra(String from, String to) {
-        return dijkstra.compute(id(from), id(to))
+    private WeightedPath dijkstra() {
+        return dijkstra.compute(id("a"), id("g"))
                 .orElseThrow(() -> new AssertionError("No path"));
     }
 

@@ -97,7 +97,7 @@ public class KShortestPathsProc {
         // eval
         try (ProgressTimer timer = builder.timeEval()) {
             algorithm = new YensKShortestPaths(graph)
-                    .withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(Dijkstra)"))
+                    .withProgressLogger(ProgressLogger.wrap(log, "KShortestPaths(Yen)"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute(startNode.getId(),
                             endNode.getId(),
@@ -109,7 +109,6 @@ public class KShortestPathsProc {
         // write
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
-
                 new WeightedPathExporter(api,
                         Pools.DEFAULT,
                         graph,
