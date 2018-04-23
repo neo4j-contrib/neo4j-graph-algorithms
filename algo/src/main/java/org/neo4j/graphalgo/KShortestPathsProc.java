@@ -65,7 +65,7 @@ public class KShortestPathsProc {
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'OUT', defaultValue:1.0, maxDepth:42, write:'true', " +
             PREFIX_IDENTIFIER + ":'PATH_'}) " +
             "YIELD resultCount, loadMillis, evalMillis, writeMillis - yields resultCount, loadMillis, evalMillis, writeMillis")
-    public Stream<KspResult> dijkstra(
+    public Stream<KspResult> yens(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
             @Name("k") long k,

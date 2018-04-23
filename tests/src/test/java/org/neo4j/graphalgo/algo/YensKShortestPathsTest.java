@@ -56,28 +56,14 @@ public class YensKShortestPathsTest {
                         "YIELD resultCount RETURN resultCount";
 
 
-        try (Transaction tx = DB.beginTx()) {
+        DB.execute(cypher).accept(row -> {
+            assertEquals(9, row.getNumber("resultCount").intValue());
+            return true;
+        });
 
-            DB.execute(cypher).accept(row -> {
-                assertEquals(9, row.getNumber("resultCount").intValue());
-                return false;
-            });
-            tx.success();
-        }
-
-        DB.execute("MATCH (a:Node {name:'a'})-[:PATH_0*1..42]->(b:Node{name:'f'}) RETURN a, b")
-                .accept(row -> {
-
-                    System.out.println(row.getNode("a"));
-                    System.out.println(row.getNode("b"));
-
-                    return true;
-                });
-
-        try (Transaction tx = DB.beginTx()) {
-            DB.getAllRelationships().stream()
-                    .forEach(r -> System.out.println(r));
-            tx.success();
+        try (Transaction transaction = DB.beginTx()) {
+            assertEquals(39, DB.getAllRelationships().stream().count());
+            transaction.success();
         }
     }
 }

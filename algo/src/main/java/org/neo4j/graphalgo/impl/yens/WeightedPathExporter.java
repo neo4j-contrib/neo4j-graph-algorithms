@@ -44,22 +44,12 @@ public class WeightedPathExporter extends StatementApi {
         }
     }
 
-    private int getOrCreatePropertyId(String propertyName) {
-        System.out.println("create " + propertyName);
-        try {
-            return applyInTransaction(stmt -> stmt
-                    .tokenWriteOperations()
-                    .propertyKeyGetOrCreateForName(propertyName));
-        } catch (KernelException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void export(int propertyId, WeightedPath path) {
-        System.out.println("exporting " + path + " as id " + propertyId);
+    private void export(String property, WeightedPath path) {
         try {
             applyInTransaction(statement -> {
                 final DataWriteOperations op = statement.dataWriteOperations();
+                final int propertyId = statement.tokenWriteOperations()
+                        .relationshipTypeGetOrCreateForName(property);
                 path.forEachEdge((s, t) -> {
                     try {
                         op.relationshipCreate(propertyId,
@@ -71,7 +61,7 @@ public class WeightedPathExporter extends StatementApi {
                 });
                 return null;
             });
-        } catch (InvalidTransactionTypeKernelException e) {
+        } catch (KernelException e) {
             throw new RuntimeException(e);
         }
     }
@@ -81,7 +71,7 @@ public class WeightedPathExporter extends StatementApi {
         paths.stream()
                 .sorted(WeightedPath.comparator().reversed())
                 .forEach(path ->
-                        export(getOrCreatePropertyId(String.format("%s%d", propertyPrefix, counter.v++)), path));
+                        export(String.format("%s%d", propertyPrefix, counter.v++), path));
     }
 
     private void writeParallel(List<WeightedPath> paths) {
@@ -89,7 +79,7 @@ public class WeightedPathExporter extends StatementApi {
         final List<Runnable> tasks = paths.stream()
                 .sorted(WeightedPath.comparator().reversed())
                 .map(path -> (Runnable) () ->
-                        export(getOrCreatePropertyId(String.format("%s%d", propertyPrefix, counter.v++)), path))
+                        export(String.format("%s%d", propertyPrefix, counter.v++), path))
                 .collect(Collectors.toList());
         ParallelUtil.run(tasks, executorService);
     }
