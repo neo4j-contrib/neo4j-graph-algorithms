@@ -45,7 +45,6 @@ public final class RelationshipsScanner extends StatementAction {
             ArrayBlockingQueue<RelationshipsBatch>[] threadQueues,
             int perThreadSize) {
         super(api);
-        assert BitUtil.isPowerOfTwo(threadQueues.length);
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.setup = setup;
         this.idMap = idMap;
@@ -120,14 +119,16 @@ public final class RelationshipsScanner extends StatementAction {
                 ? Read.ANY_RELATIONSHIP_TYPE
                 : tokenRead.relationshipType(setup.relationshipType);
 
-
         CursorFactory cursors = transaction.cursors();
-        try (RelationshipScanCursor rc = cursors.allocateRelationshipScanCursor();
-             PropertyCursor pc = cursors.allocatePropertyCursor()) {
+        try (RelationshipScanCursor rc = cursors.allocateRelationshipScanCursor()
+//             ;PropertyCursor pc = cursors.allocatePropertyCursor()
+        ) {
             transaction.dataRead().relationshipTypeScan(typeId, rc);
             while (rc.next()) {
                 long source = rc.sourceNodeReference();
                 long target = rc.targetNodeReference();
+                // TODO: right now, each thread checks for the target node to reduce load on the scanner
+                // measure benefit of this against checking here and reducing the size of the payload between threads
                 if (loadOut) {
                     long graphSource = idMap.toHugeMappedNodeId(source);
                     if (graphSource != -1L) {
@@ -161,9 +162,9 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     private void sendLastBatch() throws InterruptedException {
-        out.drainAndRelease((index, target, length) -> sendRelationship(index, target, length, Direction.OUTGOING));
+        out.drainAndRelease(this::sendRelationshipOut);
         if (in != out) {
-            in.drainAndRelease((index, target, length) -> sendRelationship(index, target, length, Direction.INCOMING));
+            in.drainAndRelease(this::sendRelationshipIn);
         }
     }
 
@@ -212,6 +213,14 @@ public final class RelationshipsScanner extends StatementAction {
         long[] newBuffer = setRelationshipBatch(batch, buffer.get(threadIndex), length, direction);
         buffer.reset(threadIndex, newBuffer);
         spinWaitSend(threadQueues[threadIndex], batch);
+    }
+
+    private void sendRelationshipOut(int threadIndex, long[] targets, int length) throws InterruptedException {
+        sendRelationship(threadIndex, targets, length, Direction.OUTGOING);
+    }
+
+    private void sendRelationshipIn(int threadIndex, long[] targets, int length) throws InterruptedException {
+        sendRelationship(threadIndex, targets, length, Direction.INCOMING);
     }
 
     private void sendRelationship(

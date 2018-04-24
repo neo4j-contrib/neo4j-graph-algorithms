@@ -14,12 +14,12 @@ final class CompressedLongArray {
     private long lastValue;
     private int length;
 
-    CompressedLongArray(long v) {
-        this.storage = EMPTY_BYTES;
+    CompressedLongArray(long v, int maxLen) {
+        this.storage = new byte[maxLen];
         add(v);
     }
 
-    void add(long v) {
+    int add(long v) {
         ++length;
         long value = v - lastValue;
         int required = DeltaEncoding.singedVSize(value);
@@ -29,6 +29,7 @@ final class CompressedLongArray {
         }
         this.pos = DeltaEncoding.encodeSignedVLong(value, storage, pos);
         this.lastValue = v;
+        return length;
     }
 
     long[] ensureBufferSize(long[] into) {

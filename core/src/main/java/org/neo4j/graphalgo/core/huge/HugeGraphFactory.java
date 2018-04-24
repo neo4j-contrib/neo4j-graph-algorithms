@@ -72,8 +72,8 @@ public final class HugeGraphFactory extends GraphFactory {
             HugeWeightMapping weights,
             int concurrency) {
         return loadSeq2(dimensions, tracker, mapping, weights, concurrency);
-//        return loadRelationships(dimensions, mapping, weights, concurrency, tracker, progress);
-//        return loadBogusRelationships(mapping, weights, tracker);
+//        return loadRelationships(dimensions, mapping.toHugeIdMap(), weights, concurrency, tracker, progress);
+//        return loadBogusRelationships(mapping.toHugeIdMap(), weights, tracker);
     }
 
     private HugeGraph loadSeq2(

@@ -81,7 +81,7 @@ final class ScanningRelationshipImporter {
 
     void run() {
         long targetThreads = (long) concurrency;
-        long batchSize = ParallelUtil.threadSize(targetThreads, dimensions.allNodesCount());
+        long batchSize = ParallelUtil.threadSize(targetThreads, idMap.nodeCount());
         batchSize = BitUtil.nextHighestPowerOfTwo(batchSize);
         while (batchSize > MAX_BATCH_SIZE) {
             targetThreads <<= 1L;
@@ -97,17 +97,28 @@ final class ScanningRelationshipImporter {
     private void run(int threads, int batchSize) {
         int inFlight = threads * PER_THREAD_IN_FLIGHT;
         long idBase = 0L;
-        //noinspection unchecked
-        final ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
-        final PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
-        for (int i = 0; i < queues.length; i++) {
+//        noinspection unchecked
+        ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
+        PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
+        int i = 0;
+        for (; i < queues.length; i++) {
+            int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
+            if (elementsForThread <= 0) {
+                break;
+            }
             final ArrayBlockingQueue<RelationshipsBatch> queue = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
             final PerThreadRelationshipBuilder builder = new PerThreadRelationshipBuilder(
-                    i, idBase, batchSize, queue, progress, idMap,
+                    api, dimensions.labelId(), dimensions.relationshipTypeId(), setup.loadAsUndirected,
+                    progress, idMap, i, idBase, elementsForThread, queue,
                     outOffsets, outAdjacency, inOffsets, inAdjacency);
+
             queues[i] = queue;
             builders[i] = builder;
             idBase += (long) batchSize;
+        }
+        if (i < queues.length) {
+            builders = Arrays.copyOf(builders, i);
+            queues = Arrays.copyOf(queues, i);
         }
 
         final Collection<Future<?>> jobs =

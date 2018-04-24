@@ -4,7 +4,7 @@ class LongsBuffer {
 
     @FunctionalInterface
     public interface BucketConsumer {
-        void apply(int bucketIndex, long[] bucket, int bucketLengt) throws InterruptedException;
+        void apply(int bucketIndex, long[] bucket, int bucketLength) throws InterruptedException;
     }
 
     private long[][] targets;
