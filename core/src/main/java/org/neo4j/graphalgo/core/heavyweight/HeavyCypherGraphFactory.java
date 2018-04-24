@@ -208,7 +208,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         // data structures for merged information
         int capacity = INITIAL_NODE_COUNT * 10;
-        LongIntMap nodeToGraphIds = new LongIntHashMap(capacity);
+        LongIntHashMap nodeToGraphIds = new LongIntHashMap(capacity);
 
         boolean hasNodeWeights = setup.shouldLoadNodeWeight();
         final WeightMap nodeWeights = newWeightMapping(hasNodeWeights, setup.nodeDefaultWeight, capacity);
@@ -365,7 +365,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         NodeRowVisitor visitor = new NodeRowVisitor();
         api.execute(setup.startLabel, params(offset, batchSize)).accept(visitor);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(setup.tracker);
         return new Nodes(offset, visitor.rows, idMap, nodeWeights, nodeProps, setup.nodeDefaultWeight, setup.nodeDefaultPropertyValue);
     }
 
