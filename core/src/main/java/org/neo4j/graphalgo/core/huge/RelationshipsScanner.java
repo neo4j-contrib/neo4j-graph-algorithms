@@ -1,26 +1,26 @@
 package org.neo4j.graphalgo.core.huge;
 
-import org.neo4j.cursor.Cursor;
 import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.core.utils.StatementTask;
+import org.neo4j.graphalgo.core.utils.ExceptionUtil;
+import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.PropertyKeyIdNotFoundKernelException;
-import org.neo4j.kernel.impl.api.KernelStatement;
-import org.neo4j.kernel.impl.api.StatementOperationContainer;
-import org.neo4j.kernel.impl.api.StatementOperationParts;
-import org.neo4j.kernel.impl.api.operations.EntityReadOperations;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.PropertyCursor;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.RelationshipScanCursor;
+import org.neo4j.internal.kernel.api.TokenRead;
+import org.neo4j.internal.kernel.api.exceptions.KernelException;
+import org.neo4j.internal.kernel.api.exceptions.PropertyKeyIdNotFoundKernelException;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.RelationshipItem;
 
 import java.util.AbstractCollection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public final class RelationshipsScanner extends StatementTask<Void, InterruptedException> {
+public final class RelationshipsScanner extends StatementAction {
 
     private final ArrayBlockingQueue<RelationshipsBatch> pool;
     private final ArrayBlockingQueue<RelationshipsBatch>[] threadQueues;
@@ -35,6 +35,7 @@ public final class RelationshipsScanner extends StatementTask<Void, InterruptedE
     private final LongsBuffer in;
     private final Direction outDirection;
     private final Direction inDirection;
+    private final GraphSetup setup;
 
     RelationshipsScanner(
             GraphDatabaseAPI api,
@@ -46,6 +47,7 @@ public final class RelationshipsScanner extends StatementTask<Void, InterruptedE
         super(api);
         assert BitUtil.isPowerOfTwo(threadQueues.length);
         assert BitUtil.isPowerOfTwo(perThreadSize);
+        this.setup = setup;
         this.idMap = idMap;
         this.threadQueues = threadQueues;
         this.batchSize = 1 << 14;
@@ -86,50 +88,46 @@ public final class RelationshipsScanner extends StatementTask<Void, InterruptedE
     }
 
     @Override
-    public Void apply(final Statement statement) throws InterruptedException {
-        final StatementOperationContainer container = resolve(StatementOperationContainer.class);
-        final StatementOperationParts parts = container.guardedParts();
-        final EntityReadOperations readOperations = parts.entityReadOperations();
-        final KernelStatement kernelStatement = (KernelStatement) statement;
+    public void accept(final KernelTransaction transaction) {
+        boolean wasInterrupted = false;
+        try {
+            scanRelationships(transaction);
+            sendLastBatch();
+        } catch (KernelException e) {
+            ExceptionUtil.throwKernelException(e);
+        } catch (InterruptedException e) {
+            wasInterrupted = true;
+        }
 
         try {
-            scanRelationships(readOperations, kernelStatement);
-        } catch (PropertyKeyIdNotFoundKernelException | EntityNotFoundException e) {
-            throw new RuntimeException(e);
+            sendSentinels();
+        } catch (InterruptedException e) {
+            wasInterrupted = true;
         }
-        sendLastBatch();
-        sendSentinels();
-        releaseBufferPool();
 
-        return null;
+        releaseBufferPool();
+        if (wasInterrupted) {
+            Thread.currentThread().interrupt();
+        }
     }
 
-    private void scanRelationships(
-            final EntityReadOperations readOperations,
-            final KernelStatement kernelStatement) throws
-            InterruptedException,
+    private void scanRelationships(final KernelTransaction transaction) throws
             PropertyKeyIdNotFoundKernelException,
-            EntityNotFoundException {
+            InterruptedException {
+        TokenRead tokenRead = transaction.tokenRead();
 
-        try (Cursor<RelationshipItem> rels = readOperations.relationshipCursorGetAll(kernelStatement)) {
-            RelationshipItem relationshipItem = rels.get();
-            while (rels.next()) {
-                long source = relationshipItem.startNode();
-                long target = relationshipItem.endNode();
-//                final long nextPropertyId = relationshipItem.nextPropertyId();
-//                if (nextPropertyId != -1L) {
-//                    try (Cursor<PropertyItem> props = readOperations.relationshipGetProperties(
-//                            kernelStatement,
-//                            relationshipItem)) {
-//                        final ReadOperations reads = kernelStatement.readOperations();
-//                        final PropertyItem propertyItem = props.get();
-//                        while (props.next()) {
-//                            final String propName = reads.propertyKeyGetName(propertyItem.propertyKeyId());
-//                            final Object value = propertyItem.value();
-//                            System.out.printf("prop (%d)->(%d): [%s] = %s%n", source, target, propName, value);
-//                        }
-//                    }
-//                }
+        int typeId = setup.loadAnyRelationshipType()
+                ? Read.ANY_RELATIONSHIP_TYPE
+                : tokenRead.relationshipType(setup.relationshipType);
+
+
+        CursorFactory cursors = transaction.cursors();
+        try (RelationshipScanCursor rc = cursors.allocateRelationshipScanCursor();
+             PropertyCursor pc = cursors.allocatePropertyCursor()) {
+            transaction.dataRead().relationshipTypeScan(typeId, rc);
+            while (rc.next()) {
+                long source = rc.sourceNodeReference();
+                long target = rc.targetNodeReference();
                 if (loadOut) {
                     long graphSource = idMap.toHugeMappedNodeId(source);
                     if (graphSource != -1L) {
@@ -142,7 +140,14 @@ public final class RelationshipsScanner extends StatementTask<Void, InterruptedE
                         batchRelationship(graphTarget, source, in, inDirection);
                     }
                 }
+//                rc.properties(pc);
+//                while (pc.next()) {
+//                    final String propName = tokenRead.propertyKeyName(pc.propertyKey());
+//                    final Value value = pc.propertyValue();
+//                    System.out.printf("prop (%d)->(%d): [%s] = %s%n", source, target, propName, value);
+//                }
             }
+
         }
     }
 
@@ -258,7 +263,7 @@ public final class RelationshipsScanner extends StatementTask<Void, InterruptedE
     private static ArrayBlockingQueue<RelationshipsBatch> newPool(int capacity) {
         final ArrayBlockingQueue<RelationshipsBatch> rels = new ArrayBlockingQueue<>(capacity);
         int i = capacity;
-        while (i --> 0) {
+        while (i-- > 0) {
             rels.add(new RelationshipsBatch(rels));
         }
         return rels;

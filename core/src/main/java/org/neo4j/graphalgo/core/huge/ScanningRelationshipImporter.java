@@ -70,6 +70,7 @@ final class ScanningRelationshipImporter {
             ExecutorService threadPool,
             int concurrency) {
         if (!ParallelUtil.canRunInParallel(threadPool)) {
+            // TODO: single thread impl
             return null;
         }
         return new ScanningRelationshipImporter(

@@ -18,31 +18,17 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
-public interface RenamesCurrentThread {
+public abstract class ThreadRenamingRunnable implements RenamesCurrentThread, Runnable {
 
-    default String threadName() {
-        return getClass().getSimpleName() + "-" + System.identityHashCode(this);
+    @Override
+    final public void run() {
+        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
+        try {
+            doRun();
+        } finally {
+            revertName.run();
+        }
     }
 
-    static Runnable renameThread(final String newThreadName) {
-        Thread currentThread = Thread.currentThread();
-        String oldThreadName = currentThread.getName();
-
-        boolean renamed = false;
-        if (!oldThreadName.equals(newThreadName)) {
-            try {
-                currentThread.setName(newThreadName);
-                renamed = true;
-            } catch (SecurityException e) {
-                // failed to rename thread, proceed as usual
-            }
-        }
-
-        if (renamed) {
-            return () -> currentThread.setName(oldThreadName);
-        }
-        return EMPTY;
-    }
-
-    Runnable EMPTY = () -> {};
+    protected abstract void doRun();
 }

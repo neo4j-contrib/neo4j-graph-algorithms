@@ -1,16 +1,17 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.core.utils.ImportProgress;
-import org.neo4j.graphalgo.core.utils.RenamingRunnable;
+import org.neo4j.graphalgo.core.utils.ThreadRenamingRunnable;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
+import org.neo4j.helpers.Exceptions;
 
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import static org.neo4j.graphalgo.core.utils.paged.DeltaEncoding.vSize;
 
-final class PerThreadRelationshipBuilder implements RenamingRunnable<Void> {
+final class PerThreadRelationshipBuilder extends ThreadRenamingRunnable {
 
     private final int threadIndex;
     private final long idBase;
@@ -52,7 +53,7 @@ final class PerThreadRelationshipBuilder implements RenamingRunnable<Void> {
     }
 
     @Override
-    public Void doRun() {
+    public void doRun() {
         try {
             while (true) {
                 try (RelationshipsBatch relationship = pollNext()) {
@@ -65,11 +66,10 @@ final class PerThreadRelationshipBuilder implements RenamingRunnable<Void> {
             flush(outTargets, outOffsets, outAllocator);
             flush(inTargets, inOffsets, inAllocator);
             outTargets = null;
-        } catch (Throwable e) {
-            e.printStackTrace();
-            throw e;
+        } catch (Exception e) {
+            Exceptions.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     @Override
