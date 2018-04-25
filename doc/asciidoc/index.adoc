@@ -11,7 +11,7 @@
 include::../../readme.adoc[tags=readme,leveloffset=1]
 
 
-== Yelp
+== The Yelp example
 
 include::yelp-intro.adoc[leveloffset=1]
 
