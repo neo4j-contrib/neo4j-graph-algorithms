@@ -4,10 +4,10 @@ image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.3[
 
 // tag::readme[]
 
-This library provides efficiently implemented, parallel versions of common graph algorithms for Neo4j 3.x exposed as Cypher procedures.
+This library provides efficiently implemented, parallel versions of common graph algorithms for Neo4j 3.x, exposed as Cypher procedures.
 
 ifndef::env-docs[]
-You can find the documentation here http://neo4j-contrib.github.io/neo4j-graph-algorithms
+You can find the documentation here: http://neo4j-contrib.github.io/neo4j-graph-algorithms
 endif::env-docs[]
 
 Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
@@ -18,15 +18,15 @@ Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algori
 
 === Centralities
 
-These algorithms determine the importance of distinct nodes in a network.
+These algorithms determine the importance of distinct nodes in a network:
 
-* Page Rank (`algo.pageRank`)
+* PageRank (`algo.pageRank`)
 * Betweenness Centrality (`algo.betweenness`)
 * Closeness Centrality (`algo.closeness`)
 
-=== Community Detection
+=== Community detection
 
-These algorithms evaluate how a group is clustered or partitioned, as well as its tendency to strengthen or break apart.
+These algorithms evaluate how a group is clustered or partitioned, as well as its tendency to strengthen or break apart:
 
 * Louvain (`algo.louvain`)
 * Label Propagation (`algo.labelPropagation`)
@@ -34,35 +34,45 @@ These algorithms evaluate how a group is clustered or partitioned, as well as it
 * Strongly Connected Components (`algo.scc`)
 * Triangle Count / Clustering Coefficient (`algo.triangleCount`)
 
-=== Path Finding
+=== Path finding
 
-These algorithms help find the shortest path or evaluate the availability and quality of routes.
+These algorithms help find the shortest path or evaluate the availability and quality of routes:
 
 * Minimum Weight Spanning Tree (`algo.mst`)
 * All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
 
 // end::algorithms[]
 
-These procedures work either on the whole graph or on a subgraph filtered by label and relationship-type.
+These procedures work either on the whole graph, or on a subgraph filtered by label and relationship-type.
 You can also use link:#cypher-projection[filtering and projection using Cypher queries].
+
+ifndef::env-docs[]
+== Feedback
 
 *We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case.
 Also please note things that are missing from the installation instructions or documentation.
 
 Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
+endif::env-docs[]
 
 == Installation
 
-Download `graph-algorithms-algo-*.jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] and copy it into your `$NEO4J_HOME/plugins` directory.
+Download `graph-algorithms-algo-[version].jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] and copy it into your `$NEO4J_HOME/plugins` directory.
 
-Because the algorithms use the lower level Kernel API to read from and write to Neo4j you will also have to enable them in the configuration (for security reasons):
+Because the algorithms use the lower level Kernel API to read from, and to write to Neo4j, for security purposes you will also have to enable them in the configuration:
 
-.Add to $NEO4J_HOME/conf/neo4j.conf
+. Add the following to your `$NEO4J_HOME/conf/neo4j.conf` file:
++
 ----
 dbms.security.procedures.unrestricted=algo.*
 ----
-
-Once you've done that restart Neo4j and execute the query `CALL algo.list()` to see a list of all the algorithms.
++
+. Restart Neo4j
+. To see a list of all the algorithms, run the following query:
++
+----
+CALL algo.list()
+----
 
 ifndef::env-docs[]
 You can also see the full list in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[documentation^].
@@ -88,16 +98,18 @@ The World Wide Web is a virtual network of information.
 == Usage
 
 These algorithms are exposed as Neo4j procedures.
-We can call them directly from Cypher in your Neo4j Browser, from cypher-shell, or your client code.
+We can call them directly from Cypher in your Neo4j Browser, from cypher-shell, or from your client code.
 
 For most algorithms we provide two procedures:
 
-* one named `algo.<name>` that writes results back to the graph as node-properties and reports statistics.
-* another named `algo.<name>.stream` that returns a stream of data, e.g. node-ids and computed values.
+* `algo.<name>` - this procedure writes results back to the graph as node-properties, and reports statistics.
+* `algo.<name>.stream` - this procedure returns a stream of data.
+For example, node-ids and computed values.
++
+For large graphs, the streaming procedure might return millions, or even billions of results.
+That is why it can be more convenient to store the results of the algorithm, and then use them with later queries.
 
-For large graphs the streaming procedure might return millions or billions of results, that's why it is often more convenient to store the results of the algorithm and then use them with later queries.
-
-We can project the graph we want to run algorithms on with either label and relationship-type projection or cypher projection.
+We can project the graph we want to run algorithms on with either label and relationship-type projection, or cypher projection.
 
 
 [ditaa]
@@ -107,18 +119,17 @@ We can project the graph we want to run algorithms on with either label and rela
 | stored   |    cypher projection     |   graph   |<-------------------
 |  graph   +------------------------->|           |
 +----------+                          +-----------+
-       
+
 ----
 
-Projected graph model is separate from Neo4j's stored graph model to allow fast cache for the topology of the graph containing only relevant nodes, relations and in addition the weights.
-For now the projected graph model does not support multiple relationships between a single pair of nodes.
-During projection we allow only one relationship between a pair of nodes per direction (in, out) in the directed case but two relationships for BOTH the undirected case.
-
+Projected graph model is separate from Neo4j's stored graph model to enable fast caching for the topology of the graph containing only relevant nodes, relations and in addition the weights.
+For now, the projected graph model does not support multiple relationships between a single pair of nodes.
+During projection, only one relationship between a pair of nodes per direction (in, out) is allowed in the directed case, but two relationships is allowed for BOTH the undirected cases.
 
 
 === Label and relationship-type projection
 
-We can project the subgraph we want to run the algorithm on using label parameter to describe nodes and relationship-type to describe relationships.
+We can project the subgraph we want to run the algorithm on by using the label parameter to describe nodes, and relationship-type to describe relationships.
 
 The general call syntax is:
 
@@ -127,7 +138,7 @@ The general call syntax is:
 CALL algo.<name>([label],[relationshipType],{config})
 ----
 
-e.g. Page Rank on DBpedia (11M nodes, 116M relationships):
+For example, PageRank on DBpedia (11M nodes, 116M relationships):
 
 [source,cypher]
 ----
@@ -145,14 +156,14 @@ ORDER BY score DESC LIMIT 10;
 === Cypher projection
 
 If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
-Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type and use `graph:'cypher'` in the config.
+Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type, and use `graph:'cypher'` in the config.
 
 Relationships described in the relationship-statement will only be projected if both source and target nodes are described in the node-statement.
 All other relationships that don't have both source and target nodes described in node-statement will be ignored in projection.
 
 We can also return a property value or weight (according to our config) in addition to the id's from these statements.
 
-Cypher projection allows us to be more expressive in describing our subgraph we want to analyse, but might take longer to project the graph with more complex cypher queries. 
+Cypher projection enables us to be more expressive in describing our subgraph that we want to analyse, but might take longer to project the graph with more complex cypher queries.
 
 
 [source,cypher]
@@ -163,14 +174,14 @@ CALL algo.pageRank(
 {graph:'cypher', iterations:5, write: true});
 ----
 
-Cypher projection can also be used to project a virtual (non-stored) graph. 
-Here is an example of how to project an undirected graph of people who visited the same web page and run Louvain community detection algorithm on it using the number of common visited web pages between pairs of people as relationship weight.
+Cypher projection can also be used to project a virtual (non-stored) graph.
+Here is an example of how to project an undirected graph of people who visited the same web page and run the Louvain community detection algorithm on it, using the number of common visited web pages between pairs of people as relationship weight:
 
 [source,cypher]
 ----
 CALL algo.louvain(
 'MATCH (p:Person) RETURN id(p) as id',
-'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person) 
+'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person)
 RETURN id(p1) as source, id(p2) as target, count(*) as weight',
 {graph:'cypher', iterations:5, write: true});
 ----
@@ -179,10 +190,10 @@ ifndef::env-docs[]
 The detailed call syntax and all parameters and possible return values for each algorithm are listed in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
 endif::env-docs[]
 
-== Graph Loading
+== Graph loading
 
 As it can take some time to load large graphs into the algorithm data structures, you can pre-load graphs and then later refer to them by name for several graph algorithms.
-After usage they can be removed from memory to free resources used.
+After usage they can be removed from memory to free resources used:
 
 [source,cypher]
 ----
@@ -204,9 +215,9 @@ CALL algo.graph.remove('my-graph')
   YIELD name, type, exists, removed, nodes;
 ----
 
-== Building Locally
+== Building locally
 
-Currently aiming at Neo4j 3.x (with a branch per version)
+Currently aiming at Neo4j 3.x (with a branch per version):
 
 ----
 git clone https://github.com/neo4j-contrib/neo4j-graph-algorithms
