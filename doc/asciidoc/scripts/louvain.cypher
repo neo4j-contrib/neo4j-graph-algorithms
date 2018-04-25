@@ -54,3 +54,10 @@ CALL algo.louvain(
   {graph:'cypher',write:true});
 
 // end::cypher-loading[]
+
+// tag::huge-projection[]
+
+CALL algo.louvain('User', 'FRIEND',{graph:'huge'})
+YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
+
+// end::huge-projection[]

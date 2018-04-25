@@ -218,6 +218,17 @@ YIELD nodeId, setId - yields a setId to each node id
 | nodeId | int | node id
 | setId | int | partition id
 |===
+
+== Huge graph projection
+ 
+If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
+Set `graph:'huge'` in the config.
+
+[source,cypher]
+----
+include::scripts/connected-components.cypher[tag=huge-projection]
+----
+
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.

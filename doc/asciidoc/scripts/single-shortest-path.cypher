@@ -104,4 +104,10 @@ RETURN writeMillis,loadMillis,nodeCount,totalCost
 
 // end::cypher-loading[]
 
+// tag::all-pairs-huge-projection[]
 
+CALL algo.allShortestPaths.stream('cost',{nodeQuery:'Loc',defaultValue:1.0,graph:'huge'})
+YIELD sourceNodeId, targetNodeId, distance
+RETURN sourceNodeId, targetNodeId, distance LIMIT 10
+
+// end::all-pairs-huge-projection[]

@@ -37,3 +37,10 @@ CALL algo.closeness.harmonic(
 );
 
 // end::cypher-loading[]
+
+// tag::huge-projection[]
+
+CALL algo.closeness.harmonic('Node', 'LINK', {graph:'huge'}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis;
+
+// end::huge-projection[]

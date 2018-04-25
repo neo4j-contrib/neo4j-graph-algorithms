@@ -40,6 +40,7 @@ These algorithms help find the shortest path or evaluate the availability and qu
 
 * Minimum Weight Spanning Tree (`algo.mst`)
 * All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
+* A* Algorithm (`algo.shortestPath.astar`)
 
 // end::algorithms[]
 
@@ -150,6 +151,19 @@ YIELD node, score
 RETURN node.title, score
 ORDER BY score DESC LIMIT 10;
 ----
+
+==== Huge graph projection
+ 
+If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
+Set `graph:'huge'` in the config.
+
+
+[source,cypher]
+----
+CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, writeProperty:'pagerank',graph:'huge'});
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, writeProperty
+----
+
 
 
 [[cypher-projection]]

@@ -54,3 +54,10 @@ CALL algo.scc(
 YIELD loadMillis, computeMillis, writeMillis;
 
 // end::cypher-loading[]
+
+// tag::huge-projection[]
+
+CALL algo.scc('User','FOLLOW', {graph:'huge'})
+YIELD loadMillis, computeMillis, writeMillis, setCount;
+
+// end::huge-projection[]
