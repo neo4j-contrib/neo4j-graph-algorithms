@@ -22,7 +22,7 @@ MERGE (c)-[:CONNECTION{time:2}]->(e);
 // tag::stream-sample-graph[]
 
 MATCH (start:Station{name:"King's Cross St. Pancras"}),(end:Station{name:"Kentish Town"})
-CALL algo.shortestPath.astar.stream(start, end, 'latitude', 'longitude', 'time', {defaultValue:1.0})
+CALL algo.shortestPath.astar.stream(start, end, 'time', 'latitude', 'longitude', {defaultValue:1.0})
 YIELD nodeId, cost
 MATCH (n) where id(n) = nodeId
 RETURN n.name as station,cost
