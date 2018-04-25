@@ -29,8 +29,7 @@ import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.graphalgo.core.utils.StatementApi;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -128,11 +127,11 @@ public final class Exporter extends StatementApi {
     }
 
     public interface WriteConsumer {
-        void accept(DataWriteOperations ops, long value) throws KernelException;
+        void accept(Write ops, long value) throws KernelException;
     }
 
     public interface PropertyWriteConsumer {
-        void accept(DataWriteOperations ops, int relationshipId, int propertyId) throws KernelException;
+        void accept(Write ops, int relationshipId, int propertyId) throws KernelException;
     }
 
     private Exporter(
@@ -207,14 +206,10 @@ public final class Exporter extends StatementApi {
         if (propertyId == -1) {
             throw new IllegalStateException("no write property id is set");
         }
-        try {
-            acceptInTransaction(stmt -> {
-                DataWriteOperations ops = stmt.dataWriteOperations();
-                writer.accept(ops, propertyId);
-            });
-        } catch (KernelException e) {
-            throw Exceptions.launderedException(e);
-        }
+        acceptInTransaction(stmt -> {
+            Write write = stmt.dataWrite();
+            writer.accept(write, propertyId);
+        });
     }
 
     public void writeRelationshipAndProperty(String relationship, String property, PropertyWriteConsumer writer) {
@@ -223,14 +218,7 @@ public final class Exporter extends StatementApi {
         if (relationshipId == -1) {
             throw new IllegalStateException("no write property id is set");
         }
-        try {
-            acceptInTransaction(stmt -> {
-                DataWriteOperations ops = stmt.dataWriteOperations();
-                writer.accept(ops, relationshipId, propertyId);
-            });
-        } catch (KernelException e) {
-            throw Exceptions.launderedException(e);
-        }
+        acceptInTransaction(stmt -> writer.accept(stmt.dataWrite(), relationshipId, propertyId));
     }
 
     private <T> void writeSequential(
@@ -268,18 +256,14 @@ public final class Exporter extends StatementApi {
     }
 
     private void writeSequential(WriteConsumer writer) {
-        try {
-            acceptInTransaction(stmt -> {
-                long progress = 0L;
-                DataWriteOperations ops = stmt.dataWriteOperations();
-                for (long i = 0L; i < nodeCount; i++) {
-                    writer.accept(ops, i);
-                    progressLogger.logProgress(++progress, nodeCount);
-                }
-            });
-        } catch (KernelException e) {
-            throw Exceptions.launderedException(e);
-        }
+        acceptInTransaction(stmt -> {
+            long progress = 0L;
+            Write ops = stmt.dataWrite();
+            for (long i = 0L; i < nodeCount; i++) {
+                writer.accept(ops, i);
+                progressLogger.logProgress(++progress, nodeCount);
+            }
+        });
     }
 
     private void writeParallel(WriteConsumer writer) {
@@ -293,20 +277,16 @@ public final class Exporter extends StatementApi {
                 nodeCount,
                 batchSize,
                 (start, len) -> () -> {
-                    try {
-                        acceptInTransaction(stmt -> {
-                            long end = start + len;
-                            DataWriteOperations ops = stmt.dataWriteOperations();
-                            for (long j = start; j < end; j++) {
-                                writer.accept(ops, j);
-                                progressLogger.logProgress(
-                                        progress.incrementAndGet(),
-                                        nodeCount);
-                            }
-                        });
-                    } catch (KernelException e) {
-                        throw Exceptions.launderedException(e);
-                    }
+                    acceptInTransaction(stmt -> {
+                        long end = start + len;
+                        Write ops = stmt.dataWrite();
+                        for (long j = start; j < end; j++) {
+                            writer.accept(ops, j);
+                            progressLogger.logProgress(
+                                    progress.incrementAndGet(),
+                                    nodeCount);
+                        }
+                    });
                 });
         ParallelUtil.runWithConcurrency(
                 concurrency,
@@ -323,7 +303,7 @@ public final class Exporter extends StatementApi {
             int propertyId,
             T data,
             PropertyTranslator<T> trans,
-            DataWriteOperations ops,
+            Write ops,
             long nodeId) throws KernelException {
         final Value prop = trans.toProperty(propertyId, data, nodeId);
         if (prop != null) {
@@ -342,7 +322,7 @@ public final class Exporter extends StatementApi {
             int propertyId2,
             U data2,
             PropertyTranslator<U> translator2,
-            DataWriteOperations ops,
+            Write ops,
             long nodeId) throws KernelException {
         final long originalNodeId = toOriginalId.applyAsLong(nodeId);
         Value prop1 = translator1.toProperty(propertyId1, data1, nodeId);
@@ -356,22 +336,14 @@ public final class Exporter extends StatementApi {
     }
 
     private int getOrCreatePropertyId(String propertyName) {
-        try {
-            return applyInTransaction(stmt -> stmt
-                    .tokenWriteOperations()
-                    .propertyKeyGetOrCreateForName(propertyName));
-        } catch (KernelException e) {
-            throw new RuntimeException(e);
-        }
+        return applyInTransaction(stmt -> stmt
+                .tokenWrite()
+                .propertyKeyGetOrCreateForName(propertyName));
     }
 
     private int getOrCreateRelationshipId(String propertyName) {
-        try {
-            return applyInTransaction(stmt -> stmt
-                    .tokenWriteOperations()
-                    .relationshipTypeGetOrCreateForName(propertyName));
-        } catch (KernelException e) {
-            throw new RuntimeException(e);
-        }
+        return applyInTransaction(stmt -> stmt
+                .tokenWrite()
+                .relationshipTypeGetOrCreateForName(propertyName));
     }
 }

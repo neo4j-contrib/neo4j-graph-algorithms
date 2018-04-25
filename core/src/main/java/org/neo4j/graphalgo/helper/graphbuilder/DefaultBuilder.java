@@ -45,10 +45,7 @@ public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
      */
     @Override
     public Relationship createRelationship(Node p, Node q) {
-        beginTx();
-        Relationship relationship = super.createRelationship(p, q);
-        closeTx();
-        return relationship;
+        return withinTransaction(() -> super.createRelationship(p, q));
     }
 
     /**
@@ -58,10 +55,7 @@ public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
      */
     @Override
     public Node createNode() {
-        beginTx();
-        Node node = super.createNode();
-        closeTx();
-        return node;
+        return withinTransaction(super::createNode);
     }
 
     @Override

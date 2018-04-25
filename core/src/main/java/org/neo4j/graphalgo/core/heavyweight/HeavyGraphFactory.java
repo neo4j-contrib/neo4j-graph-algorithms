@@ -24,8 +24,6 @@ import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Collection;
@@ -44,19 +42,10 @@ public class HeavyGraphFactory extends GraphFactory {
 
     @Override
     public Graph build() {
-        return build(setup.batchSize);
+        return importGraph(setup.batchSize);
     }
 
-    /* test-private */ Graph build(int batchSize) {
-        try {
-            return importGraph(batchSize);
-        } catch (EntityNotFoundException e) {
-            throw Exceptions.launderedException(e);
-        }
-    }
-
-    private Graph importGraph(final int batchSize) throws
-            EntityNotFoundException {
+    private Graph importGraph(final int batchSize) {
         final IdMap idMap = loadIdMap();
 
         final Supplier<WeightMapping> relWeights = () -> newWeightMap(

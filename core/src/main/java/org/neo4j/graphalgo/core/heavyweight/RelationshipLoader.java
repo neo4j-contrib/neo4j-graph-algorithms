@@ -1,63 +1,70 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.core.WeightMap;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.impl.api.store.RelationshipIterator;
+import org.neo4j.graphalgo.core.loading.LoadRelationships;
+import org.neo4j.graphalgo.core.loading.ReadHelper;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.internal.kernel.api.NodeCursor;
+import org.neo4j.internal.kernel.api.PropertyCursor;
+import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
+import org.neo4j.kernel.api.KernelTransaction;
 
 abstract class RelationshipLoader {
-    private final ReadOperations readOp;
+    private final KernelTransaction transaction;
+    private final LoadRelationships loadRelationships;
     private final AdjacencyMatrix matrix;
-    private final int[] relationType;
 
     RelationshipLoader(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final AdjacencyMatrix matrix,
             final int[] relationType) {
-        this.readOp = readOp;
+        this.transaction = transaction;
         this.matrix = matrix;
-        this.relationType = relationType;
+        loadRelationships = LoadRelationships.of(transaction.cursors(), relationType);
     }
 
     RelationshipLoader(final RelationshipLoader other) {
-        this.readOp = other.readOp;
+        this.transaction = other.transaction;
         this.matrix = other.matrix;
-        this.relationType = other.relationType;
+        this.loadRelationships = other.loadRelationships;
     }
 
-    abstract void load(long sourceNodeId, int localNodeId) throws EntityNotFoundException;
+    abstract void load(NodeCursor sourceNode, int localNodeId);
 
-    void readOutgoing(
-            VisitRelationship visit,
-            long sourceNodeId,
-            int localNodeId) throws EntityNotFoundException {
-        final int outDegree = degree(sourceNodeId, Direction.OUTGOING);
+    void readOutgoing(VisitRelationship visit, NodeCursor sourceNode, int localNodeId) {
+        final int outDegree = loadRelationships.degreeOut(sourceNode);
         if (outDegree > 0) {
-            final RelationshipIterator rels = rels(sourceNodeId, Direction.OUTGOING);
             final int[] targets = matrix.armOut(localNodeId, outDegree);
             visit.prepareNextNode(localNodeId, targets);
-            while (rels.hasNext()) {
-                final long relId = rels.next();
-                rels.relationshipVisit(relId, visit);
-            }
+            visitOut(sourceNode, visit);
             matrix.setOutDegree(localNodeId, visit.flush());
         }
     }
 
-    void readIncoming(
-            VisitRelationship visit,
-            long sourceNodeId,
-            int localNodeId) throws EntityNotFoundException {
-        final int inDegree = degree(sourceNodeId, Direction.INCOMING);
+    void readIncoming(VisitRelationship visit, NodeCursor sourceNode, int localNodeId) {
+        final int inDegree = loadRelationships.degreeIn(sourceNode);
         if (inDegree > 0) {
-            final RelationshipIterator rels = rels(sourceNodeId, Direction.INCOMING);
             final int[] targets = matrix.armIn(localNodeId, inDegree);
             visit.prepareNextNode(localNodeId, targets);
-            while (rels.hasNext()) {
-                final long relId = rels.next();
-                rels.relationshipVisit(relId, visit);
-            }
+            visitIn(sourceNode, visit);
             matrix.setInDegree(localNodeId, visit.flush());
         }
     }
@@ -65,66 +72,60 @@ abstract class RelationshipLoader {
     void readUndirected(
             VisitRelationship visitOut,
             VisitRelationship visitIn,
-            long sourceNodeId,
-            int localNodeId) throws EntityNotFoundException {
-        final int degree = degree(sourceNodeId, Direction.BOTH);
+            NodeCursor sourceNode,
+            int localNodeId) {
+        final int degree = loadRelationships.degreeBoth(sourceNode);
         if (degree > 0) {
             final int[] targets = matrix.armOut(localNodeId, degree);
             visitIn.prepareNextNode(localNodeId, targets);
-            RelationshipIterator rels = rels(sourceNodeId, Direction.INCOMING);
-            while (rels.hasNext()) {
-                final long relId = rels.next();
-                rels.relationshipVisit(relId, visitIn);
-            }
+            this.visitIn(sourceNode, visitIn);
             visitOut.prepareNextNode(visitIn);
-            rels = rels(sourceNodeId, Direction.OUTGOING);
-            while (rels.hasNext()) {
-                final long relId = rels.next();
-                rels.relationshipVisit(relId, visitOut);
-            }
+            this.visitOut(sourceNode, visitOut);
             matrix.setOutDegree(localNodeId, visitOut.flush());
         }
     }
 
     void readNodeWeight(
-            long sourceNodeId,
+            NodeCursor sourceNode,
             int sourceGraphId,
             WeightMap weights,
             int propertyId) {
-        try {
-            Object value = readOp.nodeGetProperty(sourceNodeId, propertyId);
-            if (value != null) {
-                weights.set(sourceGraphId, value);
+        try (PropertyCursor pc = transaction.cursors().allocatePropertyCursor()) {
+            sourceNode.properties(pc);
+            double weight = ReadHelper.readProperty(pc, propertyId, weights.defaultValue());
+            if (weight != weights.defaultValue()) {
+                weights.put(RawValues.combineIntInt(sourceGraphId, -1), weight);
             }
-        } catch (EntityNotFoundException ignored) {
         }
     }
 
-    private int degree(long nodeId, Direction direction) throws EntityNotFoundException {
-        if (relationType == null) {
-            return readOp.nodeGetDegree(nodeId, direction);
-        }
-        return readOp.nodeGetDegree(nodeId, direction, relationType[0]);
+    private void visitOut(NodeCursor cursor, VisitRelationship visit) {
+        visitRelationships(loadRelationships.relationshipsOut(cursor), visit);
     }
 
-    private RelationshipIterator rels(long nodeId, Direction direction) throws EntityNotFoundException {
-        if (relationType == null) {
-            return readOp.nodeGetRelationships(nodeId, direction);
+    private void visitIn(NodeCursor cursor, VisitRelationship visit) {
+        visitRelationships(loadRelationships.relationshipsIn(cursor), visit);
+    }
+
+    private void visitRelationships(RelationshipSelectionCursor rels, VisitRelationship visit) {
+        try (RelationshipSelectionCursor cursor = rels) {
+            while (cursor.next()) {
+                visit.visit(cursor);
+            }
         }
-        return readOp.nodeGetRelationships(nodeId, direction, relationType);
     }
 }
 
 final class ReadNothing extends RelationshipLoader {
     ReadNothing(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final AdjacencyMatrix matrix,
             final int[] relationType) {
-        super(readOp, matrix, relationType);
+        super(transaction, matrix, relationType);
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) {
+    void load(NodeCursor sourceNode, int localNodeId) {
     }
 }
 
@@ -132,17 +133,17 @@ final class ReadOutgoing extends RelationshipLoader {
     final VisitRelationship visitOutgoing;
 
     ReadOutgoing(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final AdjacencyMatrix matrix,
             final int[] relationType,
             final VisitRelationship visitOutgoing) {
-        super(readOp, matrix, relationType);
+        super(transaction, matrix, relationType);
         this.visitOutgoing = visitOutgoing;
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        readOutgoing(visitOutgoing, sourceNodeId, localNodeId);
+    void load(NodeCursor sourceNode, int localNodeId) {
+        readOutgoing(visitOutgoing, sourceNode, localNodeId);
     }
 }
 
@@ -150,17 +151,17 @@ final class ReadIncoming extends RelationshipLoader {
     private final VisitRelationship visitIncoming;
 
     ReadIncoming(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final AdjacencyMatrix matrix,
             final int[] relationType,
             final VisitRelationship visitIncoming) {
-        super(readOp, matrix, relationType);
+        super(transaction, matrix, relationType);
         this.visitIncoming = visitIncoming;
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        readIncoming(visitIncoming, sourceNodeId, localNodeId);
+    void load(NodeCursor sourceNode, int localNodeId) {
+        readIncoming(visitIncoming, sourceNode, localNodeId);
     }
 }
 
@@ -175,9 +176,9 @@ final class ReadBoth extends RelationshipLoader {
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        readOutgoing(visitOutgoing, sourceNodeId, localNodeId);
-        readIncoming(visitIncoming, sourceNodeId, localNodeId);
+    void load(NodeCursor sourceNode, int localNodeId) {
+        readOutgoing(visitOutgoing, sourceNode, localNodeId);
+        readIncoming(visitIncoming, sourceNode, localNodeId);
     }
 }
 
@@ -186,19 +187,19 @@ final class ReadUndirected extends RelationshipLoader {
     private final VisitRelationship visitIncoming;
 
     ReadUndirected(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final AdjacencyMatrix matrix,
             final int[] relationType,
             final VisitRelationship visitOutgoing,
             final VisitRelationship visitIncoming) {
-        super(readOp, matrix, relationType);
+        super(transaction, matrix, relationType);
         this.visitOutgoing = visitOutgoing;
         this.visitIncoming = visitIncoming;
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        readUndirected(visitOutgoing, visitIncoming, sourceNodeId, localNodeId);
+    void load(NodeCursor sourceNode, int localNodeId) {
+        readUndirected(visitOutgoing, visitIncoming, sourceNode, localNodeId);
     }
 }
 
@@ -215,9 +216,9 @@ final class ReadWithNodeWeights extends RelationshipLoader {
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        loader.load(sourceNodeId, localNodeId);
-        readNodeWeight(sourceNodeId, localNodeId, nodeWeights, nodeWeights.propertyId());
+    void load(NodeCursor sourceNode, int localNodeId) {
+        loader.load(sourceNode, localNodeId);
+        readNodeWeight(sourceNode, localNodeId, nodeWeights, nodeWeights.propertyId());
     }
 }
 
@@ -237,9 +238,9 @@ final class ReadWithNodeWeightsAndProps extends RelationshipLoader {
     }
 
     @Override
-    void load(final long sourceNodeId, final int localNodeId) throws EntityNotFoundException {
-        loader.load(sourceNodeId, localNodeId);
-        readNodeWeight(sourceNodeId, localNodeId, nodeWeights, nodeWeights.propertyId());
-        readNodeWeight(sourceNodeId, localNodeId, nodeProps, nodeProps.propertyId());
+    void load(NodeCursor sourceNode, int localNodeId) {
+        loader.load(sourceNode, localNodeId);
+        readNodeWeight(sourceNode, localNodeId, nodeWeights, nodeWeights.propertyId());
+        readNodeWeight(sourceNode, localNodeId, nodeProps, nodeProps.propertyId());
     }
 }

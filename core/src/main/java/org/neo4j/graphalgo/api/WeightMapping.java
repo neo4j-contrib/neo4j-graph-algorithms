@@ -47,14 +47,5 @@ public interface WeightMapping {
         return get(RawValues.combineIntInt(id, -1), defaultValue);
     }
 
-    /**
-     * set the weight for ID
-     */
-    void set(long id, Object weight); // TODO rm?
-
-    default void set(int id, Object weight) {
-        set(RawValues.combineIntInt(id, -1), weight);
-    }
-
     int size();
 }

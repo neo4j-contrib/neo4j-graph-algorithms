@@ -1,16 +1,37 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.graphalgo.core.loading.ReadHelper;
 import org.neo4j.graphalgo.core.utils.RawValues;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.PropertyCursor;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.RelationshipScanCursor;
+import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
 
 import java.util.Arrays;
 
 
-abstract class VisitRelationship implements RelationshipVisitor<EntityNotFoundException> {
+abstract class VisitRelationship {
 
     private final IdMap idMap;
     private final boolean shouldSort;
@@ -30,6 +51,8 @@ abstract class VisitRelationship implements RelationshipVisitor<EntityNotFoundEx
             isSorted = false;
         }
     }
+
+    abstract void visit(RelationshipSelectionCursor cursor);
 
     final void prepareNextNode(final int sourceGraphId, final int[] targets) {
         this.sourceGraphId = sourceGraphId;
@@ -75,53 +98,51 @@ abstract class VisitRelationship implements RelationshipVisitor<EntityNotFoundEx
     }
 
     static void visitWeight(
-            ReadOperations readOp,
+            Read readOp,
+            CursorFactory cursors,
             int sourceGraphId,
             int targetGraphId,
             WeightMap weights,
             long relationshipId) {
-        Object value;
-        try {
-            value = readOp.relationshipGetProperty(relationshipId, weights.propertyId());
-        } catch (EntityNotFoundException ignored) {
-            return;
+
+        // TODO: make access to rel properties better
+        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
+             PropertyCursor pc = cursors.allocatePropertyCursor()) {
+            readOp.singleRelationship(relationshipId, scanCursor);
+            while (scanCursor.next()) {
+                scanCursor.properties(pc);
+                double weight = ReadHelper.readProperty(pc, weights.propertyId(), weights.defaultValue());
+                if (weight != weights.defaultValue()) {
+                    long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
+                    weights.put(relId, weight);
+                }
+            }
         }
-        if (value == null) {
-            return;
-        }
-        double defaultValue = weights.defaultValue();
-        double doubleValue = RawValues.extractValue(value, defaultValue);
-        if (Double.compare(doubleValue, defaultValue) == 0) {
-            return;
-        }
-        long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
-        weights.put(relId, doubleValue);
     }
 
     static void visitUndirectedWeight(
-            ReadOperations readOp,
+            Read readOp,
+            CursorFactory cursors,
             int sourceGraphId,
             int targetGraphId,
             WeightMap weights,
             long relationshipId) {
-        Object value;
-        try {
-            value = readOp.relationshipGetProperty(relationshipId, weights.propertyId());
-        } catch (EntityNotFoundException ignored) {
-            return;
+
+        // TODO: make access to rel properties better
+        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
+             PropertyCursor pc = cursors.allocatePropertyCursor()) {
+            readOp.singleRelationship(relationshipId, scanCursor);
+            while (scanCursor.next()) {
+                scanCursor.properties(pc);
+                double weight = ReadHelper.readProperty(pc, weights.propertyId(), weights.defaultValue());
+                if (weight != weights.defaultValue()) {
+                    long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
+                    weights.put(relId, weight);
+                    relId = RawValues.combineIntInt(targetGraphId, sourceGraphId);
+                    weights.put(relId, weight);
+                }
+            }
         }
-        if (value == null) {
-            return;
-        }
-        double defaultValue = weights.defaultValue();
-        double doubleValue = RawValues.extractValue(value, defaultValue);
-        if (Double.compare(doubleValue, defaultValue) == 0) {
-            return;
-        }
-        long relId = RawValues.combineIntInt(sourceGraphId, targetGraphId);
-        weights.put(relId, doubleValue);
-        relId = RawValues.combineIntInt(targetGraphId, sourceGraphId);
-        weights.put(relId, doubleValue);
     }
 
     private static int checkDistinct(final int[] values, final int len) {
@@ -157,8 +178,8 @@ final class VisitOutgoingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(final long relationshipId, final int typeId, final long startNodeId, final long endNodeId) {
-        addNode(endNodeId);
+    void visit(final RelationshipSelectionCursor cursor) {
+        addNode(cursor.targetNodeReference());
     }
 }
 
@@ -169,76 +190,85 @@ final class VisitIncomingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(final long relationshipId, final int typeId, final long startNodeId, final long endNodeId) {
-        addNode(startNodeId);
+    void visit(final RelationshipSelectionCursor cursor) {
+        addNode(cursor.sourceNodeReference());
     }
 }
 
 final class VisitOutgoingWithWeight extends VisitRelationship {
 
-    private final ReadOperations readOp;
+    private final Read readOp;
+    private final CursorFactory cursors;
     private final WeightMap weights;
 
     VisitOutgoingWithWeight(
-            final ReadOperations readOp,
+            final Read readOp,
+            final CursorFactory cursors,
             final IdMap idMap,
             final boolean shouldSort,
             final WeightMap weights) {
         super(idMap, shouldSort);
         this.readOp = readOp;
+        this.cursors = cursors;
         this.weights = weights;
     }
 
     @Override
-    public void visit(final long relationshipId, final int typeId, final long startNodeId, final long endNodeId) {
-        if (addNode(endNodeId)) {
-            visitWeight(readOp, sourceGraphId, prevTarget, weights, relationshipId);
+    void visit(final RelationshipSelectionCursor cursor) {
+        if (addNode(cursor.targetNodeReference())) {
+            visitWeight(readOp, cursors, sourceGraphId, prevTarget, weights, cursor.relationshipReference());
         }
     }
 }
 
 final class VisitIncomingWithWeight extends VisitRelationship {
 
-    private final ReadOperations readOp;
+    private final Read readOp;
+    private final CursorFactory cursors;
     private final WeightMap weights;
 
     VisitIncomingWithWeight(
-            final ReadOperations readOp,
+            final Read readOp,
+            final CursorFactory cursors,
             final IdMap idMap,
             final boolean shouldSort,
             final WeightMap weights) {
         super(idMap, shouldSort);
         this.readOp = readOp;
+        this.cursors = cursors;
         this.weights = weights;
     }
 
     @Override
-    public void visit(final long relationshipId, final int typeId, final long startNodeId, final long endNodeId) {
-        if (addNode(startNodeId)) {
-            visitWeight(readOp, prevTarget, sourceGraphId, weights, relationshipId);
+    void visit(final RelationshipSelectionCursor cursor) {
+        if (addNode(cursor.sourceNodeReference())) {
+            visitWeight(readOp, cursors, prevTarget, sourceGraphId, weights, cursor.relationshipReference());
         }
     }
 }
 
 final class VisitUndirectedOutgoingWithWeight extends VisitRelationship {
 
-    private final ReadOperations readOp;
+    private final Read readOp;
+    private final CursorFactory cursors;
     private final WeightMap weights;
 
     VisitUndirectedOutgoingWithWeight(
-            final ReadOperations readOp,
+            final Read readOp,
+            final CursorFactory cursors,
             final IdMap idMap,
             final boolean shouldSort,
             final WeightMap weights) {
         super(idMap, shouldSort);
         this.readOp = readOp;
+        this.cursors = cursors;
         this.weights = weights;
     }
 
     @Override
-    public void visit(final long relationshipId, final int typeId, final long startNodeId, final long endNodeId) {
-        if (addNode(endNodeId)) {
-            visitUndirectedWeight(readOp, sourceGraphId, prevTarget, weights, relationshipId);
+    void visit(final RelationshipSelectionCursor cursor) {
+        if (addNode(cursor.targetNodeReference())) {
+            visitUndirectedWeight(readOp, cursors, sourceGraphId, prevTarget, weights, cursor.relationshipReference());
         }
     }
 }

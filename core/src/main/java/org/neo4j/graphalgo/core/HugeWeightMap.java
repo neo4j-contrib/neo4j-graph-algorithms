@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.HugeWeightMapping;
-import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.PagedLongLongDoubleMap;
 
@@ -36,14 +35,6 @@ public final class HugeWeightMap implements HugeWeightMapping {
     @Override
     public double weight(final long source, final long target) {
         return weights.getOrDefault(source, target, defaultValue);
-    }
-
-    public void put(long key1, long key2, Object value) {
-        double doubleVal = RawValues.extractValue(value, defaultValue);
-        if (doubleVal == defaultValue) {
-            return;
-        }
-        weights.put(key1, key2, doubleVal);
     }
 
     public double defaultValue() {

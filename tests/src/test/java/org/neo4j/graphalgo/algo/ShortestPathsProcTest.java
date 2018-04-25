@@ -20,24 +20,28 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Matchers;
 import org.neo4j.graphalgo.ShortestPathsProc;
 import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.DoubleConsumer;
 
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyDouble;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 
 /**         5     5      5
@@ -52,7 +56,8 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public final class ShortestPathsProcTest {
 
-    private static GraphDatabaseAPI api;
+    @ClassRule
+    public static ImpermanentDatabaseRule api = new ImpermanentDatabaseRule();
     private static long startNode;
     private static long endNode;
 
@@ -89,18 +94,14 @@ public final class ShortestPathsProcTest {
                         " (h)-[:TYPE {cost:2}]->(i),\n" +
                         " (i)-[:TYPE {cost:2}]->(x)";
 
-        api = TestDatabaseCreator.createTestDatabase();
-
-        api.getDependencyResolver()
-                .resolveDependency(Procedures.class)
+        api.resolveDependency(Procedures.class)
                 .registerProcedure(ShortestPathsProc.class);
 
-        try (Transaction tx = api.beginTx()) {
+        api.executeAndCommit(__ -> {
             api.execute(cypher);
             startNode = api.findNode(Label.label("Node"), "name", "s").getId();
             endNode = api.findNode(Label.label("Node"), "name", "x").getId();
-            tx.success();
-        }
+        });
     }
 
     @AfterClass
@@ -125,14 +126,15 @@ public final class ShortestPathsProcTest {
 
         final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'"+graphImpl+"'}) " +
+        final String cypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'" + graphImpl + "'}) " +
                 "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
             long nodeId = row.getNumber("nodeId").longValue();
             double distance = row.getNumber("distance").doubleValue();
             consumer.accept(distance);
-            System.out.printf("%d:%.1f, ",
+            System.out.printf(
+                    "%d:%.1f, ",
                     nodeId,
                     distance);
             return true;
@@ -147,7 +149,7 @@ public final class ShortestPathsProcTest {
     @Test
     public void testWriteBack() throws Exception {
 
-        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths(n, 'cost', {write:true, writeProperty:'sp',graph:'"+graphImpl+"'}) " +
+        final String matchCypher = "MATCH(n:Node {name:'s'}) WITH n CALL algo.shortestPaths(n, 'cost', {write:true, writeProperty:'sp',graph:'" + graphImpl + "'}) " +
                 "YIELD nodeCount, loadDuration, evalDuration, writeDuration RETURN nodeCount, loadDuration, evalDuration, writeDuration";
 
         api.execute(matchCypher).accept(row -> {
@@ -180,13 +182,14 @@ public final class ShortestPathsProcTest {
 
         final Consumer mock = mock(Consumer.class);
 
-        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'"+graphImpl+"'}) " +
+        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPaths.stream(n, 'cost',{graph:'" + graphImpl + "'}) " +
                 "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
             long nodeId = row.getNumber("nodeId").longValue();
             double distance = row.getNumber("distance").doubleValue();
-            System.out.printf("%d:%.1f, ",
+            System.out.printf(
+                    "%d:%.1f, ",
                     nodeId,
                     distance);
             mock.test(nodeId, distance);

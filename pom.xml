@@ -28,7 +28,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <neo4j.version>3.4.0-SNAPSHOT</neo4j.version>
+        <neo4j.version>3.4.0-beta02</neo4j.version>
         <jmh.version>1.19</jmh.version>
         <javac.target>1.8</javac.target>
     </properties>

@@ -18,32 +18,23 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.concurrent.Callable;
 
-public abstract class StatementTask<T, E extends Exception> extends StatementApi implements RenamingRunnable, Callable<T>, StatementApi.Function<T, E> {
+public abstract class StatementFunction<T> extends StatementApi implements RenamesCurrentThread, Callable<T>, StatementApi.Function<T> {
 
-    protected StatementTask(GraphDatabaseAPI api) {
+    protected StatementFunction(GraphDatabaseAPI api) {
         super(api);
     }
 
     @Override
-    public T call() throws E {
-        return runAndReturn();
-    }
-
-    @Override
-    public void doRun() {
+    public T call() {
+        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
         try {
-            runAndReturn();
-        } catch (Exception e) {
-            throw Exceptions.launderedException(e);
+            return applyInTransaction(this);
+        } finally {
+            revertName.run();
         }
-    }
-
-    private T runAndReturn() throws E {
-        return applyInTransaction(this);
     }
 }

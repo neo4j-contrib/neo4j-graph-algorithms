@@ -21,7 +21,6 @@ package org.neo4j.graphalgo.core;
 import com.carrotsearch.hppc.LongDoubleHashMap;
 import com.carrotsearch.hppc.LongDoubleMap;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.core.utils.RawValues;
 
 /**
  * single weight cache
@@ -65,15 +64,6 @@ public final class WeightMap implements WeightMapping {
     @Override
     public double get(final long id, final double defaultValue) {
         return weights.getOrDefault(id, defaultValue);
-    }
-
-    @Override
-    public void set(long id, Object value) {
-        final double doubleVal = RawValues.extractValue(value, defaultValue);
-        if (doubleVal == defaultValue) {
-            return;
-        }
-        put(id, doubleVal);
     }
 
     public void put(long key, double value) {

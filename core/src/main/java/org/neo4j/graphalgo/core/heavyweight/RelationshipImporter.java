@@ -29,16 +29,17 @@ import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
-import org.neo4j.graphalgo.core.utils.StatementTask;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.graphalgo.core.utils.StatementAction;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.NodeCursor;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.function.Supplier;
 
 
-final class RelationshipImporter extends StatementTask<Void, EntityNotFoundException> {
+final class RelationshipImporter extends StatementAction {
 
     private final PrimitiveIntIterable nodes;
     private final GraphSetup setup;
@@ -78,7 +79,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         this.relWeights = relWeights.get();
         this.nodeWeights = nodeWeights.get();
         this.nodeProps = nodeProps.get();
-        this.relationId = dimensions.relationId();
+        this.relationId = dimensions.relationshipTypeId();
     }
 
     @Override
@@ -90,25 +91,30 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
     }
 
     @Override
-    public Void apply(final Statement statement) throws EntityNotFoundException {
-        final ReadOperations readOp = statement.readOperations();
-        final RelationshipLoader loader = prepare(readOp);
+    public void accept(final KernelTransaction transaction) {
+        final Read readOp =  transaction.dataRead();
+        CursorFactory cursors = transaction.cursors();
+        final RelationshipLoader loader = prepare(transaction, readOp, cursors);
         PrimitiveIntIterator iterator = nodes.iterator();
-        while (iterator.hasNext()) {
-            final int nodeId = iterator.next();
-            final long sourceNodeId = idMap.toOriginalNodeId(nodeId);
-            loader.load(sourceNodeId, nodeId);
-            progress.relProgress();
+        try (NodeCursor nodeCursor = cursors.allocateNodeCursor()) {
+            while (iterator.hasNext()) {
+                final int nodeId = iterator.next();
+                final long sourceNodeId = idMap.toOriginalNodeId(nodeId);
+                readOp.singleNode(sourceNodeId, nodeCursor);
+                if (nodeCursor.next()) {
+                    loader.load(nodeCursor, nodeId);
+                }
+                progress.relProgress();
+            }
         }
-        return null;
     }
 
-    private RelationshipLoader prepare(final ReadOperations readOp) {
+    private RelationshipLoader prepare(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
         final RelationshipLoader loader;
         if (setup.loadAsUndirected) {
-            loader = prepareUndirected(readOp);
+            loader = prepareUndirected(transaction, readOp, cursors);
         } else {
-            loader = prepareDirected(readOp);
+            loader = prepareDirected(transaction, readOp, cursors);
         }
 
         if (this.nodeWeights instanceof WeightMap) {
@@ -128,7 +134,7 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         return loader;
     }
 
-    private RelationshipLoader prepareDirected(final ReadOperations readOp) {
+    private RelationshipLoader prepareDirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
         final boolean loadIncoming = setup.loadIncoming;
         final boolean loadOutgoing = setup.loadOutgoing;
         final boolean sort = setup.sort;
@@ -138,16 +144,16 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
         if (loadOutgoing) {
             final VisitRelationship visitor;
             if (shouldLoadWeights) {
-                visitor = new VisitOutgoingWithWeight(readOp, idMap, sort, (WeightMap) this.relWeights);
+                visitor = new VisitOutgoingWithWeight(readOp, cursors, idMap, sort, (WeightMap) this.relWeights);
             } else {
                 visitor = new VisitOutgoingNoWeight(idMap, sort);
             }
-            loader = new ReadOutgoing(readOp, matrix, relationId, visitor);
+            loader = new ReadOutgoing(transaction, matrix, relationId, visitor);
         }
         if (loadIncoming) {
             final VisitRelationship visitor;
             if (shouldLoadWeights) {
-                visitor = new VisitIncomingWithWeight(readOp, idMap, sort, (WeightMap) this.relWeights);
+                visitor = new VisitIncomingWithWeight(readOp, cursors, idMap, sort, (WeightMap) this.relWeights);
             } else {
                 visitor = new VisitIncomingNoWeight(idMap, sort);
             }
@@ -155,26 +161,26 @@ final class RelationshipImporter extends StatementTask<Void, EntityNotFoundExcep
                 ReadOutgoing readOutgoing = (ReadOutgoing) loader;
                 loader = new ReadBoth(readOutgoing, visitor);
             } else {
-                loader = new ReadIncoming(readOp, matrix, relationId, visitor);
+                loader = new ReadIncoming(transaction, matrix, relationId, visitor);
             }
         }
         if (loader == null) {
-            loader = new ReadNothing(readOp, matrix, relationId);
+            loader = new ReadNothing(transaction, matrix, relationId);
         }
         return loader;
     }
 
-    private RelationshipLoader prepareUndirected(final ReadOperations readOp) {
+    private RelationshipLoader prepareUndirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
         final VisitRelationship visitorIn;
         final VisitRelationship visitorOut;
         if (relWeights instanceof WeightMap) {
             visitorIn = new VisitIncomingNoWeight(idMap, true);
-            visitorOut = new VisitUndirectedOutgoingWithWeight(readOp, idMap, true, (WeightMap) this.relWeights);
+            visitorOut = new VisitUndirectedOutgoingWithWeight(readOp, cursors, idMap, true, (WeightMap) this.relWeights);
         } else {
             visitorIn = new VisitIncomingNoWeight(idMap, true);
             visitorOut = new VisitOutgoingNoWeight(idMap, true);
         }
-        return new ReadUndirected(readOp, matrix, relationId, visitorOut, visitorIn);
+        return new ReadUndirected(transaction, matrix, relationId, visitorOut, visitorIn);
     }
 
     Graph toGraph(final IdMap idMap, final AdjacencyMatrix matrix) {

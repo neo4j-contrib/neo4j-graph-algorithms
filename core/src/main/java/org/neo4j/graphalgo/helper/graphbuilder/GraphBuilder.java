@@ -18,11 +18,11 @@
  */
 package org.neo4j.graphalgo.helper.graphbuilder;
 
+import org.neo4j.graphalgo.core.utils.ExceptionUtil;
+import org.neo4j.graphalgo.core.utils.TransactionWrapper;
 import org.neo4j.graphdb.*;
-import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.Statement;
+import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.HashSet;
@@ -42,9 +42,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     protected final HashSet<Node> nodes;
     protected final HashSet<Relationship> relationships;
     protected final GraphDatabaseAPI api;
-    protected final ThreadToStatementContextBridge bridge;
-
-    protected Transaction tx = null;
+    protected final TransactionWrapper tx;
 
     protected Label label;
     protected RelationshipType relationship;
@@ -53,8 +51,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
         this.api = api;
         this.label = label;
         this.relationship = relationship;
-        bridge = api.getDependencyResolver()
-                .resolveDependency(ThreadToStatementContextBridge.class);
+        this.tx = new TransactionWrapper(api);
         nodes = new HashSet<>();
         relationships = new HashSet<>();
         this.self = me();
@@ -140,15 +137,14 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @param consumer the write consumer
      * @return child instance to make methods of the child class accessible.
      */
-    public ME writeInTransaction(Consumer<DataWriteOperations> consumer) {
-        beginTx();
-        try(
-            Statement statement = bridge.get()) {
-            consumer.accept(statement.dataWriteOperations());
-        } catch (InvalidTransactionTypeKernelException e) {
-            throw new RuntimeException(e);
-        }
-        closeTx();
+    public ME writeInTransaction(Consumer<Write> consumer) {
+        tx.accept(ktx -> {
+            try {
+                consumer.accept(ktx.dataWrite());
+            } catch (InvalidTransactionTypeKernelException e) {
+                ExceptionUtil.throwKernelException(e);
+            }
+        });
         return self;
     }
 
@@ -159,9 +155,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return child instance to make methods of the child class accessible.
      */
     public ME withinTransaction(Runnable runnable) {
-        beginTx();
-        runnable.run();
-        closeTx();
+        tx.accept(__ -> runnable.run());
         return self;
     }
 
@@ -173,10 +167,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      * @return child instance to make methods of the child class accessible.
      */
     public <T> T withinTransaction(Supplier<T> supplier) {
-        beginTx();
-        T t = supplier.get();
-        closeTx();
-        return t;
+        return tx.apply(__ -> supplier.get());
     }
 
     /**
@@ -227,29 +218,6 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
      */
     public CompleteGraphBuilder newCompleteGraphBuilder() {
         return new CompleteGraphBuilder(api, label, relationship);
-    }
-
-    /**
-     * create a new transaction if not already open
-     */
-    protected void beginTx() {
-        if (null != tx) {
-            return;
-        }
-        tx = api.beginTx();
-    }
-
-    /**
-     * close current transaction if any
-     */
-    protected void closeTx() {
-        if (null == tx) {
-            return;
-        }
-
-        tx.success();
-        tx.close();
-        tx = null;
     }
 
     /**

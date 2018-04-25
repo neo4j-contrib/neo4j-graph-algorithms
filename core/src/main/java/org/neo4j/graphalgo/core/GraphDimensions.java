@@ -19,17 +19,17 @@
 package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.core.utils.StatementTask;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.StatementConstants;
+import org.neo4j.graphalgo.core.utils.StatementFunction;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.TokenRead;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.store.id.IdGenerator;
 import org.neo4j.kernel.impl.store.id.IdGeneratorFactory;
 import org.neo4j.kernel.impl.store.id.IdType;
 import org.neo4j.kernel.impl.util.UnsatisfiedDependencyException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public final class GraphDimensions extends StatementTask<GraphDimensions, RuntimeException> {
+public final class GraphDimensions extends StatementFunction<GraphDimensions> {
     private final GraphSetup setup;
 
     private long nodeCount;
@@ -37,7 +37,6 @@ public final class GraphDimensions extends StatementTask<GraphDimensions, Runtim
     private long maxRelCount;
     private int labelId;
     private int[] relationId;
-    private int weightId;
     private int relWeightId;
     private int nodeWeightId;
     private int nodePropId;
@@ -69,12 +68,8 @@ public final class GraphDimensions extends StatementTask<GraphDimensions, Runtim
         return labelId;
     }
 
-    public int[] relationId() {
+    public int[] relationshipTypeId() {
         return relationId;
-    }
-
-    public int weightId() {
-        return weightId;
     }
 
     public int relWeightId() {
@@ -90,45 +85,42 @@ public final class GraphDimensions extends StatementTask<GraphDimensions, Runtim
     }
 
     @Override
-    public GraphDimensions apply(final Statement statement) throws RuntimeException {
-        final ReadOperations readOp = statement.readOperations();
-        labelId = setup.loadAnyLabel()
-                ? ReadOperations.ANY_LABEL
-                : readOp.labelGetForName(setup.startLabel);
+    public GraphDimensions apply(final KernelTransaction transaction) throws RuntimeException {
+        TokenRead tokenRead = transaction.tokenRead();
+        Read dataRead = transaction.dataRead();
+        // TODO: if the label (and type and property) is not found, we default to all labels, which is probably not what we want
+        labelId = setup.loadAnyLabel() ? Read.ANY_LABEL : tokenRead.nodeLabel(setup.startLabel);
         if (!setup.loadAnyRelationshipType()) {
-            int relId = readOp.relationshipTypeGetForName(setup.relationshipType);
-            if (relId != StatementConstants.NO_SUCH_RELATIONSHIP_TYPE) {
+            int relId = tokenRead.relationshipType(setup.relationshipType);
+            if (relId != TokenRead.NO_TOKEN) {
                 relationId = new int[]{relId};
             }
         }
-        weightId = setup.loadDefaultRelationshipWeight()
-                ? StatementConstants.NO_SUCH_PROPERTY_KEY
-                : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
-        relWeightId = setup.loadDefaultRelationshipWeight()
-                ? StatementConstants.NO_SUCH_PROPERTY_KEY
-                : readOp.propertyKeyGetForName(setup.relationWeightPropertyName);
-        nodeWeightId = setup.loadDefaultNodeWeight()
-                ? StatementConstants.NO_SUCH_PROPERTY_KEY
-                : readOp.propertyKeyGetForName(setup.nodeWeightPropertyName);
-        nodePropId = setup.loadDefaultNodeProperty()
-                ? StatementConstants.NO_SUCH_PROPERTY_KEY
-                : readOp.propertyKeyGetForName(setup.nodePropertyName);
-        nodeCount = readOp.countsForNode(labelId);
-        allNodesCount = getHighestPossibleNodeCount(readOp);
+        relWeightId = propertyKey(tokenRead, setup.shouldLoadRelationshipWeight(), setup.relationWeightPropertyName);
+        nodeWeightId = propertyKey(tokenRead, setup.shouldLoadNodeWeight(), setup.nodeWeightPropertyName);
+        nodePropId = propertyKey(tokenRead, setup.shouldLoadNodeProperty(), setup.nodePropertyName);
+        nodeCount = dataRead.countsForNode(labelId);
+        allNodesCount = getHighestPossibleNodeCount(dataRead);
         maxRelCount = Math.max(
-                readOp.countsForRelationshipWithoutTxState(
+                dataRead.countsForRelationshipWithoutTxState(
                         labelId,
-                        relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0],
-                        ReadOperations.ANY_LABEL),
-                readOp.countsForRelationshipWithoutTxState(
-                        ReadOperations.ANY_LABEL,
-                        relationId == null ? ReadOperations.ANY_RELATIONSHIP_TYPE : relationId[0],
-                        labelId)
+                        relationId == null ? Read.ANY_RELATIONSHIP_TYPE : relationId[0],
+                        Read.ANY_LABEL
+                ),
+                dataRead.countsForRelationshipWithoutTxState(
+                        Read.ANY_LABEL,
+                        relationId == null ? Read.ANY_RELATIONSHIP_TYPE : relationId[0],
+                        labelId
+                )
         );
         return this;
     }
 
-    private long getHighestPossibleNodeCount(ReadOperations readOp) {
+    private int propertyKey(TokenRead tokenRead, boolean load, String propertyName) {
+        return load ? tokenRead.propertyKey(propertyName) : TokenRead.NO_TOKEN;
+    }
+
+    private long getHighestPossibleNodeCount(Read readOp) {
         try {
             IdGeneratorFactory idGeneratorFactory = resolve(IdGeneratorFactory.class);
             if (idGeneratorFactory != null) {

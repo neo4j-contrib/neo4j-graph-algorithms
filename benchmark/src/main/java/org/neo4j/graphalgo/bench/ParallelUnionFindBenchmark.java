@@ -18,28 +18,42 @@
  */
 package org.neo4j.graphalgo.bench;
 
-import org.neo4j.graphalgo.impl.MSColoring;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.impl.*;
+import org.neo4j.graphalgo.impl.GraphUnionFind;
+import org.neo4j.graphalgo.impl.MSColoring;
+import org.neo4j.graphalgo.impl.ParallelUnionFindFJMerge;
+import org.neo4j.graphalgo.impl.ParallelUnionFindForkJoin;
+import org.neo4j.graphalgo.impl.ParallelUnionFindQueue;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.internal.kernel.api.Write;
+import org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
+import org.neo4j.internal.kernel.api.exceptions.TransactionFailureException;
 import org.neo4j.io.fs.FileUtils;
-import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.InvalidTransactionTypeKernelException;
-import org.neo4j.kernel.api.exceptions.RelationshipTypeIdNotFoundKernelException;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,9 +137,9 @@ public class ParallelUnionFindBenchmark {
     private static void createTestGraph(int sets, int setSize) throws Exception {
         final int rIdx;
         try (Transaction tx = db.beginTx();
-             Statement stm = bridge.get()) {
+             KernelTransaction stm = bridge.getKernelTransactionBoundToThisThread(true)) {
             rIdx = stm
-                    .tokenWriteOperations()
+                    .tokenWrite()
                     .relationshipTypeGetOrCreateForName(RELATIONSHIP_TYPE.name());
             tx.success();
         }
@@ -137,23 +151,23 @@ public class ParallelUnionFindBenchmark {
         ParallelUtil.run(runnables, Pools.DEFAULT);
     }
 
-    private static Runnable createLine(int size, int rIdx) throws Exception {
+    private static Runnable createLine(int size, int rIdx) {
         return () -> {
             try (Transaction tx = db.beginTx();
-                 Statement stm = bridge.get()) {
-                final DataWriteOperations op = stm.dataWriteOperations();
+                 KernelTransaction stm = bridge.getKernelTransactionBoundToThisThread(true)) {
+                final Write op = stm.dataWrite();
                 long node = op.nodeCreate();
                 for (int i = 1; i < size; i++) {
                     final long temp = op.nodeCreate();
                     try {
-                        op.relationshipCreate(rIdx, node, temp);
-                    } catch (RelationshipTypeIdNotFoundKernelException | EntityNotFoundException e) {
+                        op.relationshipCreate(node, rIdx, temp);
+                    } catch (EntityNotFoundException e) {
                         throw new RuntimeException(e);
                     }
                     node = temp;
                 }
                 tx.success();
-            } catch (InvalidTransactionTypeKernelException e) {
+            } catch (InvalidTransactionTypeKernelException | TransactionFailureException e) {
                 throw new RuntimeException(e);
             }
         };

@@ -21,6 +21,10 @@ package org.neo4j.graphalgo.core.neo4jview;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.GraphDimensions;
+import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.NodeImporter;
+import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class GraphViewFactory extends GraphFactory {
@@ -33,11 +37,13 @@ public final class GraphViewFactory extends GraphFactory {
 
     @Override
     public Graph build() {
-        return new GraphView(
+        GraphDimensions dimensions = new GraphDimensions(api, setup).call();
+        IdMap idMap = new NodeImporter(
                 api,
-                setup.startLabel,
-                setup.relationshipType,
-                setup.relationWeightPropertyName,
-                setup.relationDefaultWeight);
+                ImportProgress.EMPTY,
+                dimensions.nodeCount(),
+                dimensions.labelId()
+        ).call();
+        return new GraphView(api, dimensions, idMap, setup.relationDefaultWeight);
     }
 }

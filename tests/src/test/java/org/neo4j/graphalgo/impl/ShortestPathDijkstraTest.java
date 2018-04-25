@@ -29,8 +29,11 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
-import org.neo4j.graphalgo.core.utils.RawValues;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
@@ -262,9 +265,7 @@ public final class ShortestPathDijkstraTest {
                 if (prev != null) {
                     for (Relationship rel : prev.getRelationships(type, Direction.OUTGOING)) {
                         if (rel.getEndNodeId() == id) {
-                            double cost = RawValues.extractValue(
-                                    rel.getProperty("cost"),
-                                    0.0);
+                            double cost = ((Number) rel.getProperty("cost")).doubleValue();
                             weight += cost;
                         }
                     }

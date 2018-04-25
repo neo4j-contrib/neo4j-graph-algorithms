@@ -21,9 +21,9 @@ package org.neo4j.graphalgo.bench;
 import com.carrotsearch.hppc.ObjectLongHashMap;
 import com.carrotsearch.hppc.ObjectLongMap;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.TokenWriteOperations;
+import org.neo4j.internal.kernel.api.TokenWrite;
+import org.neo4j.internal.kernel.api.Write;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -74,13 +74,13 @@ public class HeroGraph {
         long startTime = System.nanoTime();
 
         try (Transaction tx = db.beginTx();
-             Statement statement = bridge.get();
+             KernelTransaction statement = bridge.getKernelTransactionBoundToThisThread(true);
              BufferedReader reader = new BufferedReader(
                      new InputStreamReader(
                              new BufferedInputStream(url.openStream()),
                              StandardCharsets.UTF_8))) {
 
-            TokenWriteOperations tokens = statement.tokenWriteOperations();
+            TokenWrite tokens = statement.tokenWrite();
             int hero = tokens.labelGetOrCreateForName("Hero");
             int comic = tokens.labelGetOrCreateForName("Comic");
             int appearedIn = tokens.relationshipTypeGetOrCreateForName(
@@ -89,7 +89,7 @@ public class HeroGraph {
             ObjectLongMap<String> heroIds = new ObjectLongHashMap<>();
             ObjectLongMap<String> comicIds = new ObjectLongHashMap<>();
 
-            DataWriteOperations write = statement.dataWriteOperations();
+            Write write = statement.dataWrite();
 
             // headers
             reader.readLine();
@@ -122,7 +122,7 @@ public class HeroGraph {
                     ++nodes;
                 }
 
-                write.relationshipCreate(appearedIn, heroId, comicId);
+                write.relationshipCreate(heroId, appearedIn, comicId);
                 ++rels;
             }
             tx.success();

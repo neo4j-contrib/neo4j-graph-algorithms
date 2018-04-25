@@ -16,31 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.bench;
+package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphalgo.core.utils.Pools;
+public interface RenamesCurrentThread {
 
-import java.util.concurrent.TimeUnit;
-
-@FunctionalInterface
-public interface RunSafely extends Runnable {
-    default void runSafely() throws Throwable {
-        try {
-            run();
-        } catch (StackOverflowError e) {
-            Throwable error = e;
-            Pools.DEFAULT.shutdownNow();
-            try {
-                Pools.DEFAULT.awaitTermination(10, TimeUnit.MINUTES);
-            } catch (InterruptedException e1) {
-                e1.addSuppressed(e);
-                error = e1;
-            }
-            throw error;
-        }
+    default String threadName() {
+        return getClass().getSimpleName() + "-" + System.identityHashCode(this);
     }
 
-    static void runSafe(RunSafely run) throws Throwable {
-        run.runSafely();
+    static Runnable renameThread(final String newThreadName) {
+        Thread currentThread = Thread.currentThread();
+        String oldThreadName = currentThread.getName();
+
+        boolean renamed = false;
+        if (!oldThreadName.equals(newThreadName)) {
+            try {
+                currentThread.setName(newThreadName);
+                renamed = true;
+            } catch (SecurityException e) {
+                // failed to rename thread, proceed as usual
+            }
+        }
+
+        final boolean finalRenamed = renamed;
+        return () -> {
+            if (finalRenamed) {
+                currentThread.setName(oldThreadName);
+            }
+        };
     }
 }

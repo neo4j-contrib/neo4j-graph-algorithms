@@ -26,7 +26,7 @@ plugins {
     id 'org.neo4j.doc.build.docbook' version '1.0-alpha01'
 }
 
-if (!project.hasProperty('graphAlgoVersion')) { ext.graphAlgoVersion = '3.4.0.0' }
+if (!project.hasProperty('graphAlgoVersion')) { ext.graphAlgoVersion = '3.3.4.0' }
 
 ext {
     versionParts = graphAlgoVersion.split('-')

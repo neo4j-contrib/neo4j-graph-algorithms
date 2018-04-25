@@ -26,14 +26,14 @@ import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.StatementTask;
+import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.NodeCursor;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
@@ -47,18 +47,14 @@ public final class HugeGraphFactory extends GraphFactory {
 
     @Override
     public HugeGraph build() {
-        try {
-            return importGraph();
-        } catch (EntityNotFoundException e) {
-            throw Exceptions.launderedException(e);
-        }
+        return importGraph();
     }
 
 
-    private HugeGraph importGraph() throws EntityNotFoundException {
+    private HugeGraph importGraph() {
         int concurrency = setup.concurrency();
         AllocationTracker tracker = setup.tracker;
-        HugeWeightMapping weights = hugeWeightMapping(tracker, dimensions.weightId(), setup.relationDefaultWeight);
+        HugeWeightMapping weights = hugeWeightMapping(tracker, dimensions.relWeightId(), setup.relationDefaultWeight);
         HugeIdMap mapping = loadHugeIdMap(tracker);
         HugeGraph graph = loadRelationships(dimensions, mapping, weights, concurrency, tracker, progress);
         progressLogger.logDone(tracker);
@@ -83,8 +79,8 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         final long nodeCount = dimensions.hugeNodeCount();
-        final int[] relationId = dimensions.relationId();
-        final int weightId = dimensions.weightId();
+        final int[] relationId = dimensions.relationshipTypeId();
+        final int weightId = dimensions.relWeightId();
 
         HugeLongArray inOffsets = null;
         HugeLongArray outOffsets = null;
@@ -144,8 +140,8 @@ public final class HugeGraphFactory extends GraphFactory {
             AllocationTracker tracker,
             ImportProgress progress) {
         final long nodeCount = dimensions.hugeNodeCount();
-        final int[] relationId = dimensions.relationId();
-        final int weightId = dimensions.weightId();
+        final int[] relationId = dimensions.relationshipTypeId();
+        final int weightId = dimensions.relWeightId();
 
         HugeLongArray offsets = HugeLongArray.newArray(nodeCount, tracker);
         ByteArray adjacency = ByteArray.newArray(0, tracker);
@@ -194,7 +190,7 @@ public final class HugeGraphFactory extends GraphFactory {
         }
     }
 
-    private static final class HugeRelationshipImporter extends StatementTask<Void, EntityNotFoundException> {
+    private static final class HugeRelationshipImporter extends StatementAction {
         private final int batchIndex;
         private final ImportProgress progress;
         private final NodeQueue nodes;
@@ -243,8 +239,9 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         @Override
-        public Void apply(final Statement statement) throws EntityNotFoundException {
-            ReadOperations readOp = statement.readOperations();
+        public void accept(final KernelTransaction transaction) {
+            Read readOp = transaction.dataRead();
+            CursorFactory cursors = transaction.cursors();
             boolean shouldLoadWeights = weightId >= 0;
             HugeWeightMap weightMap = shouldLoadWeights ? (HugeWeightMap) weights : null;
 
@@ -258,52 +255,57 @@ public final class HugeGraphFactory extends GraphFactory {
                 final VisitRelationship visitOut;
                 if (shouldLoadWeights) {
                     visitIn = new VisitIncomingNoWeight(idMap);
-                    visitOut = new VisitUndirectedOutgoingWithWeight(readOp, idMap, weightMap, weightId);
+                    visitOut = new VisitUndirectedOutgoingWithWeight(readOp, cursors, idMap, weightMap, weightId);
                 } else {
                     visitIn = new VisitIncomingNoWeight(idMap);
                     visitOut = new VisitOutgoingNoWeight(idMap);
                 }
-                loader = new ReadUndirected(readOp, outOffsets, outAllocator, relationId, visitOut, visitIn);
+                loader = new ReadUndirected(transaction, outOffsets, outAllocator, relationId, visitOut, visitIn);
             } else {
                 RelationshipLoader load = null;
                 if (outAllocator != null) {
                     outAllocator.prepare();
                     final VisitRelationship visitOut;
                     if (shouldLoadWeights) {
-                        visitOut = new VisitOutgoingWithWeight(readOp, idMap, weightMap, weightId);
+                        visitOut = new VisitOutgoingWithWeight(readOp, cursors, idMap, weightMap, weightId);
                     } else {
                         visitOut = new VisitOutgoingNoWeight(idMap);
                     }
-                    load = new ReadOutgoing(readOp, outOffsets, outAllocator, relationId, visitOut);
+                    load = new ReadOutgoing(transaction, outOffsets, outAllocator, relationId, visitOut);
                 }
                 if (inAllocator != null) {
                     inAllocator.prepare();
                     final VisitRelationship visitIn;
                     if (shouldLoadWeights) {
-                        visitIn = new VisitIncomingWithWeight(readOp, idMap, weightMap, weightId);
+                        visitIn = new VisitIncomingWithWeight(readOp, cursors, idMap, weightMap, weightId);
                     } else {
                         visitIn = new VisitIncomingNoWeight(idMap);
                     }
                     if (load != null) {
                         load = new ReadBoth((ReadOutgoing) load, visitIn, inOffsets, inAllocator);
                     } else {
-                        load = new ReadIncoming(readOp, inOffsets, inAllocator, relationId, visitIn);
+                        load = new ReadIncoming(transaction, inOffsets, inAllocator, relationId, visitIn);
                     }
                 }
                 if (load != null) {
                     loader = load;
                 } else {
-                    loader = new ReadNothing(readOp, relationId);
+                    loader = new ReadNothing(transaction, relationId);
                 }
             }
 
-            NodeQueue nodes = this.nodes;
-            long nodeId;
-            while ((nodeId = nodes.next()) != -1L) {
-                loader.load(idMap.toOriginalNodeId(nodeId), nodeId);
-                progress.relProgress();
+            try (NodeCursor nodeCursor = cursors.allocateNodeCursor()) {
+                NodeQueue nodes = this.nodes;
+                long nodeId;
+                while ((nodeId = nodes.next()) != -1L) {
+                    long sourceNodeId = idMap.toOriginalNodeId(nodeId);
+                    readOp.singleNode(sourceNodeId, nodeCursor);
+                    if (nodeCursor.next()) {
+                        loader.load(nodeCursor, nodeId);
+                    }
+                    progress.relProgress();
+                }
             }
-            return null;
         }
     }
 }

@@ -23,7 +23,7 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -31,14 +31,12 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.spanningTrees.Prim;
 import org.neo4j.graphalgo.impl.spanningTrees.SpanningTree;
-import org.neo4j.helpers.Exceptions;
-import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
-import org.neo4j.values.storable.Value;
 import org.neo4j.values.storable.Values;
 
 import java.util.Map;
@@ -165,17 +163,17 @@ public class PrimProc {
         return Stream.of(builder.build());
     }
 
-    private static RelationshipConsumer writeBack(int relType, int propertyType, Graph graph, DataWriteOperations ops) {
+    private static RelationshipConsumer writeBack(int relType, int propertyType, Graph graph, Write ops) {
         return (source, target, rid) -> {
             try {
                 final long relId = ops.relationshipCreate(
-                        relType,
                         graph.toOriginalNodeId(source),
+                        relType,
                         graph.toOriginalNodeId(target)
                 );
                 ops.relationshipSetProperty(relId, propertyType, Values.doubleValue(graph.weightOf(source, target)));
             } catch (KernelException e) {
-                throw Exceptions.launderedException(e);
+                ExceptionUtil.throwKernelException(e);
             }
             return true;
         };

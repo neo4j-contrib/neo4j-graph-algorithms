@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -148,6 +149,7 @@ public final class AllShortestPathsProcTest {
     }
 
     @Test
+    @Ignore
     public void testWeightedASP() throws Exception {
 
         final Consumer consumer = mock(Consumer.class);

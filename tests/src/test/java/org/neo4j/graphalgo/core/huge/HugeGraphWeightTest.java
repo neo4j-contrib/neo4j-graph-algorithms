@@ -27,9 +27,9 @@ import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 import org.neo4j.graphalgo.core.utils.paged.PageUtil;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.kernel.api.DataWriteOperations;
-import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.TokenWriteOperations;
+import org.neo4j.internal.kernel.api.TokenWrite;
+import org.neo4j.internal.kernel.api.Write;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
@@ -72,11 +72,11 @@ public final class HugeGraphWeightTest {
 
     private void mkDb(final int nodes, final int relsPerNode) {
         db.executeAndCommit((GraphDatabaseService __) -> {
-            try (Statement st = db.statement()) {
-                TokenWriteOperations token = st.tokenWriteOperations();
+            try (KernelTransaction st = db.transaction()) {
+                TokenWrite token = st.tokenWrite();
                 int type = token.relationshipTypeGetOrCreateForName("TYPE");
                 int key = token.propertyKeyGetOrCreateForName("weight");
-                DataWriteOperations write = st.dataWriteOperations();
+                Write write = st.dataWrite();
                 NewRel newRel = newRel(write, type, key);
 
                 long[] nodeIds = new long[nodes];
@@ -119,12 +119,12 @@ public final class HugeGraphWeightTest {
     }
 
     private static NewRel newRel(
-            DataWriteOperations write,
+            Write write,
             int type,
             int key) {
         return (source, target) -> {
             int fakeId = ((int) source << 16) | (int) target & 0xFFFF;
-            long rel = write.relationshipCreate(type, source, target);
+            long rel = write.relationshipCreate(source, type, target);
             write.relationshipSetProperty(rel, key, Values.intValue(fakeId));
         };
     }

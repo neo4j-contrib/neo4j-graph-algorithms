@@ -1,49 +1,87 @@
+/**
+ * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
+ *
+ * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
+ *
+ * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.graphalgo.core.huge;
 
+import org.neo4j.graphalgo.core.loading.LoadRelationships;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.impl.api.store.RelationshipIterator;
+import org.neo4j.internal.kernel.api.NodeCursor;
+import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
+import org.neo4j.kernel.api.KernelTransaction;
 
 abstract class RelationshipLoader {
-    private final ReadOperations readOp;
+    private final KernelTransaction transaction;
+    private final LoadRelationships loadRelationships;
     private final int[] relationType;
 
     RelationshipLoader(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             final int[] relationType) {
-        this.readOp = readOp;
+        this.transaction = transaction;
         this.relationType = relationType;
+        loadRelationships = LoadRelationships.of(transaction.cursors(), relationType);
     }
 
     RelationshipLoader(final RelationshipLoader other) {
-        this.readOp = other.readOp;
+        this.transaction = other.transaction;
         this.relationType = other.relationType;
+        this.loadRelationships = other.loadRelationships;
     }
 
-    abstract void load(long sourceNodeId, long localNodeId) throws EntityNotFoundException;
+    abstract void load(NodeCursor sourceNode, long localNodeId);
 
-    void readRelationship(
+    void readOutgoingRelationships(
             VisitRelationship visit,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
-            Direction direction,
-            long sourceNodeId,
-            long localGraphId)
-    throws EntityNotFoundException {
+            NodeCursor sourceNode,
+            long localGraphId) {
 
-        int degree = degree(sourceNodeId, direction);
+        int degree = loadRelationships.degreeOut(sourceNode);
         if (degree <= 0) {
             return;
         }
 
-        RelationshipIterator rs = rels(sourceNodeId, direction);
         visit.prepareNextNode(degree, localGraphId);
-        while (rs.hasNext()) {
-            rs.relationshipVisit(rs.next(), visit);
+        visitOut(sourceNode, visit);
+
+        long adjacencyIdx = visit.flush(allocator);
+        if (adjacencyIdx != 0L) {
+            offsets.set(localGraphId, adjacencyIdx);
         }
+    }
+
+    void readIncomingRelationships(
+            VisitRelationship visit,
+            HugeLongArray offsets,
+            ByteArray.LocalAllocator allocator,
+            NodeCursor sourceNode,
+            long localGraphId) {
+
+        int degree = loadRelationships.degreeIn(sourceNode);
+        if (degree <= 0) {
+            return;
+        }
+
+        visit.prepareNextNode(degree, localGraphId);
+        visitIn(sourceNode, visit);
+
         long adjacencyIdx = visit.flush(allocator);
         if (adjacencyIdx != 0L) {
             offsets.set(localGraphId, adjacencyIdx);
@@ -55,26 +93,18 @@ abstract class RelationshipLoader {
             VisitRelationship visitIn,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
-            long sourceNodeId,
-            long localGraphId)
-    throws EntityNotFoundException {
+            NodeCursor sourceNode,
+            long localGraphId) {
 
-        int degree = degree(sourceNodeId, Direction.BOTH);
+        int degree = loadRelationships.degreeBoth(sourceNode);
         if (degree <= 0) {
             return;
         }
 
-        RelationshipIterator rs = rels(sourceNodeId, Direction.INCOMING);
         visitIn.prepareNextNode(degree, localGraphId);
-        while (rs.hasNext()) {
-            rs.relationshipVisit(rs.next(), visitIn);
-        }
-
+        this.visitIn(sourceNode, visitIn);
         visitOut.prepareNextNode(visitIn);
-        rs = rels(sourceNodeId, Direction.OUTGOING);
-        while (rs.hasNext()) {
-            rs.relationshipVisit(rs.next(), visitOut);
-        }
+        this.visitOut(sourceNode, visitOut);
 
         long adjacencyIdx = visitOut.flush(allocator);
         if (adjacencyIdx != 0L) {
@@ -82,28 +112,30 @@ abstract class RelationshipLoader {
         }
     }
 
-    private int degree(long nodeId, Direction direction) throws EntityNotFoundException {
-        if (relationType == null) {
-            return readOp.nodeGetDegree(nodeId, direction);
+    private void visitOut(NodeCursor cursor, VisitRelationship visit) {
+        try (RelationshipSelectionCursor rc = loadRelationships.relationshipsOut(cursor)) {
+            while (rc.next()) {
+                visit.visit(rc);
+            }
         }
-        return readOp.nodeGetDegree(nodeId, direction, relationType[0]);
     }
 
-    private RelationshipIterator rels(long nodeId, Direction direction) throws EntityNotFoundException {
-        if (relationType == null) {
-            return readOp.nodeGetRelationships(nodeId, direction);
+    private void visitIn(NodeCursor cursor, VisitRelationship visit) {
+        try (RelationshipSelectionCursor rc = loadRelationships.relationshipsIn(cursor)) {
+            while (rc.next()) {
+                visit.visit(rc);
+            }
         }
-        return readOp.nodeGetRelationships(nodeId, direction, relationType);
     }
 }
 
 final class ReadNothing extends RelationshipLoader {
-    ReadNothing(final ReadOperations readOp, final int[] relationType) {
-        super(readOp, relationType);
+    ReadNothing(final KernelTransaction transaction, final int[] relationType) {
+        super(transaction, relationType);
     }
 
     @Override
-    void load(final long sourceNodeId, final long localNodeId) {
+    void load(final NodeCursor sourceNode, final long localNodeId) {
     }
 }
 
@@ -113,20 +145,20 @@ final class ReadOutgoing extends RelationshipLoader {
     final ByteArray.LocalAllocator allocator;
 
     ReadOutgoing(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitOutgoing) {
-        super(readOp, relationType);
+        super(transaction, relationType);
         this.offsets = offsets;
         this.allocator = allocator;
         this.visitOutgoing = visitOutgoing;
     }
 
     @Override
-    void load(final long sourceNodeId, final long localNodeId) throws EntityNotFoundException {
-        readRelationship(visitOutgoing, offsets, allocator, Direction.OUTGOING, sourceNodeId, localNodeId);
+    void load(final NodeCursor sourceNode, final long localNodeId) {
+        readOutgoingRelationships(visitOutgoing, offsets, allocator, sourceNode, localNodeId);
     }
 }
 
@@ -136,20 +168,20 @@ final class ReadIncoming extends RelationshipLoader {
     private final ByteArray.LocalAllocator allocator;
 
     ReadIncoming(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitIncoming) {
-        super(readOp, relationType);
+        super(transaction, relationType);
         this.offsets = offsets;
         this.allocator = allocator;
         this.visitIncoming = visitIncoming;
     }
 
     @Override
-    void load(final long sourceNodeId, final long localNodeId) throws EntityNotFoundException {
-        readRelationship(visitIncoming, offsets, allocator, Direction.INCOMING, sourceNodeId, localNodeId);
+    void load(final NodeCursor sourceNode, final long localNodeId) {
+        readIncomingRelationships(visitIncoming, offsets, allocator, sourceNode, localNodeId);
     }
 }
 
@@ -176,9 +208,9 @@ final class ReadBoth extends RelationshipLoader {
     }
 
     @Override
-    void load(final long sourceNodeId, final long localNodeId) throws EntityNotFoundException {
-        readRelationship(visitOutgoing, outOffsets, outAllocator, Direction.OUTGOING, sourceNodeId, localNodeId);
-        readRelationship(visitIncoming, inOffsets, inAllocator, Direction.INCOMING, sourceNodeId, localNodeId);
+    void load(final NodeCursor sourceNode, final long localNodeId) {
+        readOutgoingRelationships(visitOutgoing, outOffsets, outAllocator, sourceNode, localNodeId);
+        readIncomingRelationships(visitIncoming, inOffsets, inAllocator, sourceNode, localNodeId);
     }
 }
 
@@ -189,13 +221,13 @@ final class ReadUndirected extends RelationshipLoader {
     private final ByteArray.LocalAllocator allocator;
 
     ReadUndirected(
-            final ReadOperations readOp,
+            final KernelTransaction transaction,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
             final int[] relationType,
             final VisitRelationship visitOutgoing,
             final VisitRelationship visitIncoming) {
-        super(readOp, relationType);
+        super(transaction, relationType);
         this.offsets = offsets;
         this.allocator = allocator;
         this.visitOutgoing = visitOutgoing;
@@ -203,7 +235,7 @@ final class ReadUndirected extends RelationshipLoader {
     }
 
     @Override
-    void load(final long sourceNodeId, final long localNodeId) throws EntityNotFoundException {
-        readUndirected(visitOutgoing, visitIncoming, offsets, allocator, sourceNodeId, localNodeId);
+    void load(final NodeCursor sourceNode, final long localNodeId) {
+        readUndirected(visitOutgoing, visitIncoming, offsets, allocator, sourceNode, localNodeId);
     }
 }

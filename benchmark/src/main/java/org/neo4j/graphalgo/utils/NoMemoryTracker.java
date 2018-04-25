@@ -16,31 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.bench;
+package org.neo4j.graphalgo.utils;
 
-import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.memory.MemoryAllocationTracker;
 
-import java.util.concurrent.TimeUnit;
+final class NoMemoryTracker implements MemoryAllocationTracker {
 
-@FunctionalInterface
-public interface RunSafely extends Runnable {
-    default void runSafely() throws Throwable {
-        try {
-            run();
-        } catch (StackOverflowError e) {
-            Throwable error = e;
-            Pools.DEFAULT.shutdownNow();
-            try {
-                Pools.DEFAULT.awaitTermination(10, TimeUnit.MINUTES);
-            } catch (InterruptedException e1) {
-                e1.addSuppressed(e);
-                error = e1;
-            }
-            throw error;
-        }
+    static final MemoryAllocationTracker INSTANCE = new NoMemoryTracker();
+
+    @Override
+    public void allocated(final long bytes) {
     }
 
-    static void runSafe(RunSafely run) throws Throwable {
-        run.runSafely();
+    @Override
+    public void deallocated(final long bytes) {
+    }
+
+    @Override
+    public long usedDirectMemory() {
+        return 0L;
     }
 }

@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService;
 public class GraphSetup {
 
     // graph name
-    public String name;
+    public final String name;
     // start label type. null means any label.
     public final String startLabel;
     // end label type (not yet implemented).
@@ -61,7 +61,7 @@ public class GraphSetup {
     // default property is used for node properties if property is not set.
     public final double nodeDefaultPropertyValue;
 
-    public final Map<String,Object> params;
+    public final Map<String, Object> params;
 
     public final Log log;
     public final long logMillis;
@@ -88,18 +88,18 @@ public class GraphSetup {
      * @param endLabel not implemented yet
      * @param relationshipType the relation type identifier. null for any relationship
      * @param relationWeightPropertyName property name which holds the weights / costs of a relation.
-*                                   null means the default value is used for each weight.
+     *                                   null means the default value is used for each weight.
      * @param relationDefaultWeight the default relationship weight if property is not given.
      * @param nodeWeightPropertyName property name which holds the weights / costs of a node.
-*                               null means the default value is used for each weight.
+     *                               null means the default value is used for each weight.
      * @param nodeDefaultWeight the default node weight if property is not given.
      * @param nodePropertyName property name which holds additional values of a node.
-*                         null means the default value is used for each value.
+     *                         null means the default value is used for each value.
      * @param nodeDefaultPropertyValue the default node value if property is not given.
      * @param executor the executor. null means single threaded evaluation
      * @param batchSize batch size for parallel loading
      * @param accumulateWeights true if relationship-weights should be summed within the loader
-     * @param sort
+     * @param sort true if relationships should stored in sorted ascending order
      */
     public GraphSetup(
             String startLabel,
@@ -152,26 +152,7 @@ public class GraphSetup {
      * Setup Graph to load any label, any relationship, no property in single threaded mode
      */
     public GraphSetup() {
-        this.startLabel = null;
-        this.endLabel = null;
-        this.relationshipType = null;
-        this.loadIncoming = this.loadOutgoing = true;
-        this.relationWeightPropertyName = null;
-        this.relationDefaultWeight = 1.0;
-        this.nodeWeightPropertyName = null;
-        this.nodeDefaultWeight = 1.0;
-        this.nodePropertyName = null;
-        this.nodeDefaultPropertyValue = 1.0;
-        this.params = Collections.emptyMap();
-        this.executor = null;
-        this.concurrency = Pools.DEFAULT_CONCURRENCY;
-        this.batchSize = -1;
-        this.accumulateWeights = false;
-        this.log = NullLog.getInstance();
-        this.logMillis = -1;
-        this.sort = false;
-        this.loadAsUndirected = false;
-        this.tracker = AllocationTracker.EMPTY;
+        this(null);
     }
 
     /**
@@ -181,26 +162,38 @@ public class GraphSetup {
      * @param executor executor service
      */
     public GraphSetup(ExecutorService executor) {
-        this.startLabel = null;
-        this.endLabel = null;
-        this.relationshipType = null;
-        this.loadIncoming = this.loadOutgoing = true;
-        this.relationWeightPropertyName = null;
-        this.relationDefaultWeight = 1.0;
-        this.nodeWeightPropertyName = null;
-        this.nodeDefaultWeight = 1.0;
-        this.nodePropertyName = null;
-        this.nodeDefaultPropertyValue = 1.0;
-        this.params = Collections.emptyMap();
-        this.executor = executor;
-        this.concurrency = Pools.DEFAULT_CONCURRENCY;
-        this.batchSize = -1;
-        this.accumulateWeights = false;
-        this.log = NullLog.getInstance();
-        this.logMillis = -1;
-        this.sort = false;
-        this.loadAsUndirected = false;
-        this.tracker = AllocationTracker.EMPTY;
+        this(null, null, null, 1.0, executor);
+    }
+
+    public GraphSetup(
+            String label,
+            String relation,
+            String weightProperty,
+            double defaultWeight,
+            ExecutorService executor) {
+        this(
+                label,
+                label,
+                relation,
+                Direction.BOTH,
+                weightProperty,
+                defaultWeight,
+                null,
+                1.0,
+                null,
+                1.0,
+                Collections.emptyMap(),
+                executor,
+                Pools.DEFAULT_CONCURRENCY,
+                -1,
+                false,
+                NullLog.getInstance(),
+                -1L,
+                false,
+                false,
+                AllocationTracker.EMPTY,
+                null
+        );
     }
 
     public boolean loadConcurrent() {
@@ -214,16 +207,16 @@ public class GraphSetup {
         return concurrency;
     }
 
-    public boolean loadDefaultRelationshipWeight() {
-        return relationWeightPropertyName == null;
+    public boolean shouldLoadRelationshipWeight() {
+        return relationWeightPropertyName != null;
     }
 
-    public boolean loadDefaultNodeWeight() {
-        return nodeWeightPropertyName == null;
+    public boolean shouldLoadNodeWeight() {
+        return nodeWeightPropertyName != null;
     }
 
-    public boolean loadDefaultNodeProperty() {
-        return nodePropertyName == null;
+    public boolean shouldLoadNodeProperty() {
+        return nodePropertyName != null;
     }
 
     public boolean loadAnyLabel() {

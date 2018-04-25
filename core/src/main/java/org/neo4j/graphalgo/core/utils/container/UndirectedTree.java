@@ -144,7 +144,7 @@ public class UndirectedTree {
      * Iterate over all relationships in a BFS (breadth-first) manner.
      * BFS iteration is always stack safe, even for invalid trees.
      * BFS iteration consumes additional memory during iteration.
-     * The {@code relationId} parameter of the {@link RelationshipConsumer}
+     * The {@code relationshipTypeId} parameter of the {@link RelationshipConsumer}
      * is always {@code -1} as relation IDs are not supported by this tree.
      *
      * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree
@@ -159,7 +159,7 @@ public class UndirectedTree {
      * tree level – one for the level itself and at least one more for calling the
      * consumer. On very large trees and particularly on invalid trees, a DFS
      * might throw a {@link StackOverflowError}.
-     * The {@code relationId} parameter of the {@link RelationshipConsumer}
+     * The {@code relationshipTypeId} parameter of the {@link RelationshipConsumer}
      * is always {@code -1} as relation IDs are not supported by this tree.
      *
      * @throws ArrayIndexOutOfBoundsException if the root node is not supported by this tree

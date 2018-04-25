@@ -60,11 +60,6 @@ public class NullWeightMap implements WeightMapping {
     }
 
     @Override
-    public void set(long id, Object weight) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public int size() {
         return 0;
     }
