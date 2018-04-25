@@ -63,3 +63,11 @@ CALL algo.pageRank.stream(
 RETURN node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny}, score
 
 // end::pagerank-stream-yelp-social[]
+
+// tag::huge-projection[]
+
+CALL algo.pageRank('Page','LINKS',
+  {graph:'huge'})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, writeProperty;
+
+// end::huge-projection[]

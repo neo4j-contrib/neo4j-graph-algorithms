@@ -46,3 +46,11 @@ CALL algo.closeness(
 );
 
 // end::cypher-loading[]
+
+
+// tag::huge-projection[]
+
+CALL algo.closeness('Node', 'LINK', {graph:'huge'}) 
+YIELD nodes,loadMillis, computeMillis, writeMillis;
+
+// end::huge-projection[]
