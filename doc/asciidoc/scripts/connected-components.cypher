@@ -87,3 +87,11 @@ CALL algo.unionFind(
 );
 
 // end::cypher-loading[]
+
+
+// tag::huge-projection[]
+
+CALL algo.unionFind('User', 'FRIEND', {graph:'huge'}) 
+YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
+
+// end::huge-projection[]

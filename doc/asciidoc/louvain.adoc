@@ -192,12 +192,21 @@ YIELD nodeId, community - yields a community to each node id
 | community | int | community id
 |===
 
+== Huge graph projection
+ 
+If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
+Set `graph:'huge'` in the config.
+
+[source,cypher]
+----
+include::scripts/louvain.cypher[tag=huge-projection]
+----
+
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 Can be also used to run algorithms on a virtual graph.
 Set `graph:'cypher'` in the config.
-
 
 
 [source,cypher]
