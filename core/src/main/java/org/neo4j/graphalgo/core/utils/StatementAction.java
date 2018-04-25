@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public abstract class StatementAction extends StatementApi implements RenamesCurrentThread, Runnable, StatementApi.Consumer {
+public abstract class StatementAction extends StatementApi implements RenamesCurrentThread, Runnable, StatementApi.TxConsumer {
 
     protected StatementAction(GraphDatabaseAPI api) {
         super(api);

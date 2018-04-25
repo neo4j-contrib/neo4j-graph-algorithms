@@ -54,41 +54,16 @@ class LongsBuffer {
     }
 
     void drainAndRelease(BucketConsumer consumer) throws InterruptedException {
-        long[][] targets = this.targets;
-        int[] lengths = this.lengths;
-        int length = targets.length;
-        for (int i = 0; i < length; i++) {
-            consumer.apply(i, targets[i], lengths[i]);
-            targets[i] = null;
-        }
-        this.targets = null;
-        this.lengths = null;
-    }
-
-    static LongsBuffer EMPTY = new EmptyLongsBuffer();
-    private static long[] EMPTY_LONGS = new long[0];
-
-    private static final class EmptyLongsBuffer extends LongsBuffer {
-        EmptyLongsBuffer() {
-            super(0, 0);
-        }
-
-        @Override
-        int addRelationship(final int bucketIndex, final long source, final long target) {
-            return 0;
-        }
-
-        @Override
-        long[] get(final int bucketIndex) {
-            return EMPTY_LONGS;
-        }
-
-        @Override
-        void reset(final int bucketIndex, final long[] newBuffer) {
-        }
-
-        @Override
-        void drainAndRelease(final BucketConsumer consumer) {
+        if (targets != null) {
+            long[][] targets = this.targets;
+            int[] lengths = this.lengths;
+            int length = targets.length;
+            for (int i = 0; i < length; i++) {
+                consumer.apply(i, targets[i], lengths[i]);
+                targets[i] = null;
+            }
+            this.targets = null;
+            this.lengths = null;
         }
     }
 }

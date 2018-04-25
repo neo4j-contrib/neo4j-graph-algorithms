@@ -19,67 +19,70 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.apache.lucene.util.ArrayUtil;
-import org.neo4j.graphalgo.core.utils.paged.DeltaEncoding;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import java.util.Arrays;
 
+import static org.neo4j.graphalgo.core.huge.VarLongDecoding.zigZagUncompress;
+import static org.neo4j.graphalgo.core.huge.VarLongEncoding.encodeVLong;
+import static org.neo4j.graphalgo.core.huge.VarLongEncoding.encodedVLongSize;
+import static org.neo4j.graphalgo.core.huge.VarLongEncoding.zigZag;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfByteArray;
+
 final class CompressedLongArray {
 
-    private static final byte[] EMPTY_BYTES = new byte[0];
-
+    private final AllocationTracker tracker;
     private byte[] storage;
     private int pos;
     private long lastValue;
     private int length;
 
-    CompressedLongArray(long v, int maxLen) {
-        this.storage = new byte[maxLen];
+    CompressedLongArray(AllocationTracker tracker, long v, int maxLen) {
+        this.tracker = tracker;
+        int initialLen = maxLen < Integer.MAX_VALUE ? maxLen : 0;
+        this.storage = new byte[initialLen];
+        tracker.add(sizeOfByteArray(initialLen));
         add(v);
     }
 
     int add(long v) {
         ++length;
-        long value = v - lastValue;
-        int required = DeltaEncoding.singedVSize(value);
+        long value = zigZag(v - lastValue);
+        int required = encodedVLongSize(value);
         int pos = this.pos;
         if (storage.length <= pos + required) {
-            storage = Arrays.copyOf(storage, ArrayUtil.oversize(pos + required, Byte.BYTES));
+            int newLength = ArrayUtil.oversize(pos + required, Byte.BYTES);
+            tracker.remove(sizeOfByteArray(storage.length));
+            tracker.add(sizeOfByteArray(newLength));
+            storage = Arrays.copyOf(storage, newLength);
         }
-        this.pos = DeltaEncoding.encodeSignedVLong(value, storage, pos);
+        this.pos = encodeVLong(storage, value, pos);
         this.lastValue = v;
         return length;
     }
 
-    long[] ensureBufferSize(long[] into) {
-        if (into.length <= length) {
-            return new long[length];
-        }
-        return into;
+    int length() {
+        return length;
     }
 
     int uncompress(long[] into) {
         assert into.length >= length;
-        byte[] storage = this.storage;
-        int offset = 0;
-        int limit = pos;
-        int out = 0;
-        long lastValue = 0;
-        while (offset < limit) {
-            // offset = DeltaEncoding.decodeSignedVLong(storage, offset, into, out++);
-            byte b = storage[offset++];
-            long i = (long) ((int) b & 0x7F);
-            for (int shift = 7; ((int) b & 0x80) != 0; shift += 7) {
-                b = storage[offset++];
-                i |= ((long) b & 0x7FL) << shift;
-            }
-            i = ((i >>> 1) ^ -(i & 1L));
-            lastValue += i;
-            into[out++] = lastValue;
-        }
-        return out;
+        return zigZagUncompress(storage, pos, into);
+    }
+
+    long compress(
+            final AdjacencyCompression compression,
+            HugeAdjacencyListBuilder.Allocator allocator) {
+        int requiredBytes = compression.compress(storage);
+        long address = allocator.allocate(4 + requiredBytes);
+        compression.writeDegree(allocator.page, allocator.offset);
+        System.arraycopy(storage, 0, allocator.page, 4 + allocator.offset, requiredBytes);
+        allocator.offset += (4 + requiredBytes);
+        return address;
     }
 
     void release() {
+        tracker.remove(sizeOfByteArray(storage.length));
         storage = null;
         pos = 0;
         length = 0;

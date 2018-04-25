@@ -19,11 +19,9 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -38,31 +36,28 @@ final class ScanningRelationshipImporter {
     private static final long MAX_BATCH_SIZE = 2_000_000_000L;
     private static final int PER_THREAD_IN_FLIGHT = 1 << 4;
 
-    private final GraphDimensions dimensions;
     private final GraphSetup setup;
     private final GraphDatabaseAPI api;
     private final ImportProgress progress;
     private final HugeIdMap idMap;
     private final HugeLongArray outOffsets;
-    private final ByteArray outAdjacency;
+    private final HugeAdjacencyListBuilder outAdjacency;
     private final HugeLongArray inOffsets;
-    private final ByteArray inAdjacency;
+    private final HugeAdjacencyListBuilder inAdjacency;
     private final ExecutorService threadPool;
     private final int concurrency;
 
     private ScanningRelationshipImporter(
-            GraphDimensions dimensions,
             GraphSetup setup,
             GraphDatabaseAPI api,
             ImportProgress progress,
             HugeIdMap idMap,
             HugeLongArray outOffsets,
-            ByteArray outAdjacency,
+            HugeAdjacencyListBuilder outAdjacency,
             HugeLongArray inOffsets,
-            ByteArray inAdjacency,
+            HugeAdjacencyListBuilder inAdjacency,
             ExecutorService threadPool,
             int concurrency) {
-        this.dimensions = dimensions;
         this.setup = setup;
         this.api = api;
         this.progress = progress;
@@ -76,15 +71,14 @@ final class ScanningRelationshipImporter {
     }
 
     static ScanningRelationshipImporter create(
-            GraphDimensions dimensions,
             GraphSetup setup,
             GraphDatabaseAPI api,
             ImportProgress progress,
             HugeIdMap idMap,
             HugeLongArray outOffsets,
-            ByteArray outAdjacency,
+            HugeAdjacencyListBuilder outAdjacency,
             HugeLongArray inOffsets,
-            ByteArray inAdjacency,
+            HugeAdjacencyListBuilder inAdjacency,
             ExecutorService threadPool,
             int concurrency) {
         if (!ParallelUtil.canRunInParallel(threadPool)) {
@@ -92,15 +86,14 @@ final class ScanningRelationshipImporter {
             return null;
         }
         return new ScanningRelationshipImporter(
-                dimensions, setup, api, progress, idMap,
+                setup, api, progress, idMap,
                 outOffsets, outAdjacency, inOffsets, inAdjacency,
                 threadPool, concurrency);
     }
 
     void run() {
-        long targetThreads = (long) concurrency;
-        long batchSize = ParallelUtil.threadSize(targetThreads, idMap.nodeCount());
-        batchSize = BitUtil.nextHighestPowerOfTwo(batchSize);
+        long targetThreads = (long) BitUtil.nextHighestPowerOfTwo(concurrency);
+        long batchSize = BitUtil.nextHighestPowerOfTwo(ParallelUtil.threadSize(targetThreads, idMap.nodeCount()));
         while (batchSize > MAX_BATCH_SIZE) {
             targetThreads <<= 1L;
             batchSize >>= 1L;
@@ -108,7 +101,6 @@ final class ScanningRelationshipImporter {
         if (targetThreads > MAX_BATCH_SIZE) {
             throw new IllegalArgumentException("Can't create " + targetThreads + " threads");
         }
-
         run((int) targetThreads, (int) batchSize);
     }
 
@@ -118,23 +110,32 @@ final class ScanningRelationshipImporter {
 //        noinspection unchecked
         ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
         PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
+        int[][] outDegrees = outOffsets == null ? null : new int[threads][];
+        int[][] inDegrees = inOffsets == null ? null : new int[threads][];
         int i = 0;
-        for (; i < queues.length; i++) {
+        for (; i < threads; i++) {
             int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
             if (elementsForThread <= 0) {
                 break;
             }
             final ArrayBlockingQueue<RelationshipsBatch> queue = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
+            int[] out = outDegrees == null ? null : new int[elementsForThread];
+            int[] in = inDegrees == null ? null : new int[elementsForThread];
             final PerThreadRelationshipBuilder builder = new PerThreadRelationshipBuilder(
-                    api, dimensions.labelId(), dimensions.relationshipTypeId(), setup.loadAsUndirected,
-                    progress, idMap, i, idBase, elementsForThread, queue,
-                    outOffsets, outAdjacency, inOffsets, inAdjacency);
+                    progress, setup.tracker, i, idBase, elementsForThread, queue,
+                    out, outOffsets, outAdjacency, in, inOffsets, inAdjacency);
 
             queues[i] = queue;
             builders[i] = builder;
+            if (outDegrees != null) {
+                outDegrees[i] = out;
+            }
+            if (inDegrees != null) {
+                inDegrees[i] = in;
+            }
             idBase += (long) batchSize;
         }
-        if (i < queues.length) {
+        if (i < threads) {
             builders = Arrays.copyOf(builders, i);
             queues = Arrays.copyOf(queues, i);
         }
@@ -142,7 +143,8 @@ final class ScanningRelationshipImporter {
         final Collection<Future<?>> jobs =
                 ParallelUtil.run(Arrays.asList(builders), false, threadPool, null);
 
-        final RelationshipsScanner scanner = new RelationshipsScanner(api, setup, idMap, inFlight, queues, batchSize);
+        int queueBatchSize = (int) BitUtil.align((long) Math.max(1 << 13, setup.batchSize), 2);
+        final RelationshipsScanner scanner = new RelationshipsScanner(api, setup, idMap, inFlight, queueBatchSize, queues, outDegrees, inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
     }

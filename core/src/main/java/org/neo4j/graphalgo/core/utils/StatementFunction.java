@@ -22,7 +22,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.concurrent.Callable;
 
-public abstract class StatementFunction<T> extends StatementApi implements RenamesCurrentThread, Callable<T>, StatementApi.Function<T> {
+public abstract class StatementFunction<T> extends StatementApi implements RenamesCurrentThread, Callable<T>, StatementApi.TxFunction<T> {
 
     protected StatementFunction(GraphDatabaseAPI api) {
         super(api);

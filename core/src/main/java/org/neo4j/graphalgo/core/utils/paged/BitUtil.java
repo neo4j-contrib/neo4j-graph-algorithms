@@ -81,6 +81,11 @@ public final class BitUtil {
         return v;
     }
 
+    public static long align(long value, int alignment) {
+        assert isPowerOfTwo(alignment) : "alignment must be a power of 2:" + alignment;
+        return value + (long)(alignment - 1) & (long)(~(alignment - 1));
+    }
+
     private BitUtil() {
         throw new UnsupportedOperationException("No instances");
     }
