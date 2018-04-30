@@ -7,7 +7,7 @@ The _Closeness Centrality_ of a node measures its average distance to all other 
 Nodes with a high closeness score have the shortest distances to all other nodes.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 For each node the algorithm calculates the sum of its distances to all other nodes based on calculating shortest paths between all pairs of nodes.
@@ -30,7 +30,7 @@ The formula for *normalized closeness centrality* is as follows:
 `normalized closeness centrality(node) = (number of nodes - 1) / sum(distance from node to all other nodes)`
 // end::formula[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Closeness Centrality algorithm
 
 // tag::use-case[]
 
@@ -46,7 +46,7 @@ This process is described by Florian Boudin in https://www.aclweb.org/anthology/
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Closeness Centrality algorithm
 
 // tag::constraint[]
 Academically closeness centrality works best on connected graphs.
@@ -56,7 +56,7 @@ This means that we'll end up with an infinite closeness centrality score when we
 In practice, a variation on the original formula is used so that we don't run into these issues.
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Closeness Centrality algorithm sample
 
 image::closeness_centrality.png[]
 
@@ -124,7 +124,7 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 
 
 
-== Example Usage
+== Example usage
 
 == Syntax
 
@@ -188,7 +188,7 @@ YIELD nodeId, centrality - yields centrality for each node
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -242,7 +242,7 @@ We support the following versions of the closeness centrality algorithm:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99

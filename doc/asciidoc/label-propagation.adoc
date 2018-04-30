@@ -8,7 +8,7 @@ One interesting feature of LPA is that we can give nodes preliminary labels to n
 This means that it can be used as semi-supervised way of finding communities where we hand-pick some initial communities.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 LPA is a relatively new algorithm and was only proposed by https://arxiv.org/pdf/0709.2938.pdf[Raghavan et al.^] in 2007.
@@ -31,7 +31,7 @@ At the end of the propagation only a few labels will remain - most will have dis
 Nodes that have the same label at convergence are said to belong to the same community.
 // end::formula[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Label Propagation algorithm
 
 
 // tag::use-case[]
@@ -41,7 +41,7 @@ Nodes that have the same label at convergence are said to belong to the same com
 * Label propagation has been used to infer features of utterances in a dialogue for a machine learning model to track user intention with the help of Wikidata knowledge graph of concepts and their relations. Get more details in https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.iwsds2017/papers/IWSDS2017_paper_12.pdf[Feature Inference Based on Label Propagation on Wikidata Graph for DST]
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Label Propagation algorithm
 
 // tag::constraint[]
 In contrast with other algorithms label propagation can result in different community structures when run multiple times on the same graph.
@@ -49,7 +49,7 @@ The range of solutions can be narrowed if some nodes are given preliminary label
 Unlabelled nodes will be more likely to adapt the preliminary labels.
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Label Propagation algorithm sample
 
 image::label_propagation.png[]
 
@@ -108,7 +108,7 @@ Using this preliminary set of labels (identifiers) it then sequentially updates 
 include::scripts/label-propagation.cypher[tag=write-existing-label-sample-graph]
 ----
 
-== Example Usage
+== Example usage
 
 == Syntax
 
@@ -156,7 +156,7 @@ partitionProperty - simple label propagation kernel
 [source,cypher]
 ----
 CALL algo.labelPropagation.stream(label:String, relationship:String, {iterations:1,
-weightProperty:'weight', partitionProperty:'partition', concurrency:4, direction:'OUTGOING'}) 
+weightProperty:'weight', partitionProperty:'partition', concurrency:4, direction:'OUTGOING'})
 YIELD nodeId, label
 ----
 
@@ -230,12 +230,12 @@ We support the following versions of the label propagation algorithms:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/95
 
-_Label Propagation_ is a graph partitioning algorithm already implemented in current apoc-procedures. 
+_Label Propagation_ is a graph partitioning algorithm already implemented in current apoc-procedures.
 
 ## Progress
 
@@ -244,7 +244,7 @@ _Label Propagation_ is a graph partitioning algorithm already implemented in cur
 - [x] tests
 - [ ] edge case tests
 - [x] implement procedure
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] benchmark on bigger graphs
 - [x] parallelization
 - [x] evaluation

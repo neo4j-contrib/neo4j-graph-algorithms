@@ -12,7 +12,7 @@ More influential nodes will be visited more often.
 
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 PageRank is named after Google co-founder Larry Page and is used to rank websites in Google's search results.
@@ -36,7 +36,7 @@ where
 The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be one.
 // end::formula[]
 
-== When to use it / use-cases
+== Use-cases - when to use the PageRank algorithm
 
 // tag::use-case[]
 PageRank can be applied across a wide range of domains.
@@ -56,7 +56,7 @@ It can help find doctors or providers that are behaving in an unusual manner and
 There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the PageRank algorithm
 
 // tag::constraint[]
 There are some things to be aware of when using the Page Rank algorithm.
@@ -72,7 +72,7 @@ If you see unexpected results from running the algorithm it's worth doing some e
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google Pagerank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== PageRank algorithm sample
 
 image::pagerank.png[]
 
@@ -118,7 +118,7 @@ As we might expect, the Home page has the highest PageRank because it has incomi
 We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
 // end::stream-sample-graph-explanation[]
 
-== Example Usage
+== Example usage
 
 We will run PageRank on Yelp's social network to find potential influencers.
 
@@ -205,7 +205,7 @@ YIELD node, score - calculates page rank and streams results
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -267,7 +267,7 @@ We support the following versions of the pageRank algorithm:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/78
 
