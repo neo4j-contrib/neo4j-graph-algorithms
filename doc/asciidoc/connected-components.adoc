@@ -6,19 +6,19 @@ It differs from the SCC algorithm because it only needs a path to exist between 
 As with SCC, UnionFind is often used early in an analysis to understand a graph's structure.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 The algorithm was first described by Bernard A. Galler and Michael J. Fischer in 1964.
 The components in a graph are computed using either the breadth-first search or depth-first search algorithms.
 // end::explanation[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Connected Components algorithm
 
 // tag::use-case[]
 
 * Testing whether a graph is connected is an essential pre-processing step for every graph algorithm.
-Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be. 
+Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be.
 Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
 
 * Union Find can be used to keep track of clusters of database records as part of the de-duplication process - an important task in master data management applications.
@@ -31,16 +31,16 @@ Read more in https://pdfs.semanticscholar.org/a8e0/5f803312032569688005acadaa4d4
 // end::use-case[]
 
 
-== Constraints / when not to use it
+== Constraints - when not to use the Connected Components algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Connected Components algorithm sample
 
-Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph between those vertices. 
-A connected component of an undirected graph is a maximal connected subgraph of the graph. 
+Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph between those vertices.
+A connected component of an undirected graph is a maximal connected subgraph of the graph.
 That means that the direction of the relationships in our graph have are ignored - we treat the graph as undirected.
 
 We have two implementations of connected components algorithm.
@@ -77,7 +77,7 @@ include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 | Bridget | 0
 | Michael | 4
 | Doug | 4
-| Mark | 4 
+| Mark | 4
 |===
 // end::unweighted-stream-sample-graph-result[]
 
@@ -116,7 +116,7 @@ include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 | Bridget | 1
 | Michael | 4
 | Doug | 4
-| Mark | 4 
+| Mark | 4
 |===
 // end::weighted-stream-sample-graph-result[]
 
@@ -124,10 +124,10 @@ include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 In this case we can see that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship is ignored by the algorithm and Bridget ends up in her own component.
 // end::weighted-stream-sample-graph-explanation[]
 
-== Example Usage
+== Example usage
 
-As said Connected Components are an essential step in preprocessing your data. 
-One reason is that most centralities suffer from disconnected components or you just want to find disconnected groups of nodes. 
+As said Connected Components are an essential step in preprocessing your data.
+One reason is that most centralities suffer from disconnected components or you just want to find disconnected groups of nodes.
 Yelp's social network will be used to demonstrate how to proceed when dealing with real world data.
 A typical social network consist of one big component and a number of small disconnected components.
 
@@ -137,7 +137,7 @@ A typical social network consist of one big component and a number of small disc
 include::scripts/connected-components.cypher[tag=count-component-yelp]
 ----
 
-We get back count of disconnected components being 18512 if we do not count users without friends. 
+We get back count of disconnected components being 18512 if we do not count users without friends.
 Let's now check the size of top 20 components to get a better picture
 
 .Get the size of top 20 components
@@ -158,9 +158,9 @@ We just simply write back the results to the node, and use centralities with cyp
 [source,cypher]
 ----
 CALL algo.unionFind(label:String, relationship:String, {threshold:0.42,
-defaultValue:1.0, write: true, partitionProperty:'partition',weightProperty:'weight',graph:'heavy',concurrency:4}) 
+defaultValue:1.0, write: true, partitionProperty:'partition',weightProperty:'weight',graph:'heavy',concurrency:4})
 YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
-- finds connected partitions and potentially writes back to the node as a property partition. 
+- finds connected partitions and potentially writes back to the node as a property partition.
 
 ----
 
@@ -194,7 +194,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4}) 
+CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4})
 YIELD nodeId, setId - yields a setId to each node id
 ----
 
@@ -220,7 +220,7 @@ YIELD nodeId, setId - yields a setId to each node id
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -282,7 +282,7 @@ the calculation of the DSS is done by the ExecutorService.
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/79
@@ -293,7 +293,7 @@ _Connected Components_ or _UnionFind_ basically finds sets of connected nodes wh
 
 - [x] single threaded implementation
 - [x] tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] implement procedure
 - [x] benchmark on bigger graphs
 - [x] parallelization
@@ -311,7 +311,7 @@ We use a disjoint-set-structure which is based on a parent-array-tree. The DSS c
 
 ### benchmark
 
-Implement benchmark on big graph & 
+Implement benchmark on big graph &
 
 - stream nodeId-setId pairs
 - calculate setSize-setCount

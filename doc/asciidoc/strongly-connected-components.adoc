@@ -5,14 +5,14 @@ The _Strongly Connected Components_ (SCC) algorithm finds sets of connected node
 It is often used early in a graph analysis process to help us get an idea of how our graph is structured.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 SCC is one of the earliest graph algorithms and the first linear-time algorithm was described by Tarjan in 1972.
 Decomposing a directed graph into its strongly connected components is a classic application of the depth-first search algorithm.
 // end::explanation[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Strongly Connected Components algorithm
 
 // tag::use-case[]
 
@@ -24,24 +24,24 @@ Read more in http://journals.plos.org/plosone/article/file?id=10.1371/journal.po
 Read more in https://dl.acm.org/citation.cfm?id=513803[Routing performance in the presence of unidirectional links in multihop wireless networks^]
 
 * _SCC_ algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
-In social networks, a group of people are generally strongly connected (For example, students of a class or any other common place). 
-Many people in these groups generally like some common pages or play common games. 
+In social networks, a group of people are generally strongly connected (For example, students of a class or any other common place).
+Many people in these groups generally like some common pages or play common games.
 The SCC algorithms can be used to find such groups and suggest the commonly liked pages or games to the people in the group who have not yet liked commonly liked a page or played a game.
 
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Strongly Connected Components algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Strongly Connected Components algorithm sample
 
 image::strongly_connected_components.png[]
 
-A directed graph is strongly connected if there is a path between all pairs of vertices. 
+A directed graph is strongly connected if there is a path between all pairs of vertices.
 This algorithm treats the graph as directed, which means that the direction of the relationship is important.
 A strongly connected component only exists if there are relationships between nodes in both direction.
 
@@ -69,7 +69,7 @@ include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
 | Michael | 1
 | Charles | 0
 | Doug | 2
-| Mark | 2 
+| Mark | 2
 |===
 // end::stream-sample-graph-result[]
 
@@ -84,18 +84,18 @@ Charles ends up in his own component becuase there isn't an outgoing relationshi
 ----
 include::scripts/strongly-connected-components.cypher[tag=get-largest-component]
 ----
-== Example Usage
+== Example usage
 
 == Syntax
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.scc(label:String, relationship:String, 
-{write:true,partitionProperty:'partition',concurrency:4, graph:'heavy'}) 
+CALL algo.scc(label:String, relationship:String,
+{write:true,partitionProperty:'partition',concurrency:4, graph:'heavy'})
 YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 
-- finds strongly connected partitions and potentially writes back to the node as a property partition. 
+- finds strongly connected partitions and potentially writes back to the node as a property partition.
 ----
 
 .Parameters
@@ -126,7 +126,7 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.scc.stream(label:String, relationship:String, {concurrency:4}) 
+CALL algo.scc.stream(label:String, relationship:String, {concurrency:4})
 YIELD nodeId, partition - yields a partition to each node id
 ----
 
@@ -149,7 +149,7 @@ YIELD nodeId, partition - yields a partition to each node id
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -182,7 +182,7 @@ include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 
 - also a *recursive* tarjan implementation
 
-`algo.scc.iterative` 
+`algo.scc.iterative`
 
 - *iterative* adaption of tarjan algorithm
 
@@ -206,7 +206,7 @@ include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/97
@@ -218,7 +218,7 @@ _SCC_ is a class algorithms for finding groups of nodes where each node is direc
 - [x] implement procedure
 - [x] tests
 - [x] edge case tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] benchmark on bigger graphs
 - [x] parallelization
 - [x] evaluation

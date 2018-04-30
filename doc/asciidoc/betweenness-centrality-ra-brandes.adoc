@@ -32,7 +32,7 @@ include::scripts/betweenness-centrality.cypher[tag=stream-rabrandes-graph]
 include::scripts/betweenness-centrality.cypher[tag=write-rabrandes-graph]
 ----
 
-= Example Usage
+= Example usage
 
 = Syntax
 

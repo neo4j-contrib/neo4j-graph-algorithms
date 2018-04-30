@@ -7,7 +7,7 @@ It  is  based  on  the  observation  that  some  searches  are informed, and  th
 
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 
@@ -20,7 +20,7 @@ In our implementation geospatial distance is used as heurestic.
 
 // end::explanation[]
 
-== When to use it / use-cases
+== Use-cases - when to use the A* algorithm
 
 // tag::use-case[]
 
@@ -28,13 +28,13 @@ In our implementation geospatial distance is used as heurestic.
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the A* algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== A* algorithm sample
 
 .Create sample graph
 [source,cypher]
@@ -56,7 +56,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 | King's Cross St. Pancras | 0
 | Euston | 2
 | Camden Town | 5
-| Kentish Town | 7 
+| Kentish Town | 7
 |===
 // end::stream-sample-graph-result[]
 
@@ -65,7 +65,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 .Running algorithm and streaming results
 [source,cypher]
 ----
-CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String, 
+CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String,
 propertyKeyLon:String, {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0})
 YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)
 ----
@@ -90,7 +90,7 @@ YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclus
 |===
 | name | type | description
 | nodeId | int | node id
-| cost | int | cost it takes to get from start node to specific node 
+| cost | int | cost it takes to get from start node to specific node
 |===
 
 == Cypher projection
@@ -104,15 +104,15 @@ Set `graph:'cypher'` in the config.
 include::scripts/astar.cypher[tag=cypher-loading]
 ----
 
-== Versions 
+== Versions
 
 We support the following versions of the shortest path algorithms:
 
-* [x] directed, unweighted:  
+* [x] directed, unweighted:
 
 ** direction: 'OUTGOING' or INCOMING, weightProperty: null
 
-* [x] directed, weighted 
+* [x] directed, weighted
 
 ** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
 
@@ -120,7 +120,7 @@ We support the following versions of the shortest path algorithms:
 
 ** direction: 'BOTH', weightProperty: null
 
-* [x] undirected, weighted 
+* [x] undirected, weighted
 
 ** direction: 'BOTH', weightProperty: 'cost'
 
@@ -141,7 +141,7 @@ We support the following versions of the shortest path algorithms:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 
@@ -151,7 +151,7 @@ ifdef::implementation[]
 - [x] implement procedure
 - [x] tests
 - [x] relationship case tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [] benchmark on bigger graphs
 - [] parallelization
 - [] evaluation

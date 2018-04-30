@@ -9,7 +9,7 @@ The _Louvain_ algorithm is one of the fastest modularity based algorithms and wo
 It also reveals a hierarchy of communities at different scales, which can be useful for understanding the global functioning of a network.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 The https://arxiv.org/pdf/0803.0476.pdf[Louvain algorithm^] was proposed in 2008 by authors from the University of Louvain.
@@ -27,7 +27,7 @@ The algorithm is initialized with each node in its own community.
 
 In the first stage we iterate through each of the nodes in the network.
 We take each node, remove it from its current community and replace it in the community of ones of its neighbors.
-We compute the modularity change for each of the node's neighbors. 
+We compute the modularity change for each of the node's neighbors.
 If none of these modularity changes are positive, the node stays in its current community.
 If some of the modularity changes are positive, the node moves into the community where the modularity change is most positive.
 Ties are resolved arbitrarily.
@@ -37,7 +37,7 @@ The second stage in the Louvain Method uses the communities that were discovered
 In this network the newly discovered communities are the nodes.
 The relationship weight between the nodes representing two communities is the sum of the relationship weights between the lower-level nodes of each community.
 
-The rest of the Louvain Method consists of repeated application of stages 1 and 2. 
+The rest of the Louvain Method consists of repeated application of stages 1 and 2.
 By applying stage 1 (the community reassignment phase) to the coarse-grained graph, we find a second tier of communities of communities of nodes.
 Then, in the next application of stage 2, we define a new coarse-grained graph at this higher-level of the hierarchy.
 We keep going like this until an application of stage 1 yields no reassignments.
@@ -45,7 +45,7 @@ At that point repeated application of stages 1 and 2 will not yield any more mod
 // end::formula[]
 
 
-== When to use it / use-cases
+== Use-cases - when to use the Louvain algorithm
 
 // tag::use-case[]
 
@@ -60,12 +60,12 @@ Study mentioned is https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2784301/[Hierarc
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Louvain algorithm
 
 // tag::constraint[]
 Although the _Louvain_ Method, and modularity optimization algorithms more generally, have found wide application across many domains, some problems with these algorithms have been identified.
 
-The _resolution_ limit: 
+The _resolution_ limit:
 
 For larger networks the Louvain Method doesn't stop with the "intuitive" communities.
 Instead there's a second pass through the community modification and coarse-graining stages, in which several of the intuitive communities are merged together.
@@ -79,7 +79,7 @@ This can be a severe problem because, in the presence of a large number of high 
 https://arxiv.org/abs/0910.0165[Research] undertaken at Universite Catholique de Louvain showed that the different locally optimal community assignments can have quite different structural properties.[3]
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Louvain algorithm sample
 
 image::louvain.png[]
 
@@ -111,7 +111,7 @@ include::scripts/louvain.cypher[tag=write-sample-graph]
 | Michael | 5
 | Charles | 4
 | Doug | 4
-| Mark | 4 
+| Mark | 4
 |===
 // end::stream-sample-graph-result[]
 
@@ -121,7 +121,7 @@ Mark, Doug, and Charles are all friends with each other, as are Bridget, Alice, 
 Charles is the only one who has friends in both communities but he has more in community 4 so he fits better in that one.
 // end::stream-sample-graph-explanation[]
 
-== Example Usage
+== Example usage
 
 
 
@@ -193,7 +193,7 @@ YIELD nodeId, community - yields a community to each node id
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -214,14 +214,14 @@ Set `graph:'cypher'` in the config.
 include::scripts/louvain.cypher[tag=cypher-loading]
 ----
 
-== Versions 
+== Versions
 
 * [x] undirected, unweighted
 
 ** weightProperty: null
 
 * [x] undirected, weighted
- 
+
 ** weightProperty : 'weight'
 
 == References
@@ -230,7 +230,7 @@ include::scripts/louvain.cypher[tag=cypher-loading]
 
 * [1] https://arxiv.org/pdf/0803.0476.pdf
 
-* [2] https://www.quora.com/Is-there-a-simple-explanation-of-the-Louvain-Method-of-community-detection 
+* [2] https://www.quora.com/Is-there-a-simple-explanation-of-the-Louvain-Method-of-community-detection
 
 * [3] https://arxiv.org/abs/0910.0165
 
@@ -243,18 +243,18 @@ ifdef::implementation[]
 // tag::implementation[]
 
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/96
 
-_Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity. 
+_Louvain_ is an algorithm for detecting graph partitions in networks that relies upon a heuristic for maximizing the modularity.
 
 - [x] single threaded implementation
 - [x] tests
 - [ ] edge case tests
 - [x] implement procedure
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] benchmark on bigger graphs
 - [x] parallelization
 - [ ] evaluation

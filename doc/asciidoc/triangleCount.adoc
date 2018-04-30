@@ -5,7 +5,7 @@ Triangle counting is a community detection graph algorithm that is used to deter
 A triangle is a set of three nodes where each node has a relationship to all other nodes.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 
@@ -22,7 +22,7 @@ The computation of this score involves triangle counting.
 The transitivity coefficient of a graph, which is just three times the number of triangles divided by the number of triples in the graph is sometimes used.[2]
 // end::explanation[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Triangle Counting / Clustering Coefficient algorithm
 
 // tag::use-case[]
 * Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam or non-spam content.
@@ -36,13 +36,13 @@ Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncover
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Triangle Counting / Clustering Coefficient algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Triangle Counting / Clustering Coefficient algorithm sample
 
 image::triangle_count.png[]
 
@@ -75,7 +75,7 @@ We can see that there are `KNOWS` triangles containing Will, Michael, and Chris,
 This means that everybody in the triangle knows each other.
 // end::stream-triples-explanation[]
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph.
 [source,cypher]
 ----
 include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
@@ -105,10 +105,10 @@ include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 We learn that Michael is part of the most triangles, but it's Karin and Mark who are the best at introducing their friends - all the people who know them know each other!
 // end::triangle-stream-sample-graph-explanation[]
 
-== Example Usage
+== Example usage
 
 In graph theory, a clustering coefficient is a measure of the degree to which nodes in a graph tend to cluster together.
-Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.[4] 
+Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.[4]
 
 We check if this holds true for Yelp's social network of friends.
 
@@ -117,11 +117,11 @@ We check if this holds true for Yelp's social network of friends.
 include::scripts/triangle-count.cypher[tag=triangle-write-yelp]
 ----
 
-Average clustering coefficient is 0.0523, which is really low for a social network. 
+Average clustering coefficient is 0.0523, which is really low for a social network.
 This indicates that groups of friends are not tightly knit together, but rather sparse.
 We can assume that users are not on Yelp for finding and creating friends, like for example Facebook, but rather something else, like finding good restaurant recommendations.
 
-   
+
 Local triangle count and clustering coefficient of nodes can be used as features in finding influencers in social networks.
 
 
@@ -180,11 +180,11 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 | triangles | int | number of triangles a node is member of
 |===
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph. 
+.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph.
 [source,cypher]
 ----
-CALL algo.triangleCount(label:String, relationship:String, 
-{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'}) 
+CALL algo.triangleCount(label:String, relationship:String,
+{concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'})
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 ----
 
@@ -210,7 +210,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 | loadMillis | int | milliseconds for loading data
 | evalMillis | int | milliseconds for running the algorithm
 | writeMillis | int | milliseconds for writing result data back
-| triangleCount | int | number of triangles in the given graph. 
+| triangleCount | int | number of triangles in the given graph.
 | averageClusteringCoefficient | float | average clustering coefficient of the given graph
 
 
@@ -227,7 +227,7 @@ Set `graph:'cypher'` in the config.
 ----
 include::scripts/triangle-count.cypher[tag=cypher-loading]
 ----
-== Versions 
+== Versions
 
 We support the following versions of the triangle count algorithms:
 
@@ -256,7 +256,7 @@ ifdef::implementation[]
 // tag::implementation[]
 
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 
@@ -264,7 +264,7 @@ ifdef::implementation[]
 - [x] tests
 - [ ] edge case tests
 - [x] implement procedure
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] benchmark on bigger graphs
 - [x] parallelization
 - [x] evaluation
