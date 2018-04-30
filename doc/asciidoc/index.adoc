@@ -15,7 +15,7 @@ include::../../readme.adoc[tags=readme,leveloffset=1]
 
 include::yelp-intro.adoc[leveloffset=1]
 
-== Overview of Algorithm Procedures
+== Procedures
 
 [[table-all]]
 [separator=¦,opts=header,cols="1m,5m"]
