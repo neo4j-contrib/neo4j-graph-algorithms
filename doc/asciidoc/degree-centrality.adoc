@@ -7,7 +7,7 @@ It measures the number of incoming and outgoing relationships from a node.
 The algorithm can help us find popular nodes in a graph.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 Degree Centrality was proposed by Linton C. Freeman in his 1979 paper http://leonidzhukov.net/hse/2014/socialnetworks/papers/freeman79-centrality.pdf[Centrality in Social Networks Conceptual Clarification^].
@@ -16,7 +16,7 @@ While the algorithm can be used to find the popularity of individual nodes, it i
 // end::explanation[]
 
 
-== When to use it / use-cases
+== Use-cases - when to use the Degree Centrality algorithm
 
 
 // tag::use-case[]
@@ -30,7 +30,7 @@ Read more in https://link.springer.com/chapter/10.1007/978-3-319-23461-8_11[Two 
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Degree Centrality algorithm
 
 
 // tag::constraint[]
@@ -38,7 +38,7 @@ Read more in https://link.springer.com/chapter/10.1007/978-3-319-23461-8_11[Two 
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Degree Centrality algorithm sample
 
 .Create sample graph
 [source,cypher]

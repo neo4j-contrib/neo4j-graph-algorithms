@@ -6,7 +6,7 @@ Dijkstra's algorithm is the most well known one in this category.
 SSSP is a real time graph algorithm and can be used as part of the normal user flow in a web or mobile application.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 Path finding has a long history and is considered to be one of the classical graph problems - it has been researched as far back as the 19th century.
@@ -18,7 +18,7 @@ He needed to find a problem and solution that people not familiar with computing
 He later implemented it for a slightly simplified transportation map of 64 cities in the Netherlands.
 // end::explanation[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Single Source Shortest Path algorithm
 
 // tag::use-case[]
 * Finding directions between physical locations.
@@ -32,14 +32,14 @@ It uses Dijkstra's algorithm to help detect changes in topology, such as link fa
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Single Source Shortest Path algorithm
 
 // tag::constraint[]
 Dijkstra does not support negative weights.
 The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Single Source Shortest Path algorithm sample
 
 image::sssp.png[]
 
@@ -55,13 +55,13 @@ include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 .Running algorithm and streaming results
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]                
+include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]
 ----
 
-.Running algorithm and writing back results 
+.Running algorithm and writing back results
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]  
+include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]
 ----
 
 // tag::single-pair-stream-sample-graph-result[]
@@ -88,16 +88,16 @@ We first go by rail from "A" to "D" at a cost of 50, from "D" to "E" by road for
 .Running algorithm and streaming results
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph] 
+include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph]
 ----
 
-.Running algorithm and writing back results 
+.Running algorithm and writing back results
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph] 
+include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 ----
 
-== Example Usage
+== Example usage
 
 
 == Syntax
@@ -164,18 +164,18 @@ CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:Strin
 |===
 | name | type | description
 | nodeId | int | node id
-| cost | int | cost it takes to get from start node to specific node 
+| cost | int | cost it takes to get from start node to specific node
 |===
 
-== Versions 
+== Versions
 
 We support the following versions of the shortest path algorithms:
 
-* [x] directed, unweighted:  
+* [x] directed, unweighted:
 
 ** direction: 'OUTGOING' or INCOMING, weightProperty: null
 
-* [x] directed, weighted 
+* [x] directed, weighted
 
 ** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
 
@@ -183,7 +183,7 @@ We support the following versions of the shortest path algorithms:
 
 ** direction: 'BOTH', weightProperty: null
 
-* [x] undirected, weighted 
+* [x] undirected, weighted
 
 ** direction: 'BOTH', weightProperty: 'cost'
 
@@ -213,8 +213,8 @@ include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 - parallel non-negative single source shortest path algorithm for weighted graphs
 - It can be tweaked using the delta-parameter which controls the grade of concurrency.
 - if initialized with an non-existing weight-property it will treat the graph as unweighted
- 
-`algo.shortestPaths` 
+
+`algo.shortestPaths`
 
 - specify start node, find the shortest paths to all other nodes
 - Dijkstra single source shortest path algorithm
@@ -238,18 +238,18 @@ include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/80
 
-A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. _All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm. 
+A _Single Source Shortest Path_ algorithms calculates a path between a pair of nodes whose summed weights are minimal. A common algorithm used is Dijkstra. _All Pairs Shortest Path_ on the other hand calculates a shortest path forest containing all paths between the nodes in the graph. An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
 
 ## Progress
 
 - [x] single threaded implementation
 - [x] tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] implement procedure
 - [ ] benchmark on bigger graphs
 - [ ] parallelization
@@ -261,7 +261,7 @@ A _Single Source Shortest Path_ algorithms calculates a path between a pair of n
 
 ## Data structured involved
 
-- An int-based Fibonacci Heap which implements an efficient priority queue. 
+- An int-based Fibonacci Heap which implements an efficient priority queue.
 - Different Container for Costs / visited state / paths
 
 ## ToDo
@@ -290,8 +290,8 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 - there may be more then one shortest path, algo returns only one
 - if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
  terms of count of nodes in the path.
- 
- 
+
+
 === algo.shortestPaths
 
 - Dijkstra single source shortest path algorithm

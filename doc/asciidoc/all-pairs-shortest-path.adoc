@@ -6,7 +6,7 @@ This algorithm has optimisations that make it quicker than calling the SSSP algo
 
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
@@ -15,7 +15,7 @@ In this scenario the algorithm will return `Infinity` value as a result between 
 
 Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
 
-== When to use it / use-cases
+== Use-cases - when to use the All Pairs Shortest Path algorithm
 
 // tag::use-case[]
 
@@ -28,14 +28,14 @@ There are more details about this approach in https://cs.uwaterloo.ca/research/t
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the All Pairs Shortest Path algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
 
-== Algorithm explanation on simple sample graph
+== All Pairs Shortest Path algorithm sample
 
 image::sssp.png[]
 
@@ -90,7 +90,7 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
 ----
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -118,7 +118,7 @@ ifdef::implementation[]
 * [2] https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[REWIRE: An optimization-based framework for unstructured data center network design^] - Andrew R. Curtis, Tommy Carpenter, Mustafa Elsheikh, Alejandro López-Ortiz, S. Keshav
 // end::references[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 

@@ -5,7 +5,7 @@ Harmonic centrality (also known as 'valued centrality') is a variant of closenes
 As with many of the centrality algorithms, it originates from the field of social network analysis.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 Harmonic centrality was proposed by Marchiori and Latora [1] while trying to come up with a sensible notion of "average shortest path".
@@ -27,7 +27,7 @@ As with closeness centrality we can also calculate a *normalized harmonic centra
 In this formula ∞ values are handled cleanly.
 // end::formula[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Harmonic Centrality algorithm
 
 // tag::use-case[]
 Harmonic centrality was proposed as an alternative to closeness centrality, and therefore has similar use cases.
@@ -36,13 +36,13 @@ For example, we might use it if we're trying to identify where in the city to pl
 If we're trying to spread a message on social media we could use the algorithm to find the key influencers that can help us achieve our goal.
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Harmonic Centrality algorithm
 
 // tag::constraint[]
 
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Harmonic Centrality algorithm sample
 
 // image::harmonic_centrality.png[]
 
@@ -95,7 +95,7 @@ of each cell and multiply by 1/(n-1)
 
 
 
-== Example Usage
+== Example usage
 
 == Syntax
 
@@ -158,7 +158,7 @@ YIELD nodeId, centrality - yields centrality for each node
 |===
 
 == Huge graph projection
- 
+
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
 Set `graph:'huge'` in the config.
 
@@ -204,7 +204,7 @@ We support the following versions of the harmonic centrality algorithm:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 ...
 

@@ -6,7 +6,7 @@ _Prim's algorithm_ is one of the simplest and best-known minimum spanning tree a
 The K-Means variant of this algorithm can be used to detect clusters in the graph.
 // end::introduction[]
 
-== History, Explanation
+== History and explanation
 
 // tag::explanation[]
 The first known algorithm for finding a minimum spanning tree was developed by the Czech scientist Otakar Borůvka in 1926, while trying to find an efficient electricity network for Moravia.
@@ -24,7 +24,7 @@ The algorithm operates as follows:
 * when there are no more nodes to add, the tree we have built is a minimum spanning tree.
 // end::formula[]
 
-== When to use it / use-cases
+== Use-cases - when to use the Minimum Weight Spanning Tree algorithm
 
 // tag::use-case[]
 * Minimum spanning tree was applied to analyse airline and sea connections of Papua New Guinea and minimize the travel cost of exploring the country.
@@ -39,14 +39,14 @@ Read more in the https://www.ncbi.nlm.nih.gov/pmc/articles/PMC516344/[Use of the
 
 // end::use-case[]
 
-== Constraints / when not to use it
+== Constraints - when not to use the Minimum Weight Spanning Tree algorithm
 
 // tag::constraint[]
 The MST algorithm only gives meaningful results when run on a graph where the relationships have different weights.
 If the graph has no weights or all relationships have the same weight then any spanning tree is a minimum spanning tree.
 // end::constraint[]
 
-== Algorithm explanation on simple sample graph
+== Minimum Weight Spanning Tree algorithm sample
 
 image::mst.png[]
 
@@ -60,7 +60,7 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=create-sample-graph]
 
 Minimum weighted spanning tree visits all nodes that are in the same connected component as the starting node and returns a spanning tree of all nodes in the component where the total weight of the relationships is minimized.
 
-.Running minimum spanning tree algorithm and writing back results 
+.Running minimum spanning tree algorithm and writing back results
 [source,cypher]
 ----
 include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-minst-graph]
@@ -102,7 +102,7 @@ Nodes "F" and "G" aren't included because they're unreachable from "D".
 Maximum weighted tree spanning algorithm is similar to the minimum one, except that it returns a spanning tree of all nodes in the component where the total weight of the relationships is maximized.
 
 
-.Running maximum spanning tree algorithm and writing back results 
+.Running maximum spanning tree algorithm and writing back results
 [source,cypher]
 ----
 include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-maxst-graph]
@@ -114,14 +114,14 @@ image::maxst_result.png[]
 
 === k-Spanning tree
 
-Sometimes we want to limit the size of our spanning tree result as we are only interested in finding a smaller tree within our graph that does not span across all nodes. 
+Sometimes we want to limit the size of our spanning tree result as we are only interested in finding a smaller tree within our graph that does not span across all nodes.
 K-Spanning tree algorithm returns a tree with k nodes and k − 1 relationships.
 
 In our sample graph we have 5 nodes.
 When we ran MST above we got returned a 5-minimum spanning tree, that covered all five nodes.
 By setting the `k=3` we define that we want to get returned a 3-minimum spanning tree that covers 3 nodes and has 2 relationships.
 
-.Running k-minimum spanning tree algorithm and writing back results 
+.Running k-minimum spanning tree algorithm and writing back results
 [source,cypher]
 ----
 include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kminst-graph]
@@ -131,17 +131,17 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kminst-gra
 .Results
 [opts="header",cols="1,1"]
 |===
-| Place | partition 
+| Place | partition
 | A | 1
 | B | 1
 | C | 1
 | D | 3
-| E | 4 
+| E | 4
 |===
 
 Nodes A, B and C are the result 3-minimum spanning tree of our graph.
 
-.Running k-maximum spanning tree algorithm and writing back results 
+.Running k-maximum spanning tree algorithm and writing back results
 [source,cypher]
 ----
 include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kmaxst-graph]
@@ -151,36 +151,36 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-kmaxst-gra
 .Results
 [opts="header",cols="1,1"]
 |===
-| Place | partition 
+| Place | partition
 | A | 0
 | B | 1
 | C | 3
 | D | 3
-| E | 3 
+| E | 3
 |===
 
 Nodes C, D and E are the result 3-maximum spanning tree of our graph.
 
 
-When we run this algorithm on a bigger graph we can use the following query to find nodes that belong to our k-spanning tree result. 
+When we run this algorithm on a bigger graph we can use the following query to find nodes that belong to our k-spanning tree result.
 
 .Find nodes that belong to our k-spanning tree result.
 [source,cypher]
 ----
 MATCH (n:Place)
-WITH n.partition as partition, count(*) as count 
+WITH n.partition as partition, count(*) as count
 WHERE count = k
-RETURN n 
+RETURN n
 ----
 
-== Example Usage
+== Example usage
 
 == Syntax
 
 .Running algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:int, {writeProperty:String}) 
+CALL algo.spanningTree(label:String, relationshipType:String, weightProperty:String, startNodeId:int, {writeProperty:String})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 ----
 
@@ -211,7 +211,7 @@ YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 .Running k-spanning tree algorithm and writing back results
 [source,cypher]
 ----
-CALL algo.spanningTree.k*(label:String, relationshipType:String, weightProperty:String, startNodeId:int, k:int, {writeProperty:String}) 
+CALL algo.spanningTree.k*(label:String, relationshipType:String, weightProperty:String, startNodeId:int, k:int, {writeProperty:String})
 YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 ----
 
@@ -240,11 +240,11 @@ YIELD loadMillis, computeMillis, writeMillis, effectiveNodeCount
 |===
 
 
-== Versions 
+== Versions
 
 We support the following versions of the minimum weight spanning tree algorithm:
 
-* [x] undirected, weighted 
+* [x] undirected, weighted
 
 == References
 
@@ -263,7 +263,7 @@ We support the following versions of the minimum weight spanning tree algorithm:
 ifdef::implementation[]
 // tag::implementation[]
 
-== Implementation Details
+== Implementation details
 
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/81
@@ -274,7 +274,7 @@ A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of
 
 - [x] single threaded implementation
 - [x] tests
-- [x] simple benchmark 
+- [x] simple benchmark
 - [x] implement procedure
 - [x] benchmark on bigger graphs
 - [?] parallelization
@@ -287,8 +287,8 @@ A _Minimum Weight Spanning Tree_ is a acyclic undirected graph which consists of
 ## Data structured involved
 
 - `org.neo4j.graphalgo.core.utils.container.UndirectedTree` as container for efficient splitting and iterate
-- An int-based Fibonacci Heap priority queue. 
-- Container for visited state 
+- An int-based Fibonacci Heap priority queue.
+- Container for visited state
 
 ## ToDo
 
