@@ -1,96 +1,98 @@
 = The PageRank algorithm
 
 // tag::introduction[]
-PageRank is widely recognized as a way of detecting influential nodes in a graph.
-It is different to other centrality algorithms because the influence of a node depends on the influence of its neighbours.
+PageRank is a widely recognized way of detecting influential nodes in a graph.
+It is different to other centrality algorithms, as the influence of a node depends on the influence of its neighbours.
 
 The underlying mathematics of PageRank is based on random walks on networks.
 We can think of a random walk as the way that a person might manually traverse a graph.
-We start from any node and then either follow one of its relationships to another node or jump to another node in the graph and continue our exploration.
-The PageRank of a node is the probability that it is visited during this random walk.
-More influential nodes will be visited more often.
+We start from any node and then either follow one of its relationships to another node, or jump to another node in the graph and continue our exploration.
+The PageRank of a node is the probability that it is visited during this random walk; the more influential nodes will be visited more often.
 
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
-PageRank is named after Google co-founder Larry Page and is used to rank websites in Google's search results.
-It counts the number and quality of links to a page to determine an estimate of how important a page is.
-The underlying assumption is that more important pages are likely to receive more links from other pages.
+PageRank is named after Google co-founder Larry Page, and is used to rank websites in Google's search results.
+It counts the number, and quality, of links to a page which determines an estimation of how important the page is.
+The underlying assumption is that pages of importance are more likely to receive a higher volume of links from other pages.
 // end::explanation[]
 
 // tag::formula[]
 PageRank is defined in the original Google paper as follows:
 
-```
+----
 PR(A) = (1-d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn))
-```
+----
 
-where
+where,
 
-* we assume that a page A has pages T1...Tn which point to it (i.e., are citations).
-* d is a damping factor which can be set between 0 and 1. It is usually set to 0.85.
-* `C(A)` is defined as the number of links going out of page A.
+* we assume that a page `A` has pages `T1` to `Tn` which point to it (i.e., are citations).
+* `d` is a damping factor which can be set between 0 and 1.
+It is usually set to 0.85.
+* `C(A)` is defined as the number of links going out of page `A`.
 
-The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be one.
+The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be 1.
 // end::formula[]
 
 == Use-cases - when to use the PageRank algorithm
 
 // tag::use-case[]
 PageRank can be applied across a wide range of domains.
-These are some notable use cases:
+The following are some notable use-cases:
 
 * Personalized PageRank is used by Twitter to present users with recommendations of other accounts that they may wish to follow.
-The algorithm is run over a graph containing shared interests and common connections.
+The algorithm is run over a graph which contains shared interests and common connections.
 Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf[WTF: The Who to Follow Service at Twitter^].
 
-* PageRank has been used to rank public spaces or streets to predict traffic flow and human movement in these areas.
-The algorithm is run over a graph of intersections connected by roads and the PageRank score reflects the tendency of people to park, or end their journey, on each street.
+* PageRank has been used to rank public spaces or streets, predicting traffic flow and human movement in these areas.
+The algorithm is run over a graph which contains intersections connected by roads, where the PageRank score reflects the tendency of people to park, or end their journey, on each street.
 This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf[Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study^].
 
 * PageRank can be used as part of an anomaly or fraud detection system in the healthcare and insurance industries.
-It can help find doctors or providers that are behaving in an unusual manner and then feed the score into a machine learning algorithm.
+It can help find doctors or providers that are behaving in an unusual manner, and then feed the score into a machine learning algorithm.
 
-There are many more use cases which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
+There are many more use cases, which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf[PageRank beyond the web^]
 // end::use-case[]
 
 == Constraints - when not to use the PageRank algorithm
 
 // tag::constraint[]
-There are some things to be aware of when using the Page Rank algorithm.
+There are some things to be aware of when using the PageRank algorithm:
 
-* Spider traps - if there are no links from within the group to outside the groups then the group of pages is a spider trap.
+* If there are no links from within a group of pages to outside of the group, then the group is considered a spider trap.
 
-* Rank sink - this occurs when a network of pages form an infinite cycle.
+* Rank sink can occur when a network of pages form an infinite cycle.
 
-* Dead-ends and Dangling links - Dead-ends occurs when pages have no out links.
-If a page contains a link to another page which has no out links, the link would be known as a dangling link.
+* Dead-ends occur when pages have no out-links.
+If a page contains a link to another page which has no out-links, the link would be known as a dangling link.
 
-If you see unexpected results from running the algorithm it's worth doing some exploratory analysis of the graph to see if any of these problems are the cause.
-You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google Pagerank Algorithm and How It Works^] to learn more.
+If you see unexpected results from running the algorithm, it is worth doing some exploratory analysis of the graph to see if any of these problems are the cause.
+You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google PageRank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
 == PageRank algorithm sample
 
+This sample will explain the PageRank algorithm, using a simple graph:
+
 image::pagerank.png[]
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=create-sample-graph]
 ----
 
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=stream-sample-graph]
 ----
 
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=write-sample-graph]
@@ -101,7 +103,7 @@ include::scripts/pagerank.cypher[tag=write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | pageRank
+| Name | PageRank
 | Home | 3.232
 | Product | 1.059
 | Links | 1.059
@@ -120,17 +122,17 @@ We can also see that it's not only the number of incoming links that is importan
 
 == Example usage
 
-We will run PageRank on Yelp's social network to find potential influencers.
+In this example we will run PageRank on Yelp's social network to find potential influencers.
 
 In the link:#_import[import section] we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
-Relationships in Neo4j always have a direction but in this domain the direction is irrelevant.
-If `Person A` is a `FRIEND` with `Person B` we can say that `Person B` is also a `FRIEND` with `Person A`.
+Relationships in Neo4j always have a direction, but in this domain the direction is irrelevant.
+If `Person A` is a `FRIEND` with `Person B`, we can say that `Person B` is also a `FRIEND` with `Person A`.
 
-The default label and relationship-type selection syntax won't work for us here because it will project a directed social network.
+The default label and relationship-type selection syntax won't work for us here, because it will project a directed social network.
 Instead, we can project our undirected social network using *Cypher loading*.
 We can also apply this approach to other algorithms that use *Cypher loading*.
 
-.Running algorithm on Yelp social network
+.The following will run the algorithm on Yelp social network:
 [source,cypher]
 ----
 include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
@@ -138,7 +140,7 @@ include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
 
 == Syntax
 
-.running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String,
@@ -146,37 +148,37 @@ CALL algo.pageRank(label:String, relationship:String,
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 ----
 
-.parameters
+.Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| iterations | int | 20 | yes | how many iterations of page-rank to run
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
-| write | boolean | true | yes | if result should be written back as node property
-| writeProperty | string | 'pagerank' | yes | property name written back to
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| iterations | int | 20 | yes | How many iterations of PageRank to run
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
+| write | boolean | true | yes | Specify if the result should be written back as a node property
+| writeProperty | string | 'pagerank' | yes | The property name written back to
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
-.results
+.Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodes | int | number of nodes considered
-| iterations | int | number of iterations run
-| dampingFactor | float | damping factor used
-| writeProperty | string | property name written back to
-| write | boolean | if result was written back as node property
-| loadMillis | int | milliseconds for loading data
-| computeMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
+| Name | Type | Description
+| nodes | int | The number of nodes considered
+| iterations | int | The number of iterations run
+| dampingFactor | float | The damping factor used
+| writeProperty | string | The property name written back to
+| write | boolean | Specifies if the result was written back as node property
+| loadMillis | int | Milliseconds for loading data
+| computeMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
 
 |===
 
 
-.running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 CALL algo.pageRank.stream(label:String, relationship:String,
@@ -184,24 +186,24 @@ CALL algo.pageRank.stream(label:String, relationship:String,
 YIELD node, score - calculates page rank and streams results
 ----
 
-.parameters
+.Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
-| iterations | int | 20 | yes | how many iterations of page-rank to run
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| dampingFactor | float | 0.85 | yes | damping factor of the page-rank calculation
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
+| iterations | int | 20 | yes | Specify how many iterations of PageRank to run
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
-.results
-[opts="headers"]
+.Results
+[opts="header"]
 |===
-| name | type | description
-| node | long | node id
-| score | float | page-rank weight
+| Name | Type | Description
+| node | long | Node ID
+| score | float | PageRank weight
 |===
 
 == Huge graph projection
@@ -217,7 +219,7 @@ include::scripts/pagerank.cypher[tag=huge-projection]
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Don't forget to set `graph:'cypher'` in the config.
+You must ensure that `graph:'cypher'` is set in the config:
 
 [source,cypher]
 ----
@@ -226,7 +228,7 @@ include::scripts/pagerank.cypher[tag=cypher-loading]
 
 == Versions
 
-We support the following versions of the pageRank algorithm:
+We support the following versions of the PageRank algorithm:
 
 * [x] directed, unweighted
 
@@ -238,6 +240,7 @@ We support the following versions of the pageRank algorithm:
 
 * [ ] undirected, weighted
 
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -263,6 +266,7 @@ We support the following versions of the pageRank algorithm:
 * [7] http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
 
 // end::references[]
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -273,9 +277,9 @@ ifdef::implementation[]
 
 :leveloffset: +1
 
-_PageRank_ is Googles popular search algorithm.
+PageRank is the popular search algorithm developed by Google.
 
-More: https://en.wikipedia.org/wiki/PageRank
+For more information, see the https://en.wikipedia.org/wiki/PageRank[PageRank page on Wikipedia].
 
 ## Progress
 
