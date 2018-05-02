@@ -1,4 +1,4 @@
-= Minimum Weight Spanning Tree
+= The Minimum Weight Spanning Tree algorithm
 
 // tag::introduction[]
 The _Minimum Weight Spanning Tree_ (MST) starts from a given node and finds all its reachable nodes and the set of relationships that connect the nodes together with the minimum possible weight.
@@ -112,7 +112,7 @@ include::scripts/minimum-weight-spanning-tree.cypher[tag=write-sample-maxst-grap
 
 image::maxst_result.png[]
 
-=== k-Spanning tree
+=== K-Spanning tree
 
 Sometimes we want to limit the size of our spanning tree result as we are only interested in finding a smaller tree within our graph that does not span across all nodes.
 K-Spanning tree algorithm returns a tree with k nodes and k − 1 relationships.

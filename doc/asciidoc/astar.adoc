@@ -1,4 +1,4 @@
-= The A* Algorithm
+= The A* algorithm
 
 // tag::introduction[]
 

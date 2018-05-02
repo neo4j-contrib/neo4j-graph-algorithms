@@ -1,4 +1,4 @@
-= Single Source Shortest Path
+= The Single Source Shortest Path algorithm
 
 // tag::introduction[]
 The _Single Source Shortest Path_ (SSSP) algorithm calculates the shortest (weighted) path between a pair of nodes.
@@ -49,7 +49,7 @@ image::sssp.png[]
 include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
-=== Dijkstra single source shortest path algorithm
+=== The Dijkstra Single Source Shortest Path algorithm
 
 
 .Running algorithm and streaming results

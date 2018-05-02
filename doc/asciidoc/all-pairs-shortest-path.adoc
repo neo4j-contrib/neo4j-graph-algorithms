@@ -1,4 +1,4 @@
-= All Pairs Shortest Path
+= The All Pairs Shortest Path algorithm
 
 // tag::introduction[]
 _All Pairs Shortest Path_ (APSP) calculates the shortest (weighted) path between all pairs of nodes.

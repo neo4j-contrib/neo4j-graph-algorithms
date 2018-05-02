@@ -1,4 +1,4 @@
-= Community detection: Connected Components
+= The Connected Components algorithm
 
 // tag::introduction[]
 The _Connected Components_ or _UnionFind_ algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
@@ -54,7 +54,7 @@ image::connected_components.png[]
 include::scripts/connected-components.cypher[tag=create-sample-graph]
 ----
 
-=== Unweighted version:
+=== Unweighted version
 
 .Running algorithm and streaming results
 [source,cypher]
@@ -91,7 +91,7 @@ The first group contains Alice, Charles, and Bridget, while the second group con
 ----
 include::scripts/connected-components.cypher[tag=check-results-sample-graph]
 ----
-=== Weighted version:
+=== Weighted version
 
 If you define the property that holds the weight(weightProperty) and the threshold, it means the nodes are only connected, if the threshold on the weight of the relationship is high enough otherwise the relationship is thrown away.
 
