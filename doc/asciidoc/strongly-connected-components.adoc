@@ -1,4 +1,4 @@
-= Community detection: Strongly Connected Components
+= The Strongly Connected Components algorithm
 
 // tag::introduction[]
 The _Strongly Connected Components_ (SCC) algorithm finds sets of connected nodes in a directed graph where each node is reachable in both directions from any other node in the same set.

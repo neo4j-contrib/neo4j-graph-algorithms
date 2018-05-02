@@ -1,4 +1,4 @@
-= Closeness Centrality
+= The Closeness Centrality algorithm
 
 // tag::introduction[]
 _Closeness Centrality_ is a way of detecting nodes that are able to spread information very efficiently through a graph.

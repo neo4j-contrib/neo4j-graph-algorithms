@@ -1,11 +1,11 @@
-= Approximation of betweenness centrality
+= Approximation of Betweenness Centrality
 
 // tag::introduction[]
 As mentioned above, calculating the exact betweenness centrality on large graphs can be very time consuming.
 We might therefore choose to use an approximation algorithm that will run much quicker and still give us useful information.
 // end::introduction[]
 
-== RA-Brandes Algorithm
+== RA-Brandes algorithm
 
 // tag::explanation[]
 The RA-Brandes algorithm is the best known one for calculating an approximate score for betweenness centrality.

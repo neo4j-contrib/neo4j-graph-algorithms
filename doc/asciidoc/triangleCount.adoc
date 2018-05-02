@@ -1,4 +1,4 @@
-= Community detection: Triangle Counting / Clustering Coefficient
+= The Triangle Counting / Clustering Coefficient algorithm
 
 // tag::introduction[]
 Triangle counting is a community detection graph algorithm that is used to determine the number of triangles passing through each node in the graph.
