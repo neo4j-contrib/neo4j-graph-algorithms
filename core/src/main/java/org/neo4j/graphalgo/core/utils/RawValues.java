@@ -23,8 +23,6 @@ import org.neo4j.values.storable.NumberValue;
 import org.neo4j.values.storable.TextValue;
 
 /**
- * TODO: find suitable name or move
- *
  * @author mknblch
  */
 public class RawValues {
