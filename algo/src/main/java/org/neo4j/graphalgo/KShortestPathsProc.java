@@ -61,7 +61,7 @@ public class KShortestPathsProc {
     public KernelTransaction transaction;
 
     @Procedure(value = "algo.kShortestPaths", mode = Mode.WRITE)
-    @Description("CALL algo.shortestPath(startNode:Node, endNode:Node, k:int, weightProperty:String" +
+    @Description("CALL algo.kShortestPaths(startNode:Node, endNode:Node, k:int, weightProperty:String" +
             "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'OUT', defaultValue:1.0, maxDepth:42, write:'true', " +
             PREFIX_IDENTIFIER + ":'PATH_'}) " +
             "YIELD resultCount, loadMillis, evalMillis, writeMillis - yields resultCount, loadMillis, evalMillis, writeMillis")
