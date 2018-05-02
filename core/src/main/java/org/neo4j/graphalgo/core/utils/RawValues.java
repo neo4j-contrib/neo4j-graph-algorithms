@@ -21,8 +21,6 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.graphdb.Direction;
 
 /**
- * TODO: find suitable name or move
- *
  * @author mknblch
  */
 public class RawValues {

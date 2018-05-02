@@ -51,7 +51,7 @@ public class ProgressLoggerAdapter implements ProgressLogger {
     }
 
     @Override
-    public void logDone(Supplier<String> msgFactory) {
+    public void log(Supplier<String> msgFactory) {
         doLog(100, msgFactory);
     }
 
