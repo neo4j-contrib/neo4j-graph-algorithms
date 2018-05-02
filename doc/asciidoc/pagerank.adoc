@@ -1,4 +1,4 @@
-= PageRank
+= The PageRank algorithm
 
 // tag::introduction[]
 PageRank is widely recognized as a way of detecting influential nodes in a graph.

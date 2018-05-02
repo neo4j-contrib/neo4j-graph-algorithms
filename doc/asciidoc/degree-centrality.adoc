@@ -1,4 +1,4 @@
-= Degree Centrality
+= The Degree Centrality algorithm
 
 // tag::introduction[]
 Degree Centrality is the simplest of all the centrality algorithms.

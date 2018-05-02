@@ -1,4 +1,4 @@
-= Community detection: Label Propagation
+= The Label Propagation algorithm
 
 // tag::introduction[]
 _Label Propagation_ (LPA) is a fast algorithm for finding communities in a graph.

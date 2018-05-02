@@ -1,4 +1,4 @@
-= Community detection: Louvain
+= The Louvain algorithm
 
 
 // tag::introduction[]
