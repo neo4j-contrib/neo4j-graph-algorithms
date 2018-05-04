@@ -2,41 +2,44 @@
 
 // tag::introduction[]
 Triangle counting is a community detection graph algorithm that is used to determine the number of triangles passing through each node in the graph.
-A triangle is a set of three nodes where each node has a relationship to all other nodes.
+A triangle is a set of three nodes, where each node has a relationship to all other nodes.
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
 
-Triangle counting gained popularity in social network analysis where it is used to detect communities and measure the cohesiveness of those communities.
-It is often used as part of the computation of network indices such as the clustering coefficient.
+Triangle counting gained popularity in social network analysis, where it is used to detect communities and measure the cohesiveness of those communities.
+It is often used as part of the computation of network indices, such as the clustering coefficient.
 
 There are two types of clustering coefficient:
 
-* The *local clustering coefficient* of a node is the likelihood that its neighbours are also connected.
-The computation of this score involves triangle counting.
+Local clustering coefficient::
+ The local clustering coefficient of a node is the likelihood that its neighbours are also connected.
+ The computation of this score involves triangle counting.
 
-* The *global clustering coefficient* is the normalized sum of those local clustering coefficients.
+Global clustering coefficient::
+ The global clustering coefficient is the normalized sum of those local clustering coefficients.
 
-The transitivity coefficient of a graph, which is just three times the number of triangles divided by the number of triples in the graph is sometimes used.[2]
+The transitivity coefficient of a graph is sometimes used, which is three times the number of triangles divided by the number of triples in the graph.
+For more information, see http://i11www.iti.kit.edu/extra/publications/sw-fclt-05_t.pdf["Finding, Counting and Listing all Triangles in Large Graphs, An Experimental Study"].
 // end::explanation[]
 
 == Use-cases - when to use the Triangle Counting / Clustering Coefficient algorithm
 
 // tag::use-case[]
-* Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam or non-spam content.
-This is described in http://chato.cl/papers/becchetti_2007_approximate_count_triangles.pdf[Efficient Semi-streaming Algorithms for Local Triangle Counting in Massive Graphs].
+* Triangle count and clustering coefficient have been shown to be useful as features for classifying a given website as spam, or non-spam, content.
+This is described in http://chato.cl/papers/becchetti_2007_approximate_count_triangles.pdf["Efficient Semi-streaming Algorithms for Local Triangle Counting in Massive Graphs"].
 
-* Clustering coefficient has been used to investigate community structure of Facebook's social graph where they found dense neighbourhoods of users in an otherwise sparse global graph.
-Find this study in https://arxiv.org/pdf/1111.4503.pdf[The Anatomy of the Facebook Social Graph].
+* Clustering coefficient has been used to investigate the community structure of Facebook's social graph, where they found dense neighbourhoods of users in an otherwise sparse global graph.
+Find this study in https://arxiv.org/pdf/1111.4503.pdf["The Anatomy of the Facebook Social Graph"].
 
-* Clustering coefficient has been proposed to help explore thematic structure of the web and detect communities of pages with a common topic based on the reciprocal links between them.
-Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncovers hidden thematic layers in the World Wide Web].
+* Clustering coefficient has been proposed to help explore thematic structure of the web, and detect communities of pages with a common topic based on the reciprocal links between them.
+For more information, see http://www.pnas.org/content/99/9/5825[Curvature of co-links uncovers hidden thematic layers in the World Wide Web].
 
 // end::use-case[]
 
-== Constraints - when not to use the Triangle Counting / Clustering Coefficient algorithm
+// == Constraints - when not to use the Triangle Counting / Clustering Coefficient algorithm
 
 // tag::constraint[]
 
@@ -47,13 +50,13 @@ Find more in http://www.pnas.org/content/99/9/5825[Curvature of co-links uncover
 image::triangle_count.png[]
 
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/triangle-count.cypher[tag=create-sample-graph]
 ----
 
-.returns a stream of triples with nodeIds for each triangle.
+.The following will return a stream of triples, with `nodeId` for each triangle:
 [source,cypher]
 ----
 include::scripts/triangle-count.cypher[tag=stream-triples]
@@ -71,17 +74,17 @@ include::scripts/triangle-count.cypher[tag=stream-triples]
 // end::stream-triples-result[]
 
 // tag::stream-triples-explanation[]
-We can see that there are `KNOWS` triangles containing Will, Michael, and Chris, Will, Mark, and Michael, and Michael, Karin, and Chris.
+We can see that there are `KNOWS` triangles containing "Will, Michael, and Chris", "Will, Mark, and Michael", and "Michael, Karin, and Chris".
 This means that everybody in the triangle knows each other.
 // end::stream-triples-explanation[]
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph.
+.The following will count the number of triangles that a node is member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
 [source,cypher]
 ----
 include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
 ----
 
-.counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
+.The following will count the number of triangles that a node is member of, and return a stream with `nodeId` and `triangleCount`:
 [source,cypher]
 ----
 include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
@@ -91,7 +94,7 @@ include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| name | triangles | coefficient
+| Name | Triangles | Coefficient
 | Will | 2 | 0.6666666666666666
 | Mark | 1 | 1
 | Michael | 3 | 0.3
@@ -102,15 +105,15 @@ include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 // end::triangle-stream-sample-graph-result[]
 
 // tag::triangle-stream-sample-graph-explanation[]
-We learn that Michael is part of the most triangles, but it's Karin and Mark who are the best at introducing their friends - all the people who know them know each other!
+We learn that Michael is part of the most triangles, but it's Karin and Mark who are the best at introducing their friends - all of the people who know them, know each other!
 // end::triangle-stream-sample-graph-explanation[]
 
 == Example usage
 
-In graph theory, a clustering coefficient is a measure of the degree to which nodes in a graph tend to cluster together.
-Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.[4]
+In graph theory, a https://en.wikipedia.org/wiki/Clustering_coefficient[clustering coefficient] is a measure of the degree to which nodes in a graph tend to cluster together.
+Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.
 
-We check if this holds true for Yelp's social network of friends.
+We check if this holds true for Yelp's social network of friends:
 
 [source,cypher]
 ----
@@ -119,15 +122,14 @@ include::scripts/triangle-count.cypher[tag=triangle-write-yelp]
 
 Average clustering coefficient is 0.0523, which is really low for a social network.
 This indicates that groups of friends are not tightly knit together, but rather sparse.
-We can assume that users are not on Yelp for finding and creating friends, like for example Facebook, but rather something else, like finding good restaurant recommendations.
-
+We can assume that users are not on Yelp for finding and creating friends, like Facebook for example, but rather something else, like finding good restaurant recommendations.
 
 Local triangle count and clustering coefficient of nodes can be used as features in finding influencers in social networks.
 
 
 == Syntax
 
-.returns a stream of triples with nodeIds for each triangle.
+.The following will return a stream of triples with `nodeId` for each triangle:
 [source,cypher]
 ----
 CALL algo.triangle.stream(label:String, relationship:String, {concurrency:4})
@@ -137,10 +139,10 @@ YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all nodes
-| concurrency | int | available CPUs | yes | number of concurrent threads
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
+| concurrency | int | available CPUs | yes | The number of concurrent threads
 |===
 
 
@@ -148,13 +150,13 @@ YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodeA | int | id of node in the given triangle
-| nodeB | int | id of node in the given triangle
-| nodeC | int | id of node in the given triangle
+| Name | Type | Description
+| nodeA | int | The ID of node in the given triangle
+| nodeB | int | The ID of node in the given triangle
+| nodeC | int | The ID of node in the given triangle
 |===
 
-.counts number of triangles a node is member of and returns a stream with nodeId and triangleCount
+.The following will count the number of triangles that a node is a member of, and return a stream with `nodeId` and `triangleCount`:
 [source,cypher]
 ----
 CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:4})
@@ -164,10 +166,10 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| concurrency | int | available CPUs | yes | number of concurrent threads
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| concurrency | int | available CPUs | yes | The number of concurrent threads
 |===
 
 
@@ -175,12 +177,12 @@ YIELD nodeId, triangles - yield nodeId, number of triangles
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodeId | int | id of node
-| triangles | int | number of triangles a node is member of
+| Name | Type | Description
+| nodeId | int | The ID of node
+| triangles | int | The number of triangles a node is member of
 |===
 
-.counts the number of triangles a node is member of and writes it back. Returns total triangle count and average clustering coefficient of the given graph.
+.The following will count the number of triangles that a node is a member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
 [source,cypher]
 ----
 CALL algo.triangleCount(label:String, relationship:String,
@@ -191,13 +193,13 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| write | boolean | true | yes | if result should be written back as node property
-| writeProperty | string | 'triangles' | yes | property name the number of triangles a node is member of is written to
-| clusteringCoefficientProperty | string | 'coefficient' | yes | property name clustering coefficient of the node is written to
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| write | boolean | true | yes | Specifies if the result should be written back as a node property
+| writeProperty | string | 'triangles' | yes | The property name the number of triangles a node is member of is written to
+| clusteringCoefficientProperty | string | 'coefficient' | yes | The property name clustering coefficient of the node is written to
 |===
 
 
@@ -205,13 +207,13 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodeCount | int | number of nodes considered
-| loadMillis | int | milliseconds for loading data
-| evalMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
-| triangleCount | int | number of triangles in the given graph.
-| averageClusteringCoefficient | float | average clustering coefficient of the given graph
+| Name | Type | Description
+| nodeCount | int | The number of nodes considered
+| loadMillis | int | Milliseconds for loading data
+| evalMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
+| triangleCount | int | The number of triangles in the given graph
+| averageClusteringCoefficient | float | The average clustering coefficient of the given graph
 
 
 
@@ -220,8 +222,9 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -233,6 +236,7 @@ We support the following versions of the triangle count algorithms:
 
 * [x] undirected, unweighted
 
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -250,7 +254,7 @@ We support the following versions of the triangle count algorithms:
 
 * [7] https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/1471-2105-6-270?site=bmcbioinformatics.biomedcentral.com
 // end::references[]
-
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
