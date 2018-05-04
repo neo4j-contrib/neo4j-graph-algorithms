@@ -3,7 +3,7 @@
 // tag::introduction[]
 
 The A* (pronounced “A-star”) algorithm improves on the classic Dijkstra algorithm.
-It  is  based  on  the  observation  that  some  searches  are informed, and  that  by  being informed we can make better choices over which paths to take through the graph.
+It is based upon the observation that some searches are informed, and that by being informed we can make better choices over which paths to take through the graph.
 
 // end::introduction[]
 
@@ -11,12 +11,20 @@ It  is  based  on  the  observation  that  some  searches  are informed, and  th
 
 // tag::explanation[]
 
-A* algorithm was first described in 1968 by Peter Hart, Nils Nilsson and Bertram Raphael[1]
+The A* algorithm was first described in 1968 by Peter Hart, Nils Nilsson, and Bertram Raphael.
+For more information, see https://ieeexplore.ieee.org/document/4082128/[A Formal Basis for the Heuristic Determination of Minimum Cost Paths].
 
-In A* we split the path cost into two parts: g(n), which is the cost of the path from the starting point to some node n; and h(n), which represents the estimated  cost  of the path from the node n to the destination node, as computed by a heuristic (an intelligent guess).
-The A* algorithm balances g(n) and h(n) as it iterates the graph, thereby ensuring that at each iteration it chooses the node with the lowest overall cost f(n) = g(n) + h(n).
+In A*, we split the path cost into two parts:
 
-In our implementation geospatial distance is used as heurestic.
+`g(n)`::
+ This is the cost of the path from the starting point to some node n.
+
+`h(n)`::
+ This represents the estimated cost of the path from the node n to the destination node, as computed by a heuristic (an intelligent guess).
+
+The A* algorithm balances `g(n)` and `h(n)` as it iterates the graph, thereby ensuring that at each iteration it chooses the node with the lowest overall cost `f(n) = g(n) + h(n)`.
+
+In our implementation, geospatial distance is used as heurestic.
 
 // end::explanation[]
 
@@ -24,11 +32,11 @@ In our implementation geospatial distance is used as heurestic.
 
 // tag::use-case[]
 
-* A* algorithm can be used to find shortest paths between single pairs of locations where GPS coordinates are known.
+* The A* algorithm can be used to find shortest paths between single pairs of locations, where GPS coordinates are known.
 
 // end::use-case[]
 
-== Constraints - when not to use the A* algorithm
+// == Constraints - when not to use the A* algorithm
 
 // tag::constraint[]
 
@@ -36,13 +44,13 @@ In our implementation geospatial distance is used as heurestic.
 
 == A* algorithm sample
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/astar.cypher[tag=create-sample-graph]
 ----
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/astar.cypher[tag=stream-sample-graph]
@@ -52,7 +60,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | cost
+| Name | Cost
 | King's Cross St. Pancras | 0
 | Euston | 2
 | Camden Town | 5
@@ -62,7 +70,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 
 == Syntax
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String,
@@ -73,31 +81,32 @@ YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclus
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| startNode  | node | null | no | start node
-| endNode | node | null | no | end node
-| weightProperty | string | null | yes | property name that contains weight
-| propertyKeyLat | string | null | no | property name that contains latitude coordinate
-| propertyKeyLon | string | null | no | property name that contains longitude coordinate
-| nodeQuery | string | null | yes | label to load from the graph, if null load all nodes
-| relationshipQuery | string | null | yes | relationship-type to load from the graph, if null load all nodes
-| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
-| direction | string | outgoing | yes | relationship direction to load from the graph, if 'both' treats the relationships as undirected
+| Name | Type | Default | Optional | Description
+| startNode  | node | null | no | The start node
+| endNode | node | null | no | The end node
+| weightProperty | string | null | yes | The property name that contains weight
+| propertyKeyLat | string | null | no | The property name that contains latitude coordinate
+| propertyKeyLon | string | null | no | The property name that contains longitude coordinate
+| nodeQuery | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationshipQuery | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
+| defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
+| direction | string | outgoing | yes | The relationship direction to load from the graph. If 'both', treats the relationships as undirected
 |===
 
 .Results
-[opts="headers"]
+[opts="header"]
 |===
-| name | type | description
-| nodeId | int | node id
-| cost | int | cost it takes to get from start node to specific node
+| Name | Type | Description
+| nodeId | int | Node ID
+| cost | int | The cost it takes to get from start node to specific node
 |===
 
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -128,15 +137,15 @@ We support the following versions of the shortest path algorithms:
 
 `algo.shortestPath.astar.stream()`
 
-- implementation of A* heuristic function is for geospatial distances.
+* Implementation of A* heuristic function is for geospatial distances.
 
-== References
-
-// tag::references[]
-
-* [1]https://ieeexplore.ieee.org/document/4082128/[A Formal Basis for the Heuristic Determination of Minimum Cost Paths]
-
-// end::references[]
+// == References
+//
+// // tag::references[]
+//
+// * [1]https://ieeexplore.ieee.org/document/4082128/[A Formal Basis for the Heuristic Determination of Minimum Cost Paths]
+//
+// // end::references[]
 
 ifdef::implementation[]
 // tag::implementation[]
