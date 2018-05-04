@@ -1,24 +1,25 @@
 = The Betweenness Centrality algorithm
 
 // tag::introduction[]
-_Betweenness Centrality_ is a way of detecting the amount of influence a node has over the flow of information in a graph.
+Betweenness centrality is a way of detecting the amount of influence a node has over the flow of information in a graph.
+It is often used to find nodes that serve as a bridge from one part of a graph to another.
+
+In the following example, Alice is the main connection in the graph:
 
 image::../images/betweenness_centrality.png[]
 
-It is often used to find nodes that serve as a bridge from one part of a graph to another.
-In the above example Alice is the main connection in the graph.
-If Alice is removed all connections in the graph would be cut off.
-This makes Alice "important" because she ensures that no nodes are isolated.
+If Alice is removed, all connections in the graph would be cut off.
+This makes Alice important, because she ensures that no nodes are isolated.
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
-The betweenness centrality algorithm calculates the shortest (weighted) path between every pair of nodes in a connected graph using the breadth-first search algorithm.
-Each node receives a score based on the number of these shortest paths that pass through the node.
-Nodes that most frequently lie on these shortest paths are will have a higher betweenness centrality score.
+The Betweenness Centrality algorithm calculates the shortest (weighted) path between every pair of nodes in a connected graph, using the breadth-first search algorithm.
+Each node receives a score, based on the number of these shortest paths that pass through the node.
+Nodes that most frequently lie on these shortest paths will have a higher betweenness centrality score.
 
-The algorithm was given its first formal definition by Linton Freeman in his 1971 paper http://moreno.ss.uci.edu/23.pdf[A Set of Measures of Centrality Based on Betweenness^].
+The algorithm was given its first formal definition by Linton Freeman, in his 1971 paper http://moreno.ss.uci.edu/23.pdf["A Set of Measures of Centrality Based on Betweenness"^].
 It was considered to be one of the "three distinct intuitive conceptions of centrality".
 // end::explanation[]
 
@@ -26,18 +27,17 @@ It was considered to be one of the "three distinct intuitive conceptions of cent
 
 // tag::use-case[]
 
-* Betweenness centrality is used to research the network flow in package delivery process or telecommunications network.
+* Betweenness centrality is used to research the network flow in a package delivery process, or telecommunications network.
 These networks are characterized by traffic that has a known target and takes the shortest path possible.
-This and other scenarios are described by Stephen P. Borgatti in http://www.analytictech.com/borgatti/papers/centflow.pdf[Centrality and network flow]
+This, and other scenarios, are described by Stephen P. Borgatti in http://www.analytictech.com/borgatti/papers/centflow.pdf["Centrality and network flow"].
 
-* Betweenness centrality is used to identify influencers in legitimate or criminal organizations.
-Studies show that influencers in organizations are not necessarily in management positions but instead can be found in brokerage positions of the organizational network.
-Removal of such influencers could seriously cripple the organization.
-More detail can be found in http://archives.cerium.ca/IMG/pdf/Morselli_and_Roy_2008_.pdf[Brokerage qualifications in ringing operations] by Carlo Morselli and Julie Roy
+* Betweenness centrality is used to identify influencers in legitimate, or criminal, organizations.
+Studies show that influencers in organizations are not necessarily in management positions, but instead can be found in brokerage positions of the organizational network.
+Removal of such influencers could seriously destabilize the organization.
+More detail can be found in http://archives.cerium.ca/IMG/pdf/Morselli_and_Roy_2008_.pdf["Brokerage qualifications in ringing operations"], by Carlo Morselli and Julie Roy.
 
-* Betweenness centrality can be used to help micro bloggers spread their reach on Twitter network with a recommendation engine that targets influencers they should interact with in future.
-This approach is described in ftp://ftp.umiacs.umd.edu/incoming/louiqa/PUB2012/RecMB.pdf[Making Recommendations in a Microblog to Improve the
-Impact of a Focal User]
+* Betweenness centrality can be used to help microbloggers spread their reach on Twitter, with a recommendation engine that targets influencers that they should interact with in the future.
+This approach is described in ftp://ftp.umiacs.umd.edu/incoming/louiqa/PUB2012/RecMB.pdf["Making Recommendations in a Microblog to Improve the Impact of a Focal User"].
 
 
 // end::use-case[]
@@ -45,12 +45,15 @@ Impact of a Focal User]
 == Constraints - when not to use the Betweenness Centrality algorithm
 
 // tag::constraint[]
-Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
-It therefore doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation. [4]
+* Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
+Therefore, it doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation.
+ifndef::env-docs[]
+[4]
+endif::env-docs[]
 
-For large graphs exact centrality computation isn't practical.
+* For large graphs, exact centrality computation isn't practical.
 The fastest known algorithm for exactly computing betweenness of all the nodes requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
-Instead we can use an approximation algorithm that works with a subset of nodes.
+Instead, we can use an approximation algorithm that works with a subset of nodes.
 // end::constraint[]
 
 == Betweenness Centrality algorithm sample
@@ -58,19 +61,19 @@ Instead we can use an approximation algorithm that works with a subset of nodes.
 People with high betweenness tend to be the innovators and brokers in social networks.
 They combine different perspectives, transfer ideas between groups, and get power from their ability to make introductions and pull strings.
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=create-sample-graph]
 ----
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=stream-sample-graph]
 ----
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
@@ -80,7 +83,7 @@ include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | centrality weight
+| Name | Centrality weight
 | Alice | 4
 | Charles | 2
 | Bridget | 0
@@ -91,8 +94,8 @@ include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 // end::stream-sample-graph-result[]
 
 // tag::stream-sample-graph-explanation[]
-We can see that Alice is the main broker in this network and Charles is a minor broker.
-The others don't have any influence because all the shortest paths between pairs of people go via Alice or Charles.
+We can see that Alice is the main broker in this network, and Charles is a minor broker.
+The others don't have any influence, because all the shortest paths between pairs of people go via Alice or Charles.
 // end::stream-sample-graph-explanation[]
 
 include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
@@ -100,8 +103,9 @@ include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -129,27 +133,25 @@ We support the following versions of the betweenness centrality algorithm:
 
 `algo.betweenness()`
 
-- implementation of brandes-bc algorithm and nodePartitioning extension
-- if concurrency parameter is set (and >1) ParallelBetweennessCentrality is used
-- ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
- calculates the BC for one node at a time
+* Implementation of brandes-bc algorithm and nodePartitioning extension.
+* If concurrency parameter is set (and >1), ParallelBetweennessCentrality is used.
+* ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation, where each one
+ calculates the BC for one node at a time.
 
 `algo.betweenness.exp1()`
 
-- brandes-like algorithm which uses successor sets instead of predecessor sets
-- The algorithm is based on Brandes definition but with some changes
- regarding the dependency-accumulation step.
-- Does not support undirected graph
+* Brandes-like algorithm, which uses successor sets instead of predecessor sets.
+* The algorithm is based on Brandes definition, but with some changes regarding the dependency-accumulation step.
+* Does not support undirected graph
 
 `algo.betweenness.sampled()`
 
-- Calculates betweenness-dependencies on a subset of pivot nodes (instead of all nodes). Up to now 2 randomization strategies are implemented which can be set using the optional argument strategy:
+* Calculates betweenness-dependencies on a subset of pivot nodes (instead of all nodes).
+2 randomization strategies are implemented, which can be set using the optional argument strategy: `random selection(default): strategy:'random':` (takes optional argument probability:double(0-1) or log10(N) / e^2 as default)
+* Degree based randomization: `strategy:'degree':` (makes dense nodes more likely)
+* Optional Arguments: `maxDepth:int`
 
-- random selection(default): strategy:'random': (takes optional argument probability:double(0-1) or log10(N) / e^2 as default)
-- degree based randomization: strategy:'degree': (makes dense nodes more likely)
-- optional Arguments: maxDepth:int
-
-
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -179,6 +181,7 @@ We support the following versions of the betweenness centrality algorithm:
 * [4] https://global.oup.com/academic/product/networks-9780199206650?cc=us&lang=en&[Newman, Mark. Networks: An Introduction (Page 186). OUP Oxford.^]
 
 // end::references[]
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
