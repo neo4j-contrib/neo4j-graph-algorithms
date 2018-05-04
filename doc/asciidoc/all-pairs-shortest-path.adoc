@@ -1,16 +1,16 @@
 = The All Pairs Shortest Path algorithm
 
 // tag::introduction[]
-_All Pairs Shortest Path_ (APSP) calculates the shortest (weighted) path between all pairs of nodes.
-This algorithm has optimisations that make it quicker than calling the SSSP algorithm for every pair of nodes in the graph.
+The All Pairs Shortest Path (APSP) calculates the shortest (weighted) path between all pairs of nodes.
+This algorithm has optimisations that make it quicker than calling the Single Source Shortest Path algorithm for every pair of nodes in the graph.
 
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
-Some pairs of nodes might not be reachable between each other, so no shortest path exist between these pairs of nodes.
-In this scenario the algorithm will return `Infinity` value as a result between these pairs of nodes.
+Some pairs of nodes might not be reachable between each other, so no shortest path exists between these pairs.
+In this scenario, the algorithm will return `Infinity` value as a result between these pairs of nodes.
 // end::explanation[]
 
 Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
@@ -19,16 +19,16 @@ Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` fu
 
 // tag::use-case[]
 
-* The all pairs shortest path algorithm is used in urban service system problems related to the location of urban facilities or to the distribution or delivery of goods.
+* The All Pairs Shortest Path algorithm is used in urban service system problems, related to the location of urban facilities or to the distribution or delivery of goods.
 One example of this is determining the traffic load expected on different segments of a transportation grid.
-You can read more in http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
+For more information, see http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
 
 * All pairs shortest path is used as part of the REWIRE data center design algorithm that finds a network with maximum bandwidth and minimal latency.
-There are more details about this approach in https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[REWIRE: An Optimization-based Framework for Data Center Network Design^]
+There are more details about this approach in https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf["REWIRE: An Optimization-based Framework for Data Center Network Design"^]
 
 // end::use-case[]
 
-== Constraints - when not to use the All Pairs Shortest Path algorithm
+// == Constraints - when not to use the All Pairs Shortest Path algorithm
 
 // tag::constraint[]
 
@@ -39,13 +39,13 @@ There are more details about this approach in https://cs.uwaterloo.ca/research/t
 
 image::sssp.png[]
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
@@ -55,7 +55,7 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| source | target | cost
+| Source | Target | Cost
 | A | F | 100
 | C | F | 90
 | B | F | 90
@@ -73,17 +73,17 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
 
 // tag::all-pairs-stream-sample-graph-explanation[]
 This query returned the top 10 pairs of nodes that are the furthest away from each other.
-"F" and "E" seem to be quite distant from the others.
+F and E appear to be quite distant from the others.
 // end::all-pairs-stream-sample-graph-explanation[]
 
-For now only single-source shortest path support loading the relationship as undirected, but we can use cypher loading to help us solve this.
-Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], that is a directed graph in which the reverse of every relationship is also a relationship.
+For now, only single-source shortest path support loading the relationship as undirected, but we can use Cypher loading to help us solve this.
+Undirected graph can be represented as https://en.wikipedia.org/wiki/Bidirected_graph[Bidirected graph], which is a directed graph in which the reverse of every relationship is also a relationship.
 
-We do not have to save this reversed relationship, we can project it using *cypher loading*.
+We do not have to save this reversed relationship, we can project it using *Cypher loading*.
 Note that relationship query does not specify direction of the relationship.
-This is applicable to all other algorithms, that use *cypher loading*.
+This is applicable to all other algorithms that use Cypher loading.
 
-.Running all pairs shortest path treating the graph as undirected
+.The following will run the algorithm, treating the graph as undirected:
 [source,cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
@@ -92,7 +92,8 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
 == Huge graph projection
 
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-Set `graph:'huge'` in the config.
+
+.Set `graph:'huge'` in the config:
 
 [source,cypher]
 ----
@@ -103,20 +104,22 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-huge-projection]
 
 `algo.allShortestPaths.stream`
 
-- find shortest paths between all pairs of nodes
-- returns a stream of source-target node to distance tuples for each pair of nodes
-- writeback not supported
-- if initialized with an non-existing weight-property it will treat the graph as unweighted
+* Find shortest paths between all pairs of nodes.
+* Returns a stream of source-target node to distance tuples for each pair of nodes.
+* Writeback is not supported.
+* If initialized with an non-existing weight-property, it will treat the graph as unweighted.
 
 ifdef::implementation[]
 // tag::implementation[]
 
+ifndef::env-docs[]
 == References
 
 // tag::references[]
 * [1] http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^] - Richard C. Larson and Amedeo R. Odoni
 * [2] https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf[REWIRE: An optimization-based framework for unstructured data center network design^] - Andrew R. Curtis, Tommy Carpenter, Mustafa Elsheikh, Alejandro López-Ortiz, S. Keshav
 // end::references[]
+endif::env-docs[]
 
 == Implementation details
 
