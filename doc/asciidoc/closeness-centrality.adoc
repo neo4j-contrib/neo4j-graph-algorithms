@@ -1,16 +1,16 @@
 = The Closeness Centrality algorithm
 
 // tag::introduction[]
-_Closeness Centrality_ is a way of detecting nodes that are able to spread information very efficiently through a graph.
+Closeness centrality is a way of detecting nodes that are able to spread information very efficiently through a graph.
 
-The _Closeness Centrality_ of a node measures its average distance to all other nodes.
+The closeness centrality of a node measures its average distance to all other nodes.
 Nodes with a high closeness score have the shortest distances to all other nodes.
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
-For each node the algorithm calculates the sum of its distances to all other nodes based on calculating shortest paths between all pairs of nodes.
+For each node, the Closeness Centrality algorithm calculates the sum of its distances to all other nodes, based on calculating the shortest paths between all pairs of nodes.
 The closeness centrality of a node is sometimes referred to as the node's 'farness'.
 // end::explanation[]
 
@@ -34,25 +34,25 @@ The formula for *normalized closeness centrality* is as follows:
 
 // tag::use-case[]
 
-* Closeness centrality is used to research organizational networks where individuals with high closeness centrality are in a favourable position to control and acquire vital information and resources within the organization.
-One such study is http://www.orgnet.com/MappingTerroristNetworks.pdf[Mapping Networks of Terrorist Cells by Valdis E. Krebs^].
+* Closeness centrality is used to research organizational networks, where individuals with high closeness centrality are in a favourable position to control and acquire vital information and resources within the organization.
+One such study is http://www.orgnet.com/MappingTerroristNetworks.pdf["Mapping Networks of Terrorist Cells"^] by Valdis E. Krebs.
 
 * Closeness centrality can be interpreted as an estimated time of arrival of information flowing through telecommunications or package delivery networks where information flows through shortest paths to a predefined target.
-It can also be used in networks where information spreads through all shortest paths simultaneously such as infection spreading through a social network.
-Find more details in http://www.analytictech.com/borgatti/papers/centflow.pdf[Centrality and network flow] by Stephen P. Borgatti.
+It can also be used in networks where information spreads through all shortest paths simultaneously, such as infection spreading through a social network.
+Find more details in http://www.analytictech.com/borgatti/papers/centflow.pdf["Centrality and network flow"] by Stephen P. Borgatti.
 
-* Closeness centrality has been used to estimate the importance of words in a document based on a graph-based keyphrase extraction process.
-This process is described by Florian Boudin in https://www.aclweb.org/anthology/I/I13/I13-1102.pdf[A Comparison of Centrality Measures for Graph-Based Keyphrase Extraction].
+* Closeness centrality has been used to estimate the importance of words in a document, based on a graph-based keyphrase extraction process.
+This process is described by Florian Boudin in https://www.aclweb.org/anthology/I/I13/I13-1102.pdf["A Comparison of Centrality Measures for Graph-Based Keyphrase Extraction"].
 
 // end::use-case[]
 
 == Constraints - when not to use the Closeness Centrality algorithm
 
 // tag::constraint[]
-Academically closeness centrality works best on connected graphs.
-If we use the original formula on an unconnected graph we can end up with an infinite distance between two nodes in separate connected components.
+* Academically, closeness centrality works best on connected graphs.
+If we use the original formula on an unconnected graph, we can end up with an infinite distance between two nodes in separate connected components.
 This means that we'll end up with an infinite closeness centrality score when we sum up all the distances from that node.
-
++
 In practice, a variation on the original formula is used so that we don't run into these issues.
 // end::constraint[]
 
@@ -60,20 +60,20 @@ In practice, a variation on the original formula is used so that we don't run in
 
 image::closeness_centrality.png[]
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/closeness-centrality.cypher[tag=create-sample-graph]
 ----
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/closeness-centrality.cypher[tag=stream-sample-graph]
 - yields centrality for each node
 ----
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/closeness-centrality.cypher[tag=write-sample-graph]
@@ -84,7 +84,7 @@ include::scripts/closeness-centrality.cypher[tag=write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | centrality weight
+| Name | Centrality weight
 | C | 0.6666666666666666
 | B | 0.5714285714285714
 | D | 0.5714285714285714
@@ -94,9 +94,9 @@ include::scripts/closeness-centrality.cypher[tag=write-sample-graph]
 // end::stream-sample-graph-result[]
 
 // tag::stream-sample-graph-explanation[]
-"C" is the best connected node in this graph although "B" and "D" aren't far behind.
-"A" and "E" don't have close ties to many other nodes so their scores are lower.
-A score of 1 would indicate that a node has a direct connection to all other nodes.
+C is the best connected node in this graph, although B and D aren't far behind.
+A and E don't have close ties to many other nodes, so their scores are lower.
+Any node that has a direct connection to all other nodes would score 1.
 // end::stream-sample-graph-explanation[]
 
 Calculation:
@@ -128,7 +128,7 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 
 == Syntax
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 CALL algo.closeness(label:String, relationship:String,
@@ -140,29 +140,29 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| write | boolean | true | yes | if result should be written back as node property
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| writeProperty | string | 'centrality' | yes | property name written back to
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| write | boolean | true | yes | Specifies if the result should be written back as a node property
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| writeProperty | string | 'centrality' | yes | The property name written back to
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter,. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodes | int | number of nodes considered
-| loadMillis | int | milliseconds for loading data
-| evalMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
+| Name | Type | Description
+| nodes | int | The number of nodes considered
+| loadMillis | int | Milliseconds for loading data
+| evalMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
 
 
 |===
 
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 CALL algo.closeness.stream(label:String, relationship:String,{concurrency:4})
@@ -172,25 +172,26 @@ YIELD nodeId, centrality - yields centrality for each node
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
-[opts="headers"]
+[opts="header"]
 |===
-| name | type | description
-| node | long | node id
-| centrality | float | closeness centrality weight
+| Name | Type | Description
+| node | long | Node ID
+| centrality | float | Closeness centrality weight
 |===
 
 == Huge graph projection
 
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-Set `graph:'huge'` in the config.
+
+.Set `graph:'huge'` in the config:
 
 [source,cypher]
 ----
@@ -200,8 +201,9 @@ include::scripts/closeness-centrality.cypher[tag=huge-projection]
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -222,7 +224,7 @@ We support the following versions of the closeness centrality algorithm:
 
 * [ ] undirected, weighted
 
-
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -238,6 +240,7 @@ We support the following versions of the closeness centrality algorithm:
 
 * https://www.andrew.cmu.edu/user/andersok/Katharine_A._Anderson/Social_Economic_and_Information_Networks_files/CentralitySlides.pdf
 // end::references[]
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -247,16 +250,16 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/99
 
-_Closeness Centrality_ of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph.
-Thus the more central a node is, the closer it is to all other nodes.
+Closeness centrality of a node is a measure of centrality in a network, calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph.
+Thus, the more central a node is, the closer it is to all other nodes.
 
 == Details
 
-- use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
-- MSBFS gives depth and number of sources.
-- in this scheme the farness can be calculated as follows
+* Use `org.neo4j.graphalgo.impl.msbfs.MultiSourceBFS` for BFS
+* MSBFS gives depth and number of sources.
+* In this scheme, the farness can be calculated as follows
 
- farness(v) = farness(v) + numberOfSources(v) * depth(v)
+`farness(v) = farness(v) + numberOfSources(v) * depth(v)`
 
 // end::implementation[]
 endif::implementation[]
