@@ -1,7 +1,7 @@
 = The Connected Components algorithm
 
 // tag::introduction[]
-The Connected Components, or `UnionFind`, algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
+The Connected Components, or `Union Find`, algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
 It differs from the Strongly Connected Components algorithm (SCC) because it only needs a path to exist between pairs of nodes in one direction, whereas SCC needs a path to exist in both directions.
 As with SCC, `UnionFind` is often used early in an analysis to understand a graph's structure.
 // end::introduction[]
@@ -21,7 +21,7 @@ The components in a graph are computed using either the breadth-first search or 
 Such tests can be performed so quickly, and easily, that you should always verify that your input graph is connected, even when you know it has to be.
 Subtle, difficult-to-detect, bugs often result when your algorithm is run only on one component of a disconnected graph.
 
-* `UnionFind` can be used to keep track of clusters of database records, as part of the de-duplication process - an important task in master data management applications.
+* `Union Find` can be used to keep track of clusters of database records, as part of the de-duplication process - an important task in master data management applications.
 Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405["An efficient domain-independent algorithm for detecting approximately duplicate database records"^].
 
 *  Weakly connected components (WCC) can be used to analyse citation networks.
@@ -252,7 +252,7 @@ are merged.
 
 `algo.unionFind.queue`
 
-* Parallel `UnionFind`, using `ExecutorService` only.
+* Parallel `Union Find`, using `ExecutorService` only.
 * Algorithm based on the idea that `DisjointSetStruct` can be built using just a partition of the nodes, which are then merged pairwise.
 * The implementation is based on a queue which acts as a buffer for each computed `DisjointSetStruct`.
 As long as there are more elements on the queue, the algorithm takes two, merges them, and adds its result to the queue until only 1 element remains.
@@ -289,7 +289,7 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/79
 
-_Connected Components_ or _UnionFind_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows partitioning of the graph based on Relationships and Properties.
+_Connected Components_ or _Union Find_ basically finds sets of connected nodes where each node is reachable from any other node in the same set. One implementation also evaluates a Predicate on each relation which allows partitioning of the graph based on Relationships and Properties.
 
 ## Progress
 
@@ -321,7 +321,7 @@ Implement benchmark on big graph &
 
 ### parallelization
 
-One approach to parallelize _UnionFind_ might be _relationship partitioning_ where each thread performs the execution into it's own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.
+One approach to parallelize _Union Find_ might be _relationship partitioning_ where each thread performs the execution into it's own DSS instance on a subset of relationships. So each thread calculates a distinct set of unions. Later we can merge each DSS pairwise which can also be perfomed in parallel. Nonetheless the memory consumption might be high due to the preallocated array in DSS. We could also switch to a growing container if this is a problem.
 
 ### evaluation
 
@@ -339,7 +339,7 @@ are merged
 
 === algo.unionFind.queue
 
-- parallel UnionFind using ExecutorService only.
+- parallel Union Find using ExecutorService only.
 - Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
 which are then merged pairwise.
 - The implementation is based on a queue which acts as a buffer for each computed DSS. As long as there are
