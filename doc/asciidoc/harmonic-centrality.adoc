@@ -10,7 +10,7 @@ As with many of the centrality algorithms, it originates from the field of socia
 // tag::explanation[]
 Harmonic centrality was proposed by Marchiori and Latora in https://arxiv.org/pdf/cond-mat/0008357.pdf[Harmony in the Small World^] while trying to come up with a sensible notion of "average shortest path".
 
-They suggested a different way of calculating the average distance than used in the Closeness Centrality algorithm.
+They suggested a different way of calculating the average distance to that used in the Closeness Centrality algorithm.
 Rather than summing the distances of a node to all other nodes, the harmonic centrality algorithm sums the inverse of those distances.
 This enables it deal with infinite values.
 // end::explanation[]
