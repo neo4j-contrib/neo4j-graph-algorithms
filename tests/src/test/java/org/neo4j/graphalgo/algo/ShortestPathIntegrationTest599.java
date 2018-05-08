@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.ShortestPathProc;
 import org.neo4j.graphdb.Result;
-import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
