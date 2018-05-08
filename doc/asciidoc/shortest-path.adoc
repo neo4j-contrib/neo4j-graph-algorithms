@@ -26,9 +26,6 @@ This is the most common usage, and web mapping tools such as Google Maps use the
 * Social networks can use the algorithm to find the degrees of separation between people.
 For example, when you view someone's profile on LinkedIn, it will indicate how many people separate you in the connections graph, as well as listing your mutual connections.
 
-* https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^] is a routing protocol for IP networks.
-It uses Dijkstra's algorithm to help detect changes in topology, such as link failures, and https://routing-bits.com/2009/08/06/ospf-convergence/[come up with a new routing structure in seconds^].
-
 // end::use-case[]
 
 == Constraints - when not to use the Shortest Path algorithm
