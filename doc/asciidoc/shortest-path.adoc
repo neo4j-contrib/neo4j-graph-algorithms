@@ -66,19 +66,21 @@ include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]
 |===
 | Name | Cost
 | A | 0
-| D | 50
-| E | 80
-| F | 100
+| C | 50
+| D | 90
+| E | 120
+| F | 160
 |===
 
 // end::single-pair-stream-sample-graph-result[]
 
 // tag::single-pair-stream-sample-graph-explanation[]
-The quickest route takes us from A to F, via D and E, at a total cost of 100:
+The quickest route takes us from A to F, via C, D, and E, at a total cost of 160:
 
-* First, we go by rail from A to D, at a cost of 50.
-* Then, from D to E by road, for an additional 30.
-* Finally, from E to F by rail, for a further 20.
+* First, we go from A to C, at a cost of 50.
+* Then, we go from C to D, for an additional 40.
+* Then, from D to E, for an additional 30.
+* Finally, from E to F, for a further 40.
 // end::single-pair-stream-sample-graph-explanation[]
 
 

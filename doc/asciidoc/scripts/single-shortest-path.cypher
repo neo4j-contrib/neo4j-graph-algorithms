@@ -10,14 +10,12 @@ MERGE (f:Loc {name:'F'})
 MERGE (a)-[:ROAD {cost:50}]->(b)
 MERGE (a)-[:ROAD {cost:50}]->(c)
 MERGE (a)-[:ROAD {cost:100}]->(d)
-MERGE (a)-[:RAIL {cost:50}]->(d)
 MERGE (b)-[:ROAD {cost:40}]->(d)
 MERGE (c)-[:ROAD {cost:40}]->(d)
 MERGE (c)-[:ROAD {cost:80}]->(e)
 MERGE (d)-[:ROAD {cost:30}]->(e)
 MERGE (d)-[:ROAD {cost:80}]->(f)
-MERGE (e)-[:ROAD {cost:40}]->(f)
-MERGE (e)-[:RAIL {cost:20}]->(f);
+MERGE (e)-[:ROAD {cost:40}]->(f);
 
 // end::create-sample-graph[]
 
@@ -47,8 +45,11 @@ RETURN writeMillis,loadMillis,nodeCount,totalCost
 
 MATCH (n:Loc {name:'A'})
 CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0)
-YIELD nodeId, distance 
-RETURN nodeId, distance LIMIT 20
+YIELD nodeId, distance
+
+MATCH (destination) WHERE id(destination)  = nodeId
+
+RETURN destination.name AS destination, distance
 
 // end::delta-stream-sample-graph[]
 
