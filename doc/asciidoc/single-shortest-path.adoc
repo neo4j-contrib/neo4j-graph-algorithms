@@ -7,23 +7,14 @@ The Single Source Shortest Path (SSSP) algorithm calculates the shortest (weight
 == History and explanation
 
 // tag::explanation[]
-Path finding has a long history, and is considered to be one of the classical graph problems; it has been researched as far back as the 19th century.
-It gained prominence in the early 1950s in the context of ‘alternate routing’, i.e. finding a second shortest route if the shortest route is blocked.
+SSSP came into prominence at the same time as the shortest path algorithm and Dijkstra's algorithm can act as an implementation for both problems.
 
-Dijkstra came up with his algorithm in 1956 while trying to come up with something to show off the new ARMAC computers.
-He needed to find a problem and solution that people not familiar with computing would be able to understand, and designed what is now known as Dijkstra's algorithm.
-He later implemented it for a slightly simplified transportation map of 64 cities in the Netherlands.
+We implement a delta-stepping algorithm that has been https://arxiv.org/pdf/1604.02113v1.pdf[shown to outperform Dijkstra's^].
 // end::explanation[]
 
 == Use-cases - when to use the Single Source Shortest Path algorithm
 
 // tag::use-case[]
-* Finding directions between physical locations.
-This is the most common usage, and web mapping tools such as Google Maps use the shortest path algorithm, or a variant of it, to provide driving directions.
-
-* Social networks can use the algorithm to find the degrees of separation between people.
-For example, when you view someone's profile on LinkedIn, it will indicate how many people separate you in the connections graph, as well as listing your mutual connections.
-
 * https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^] is a routing protocol for IP networks.
 It uses Dijkstra's algorithm to help detect changes in topology, such as link failures, and https://routing-bits.com/2009/08/06/ospf-convergence/[come up with a new routing structure in seconds^].
 
@@ -32,7 +23,7 @@ It uses Dijkstra's algorithm to help detect changes in topology, such as link fa
 == Constraints - when not to use the Single Source Shortest Path algorithm
 
 // tag::constraint[]
-Dijkstra does not support negative weights.
+Delta stepping does not support negative weights.
 The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
 // end::constraint[]
 
