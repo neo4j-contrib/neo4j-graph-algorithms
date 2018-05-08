@@ -29,7 +29,10 @@ MERGE (d)-[:LINKS]->(home)
 // tag::stream-sample-graph[]
 
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
-YIELD node, score
+YIELD nodeId, score
+
+MATCH (node) WHERE id(n) = nodeId
+
 RETURN node.name AS page,score
 ORDER BY score DESC
 
