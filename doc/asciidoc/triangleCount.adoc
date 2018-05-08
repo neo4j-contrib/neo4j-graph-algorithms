@@ -95,11 +95,11 @@ include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
 [opts="header",cols="1,1,1"]
 |===
 | Name | Triangles | Coefficient
-| Will | 2 | 0.6666666666666666
-| Mark | 1 | 1
-| Michael | 3 | 0.3
 | Karin | 1 | 1
+| Mark | 1 | 1
 | Chris | 2 | 0.6666666666666666
+| Will | 2 | 0.6666666666666666
+| Michael | 3 | 0.3
 | Alice | 0 | 0
 |===
 // end::triangle-stream-sample-graph-result[]
