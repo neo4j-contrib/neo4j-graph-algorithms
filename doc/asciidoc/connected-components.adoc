@@ -1,9 +1,9 @@
 = The Connected Components algorithm
 
 // tag::introduction[]
-The _Connected Components_ or _UnionFind_ algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
-It differs from the SCC algorithm because it only needs a path to exist between pairs of nodes in one direction, whereas SCC needs a path to exist in both directions.
-As with SCC, UnionFind is often used early in an analysis to understand a graph's structure.
+The Connected Components, or `UnionFind`, algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
+It differs from the Strongly Connected Components algorithm (SCC) because it only needs a path to exist between pairs of nodes in one direction, whereas SCC needs a path to exist in both directions.
+As with SCC, `UnionFind` is often used early in an analysis to understand a graph's structure.
 // end::introduction[]
 
 == History and explanation
@@ -18,20 +18,20 @@ The components in a graph are computed using either the breadth-first search or 
 // tag::use-case[]
 
 * Testing whether a graph is connected is an essential pre-processing step for every graph algorithm.
-Such tests can be performed so quickly and easily that you should always verify that your input graph is connected, even when you know it has to be.
-Subtle, difficult-to-detect bugs often result when your algorithm is run only on one component of a disconnected graph.
+Such tests can be performed so quickly, and easily, that you should always verify that your input graph is connected, even when you know it has to be.
+Subtle, difficult-to-detect, bugs often result when your algorithm is run only on one component of a disconnected graph.
 
-* Union Find can be used to keep track of clusters of database records as part of the de-duplication process - an important task in master data management applications.
-Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405[An efficient domain-independent algorithm for detecting approximately duplicate database records^].
+* `UnionFind` can be used to keep track of clusters of database records, as part of the de-duplication process - an important task in master data management applications.
+Read more in http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.28.8405["An efficient domain-independent algorithm for detecting approximately duplicate database records"^].
 
-*  Weakly Connected Components can be used to analyse citation networks.
+*  Weakly connected components (WCC) can be used to analyse citation networks.
 One study uses WCC to work out how well connected the network is, and then to see whether the connectivity remains if 'hub' or 'authority' nodes are moved from the graph.
-Read more in https://pdfs.semanticscholar.org/a8e0/5f803312032569688005acadaa4d4abf0136.pdf[Characterizing and Mining Citation Graph of Computer Science Literature^].
+Read more in https://pdfs.semanticscholar.org/a8e0/5f803312032569688005acadaa4d4abf0136.pdf["Characterizing and Mining Citation Graph of Computer Science Literature"^].
 
 // end::use-case[]
 
 
-== Constraints - when not to use the Connected Components algorithm
+// == Constraints - when not to use the Connected Components algorithm
 
 // tag::constraint[]
 
@@ -39,16 +39,16 @@ Read more in https://pdfs.semanticscholar.org/a8e0/5f803312032569688005acadaa4d4
 
 == Connected Components algorithm sample
 
-Recall that an undirected graph is connected if for every pair of vertices, there is a path in the graph between those vertices.
+If we recall that an undirected graph is connected if, for every pair of vertices there is a path in the graph between those vertices.
 A connected component of an undirected graph is a maximal connected subgraph of the graph.
-That means that the direction of the relationships in our graph have are ignored - we treat the graph as undirected.
+That means that the direction of the relationships in our graph are ignored - we treat the graph as undirected.
 
-We have two implementations of connected components algorithm.
+We have two implementations of the Connected Components algorithm.
 The first treats the graph as unweighted and the second treats it as weighted, where you can define the threshold of the weight above which relationships are included.
 
 image::connected_components.png[]
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=create-sample-graph]
@@ -56,12 +56,12 @@ include::scripts/connected-components.cypher[tag=create-sample-graph]
 
 === Unweighted version
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=unweighted-stream-sample-graph]
 ----
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
@@ -71,7 +71,7 @@ include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | partition
+| Name | Partition
 | Alice | 0
 | Charles | 0
 | Bridget | 0
@@ -82,25 +82,27 @@ include::scripts/connected-components.cypher[tag=unweighted-write-sample-graph]
 // end::unweighted-stream-sample-graph-result[]
 
 // tag::unweighted-stream-sample-graph-explanation[]
-We have two distinct group of users that have no link between them.
+We have two distinct group of users, that have no link between them.
+
 The first group contains Alice, Charles, and Bridget, while the second group contains Michael, Doug, and Mark.
 // end::unweighted-stream-sample-graph-explanation[]
 
-.We can also easily check the number and size of partitions using cypher.
+.The following will check the number and size of partitions, using Cypher:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=check-results-sample-graph]
 ----
 === Weighted version
 
-If you define the property that holds the weight(weightProperty) and the threshold, it means the nodes are only connected, if the threshold on the weight of the relationship is high enough otherwise the relationship is thrown away.
+If you define the property that holds the weight (`weightProperty`) and the threshold, it means the nodes are only connected, if the threshold on the weight of the relationship is high enough, otherwise the relationship is thrown away.
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=weighted-stream-sample-graph]
 ----
-.Running algorithm and writing back results
+
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
@@ -110,7 +112,7 @@ include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | partition
+| Name | Partition
 | Alice | 0
 | Charles | 0
 | Bridget | 1
@@ -121,40 +123,40 @@ include::scripts/connected-components.cypher[tag=weighted-write-sample-graph]
 // end::weighted-stream-sample-graph-result[]
 
 // tag::weighted-stream-sample-graph-explanation[]
-In this case we can see that because the weight of the relationship betwen Bridget and Alice is only 0.5, the relationship is ignored by the algorithm and Bridget ends up in her own component.
+In this case we can see that, because the weight of the relationship between Bridget and Alice is only 0.5, the relationship is ignored by the algorithm, and Bridget ends up in her own component.
 // end::weighted-stream-sample-graph-explanation[]
 
 == Example usage
 
-As said Connected Components are an essential step in preprocessing your data.
-One reason is that most centralities suffer from disconnected components or you just want to find disconnected groups of nodes.
-Yelp's social network will be used to demonstrate how to proceed when dealing with real world data.
-A typical social network consist of one big component and a number of small disconnected components.
+As mentioned above, connected components are an essential step in preprocessing your data.
+One reason is that most centralities suffer from disconnected components, or you just want to find disconnected groups of nodes.
+Int his example, Yelp's social network will be used to demonstrate how to proceed when dealing with real world data.
+A typical social network consists of one big component and a number of small disconnected components.
 
-.Get the count of connected components
+.The following will get the count of connected components:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=count-component-yelp]
 ----
 
-We get back count of disconnected components being 18512 if we do not count users without friends.
-Let's now check the size of top 20 components to get a better picture
+We get back the count of disconnected components being 18512 if we do not count users without friends.
+Let's now check the size of top 20 components to get a better picture:
 
-.Get the size of top 20 components
+.The following will get the size of top 20 components:
 [source,cypher]
 ----
 include::scripts/connected-components.cypher[tag=top-20-component-yelp]
 ----
 
 The biggest component has 8938630 out of total 8981389 (99,5%).
-It is quite high, but not shocking as we have a friendship social network, where we can expect small world effect and 6 degree of separation rule, where you can get to any person in a social network, just depends how long is the path.
+It is quite high, but not shocking, as we have a friendship social network where we can expect small world effect and 6 degree of separation rule, where you can get to any person in a social network, just depends how long is the path.
 
-We can now move on to next step of analysis and run centralities only on the biggest components, so that our results will be more accurate.
-We just simply write back the results to the node, and use centralities with cypher loading or set a new label for the biggest component.
+We can now move on to next step of analysis and run centralities on only the biggest components, so that our results will be more accurate.
+We will write back the results to the node, and use centralities with Cypher loading, or set a new label for the biggest component.
 
 == Syntax
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 CALL algo.unionFind(label:String, relationship:String, {threshold:0.42,
@@ -167,31 +169,31 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
-| write | boolean | true | yes | if result should be written back as node property
-| partitionProperty | string | 'partition' | yes | property name written back the id of the partition particular node belongs to
-| threshold | float | null | yes | value of the weight above which the relationship is not thrown away
-| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| write | boolean | true | yes | Specifies if the result should be written back as a node property
+| partitionProperty | string | 'partition' | yes | The property name written back the ID of the partition particular node belongs to
+| threshold | float | null | yes | The value of the weight above which the relationship is not thrown away
+| defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| nodes | int | number of nodes considered
-| setCount | int | number of partitions found
-| loadMillis | int | milliseconds for loading data
-| computeMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
+| Name | Type | Description
+| nodes | int | The number of nodes considered
+| setCount | int | The number of partitions found
+| loadMillis | int | Milliseconds for loading data
+| computeMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
 |===
 
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4})
@@ -201,28 +203,29 @@ YIELD nodeId, setId - yields a setId to each node id
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| weightProperty | string | null | yes | property name that contains weight, if null treats the graph as unweighted. Must be numeric.
-| threshold | float | null | yes | value of the weight above which the relationship is not thrown away
-| defaultValue | float | null | yes | default value of the weight in case it is missing or invalid
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| threshold | float | null | yes | The value of the weight above which the relationship is not thrown away
+| defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
-[opts="headers"]
+[opts="header"]
 |===
-| name | type | description
-| nodeId | int | node id
-| setId | int | partition id
+| Name | Type | Description
+| nodeId | int | Node ID
+| setId | int | Partition ID
 |===
 
 == Huge graph projection
 
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-Set `graph:'huge'` in the config.
+
+.Set `graph:'huge'` in the config:
 
 [source,cypher]
 ----
@@ -232,8 +235,9 @@ include::scripts/connected-components.cypher[tag=huge-projection]
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -243,32 +247,29 @@ include::scripts/connected-components.cypher[tag=cypher-loading]
 
 `algo.unionFind`
 
-- if a threshold configuration parameter is supplied only relationships with a property value higher then the threshold
-are merged
+* If a threshold configuration parameter is supplied, only relationships with a property value higher than the threshold
+are merged.
 
 `algo.unionFind.queue`
 
-- parallel UnionFind using ExecutorService only.
-- Algorithm based on the idea that DisjointSetStruct can be built using just a partition of the nodes
-which are then merged pairwise.
-- The implementation is based on a queue which acts as a buffer for each computed DSS. As long as there are
-more elements on the queue the algorithm takes two, merges them and adds its result to the queue until only
-1 element remains.
+* Parallel `UnionFind`, using `ExecutorService` only.
+* Algorithm based on the idea that `DisjointSetStruct` can be built using just a partition of the nodes, which are then merged pairwise.
+* The implementation is based on a queue which acts as a buffer for each computed `DisjointSetStruct`.
+As long as there are more elements on the queue, the algorithm takes two, merges them, and adds its result to the queue until only 1 element remains.
 
 `algo.unionFind.forkJoinMerge`
 
--  Like in *exp1* the resulting DSS of each node-partition is merged by the ForkJoin pool while
-the calculation of the DSS is done by the ExecutorService.
+* Like in `algo.unionFind.queue`, the resulting `DisjointSetStruct` of each node-partition is merged by the `ForkJoin` pool, while the calculation of the `DisjointSetStruct` is done by the `ExecutorService`.
 
 `algo.unionFind.forkJoin`
 
-- calculation and merge using forkJoinPool
+* Calculation and merge using `forkJoinPool`
 
 `algo.unionFind.mscoloring`
 
-- coloring based parallel algorithm
+* Coloring based parallel algorithm
 
-
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -278,6 +279,7 @@ the calculation of the DSS is done by the ExecutorService.
 * https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
 
 // end::references[]
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
