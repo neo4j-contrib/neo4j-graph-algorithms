@@ -1,7 +1,9 @@
-= The Single Source Shortest Path algorithm
+= The Shortest Path algorithm
 
 // tag::introduction[]
-The Single Source Shortest Path (SSSP) algorithm calculates the shortest (weighted) path from a node to all other nodes in the graph.
+The Shortest Path algorithm calculates the shortest (weighted) path between a pair of nodes.
+In this category, Dijkstra's algorithm is the most well known.
+It is a real time graph algorithm, and can be used as part of the normal user flow in a web or mobile application.
 // end::introduction[]
 
 == History and explanation
@@ -15,7 +17,7 @@ He needed to find a problem and solution that people not familiar with computing
 He later implemented it for a slightly simplified transportation map of 64 cities in the Netherlands.
 // end::explanation[]
 
-== Use-cases - when to use the Single Source Shortest Path algorithm
+== Use-cases - when to use the Shortest Path algorithm
 
 // tag::use-case[]
 * Finding directions between physical locations.
@@ -29,14 +31,14 @@ It uses Dijkstra's algorithm to help detect changes in topology, such as link fa
 
 // end::use-case[]
 
-== Constraints - when not to use the Single Source Shortest Path algorithm
+== Constraints - when not to use the Shortest Path algorithm
 
 // tag::constraint[]
 Dijkstra does not support negative weights.
 The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
 // end::constraint[]
 
-== Single Source Shortest Path algorithm sample
+== Shortest Path algorithm sample
 
 image::sssp.png[]
 
@@ -46,20 +48,42 @@ image::sssp.png[]
 include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
-=== Delta stepping algorithm
+=== The Dijkstra Shortest Path algorithm
 
 
 .The following will run the algorithm and stream results:
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph]
+include::scripts/single-shortest-path.cypher[tag=single-pair-stream-sample-graph]
 ----
 
 .The following will run the algorithm and write back results:
 [source,cypher]
 ----
-include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
+include::scripts/single-shortest-path.cypher[tag=single-pair-write-sample-graph]
 ----
+
+// tag::single-pair-stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name | Cost
+| A | 0
+| D | 50
+| E | 80
+| F | 100
+|===
+
+// end::single-pair-stream-sample-graph-result[]
+
+// tag::single-pair-stream-sample-graph-explanation[]
+The quickest route takes us from A to F, via D and E, at a total cost of 100:
+
+* First, we go by rail from A to D, at a cost of 50.
+* Then, from D to E by road, for an additional 30.
+* Finally, from E to F by rail, for a further 20.
+// end::single-pair-stream-sample-graph-explanation[]
+
 
 // == Example usage
 
@@ -69,9 +93,10 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 .The following will run the algorithm and write back results:
 [source,cypher]
 ----
-CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Float, {defaultValue:1.0, write:true, writeProperty:'sssp'})
-YIELD nodeCount, loadDuration, evalDuration, writeDuration
-RETURN nodeCount, loadDuration, evalDuration, writeDuration
+CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
+{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp',direction:'OUTGOING'})
+YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
+
 ----
 
 .Parameters
@@ -79,8 +104,9 @@ RETURN nodeCount, loadDuration, evalDuration, writeDuration
 |===
 | Name | Type | Default | Optional | Description
 | startNode  | node | null | no | The start node
+| endNode | node | null | no | The end node
 | weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
-| delta | float | null | yes | The grade of concurrency to use.
+| defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
 | write | boolean | true | yes | Specifies if the result should be written back as a node property
 | writeProperty | string | 'sssp' | yes | The property name written back to the node sequence of the node in the path
 | nodeQuery | string | null | yes | The label to load from the graph. If null, load all nodes
@@ -103,7 +129,7 @@ RETURN nodeCount, loadDuration, evalDuration, writeDuration
 .The following will run the algorithm and stream results:
 [source,cypher]
 ----
-CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta: Float,
+CALL algo.shortestPath.stream(startNode:Node, endNode:Node, weightProperty:String
 {nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, direction:'OUTGOING'})
  YIELD nodeId, cost
 ----
@@ -113,8 +139,8 @@ CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:Strin
 |===
 | Name | Type | Default | Optional | Description
 | startNode  | node | null | no | The start node
+| endNode | node | null | no | The end node
 | weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
-| delta | float | null | yes | The grade of concurrency to use.
 | nodeQuery | string | null | yes | The label to load from the graph. If null, load all nodes
 | relationshipQuery | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
 | defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
@@ -163,11 +189,17 @@ include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 
 == Implementations
 
-`algo.shortestPath.deltaStepping`
+`algo.shortestPath`
+
+* Specify start and end node, find the shortest path between them.
+* Dijkstra single source shortest path algorithm.
+* There may be more then one shortest path, algorithm returns only one.
+* If initialized with an non-existing weight-property, it will treat the graph as unweighted.
+
+`algo.shortestPaths`
 
 * Specify start node, find the shortest paths to all other nodes.
-* Parallel non-negative single source shortest path algorithm for weighted graphs.
-* It can be tweaked using the delta-parameter which controls the grade of concurrency.
+* Dijkstra single source shortest path algorithm.
 * If initialized with an non-existing weight-property, it will treat the graph as unweighted.
 
 ifndef::env-docs[]
@@ -194,7 +226,7 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/80
 
-A Single Source Shortest Path algorithm calculates a path between a pair of nodes whose summed weights are minimal.
+A Shortest Path algorithm calculates a path between a pair of nodes whose summed weights are minimal.
 A common algorithm used is Dijkstra.
 On the other hand, All Pairs Shortest Path calculates a shortest path forest containing all paths between the nodes in the graph.
 An algorithm to solve this is Floyd Warshall or Parallel Johnson's algorithm.
@@ -235,14 +267,22 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 == Details
 
 
-=== algo.shortestPath.deltaStepping
+=== algo.shortestPath
 
-TODO naming!?
-- parallel non-negative single source shortest path algorithm for weighted graphs
-- It can be tweaked using the delta-parameter which controls the grade of concurrency.
+- Dijkstra single source shortest path algorithm
+- The algorithm computes a shortest path on weighted graphs
+ between a given start and target-NodeId. It returns result tuples of [nodeId, distance] of each node
+ in the path
+- there may be more then one shortest path, algo returns only one
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in
+ terms of count of nodes in the path.
+
+
+=== algo.shortestPaths
+
+- Dijkstra single source shortest path algorithm
 - returns minimum distance to *all other nodes*
-- if initialized with an non-existing weight-property and a defaultWeight of 1.0 its result can be interpreted as
- the number of nodes to reach the target
+- if initialized with an not-existing weight-property and a defaultWeight of 1.0 the resulting path is minimal in terms of count of nodes in the path.
 
 // end::implementation[]
 endif::implementation[]

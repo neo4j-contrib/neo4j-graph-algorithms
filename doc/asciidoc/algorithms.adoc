@@ -25,6 +25,8 @@ include::harmonic-centrality.adoc[leveloffset=2]
 
 include::minimum-weight-spanning-tree.adoc[leveloffset=2]
 
+include::shortest-path.adoc[leveloffset=2]
+
 include::single-shortest-path.adoc[leveloffset=2]
 
 include::astar.adoc[leveloffset=2]
