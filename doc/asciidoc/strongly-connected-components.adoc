@@ -1,14 +1,14 @@
 = The Strongly Connected Components algorithm
 
 // tag::introduction[]
-The _Strongly Connected Components_ (SCC) algorithm finds sets of connected nodes in a directed graph where each node is reachable in both directions from any other node in the same set.
+The Strongly Connected Components (SCC) algorithm finds sets of connected nodes in a directed graph where each node is reachable in both directions from any other node in the same set.
 It is often used early in a graph analysis process to help us get an idea of how our graph is structured.
 // end::introduction[]
 
 == History and explanation
 
 // tag::explanation[]
-SCC is one of the earliest graph algorithms and the first linear-time algorithm was described by Tarjan in 1972.
+SCC is one of the earliest graph algorithms, and the first linear-time algorithm was described by Tarjan in 1972.
 Decomposing a directed graph into its strongly connected components is a classic application of the depth-first search algorithm.
 // end::explanation[]
 
@@ -16,22 +16,22 @@ Decomposing a directed graph into its strongly connected components is a classic
 
 // tag::use-case[]
 
-* In the analysis of powerful transnational corporations, SCC can be used to find the set of firms in which every member owns directly and/or indirectly shares in every other member.
-Although it has benefits such as reducing transaction costs and increasing trust, this type of structure can weaken market competition.
-Read more in http://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0025995&type=printable[The Network of Global Corporate Control^].
+* In the analysis of powerful transnational corporations, SCC can be used to find the set of firms in which every member owns directly and/or indirectly owns shares in every other member.
+Although it has benefits, such as reducing transaction costs and increasing trust, this type of structure can weaken market competition.
+Read more in http://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0025995&type=printable["The Network of Global Corporate Control"^].
 
 * SCC can be used to compute the connectivity of different network configurations when measuring routing performance in multihop wireless networks.
-Read more in https://dl.acm.org/citation.cfm?id=513803[Routing performance in the presence of unidirectional links in multihop wireless networks^]
+Read more in https://dl.acm.org/citation.cfm?id=513803["Routing performance in the presence of unidirectional links in multihop wireless networks"^]
 
-* _SCC_ algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
+* Strongly Connected Components algorithms can be used as a first step in many graph algorithms that work only on strongly connected graph.
 In social networks, a group of people are generally strongly connected (For example, students of a class or any other common place).
-Many people in these groups generally like some common pages or play common games.
-The SCC algorithms can be used to find such groups and suggest the commonly liked pages or games to the people in the group who have not yet liked commonly liked a page or played a game.
+Many people in these groups generally like some common pages, or play common games.
+The SCC algorithms can be used to find such groups, and suggest the commonly liked pages or games to the people in the group who have not yet liked those pages or games.
 
 
 // end::use-case[]
 
-== Constraints - when not to use the Strongly Connected Components algorithm
+// == Constraints - when not to use the Strongly Connected Components algorithm
 
 // tag::constraint[]
 
@@ -45,14 +45,13 @@ A directed graph is strongly connected if there is a path between all pairs of v
 This algorithm treats the graph as directed, which means that the direction of the relationship is important.
 A strongly connected component only exists if there are relationships between nodes in both direction.
 
-.Create sample graph
+.The following will create a sample graph:
 [source,cypher]
 ----
 include::scripts/strongly-connected-components.cypher[tag=create-sample-graph]
-
 ----
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
@@ -63,7 +62,7 @@ include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| name | partition
+| Name | Partition
 | Alice | 1
 | Bridget | 1
 | Michael | 1
@@ -75,20 +74,22 @@ include::scripts/strongly-connected-components.cypher[tag=write-sample-graph]
 
 // tag::stream-sample-graph-explanation[]
 We have 3 strongly connected components in our sample graph.
-The first and biggest component has members Alice, Bridget, and Michael, while the second component has Doug and Mark.
-Charles ends up in his own component becuase there isn't an outgoing relationship from that node to any of the others.
+
+The first, and biggest, component has members Alice, Bridget, and Michael, while the second component has Doug and Mark.
+Charles ends up in his own component because there isn't an outgoing relationship from that node to any of the others.
 // end::stream-sample-graph-explanation[]
 
-.Find the largest partition
+.The following will find the largest partition:
 [source,cypher]
 ----
 include::scripts/strongly-connected-components.cypher[tag=get-largest-component]
 ----
-== Example usage
+
+// == Example usage
 
 == Syntax
 
-.Running algorithm and writing back results
+.The following will run the algorithm and write back results:
 [source,cypher]
 ----
 CALL algo.scc(label:String, relationship:String,
@@ -101,29 +102,29 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph. If null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph. If null load all relationships
-| write | boolean | true | yes | if result should be written back as node property
-| partitionProperty | string | 'partition' | yes | property name written back to
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| write | boolean | true | yes | Specifies if the result should be written back as a node property
+| partitionProperty | string | 'partition' | yes | The property name written back to
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| name | type | description
-| setCount | int | number of partitions found
-| maxSetSize | int | number of members in biggest partition
-| minSetSize | int | number of members in smallest partition
-| loadMillis | int | milliseconds for loading data
-| computeMillis | int | milliseconds for running the algorithm
-| writeMillis | int | milliseconds for writing result data back
+| Name | Type | Description
+| setCount | int | The number of partitions found
+| maxSetSize | int | The number of members in biggest partition
+| minSetSize | int | The number of members in smallest partition
+| loadMillis | int | Milliseconds for loading data
+| computeMillis | int | Milliseconds for running the algorithm
+| writeMillis | int | Milliseconds for writing result data back
 |===
 
-.Running algorithm and streaming results
+.The following will run the algorithm and stream results:
 [source,cypher]
 ----
 CALL algo.scc.stream(label:String, relationship:String, {concurrency:4})
@@ -133,25 +134,26 @@ YIELD nodeId, partition - yields a partition to each node id
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| name | type | default | optional | description
-| label  | string | null | yes | label to load from the graph, if null load all nodes
-| relationship | string | null | yes | relationship-type to load from the graph, if null load all relationships
-| concurrency | int | available CPUs | yes | number of concurrent threads
-| graph | string | 'heavy' | yes | use 'heavy' when describing the subset of the graph with label and relationship-type parameter, 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name | Type | Default | Optional | Description
+| label  | string | null | yes | The label to load from the graph. If null, load all nodes
+| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
+| concurrency | int | available CPUs | yes | The number of concurrent threads
+| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
-[opts="headers"]
+[opts="header"]
 |===
-| name | type | description
-| nodeId | int | node id
-| partition | int | partition id
+| Name | Type | Description
+| nodeId | int | Node ID
+| partition | int | Partition ID
 |===
 
 == Huge graph projection
 
 If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-Set `graph:'huge'` in the config.
+
+.Set `graph:'huge'` in the config:
 
 [source,cypher]
 ----
@@ -161,8 +163,9 @@ include::scripts/strongly-connected-components.cypher[tag=huge-projection]
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-Can be also used to run algorithms on a virtual graph.
-Set `graph:'cypher'` in the config.
+This can also be used to run algorithms on a virtual graph.
+
+.Set `graph:'cypher'` in the config:
 
 [source,cypher]
 ----
@@ -172,24 +175,25 @@ include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 
 `algo.scc`
 
-- *iterative* adaptation (same as `algo.scc.iterative`)
+* *Iterative* adaptation (same as `algo.scc.iterative`).
 
 `algo.scc.recursive.tarjan`
 
-- original *recursive* tarjan implementation
+* Original *recursive* tarjan implementation.
 
 `algo.scc.recursive.tunedTarjan`
 
-- also a *recursive* tarjan implementation
+* Also a *recursive* tarjan implementation.
 
 `algo.scc.iterative`
 
-- *iterative* adaption of tarjan algorithm
+* *Iterative* adaption of tarjan algorithm.
 
 `algo.scc.multistep`
 
-- parallel scc algorithm
+* Parallel SCC algorithm.
 
+ifndef::env-docs[]
 == References
 
 // tag::references[]
@@ -201,7 +205,7 @@ include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 * http://www.sandia.gov/~srajama/publications/BFS_and_Coloring.pdf
 
 // end::references[]
-
+endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
@@ -211,7 +215,7 @@ ifdef::implementation[]
 :leveloffset: +1
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/97
 
-_SCC_ is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements _Tarjan's_ SCC algorithm.
+Strongly Connected Components (SCC) is a class algorithms for finding groups of nodes where each node is directly reachable from every other node in the group. There are several algorithms to compute the SCC. Our current implementation (still in graphtest project) implements _Tarjan's_ SCC algorithm.
 
 ## Progress
 
