@@ -41,6 +41,7 @@ These algorithms help find the shortest path or evaluate the availability and qu
 * Minimum Weight Spanning Tree (`algo.mst`)
 * All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
 * A* Algorithm (`algo.shortestPath.astar`)
+* Yen's K-Shortest Paths (`algo.kShortestPaths`)
 
 // end::algorithms[]
 

@@ -63,6 +63,10 @@ include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
 
 include::astar.adoc[leveloffset=2,tags=implementation]
 
+=== Yen's K-Shortest Paths algorithm
+
+include::yens-k-shortest-paths.adoc[leveloffset=2,tags=implementation]
+
 === All Pairs Shortest Path
 
 include::all-pairs-shortest-path.adoc[leveloffset=2,tags=implementation]
