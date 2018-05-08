@@ -195,7 +195,7 @@ public class RABrandesBetweennessCentrality extends Algorithm<RABrandesBetweenne
                 while (!queue.isEmpty()) {
                     int node = queue.removeFirst();
                     int nodeDepth = queue.removeFirst();
-                    if (nodeDepth > maxDepth) {
+                    if (nodeDepth - 1 > maxDepth) {
                         continue;
                     }
                     stack.push(node);
