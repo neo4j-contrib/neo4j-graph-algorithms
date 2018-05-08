@@ -19,7 +19,7 @@ Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` fu
 
 // tag::use-case[]
 
-* The All Pairs Shortest Path algorithm is used in urban service system problems, related to the location of urban facilities or to the distribution or delivery of goods.
+* The All Pairs Shortest Path algorithm is used in urban service system problems, such as the location of urban facilities or the distribution or delivery of goods.
 One example of this is determining the traffic load expected on different segments of a transportation grid.
 For more information, see http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
 
