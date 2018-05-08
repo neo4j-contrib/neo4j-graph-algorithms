@@ -47,9 +47,7 @@ This approach is described in ftp://ftp.umiacs.umd.edu/incoming/louiqa/PUB2012/R
 // tag::constraint[]
 * Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
 Therefore, it doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation.
-ifndef::env-docs[]
-[4]
-endif::env-docs[]
+Newman explains this in more detail on page 186 of https://global.oup.com/academic/product/networks-9780199206650?cc=us&lang=en&[Networks: An Introduction^].
 
 * For large graphs, exact centrality computation isn't practical.
 The fastest known algorithm for exactly computing betweenness of all the nodes requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
