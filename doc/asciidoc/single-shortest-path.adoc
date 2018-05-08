@@ -52,6 +52,26 @@ include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph]
 include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 ----
 
+
+// tag::delta-stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name | Cost
+| A | 0
+| B | 50
+| C | 50
+| D | 90
+| E | 120
+| F | 160
+|===
+
+// end::delta-stream-sample-graph-result[]
+
+// tag::single-pair-stream-sample-graph-explanation[]
+The above table shows the cost of going from A to each of the other nodes, including itself at a cost of 0.
+// end::single-pair-stream-sample-graph-explanation[]
+
 // == Example usage
 
 
