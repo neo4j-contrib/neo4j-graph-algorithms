@@ -32,8 +32,6 @@ where,
 * `d` is a damping factor which can be set between 0 and 1.
 It is usually set to 0.85.
 * `C(A)` is defined as the number of links going out of page `A`.
-
-The PageRanks form a probability distribution over web pages, which means that the sum of all web pages' PageRanks will be 1.
 // end::formula[]
 
 == Use-cases - when to use the PageRank algorithm
