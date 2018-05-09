@@ -48,6 +48,7 @@ YIELD nodeId, triangles, coefficient
 MATCH (p:Person) WHERE id(p) = nodeId
 
 RETURN p.id AS name, triangles, coefficient
+ORDER BY coefficient DESC
 
 // end::triangle-stream-sample-graph[]
 
