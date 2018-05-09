@@ -4,7 +4,7 @@
 The Label Propagation algorithm (LPA) is a fast algorithm for finding communities in a graph.
 It detects these communities using network structure alone as its guide, and doesn't require a pre-defined objective function or prior information about the communities.
 
-One interesting feature of LPA is that we can give nodes preliminary labels to narrow down the range of solutions generated.
+One interesting feature of LPA is that nodes can be assigned preliminary labels to narrow down the range of solutions generated.
 This means that it can be used as semi-supervised way of finding communities where we hand-pick some initial communities.
 // end::introduction[]
 

@@ -1,14 +1,9 @@
 = The PageRank algorithm
 
 // tag::introduction[]
-PageRank is a widely recognized way of detecting influential nodes in a graph.
-It is different to other centrality algorithms, as the influence of a node depends on the influence of its neighbours.
+PageRank is an algorithm that measures the *transitive* influence or connectivity of nodes.
 
-PageRank is an iterative algorithm and by default our implementation will run for 20 iterations.
-Nodes are initialized with a small amount of PageRank.
-On every iteration a percentage of that PageRank is disseminated to each of its outgoing neighbours.
-
-Influential nodes will receive these disseminations more frequently and will therefore end up with a higher score.
+It can be computed by either iteratively distributing one node's rank (originally based on degree) over its neighbours or by randomly traversing the graph and counting the frequency of hitting each nodes during these walks.
 // end::introduction[]
 
 == History and explanation
