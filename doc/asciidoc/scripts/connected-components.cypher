@@ -14,6 +14,23 @@ MERGE (nMark)-[:FRIEND {weight:2}]->(nMichael);
 
 // end::create-sample-graph[]
 
+// tag::create-unweighted-sample-graph[]
+
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:FRIEND]->(nBridget)
+MERGE (nAlice)-[:FRIEND]->(nCharles)
+MERGE (nMark)-[:FRIEND]->(nDoug)
+MERGE (nMark)-[:FRIEND]->(nMichael);
+
+// end::create-unweighted-sample-graph[]
+
+
 // tag::unweighted-stream-sample-graph[]
 
 CALL algo.unionFind.stream('User', 'FRIEND', {}) 
