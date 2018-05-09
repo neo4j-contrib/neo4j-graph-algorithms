@@ -3,7 +3,7 @@
 // tag::introduction[]
 Closeness centrality is a way of detecting nodes that are able to spread information very efficiently through a graph.
 
-The closeness centrality of a node measures its average distance to all other nodes.
+The closeness centrality of a node measures its average farness (inverse distance) to all other nodes.
 Nodes with a high closeness score have the shortest distances to all other nodes.
 // end::introduction[]
 
@@ -11,7 +11,7 @@ Nodes with a high closeness score have the shortest distances to all other nodes
 
 // tag::explanation[]
 For each node, the Closeness Centrality algorithm calculates the sum of its distances to all other nodes, based on calculating the shortest paths between all pairs of nodes.
-The closeness centrality of a node is sometimes referred to as the node's 'farness'.
+The resulting sum is then inverted to determine the closeness centrality score for that node.
 // end::explanation[]
 
 // tag::formula[]
@@ -19,11 +19,8 @@ The *raw closeness centrality* of a node is calculated using the following formu
 
 `raw closeness centrality(node) = 1 / sum(distance from node to all other nodes)`
 
-The greater the raw closeness centrality, the longer it takes for information originating at random points in the graph to arrive at the node.
-
-Raw closeness centrality is an inverse measure of centrality.
-i.e. nodes with smaller scores are the most central.
-It is therefore more common to calculate the *normalized closeness centrality* score where nodes with a higher score are more central.
+It is more common to normalize this score so that it represents the average length of the shortest paths rather than their sum.
+This adjustment allow comparisons of the closeness centrality of nodes of graphs of different sizes
 
 The formula for *normalized closeness centrality* is as follows:
 
