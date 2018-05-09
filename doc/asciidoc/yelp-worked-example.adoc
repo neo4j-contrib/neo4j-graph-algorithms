@@ -60,7 +60,14 @@ We'll start by finding users who have reviewed more than 5 hotels.
 After that we'll find the social network between those users and work out which users sit at the centre of that network.
 This should reveal the most influential people.
 
-The following query will execute the page rank algorithm over users that reviewed hotels and add a `hotelPageRank` property to each of those users.
+We want to execute the page rank algorithm over a projected graph of users that have reviewed hotels and then add a `hotelPageRank` property to each of those users.
+This is the first example where we can express the projected graph in terms of node labels and relationship types.
+Instead we will write Cypher statements to project the required graph.
+
+See the Usage section of The Neo4j Graph Algorithms Library chapter for a refresher on the different usages options.
+<link to chapter 5 usage here>
+
+The following query will execute the page rank algorithm:
 // end::influential-hotel-reviewers-intro[]
 
 // tag::top-reviewers-result[]
