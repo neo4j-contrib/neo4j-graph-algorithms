@@ -1,0 +1,336 @@
+= Asciidoctor Diagram
+Pepijn Van_Eeckhoudt <https://github.com/pepijnve[@pepijnve]>; Sarah White <https://github.com/graphitefriction[@graphitefriction]>
+:translators: D瓜哥
+ifdef::env-github[Translated by: {translators}]
+:description: Asciidoctor 的 扩展 Asciidoctor Diagram 的说明文档。
+ifdef::env-github[:toc: macro]
+ifndef::env-site[:toc: preamble]
+ifndef::imagesdir[:imagesdir: images]
+:icons: font
+:source-highlighter: coderay
+:source-language: asciidoc
+:table-caption!:
+:example-caption!:
+:figure-caption!:
+:check: icon:check[]
+ifdef::env-github[:check: :ballot_box_with_check:]
+ifndef::env-site[:status:]
+:uri-actdiag: http://blockdiag.com/en/actdiag/index.html
+:uri-asciidoctor-api: http://asciidoctor.org/docs/user-manual/#api
+:uri-asciidoctor-extensions: http://asciidoctor.org/docs/user-manual/#extension-points
+:uri-blockdiag: http://blockdiag.com
+:uri-ditaa: http://ditaa.sourceforge.net/
+:uri-dot: http://www.graphviz.org/content/dot-language
+:uri-erd: https://github.com/BurntSushi/erd
+:uri-graphviz: http://www.graphviz.org
+:uri-imagemagick: http://www.imagemagick.org
+:uri-java: http://java.sun.com
+:uri-mermaid: http://knsv.github.io/mermaid/
+:uri-nwdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-packetdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-phantomjs: http://phantomjs.org
+:uri-plantuml: http://plantuml.sourceforge.net
+:uri-py-plantuml: https://code.google.com/p/asciidoc-plantuml/
+:uri-rackdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-seqdiag: http://blockdiag.com/en/seqdiag/index.html
+:uri-shaape: https://github.com/christiangoltz/shaape
+:uri-wavedrom: http://wavedrom.com
+:uri-wavedromeditor: https://github.com/wavedrom/wavedrom.github.io/releases
+:uri-wavedromcli: https://github.com/wavedrom/cli
+
+Asciidoctor Diagram 是一组 Asciidoctor 扩展，它可以让你向 AsciiDoc 文档中添加图表，而这些图表则是使用纯文本描述的。
+
+扩展支持 BlockDiag （BlockDiag、SeqDiag、ActDiag、NwDiag）， Ditaa、GraphViz、Mermaid、PlantUML、Shaape 和 WaveDrom 语法。
+
+每个扩展都是运行图表处理器，然后根据输入文本来生成一个 SVG、PNG 或 TXT 文件。
+生成的文件随后插入到你处理过的文档中。
+
+Asciidoctor Diagram 是受 {uri-py-plantuml}[AsciiDoc PlantUML filter] 启发而产生的项目。
+
+该文档有如下语言的翻译版：
+
+* link:README.adoc[English]
+
+TIP: 本文档是 link:README.adoc[README] 的翻译版。如果发现有什么不一致或者错误的地方，请以原文档为准。
+
+ifdef::status[]
+[discrete]
+[[status]]
+== 状态
+
+image:https://travis-ci.org/asciidoctor/asciidoctor-diagram.svg?branch=master["Linux Build Status", link="https://travis-ci.org/asciidoctor/asciidoctor-diagram"]
+image:https://ci.appveyor.com/api/projects/status/4r4gkk5gy3igs6nh/branch/master?svg=true["Windows Build Status", link="https://ci.appveyor.com/project/asciidoctor/asciidoctor-diagram"]
+image:https://img.shields.io/gem/v/asciidoctor-diagram.svg?label=gem%20version[Gem Version, link=https://rubygems.org/gems/asciidoctor-diagram]
+endif::status[]
+
+ifeval::["{toc-placement}" == "macro"]
+[discrete]
+== Contents
+
+toc::[title={blank}]
+endif::[]
+
+[[installation]]
+== 安装
+
+Asciidoctor Diagram 是一个 RubyGem ，它可以使用 `gem` 或 `bundle` 命令来安装。
+
+你可以通过在命令行中输入 `gem install` 来安装 Asciidoctor Diagram。
+
+ $ gem install asciidoctor-diagram
+
+或者，先在项目的 [.path]_Gemfile_ 文件中添加如下内容：
+
+.Gemfile
+[source,ruby]
+----
+gem 'asciidoctor-diagram', '~> 1.4.0'
+----
+
+然后在命令中执行 `bundle` 命令。
+
+ $ bundle
+
+[[creating-a-diagram]]
+== 创建图表
+
+一个图表可以直接书写在文档内部的文本块中，这个文本块还可以接受几个属性。
+
+.图表骨架
+----
+[diagram-type, generated-file-name, generated-image-format] // <1> <2> <3>
+.... // <4>
+符合相应语法的图表
+....
+----
+<1> 属性列表中第一个位置的属性指明所使用的图表类型。
+<2> 第二个位置的属性指明生成文件的文件名。如果没有指明，则默认使用原文件名来命名新生成的文件名。
+<3> 第三个位置的属性指明生成图表的格式，类似三个字符的文件扩展名。
+<4> 将属性列表直接放在文本块分隔符（ +....+ ）上面。你也可以使用开放块（ `--` ）作为另一个选择。
+
+图表类型以及可用的输出格式如下：
+
+[cols=">,4*^",options="header"]
+|===
+|图表类型                     |gif    |png    |svg    |txt
+|{uri-actdiag}[actdiag]      |       |{check}|{check}|
+|{uri-blockdiag}[blockdiag]  |       |{check}|{check}|
+|{uri-ditaa}[ditaa]          |       |{check}|       |
+|{uri-erd}[erd]              |       |{check}|{check}|
+|{uri-dot}[graphviz]         |       |{check}|{check}|
+|<<meme,meme>>               |{check}|{check}|       |
+|{uri-mermaid}[mermaid]      |       |{check}|{check}|
+|{uri-nwdiag}[nwdiag]        |       |{check}|{check}|
+|{uri-packetdiag}[packetdiag]|       |{check}|{check}|
+|{uri-plantuml}[plantuml]    |       |{check}|{check}|{check}
+|{uri-rackdiag}[rackdiag]    |       |{check}|{check}|
+|{uri-seqdiag}[seqdiag]      |       |{check}|{check}|
+|{uri-shaape}[shaape]        |       |{check}|{check}|
+|{uri-wavedrom}[wavedrom]    |       |{check}|{check}|
+|===
+
+下面的例子演示一个直接书写在 AsciiDoc 文档中的基本 ditaa 块的结构。
+
+.基本 ditaa 块
+[source]
+----
+[ditaa]
+....
+                   +-------------+
+                   | Asciidoctor |-------+
+                   |   diagram   |       |
+                   +-------------+       | PNG out
+                       ^                 |
+                       | ditaa in        |
+                       |                 v
+ +--------+   +--------+----+    /---------------\
+ |        | --+ Asciidoctor +--> |               |
+ |  Text  |   +-------------+    |   Beautiful   |
+ |Document|   |   !magic!   |    |    Output     |
+ |     {d}|   |             |    |               |
+ +---+----+   +-------------+    \---------------/
+     :                                   ^
+     |          Lots of work             |
+     +-----------------------------------+
+....
+----
+
+上面的 ditaa 块生成的图表如下图所示：
+
+.渲染 ditaa 图表
+image::asciidoctor-diagram-process.png[Asciidoctor Diagram 处理图表,650,319]
+
+上面渲染后的图表得到的文件名为 `58372f7d2ceffae9e91fd0a7cbb080b6.png`。
+这串长数字是源码的校验和，由 asciidoctor-diagram 计算所得。
+如果想给所生成的文件一个更具有意义的名字，请在 `target` 属性中填写。
+
+这可以很容易通过指明第二个位置的属性或者一个命名属性来指明文件名。
+下面的两个例子将生成文件名为 `ditaa-diagram.png` 的文件。
+
+....
+[ditaa, "ditaa-diagram"]
+----
+<snip>
+----
+
+[ditaa, target="ditaa-diagram"]
+----
+<snip>
+----
+....
+
+下面的例子演示一个直接书写在 AsciiDoc 文档中的基本 PlantUML 块的结构。
+
+.PlantUML 图表语法
+[source]
+----
+[plantuml, diagram-classes, png] // <1> <2> <3>
+....
+class BlockProcessor
+class DiagramBlock
+class DitaaBlock
+class PlantUmlBlock
+
+BlockProcessor <|-- DiagramBlock
+DiagramBlock <|-- DitaaBlock
+DiagramBlock <|-- PlantUmlBlock
+....
+----
+<1> 这个图表是使用 PlantUML 书写的，所以第一个位置的属性应该被指明为 `plantuml` 图表类型。
+<2> 生成的图表文件的名字被书写在第二个位置的属性。
+<3> 生成的文件格式放置在第三个属性位置。
+
+.渲染后的 PlantUML 图表
+image::asciidoctor-diagram-classes.png[Asciidoctor Diagram 类图]
+
+[[generating-a-diagram-from-a-terminal]]
+== 从终端中生成图表
+
+你可以使用 `-r` 标识在终端中加载 Asciidoctor Diagram。
+
+ $ asciidoctor -r asciidoctor-diagram sample.adoc
+
+你也可以在其他的转化器中使用 Asciidoctor Diagram，例如 Asciidoctor EPUB。
+Asciidoctor-epub3 也是通过 `-r` 标识来加载。
+
+ $ asciidoctor -r asciidoctor-diagram -r asciidoctor-epub3 -b epub3 sample.adoc
+
+或者，你也可以通过 `asciidoctor-epub3` 命令来调用 Asciidoctor 和 EPUB  转化器。
+这个命令隐式地设置 `-r` 和 `-b` 标识用于 EPUB3 输出。
+
+ $ asciidoctor-epub3 -r asciidoctor-diagram sample.adoc
+
+[[advanced-usage]]
+== 高级用法
+
+[[enabling-extensions]]
+=== 启用扩展
+
+在你的程序中，你可以加载并注册整个图表扩展集合。
+
+[source,ruby]
+----
+require 'asciidoctor-diagram'
+----
+
+或者，加载并注册每一个单独的扩展。
+
+[source,ruby]
+----
+require 'asciidoctor-diagram/<extension_name>'
+----
+
+`<extension_name>` 可以是 `blockdiag`、`ditaa`、`erd`、`graphviz`、`meme`、`mermaid`、`plantuml`、`shaape` 或 `wavedrom`。
+
+加载一个或多个这些文件将为所有需要处理的文档自动注册这些扩展。
+
+如果你需要更细粒度控制扩展的可用性， 则可以使用 `asciidoctor-diagram/<extension_name>/extension`。
+它将加载扩展但是不会向 Asciidoctor 扩展注册表中注册。
+你可以在恰当的时机使用 `Asciidoctor::Extensions` API 来手动注册扩展。
+
+本文档使用 ditaa 图表作为示例，演示了 asciidoctor-diagram 块的一系列特性。
+
+[[diagram-block-macro]]
+=== 图表块宏
+
+图表扩展还可以以块宏的形式来使用。
+
+.图表块宏的骨架
+----
+宏名::原文件名[生成的文件扩展名] // <1> <2> <3>
+----
+<1> 宏名和以块形式的块名相同。
+<2> 原文件名指明包含图表源代码的外部文件。
+<3> 第一个可选的属性指明用于生成图表的文件扩展名（也就是 `format` ）
+
+源文件的名字是相对正在处理的文件的位置的相对路径。
+// When the source file name is a relative path it is resolved with respect to the location of the document being processed. 怎么翻译？
+
+[[image-output-location]]
+=== 图表输出位置
+
+当 Asciidoctor Diagram 将图片写入磁盘时，它将根据如下选项依次来决定将文件写入到何处。
+
+. `\{imagesoutdir\}` 如果 `imagesoutdir` 属性被指明
+. `\{outdir\}/\{imagesdir\}` 如果 `outdir` 属性被指明
+. `\{to_dir\}/\{imagesdir\}` 如果 `to_dir` 属性被指明
+. `\{base_dir\}/\{imagesdir\}`
+
+[[specifying-diagram-generator-paths]]
+=== 指定图表输出路径
+
+Asciidoctor Diagram 依赖外部工具来生成图片。
+大多数情况下，它会自动从 `PATH` 环境变量指定的每一个路径中查找定位有特定可执行的工具。
+// In most cases it will locate these tools automatically for you by looking for specific executables in each directory in the `PATH` environment variable.
+如果你安装的工具不在 `PATH` 指明的路径中，你可以通过手动指明相关属性来覆盖工具的定位位置。
+下面的表格指明每一个图表类型必须依赖的工具，工具被安装的位置和用于覆盖默认位置的文档属性。
+
+[cols=">,2*<",options="header"]
+|===
+   |Diagram Type |Tool                                                                  |Attribute
+   |actdiag      |{uri-actdiag}[ActDiag]                                                |`actdiag`
+   |blockdiag    |{uri-blockdiag}[BlockDiag]                                            |`blockdiag`
+   |ditaa        |{uri-java}[Java]                                                      |`java`
+   |erd          |{uri-erd}[Erd]                                                         |`erd`
+   |graphviz     |{uri-graphviz}[GraphViz]                                              |`dot` 或 `graphvizdot`
+   |meme         |{uri-imagemagick}[ImageMagick]                                        |`convert` 和 `identify`
+   |mermaid      |{uri-mermaid}[Mermaid]                                                |`mermaid`
+   |nwdiag       |{uri-nwdiag}[NwDiag]                                                  |`nwdiag`
+   |packetdiag   |{uri-nwdiag}[NwDiag]                                                  |`packetdiag`
+   |plantuml     |{uri-java}[Java]                                                      |`java`
+   |rackdiag     |{uri-nwdiag}[NwDiag]                                                  |`rackdiag`
+   |seqdiag      |{uri-seqdiag}[SeqDiag]                                                |`seqdiag`
+   |shaape       |{uri-shaape}[Shaape]                                                  |`shaape`
+.2+|wavedrom     |{uri-wavedromeditor}[WaveDrom Editor]                                 |`wavedrom`
+                 |{uri-wavedromcli}[WaveDrom CLI] 和 {uri-phantomjs}[PhantomJS]        |`wavedrom` 和 `phantomjs`
+|===
+
+举例说明一下，假如你将 `actdiag` 安装在 `/home/me/actdiag/bin` 下，这路径不在 `PATH` 范围内，则你可以在命令行中指明它的位置：
+
+ $ asciidoctor -a actdiag=/home/me/actdiag/bin/actdiag -r asciidoctor-diagram sample.adoc
+
+[[meme]]
+=== Meme 扩展
+
+meme 扩展提供了一个基本的 '`Advice Animal`' 风格的图片生成器。
+使用一个例子就能非常方便地解释它的用法。
+
+----
+meme::yunoguy.jpg[Doc writers,Y U NO \\ AsciiDoc]
+----
+
+宏块的目的是告诉扩展使用哪些图像作为背景。
+// The target of the block macro tells the extension which image to use as background.
+头两个位置的属性是 `top` 和 `bottom`，用于标题的顶部和底部。
+出现在 `\\` 周围的空白符将被解释为换行符。
+
+块宏海支持如下的命名熟悉：
+
+. `fillColor`：文字的填充颜色。默认为 `white`。
+. `strokeColor`：文本的轮廓颜色。默认为 `black`。
+. `strokeWidth`：文本轮廓的宽度。默认为 `2`。
+. `font`: 文本的字体外观。默认为 `Impact`。
+. `options`：逗号分隔的标识列表，用于修改图片的渲染。目前只支持 `noupcase`， 它可以禁用大写的标签。
+// . `options`: a comma separate list of flags that modify the image rendering. Currently only `noupcase` is supported which disable upper casing the labels.
+. `target` （第三位可选参数）：生成文件的文件名。如果没有指定，则将会使用自动生成的文件名。
+. `format` （第四位可选参数）：生成图片的格式。meme 扩展支持 `png` 和 `gif`。、

@@ -1,0 +1,251 @@
+= Asciidoctor-diagram Changelog
+
+== 1.5.9
+
+Enhancements::
+
+  * Add support for ASCIIToSVG
+  * Issue #181: Add support for Vega and Vega-Lite
+
+== 1.5.8
+
+Enhancements::
+
+  * Issue #163: Add support for Mermaid.CLI
+  * Update PlantUML to revision 2018.1
+  * Add initial SVG support for Ditaa
+
+Bug Fixes::
+
+  * Issue #159: Resolve classloading issue in JRuby (@robertpanzer)
+  * Issue #177: Resolve unused variable warning in svgbob integratin
+
+== 1.5.7
+
+Enhancements::
+
+  * Update PlantUML to revision 2017.20
+  * Add support for Syntrax `--title` argument via the `heading` attribute (@vinipsmaker)
+
+Bug Fixes::
+
+  * Issue #173: Block macro targets are now correctly resolved against the document base directory.
+
+== 1.5.6
+
+Enhancements::
+
+  * Issue #167: Add support for Msc diagrams
+  * Issue #170: Add support for Syntrax diagrams
+  * Add support for SvgBob diagrams
+  * The output format can now be configured globally per diagram type using a document attribute with the name `<diagram_type>-format`.
+    As an example to generate all plantuml diagrams as SVG set the attribute `plantuml-format` to `svg` in your document header or via the command line.
+
+Bug Fixes::
+
+  * Issue #164: Restore numbered captions for diagrams when using asciidoctor >= 1.5.6
+
+== 1.5.5
+
+Enhancements::
+
+  * Update PlantUML to revision 2017.15
+  * Issue #147: Add support for PlantUML SVG output (@puffybsd)
+  
+Bug Fixes::
+
+  * Issue #145: Incremental runs on documents containing meme diagrams would fail
+  * Issue #150: Resolve Ditaa character encoding issues
+  * Avoid error when the `PATH` environment variable is not defined (@BrentDouglas)
+
+== 1.5.4.1
+
+Enhancements::
+
+  * Resolve compatibility issues with Asciidoctor 1.5.6 (@robertpanzer, @mojavelinux)
+
+== 1.5.4
+
+Enhancements::
+
+  * Add support for UMLet (@basejumpa)
+  * Issue #141: Allow blockdiag fontpath to be specified via attributes (@bithium)
+
+Bug Fixes::
+
+  * Issue #140: Restore PNG as default format for Graphviz diagrams
+
+== 1.5.3
+
+Enhancements::
+
+  * Issue #124: Improve compatibility with Cygwin
+  * Issue #133: Support substitutions in block macro target attribute
+  * Issue #135: Add support for PDF output for blockdiag and graphviz.
+  * Update PlantUML to revision 8053 (21/12/2016)
+
+Bug Fixes::
+
+  * Resolve error when using WaveDromEditor.app on macOS
+
+== 1.5.2
+
+Enhancements::
+
+  * Apply anti-aliasing to blockdiag generated images (@bithium)
+  * Issue #118: Add support for Erd.
+
+Bug Fixes::
+
+  * Issue #125: Use correct path separator when running under Cygwin.
+  * Issue #127: Resolved Ruby warnings when running in verbose mode.
+
+== 1.5.1
+
+Bug Fixes::
+
+  * Issue #119: Fixed an issue where 'unresolved constant' errors could occur when using PlantUML diagrams.
+
+== 1.5.0
+
+Enhancements::
+
+  * Issue #98: Automatically detect Actdiag, Blockdiag, Nwdiag and Seqdiag executables from Python 3.x Debian packages.
+  * Issue #100: Support specifying the layout engine for `dot` (`-K<engine>`) using the `layout` attribute on `graphviz` blocks. 
+  * Issue #102: Generate cache files in `asciidoctor/diagram` to avoid cluttering the output directory.
+  * Issue #105: Support substitutions in diagram blocks.
+  * Issue #107: Improve error reporting when Mermaid diagram generation fails.
+  * Issue #112: Update PlantUML to revision 8043 (19/06/2016)
+  * Issue #114: Asciidoctor Diagram now requires Asciidoctor if it hasn't been loaded already.
+  * Issue #116: Resolve relative paths in PlantUML !include directives
+  * Add Chinese README translation (@diguage)
+
+== 1.4.0
+
+Enhancements::
+
+  * Use wavedrom-cli when available
+  * Add meme generator
+
+Bug Fixes::
+
+  * Issue #71: Don't fail early for PlantUML diagrams if `dot` can't be found. PlantUML doesn't need it for all diagrams
+    types so invoke PlantUML without specifying the location of `dot` and let PlantUML produce an error when necessary.
+  * Issue #85: Support target attribute values containing one or more directory names.
+
+== 1.3.2
+
+Enhancements::
+
+  * Add support for WaveDrom diagrams (requires WaveDrom Editor to be installed separately)
+  * Allow error handling to be controlled using the `diagram-on-error` attribute.
+    Setting this attribute to `log` (default) logs an error message and continues processing of the document.
+    Setting it to `abort` triggers an exception and aborts document processing.
+  * Resolve relative image references in PlantUML diagrams to absolute ones up front to ensure PlantUML can locate the images
+
+Bug Fixes::
+
+  * Issue #83: Omit stack trace information from error message that gets embedded in the output document
+  * Issue #84: Restore support for specifying the location of the `dot` executable using the `graphvizdot` attribute
+  * Avoid deprecation warnings with JRuby 9000 (@robertpanzer)
+
+== 1.3.1
+
+Bug Fixes::
+
+  * Issue #78: Resolve Java launch issues when running in a Cygwin environment (@chanibal)
+
+== 1.3.0
+
+Enhancements::
+
+  * Introduces a documented, public extension API
+  * Add support for Actdiag diagrams (requires Actdiag to be installed separately)
+  * Add support for Seqdiag diagrams (requires Seqdiag to be installed separately)
+  * Add support for Nwdiag diagrams (requires Nwdiag to be installed separately)
+  * Add support for Salt UI diagrams (issue #66)
+  * Updated PlantUML to revision 8028 (10/07/2015)
+  * Remove dependency on RJB to simplify installation (issue #48)
+  * Add diagram scaling support using the scale attribute (issue #58)
+  * Add Ditaa command line option support using the options attribute (issue #69)
+  * Add extra usage instructions to README (@nearnshaw)
+
+Bug Fixes::
+
+  * Issue #49: Resolve issue that made Java 6 installation prompt appear on Mac OS X
+  * Issue #51: Resolved issue where PNG files generated by Graphviz were not processed correctly on Windows
+  * Fix caching issue on Travis CI (@j-manu)
+
+== 1.2.0
+
+Enhancements::
+
+  * Updated to Asciidoctor 1.5.0
+
+== 1.1.6
+
+Enhancements::
+
+  * Updated PlantUML to revision 8002 (23/07/2014)
+  * Add support for Shaape diagrams (requires Shaape to be installed separately)
+  * Add support for Blockdiag diagrams (requires Blockdiag to be installed separately)
+
+Bug Fixes::
+
+  * Issue #38: Resolved Graphviz syntax errors with certain diagrams
+
+== 1.1.5
+
+Enhancements::
+
+  * Use the output directory (outdir attribute) as base directory if it's specified. (@neher)
+  * Do not auto-generate width/height attributes when outputting to a non-HTML backend. This resolves issues with
+    oversized images in docbook output. (@neher)
+
+== 1.1.4
+
+Bug Fixes::
+
+  * Under CRuby in combination with certain Java versions a FileNotFoundException could be triggered due to incorrect
+    method selection by RJB
+
+== 1.1.3
+
+Bug Fixes::
+
+  * Image regeneration logic did not always correctly detect cases where images did not need to be updated
+
+== 1.1.2
+
+Bug Fixes::
+
+  * Fix corrupt PNG images on Windows
+  * Fix NoSuchMethodError in block macro processing when target image file already existed
+  * Respect target attribute in block macros
+
+== 1.1.1
+
+Bug Fixes::
+
+  * Changed rjb dependency from ~> 1.4.9 to ~> 1.4.8 to be compatible with buildr 1.4.15
+
+== 1.1.0
+
+Enhancements::
+
+  * Add support for `graphviz` blocks which may contain diagrams specified using the Graphviz DOT language
+  * The location of the Graphviz `dot` executable can now be specified using the `graphvizdot` document attribute
+  * Add support for `ditaa`, `graphivz` and `plantuml` block macros
+
+== 1.0.1
+
+Bug Fixes::
+
+  * Corrections to gemspec
+
+== 1.0.0
+
+Initial release::
+
+  * Provides Asciidoctor extension for `ditaa` and `plantuml` blocks
+  * PlantUML skin parameters can be injected from an external file using the `plantumlconfig` document attribute

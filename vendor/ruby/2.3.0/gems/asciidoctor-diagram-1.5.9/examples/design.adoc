@@ -1,0 +1,78 @@
+= The design of Asciidoctor-diagram
+
+This document explains the design of Asciidoctor-diagram using PlantUML syntax.
+A detailed explanation of the PlantUML syntax is out scope for this document.
+This can be found on the http://www.plantuml.com[PlantUML web site].
+
+Asciidoctor-diagram is a simple Asciidoctor extension that enables embedding of diagrams inside asciidoc documents using various plain text diagram syntaxes.
+The current version of Asciidoctor-diagram support the Ditaa, Graphviz DOT and PlantUML syntax.
+
+Asciidoctor-diagram enables a number of new block types using the Asciidoctor `BlockProcessor` extension API.
+
+The main logic of the diagram generation is provided by the `DiagramBlock` module.
+This includes the shared options for the various blocks, checksum calculation of the diagram source code, cache validation and attribute generation for the generated output blocks.
+The DiagramBlock module also provides a means to register diagram output formats.
+
+When registering an output format, the registering code must specify a number of control parameters.
+The first parameter is the format name which controls when the generator is activated.
+The generator that is registered first determines the default format for the block.
+The second parameter is the output type of the generator.
+This is either `:image` or `:literal`.
+This parameter controls what type of block the `DiagramBlock` code will generate.
+Finally, a block should be provided that generates the diagram and returns it as a String.
+When called these blocks will receive the diagram source code and the parent Block as arguments.
+
+The actual `BlockProcessor` implementations include the `DiagramBlock` module and the appropriate generator module.
+The remainder of the implementation consists of registering format.
+
+The diagram below illustrates the relationship between the various classes and modules.
+
+.Asciidoctor-diagram class diagram
+[plantuml, "classes", align="center"]
+----
+namespace asciidoctor.extensions {
+  class BlockProcessor
+}
+
+namespace asciidoctor.diagram {
+  asciidoctor.extensions.BlockProcessor <|-- DitaaBlock
+  class DitaaGenerator << (M,#FF7700) >>
+
+  asciidoctor.extensions.BlockProcessor <|-- GraphvizBlock
+  asciidoctor.extensions.BlockProcessor <|-- PlantUmlBlock
+  class PlantUmlGenerator << (M,#FF7700) >>
+
+  class DiagramBlock << (M,#FF7700) >>
+
+  DitaaBlock --|> DitaaGenerator
+  DitaaBlock --|> DiagramBlock
+  GraphvizBlock --|> PlantUmlGenerator
+  GraphvizBlock --|> DiagramBlock
+  PlantUmlBlock --|> PlantUmlGenerator
+  PlantUmlBlock --|> DiagramBlock
+}
+----
+
+When Asciidoctor process a document it will invoke the block processors at the appropriate moment.
+The sequence of method calls for a Ditaa block is shown below.
+
+.Processing a Ditaa block
+[plantuml, "processing", align="center"]
+----
+Lexer->DiagramBlock : process
+activate DiagramBlock #FFBBBB
+
+DiagramBlock -> DiagramBlock: create_image_block
+activate DiagramBlock #DarkSalmon
+
+DiagramBlock -> DiagramBlock: code_checksum
+
+DiagramBlock -> DitaaGenerator: ditaa
+activate DitaaGenerator
+DiagramBlock <-- DitaaGenerator: image as String
+deactivate DitaaGenerator
+deactivate DiagramBlock
+
+Lexer <-- DiagramBlock: generated Block
+deactivate DiagramBlock
+----

@@ -1,0 +1,18 @@
+= Asciidoctor-diagram Examples
+
+This directory contains a number of example files that illustrate how to use the asciidoctor-diagram extension.
+
+In order to build the examples correctly the asciidoctor-diagram extension should be loaded.
+This can be done using bundler by running
+
+----
+bundle exec asciidoctor -r asciidoctor-diagram <asciidoc file>
+----
+
+If you do not want to use bundler you can alternatively run
+
+----
+asciidoctor -r asciidoctor-diagram -I ../lib <asciidoc file>
+----
+
+This variant requires you to explicitly specify the load path from which asciidoctor-diagram can be loaded.

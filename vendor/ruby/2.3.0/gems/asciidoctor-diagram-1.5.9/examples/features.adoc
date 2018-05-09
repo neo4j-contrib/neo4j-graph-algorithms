@@ -1,0 +1,164 @@
+= Asciidoctor-diagram features
+
+This document explains the various features of asciidoctor-diagram blocks using ditaa diagrams as an example.
+
+== Simple diagrams
+
+To mark a block as a diagram the appropriate style should be applied. This can be either `ditaa`, `graphviz` or `plantuml`.
+These styles can be applied to literal, listing or open blocks.
+
+A basic ditaa listing can be written as follows:
+
+---------
+[ditaa]
+----
+                   +-------------+
+                   | asciidoctor |-------+
+                   |  diagram    |       |
+                   +-------------+       | png out
+                       ^                 |
+                       | ditaa in        |
+                       |                 v
+ +--------+   +--------+----+    /---------------\
+ |        | --+ asciidoctor +--> |               |
+ |  Text  |   +-------------+    |Beatiful output|
+ |Document|   |   !magic!   |    |               |
+ |     {d}|   |             |    |               |
+ +---+----+   +-------------+    \---------------/
+     :                                   ^
+     |          Lots of work             |
+     +-----------------------------------+
+----
+---------
+
+results in the following image.
+
+[ditaa]
+----
+                   +-------------+
+                   | asciidoctor |-------+
+                   |  diagram    |       |
+                   +-------------+       | png out
+                       ^                 |
+                       | ditaa in        |
+                       |                 v
+ +--------+   +--------+----+    /---------------\
+ |        | --+ asciidoctor +--> |               |
+ |  Text  |   +-------------+    |Beatiful output|
+ |Document|   |   !magic!   |    |               |
+ |     {d}|   |             |    |               |
+ +---+----+   +-------------+    \---------------/
+     :                                   ^
+     |          Lots of work             |
+     +-----------------------------------+
+----
+
+== Controlling the file name
+
+The image above gets the file name `58372f7d2ceffae9e91fd0a7cbb080b6.png`.
+That long number is the checksum of the source code that was calculated by asciidoctor-diagram.
+If you want to give your generated files a more meaningful name, simply fill in the `target` attribute.
+
+This can be done by either specifying it as the first positional attribute or as a named attribute.
+Both examples below would result in a file called `ditaa-diagram.png`.
+
+---------
+[ditaa, "ditaa-diagram"]
+----
+<snip>
+----
+
+[ditaa, target="ditaa-diagram"]
+----
+<snip>
+----
+---------
+
+== Choosing an output format
+
+By default images are generated in `PNG` format.
+This can be overridden by defining the `format` (or 2nd positional) attribute.
+The set of supported formats is diagram type dependent.
+`ditaa` only supports the `png` format.
+`graphviz` supports `png` and `svg`.
+`plantuml` supports `png`, `svg` and `txt`.
+
+The `txt` format is perhaps a bit non-obvious.
+This generates an ascii art version of the UML diagrams.
+
+The following Graphviz DOT script
+
+---------
+[graphviz, "dot_example", "svg"]
+----
+graph ethane {
+     C_0 -- H_0 [type=s];
+     C_0 -- H_1 [type=s];
+     C_0 -- H_2 [type=s];
+     C_0 -- C_1 [type=s];
+     C_1 -- H_3 [type=s];
+     C_1 -- H_4 [type=s];
+     C_1 -- H_5 [type=s];
+}
+----
+---------
+
+generates an SVG representation of an ethane molecule footnote:[From http://en.wikipedia.org/wiki/DOT_(graph_description_language)#A_simple_example]
+
+[graphviz, "dot_example", "svg"]
+----
+graph ethane {
+     C_0 -- H_0 [type=s];
+     C_0 -- H_1 [type=s];
+     C_0 -- H_2 [type=s];
+     C_0 -- C_1 [type=s];
+     C_1 -- H_3 [type=s];
+     C_1 -- H_4 [type=s];
+     C_1 -- H_5 [type=s];
+}
+----
+
+== Using standard asciidoc features
+
+Any remaining other attributes that are specified on a diagram block are copied over to the generated block.
+This means you can use the regular http://asciidoctor.org/docs/user-manual/#put-images-in-their-place[asciidoc positioning attributes] to place the diagrams where you want to.
+
+Block titles and block ids can also be applied in the same way to diagram blocks.
+
+As an example, the following block
+
+--------
+[[plan]]
+.My plan to conquer the world
+[plantuml, align="center"]
+--------
+
+results in a block with the correct caption and id applied to it.
+
+[[plan]]
+.My plan to conquer the world
+[plantuml, "activity_diagram", "svg", align="center"]
+----
+(*) --> "Create an Asciidoctor extension"
+"Create an Asciidoctor extension" --> " ? "
+" ? " --> "Profits!"
+"Profits!" --> (*)
+----
+
+== Loading diagrams from external files
+
+Asciidoctor-diagram also supports the various diagram block in block macro form.
+These are macros of the form `<name>::<target>[<attrlist>]`.
+
+In asciidoctor-diagram the macro names are identical to the block styles: `ditaa`, `graphivz` and `plantuml`
+The target is the path to the file containing the diagram source code.
+When the target is a relative path it is resolved with respect to the location of the document being processed.
+The attribute list behaves mostly the same as with the block styles.
+The only difference is that the `target` attribute is not supported.
+Instead the name of the generated image is derived from the target propery of the macro.
+
+The previous example in block macro form would look something like this with the text from the block located in a file called `activity_diagram.txt` instead of inline in the document.
+
+----
+plantuml:activity_diagram.txt[format="svg", align="center"]
+----

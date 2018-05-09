@@ -1,0 +1,452 @@
+= Asciidoctor Diagram
+Pepijn Van_Eeckhoudt <https://github.com/pepijnve[@pepijnve]>; Sarah White <https://github.com/graphitefriction[@graphitefriction]>
+:description: README for the Asciidoctor Diagram extension for Asciidoctor.
+ifdef::env-github[:toc: macro]
+ifndef::env-site[:toc: preamble]
+ifndef::imagesdir[:imagesdir: images]
+:icons: font
+:source-highlighter: coderay
+:source-language: asciidoc
+:table-caption!:
+:example-caption!:
+:figure-caption!:
+:check: icon:check[]
+ifdef::env-github[:check: :ballot_box_with_check:]
+ifndef::env-site[:status:]
+:uri-a2s: https://github.com/dhobsd/asciitosvg
+:uri-actdiag: http://blockdiag.com/en/actdiag/index.html
+:uri-asciidoctor-api: http://asciidoctor.org/docs/user-manual/#api
+:uri-asciidoctor-extensions: http://asciidoctor.org/docs/user-manual/#extension-points
+:uri-blockdiag: http://blockdiag.com
+:uri-ditaa: http://ditaa.sourceforge.net/
+:uri-dot: https://graphviz.gitlab.io/_pages/doc/info/lang.html
+:uri-erd: https://github.com/BurntSushi/erd
+:uri-graphviz: https://graphviz.gitlab.io
+:uri-imagemagick: http://www.imagemagick.org
+:uri-java: http://java.sun.com
+:uri-mermaid: https://github.com/mermaidjs/mermaid.cli
+:uri-mscgen: http://www.mcternan.me.uk/mscgen/
+:uri-nwdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-packetdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-phantomjs: http://phantomjs.org
+:uri-plantuml: http://plantuml.sourceforge.net
+:uri-py-plantuml: https://code.google.com/p/asciidoc-plantuml/
+:uri-rackdiag: http://blockdiag.com/en/nwdiag/index.html
+:uri-seqdiag: http://blockdiag.com/en/seqdiag/index.html
+:uri-shaape: https://github.com/christiangoltz/shaape
+:uri-svgbob: https://github.com/ivanceras/svgbobrus
+:uri-syntrax: https://kevinpt.github.io/syntrax/
+:uri-umlet: http://www.umlet.com/
+:uri-vega: https://vega.github.io/vega/
+:uri-vegalite: https://vega.github.io/vega-lite/
+:uri-wavedrom: http://wavedrom.com
+:uri-wavedromeditor: https://github.com/wavedrom/wavedrom.github.io/releases
+:uri-wavedromcli: https://github.com/wavedrom/cli
+
+Asciidoctor Diagram is a set of Asciidoctor extensions that enable you to add diagrams, which you describe using plain text, to your AsciiDoc document.
+
+The extensions supports the {uri-a2s}[AsciiToSVG], BlockDiag ({uri-blockdiag}[BlockDiag], {uri-seqdiag}[SeqDiag], {uri-actdiag}[ActDiag], {uri-nwdiag}[NwDiag]), {uri-ditaa}[Ditaa], {uri-erd}[Erd], {uri-dot}[GraphViz], {uri-mermaid}[Mermaid], {uri-mscgen}[Msc], {uri-plantuml}[PlantUML], {uri-shaape}[Shaape], {uri-svgbob}[SvgBob], {uri-syntrax}[Syntrax], {uri-umlet}[UMLet], {uri-vega}[Vega], {uri-vegalite}[Vega-Lite] and {uri-wavedrom}[WaveDrom] syntax.
+
+Each extension runs the diagram processor to generate an SVG, PNG, or TXT file from the input text.
+The generated file is then inserted into your converted document.
+
+Asciidoctor Diagram was inspired by the {uri-py-plantuml}[AsciiDoc PlantUML filter].
+
+Translations of the document are available in the following languages:
+
+* link:README_zh-CN.adoc[汉语]
+
+ifdef::status[]
+[discrete]
+== Status
+
+image:https://travis-ci.org/asciidoctor/asciidoctor-diagram.svg?branch=master["Linux Build Status", link="https://travis-ci.org/asciidoctor/asciidoctor-diagram"]
+image:https://ci.appveyor.com/api/projects/status/4r4gkk5gy3igs6nh/branch/master?svg=true["Windows Build Status", link="https://ci.appveyor.com/project/asciidoctor/asciidoctor-diagram"]
+image:https://badge.fury.io/rb/asciidoctor-diagram.svg[Gem Version, link=https://rubygems.org/gems/asciidoctor-diagram]
+endif::status[]
+
+ifeval::["{toc-placement}" == "macro"]
+[discrete]
+== Contents
+
+toc::[title={blank}]
+endif::[]
+
+== Installation
+
+Asciidoctor Diagram is a RubyGem, which can be installed using the `gem` or `bundle` commands.
+
+You can install the Asciidoctor Diagram gem by typing `gem install` in the CLI.
+
+ $ gem install asciidoctor-diagram
+
+by first adding the following entry to your project's [.path]_Gemfile_.
+
+.Gemfile
+[source,ruby]
+----
+gem 'asciidoctor-diagram'
+----
+
+Then execute `bundle` in the CLI.
+
+ $ bundle
+
+== Creating a Diagram
+
+A diagram is written inside a literal block, which can accept several attributes.
+
+.Anatomy of a diagram
+----
+[diagram-type, generated-file-name, generated-image-format] // <1> <2> <3>
+.... // <4>
+Diagram in appropriate syntax
+....
+----
+<1> The first positional attribute in the attribute list specifies the diagram that is being used.
+<2> The second, optional positional attribute assigns a file name (i.e. `target`) to the generated diagram. If a target is not specified an auto-generated name will be used.
+<3> The third, optional positional attribute specifies the image format to create, specified as a three character file extension.
+<4> Place the attribute list directly on top of the delimited literal block (+....+). You can also use an open block as an alternative (`--`).
+
+The following diagram types and output formats are available:
+
+[cols=">,5*^",options="header"]
+|===
+|Diagram Type                |gif    |pdf    |png    |svg    |txt
+|{uri-a2s}[a2s]              |       |       |       |{check}|
+|{uri-actdiag}[actdiag]      |       |{check}|{check}|{check}|
+|{uri-blockdiag}[blockdiag]  |       |{check}|{check}|{check}|
+|{uri-ditaa}[ditaa]          |       |       |{check}|{check}|
+|{uri-erd}[erd]              |       |       |{check}|{check}|
+|{uri-dot}[graphviz]         |       |{check}|{check}|{check}|
+|<<meme,meme>>               |{check}|       |{check}|       |
+|{uri-mermaid}[mermaid]      |       |{check}|{check}|{check}|
+|{uri-mscgen}[msc]           |       |       |{check}|{check}|
+|{uri-nwdiag}[nwdiag]        |       |{check}|{check}|{check}|
+|{uri-packetdiag}[packetdiag]|       |{check}|{check}|{check}|
+|{uri-plantuml}[plantuml]    |       |       |{check}|{check}|{check}
+|{uri-rackdiag}[rackdiag]    |       |{check}|{check}|{check}|
+|{uri-seqdiag}[seqdiag]      |       |{check}|{check}|{check}|
+|{uri-shaape}[shaape]        |       |       |{check}|{check}|
+|{uri-svgbob}[svgbob]        |       |       |       |{check}|
+|{uri-syntrax}[syntrax]      |       |{check}|{check}|{check}|
+|{uri-umlet}[umlet]          |{check}|{check}|{check}|{check}|
+|{uri-vega}[vega]            |       |       |{check}|{check}|
+|{uri-vegalite}[vegalite]    |       |       |{check}|{check}|
+|{uri-wavedrom}[wavedrom]    |       |       |{check}|{check}|
+|===
+
+The example below illustrates the structure of a basic ditaa block written directly in an AsciiDoc document.
+
+.Basic ditaa block
+[source]
+----
+[ditaa]
+....
+                   +-------------+
+                   | Asciidoctor |-------+
+                   |   diagram   |       |
+                   +-------------+       | PNG out
+                       ^                 |
+                       | ditaa in        |
+                       |                 v
+ +--------+   +--------+----+    /---------------\
+ |        | --+ Asciidoctor +--> |               |
+ |  Text  |   +-------------+    |   Beautiful   |
+ |Document|   |   !magic!   |    |    Output     |
+ |     {d}|   |             |    |               |
+ +---+----+   +-------------+    \---------------/
+     :                                   ^
+     |          Lots of work             |
+     +-----------------------------------+
+....
+----
+
+The ditaa block above results in the following generated diagram.
+
+.Rendered ditaa diagram
+image::asciidoctor-diagram-process.png[Asciidoctor Diagram process diagram,650,319]
+
+The rendered ditaa diagram above gets the file name `58372f7d2ceffae9e91fd0a7cbb080b6.png`.
+That long number is the checksum of the source code calculated by asciidoctor-diagram.
+If you want to give your generated files a more meaningful name, fill in the `target` attribute.
+
+This can be done by either specifying it as the second positional attribute or as a named attribute.
+Both examples below would result in a file called `ditaa-diagram.png`.
+
+....
+[ditaa, "ditaa-diagram"]
+----
+<snip>
+----
+
+[ditaa, target="ditaa-diagram"]
+----
+<snip>
+----
+....
+
+
+The example below illustrates the structure of a basic PlantUML block written directly in an AsciiDoc document.
+
+.PlantUML Diagram Syntax
+[source]
+----
+[plantuml, diagram-classes, png] // <1> <2> <3>
+....
+class BlockProcessor
+class DiagramBlock
+class DitaaBlock
+class PlantUmlBlock
+
+BlockProcessor <|-- DiagramBlock
+DiagramBlock <|-- DitaaBlock
+DiagramBlock <|-- PlantUmlBlock
+....
+----
+<1> The diagram is written in PlantUML so the first positional attribute is assigned the `plantuml` diagram type.
+<2> The name of the generated diagram file (target) is written in the second positional attribute.
+<3> The output format is entered in the third positional attribute.
+
+.Rendered PlantUML diagram
+image::asciidoctor-diagram-classes.png[Asciidoctor Diagram classes diagram]
+
+== Generating a Diagram from a Terminal
+
+You can load Asciidoctor diagram in a terminal using the `-r` flag.
+
+ $ asciidoctor -r asciidoctor-diagram sample.adoc
+
+You can also use Asciidoctor diagram with other converters, such as Asciidoctor EPUB.
+Asciidoctor-epub3 is also loaded with the `-r` flag.
+
+ $ asciidoctor -r asciidoctor-diagram -r asciidoctor-epub3 -b epub3 sample.adoc
+
+Or, you can invoke Asciidoctor and the EPUB converter with the `asciidoctor-epub3` command.
+The command implicitly sets the `-r` and `-b` flags for EPUB3 output.
+
+ $ asciidoctor-epub3 -r asciidoctor-diagram sample.adoc
+
+== Advanced Usage
+
+=== Enabling Extensions
+
+In your program, you can either load and register the entire set of diagram extensions
+
+[source,ruby]
+----
+require 'asciidoctor-diagram'
+----
+
+or load and register each extension individually.
+
+[source,ruby]
+----
+require 'asciidoctor-diagram/<extension_name>'
+----
+
+`<extension_name>` can be one of `a2s`, `blockdiag`, `ditaa`, `erd`, `graphviz`, `meme`, `mermaid`, `msc`, `plantuml`, `shaape`, `svgbob`, `syntrax`, `umlet`, `vega` or `wavedrom`.
+
+Requiring one or more of these files will automatically register the extensions for all processed documents.
+
+If you need more fine grained control over when the extensions are enabled, `asciidoctor-diagram/<extension_name>/extension` can be used instead.
+This loads the extensions but does not register it in the Asciidoctor extension registry.
+You can then manually register the extensions at the appropriate times using the `Asciidoctor::Extensions` API.
+
+This document explains the various features of asciidoctor-diagram blocks using ditaa diagrams as an example.
+
+=== Diagram Block Macro
+
+The diagram extensions can also be used in in block macro form.
+
+.Anatomy of a diagram block macro
+----
+block-name::source-file-name[generated-file-extension] // <1> <2> <3>
+----
+<1> The macro name is the same as the block name in the block form.
+<2> The source file name specifies the external file that contains the diagram source code.
+<3> The first, optional, positional attribute assigns the file extension (i.e. `format`) to the generated diagram.
+
+When the source file name is a relative path it is resolved with respect to the location of the document being processed.
+
+=== Image Output Location
+
+When Asciidoctor Diagram writes images to disk it will go over the following options in order to determine where to write the files.
+
+. `\{imagesoutdir\}` if the `imagesoutdir` attribute has been specified
+. `\{outdir\}/\{imagesdir\}` if the `outdir` attribute has been specified
+. `\{to_dir\}/\{imagesdir\}` if the `to_dir` attribute has been specified
+. `\{base_dir\}/\{imagesdir\}`
+
+=== Specifying Diagram Generator Paths
+
+Asciidoctor Diagram depends on external tools to generates images.
+In most cases it will locate these tools automatically for you by looking for specific executables in each directory in the `PATH` environment variable.
+In case you've installed a tool in a way where the executable is not in the `PATH`, you can override its location manually using document attributes.
+The following table lists the tools that are required for each diagram type, the location where they can be downloaded and the document attribute you can use to override their locations.
+
+[cols=">,2*<",options="header"]
+|===
+   |Diagram Type |Tool                                                                  |Attribute
+   |a2s          |{uri-a2s}[AsciiToSvg]                                                 |`a2s`
+   |actdiag      |{uri-actdiag}[ActDiag]                                                |`actdiag`
+   |blockdiag    |{uri-blockdiag}[BlockDiag]                                            |`blockdiag`
+   |ditaa        |{uri-java}[Java]                                                      |`java`
+   |erd          |{uri-erd}[Erd]                                                        |`erd`
+   |graphviz     |{uri-graphviz}[GraphViz]                                              |`dot` or `graphvizdot`
+   |meme         |{uri-imagemagick}[ImageMagick]                                        |`convert` and `identify`
+   |mermaid      |{uri-mermaid}[Mermaid.cli]                                            |`mermaid`
+   |msc          |{uri-mscgen}[Mscgen]                                                  |`mscgen`
+   |nwdiag       |{uri-nwdiag}[NwDiag]                                                  |`nwdiag`
+   |packetdiag   |{uri-nwdiag}[NwDiag]                                                  |`packetdiag`
+   |plantuml     |{uri-java}[Java]                                                      |`java`
+   |rackdiag     |{uri-nwdiag}[NwDiag]                                                  |`rackdiag`
+   |seqdiag      |{uri-seqdiag}[SeqDiag]                                                |`seqdiag`
+   |shaape       |{uri-shaape}[Shaape]                                                  |`shaape`
+   |svgbob       |{uri-svgbob}[SvgBob]                                                  |`svgbob`
+   |syntrax      |{uri-syntrax}[Syntrax]                                                |`syntrax`
+   |umlet        |{uri-umlet}[Umlet]                                                    |`umlet`
+   |vega         |{uri-vega}[vg2png] and/or {uri-vega}[vg2png]                          |`vg2png` and `vg2svg`
+   |vegalite     |{uri-vegalite}[vl2vg] and {uri-vega}[vg2png] and/or {uri-vega}[vg2svg]|`vl2vg`, `vg2png` and `vg2svg`
+.2+|wavedrom     |{uri-wavedromeditor}[WaveDrom Editor]                                 |`wavedrom`
+                 |{uri-wavedromcli}[WaveDrom CLI] and {uri-phantomjs}[PhantomJS]        |`wavedrom` and `phantomjs`
+|===
+
+If for instance you installed `actdiag` in `/home/me/actdiag/bin` and this path is not included in the `PATH` you can specify its location on the command line
+
+ $ asciidoctor -a actdiag=/home/me/actdiag/bin/actdiag -r asciidoctor-diagram sample.adoc
+
+[[meme]]
+=== The Meme Extension
+
+The meme extension provides a basic '`Advice Animal`' style image generator.
+It's usage is easiest to explain with an example.
+
+----
+meme::yunoguy.jpg[Doc writers,Y U NO \\ AsciiDoc]
+----
+
+The target of the block macro tells the extension which image to use as background.
+The first two positional attributes are `top` and `bottom` and are used for the top and bottom label.
+Occurrences of `\\` surrounded by whitespace are interpreted as line breaks.
+
+=== Diagram Attributes
+
+Certain diagram types allow image generation to be customized using attributes.
+Each attribute can be specified either at the block level or at the document level.
+This is illustrated for the blockdiag `fontpath` attribute in the example below.
+
+----
+= Asciidoctor Diagram
+:blockdiag-fontpath: /path/to/font.ttf <1>
+
+[blockdiag] <2>
+....
+....
+
+[blockdiag, fontpath="/path/to/otherfont.ttf"] <3>
+....
+....
+----
+<1> Block level attributes can be specified at the document level by prefixing them with `<blocktype>-`
+<2> The first diagram does not specify an explicit value for `fontpath` so the global value will be used
+<3> The second diagram specifies a `fontpath` value which overrrides the global value
+
+Each attribute can either be specified at the block level or at the document level.
+The attribute name at the block level should be prefixed with the name of the diagram type and a dash.
+
+==== AsciiToSVG
+
+[cols=">,<,<",options="header"]
+|===
+|Name         |Default value   |Description
+|fontfamily   |unspecified     |The font family to use in the generated SVG image
+|noblur       |unspecified     |Disable drop-shadow blurring
+|===
+
+==== Blockdiag
+
+[cols=">,<,<",options="header"]
+|===
+|Name         |Default value   |Description
+|fontpath     |unspecified     |The path to the font that should be used by blockdiag
+|===
+
+==== Ditaa
+
+[cols=">,<,<",options="header"]
+|===
+|Name         |Default value   |Description
+|scale        |1               |A scale factor that is applied to the image.
+|tabs         |8               |An integer value that specifies the tab size as a number of spaces.
+|background   |FFFFFF          |The background colour of the image. The format should be a six-digit hexadecimal number (as in HTML, FF0000 for red). Pass an eight-digit hex to define transparency.
+|antialias    |true            |Enables or disables anti-aliasing.
+|separation   |true            |Prevents the separation of common edges of shapes.
+|round-corners|false           |Causes all corners to be rendered as round corners.
+|shadows      |true            |Enables or disable drop shadows.
+|debug        |false           |Renders the debug grid over the resulting image.
+|fixed-slope  |false           |Makes sides of parallelograms and trapezoids fixed slope instead of fixed width.
+|transparent  |false           |Makes the background of the image transparent instead of using the background color.
+|===
+
+==== GraphViz
+
+[cols=">,<,<",options="header"]
+|===
+|Name         |Default value   |Description
+|layout       |unspecified     |The graphviz layout engine to use (dot -K option).
+|===
+
+==== Meme
+
+[cols=">,<,<",options="header"]
+|===
+|Name          |Default value |Description
+|fillColor     |white         |The fill color for the text.
+|strokeColor   |black         |The outline color for the text
+|strokeWidth   |2             |The width of the text outline.
+|font          |Impact        |The font face to use for the text.
+|options       |unspecified   |a comma separate list of flags that modify the image rendering. Currently only `noupcase` is supported which disable upper casing the labels.
+|===
+
+==== Mermaid
+
+[cols=">,<,<",options="header"]
+|===
+|Name          |Default value   |Description
+|background    |FFFFFF          |The background colour of the image. The format should be a six-digit hexadecimal number (as in HTML, FF0000 for red). Pass an eight-digit hex to define transparency.
+|css           |unspecified     |Path to a CSS file to pass to mermaid.
+|config        |unspecified     |Path to a JSON config file to pass to mermaid.
+|ganttconfig   |unspecified     |Path to a gantt config file to pass to mermaid.
+|sequenceconfig|unspecified     |Path to a sequence config file to pass to mermaid.
+|theme         |unspecified     |Theme of the chart, could be default, forest, dark or neutral.
+|width         |unspecified     |Width of the page.
+|height        |unspecified     |Height of the page.
+|===
+
+==== Msc
+
+[cols=">,<,<",options="header"]
+|===
+|Name         |Default value   |Description
+|font         |unspecified     |The name of the font that should be used by mscgen
+|===
+
+==== PlantUML
+
+[cols=">,<,<",options="header"]
+|===
+|Name          |Default value   |Description
+|config        |unspecified     |Path to a config file to pass to PlantUML.
+|===
+
+==== Syntrax
+
+[cols=">,<,<",options="header"]
+|===
+|Name          |Default value   |Description
+|heading       |unspecifed      |Diagram title
+|scale         |1               |A scale factor that is applied to the image.
+|style         |unspecifed      |Path to a style config file to pass to Syntrax.
+|transparent   |false           |Makes the background of the image transparent instead of opaque white.
+|===
