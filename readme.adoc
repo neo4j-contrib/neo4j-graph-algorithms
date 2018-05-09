@@ -99,20 +99,21 @@ The World Wide Web is a virtual network of information.
 
 == Usage
 
-These algorithms are exposed as Neo4j procedures.
-We can call them directly from Cypher in your Neo4j Browser, from cypher-shell, or from your client code.
 
-For most algorithms we provide two procedures:
+// tag::usage[]
+These algorithms are exposed as Neo4j procedures.
+They can be called directly from Cypher in your Neo4j Browser, from cypher-shell, or from your client code.
+
+For most algorithms there are two procedures:
 
 * `algo.<name>` - this procedure writes results back to the graph as node-properties, and reports statistics.
 * `algo.<name>.stream` - this procedure returns a stream of data.
 For example, node-ids and computed values.
 +
 For large graphs, the streaming procedure might return millions, or even billions of results.
-That is why it can be more convenient to store the results of the algorithm, and then use them with later queries.
+In this case it may be more convenient to store the results of the algorithm, and then use them with later queries.
 
 We can project the graph we want to run algorithms on with either label and relationship-type projection, or cypher projection.
-
 
 [ditaa]
 ----
@@ -124,21 +125,25 @@ We can project the graph we want to run algorithms on with either label and rela
 
 ----
 
-Projected graph model is separate from Neo4j's stored graph model to enable fast caching for the topology of the graph containing only relevant nodes, relations and in addition the weights.
-For now, the projected graph model does not support multiple relationships between a single pair of nodes.
-During projection, only one relationship between a pair of nodes per direction (in, out) is allowed in the directed case, but two relationships is allowed for BOTH the undirected cases.
+The projected graph model is separate from Neo4j's stored graph model to enable fast caching for the topology of the graph, containing only relevant nodes, relationships and weights.
+The projected graph model does not support multiple relationships between a single pair of nodes.
+During projection, only one relationship between a pair of nodes per direction (in, out) is allowed in the directed case, but two relationships are allowed for BOTH the undirected cases.
 
+// end::usage[]
 
 === Label and relationship-type projection
 
+// tag::label-relationship-type-projection[]
 We can project the subgraph we want to run the algorithm on by using the label parameter to describe nodes, and relationship-type to describe relationships.
 
 The general call syntax is:
 
 [source,cypher]
 ----
-CALL algo.<name>([label],[relationshipType],{config})
+CALL algo.<name>('NodeLabel', "RelationshipType", {config})
 ----
+
+// end::label-relationship-type-projection[]
 
 For example, PageRank on DBpedia (11M nodes, 116M relationships):
 
@@ -170,15 +175,28 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 [[cypher-projection]]
 === Cypher projection
 
+// tag::cypher-projection[]
 If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
 Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type, and use `graph:'cypher'` in the config.
 
 Relationships described in the relationship-statement will only be projected if both source and target nodes are described in the node-statement.
-All other relationships that don't have both source and target nodes described in node-statement will be ignored in projection.
+Relationships that don't have both source and target nodes described in the node-statement will be ignored.
 
-We can also return a property value or weight (according to our config) in addition to the id's from these statements.
+We can also return a property value or weight (according to our config) in addition to the ids from these statements.
 
 Cypher projection enables us to be more expressive in describing our subgraph that we want to analyse, but might take longer to project the graph with more complex cypher queries.
+
+The general call syntax is:
+
+[source,cypher]
+----
+CALL algo.<name>(
+  'MATCH (n) RETURN id(n) AS id',
+  "MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target",
+  {graph: "cypher"})
+----
+
+// end::cypher-projection[]
 
 
 [source,cypher]
