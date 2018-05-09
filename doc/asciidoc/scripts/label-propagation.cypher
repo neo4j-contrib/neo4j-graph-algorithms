@@ -20,6 +20,28 @@ MERGE (nCharles)-[:FOLLOW]->(nDoug);
 
 // end::create-sample-graph[]
 
+// tag::create-no-seed-sample-graph[]
+
+MERGE (nAlice:User {id:'Alice'})
+MERGE (nBridget:User {id:'Bridget'})
+MERGE (nCharles:User {id:'Charles'})
+MERGE (nDoug:User {id:'Doug'})
+MERGE (nMark:User {id:'Mark'})
+MERGE (nMichael:User {id:'Michael'})
+
+MERGE (nAlice)-[:FOLLOW]->(nBridget)
+MERGE (nAlice)-[:FOLLOW]->(nCharles)
+MERGE (nMark)-[:FOLLOW]->(nDoug)
+MERGE (nBridget)-[:FOLLOW]->(nMichael)
+MERGE (nDoug)-[:FOLLOW]->(nMark)
+MERGE (nMichael)-[:FOLLOW]->(nAlice)
+MERGE (nAlice)-[:FOLLOW]->(nMichael)
+MERGE (nBridget)-[:FOLLOW]->(nAlice)
+MERGE (nMichael)-[:FOLLOW]->(nBridget)
+MERGE (nCharles)-[:FOLLOW]->(nDoug);
+
+// end::create-no-seed-sample-graph[]
+
 // tag::stream-sample-graph[]
 
 CALL algo.labelPropagation.stream("User", "FOLLOW",
