@@ -25,6 +25,7 @@ include::../../target/generated-documentation/org.neo4j.graphalgo.csv[]
 
 include::algorithms.adoc[leveloffset=1]
 
+ifndef::env-docs[]
 == Implementers section
 
 include::algo-procedures-api.adoc[leveloffset=2]
@@ -90,6 +91,8 @@ include::connected-components.adoc[leveloffset=2,tags=implementation]
 === Strongly Connected Components
 
 include::strongly-connected-components.adoc[leveloffset=2,tags=implementation]
+
+endif::env-docs[]
 
 ifdef::backend-html5[]
 ++++
