@@ -1,16 +1,18 @@
 = The Betweenness Centrality algorithm
 
-// tag::introduction[]
+// tag::introduction-start[]
 Betweenness centrality is a way of detecting the amount of influence a node has over the flow of information in a graph.
 It is often used to find nodes that serve as a bridge from one part of a graph to another.
 
 In the following example, Alice is the main connection in the graph:
+// end::introduction-start[]
 
 image::../images/betweenness_centrality.png[]
 
+// tag::introduction-end[]
 If Alice is removed, all connections in the graph would be cut off.
 This makes Alice important, because she ensures that no nodes are isolated.
-// end::introduction[]
+// end::introduction-end[]
 
 == History and explanation
 
