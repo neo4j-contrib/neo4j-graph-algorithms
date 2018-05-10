@@ -24,15 +24,30 @@ The guide covers the following areas:
 [[introduction]]
 == Introduction
 
+[abstract]
+--
+This chapter is an introduction to the library of Neo4j Graph Algorithms.
+--
+
 include::../../readme.adoc[tags=readme,leveloffset=1]
 
 [[yelp-example]]
 == The Yelp example
 
+[abstract]
+--
+This chapter uses the Yelp Dataset challenge as an example of using graph algorithms on a social network of friends.
+--
+
 include::yelp-intro.adoc[leveloffset=1]
 
 [[procedures]]
 == Procedures
+
+[abstract]
+--
+This chapter is a list of Neo4j Graph Algorithm procedures.
+--
 
 [[table-all]]
 [separator=¦,opts=header,cols="1m,5m"]

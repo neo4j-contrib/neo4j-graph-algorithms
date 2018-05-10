@@ -1,6 +1,11 @@
 [[algorithms]]
 = Algorithms
 
+[abstract]
+--
+This chapter is a detailed guide to each of the Neo4j Graph Algorithms, including use-cases and examples.
+--
+
 Graph algorithms are used to compute metrics for graphs, nodes, or relationships.
 
 They can provide insights on relevant entities in the graph (centralities, ranking), or inherent structures like communities (community-detection, graph-partitioning, clustering).
