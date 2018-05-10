@@ -6,15 +6,32 @@
 :toclevels: 2
 :env-docs: true
 
+License: link:{common-license-page-uri}[Creative Commons 4.0]
+
+[abstract]
+--
+This is the user guide for Neo4j Graph Algorithms version {docs-version}, authored by the Neo4j Team.
+--
+
+The guide covers the following areas:
+
+* <<introduction>> -- An introduction to Neo4j Graph Algorithms.
+* <<yelp-example>> -- An illustration of how to use graph algorithms on a social network of friends.
+* <<procedures>> -- A list of Neo4j Graph Algorithm procedures.
+* <<algorithms>> -- A detailed guide to each of the Neo4j Graph Algorithms, including use-cases and examples.
+
+
+[[introduction]]
 == Introduction
 
 include::../../readme.adoc[tags=readme,leveloffset=1]
 
-
+[[yelp-example]]
 == The Yelp example
 
 include::yelp-intro.adoc[leveloffset=1]
 
+[[procedures]]
 == Procedures
 
 [[table-all]]

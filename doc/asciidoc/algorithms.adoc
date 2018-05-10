@@ -1,3 +1,4 @@
+[[algorithms]]
 = Algorithms
 
 Graph algorithms are used to compute metrics for graphs, nodes, or relationships.
