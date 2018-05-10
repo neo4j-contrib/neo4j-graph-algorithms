@@ -59,6 +59,9 @@ One way we can do this is by ordering reviews based on the influence of the revi
 We'll start by finding users who have reviewed more than 5 hotels.
 After that we'll find the social network between those users and work out which users sit at the centre of that network.
 This should reveal the most influential people.
+The FRIENDS relationship is an example of a bidirectional relationship
+i.e. if Person A is friends with Person B then Person B is also friends with Person A.
+Neo4j stores a directed graph but we can choose to ignore the direction when we query the graph.
 
 We want to execute the page rank algorithm over a projected graph of users that have reviewed hotels and then add a `hotelPageRank` property to each of those users.
 This is the first example where we can express the projected graph in terms of node labels and relationship types.
