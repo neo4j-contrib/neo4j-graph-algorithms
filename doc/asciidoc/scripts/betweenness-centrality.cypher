@@ -23,8 +23,7 @@ YIELD nodeId, centrality
 MATCH (user:User) WHERE id(user) = nodeId
 
 RETURN user.id AS user,centrality
-ORDER BY centrality DESC
-LIMIT 20;
+ORDER BY centrality DESC;
 
 // end::stream-sample-graph[]
 
@@ -47,16 +46,21 @@ CALL algo.betweenness(
 
 // tag::stream-rabrandes-graph[]
 
-CALL algo.betweenness.sampled.stream('User','FRIEND', 
-  {strategy:'random', probability:1.0, maxDepth:5}) 
+CALL algo.betweenness.sampled.stream('User','MANAGE',
+  {strategy:'random', probability:1.0, maxDepth:1, direction: "out"})
+
 YIELD nodeId, centrality
+
+MATCH (user) WHERE id(user) = nodeId
+RETURN user.id AS user,centrality
+ORDER BY centrality DESC;
 
 // end::stream-rabrandes-graph[]
 
 // tag::write-rabrandes-graph[]
 
-CALL algo.betweenness.sampled('User','FRIEND', 
-  {strategy:'random', probability:1.0, writeProperty:'centrality', maxDepth:5}) 
+CALL algo.betweenness.sampled('User','MANAGE',
+  {strategy:'random', probability:1.0, writeProperty:'centrality', maxDepth:1, direction: "out"})
 YIELD nodes, minCentrality, maxCentrality
 
 // end::write-rabrandes-graph[]
