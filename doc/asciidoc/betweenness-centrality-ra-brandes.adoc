@@ -36,6 +36,25 @@ include::scripts/betweenness-centrality.cypher[tag=stream-rabrandes-graph]
 include::scripts/betweenness-centrality.cypher[tag=write-rabrandes-graph]
 ----
 
+// tag::stream-rabrandes-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name | Centrality weight
+| Alice | 3
+| Charles | 1
+| Bridget | 0
+| Michael | 0
+| Doug | 0
+| Mark | 0
+|===
+// end::stream-rabrandes-graph-result[]
+
+// tag::stream-rabrandes-graph-explanation[]
+Alice is still the main broker in the network, and Charles is a minor broker, although their centrality score has reduced as the algorithm only considers relationships at a depth of 1.
+The others don’t have any influence, because all the shortest paths between pairs of people go via Alice or Charles.
+// end::stream-rabrandes-graph-explanation[]
+
 = Example usage
 
 = Syntax
