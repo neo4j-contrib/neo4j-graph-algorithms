@@ -1,9 +1,12 @@
+[[algorithms-single-source-shortest-path]]
 = The Single Source Shortest Path algorithm
 
 // tag::introduction[]
 The Single Source Shortest Path (SSSP) algorithm calculates the shortest (weighted) path from a node to all other nodes in the graph.
 // end::introduction[]
 
+
+[[algorithms-single-source-shortest-path-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -12,14 +15,17 @@ SSSP came into prominence at the same time as the shortest path algorithm and Di
 We implement a delta-stepping algorithm that has been https://arxiv.org/pdf/1604.02113v1.pdf[shown to outperform Dijkstra's^].
 // end::explanation[]
 
+
+[[algorithms-single-source-shortest-path-usecase]]
 == Use-cases - when to use the Single Source Shortest Path algorithm
 
 // tag::use-case[]
 * https://en.wikipedia.org/wiki/Open_Shortest_Path_First[Open Shortest Path First^] is a routing protocol for IP networks.
-It uses Dijkstra's algorithm to help detect changes in topology, such as link failures, and https://routing-bits.com/2009/08/06/ospf-convergence/[come up with a new routing structure in seconds^].
-
+  It uses Dijkstra's algorithm to help detect changes in topology, such as link failures, and https://routing-bits.com/2009/08/06/ospf-convergence/[come up with a new routing structure in seconds^].
 // end::use-case[]
 
+
+[[algorithms-single-source-shortest-path-limitations]]
 == Constraints - when not to use the Single Source Shortest Path algorithm
 
 // tag::constraint[]
@@ -27,27 +33,29 @@ Delta stepping does not support negative weights.
 The algorithm assumes that adding a relationship to a path can never make a path shorter - an invariant that would be violated with negative weights.
 // end::constraint[]
 
+
+[[algorithms-single-source-shortest-path-sample]]
 == Single Source Shortest Path algorithm sample
 
 image::sssp.png[]
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
+
 === Delta stepping algorithm
 
-
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=delta-stream-sample-graph]
 ----
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 ----
@@ -58,12 +66,12 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 [opts="header",cols="1,1"]
 |===
 | Name | Cost
-| A | 0
-| B | 50
-| C | 50
-| D | 90
-| E | 120
-| F | 160
+| A    | 0
+| B    | 50
+| C    | 50
+| D    | 90
+| E    | 120
+| F    | 160
 |===
 
 // end::delta-stream-sample-graph-result[]
@@ -72,13 +80,12 @@ include::scripts/single-shortest-path.cypher[tag=delta-write-sample-graph]
 The above table shows the cost of going from A to each of the other nodes, including itself at a cost of 0.
 // end::delta-stream-sample-graph-explanation[]
 
-// == Example usage
 
-
+[[algorithms-single-source-shortest-path-syntax]]
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Float, {defaultValue:1.0, write:true, writeProperty:'sssp'})
 YIELD nodeCount, loadDuration, evalDuration, writeDuration
@@ -88,77 +95,72 @@ RETURN nodeCount, loadDuration, evalDuration, writeDuration
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| startNode  | node | null | no | The start node
-| weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
-| delta | float | null | yes | The grade of concurrency to use.
-| write | boolean | true | yes | Specifies if the result should be written back as a node property
-| writeProperty | string | 'sssp' | yes | The property name written back to the node sequence of the node in the path
-| nodeQuery | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationshipQuery | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
-| direction | string | outgoing | yes | The relationship direction to load from the graph. If 'both', treats the relationships as undirected
+| Name              | Type    | Default  | Optional | Description
+| startNode         | node    | null     | no       | The start node
+| weightProperty    | string  | null     | yes      | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| delta             | float   | null     | yes      | The grade of concurrency to use.
+| write             | boolean | true     | yes      | Specifies if the result should be written back as a node property
+| writeProperty     | string  | 'sssp'   | yes      | The property name written back to the node sequence of the node in the path
+| nodeQuery         | string  | null     | yes      | The label to load from the graph. If null, load all nodes
+| relationshipQuery | string  | null     | yes      | The relationship-type to load from the graph. If null, load all nodes
+| direction         | string  | outgoing | yes      | The relationship direction to load from the graph. If 'both', treats the relationships as undirected
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name | Type | Description
-| nodeCount | int | The number of nodes considered
-| totalCost | float | The sum of all weights along the path
-| loadMillis | int | Milliseconds for loading data
-| evalMillis | int | Milliseconds for running the algorithm
-| writeMillis | int | Milliseconds for writing result data back
+| Name        | Type  | Description
+| nodeCount   | int   | The number of nodes considered
+| totalCost   | float | The sum of all weights along the path
+| loadMillis  | int   | Milliseconds for loading data
+| evalMillis  | int   | Milliseconds for running the algorithm
+| writeMillis | int   | Milliseconds for writing result data back
 |===
 
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.shortestPath.deltaStepping.stream(startNode:Node, weightProperty:String, delta: Float,
-{nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, direction:'OUTGOING'})
- YIELD nodeId, cost
+    {nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, direction:'OUTGOING'})
+YIELD nodeId, cost
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| startNode  | node | null | no | The start node
-| weightProperty | string | null | yes | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
-| delta | float | null | yes | The grade of concurrency to use.
-| nodeQuery | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationshipQuery | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
-| defaultValue | float | null | yes | The default value of the weight in case it is missing or invalid
-| direction | string | outgoing | yes | The relationship direction to load from the graph. If 'both', treats the relationships as undirected
+| Name              | Type   | Default  | Optional | Description
+| startNode         | node   | null     | no       | The start node
+| weightProperty    | string | null     | yes      | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| delta             | float  | null     | yes      | The grade of concurrency to use.
+| nodeQuery         | string | null     | yes      | The label to load from the graph. If null, load all nodes
+| relationshipQuery | string | null     | yes      | The relationship-type to load from the graph. If null, load all nodes
+| defaultValue      | float  | null     | yes      | The default value of the weight in case it is missing or invalid
+| direction         | string | outgoing | yes      | The relationship direction to load from the graph. If 'both', treats the relationships as undirected
 |===
 
 .Results
 [opts="header"]
 |===
-| Name | Type | Description
-| nodeId | int | Node ID
-| cost | int | The cost it takes to get from start node to specific node
+| Name   | Type | Description
+| nodeId | int  | Node ID
+| cost   | int  | The cost it takes to get from start node to specific node
 |===
+
 
 == Versions
 
 We support the following versions of the shortest path algorithms:
 
 * [x] directed, unweighted:
-
 ** direction: 'OUTGOING' or INCOMING, weightProperty: null
-
 * [x] directed, weighted
-
 ** direction: 'OUTGOING' or INCOMING, weightProperty: 'cost'
-
 * [x] undirected, unweighted
-
 ** direction: 'BOTH', weightProperty: null
-
 * [x] undirected, weighted
-
 ** direction: 'BOTH', weightProperty: 'cost'
+
 
 == Cypher projection
 
@@ -167,10 +169,11 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 ----
+
 
 == Implementations
 
@@ -181,24 +184,22 @@ include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 * It can be tweaked using the delta-parameter which controls the grade of concurrency.
 * If initialized with an non-existing weight-property, it will treat the graph as unweighted.
 
+
 ifndef::env-docs[]
 == References
 
 // tag::references[]
 * [1] http://onlinepubs.trb.org/Onlinepubs/hrbbulletin/61/61-003.pdf[Effect of travel time and distance on freeway usage^]
-
 * http://www.math.uiuc.edu/documenta/vol-ismp/32_schrijver-alexander-sp.pdf
-
 * http://www.math.ias.edu/~pooyahat/Dijkstra.pdf
-
 * https://arxiv.org/pdf/1604.02113v1.pdf
-
 * https://www.cc.gatech.edu/~bader/papers/ShortestPaths-ALENEX2007.pdf
 // end::references[]
 endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
+
 
 == Implementation details
 
@@ -242,6 +243,7 @@ Parallizing _All Pairs Shortest Path_ might be easy using Dijkstra on each threa
 ### evaluation
 
 - Performance tests on different dataset sizes / level of concurrency
+
 
 == Details
 

@@ -1,11 +1,14 @@
+[[algorithms-pagerank]]
 = The PageRank algorithm
 
 // tag::introduction[]
 PageRank is an algorithm that measures the *transitive* influence or connectivity of nodes.
 
-It can be computed by either iteratively distributing one node's rank (originally based on degree) over its neighbours or by randomly traversing the graph and counting the frequency of hitting each nodes during these walks.
+It can be computed by either iteratively distributing one node's rank (originally based on degree) over its neighbours or by randomly traversing the graph and counting the frequency of hitting each node during these walks.
 // end::introduction[]
 
+
+[[algorithms-pagerank-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -25,10 +28,12 @@ where,
 
 * we assume that a page `A` has pages `T1` to `Tn` which point to it (i.e., are citations).
 * `d` is a damping factor which can be set between 0 and 1.
-It is usually set to 0.85.
+  It is usually set to 0.85.
 * `C(A)` is defined as the number of links going out of page `A`.
 // end::formula[]
 
+
+[[algorithms-pagerank-usecase]]
 == Use-cases - when to use the PageRank algorithm
 
 // tag::use-case[]
@@ -36,19 +41,21 @@ PageRank can be applied across a wide range of domains.
 The following are some notable use-cases:
 
 * Personalized PageRank is used by Twitter to present users with recommendations of other accounts that they may wish to follow.
-The algorithm is run over a graph which contains shared interests and common connections.
-Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf["WTF: The Who to Follow Service at Twitter"^].
+  The algorithm is run over a graph which contains shared interests and common connections.
+  Their approach is described in more detail in https://web.stanford.edu/~rezab/papers/wtf_overview.pdf["WTF: The Who to Follow Service at Twitter"^].
 
 * PageRank has been used to rank public spaces or streets, predicting traffic flow and human movement in these areas.
-The algorithm is run over a graph which contains intersections connected by roads, where the PageRank score reflects the tendency of people to park, or end their journey, on each street.
-This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf["Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study"^].
+  The algorithm is run over a graph which contains intersections connected by roads, where the PageRank score reflects the tendency of people to park, or end their journey, on each street.
+  This is described in more detail in https://arxiv.org/pdf/0804.1630.pdf["Self-organized Natural Roads for Predicting Traffic Flow: A Sensitivity Study"^].
 
 * PageRank can be used as part of an anomaly or fraud detection system in the healthcare and insurance industries.
-It can help find doctors or providers that are behaving in an unusual manner, and then feed the score into a machine learning algorithm.
+  It can help find doctors or providers that are behaving in an unusual manner, and then feed the score into a machine learning algorithm.
 
 There are many more use cases, which you can read about in David Gleich's https://arxiv.org/pdf/1407.5107.pdf["PageRank beyond the web"^]
 // end::use-case[]
 
+
+[[algorithms-pagerank-limitations]]
 == Constraints - when not to use the PageRank algorithm
 
 // tag::constraint[]
@@ -59,12 +66,14 @@ There are some things to be aware of when using the PageRank algorithm:
 * Rank sink can occur when a network of pages form an infinite cycle.
 
 * Dead-ends occur when pages have no out-links.
-If a page contains a link to another page which has no out-links, the link would be known as a dangling link.
+  If a page contains a link to another page which has no out-links, the link would be known as a dangling link.
 
 If you see unexpected results from running the algorithm, it is worth doing some exploratory analysis of the graph to see if any of these problems are the cause.
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google PageRank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
+
+[[algorithms-pagerank-sample]]
 == PageRank algorithm sample
 
 This sample will explain the PageRank algorithm, using a simple graph:
@@ -72,39 +81,36 @@ This sample will explain the PageRank algorithm, using a simple graph:
 image::pagerank.png[]
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=create-sample-graph]
 ----
 
-
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=stream-sample-graph]
 ----
 
-
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=write-sample-graph]
 ----
-
 
 // tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1"]
 |===
-| Name | PageRank
-| Home | 3.232
+| Name    | PageRank
+| Home    | 3.232
 | Product | 1.059
-| Links | 1.059
-| About | 1.059
-| Site A | 0.328
-| Site B | 0.328
-| Site C | 0.328
-| Site D | 0.328
+| Links   | 1.059
+| About   | 1.059
+| Site A  | 0.328
+| Site B  | 0.328
+| Site C  | 0.328
+| Site D  | 0.328
 |===
 // end::stream-sample-graph-result[]
 
@@ -113,11 +119,13 @@ As we might expect, the Home page has the highest PageRank because it has incomi
 We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
 // end::stream-sample-graph-explanation[]
 
+
+[[algorithms-pagerank-example]]
 == Example usage
 
 In this example we will run PageRank on Yelp's social network to find potential influencers.
 
-In the link:#_import[import section] we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
+When <<yelp-import, importing the Yelp dataset>> we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
 Relationships in Neo4j always have a direction, but in this domain the direction is irrelevant.
 If `Person A` is a `FRIEND` with `Person B`, we can say that `Person B` is also a `FRIEND` with `Person A`.
 
@@ -126,15 +134,17 @@ Instead, we can project our undirected social network using *Cypher loading*.
 We can also apply this approach to other algorithms that use *Cypher loading*.
 
 .The following will run the algorithm on Yelp social network:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
 ----
 
+
+[[algorithms-pagerank-syntax]]
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String,
     {iterations:20, dampingFactor:0.85, write: true, writeProperty:'pagerank', concurrency:4})
@@ -144,60 +154,59 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
-| iterations | int | 20 | yes | How many iterations of PageRank to run
-| concurrency | int | available CPUs | yes | The number of concurrent threads
-| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
-| write | boolean | true | yes | Specify if the result should be written back as a node property
-| writeProperty | string | 'pagerank' | yes | The property name written back to
-| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name          | Type    | Default        | Optional | Description
+| label         | string  | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship  | string  | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| iterations    | int     | 20             | yes      | How many iterations of PageRank to run
+| concurrency   | int     | available CPUs | yes      | The number of concurrent threads
+| dampingFactor | float   | 0.85           | yes      | The damping factor of the PageRank calculation
+| write         | boolean | true           | yes      | Specify if the result should be written back as a node property
+| writeProperty | string  | 'pagerank'     | yes      | The property name written back to
+| graph         | string  | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name | Type | Description
-| nodes | int | The number of nodes considered
-| iterations | int | The number of iterations run
-| dampingFactor | float | The damping factor used
-| writeProperty | string | The property name written back to
-| write | boolean | Specifies if the result was written back as node property
-| loadMillis | int | Milliseconds for loading data
-| computeMillis | int | Milliseconds for running the algorithm
-| writeMillis | int | Milliseconds for writing result data back
-
+| Name          | Type    | Description
+| nodes         | int     | The number of nodes considered
+| iterations    | int     | The number of iterations run
+| dampingFactor | float   | The damping factor used
+| writeProperty | string  | The property name written back to
+| write         | boolean | Specifies if the result was written back as node property
+| loadMillis    | int     | Milliseconds for loading data
+| computeMillis | int     | Milliseconds for running the algorithm
+| writeMillis   | int     | Milliseconds for writing result data back
 |===
 
-
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.pageRank.stream(label:String, relationship:String,
-  {iterations:20, dampingFactor:0.85, concurrency:4})
+    {iterations:20, dampingFactor:0.85, concurrency:4})
 YIELD node, score - calculates page rank and streams results
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all nodes
-| iterations | int | 20 | yes | Specify how many iterations of PageRank to run
-| concurrency | int | available CPUs | yes | The number of concurrent threads
-| dampingFactor | float | 0.85 | yes | The damping factor of the PageRank calculation
-| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name          | Type   | Default        | Optional | Description
+| label         | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship  | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
+| iterations    | int    | 20             | yes      | Specify how many iterations of PageRank to run
+| concurrency   | int    | available CPUs | yes      | The number of concurrent threads
+| dampingFactor | float  | 0.85           | yes      | The damping factor of the PageRank calculation
+| graph         | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header"]
 |===
-| Name | Type | Description
-| node | long | Node ID
+| Name  | Type  | Description
+| node  | long  | Node ID
 | score | float | PageRank weight
 |===
+
 
 == Huge graph projection
 
@@ -205,20 +214,22 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 
 .Set `graph:'huge'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=huge-projection]
 ----
+
 
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
 You must ensure that `graph:'cypher'` is set in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/pagerank.cypher[tag=cypher-loading]
 ----
+
 
 == Versions
 
@@ -233,6 +244,7 @@ We support the following versions of the PageRank algorithm:
 ** Only with cypher projection
 
 * [ ] undirected, weighted
+
 
 ifndef::env-docs[]
 == References
@@ -262,9 +274,9 @@ ifndef::env-docs[]
 // end::references[]
 endif::env-docs[]
 
+
 ifdef::implementation[]
 // tag::implementation[]
-
 == Implementation details
 
 // copied from: https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues/78
@@ -309,24 +321,23 @@ One approach to parallelize _PageRank_ might be to partition the node into batch
 
 - we might scale up the ranks to ints for faster multiplication.
 
+
 == Details
 
 Partition based parallel PageRank based on "An Efficient Partition-Based Parallel PageRank Algorithm" [1]-
 
-- Each partition thread has its local array of only the nodes that it is responsible for,
-not for all nodes. Combined, all partitions hold all page rank scores for every node once.
-Instead of writing partition files and transferring them across the network
-(as done in the paper since they were concerned with parallelising across multiple nodes),
-we use integer arrays to write the results to.
-The actual score is upscaled from a double to an integer by multiplying it with {@code 100_000}.
+- Each partition thread has its local array of only the nodes that it is responsible for, not for all nodes.
+  Combined, all partitions hold all page rank scores for every node once.
+  Instead of writing partition files and transferring them across the network (as done in the paper since they were concerned with parallelising across multiple nodes), we use integer arrays to write the results to.
+  The actual score is upscaled from a double to an integer by multiplying it with {@code 100_000}.
 
 - To avoid contention by writing to a shared array, we partition the result array.
 - During execution, the scores arrays are shaped like this:
 
     [ executing partition ] -> [ calculated partition ] -> [ local page rank scores ]
 
-- Each single partition writes in a partitioned array, calculation the scores
- for every receiving partition. A single partition only sees:
+- Each single partition writes in a partitioned array, calculation the scores for every receiving partition.
+  A single partition only sees:
 
     [ calculated partition ] -> [ local page rank scores ]
 
@@ -335,26 +346,21 @@ The actual score is upscaled from a double to an integer by multiplying it with 
     [ calculated partition ] -> [ executing partition ] -> [ local page rank scores ]
 
 - This step does not happen in parallel, but does not involve extensive copying.
-The local page rank scores needn't be copied, only the partitioning arrays.
-All in all, {@code concurrency^2} array element reads and assignments have to
-be performed.
+  The local page rank scores needn't be copied, only the partitioning arrays.
+  All in all, {@code concurrency^2} array element reads and assignments have to be performed.
 
 - For the next iteration, every partition first updates its scores, in parallel.
-A single partition now sees:
+  A single partition now sees:
 
     [ executing partition ] -> [ local page rank scores ]
 
-- That is, a list of all calculated scores for it self, grouped by the partition that
-calculated these scores.
-This means, most of the synchronization happens in parallel, too.
+- That is, a list of all calculated scores for it self, grouped by the partition that calculated these scores.
+  This means, most of the synchronization happens in parallel, too.
 
-- Partitioning is not done by number of nodes but by the accumulated degree –
-as described in "Fast Parallel PageRank: A Linear System Approach" [2].
-Every partition should have about the same number of relationships to operate on.
-- This is done to avoid having one partition with super nodes and instead have
-all partitions run in approximately equal time.
-Smaller partitions are merged down until we have at most {@code concurrency} partitions,
-in order to batch partitions and keep the number of threads in use predictable/configurable.
+- Partitioning is not done by number of nodes but by the accumulated degree – as described in "Fast Parallel PageRank: A Linear System Approach" [2].
+  Every partition should have about the same number of relationships to operate on.
+- This is done to avoid having one partition with super nodes and instead have all partitions run in approximately equal time.
+  Smaller partitions are merged down until we have at most {@code concurrency} partitions, in order to batch partitions and keep the number of threads in use predictable/configurable.
 
 [1]: An Efficient Partition-Based Parallel PageRank Algorithm
 [2]: <a href="https://www.cs.purdue.edu/homes/dgleich/
