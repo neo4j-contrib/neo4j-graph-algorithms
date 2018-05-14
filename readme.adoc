@@ -12,9 +12,12 @@ endif::env-docs[]
 
 Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
 
+
+[[introduction-algorithms]]
 == Algorithms
 
 // tag::algorithms[]
+
 
 === Centralities
 
@@ -23,6 +26,7 @@ These algorithms determine the importance of distinct nodes in a network:
 * PageRank (`algo.pageRank`)
 * Betweenness Centrality (`algo.betweenness`)
 * Closeness Centrality (`algo.closeness`)
+
 
 === Community detection
 
@@ -33,6 +37,7 @@ These algorithms evaluate how a group is clustered or partitioned, as well as it
 * (Weakly) Connected Components (`algo.unionFind`)
 * Strongly Connected Components (`algo.scc`)
 * Triangle Count / Clustering Coefficient (`algo.triangleCount`)
+
 
 === Path finding
 
@@ -48,6 +53,7 @@ These algorithms help find the shortest path or evaluate the availability and qu
 These procedures work either on the whole graph, or on a subgraph filtered by label and relationship-type.
 You can also use link:#cypher-projection[filtering and projection using Cypher queries].
 
+
 ifndef::env-docs[]
 == Feedback
 
@@ -56,6 +62,7 @@ Also please note things that are missing from the installation instructions or d
 
 Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
 endif::env-docs[]
+
 
 == Installation
 
@@ -97,8 +104,8 @@ The World Wide Web is a virtual network of information.
 * _Note that Neo4j stores directed relationships, we can treat them as though they are undirected when we are doing the analysis_
 ////
 
-== Usage
 
+== Usage
 
 // tag::usage[]
 These algorithms are exposed as Neo4j procedures.
@@ -131,6 +138,7 @@ During projection, only one relationship between a pair of nodes per direction (
 
 // end::usage[]
 
+
 === Label and relationship-type projection
 
 // tag::label-relationship-type-projection[]
@@ -158,6 +166,7 @@ RETURN node.title, score
 ORDER BY score DESC LIMIT 10;
 ----
 
+
 ==== Huge graph projection
 
 // tag::huge-graph-projection[]
@@ -180,6 +189,7 @@ For example, PageRank on DBpedia:
 CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, writeProperty:'pagerank',graph:'huge'});
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, writeProperty
 ----
+
 
 [[cypher-projection]]
 === Cypher projection
@@ -234,6 +244,7 @@ ifndef::env-docs[]
 The detailed call syntax and all parameters and possible return values for each algorithm are listed in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
 endif::env-docs[]
 
+
 == Graph loading
 
 As it can take some time to load large graphs into the algorithm data structures, you can pre-load graphs and then later refer to them by name for several graph algorithms.
@@ -258,6 +269,7 @@ CALL algo.pageRank(null,null,{graph:'my-graph',...})
 CALL algo.graph.remove('my-graph')
   YIELD name, type, exists, removed, nodes;
 ----
+
 
 == Building locally
 

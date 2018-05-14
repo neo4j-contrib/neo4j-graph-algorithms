@@ -1,6 +1,13 @@
 [[algorithms]]
 = Algorithms
 
+ifdef::env-docs[]
+[abstract]
+--
+This chapter provides explanations and examples for each of the algorithms in the Neo4j Graph Algorithms library.
+--
+endif::env-docs[]
+
 Graph algorithms are used to compute metrics for graphs, nodes, or relationships.
 
 They can provide insights on relevant entities in the graph (centralities, ranking), or inherent structures like communities (community-detection, graph-partitioning, clustering).

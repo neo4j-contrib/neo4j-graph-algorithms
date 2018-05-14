@@ -24,15 +24,33 @@ The guide covers the following areas:
 [[introduction]]
 == Introduction
 
+[abstract]
+--
+This chapter provides an introduction to the available graph algorithms, and instructions for installation and use.
+--
+
 include::../../readme.adoc[tags=readme,leveloffset=1]
+
 
 [[yelp-example]]
 == The Yelp example
 
+[abstract]
+--
+This chapter introduces the Yelp Open Dataset that is used throughout to exemplify how the Neo4j Graph Algorithms work.
+--
+
 include::yelp-intro.adoc[leveloffset=1]
+
 
 [[procedures]]
 == Procedures
+
+[abstract]
+--
+This chapter contains a reference of all the procedures in the Neo4j Graph Algorithms library.
+--
+
 
 [[table-all]]
 [separator=¦,opts=header,cols="1m,5m"]
@@ -41,6 +59,7 @@ include::../../target/generated-documentation/org.neo4j.graphalgo.csv[]
 |===
 
 include::algorithms.adoc[leveloffset=1]
+
 
 ifndef::env-docs[]
 == Implementers section
@@ -53,57 +72,71 @@ include::implementers.adoc[leveloffset=2]
 
 :implementation:
 
+
 === PageRank
 
 include::pagerank.adoc[leveloffset=2,tags=implementation]
+
 
 === Betweenness Centrality
 
 include::betweenness-centrality.adoc[leveloffset=2,tags=implementation]
 
+
 === Closeness Centrality
 
 include::closeness-centrality.adoc[leveloffset=2,tags=implementation]
+
 
 === Harmonic Centrality
 
 include::harmonic-centrality.adoc[leveloffset=2,tags=implementation]
 
+
 === Minimum Weight Spanning Tree
 
 include::minimum-weight-spanning-tree.adoc[leveloffset=2,tags=implementation]
+
 
 === Single Shortest Path
 
 include::single-shortest-path.adoc[leveloffset=2,tags=implementation]
 
+
 === A*
 
 include::astar.adoc[leveloffset=2,tags=implementation]
+
 
 === Yen's K-Shortest Paths algorithm
 
 include::yens-k-shortest-paths.adoc[leveloffset=2,tags=implementation]
 
+
 === All Pairs Shortest Path
 
 include::all-pairs-shortest-path.adoc[leveloffset=2,tags=implementation]
+
 
 === Triangle Count
 
 include::triangleCount.adoc[leveloffset=2,tags=implementation]
 
+
 === Label Propagation
 
 include::label-propagation.adoc[leveloffset=2,tags=implementation]
+
 
 === Louvain
 
 include::louvain.adoc[leveloffset=2,tags=implementation]
 
+
 === Weakly Connected Components
 
 include::connected-components.adoc[leveloffset=2,tags=implementation]
+
 
 === Strongly Connected Components
 
