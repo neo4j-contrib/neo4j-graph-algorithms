@@ -26,13 +26,13 @@ MATCH (n:Node) WHERE id(n) = nodeId
 
 RETURN n.id AS node, centrality
 ORDER BY centrality DESC
-limit 20;
+LIMIT 20;
 
 // end::stream-sample-graph[]
 
 // tag::write-sample-graph[]
 
-CALL algo.closeness('Node', 'LINK', {write:true, writeProperty:'centrality'}) 
+CALL algo.closeness('Node', 'LINK', {write:true, writeProperty:'centrality'})
 YIELD nodes,loadMillis, computeMillis, writeMillis;
 
 // end::write-sample-graph[]
@@ -50,7 +50,7 @@ CALL algo.closeness(
 
 // tag::huge-projection[]
 
-CALL algo.closeness('Node', 'LINK', {graph:'huge'}) 
+CALL algo.closeness('Node', 'LINK', {graph:'huge'})
 YIELD nodes,loadMillis, computeMillis, writeMillis;
 
 // end::huge-projection[]
