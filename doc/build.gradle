@@ -72,6 +72,7 @@ ext {
     ]
     asciidocSourceDir = "$projectDir/asciidoc"
     distDir = "$buildDir/distributions"
+    docId = 'graph-algorithms'
 }
 
 def getAsciidoctor() {
@@ -107,6 +108,17 @@ task docbook {
             into outputDir
         }
     }
+    finalizedBy 'preprocess'
+}
+
+preprocess {
+    dependsOn docbook
+    def sourceFile = "${buildDir}/docbook/${versions.graphAlgoDocs}/index.xml"
+    input sourceFile
+    outFile sourceFile
+    parameters([
+        "book-id": "$docId"
+    ])
 }
 
 task makeToc(type: XsltTask, dependsOn: docbook) {
@@ -142,7 +154,6 @@ html {
     ext.sourceDir = docbook.outputDir
     ext.sourceFile = "$sourceDir/index.xml"
     ext.outputDir = "$buildDir/html/${versions.graphAlgoDocs}"
-    ext.docId = 'graph-algorithms'
     ext.contentMap = "$projectDir/docbook/content-map.xml"
     inputs.file sourceFile
     inputs.dir 'css'
