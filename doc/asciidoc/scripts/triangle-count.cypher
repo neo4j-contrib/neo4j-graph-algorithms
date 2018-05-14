@@ -20,8 +20,8 @@ MERGE (chris)-[:KNOWS]->(karin);
 
 // tag::stream-triples[]
 
-CALL algo.triangle.stream('Person','KNOWS') 
-yield nodeA,nodeB,nodeC
+CALL algo.triangle.stream('Person','KNOWS')
+YIELD nodeA,nodeB,nodeC
 
 MATCH (a:Person) WHERE id(a) = nodeA
 MATCH (b:Person) WHERE id(b) = nodeB
@@ -35,14 +35,14 @@ RETURN a.id AS nodeA, b.id AS nodeB, c.id AS nodeC
 // tag::triangle-write-sample-graph[]
 
 CALL algo.triangleCount('Person', 'KNOWS',
-  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
+  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'})
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
 
 // end::triangle-write-sample-graph[]
 
 // tag::triangle-stream-sample-graph[]
 
-CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4}) 
+CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4})
 YIELD nodeId, triangles, coefficient
 
 MATCH (p:Person) WHERE id(p) = nodeId
@@ -55,7 +55,7 @@ ORDER BY coefficient DESC
 // tag::triangle-write-yelp[]
 
 CALL algo.triangleCount('User', 'FRIEND',
-  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'}) 
+  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'})
 YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
 
 // end::triangle-write-yelp[]
@@ -65,7 +65,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 CALL algo.triangleCount(
   'MATCH (p:Person) RETURN id(p) as id',
   'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source,id(p2) as target',
-  {concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'}) 
-yield loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+  {concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'})
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
 
 // end::cypher-loading[]
