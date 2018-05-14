@@ -31,6 +31,8 @@
 			<item>YIELD</item>
 			<item>CALL</item>
 			<item>ORDER BY</item>
+			<item>ORDER</item>
+			<item>BY</item>
 			<item>AS</item>
 			<item>LIMIT</item>
 		</list>
