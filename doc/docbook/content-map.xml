@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d:toc xmlns:d="http://docbook.org/ns/docbook" xmlns="http://www.w3.org/1999/xhtml" role="chunk-toc">
+  <d:tocentry linkend="graph-algorithms"><?dbhtml filename="index.html"?>
+    <d:tocentry linkend="introduction"><?dbhtml filename="introduction/index.html"?>
+    </d:tocentry>
+    <d:tocentry linkend="yelp-example"><?dbhtml filename="yelp-example/index.html"?>
+    </d:tocentry>
+    <d:tocentry linkend="procedures"><?dbhtml filename="procedures/index.html"?>
+    </d:tocentry>
+    <d:tocentry linkend="algorithms"><?dbhtml filename="algorithms/index.html"?>
+      <d:tocentry linkend="algorithms-pagerank"><?dbhtml filename="algorithms/page-rank/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-betweenness-centrality"><?dbhtml filename="algorithms/betweenness-centrality/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-closeness-centrality"><?dbhtml filename="algorithms/closeness-centrality/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-harmonic-centrality"><?dbhtml filename="algorithms/harmonic-centrality/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-minimum-weight-spanning-tree"><?dbhtml filename="algorithms/minimum-weight-spanning-tree/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-shortest-path"><?dbhtml filename="algorithms/shortest-path/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-single-source-shortest-path"><?dbhtml filename="algorithms/single-source-shortest-path/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-a_star"><?dbhtml filename="algorithms/a_star/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-yens-k-shortest-path"><?dbhtml filename="algorithms/yen-s-k-shortest-path/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithm-all-pairs-shortest-path"><?dbhtml filename="algorithms/all-pairs-shortest-path/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-triangle-count-clustering-coefficient"><?dbhtml filename="algorithms/triangle-counting-clustering-coefficient/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-label-propagation"><?dbhtml filename="algorithms/label-propagation/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-louvain"><?dbhtml filename="algorithms/louvain/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-connected-components"><?dbhtml filename="algorithms/connected-components/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-strongly-connected-components"><?dbhtml filename="algorithms/strongly-connected-components/index.html"?>
+      </d:tocentry>
+    </d:tocentry>
+  </d:tocentry>
+</d:toc>
+<!-- vim: set ts=2 sw=2: -->
