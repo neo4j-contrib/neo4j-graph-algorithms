@@ -1,11 +1,13 @@
+[[algorithm-all-pairs-shortest-path]]
 = The All Pairs Shortest Path algorithm
 
 // tag::introduction[]
 The All Pairs Shortest Path (APSP) calculates the shortest (weighted) path between all pairs of nodes.
 This algorithm has optimisations that make it quicker than calling the Single Source Shortest Path algorithm for every pair of nodes in the graph.
-
 // end::introduction[]
 
+
+[[algorithm-all-pairs-shortest-path-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -15,38 +17,34 @@ In this scenario, the algorithm will return `Infinity` value as a result between
 
 Plain cypher does not support filtering `Infinity` values, so `algo.isFinite` function was added to help filter `Infinity` values from results.
 
+
+[[algorithm-all-pairs-shortest-path-usecase]]
 == Use-cases - when to use the All Pairs Shortest Path algorithm
 
 // tag::use-case[]
 
 * The All Pairs Shortest Path algorithm is used in urban service system problems, such as the location of urban facilities or the distribution or delivery of goods.
-One example of this is determining the traffic load expected on different segments of a transportation grid.
-For more information, see http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
-
+  One example of this is determining the traffic load expected on different segments of a transportation grid.
+  For more information, see http://web.mit.edu/urban_or_book/www/book/[Urban Operations Research^].
 * All pairs shortest path is used as part of the REWIRE data center design algorithm that finds a network with maximum bandwidth and minimal latency.
-There are more details about this approach in https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf["REWIRE: An Optimization-based Framework for Data Center Network Design"^]
+  There are more details about this approach in https://cs.uwaterloo.ca/research/tr/2011/CS-2011-21.pdf["REWIRE: An Optimization-based Framework for Data Center Network Design"^]
 
 // end::use-case[]
 
-// == Constraints - when not to use the All Pairs Shortest Path algorithm
 
-// tag::constraint[]
-
-// end::constraint[]
-
-
+[[algorithm-all-pairs-shortest-path-sample]]
 == All Pairs Shortest Path algorithm sample
 
 image::sssp.png[]
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
 ----
@@ -56,19 +54,17 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-sample-graph]
 [opts="header",cols="1,1,1"]
 |===
 | Source | Target | Cost
-| A | F | 100
-| C | F | 90
-| B | F | 90
-| A | E | 80
-| C | E | 70
-| B | E | 80
-| A | B | 50
-| D | F | 50
-| A | C | 50
-| A | D | 50
-
+| A      | F      | 100
+| C      | F      | 90
+| B      | F      | 90
+| A      | E      | 80
+| C      | E      | 70
+| B      | E      | 80
+| A      | B      | 50
+| D      | F      | 50
+| A      | C      | 50
+| A      | D      | 50
 |===
-
 // end::all-pairs-stream-sample-graph-result[]
 
 // tag::all-pairs-stream-sample-graph-explanation[]
@@ -84,10 +80,11 @@ Note that relationship query does not specify direction of the relationship.
 This is applicable to all other algorithms that use Cypher loading.
 
 .The following will run the algorithm, treating the graph as undirected:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-bidirected-graph]
 ----
+
 
 == Huge graph projection
 
@@ -95,10 +92,11 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 
 .Set `graph:'huge'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=all-pairs-huge-projection]
 ----
+
 
 == Implementations
 
@@ -112,6 +110,7 @@ include::scripts/single-shortest-path.cypher[tag=all-pairs-huge-projection]
 ifdef::implementation[]
 // tag::implementation[]
 
+
 ifndef::env-docs[]
 == References
 
@@ -121,25 +120,25 @@ ifndef::env-docs[]
 // end::references[]
 endif::env-docs[]
 
+
 == Implementation details
 
 :leveloffset: +1
 
+
 == Details
+
 
 === algo.allShortestPaths.stream
 
-- returns a stream of source-target node to distance tuples for each pair of nodes
-- Since all nodeId's have already been ordered by the idMapping we can use an integer
- instead of a queue which just count's up for each startNodeId as long as it is
- < nodeCount.
+- Returns a stream of source-target node to distance tuples for each pair of nodes
+- Since all nodeId's have already been ordered by the idMapping we can use an integer instead of a queue which just counts up for each startNodeId as long as it is < nodeCount.
 - Each thread tries to take one int from the counter at one time and starts its computation on it.
 - The {@link AllShortestPaths#concurrency} value determines the count of workers that should be spawned.
-- Due to the high memory footprint the result set would have we emit each result into
- a blocking queue. The result stream takes elements from the queue while the workers
- add elements to it.
+- Due to the high memory footprint the result set would have we emit each result into a blocking queue.
+  The result stream takes elements from the queue while the workers add elements to it.
 - The result stream is limited by N^2. If the stream gets closed prematurely the workers get closed too.
-- writeback not supported!
+- Writeback not supported!
 
 // end::implementation[]
 endif::implementation[]

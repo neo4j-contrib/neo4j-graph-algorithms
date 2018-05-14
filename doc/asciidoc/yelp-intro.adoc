@@ -17,6 +17,7 @@ We will illustrate how to use graph algorithms on a social network of friends, a
 For more information, it is also worth checking out https://www.yelp.com/dataset/challenge/winners[past winners, and their work].
 
 
+[[yelp-data]]
 == Data
 
 // tag::data-explanation[]
@@ -32,15 +33,17 @@ In Round 10 of the challenge, the dataset included:
 // tag::data-download[]
 You can https://www.yelp.com/dataset/download[download the dataset in JSON format] by filling out a form on Yelp's website.
 There are 6 JSON files available (https://www.yelp.com/dataset/documentation/json[detailed documentation]).
-For the purposes of this example, we'll ignore the photos and checkins files as they aren't relevant for our analysis.
+For the purposes of this example, we will ignore the photos and checkins files as they are not relevant for our analysis.
 // end::data-download[]
 
-We'll create a knowledge graph from the rest of the files, and will use the https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases[APOC plugin] to help us with importing and batching data in Neo4j.
+We will create a knowledge graph from the rest of the files, and will use the https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases[APOC plugin] to help us with importing and batching data in Neo4j.
 Depending on your setup, import might take some time (the _user.json_ file contains data for about a 10 million-person social network of friends).
 While _review.json_ is even bigger in size, it is mostly made up of the text that represents the actual review, so the import will be faster.
 We also do not need the actual text, but only the meta-data about them.
 For example, meta-data on who wrote the review and how a certain business was rated is imported, but the text itself will not be imported.
 
+
+[[yelp-model]]
 == Graph model
 
 image::yelp_graph_model.png[]
@@ -57,47 +60,49 @@ If we were to use our graph as a recommendation engine, we might construct a dif
 
 For further information on using Neo4j as a recommendation engine, check out this http://guides.neo4j.com/sandbox/recommendations[great guide] or this https://www.youtube.com/watch?v=oMTmG4ClO5I[educational video].
 
+
+[[yelp-import]]
 == Import
 
-
 .Define graph schema (constraint/index)
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=load-schema]
 ----
 
-
 .Load businesses
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=load-business]
 ----
 
 .Load tips
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=load-tip]
 ----
 
 .Load reviews
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=load-review]
 ----
 .Load users
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=load-user]
 ----
 
+
+[[yelp-networks]]
 == Networks
+
 
 === Social network
 
 A https://en.wikipedia.org/wiki/Social_network[Social network] is a theoretical construct, useful in the social sciences to study relationships between individuals, groups, organizations, or even entire societies.
 An axiom of the social network approach to understanding social interaction is that social phenomena should be primarily conceived and investigated through the properties of relationships between and within nodes, instead of the properties of these nodes themselves.
 Precisely because many different types of relations, singular or in combination, form these network configurations, network analytics are useful to a broad range of research enterprises.
-
 
 https://en.wikipedia.org/wiki/Social_network_analysis[Social network analysis] is the process of investigating social structures through the use of networks and graph theory.
 It characterizes networked structures in terms of nodes (individual actors, people, or things within the network) and the ties, edges, or links (relationships or interactions) that connect them.
@@ -106,9 +111,9 @@ Examples of social structures commonly visualized through social network analysi
 Social network analysis has emerged as a key technique in modern sociology.
 It has also gained a significant following in anthropology, biology, demography, communication studies, economics, geography, history, information science, organizational studies, political science, social psychology, development studies, sociolinguistics, and computer science.
 
-
 Yelp's friendship network is an _undirected_ graph with _unweighted_ friend relationships between users.
 While there are over 500,000 users with no friends, they will be ignored in this analysis.
+
 
 ==== Global graph statistics:
 
@@ -128,6 +133,7 @@ Average clustering coefficient :
 
 Graph diameter (longest shortest path):
 
+
 ==== Local graph statistics:
 
 .Use apoc to calculate local statistics
@@ -144,17 +150,11 @@ Minimum count of friends : 1
 
 Maximum count of friends : 14995
 
-
-
 Prior work:
 
 * http://snap.stanford.edu/class/cs224w-2015/projects_2015/Predicting_Yelp_Ratings_From_Social_Network_Data.pdf
-
 * https://arxiv.org/pdf/1512.06915.pdf
-
 * http://trust.sce.ntu.edu.sg/wit-ec16/paper/davoust.pdf
-
-
 
 
 === Projecting a review co-occurence graph
@@ -162,14 +162,15 @@ Prior work:
 We can try to find which businesses are often reviewed by the same users, by inferring a https://en.wikipedia.org/wiki/Co-occurrence_networks[co-occurence network] between them.
 
 [NOTE]
+====
 Co-occurrence networks are the collective interconnection of nodes, based on their paired presence within a specified domain.
 Our network is generated by connecting pairs of businesses using a set of criteria defining co-occurrence.
+====
 
-The co-occurence criteria for this network is that any pair of businesses must have at least 5 common reviewers.
+The co-occurrence criteria for this network is that any pair of businesses must have at least 5 common reviewers.
 We save the count of common reviewers as a property of the relationship that will be used as a weight in community detection analysis.
 Inferred graph is _undirected_, as changing the direction of the relationships does not imply any semantic difference.
-We will limit our network to those businesses, that have more than 10 reviews and project a co-occurent relationship between businesses:
-
+We will limit our network to those businesses, that have more than 10 reviews and project a co-occurrent relationship between businesses:
 
 .Project a review co-occurence between businesses
 [source,cypher]
@@ -202,5 +203,4 @@ include::scripts/yelp-import.cypher[tag=reviewsimilarity-graph]
 Prior work:
 
 * http://snap.stanford.edu/class/cs224w-2015/projects_2015/Predicting_Yelp_Ratings_Using_User_Friendship_Network_Information.pdf
-
 * http://snap.stanford.edu/class/cs224w-2013/projects2013/cs224w-038-final.pdf

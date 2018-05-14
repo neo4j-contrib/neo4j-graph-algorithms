@@ -1,3 +1,4 @@
+[[algorithms-label-propagation]]
 = The Label Propagation algorithm
 
 // tag::introduction[]
@@ -8,6 +9,8 @@ One interesting feature of LPA is that nodes can be assigned preliminary labels 
 This means that it can be used as semi-supervised way of finding communities where we hand-pick some initial communities.
 // end::introduction[]
 
+
+[[algorithms-label-propagation-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -24,7 +27,7 @@ The algorithm works as follows:
 * Every node is initialized with a unique label (an identifier).
 * These labels propagate through the network.
 * At every iteration of propagation, each node updates its label to the one that the maximum numbers of its neighbours belongs to.
-Ties are broken uniformly and randomly.
+  Ties are broken uniformly and randomly.
 * LPA reaches convergence when each node has the majority label of its neighbours.
 
 As labels propagate, densely connected groups of nodes quickly reach a consensus on a unique label.
@@ -32,19 +35,21 @@ At the end of the propagation only a few labels will remain - most will have dis
 Nodes that have the same label at convergence are said to belong to the same community.
 // end::formula[]
 
+
+[[algorithms-label-propagation-usecase]]
 == Use-cases - when to use the Label Propagation algorithm
 
-
 // tag::use-case[]
-
 * Label propagation has been used to assign polarity of tweets, as a part of semantic analysis which uses seed labels from a classifier trained to detect positive and negative emoticons in combination with Twitter follower graph.
-For more information, see https://dl.acm.org/citation.cfm?id=2140465[Twitter polarity classification with label propagation over lexical links and the follower graph]
+  For more information, see https://dl.acm.org/citation.cfm?id=2140465[Twitter polarity classification with label propagation over lexical links and the follower graph]
 * Label propagation has been used to estimate potentially dangerous combinations of drugs to co-prescribe to a patient, based on the chemical similarity and side effect profiles.
-The study can be found in  https://www.nature.com/articles/srep12339[Label Propagation Prediction of Drug-Drug Interactions Based on Clinical Side Effects]
+  The study can be found in  https://www.nature.com/articles/srep12339[Label Propagation Prediction of Drug-Drug Interactions Based on Clinical Side Effects]
 * Label propagation has been used to infer features of utterances in a dialogue, for a machine learning model to track user intention with the help of Wikidata knowledge graph of concepts and their relations.
-For more information, see  https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.iwsds2017/papers/IWSDS2017_paper_12.pdf["Feature Inference Based on Label Propagation on Wikidata Graph for DST"]
+  For more information, see  https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.iwsds2017/papers/IWSDS2017_paper_12.pdf["Feature Inference Based on Label Propagation on Wikidata Graph for DST"]
 // end::use-case[]
 
+
+[[algorithms-label-propagation-limitations]]
 == Constraints - when not to use the Label Propagation algorithm
 
 // tag::constraint[]
@@ -53,24 +58,26 @@ The range of solutions can be narrowed if some nodes are given preliminary label
 Unlabelled nodes will be more likely to adapt the preliminary labels.
 // end::constraint[]
 
+
+[[algorithms-label-propagation-sample]]
 == Label Propagation algorithm sample
 
 image::label_propagation.png[]
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/label-propagation.cypher[tag=create-sample-graph]
 ----
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/label-propagation.cypher[tag=stream-sample-graph]
 ----
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/label-propagation.cypher[tag=write-sample-graph]
 ----
@@ -79,13 +86,13 @@ include::scripts/label-propagation.cypher[tag=write-sample-graph]
 .Results
 [opts="header",cols="1,1"]
 |===
-| Name | Partition
-| Alice | 5
+| Name    | Partition
+| Alice   | 5
 | Charles | 4
 | Bridget | 5
 | Michael | 5
-| Doug | 4
-| Mark | 4
+| Doug    | 4
+| Mark    | 4
 |===
 // end::stream-sample-graph-result[]
 
@@ -95,6 +102,7 @@ Our algorithm found two communities, with 3 members each.
 It appears that Michael, Bridget, and Alice belong together, as do Doug and Mark.
 Only Charles doesn't strongly fit into either side, but ends up with Doug and Mark.
 // end::stream-sample-graph-explanation[]
+
 
 === Using seed labels
 
@@ -109,38 +117,36 @@ If there isn't one, it assigns the node new unique label (node ID is used).
 Using this preliminary set of labels (identifiers), it then sequentially updates each node's label to a new one, which is the most frequent label among its neighbors at every label propagation step (iteration).
 
 .The following will run the algorithm with pre-defined labels:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/label-propagation.cypher[tag=write-existing-label-sample-graph]
 ----
 
-// == Example usage
 
+[[algorithms-label-propagation-syntax]]
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
-weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4})
-YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty,
-partitionProperty - simple label propagation kernel
+    weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4})
+YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
-| direction | string | 'OUTGOING' | yes | The relationship-direction to use in the algorithm
-| concurrency | int | available CPUs | yes | The number of concurrent threads
-| iterations | int | 1 | yes | The maximum number of iterations to run
-| weightProperty | string | 'weight' | yes | The property name of node and/or relationship that contain weight. Must be numeric.
-| partitionProperty | string | 'partition' | yes | The property name written back to the partition of the graph in which the node reside. Can be used to define initial set of labels (must be a number)
-| write | boolean | true | yes | Specifies if the result should be written back as a node property
-| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
-
+| Name              | Type    | Default        | Optional | Description
+| label             | string  | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship      | string  | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| direction         | string  | 'OUTGOING'     | yes      | The relationship-direction to use in the algorithm
+| concurrency       | int     | available CPUs | yes      | The number of concurrent threads
+| iterations        | int     | 1              | yes      | The maximum number of iterations to run
+| weightProperty    | string  | 'weight'       | yes      | The property name of node and/or relationship that contain weight. Must be numeric.
+| partitionProperty | string  | 'partition'    | yes      | The property name written back to the partition of the graph in which the node reside. Can be used to define initial set of labels (must be a number)
+| write             | boolean | true           | yes      | Specifies if the result should be written back as a node property
+| graph             | string  | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
@@ -162,31 +168,32 @@ partitionProperty - simple label propagation kernel
 [source,cypher]
 ----
 CALL algo.labelPropagation.stream(label:String, relationship:String, {iterations:1,
-weightProperty:'weight', partitionProperty:'partition', concurrency:4, direction:'OUTGOING'})
+    weightProperty:'weight', partitionProperty:'partition', concurrency:4, direction:'OUTGOING'})
 YIELD nodeId, label
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
-| direction | string | 'OUTGOING' | yes | The relationship-direction to use in the algorithm
-| concurrency | int | available CPUs | yes | The number of concurrent threads
-| iterations | int | 1 | yes | The maximum number of iterations to run
-| weightProperty | string | 'weight' | yes | The property name of node and/or relationship that contain weight. Must be numeric.
-| partitionProperty | string | 'partition' | yes | The property name written back to the partition of the graph in which the node reside. Can be used to define initial set of labels (must be a number)
-| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name              | Type   | Default        | Optional | Description
+| label             | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship      | string | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| direction         | string | 'OUTGOING'     | yes      | The relationship-direction to use in the algorithm
+| concurrency       | int    | available CPUs | yes      | The number of concurrent threads
+| iterations        | int    | 1              | yes      | The maximum number of iterations to run
+| weightProperty    | string | 'weight'       | yes      | The property name of node and/or relationship that contain weight. Must be numeric.
+| partitionProperty | string | 'partition'    | yes      | The property name written back to the partition of the graph in which the node reside. Can be used to define initial set of labels (must be a number)
+| graph             | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header"]
 |===
-| Name | Type | Description
-| nodeId | int | Node ID
-| label | int | Community ID
+| Name   | Type | Description
+| nodeId | int  | Node ID
+| label  | int  | Community ID
 |===
+
 
 == Cypher projection
 
@@ -195,30 +202,25 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/label-propagation.cypher[tag=cypher-loading]
 ----
+
 
 == Versions
 
 We support the following versions of the Label Propagation algorithm:
 
 * [x] directed, unweighted:
-
 ** direction: 'INCOMING' or 'OUTGOING', weightProperty: null
-
 * [x] directed, weighted
-
 ** direction: 'INCOMING' or 'OUTGOING', weightProperty : 'weight'
-
 * [x] undirected, unweighted
-
 ** direction: 'BOTH', weightProperty: null
-
 * [x] undirected, weighted
-
 ** direction: 'BOTH', weightProperty: 'weight'
+
 
 ifndef::env-docs[]
 == References
@@ -226,11 +228,8 @@ ifndef::env-docs[]
 // tag::references[]
 
 * [1] http://shodhganga.inflibnet.ac.in/bitstream/10603/36003/4/chapter3.pdf[Label Propagation in Community Detection^]
-
 * [2] https://arxiv.org/pdf/0709.2938.pdf[A Local Method for Detecting Communities^]
-
 * [3] https://arxiv.org/abs/cond-mat/0412482
-
 * http://cpb.iphy.ac.cn/fileup/PDF/2014-9-098902.pdf
 
 // end::references[]
@@ -238,6 +237,7 @@ endif::env-docs[]
 
 ifdef::implementation[]
 // tag::implementation[]
+
 
 == Implementation details
 

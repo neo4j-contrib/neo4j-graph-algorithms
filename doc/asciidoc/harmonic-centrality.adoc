@@ -1,3 +1,4 @@
+[[algorithms-harmonic-centrality]]
 = The Harmonic Centrality algorithm
 
 // tag::introduction[]
@@ -5,6 +6,8 @@ Harmonic centrality (also known as valued centrality) is a variant of closeness 
 As with many of the centrality algorithms, it originates from the field of social network analysis.
 // end::introduction[]
 
+
+[[algorithms-harmonic-centrality-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -27,6 +30,8 @@ As with closeness centrality, we can also calculate a *normalized harmonic centr
 In this formula, ∞ values are handled cleanly.
 // end::formula[]
 
+
+[[algorithms-harmonic-centrality-usecase]]
 == Use-cases - when to use the Harmonic Centrality algorithm
 
 // tag::use-case[]
@@ -40,6 +45,8 @@ If we're trying to spread a message on social media we could use the algorithm t
 // == Constraints - when not to use the Harmonic Centrality algorithm
 // end::constraint[]
 
+
+[[algorithms-harmonic-centrality-sample]]
 == Harmonic Centrality algorithm sample
 
 // image::harmonic_centrality.png[]
@@ -70,6 +77,8 @@ Calculation:
 
 `k = N-1 = 4`
 
+
+....
      A     B     C     D     E
  ---|-----------------------------
  A  | 0     1     2     -     -    // distance between each pair of nodes
@@ -87,46 +96,42 @@ Calculation:
 sum |1.5    2    1.5    1     1
  ---|------------------------------
  *k |0.37  0.5  0.37  0.25  0.25
+....
 
 Instead of calculating the farness, we sum the inverse of each cell and multiply by `1/(n-1)`.
 
 
-
-== Example usage
-
+[[algorithms-harmonic-centrality-syntax]]
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.closeness.harmonic(label:String, relationship:String,
 {write:true, writeProperty:'centrality',graph:'heavy', concurrency:4})
 YIELD nodes,loadMillis, computeMillis, writeMillis
-- calculates closeness centrality and potentially writes back
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
-| write | boolean | true | yes | Specifies if the result should be written back as a node property
-| concurrency | int | available CPUs | yes | The number of concurrent threads
-| writeProperty | string | 'centrality' | yes | The property name written back to
-| graph | string | 'heavy' | yes | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| Name          | Type    | Default        | Optional | Description
+| label         | string  | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship  | string  | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| write         | boolean | true           | yes      | Specifies if the result should be written back as a node property
+| concurrency   | int     | available CPUs | yes      | The number of concurrent threads
+| writeProperty | string  | 'centrality'   | yes      | The property name written back to
+| graph         | string  | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name | Type | Description
-| nodes | int | The number of nodes considered
-| loadMillis | int | Milliseconds for loading data
-| evalMillis | int | Milliseconds for running the algorithm
-| writeMillis | int | Milliseconds for writing result data back
-
-
+| Name        | Type | Description
+| nodes       | int  | The number of nodes considered
+| loadMillis  | int  | Milliseconds for loading data
+| evalMillis  | int  | Milliseconds for running the algorithm
+| writeMillis | int  | Milliseconds for writing result data back
 |===
 
 
@@ -140,19 +145,20 @@ YIELD nodeId, centrality - yields centrality for each node
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name | Type | Default | Optional | Description
-| label  | string | null | yes | The label to load from the graph. If null, load all nodes
-| relationship | string | null | yes | The relationship-type to load from the graph. If null, load all relationships
-| concurrency | int | available CPUs | yes | The number of concurrent threads
+| Name         | Type   | Default        | Optional | Description
+| label        | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship | string | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| concurrency  | int    | available CPUs | yes      | The number of concurrent threads
 |===
 
 .Results
 [opts="header"]
 |===
-| Name | Type | Description
-| node | long | Node ID
+| Name       | Type  | Description
+| node       | long  | Node ID
 | centrality | float | Closeness centrality weight
 |===
+
 
 == Huge graph projection
 
@@ -164,6 +170,7 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 ----
 include::scripts/harmonic-centrality.cypher[tag=huge-projection]
 ----
+
 
 == Cypher projection
 
@@ -177,6 +184,7 @@ This can also be used to run algorithms on a virtual graph.
 include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
 ----
 
+
 == Versions
 
 We support the following versions of the harmonic centrality algorithm:
@@ -185,16 +193,14 @@ We support the following versions of the harmonic centrality algorithm:
 
 * [ ] undirected, weighted
 
+
 ifndef::env-docs[]
 == References
 
 // tag::references[]
 * [1] https://arxiv.org/pdf/cond-mat/0008357.pdf
-
 * [2] \https://infoscience.epfl.ch/record/200525/files/[EN]ASNA09.pdf?
-
 * [3] https://arxiv.org/pdf/1308.2140.pdf
-
 * [4] https://www.cmu.edu/joss/content/articles/volume6/dekker/index.html
 // end::references[]
 endif::env-docs[]
@@ -203,9 +209,11 @@ endif::env-docs[]
 ifdef::implementation[]
 // tag::implementation[]
 
+
 == Implementation details
 
 ...
+
 
 == Details
 

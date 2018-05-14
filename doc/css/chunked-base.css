@@ -6,6 +6,7 @@
 }
 #logo img {
   max-height: 50px;
+  padding-bottom: 0;
 }
 /* END Logo */
 
@@ -67,7 +68,7 @@ div.toc ul ul {
 /*
  * BEGIN section and in general the main content of the page
  */
-body > section, div.book {
+body > section, div.book, #search-results {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
@@ -80,11 +81,11 @@ body > section, div.book {
   padding-right: 1em;
 }
 
-body > section, div.book {
+body > section, div.book, #search-results {
   max-width: 940px;
 }
 
-body > section, div.book {
+body > section, div.book, #search-results {
   padding-top: 120px;
   padding-bottom: 4.2em;
 }
@@ -360,7 +361,45 @@ table tbody > tr:last-child > th.tableblock, table tbody > tr:last-child > td, t
  * END Tables
  */
 
-td.gsc-search-button > input.gsc-search-button {
+#search {
+  display: none;
+}
+
+div.search-result-summary {
+  color: #676767;
+  font-size: 12px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+div.search-result-items {
+  border-top: 1px solid #ccc;
+  padding-left: 10px;
+}
+
+div.search-result-item {
+  border-left: 2px solid transparent;
+  margin-left: -12px;
+  padding-left: 10px;
+  margin-top: 1em;
+}
+
+div.search-result-item:hover {
+  border-left-color: rgb(66, 139, 202);
+}
+
+div.search-result-item-description {
+  font-size: 85%;
+}
+
+#search-form-input {
+  border-radius: 4px;
+  border: 1px solid #bbb;
+  width: 160px;
+  font-size: 14px;
+}
+
+td.gsc-search-button > input.gsc-search-button, #search-form-button{
   border: none;
   font-size: 0;
   background: #ffffff url('https://neo4j.com/wp-content/themes/neo4jweb/assets/images/search-icon.svg') no-repeat center;
@@ -381,11 +420,10 @@ span#nav-current {
   div.searchbox {
     margin-left: auto;
   }
-  td.gsc-search-button { padding: 0.3em 0.3em; }
+  td.gsc-search-button, #search-form-button { padding: 0.3em 0.3em; }
   td.gsc-clear-button { padding: 0.3em 0.3em; }
-  td.gsc-input > input { line-height: 20px; padding: 1.5px 3px; }
+  td.gsc-input > input, #search-form-input { line-height: 20px; padding: 1.5px 3px; }
   form.gsc-search-box { padding-top: 10px !important; }
-
 }
 
 @media only screen and (min-width: 768px) {
@@ -406,8 +444,8 @@ span#nav-current {
   }
 
   div.searchbox { max-width: 210px; margin-left: 0; }
-  td.gsc-search-button > input.gsc-search-button { min-width: 27px; }
-  td.gsc-input > input { line-height: 22px; }
+  td.gsc-search-button > input.gsc-search-button, #search-form-button { min-width: 27px; }
+  td.gsc-input > input, #search-form > input { line-height: 22px; }
 
   #header-nav {
     position: absolute;
@@ -490,7 +528,7 @@ span#nav-current {
     float: left;
   }
   ul.documentation-library li a {
-    padding: 0 22px 0 0;
+    margin: 0 11px;
     color: #999;
     text-transform: uppercase;
   }
@@ -539,9 +577,26 @@ span#nav-current {
 
   ul.documentation-library li a {
     font-size: 13px;
-    padding: 0 40px 0 0;
+    margin: 0 20px;
   }
 }
+
+/*
+ * BEGIN TOC and library header contextual highlighting
+ */
+span.active-nested-section {
+  border-left: 3px solid #58b535;
+  margin-left: -13px;
+  padding-left: 10px;
+}
+
+li.active-toplevel-section {
+  border-left: 3px solid #58b535;
+  margin-left: -13px;
+  padding-left: 10px;
+  background-color: rgb(88, 181, 53, 0.05);
+}
+/* END TOC and library header contextual highlighting */
 
 /*
  * Header & footer
@@ -604,6 +659,102 @@ header p { margin: 0; }
 #header-nav span.nav-next {
   order: 3;
   width: 33%;
+}
+
+section.deprecated {
+  border-left: 1px solid #F58220;
+  padding-left: 10px;
+}
+
+section.deprecated .title:after, p.deprecated:before, table span.deprecated:after {
+  content: "deprecated";
+  text-align: center;
+  font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue","Helvetica","Arial",sans-serif;
+  font-weight: normal;
+  font-size: 0.5em;
+  color: #F58220;
+
+  position: relative;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border-color: #F58220;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 6px;
+}
+
+section.deprecated .title:after {
+  bottom: 4px;
+  margin-left: 10px;
+}
+
+p.deprecated {
+  border-left: 1px solid #F58220;
+  padding-left: 10px;
+}
+
+p.deprecated:before {
+  display: block;
+  font-size: 0.8em;
+  width: 100px;
+  margin-top: 1.5em;
+}
+
+table span.deprecated:after {
+  font-size: 0.8em;
+  margin-left: 10px;
+}
+
+@media only screen and (min-width: 1280px) {
+  p.deprecated:before {
+    display: inline;
+    left: -120px;
+    margin-right: -88px;
+  }
+}
+
+
+/* Provide for highlighting of Enterprise Edition features */
+section.enterprise-edition > div.titlepage .title:after, p.enterprise-edition:after, span.enterprise-edition:after, table.enterprise-edition > caption:after {
+  content: "Enterprise Edition";
+  text-align: center;
+  font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue","Helvetica","Arial",sans-serif;
+  font-weight: normal;
+  font-size: 0.5em;
+  color: #58b535;
+  position: relative;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border-color: #58b535;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 6px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+p.enterprise-edition:after, table.enterprise-edition > caption:after {
+  font-size: 0.8em;
+  display: inline;
+  white-space: nowrap;
+}
+
+span.enterprise-edition:after {
+  font-size: 0.8em;
+  display: inline;
+  white-space: nowrap;
+}
+
+section.enterprise-edition > div.titlepage .title:after {
+  bottom: 4px;
+}
+
+@media only screen and (min-width: 1280px) {
+  p.enterprise-edition:before {
+    display: inline;
+    left: -120px;
+    margin-right: -88px;
+  }
 }
 
 /* vim: set sw=2 ts=2: */

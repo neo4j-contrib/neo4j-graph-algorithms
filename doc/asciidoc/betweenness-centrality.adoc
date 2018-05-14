@@ -1,3 +1,4 @@
+[[algorithms-betweenness-centrality]]
 = The Betweenness Centrality algorithm
 
 // tag::introduction-start[]
@@ -14,6 +15,8 @@ If Alice is removed, all connections in the graph would be cut off.
 This makes Alice important, because she ensures that no nodes are isolated.
 // end::introduction-end[]
 
+
+[[algorithms-betweenness-centrality-context]]
 == History and explanation
 
 // tag::explanation[]
@@ -25,71 +28,75 @@ The algorithm was given its first formal definition by Linton Freeman, in his 19
 It was considered to be one of the "three distinct intuitive conceptions of centrality".
 // end::explanation[]
 
+
+[[algorithms-betweenness-centrality-usecase]]
 == Use-cases - when to use the Betweenness Centrality algorithm
 
 // tag::use-case[]
 
 * Betweenness centrality is used to research the network flow in a package delivery process, or telecommunications network.
-These networks are characterized by traffic that has a known target and takes the shortest path possible.
-This, and other scenarios, are described by Stephen P. Borgatti in http://www.analytictech.com/borgatti/papers/centflow.pdf["Centrality and network flow"].
+  These networks are characterized by traffic that has a known target and takes the shortest path possible.
+  This, and other scenarios, are described by Stephen P. Borgatti in http://www.analytictech.com/borgatti/papers/centflow.pdf["Centrality and network flow"].
 
 * Betweenness centrality is used to identify influencers in legitimate, or criminal, organizations.
-Studies show that influencers in organizations are not necessarily in management positions, but instead can be found in brokerage positions of the organizational network.
-Removal of such influencers could seriously destabilize the organization.
-More detail can be found in http://archives.cerium.ca/IMG/pdf/Morselli_and_Roy_2008_.pdf["Brokerage qualifications in ringing operations"], by Carlo Morselli and Julie Roy.
+  Studies show that influencers in organizations are not necessarily in management positions, but instead can be found in brokerage positions of the organizational network.
+  Removal of such influencers could seriously destabilize the organization.
+  More detail can be found in http://archives.cerium.ca/IMG/pdf/Morselli_and_Roy_2008_.pdf["Brokerage qualifications in ringing operations"], by Carlo Morselli and Julie Roy.
 
 * Betweenness centrality can be used to help microbloggers spread their reach on Twitter, with a recommendation engine that targets influencers that they should interact with in the future.
-This approach is described in ftp://ftp.umiacs.umd.edu/incoming/louiqa/PUB2012/RecMB.pdf["Making Recommendations in a Microblog to Improve the Impact of a Focal User"].
-
-
+  This approach is described in ftp://ftp.umiacs.umd.edu/incoming/louiqa/PUB2012/RecMB.pdf["Making Recommendations in a Microblog to Improve the Impact of a Focal User"].
 // end::use-case[]
 
+
+[[algorithms-betweenness-centrality-limitations]]
 == Constraints - when not to use the Betweenness Centrality algorithm
 
 // tag::constraint[]
 * Betweeness centrality makes the assumption that all communication between nodes happens along the shortest path and with the same frequency, which isn't the case in real life.
-Therefore, it doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation.
-Newman explains this in more detail on page 186 of https://global.oup.com/academic/product/networks-9780199206650?cc=us&lang=en&[Networks: An Introduction^].
+  Therefore, it doesn't give us a perfect view of the most influential nodes in a graph, but rather a good representation.
+  Newman explains this in more detail on page 186 of https://global.oup.com/academic/product/networks-9780199206650?cc=us&lang=en&[Networks: An Introduction^].
 
 * For large graphs, exact centrality computation isn't practical.
-The fastest known algorithm for exactly computing betweenness of all the nodes requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
-Instead, we can use an approximation algorithm that works with a subset of nodes.
+  The fastest known algorithm for exactly computing betweenness of all the nodes requires at least `O(nm)` time for unweighted graphs, where `n` is the number of nodes and `m` is the number of relationships.
+  Instead, we can use an approximation algorithm that works with a subset of nodes.
 // end::constraint[]
 
+
+[[algorithms-betweenness-centrality-sample]]
 == Betweenness Centrality algorithm sample
 
 People with high betweenness tend to be the innovators and brokers in social networks.
 They combine different perspectives, transfer ideas between groups, and get power from their ability to make introductions and pull strings.
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=create-sample-graph]
 ----
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=stream-sample-graph]
 ----
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=write-sample-graph]
 ----
 
 // tag::stream-sample-graph-result[]
 .Results
-[opts="header",cols="1,1"]
+[opts="header", cols="1,1"]
 |===
-| Name | Centrality weight
-| Alice | 4
+| Name    | Centrality weight
+| Alice   | 4
 | Charles | 2
 | Bridget | 0
 | Michael | 0
-| Doug | 0
-| Mark | 0
+| Doug    | 0
+| Mark    | 0
 |===
 // end::stream-sample-graph-result[]
 
@@ -100,6 +107,7 @@ The others don't have any influence, because all the shortest paths between pair
 
 include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
 
+
 == Cypher projection
 
 If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
@@ -107,10 +115,11 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/betweenness-centrality.cypher[tag=cypher-loading]
 ----
+
 
 == Versions
 
@@ -128,6 +137,7 @@ We support the following versions of the betweenness centrality algorithm:
 ** direction:'both' or '<>'
 
 * [ ] undirected, weighted
+
 
 == Implementations
 
@@ -151,7 +161,9 @@ We support the following versions of the betweenness centrality algorithm:
 * Degree based randomization: `strategy:'degree':` (makes dense nodes more likely)
 * Optional Arguments: `maxDepth:int`
 
+
 ifndef::env-docs[]
+
 == References
 
 // tag::references[]
@@ -186,6 +198,7 @@ endif::env-docs[]
 ifdef::implementation[]
 // tag::implementation[]
 
+
 == Implementation details
 
 :leveloffset: +1
@@ -208,6 +221,7 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 
 == Details
 
+
 === algo.betweenness
 
 - implementation of brandes-bc algorithm and nodePartitioning extension
@@ -216,12 +230,14 @@ In graph theory, betweenness centrality is a measure of centrality in a graph ba
 - ParallelBC spawns N(given by the concurrency param) concurrent threads for calculation where each one
  calculates the BC for one node at a time
 
+
 === algo.betweenness.exp1
 
 - brandes-like algorithm which uses successor sets instead of predecessor sets
 - The algorithm is based on Brandes definition but with some changes
  regarding the dependency-accumulation step.
 - http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
+
 
 === algo.betweenness.sampled.*
 
