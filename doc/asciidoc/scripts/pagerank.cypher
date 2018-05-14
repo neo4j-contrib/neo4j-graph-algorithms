@@ -31,7 +31,7 @@ MERGE (d)-[:LINKS]->(home)
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD nodeId, score
 
-MATCH (node) WHERE id(n) = nodeId
+MATCH (node) WHERE id(node) = nodeId
 
 RETURN node.name AS page,score
 ORDER BY score DESC
