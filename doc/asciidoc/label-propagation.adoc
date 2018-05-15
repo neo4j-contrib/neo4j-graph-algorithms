@@ -1,6 +1,11 @@
 [[algorithms-label-propagation]]
 = The Label Propagation algorithm
 
+[abstract]
+--
+This section describes the Label Propagation algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction[]
 The Label Propagation algorithm (LPA) is a fast algorithm for finding communities in a graph.
 It detects these communities using network structure alone as its guide, and doesn't require a pre-defined objective function or prior information about the communities.
