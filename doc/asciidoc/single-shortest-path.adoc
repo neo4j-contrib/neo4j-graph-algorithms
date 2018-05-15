@@ -87,7 +87,8 @@ The above table shows the cost of going from A to each of the other nodes, inclu
 .The following will run the algorithm and write back results:
 [source, cypher]
 ----
-CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Float, {defaultValue:1.0, write:true, writeProperty:'sssp'})
+CALL algo.shortestPath.deltaStepping(startNode:Node, weightProperty:String, delta:Float,
+    {defaultValue:1.0, write:true, writeProperty:'sssp'})
 YIELD nodeCount, loadDuration, evalDuration, writeDuration
 RETURN nodeCount, loadDuration, evalDuration, writeDuration
 ----

@@ -99,10 +99,10 @@ The quickest route takes us from A to F, via C, D, and E, at a total cost of 160
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.shortestPath(startNode:Node, endNode:Node, weightProperty:String
-    {nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0,write:'true',writeProperty:'sssp',direction:'OUTGOING'})
+    {nodeQuery:'labelName', relationshipQuery:'relationshipName', defaultValue:1.0, write:'true', writeProperty:'sssp', direction:'OUTGOING'})
 YIELD nodeCount, totalCost, loadMillis, evalMillis, writeMillis
 
 ----
@@ -184,7 +184,7 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/single-shortest-path.cypher[tag=cypher-loading]
 ----

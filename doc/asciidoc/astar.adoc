@@ -70,9 +70,9 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 .The following will run the algorithm and stream results:
 [source, cypher]
 ----
-CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String,
-    propertyKeyLon:String, {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0})
-YIELD nodeId, cost - yields a stream of {nodeId, cost} from start to end (inclusive)
+CALL algo.shortestPath.astar.stream((startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String, propertyKeyLon:String,
+    {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0})
+YIELD nodeId, cost
 ----
 
 .Parameters
@@ -106,7 +106,7 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/astar.cypher[tag=cypher-loading]
 ----

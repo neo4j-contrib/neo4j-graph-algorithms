@@ -131,8 +131,7 @@ Charles is the only one who has friends in both communities, but he has more in 
 [source,cypher]
 ----
 CALL algo.louvain(label:String, relationship:String,
-    {weightProperty:'weight', defaultValue:1.0, write: true,
-     writeProperty:'community', concurrency:4})
+    {weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4})
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 
 ----

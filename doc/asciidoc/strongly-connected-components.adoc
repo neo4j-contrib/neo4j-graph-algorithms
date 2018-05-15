@@ -85,12 +85,11 @@ include::scripts/strongly-connected-components.cypher[tag=get-largest-component]
 == Syntax
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.scc(label:String, relationship:String,
     {write:true,partitionProperty:'partition',concurrency:4, graph:'heavy'})
 YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
-// finds strongly connected partitions and potentially writes back to the node as a property partition.
 ----
 
 .Parameters
@@ -118,10 +117,10 @@ YIELD loadMillis, computeMillis, writeMillis, setCount, maxSetSize, minSetSize
 |===
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 CALL algo.scc.stream(label:String, relationship:String, {concurrency:4})
-YIELD nodeId, partition - yields a partition to each node id
+YIELD nodeId, partition
 ----
 
 .Parameters
@@ -149,7 +148,7 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 
 .Set `graph:'huge'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/strongly-connected-components.cypher[tag=huge-projection]
 ----
@@ -162,7 +161,7 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/strongly-connected-components.cypher[tag=cypher-loading]
 ----

@@ -166,7 +166,7 @@ When we run this algorithm on a bigger graph, we can use the following query to 
 [source, cypher]
 ----
 MATCH (n:Place)
-WITH n.partition as partition, count(*) as count
+WITH n.partition AS partition, count(*) as count
 WHERE count = k
 RETURN n
 ----

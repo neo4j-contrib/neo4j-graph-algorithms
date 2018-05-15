@@ -184,7 +184,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 ----
 CALL algo.pageRank.stream(label:String, relationship:String,
     {iterations:20, dampingFactor:0.85, concurrency:4})
-YIELD node, score - calculates page rank and streams results
+YIELD node, score
 ----
 
 .Parameters
