@@ -22,6 +22,7 @@ import org.neo4j.function.ThrowingConsumer;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.StatementAction;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.CursorFactory;
@@ -39,6 +40,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
+
 public final class RelationshipsScanner extends StatementAction {
 
     private final ArrayBlockingQueue<RelationshipsBatch> pool;
@@ -55,11 +58,13 @@ public final class RelationshipsScanner extends StatementAction {
     private final Emit emit;
     private final GraphSetup setup;
     private final ImportProgress progress;
+    private final AllocationTracker tracker;
 
     RelationshipsScanner(
             GraphDatabaseAPI api,
             GraphSetup setup,
             ImportProgress progress,
+            AllocationTracker tracker,
             HugeIdMap idMap,
             int maxInFlight,
             int batchSize,
@@ -72,6 +77,7 @@ public final class RelationshipsScanner extends StatementAction {
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.setup = setup;
         this.progress = progress;
+        this.tracker = tracker;
         this.idMap = idMap;
         this.threadQueues = threadQueues;
         this.outDegrees = outDegrees;
@@ -152,8 +158,14 @@ public final class RelationshipsScanner extends StatementAction {
     private void loadDegrees(final KernelTransaction transaction) {
         forAllRelationships(transaction, this::loadDegree);
         // remove references so that GC can eventually reclaim memory
-        inDegrees = null;
-        outDegrees = null;
+        if (inDegrees != null) {
+            tracker.remove(sizeOfObjectArray(inDegrees.length));
+            inDegrees = null;
+        }
+        if (outDegrees != null) {
+            tracker.remove(sizeOfObjectArray(outDegrees.length));
+            outDegrees = null;
+        }
     }
 
     private void loadDegree(RelationshipScanCursor rc) {

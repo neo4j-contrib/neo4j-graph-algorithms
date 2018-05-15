@@ -27,6 +27,10 @@ import org.neo4j.helpers.Exceptions;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
+
+
 final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnable {
 
     private static final int INIT_OUT = 1;
@@ -116,14 +120,26 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
     }
 
     private void release(boolean flushBuffers) {
-        inDegrees = null;
-        outDegrees = null;
+        if (inDegrees != null) {
+            tracker.remove(sizeOfIntArray(inDegrees.length));
+            inDegrees = null;
+        }
+        if (outDegrees != null) {
+            tracker.remove(sizeOfIntArray(outDegrees.length));
+            outDegrees = null;
+        }
         if (flushBuffers) {
             flush(outTargets, outOffsets, outAllocator, outCompression);
             flush(inTargets, inOffsets, inAllocator, inCompression);
         }
-        outTargets = null;
-        inTargets = null;
+        if (outTargets != null) {
+            tracker.remove(sizeOfObjectArray(outTargets.length));
+            outTargets = null;
+        }
+        if (inTargets != null) {
+            tracker.remove(sizeOfObjectArray(inTargets.length));
+            inTargets = null;
+        }
         if (outCompression != null) {
             outCompression.release();
         }
@@ -187,6 +203,7 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
         if ((initStatus & INIT_OUT) == 0) {
             initStatus |= INIT_OUT;
             outTargets = new CompressedLongArray[numberOfElements];
+            tracker.add(sizeOfObjectArray(numberOfElements));
             outAllocator.prepare();
         }
     }
@@ -195,6 +212,7 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
         if ((initStatus & INIT_IN) == 0) {
             initStatus |= INIT_IN;
             inTargets = new CompressedLongArray[numberOfElements];
+            tracker.add(sizeOfObjectArray(numberOfElements));
             inAllocator.prepare();
         }
     }

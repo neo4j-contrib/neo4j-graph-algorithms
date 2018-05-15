@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.core.huge;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -31,6 +32,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
+
 final class ScanningRelationshipImporter {
 
     private static final long MAX_BATCH_SIZE = 2_000_000_000L;
@@ -39,6 +43,7 @@ final class ScanningRelationshipImporter {
     private final GraphSetup setup;
     private final GraphDatabaseAPI api;
     private final ImportProgress progress;
+    private final AllocationTracker tracker;
     private final HugeIdMap idMap;
     private final HugeLongArray outOffsets;
     private final HugeAdjacencyListBuilder outAdjacency;
@@ -51,6 +56,7 @@ final class ScanningRelationshipImporter {
             GraphSetup setup,
             GraphDatabaseAPI api,
             ImportProgress progress,
+            AllocationTracker tracker,
             HugeIdMap idMap,
             HugeLongArray outOffsets,
             HugeAdjacencyListBuilder outAdjacency,
@@ -61,6 +67,7 @@ final class ScanningRelationshipImporter {
         this.setup = setup;
         this.api = api;
         this.progress = progress;
+        this.tracker = tracker;
         this.idMap = idMap;
         this.outOffsets = outOffsets;
         this.outAdjacency = outAdjacency;
@@ -74,6 +81,7 @@ final class ScanningRelationshipImporter {
             GraphSetup setup,
             GraphDatabaseAPI api,
             ImportProgress progress,
+            AllocationTracker tracker,
             HugeIdMap idMap,
             HugeLongArray outOffsets,
             HugeAdjacencyListBuilder outAdjacency,
@@ -86,7 +94,7 @@ final class ScanningRelationshipImporter {
             return null;
         }
         return new ScanningRelationshipImporter(
-                setup, api, progress, idMap,
+                setup, api, progress, tracker, idMap,
                 outOffsets, outAdjacency, inOffsets, inAdjacency,
                 threadPool, concurrency);
     }
@@ -110,8 +118,8 @@ final class ScanningRelationshipImporter {
 //        noinspection unchecked
         ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
         PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
-        int[][] outDegrees = outOffsets == null ? null : new int[threads][];
-        int[][] inDegrees = inOffsets == null ? null : new int[threads][];
+        int[][] outDegrees = allocateDegrees(outOffsets != null, threads);
+        int[][] inDegrees = allocateDegrees(inOffsets != null, threads);
         int i = 0;
         for (; i < threads; i++) {
             int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
@@ -119,20 +127,14 @@ final class ScanningRelationshipImporter {
                 break;
             }
             final ArrayBlockingQueue<RelationshipsBatch> queue = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
-            int[] out = outDegrees == null ? null : new int[elementsForThread];
-            int[] in = inDegrees == null ? null : new int[elementsForThread];
+            int[] out = allocateDegree(outDegrees, elementsForThread, i);
+            int[] in = allocateDegree(inDegrees, elementsForThread, i);
             final PerThreadRelationshipBuilder builder = new PerThreadRelationshipBuilder(
-                    progress, setup.tracker, i, idBase, elementsForThread, queue,
+                    progress, tracker, i, idBase, elementsForThread, queue,
                     out, outOffsets, outAdjacency, in, inOffsets, inAdjacency);
 
             queues[i] = queue;
             builders[i] = builder;
-            if (outDegrees != null) {
-                outDegrees[i] = out;
-            }
-            if (inDegrees != null) {
-                inDegrees[i] = in;
-            }
             idBase += (long) batchSize;
         }
         if (i < threads) {
@@ -144,8 +146,26 @@ final class ScanningRelationshipImporter {
                 ParallelUtil.run(Arrays.asList(builders), false, threadPool, null);
 
         int queueBatchSize = (int) BitUtil.align((long) Math.max(1 << 13, setup.batchSize), 2);
-        final RelationshipsScanner scanner = new RelationshipsScanner(api, setup, idMap, inFlight, queueBatchSize, queues, outDegrees, inDegrees, batchSize);
+        final RelationshipsScanner scanner = new RelationshipsScanner(
+                api, setup, progress, tracker, idMap,
+                inFlight, queueBatchSize, queues, outDegrees, inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
+    }
+
+    private int[][] allocateDegrees(boolean shouldAllocate, int size) {
+        if (shouldAllocate) {
+            tracker.add(sizeOfObjectArray(size));
+            return new int[size][];
+        }
+        return null;
+    }
+
+    private int[] allocateDegree(int[][] into, int size, int index) {
+        if (into != null) {
+            tracker.add(sizeOfIntArray(size));
+            return into[index] = new int[size];
+        }
+        return null;
     }
 }
