@@ -1,6 +1,11 @@
 [[algorithms-connected-components]]
 = The Connected Components algorithm
 
+[abstract]
+--
+This section describes the Connected Components algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction[]
 The Connected Components, or `Union Find`, algorithm finds sets of connected nodes in an undirected graph where each node is reachable from any other node in the same set.
 It differs from the Strongly Connected Components algorithm (SCC) because it only needs a path to exist between pairs of nodes in one direction, whereas SCC needs a path to exist in both directions.

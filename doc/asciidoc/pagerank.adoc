@@ -1,6 +1,11 @@
 [[algorithms-pagerank]]
 = The PageRank algorithm
 
+[abstract]
+--
+This section describes the PageRank algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction[]
 PageRank is an algorithm that measures the *transitive* influence or connectivity of nodes.
 
