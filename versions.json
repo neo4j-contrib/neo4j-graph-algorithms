@@ -1,5 +1,89 @@
 [
     {
+        "neo4j": "3.4.0-rc02",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-rc01",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-beta02",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-beta01",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha10",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha09",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha08",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha07",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha06",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha05",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha04",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha03",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha02",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
+        "neo4j": "3.4.0-alpha01",
+        "version": "3.4.0.0",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.4.0.0",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.4.0.0/graph-algorithms-algo-3.4.0.0.jar"
+    },
+    {
         "neo4j": "3.3.5",
         "version": "3.3.2.0",
         "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.3.2.0",
