@@ -163,13 +163,9 @@ We will write back the results to the node, and use centralities with Cypher loa
 [source, cypher]
 ----
 CALL algo.unionFind(label:String, relationship:String, {threshold:0.42,
-    defaultValue:1.0, write: true, partitionProperty:'partition',weightProperty:'weight',graph:'heavy',concurrency:4})
+    defaultValue:1.0, write: true, partitionProperty:'partition', weightProperty:'weight', graph:'heavy', concurrency:4})
 YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
-- finds connected partitions and potentially writes back to the node as a property partition.
 ----
-
-// Is that ^^ supposed to be line comment syntax?
-// Dude, this is Cypher!
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
@@ -199,9 +195,10 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
-CALL algo.unionFind.stream(label:String, relationship:String, {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4})
+CALL algo.unionFind.stream(label:String, relationship:String,
+    {weightProperty:'weight', threshold:0.42, defaultValue:1.0, concurrency:4})
 YIELD nodeId, setId - yields a setId to each node id
 ----
 
@@ -233,7 +230,7 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 
 .Set `graph:'huge'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/connected-components.cypher[tag=huge-projection]
 ----
@@ -246,7 +243,7 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/connected-components.cypher[tag=cypher-loading]
 ----

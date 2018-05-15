@@ -131,7 +131,7 @@ include::scripts/label-propagation.cypher[tag=write-existing-label-sample-graph]
 ----
 CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
     weightProperty:'weight', partitionProperty:'partition', write:true, concurrency:4})
-YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty - simple label propagation kernel
+YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty, partitionProperty
 ----
 
 .Parameters
@@ -161,7 +161,7 @@ YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, wr
 | writeMillis | int | Milliseconds for writing result data back
 | weightProperty | string | The property name that contains weight
 | partitionProperty | string | The property name written back to
-| write | boolean | true | yes | Specifies if the result was written back as a node property
+| write | boolean | Specifies if the result was written back as a node property
 |===
 
 .The following will run the algorithm and stream back results:

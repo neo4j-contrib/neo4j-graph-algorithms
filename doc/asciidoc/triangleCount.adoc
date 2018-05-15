@@ -133,7 +133,7 @@ Local triangle count and clustering coefficient of nodes can be used as features
 [source, cypher]
 ----
 CALL algo.triangle.stream(label:String, relationship:String, {concurrency:4})
-YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
+YIELD nodeA, nodeB, nodeC
 ----
 
 .Parameters
@@ -158,7 +158,7 @@ YIELD nodeA, nodeB, nodeC - yield nodeA, nodeB and nodeC which form a triangle
 [source, cypher]
 ----
 CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:4})
-YIELD nodeId, triangles - yield nodeId, number of triangles
+YIELD nodeId, triangles
 ----
 
 .Parameters
