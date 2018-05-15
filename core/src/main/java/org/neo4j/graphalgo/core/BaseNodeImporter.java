@@ -45,7 +45,6 @@ public abstract class BaseNodeImporter<T> extends StatementFunction<T> {
             progress.nodeImported();
         });
         finish(mapping);
-        progress.resetForRelationships();
         return mapping;
     }
 

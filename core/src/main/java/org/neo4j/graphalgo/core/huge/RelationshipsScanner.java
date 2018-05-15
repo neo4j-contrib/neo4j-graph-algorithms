@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.function.ThrowingConsumer;
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Direction;
@@ -53,10 +54,12 @@ public final class RelationshipsScanner extends StatementAction {
     private final DegreeLoader loader;
     private final Emit emit;
     private final GraphSetup setup;
+    private final ImportProgress progress;
 
     RelationshipsScanner(
             GraphDatabaseAPI api,
             GraphSetup setup,
+            ImportProgress progress,
             HugeIdMap idMap,
             int maxInFlight,
             int batchSize,
@@ -68,6 +71,7 @@ public final class RelationshipsScanner extends StatementAction {
         assert (batchSize & 1) == 0 : "batchSize must be even";
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.setup = setup;
+        this.progress = progress;
         this.idMap = idMap;
         this.threadQueues = threadQueues;
         this.outDegrees = outDegrees;
@@ -153,13 +157,19 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     private void loadDegree(RelationshipScanCursor rc) {
+        int imported = 0;
         while (rc.next()) {
             long source = idMap.toHugeMappedNodeId(rc.sourceNodeReference());
             long target = idMap.toHugeMappedNodeId(rc.targetNodeReference());
             if (source != -1L && target != -1L) {
                 loader.load(source, target, this);
             }
+            if (++imported == 100_000) {
+                progress.relationshipsImported(100_000);
+                imported = 0;
+            }
         }
+        progress.relationshipsImported(imported);
     }
 
     private void scanRelationships(final KernelTransaction transaction) throws InterruptedException {

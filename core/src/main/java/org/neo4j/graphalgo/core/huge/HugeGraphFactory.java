@@ -23,6 +23,9 @@ import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.GraphDimensions;
+import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
+import org.neo4j.graphalgo.core.utils.ImportProgress;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -36,6 +39,31 @@ public final class HugeGraphFactory extends GraphFactory {
     @Override
     public HugeGraph build() {
         return importGraph();
+    }
+
+    @Override
+    protected ImportProgress importProgress(
+            final ProgressLogger progressLogger,
+            final GraphDimensions dimensions,
+            final GraphSetup setup) {
+
+        // ops for scanning degrees
+        long relOperations = dimensions.maxRelCount();
+
+        // batching for undirected double the amount of rels imported
+        if (setup.loadIncoming || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+        if (setup.loadOutgoing || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+
+        return new ApproximatedImportProgress(
+                progressLogger,
+                setup.tracker,
+                dimensions.hugeNodeCount(),
+                relOperations
+        );
     }
 
     private HugeGraph importGraph() {
@@ -79,7 +107,7 @@ public final class HugeGraphFactory extends GraphFactory {
         }
 
         final ScanningRelationshipImporter importer = ScanningRelationshipImporter.create(
-                setup, api, progress, mapping,
+                setup, api, progress, tracker, mapping,
                 outOffsets, outAdjacency, inOffsets, inAdjacency,
                 threadPool, concurrency);
         if (importer != null) {

@@ -180,7 +180,7 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             default:
                 throw new IllegalArgumentException(batch.direction + " unsupported in loading");
         }
-        progress.relationshipBatchImported(batch.length >> 1);
+        progress.relationshipsImported(batch.length >> 1);
     }
 
     private void initOut() {
