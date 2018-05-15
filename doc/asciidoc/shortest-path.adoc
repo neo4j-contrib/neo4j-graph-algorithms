@@ -1,6 +1,11 @@
 [[algorithms-shortest-path]]
 = The Shortest Path algorithm
 
+[abstract]
+--
+This section describes the Shortest Path algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction[]
 The Shortest Path algorithm calculates the shortest (weighted) path between a pair of nodes.
 In this category, Dijkstra's algorithm is the most well known.

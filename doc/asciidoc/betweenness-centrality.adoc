@@ -1,6 +1,11 @@
 [[algorithms-betweenness-centrality]]
 = The Betweenness Centrality algorithm
 
+[abstract]
+--
+This section describes the Betweenness Centrality algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction-start[]
 Betweenness centrality is a way of detecting the amount of influence a node has over the flow of information in a graph.
 It is often used to find nodes that serve as a bridge from one part of a graph to another.

@@ -1,6 +1,11 @@
 [[algorithms-louvain]]
 = The Louvain algorithm
 
+[abstract]
+--
+This section describes the Louvain algorithm in the Neo4j Graph Algorithms library.
+--
+
 // tag::introduction[]
 The Louvain method of community detection is an algorithm for detecting communities in networks.
 It maximizes a modularity score for each community, where the modularity quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are, compared to how connected they would be in a random network.
