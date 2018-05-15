@@ -137,7 +137,7 @@ Graph diameter (longest shortest path):
 ==== Local graph statistics:
 
 .Use apoc to calculate local statistics
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=social-network-local-props]
 ----
@@ -173,7 +173,7 @@ Inferred graph is _undirected_, as changing the direction of the relationships d
 We will limit our network to those businesses, that have more than 10 reviews and project a co-occurrent relationship between businesses:
 
 .Project a review co-occurence between businesses
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=coocurence-graph]
 ----
@@ -195,7 +195,7 @@ Projected graph is modeled _undirected_, as the direction of the relationships h
 Projecting a review similarity graph is often used in recommendations; similar users are calculated based on review ratings, so we can recommend to a user what similar users liked.
 
 .Create a review similarity graph
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/yelp-import.cypher[tag=reviewsimilarity-graph]
 ----

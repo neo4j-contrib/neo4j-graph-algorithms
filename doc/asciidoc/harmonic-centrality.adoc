@@ -53,24 +53,22 @@ If we're trying to spread a message on social media we could use the algorithm t
 
 
 .The following will create a sample graph:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/harmonic-centrality.cypher[tag=create-sample-graph]
 ----
 
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/harmonic-centrality.cypher[tag=stream-sample-graph]
-- yields centrality for each node
 ----
 
 .The following will run the algorithm and write back results:
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/harmonic-centrality.cypher[tag=write-sample-graph]
-- calculates closeness centrality and potentially writes back
 ----
 
 Calculation:
@@ -108,8 +106,8 @@ Instead of calculating the farness, we sum the inverse of each cell and multiply
 [source, cypher]
 ----
 CALL algo.closeness.harmonic(label:String, relationship:String,
-{write:true, writeProperty:'centrality',graph:'heavy', concurrency:4})
-YIELD nodes,loadMillis, computeMillis, writeMillis
+    {write:true, writeProperty:'centrality', graph:'heavy', concurrency:4})
+YIELD nodes, loadMillis, computeMillis, writeMillis
 ----
 
 .Parameters
@@ -136,10 +134,10 @@ YIELD nodes,loadMillis, computeMillis, writeMillis
 
 
 .The following will run the algorithm and stream results:
-[source,cypher]
+[source, cypher]
 ----
-CALL algo.closeness.harmonic.stream(label:String, relationship:String,{concurrency:4})
-YIELD nodeId, centrality - yields centrality for each node
+CALL algo.closeness.harmonic.stream(label:String, relationship:String, {concurrency:4})
+YIELD nodeId, centrality
 ----
 
 .Parameters
@@ -166,7 +164,7 @@ If our projected graph contains more than 2 billion nodes or relationships, we n
 
 .Set `graph:'huge'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/harmonic-centrality.cypher[tag=huge-projection]
 ----
@@ -179,7 +177,7 @@ This can also be used to run algorithms on a virtual graph.
 
 .Set `graph:'cypher'` in the config:
 
-[source,cypher]
+[source, cypher]
 ----
 include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
 ----

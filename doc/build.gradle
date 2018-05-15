@@ -39,12 +39,22 @@ ext {
     ]
     if (1 < versionParts.size()) { versions.graphAlgoDocs += '-preview' }
 
+    docsBaseUri = "https://neo4j.com/docs"
+    crossReferenceBase = [ // We have no strategy for cross references; always link to current.
+            'operations-manual' : "${docsBaseUri}/operations-manual/current",
+            'developer-manual'  : "${docsBaseUri}/developer-manual/current",
+            'java-reference'    : "${docsBaseUri}/java-reference/current",
+            'rest-docs'         : "${docsBaseUri}/rest-docs/current",
+            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
+            'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
+    ]
     asciidoctorAttributes = [
         'common': [
             'doctype'            : 'book',
             'icons'              : 'font',
             'attribute-missing'  : 'warn',
             'docs-version'       : versions.graphAlgoDocs,
+            'common-license-page-uri': "$docsBaseUri/license/",
         ],
         'docbook': [
             'imagesdir'          : 'images',
@@ -60,15 +70,6 @@ ext {
             'showlinks'         : '',
             'nonhtmloutput'     : '',
         ]
-    ]
-    docsBaseUri = "https://neo4j.com/docs"
-    crossReferenceBase = [ // We have no strategy for cross references; always link to current.
-            'operations-manual' : "${docsBaseUri}/operations-manual/current",
-            'developer-manual'  : "${docsBaseUri}/developer-manual/current",
-            'java-reference'    : "${docsBaseUri}/java-reference/current",
-            'rest-docs'         : "${docsBaseUri}/rest-docs/current",
-            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
-            'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
     ]
     asciidocSourceDir = "$projectDir/asciidoc"
     distDir = "$buildDir/distributions"
