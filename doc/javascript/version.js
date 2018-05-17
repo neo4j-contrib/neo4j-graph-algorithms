@@ -1,5 +1,5 @@
 window.docMeta = (function () {
-  var version = '3.4-preview';
+  var version = '3.4';
   var name = 'graph-algorithms';
   var href = window.location.href;
   return {
