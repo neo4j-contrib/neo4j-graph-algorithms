@@ -280,7 +280,6 @@ public final class RelationshipsScanner extends StatementAction {
         if (length == 0) {
             return;
         }
-//        System.out.println("sending batch of length " + length + " to thread #" + threadIndex);
         RelationshipsBatch batch = nextRelationshipBatch();
         long[] newBuffer = setRelationshipBatch(batch, buffer.get(threadIndex), length, direction);
         buffer.reset(threadIndex, newBuffer);
@@ -304,7 +303,6 @@ public final class RelationshipsScanner extends StatementAction {
         if (length == 0) {
             return;
         }
-//        System.out.println("sending batch of length " + length + " to thread #" + threadIndex);
         RelationshipsBatch batch = nextRelationshipBatch();
         setRelationshipBatch(batch, targets, length, direction);
         spinWaitSend(threadQueues[threadIndex], batch);
@@ -334,11 +332,6 @@ public final class RelationshipsScanner extends StatementAction {
     private void spinWaitSend(ArrayBlockingQueue<RelationshipsBatch> queue, RelationshipsBatch rel)
     throws InterruptedException {
         queue.put(rel);
-//        while (true) {
-//            if (queue.offer(rel)) {
-//                return;
-//            }
-//        }
     }
 
     private static ArrayBlockingQueue<RelationshipsBatch> newPool(int capacity) {

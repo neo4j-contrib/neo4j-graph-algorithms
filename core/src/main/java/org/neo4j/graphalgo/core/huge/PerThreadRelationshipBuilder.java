@@ -175,12 +175,6 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             Thread.currentThread().interrupt();
             return RelationshipsBatch.SENTINEL;
         }
-//        LoadedRelationship relationship = queue.poll();
-//        while (relationship == null) {
-//            Thread.yield();
-//            relationship = queue.poll();
-//        }
-//        return relationship;
     }
 
     private void addRelationship(RelationshipsBatch batch) {
