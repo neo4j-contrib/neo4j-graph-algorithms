@@ -30,11 +30,8 @@ public abstract class StatementFunction<T> extends StatementApi implements Renam
 
     @Override
     public T call() {
-        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
-        try {
+        try (Revert ignored = RenamesCurrentThread.renameThread(threadName())) {
             return applyInTransaction(this);
-        } finally {
-            revertName.run();
         }
     }
 }

@@ -91,13 +91,10 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
 
     @Override
     public void run() {
-        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
-        try {
+        try (Revert ignored = RenamesCurrentThread.renameThread(threadName())) {
             runImport();
         } catch (Exception e) {
             drainQueue(e);
-        } finally {
-            revertName.run();
         }
     }
 

@@ -29,14 +29,11 @@ public abstract class StatementAction extends StatementApi implements RenamesCur
 
     @Override
     public void run() {
-        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
-        try {
+        try (Revert ignored = RenamesCurrentThread.renameThread(threadName())) {
             acceptInTransaction(this);
         } catch (Exception e) {
             Exceptions.throwIfUnchecked(e);
             throw new RuntimeException(e);
-        } finally {
-            revertName.run();
         }
     }
 }
