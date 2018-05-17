@@ -432,6 +432,7 @@ public final class RelationshipsScanner extends StatementAction {
         throws InterruptedException {
             scanner.batchRelationship(source, target, buffer, Direction.OUTGOING);
         }
+
         @Override
         public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
             buffer.drainAndRelease(scanner::sendRelationshipOut);
@@ -451,6 +452,7 @@ public final class RelationshipsScanner extends StatementAction {
         throws InterruptedException {
             scanner.batchRelationship(target, source, buffer, Direction.INCOMING);
         }
+
         @Override
         public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
             buffer.drainAndRelease(scanner::sendRelationshipOut);

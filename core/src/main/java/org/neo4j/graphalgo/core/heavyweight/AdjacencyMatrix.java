@@ -21,7 +21,10 @@ package org.neo4j.graphalgo.core.heavyweight;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.NodeIterator;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
@@ -32,7 +35,9 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.IntPredicate;
 
-import static org.neo4j.graphalgo.core.utils.ArrayUtil.*;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.LINEAR_SEARCH_LIMIT;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.binarySearch;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.linearSearch;
 
 /**
  * Relation Container built of multiple arrays. The node capacity must be constant and the node IDs have to be
@@ -70,11 +75,22 @@ class AdjacencyMatrix {
         this(nodeCount, true, true, sorted, tracker);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted, AllocationTracker tracker) {
+    AdjacencyMatrix(
+            int nodeCount,
+            boolean withIncoming,
+            boolean withOutgoing,
+            boolean sorted,
+            AllocationTracker tracker) {
         this(nodeCount, withIncoming, withOutgoing, sorted, true, tracker);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted, boolean preFill, AllocationTracker tracker) {
+    AdjacencyMatrix(
+            int nodeCount,
+            boolean withIncoming,
+            boolean withOutgoing,
+            boolean sorted,
+            boolean preFill,
+            AllocationTracker tracker) {
         if (withOutgoing) {
             tracker.add(MemoryUsage.sizeOfIntArray(nodeCount));
             tracker.add(MemoryUsage.sizeOfObjectArray(nodeCount));
@@ -137,7 +153,7 @@ class AdjacencyMatrix {
      * grow array for outgoing connections
      */
     private void growOut(int sourceNodeId, int length) {
-        assert length >= 0: "size must be positive (got " + length + "): likely integer overflow?";
+        assert length >= 0 : "size must be positive (got " + length + "): likely integer overflow?";
         if (outgoing[sourceNodeId].length < length) {
             outgoing[sourceNodeId] = growArray(outgoing[sourceNodeId], length);
         }
@@ -147,7 +163,7 @@ class AdjacencyMatrix {
      * grow array for incoming connections
      */
     private void growIn(int targetNodeId, int length) {
-        assert length >= 0: "size must be positive (got " + length + "): likely integer overflow?";
+        assert length >= 0 : "size must be positive (got " + length + "): likely integer overflow?";
         if (incoming[targetNodeId].length < length) {
             incoming[targetNodeId] = growArray(incoming[targetNodeId], length);
         }

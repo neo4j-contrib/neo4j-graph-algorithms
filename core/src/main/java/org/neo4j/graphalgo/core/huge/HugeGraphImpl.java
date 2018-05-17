@@ -252,7 +252,10 @@ public class HugeGraphImpl implements HugeGraph {
         forEachIncoming((long) nodeId, inAdjacency.newCursor(), toHugeInConsumer(consumer));
     }
 
-    private void forEachIncoming(long node, HugeAdjacencyList.Cursor newCursor, final HugeRelationshipConsumer consumer) {
+    private void forEachIncoming(
+            long node,
+            HugeAdjacencyList.Cursor newCursor,
+            final HugeRelationshipConsumer consumer) {
         HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, inOffsets, inAdjacency);
         consumeNodes(node, cursor, consumer);
     }
@@ -271,7 +274,10 @@ public class HugeGraphImpl implements HugeGraph {
         forEachOutgoing((long) nodeId, outAdjacency.newCursor(), toHugeOutConsumer(consumer));
     }
 
-    private void forEachOutgoing(long node, HugeAdjacencyList.Cursor newCursor, final HugeRelationshipConsumer consumer) {
+    private void forEachOutgoing(
+            long node,
+            HugeAdjacencyList.Cursor newCursor,
+            final HugeRelationshipConsumer consumer) {
         HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, outOffsets, outAdjacency);
         consumeNodes(node, cursor, consumer);
     }
@@ -395,7 +401,7 @@ public class HugeGraphImpl implements HugeGraph {
             HugeAdjacencyList.Cursor cursor,
             HugeRelationshipConsumer consumer) {
         //noinspection StatementWithEmptyBody
-        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong())) ;
     }
 
     private HugeRelationshipConsumer toHugeOutConsumer(RelationshipConsumer consumer) {

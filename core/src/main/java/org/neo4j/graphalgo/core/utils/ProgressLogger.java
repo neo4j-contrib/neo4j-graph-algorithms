@@ -50,9 +50,11 @@ public interface ProgressLogger {
     default void logProgress(double numerator, double denominator, Supplier<String> msg) {
         logProgress(numerator / denominator, msg);
     }
+
     default void logProgress(double numerator, double denominator) {
         logProgress(numerator, denominator, NO_MESSAGE);
     }
+
     default void logProgress(double percentDone) {
         logProgress(percentDone, NO_MESSAGE);
     }

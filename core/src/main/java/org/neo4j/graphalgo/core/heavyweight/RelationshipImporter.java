@@ -92,7 +92,7 @@ final class RelationshipImporter extends StatementAction {
 
     @Override
     public void accept(final KernelTransaction transaction) {
-        final Read readOp =  transaction.dataRead();
+        final Read readOp = transaction.dataRead();
         CursorFactory cursors = transaction.cursors();
         final RelationshipLoader loader = prepare(transaction, readOp, cursors);
         PrimitiveIntIterator iterator = nodes.iterator();
@@ -109,7 +109,10 @@ final class RelationshipImporter extends StatementAction {
         }
     }
 
-    private RelationshipLoader prepare(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
+    private RelationshipLoader prepare(
+            final KernelTransaction transaction,
+            final Read readOp,
+            final CursorFactory cursors) {
         final RelationshipLoader loader;
         if (setup.loadAsUndirected) {
             loader = prepareUndirected(transaction, readOp, cursors);
@@ -134,7 +137,10 @@ final class RelationshipImporter extends StatementAction {
         return loader;
     }
 
-    private RelationshipLoader prepareDirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
+    private RelationshipLoader prepareDirected(
+            final KernelTransaction transaction,
+            final Read readOp,
+            final CursorFactory cursors) {
         final boolean loadIncoming = setup.loadIncoming;
         final boolean loadOutgoing = setup.loadOutgoing;
         final boolean sort = setup.sort;
@@ -170,12 +176,20 @@ final class RelationshipImporter extends StatementAction {
         return loader;
     }
 
-    private RelationshipLoader prepareUndirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
+    private RelationshipLoader prepareUndirected(
+            final KernelTransaction transaction,
+            final Read readOp,
+            final CursorFactory cursors) {
         final VisitRelationship visitorIn;
         final VisitRelationship visitorOut;
         if (relWeights instanceof WeightMap) {
             visitorIn = new VisitIncomingNoWeight(idMap, true);
-            visitorOut = new VisitUndirectedOutgoingWithWeight(readOp, cursors, idMap, true, (WeightMap) this.relWeights);
+            visitorOut = new VisitUndirectedOutgoingWithWeight(
+                    readOp,
+                    cursors,
+                    idMap,
+                    true,
+                    (WeightMap) this.relWeights);
         } else {
             visitorIn = new VisitIncomingNoWeight(idMap, true);
             visitorOut = new VisitOutgoingNoWeight(idMap, true);

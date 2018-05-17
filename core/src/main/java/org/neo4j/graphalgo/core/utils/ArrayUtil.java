@@ -67,11 +67,11 @@ public final class ArrayUtil {
     private static boolean linearSearch(int[] arr, int low, int high, int key) {
         int i = low;
         for (; i < high - 3; i += 4) {
-            if (arr [i] > key) return false;
-            if (arr [i] == key) return true;
-            if (arr [i + 1] == key) return true;
-            if (arr [i + 2] == key) return true;
-            if (arr [i + 3] == key) return true;
+            if (arr[i] > key) return false;
+            if (arr[i] == key) return true;
+            if (arr[i + 1] == key) return true;
+            if (arr[i + 2] == key) return true;
+            if (arr[i + 3] == key) return true;
         }
         for (; i <= high; i++) {
             if (arr[i] == key) {

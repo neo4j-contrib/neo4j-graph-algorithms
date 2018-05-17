@@ -101,7 +101,7 @@ public final class Exporter extends StatementApi {
                 throw new IllegalStateException("no logger set");
             }
             final long logTime = unit.toMillis(time);
-            if ((int)logTime != logTime) {
+            if ((int) logTime != logTime) {
                 throw new IllegalArgumentException("timespan too large");
             }
             loggerAdapter.withLogIntervalMillis((int) logTime);
@@ -235,7 +235,15 @@ public final class Exporter extends StatementApi {
             int propertyId2,
             U data2,
             PropertyTranslator<U> translator2) {
-        writeSequential((ops, offset) -> doWrite(propertyId1, data1, translator1, propertyId2, data2, translator2, ops, offset));
+        writeSequential((ops, offset) -> doWrite(
+                propertyId1,
+                data1,
+                translator1,
+                propertyId2,
+                data2,
+                translator2,
+                ops,
+                offset));
     }
 
     private <T> void writeParallel(
@@ -252,7 +260,15 @@ public final class Exporter extends StatementApi {
             int propertyId2,
             U data2,
             PropertyTranslator<U> translator2) {
-        writeParallel((ops, offset) -> doWrite(propertyId1, data1, translator1, propertyId2, data2, translator2, ops, offset));
+        writeParallel((ops, offset) -> doWrite(
+                propertyId1,
+                data1,
+                translator1,
+                propertyId2,
+                data2,
+                translator2,
+                ops,
+                offset));
     }
 
     private void writeSequential(WriteConsumer writer) {

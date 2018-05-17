@@ -83,7 +83,7 @@ public final class BitUtil {
 
     public static long align(long value, int alignment) {
         assert isPowerOfTwo(alignment) : "alignment must be a power of 2:" + alignment;
-        return value + (long)(alignment - 1) & (long)(~(alignment - 1));
+        return value + (long) (alignment - 1) & (long) (~(alignment - 1));
     }
 
     private BitUtil() {

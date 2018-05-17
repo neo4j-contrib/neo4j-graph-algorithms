@@ -114,8 +114,8 @@ public abstract class GraphFactory {
             int propertyId,
             double defaultValue) {
         return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                    ? new HugeNullWeightMap(defaultValue)
-                    : new HugeWeightMap(dimensions.hugeNodeCount(), defaultValue, tracker);
+                ? new HugeNullWeightMap(defaultValue)
+                : new HugeWeightMap(dimensions.hugeNodeCount(), defaultValue, tracker);
     }
 
     private static ProgressLogger progressLogger(Log log, long time, TimeUnit unit) {

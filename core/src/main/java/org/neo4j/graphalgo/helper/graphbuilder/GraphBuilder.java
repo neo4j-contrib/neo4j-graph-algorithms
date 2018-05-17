@@ -20,7 +20,10 @@ package org.neo4j.graphalgo.helper.graphbuilder;
 
 import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.TransactionWrapper;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -229,7 +232,6 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     }
 
     /**
->>>>>>> a7b56859... Add test for larger triangle counting
      * return child instance for method chaining from methods of the abstract parent class
      *
      * @return self (child instance)
@@ -249,7 +251,7 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
     /**
      * create a new default builder with a defined RNG
      *
-     * @param api the neo4j api
+     * @param api    the neo4j api
      * @param random the random number generator
      * @return a new default builder
      */
