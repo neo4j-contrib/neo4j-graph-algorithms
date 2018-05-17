@@ -37,7 +37,6 @@ import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray
 
 final class ScanningRelationshipImporter {
 
-    private static final long MAX_BATCH_SIZE = 2_000_000_000L;
     private static final int PER_THREAD_IN_FLIGHT = 1 << 4;
 
     private final GraphSetup setup;
@@ -100,22 +99,14 @@ final class ScanningRelationshipImporter {
     }
 
     void run() {
-        long targetThreads = (long) BitUtil.nextHighestPowerOfTwo(concurrency);
-        long batchSize = BitUtil.nextHighestPowerOfTwo(ParallelUtil.threadSize(targetThreads, idMap.nodeCount()));
-        while (batchSize > MAX_BATCH_SIZE) {
-            targetThreads <<= 1L;
-            batchSize >>= 1L;
-        }
-        if (targetThreads > MAX_BATCH_SIZE) {
-            throw new IllegalArgumentException("Can't create " + targetThreads + " threads");
-        }
-        run((int) targetThreads, (int) batchSize);
+        final ThreadSizing threadSizing = new ThreadSizing(concurrency, idMap.nodeCount(), threadPool);
+        run(threadSizing.numberOfThreads(), threadSizing.batchSize());
     }
 
     private void run(int threads, int batchSize) {
         int inFlight = threads * PER_THREAD_IN_FLIGHT;
         long idBase = 0L;
-//        noinspection unchecked
+        //noinspection unchecked
         ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
         PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
         int[][] outDegrees = allocateDegrees(outOffsets != null, threads);
