@@ -25,7 +25,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 final class RelationshipsBatch implements AutoCloseable {
     static final RelationshipsBatch SENTINEL = new RelationshipsBatch(null);
 
-    long[] sourceAndTargets;
+    long[] sourceTargetIds;
     int length;
     Direction direction;
 

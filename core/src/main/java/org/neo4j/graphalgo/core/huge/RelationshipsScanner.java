@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.core.huge;
 import org.neo4j.function.ThrowingConsumer;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
+import org.neo4j.graphalgo.core.utils.RenamesCurrentThread;
 import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
@@ -34,7 +35,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -48,8 +48,8 @@ public final class RelationshipsScanner extends StatementAction {
     private final ArrayBlockingQueue<RelationshipsBatch>[] threadQueues;
     private int[][] outDegrees;
     private int[][] inDegrees;
-    private final long[] baseIds;
     private final int threadsShift;
+    private final long threadsMask;
     private final int batchSize;
 
     private final HugeIdMap idMap;
@@ -73,7 +73,7 @@ public final class RelationshipsScanner extends StatementAction {
             int[][] inDegrees,
             int perThreadSize) {
         super(api);
-        assert (batchSize & 1) == 0 : "batchSize must be even";
+        assert (batchSize % 3) == 0 : "batchSize must be divisible by three";
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.setup = setup;
         this.progress = progress;
@@ -82,10 +82,9 @@ public final class RelationshipsScanner extends StatementAction {
         this.threadQueues = threadQueues;
         this.outDegrees = outDegrees;
         this.inDegrees = inDegrees;
-        this.baseIds = new long[threadQueues.length];
-        Arrays.setAll(baseIds, i -> (long) i * perThreadSize);
-        this.batchSize = batchSize;
         this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
+        this.threadsMask = (long)(perThreadSize - 1);
+        this.batchSize = batchSize;
         this.pool = newPool(maxInFlight);
         Map.Entry<DegreeLoader, Emit> entry = setupDegreeLoaderAndEmit(setup, batchSize, threadQueues.length);
         this.loader = entry.getKey();
@@ -96,8 +95,7 @@ public final class RelationshipsScanner extends StatementAction {
         final DegreeLoader loader;
         final Emit emit;
         if (setup.loadAsUndirected) {
-            this.inDegrees = this.outDegrees;
-            loader = new LoadDegreeBoth();
+            loader = new LoadDegreeUndirected();
             LongsBuffer buffer = new LongsBuffer(threadSize, batchSize);
             emit = new EmitBoth(buffer, Direction.OUTGOING, buffer, Direction.OUTGOING);
         } else {
@@ -156,7 +154,9 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     private void loadDegrees(final KernelTransaction transaction) {
-        forAllRelationships(transaction, this::loadDegree);
+        try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-degrees")) {
+            forAllRelationships(transaction, this::loadDegree);
+        }
         // remove references so that GC can eventually reclaim memory
         if (inDegrees != null) {
             tracker.remove(sizeOfObjectArray(inDegrees.length));
@@ -193,7 +193,7 @@ public final class RelationshipsScanner extends StatementAction {
             long source = idMap.toHugeMappedNodeId(rc.sourceNodeReference());
             long target = idMap.toHugeMappedNodeId(rc.targetNodeReference());
             if (source != -1L && target != -1L) {
-                emit.emit(source, target, this);
+                emit.emit(source, target, rc.relationshipReference(), this);
             }
         }
     }
@@ -218,20 +218,22 @@ public final class RelationshipsScanner extends StatementAction {
         return (int) (nodeId >>> threadsShift);
     }
 
+    private int threadLocalId(long nodeId) {
+        return (int) (nodeId & threadsMask);
+    }
+
     private void incOutDegree(long nodeId) {
-        int threadIdx = threadIndex(nodeId);
-        ++outDegrees[threadIdx][(int) (nodeId - baseIds[threadIdx])];
+        ++outDegrees[threadIndex(nodeId)][threadLocalId(nodeId)];
     }
 
     private void incInDegree(long nodeId) {
-        int threadIdx = threadIndex(nodeId);
-        ++inDegrees[threadIdx][(int) (nodeId - baseIds[threadIdx])];
+        ++inDegrees[threadIndex(nodeId)][threadLocalId(nodeId)];
     }
 
-    private void batchRelationship(long source, long target, LongsBuffer buffer, Direction direction)
+    private void batchRelationship(long source, long target, long relId, LongsBuffer buffer, Direction direction)
     throws InterruptedException {
         int threadIndex = threadIndex(source);
-        int len = buffer.addRelationship(threadIndex, source, target);
+        int len = buffer.addRelationship(threadIndex, source, target, relId);
         if (len >= batchSize) {
             sendRelationship(threadIndex, len, buffer, direction);
         }
@@ -262,7 +264,7 @@ public final class RelationshipsScanner extends StatementAction {
 
                 @Override
                 public boolean add(final RelationshipsBatch relationshipsBatch) {
-                    relationshipsBatch.sourceAndTargets = null;
+                    relationshipsBatch.sourceTargetIds = null;
                     relationshipsBatch.length = 0;
                     return false;
                 }
@@ -319,12 +321,12 @@ public final class RelationshipsScanner extends StatementAction {
     private long[] setRelationshipBatch(RelationshipsBatch loaded, long[] batch, int length, Direction direction) {
         loaded.length = length;
         loaded.direction = direction;
-        if (loaded.sourceAndTargets == null) {
-            loaded.sourceAndTargets = batch;
+        if (loaded.sourceTargetIds == null) {
+            loaded.sourceTargetIds = batch;
             return new long[length];
         } else {
-            long[] sourceAndTargets = loaded.sourceAndTargets;
-            loaded.sourceAndTargets = batch;
+            long[] sourceAndTargets = loaded.sourceTargetIds;
+            loaded.sourceTargetIds = batch;
             return sourceAndTargets;
         }
     }
@@ -345,6 +347,15 @@ public final class RelationshipsScanner extends StatementAction {
 
     private interface DegreeLoader {
         void load(long source, long target, RelationshipsScanner scanner);
+    }
+
+    private static final class LoadDegreeUndirected implements DegreeLoader {
+
+        @Override
+        public void load(long source, long target, RelationshipsScanner scanner) {
+            scanner.incOutDegree(source);
+            scanner.incOutDegree(target);
+        }
     }
 
     private static final class LoadDegreeBoth implements DegreeLoader {
@@ -380,7 +391,7 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     private interface Emit {
-        void emit(long source, long target, RelationshipsScanner scanner) throws InterruptedException;
+        void emit(long source, long target, long relId, RelationshipsScanner scanner) throws InterruptedException;
 
         void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException;
     }
@@ -399,10 +410,10 @@ public final class RelationshipsScanner extends StatementAction {
         }
 
         @Override
-        public void emit(long source, long target, RelationshipsScanner scanner)
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, outBuffer, outDirection);
-            scanner.batchRelationship(target, source, inBuffer, inDirection);
+            scanner.batchRelationship(source, target, relId, outBuffer, outDirection);
+            scanner.batchRelationship(target, source, relId, inBuffer, inDirection);
         }
 
         @Override
@@ -421,9 +432,9 @@ public final class RelationshipsScanner extends StatementAction {
         }
 
         @Override
-        public void emit(long source, long target, RelationshipsScanner scanner)
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, buffer, Direction.OUTGOING);
+            scanner.batchRelationship(source, target, relId, buffer, Direction.OUTGOING);
         }
 
         @Override
@@ -441,9 +452,9 @@ public final class RelationshipsScanner extends StatementAction {
         }
 
         @Override
-        public void emit(long source, long target, RelationshipsScanner scanner)
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(target, source, buffer, Direction.INCOMING);
+            scanner.batchRelationship(target, source, relId, buffer, Direction.INCOMING);
         }
 
         @Override
@@ -457,7 +468,7 @@ public final class RelationshipsScanner extends StatementAction {
         }
 
         @Override
-        public void emit(long source, long target, RelationshipsScanner scanner) {
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner) {
         }
 
         @Override

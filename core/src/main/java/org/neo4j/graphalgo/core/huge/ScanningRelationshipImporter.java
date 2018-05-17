@@ -19,11 +19,10 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.GraphSetup;
+import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.BitUtil;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Arrays;
@@ -33,21 +32,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 final class ScanningRelationshipImporter {
 
-    private static final int PER_THREAD_IN_FLIGHT = 1 << 4;
+    private static final int PER_THREAD_IN_FLIGHT = 1 << 7;
 
     private final GraphSetup setup;
     private final GraphDatabaseAPI api;
     private final ImportProgress progress;
     private final AllocationTracker tracker;
     private final HugeIdMap idMap;
-    private final HugeLongArray outOffsets;
-    private final HugeAdjacencyListBuilder outAdjacency;
-    private final HugeLongArray inOffsets;
-    private final HugeAdjacencyListBuilder inAdjacency;
+    private final HugeWeightMapBuilder weights;
+    private final HugeAdjacencyBuilder outAdjacency;
+    private final HugeAdjacencyBuilder inAdjacency;
     private final ExecutorService threadPool;
     private final int concurrency;
 
@@ -57,10 +54,9 @@ final class ScanningRelationshipImporter {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeIdMap idMap,
-            HugeLongArray outOffsets,
-            HugeAdjacencyListBuilder outAdjacency,
-            HugeLongArray inOffsets,
-            HugeAdjacencyListBuilder inAdjacency,
+            HugeWeightMapBuilder weights,
+            HugeAdjacencyBuilder outAdjacency,
+            HugeAdjacencyBuilder inAdjacency,
             ExecutorService threadPool,
             int concurrency) {
         this.setup = setup;
@@ -68,9 +64,8 @@ final class ScanningRelationshipImporter {
         this.progress = progress;
         this.tracker = tracker;
         this.idMap = idMap;
-        this.outOffsets = outOffsets;
+        this.weights = weights;
         this.outAdjacency = outAdjacency;
-        this.inOffsets = inOffsets;
         this.inAdjacency = inAdjacency;
         this.threadPool = threadPool;
         this.concurrency = concurrency;
@@ -82,10 +77,9 @@ final class ScanningRelationshipImporter {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeIdMap idMap,
-            HugeLongArray outOffsets,
-            HugeAdjacencyListBuilder outAdjacency,
-            HugeLongArray inOffsets,
-            HugeAdjacencyListBuilder inAdjacency,
+            HugeWeightMapBuilder weights,
+            HugeAdjacencyBuilder outAdjacency,
+            HugeAdjacencyBuilder inAdjacency,
             ExecutorService threadPool,
             int concurrency) {
         if (!ParallelUtil.canRunInParallel(threadPool)) {
@@ -93,70 +87,112 @@ final class ScanningRelationshipImporter {
             return null;
         }
         return new ScanningRelationshipImporter(
-                setup, api, progress, tracker, idMap,
-                outOffsets, outAdjacency, inOffsets, inAdjacency,
-                threadPool, concurrency);
+                setup, api, progress, tracker, idMap, weights,
+                outAdjacency, inAdjacency, threadPool, concurrency);
     }
 
-    void run() {
+    HugeWeightMapping run() {
         final ThreadSizing threadSizing = new ThreadSizing(concurrency, idMap.nodeCount(), threadPool);
-        run(threadSizing.numberOfThreads(), threadSizing.batchSize());
+        return run(threadSizing.numberOfThreads(), threadSizing.batchSize());
     }
 
-    private void run(int threads, int batchSize) {
-        int inFlight = threads * PER_THREAD_IN_FLIGHT;
+    private HugeWeightMapping run(int threads, int batchSize) {
+        ThreadLoader loader = new ThreadLoader(tracker, weights, outAdjacency, inAdjacency, threads);
         long idBase = 0L;
-        //noinspection unchecked
-        ArrayBlockingQueue<RelationshipsBatch>[] queues = new ArrayBlockingQueue[threads];
-        PerThreadRelationshipBuilder[] builders = new PerThreadRelationshipBuilder[threads];
-        int[][] outDegrees = allocateDegrees(outOffsets != null, threads);
-        int[][] inDegrees = allocateDegrees(inOffsets != null, threads);
-        int i = 0;
-        for (; i < threads; i++) {
-            int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
-            if (elementsForThread <= 0) {
-                break;
-            }
-            final ArrayBlockingQueue<RelationshipsBatch> queue = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
-            int[] out = allocateDegree(outDegrees, elementsForThread, i);
-            int[] in = allocateDegree(inDegrees, elementsForThread, i);
-            final PerThreadRelationshipBuilder builder = new PerThreadRelationshipBuilder(
-                    progress, tracker, i, idBase, elementsForThread, queue,
-                    out, outOffsets, outAdjacency, in, inOffsets, inAdjacency);
-
-            queues[i] = queue;
-            builders[i] = builder;
+        int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
+        while (elementsForThread > 0) {
+            loader.add(api, progress, idBase, elementsForThread);
             idBase += (long) batchSize;
+            elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
         }
-        if (i < threads) {
-            builders = Arrays.copyOf(builders, i);
-            queues = Arrays.copyOf(queues, i);
-        }
+        loader.finish();
 
         final Collection<Future<?>> jobs =
-                ParallelUtil.run(Arrays.asList(builders), false, threadPool, null);
+                ParallelUtil.run(Arrays.asList(loader.builders), false, threadPool, null);
 
-        int queueBatchSize = (int) BitUtil.align((long) Math.max(1 << 13, setup.batchSize), 2);
+        int inFlight = threads * PER_THREAD_IN_FLIGHT;
+        int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
+        int queueBatchSize = 3 * baseQueueBatchSize;
         final RelationshipsScanner scanner = new RelationshipsScanner(
                 api, setup, progress, tracker, idMap,
-                inFlight, queueBatchSize, queues, outDegrees, inDegrees, batchSize);
+                inFlight, queueBatchSize, loader.queues, loader.outDegrees, loader.inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
+
+        return loader.weights.build();
     }
 
-    private int[][] allocateDegrees(boolean shouldAllocate, int size) {
-        if (shouldAllocate) {
-            tracker.add(sizeOfObjectArray(size));
-            return new int[size][];
-        }
-        return null;
-    }
+    private static final class ThreadLoader {
+        private final AllocationTracker tracker;
+        private final HugeWeightMapBuilder weights;
+        private final HugeAdjacencyBuilder outAdjacency;
+        private final HugeAdjacencyBuilder inAdjacency;
 
-    private int[] allocateDegree(int[][] into, int size, int index) {
-        if (into != null) {
-            tracker.add(sizeOfIntArray(size));
-            return into[index] = new int[size];
+        private ArrayBlockingQueue<RelationshipsBatch>[] queues;
+        private PerThreadRelationshipBuilder[] builders;
+        private int[][] outDegrees;
+        private int[][] inDegrees;
+
+        private int index;
+
+        ThreadLoader(
+                AllocationTracker tracker,
+                HugeWeightMapBuilder weights,
+                HugeAdjacencyBuilder outAdjacency,
+                HugeAdjacencyBuilder inAdjacency,
+                int threads) {
+            this.tracker = tracker;
+            this.weights = weights;
+            this.outAdjacency = outAdjacency;
+            this.inAdjacency = inAdjacency;
+            weights.prepare(threads);
+            //noinspection unchecked
+            queues = new ArrayBlockingQueue[threads];
+            builders = new PerThreadRelationshipBuilder[threads];
+            if (outAdjacency != null) {
+                outDegrees = new int[threads][];
+            }
+            if (inAdjacency != null) {
+                inDegrees = new int[threads][];
+            }
         }
-        return null;
+
+        void add(
+                GraphDatabaseAPI api,
+                ImportProgress progress,
+                long startId,
+                int numberOfElements) {
+            int index = this.index++;
+            queues[index] = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
+            int[] ins = null, outs = null;
+            if (inDegrees != null) {
+                tracker.add(sizeOfIntArray(numberOfElements));
+                ins = inDegrees[index] = new int[numberOfElements];
+            }
+            if (outDegrees != null) {
+                tracker.add(sizeOfIntArray(numberOfElements));
+                outs = outDegrees[index] = new int[numberOfElements];
+            }
+            HugeWeightMapBuilder threadWeights = weights.threadLocalCopy(index, numberOfElements);
+            builders[index] = new PerThreadRelationshipBuilder(
+                    api, progress, tracker, threadWeights, queues[index],
+                    index, startId, numberOfElements,
+                    outs, outAdjacency, ins, inAdjacency);
+        }
+
+        void finish() {
+            int length = index;
+            weights.finish(length);
+            if (length < queues.length) {
+                queues = Arrays.copyOf(queues, length);
+                builders = Arrays.copyOf(builders, length);
+                if (inDegrees != null) {
+                    inDegrees = Arrays.copyOf(inDegrees, length);
+                }
+                if (outDegrees != null) {
+                    outDegrees = Arrays.copyOf(outDegrees, length);
+                }
+            }
+        }
     }
 }

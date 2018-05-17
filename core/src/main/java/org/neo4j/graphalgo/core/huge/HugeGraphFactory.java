@@ -27,7 +27,7 @@ import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
+import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class HugeGraphFactory extends GraphFactory {
@@ -74,9 +74,8 @@ public final class HugeGraphFactory extends GraphFactory {
                 dimensions.maxRelCount());
         int concurrency = setup.concurrency();
         AllocationTracker tracker = setup.tracker;
-        HugeWeightMapping weights = hugeWeightMapping(tracker, dimensions.relWeightId(), setup.relationDefaultWeight);
         HugeIdMap mapping = loadHugeIdMap(tracker);
-        HugeGraph graph = loadRelationships(dimensions, tracker, mapping, weights, concurrency);
+        HugeGraph graph = loadRelationships(dimensions, tracker, mapping, concurrency);
         progressLogger.logDone(tracker);
         return graph;
     }
@@ -85,44 +84,37 @@ public final class HugeGraphFactory extends GraphFactory {
             GraphDimensions dimensions,
             AllocationTracker tracker,
             HugeIdMap mapping,
-            HugeWeightMapping weights,
             int concurrency) {
         final long nodeCount = dimensions.hugeNodeCount();
-        HugeLongArray outOffsets = null;
-        HugeAdjacencyListBuilder outAdjacency = null;
-        HugeLongArray inOffsets = null;
-        HugeAdjacencyListBuilder inAdjacency = null;
+        HugeAdjacencyBuilder outAdjacency = null;
+        HugeAdjacencyBuilder inAdjacency = null;
         if (setup.loadAsUndirected) {
-            outOffsets = HugeLongArray.newArray(nodeCount, tracker);
-            outAdjacency = HugeAdjacencyListBuilder.newBuilder(tracker);
+            outAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
         } else {
             if (setup.loadOutgoing) {
-                outOffsets = HugeLongArray.newArray(nodeCount, tracker);
-                outAdjacency = HugeAdjacencyListBuilder.newBuilder(tracker);
+                outAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
             }
             if (setup.loadIncoming) {
-                inOffsets = HugeLongArray.newArray(nodeCount, tracker);
-                inAdjacency = HugeAdjacencyListBuilder.newBuilder(tracker);
+                inAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
             }
         }
 
+        int weightProperty = dimensions.relWeightId();
+        HugeWeightMapBuilder weightsBuilder = weightProperty == StatementConstants.NO_SUCH_PROPERTY_KEY
+                ? new HugeWeightMapBuilder.NullBuilder(setup.relationDefaultWeight)
+                : new HugeWeightMapBuilder(tracker, weightProperty, setup.relationDefaultWeight);
+
         final ScanningRelationshipImporter importer = ScanningRelationshipImporter.create(
-                setup, api, progress, tracker, mapping,
-                outOffsets, outAdjacency, inOffsets, inAdjacency,
-                threadPool, concurrency);
+                setup, api, progress, tracker, mapping, weightsBuilder,
+                outAdjacency, inAdjacency, threadPool, concurrency);
+        HugeWeightMapping weights;
         if (importer != null) {
-            importer.run();
+            weights = importer.run();
+        } else {
+            weights = new HugeNullWeightMap(setup.relationDefaultWeight);
         }
 
-        return new HugeGraphImpl(
-                tracker,
-                mapping,
-                weights,
-                inAdjacency != null ? inAdjacency.build() : null,
-                outAdjacency != null ? outAdjacency.build() : null,
-                inOffsets,
-                outOffsets
-        );
+        return HugeAdjacencyBuilder.apply(tracker, mapping, weights, inAdjacency, outAdjacency);
     }
 
 }

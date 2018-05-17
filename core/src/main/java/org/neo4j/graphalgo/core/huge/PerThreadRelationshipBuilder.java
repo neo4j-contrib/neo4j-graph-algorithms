@@ -18,12 +18,14 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
-import org.neo4j.graphalgo.core.huge.HugeAdjacencyListBuilder.Allocator;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
-import org.neo4j.graphalgo.core.utils.RenamesCurrentThread;
+import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.helpers.Exceptions;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -31,7 +33,7 @@ import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 
-final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnable {
+final class PerThreadRelationshipBuilder extends StatementAction {
 
     private static final int INIT_OUT = 1;
     private static final int INIT_IN = 2;
@@ -43,58 +45,60 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
     private final ArrayBlockingQueue<RelationshipsBatch> queue;
     private final ImportProgress progress;
     private final AllocationTracker tracker;
+    private final HugeWeightMapBuilder weights;
 
-    private int initStatus;
+    private Read read;
+    private CursorFactory cursors;
 
+    private final HugeAdjacencyBuilder outAdjacency;
     private int[] outDegrees;
     private CompressedLongArray[] outTargets;
-    private final HugeLongArray outOffsets;
-    private final Allocator outAllocator;
-    private final AdjacencyCompression inCompression;
 
+    private final HugeAdjacencyBuilder inAdjacency;
     private int[] inDegrees;
     private CompressedLongArray[] inTargets;
-    private final HugeLongArray inOffsets;
-    private final Allocator inAllocator;
-    private final AdjacencyCompression outCompression;
 
+    private int initStatus;
     private long size;
 
     PerThreadRelationshipBuilder(
+            GraphDatabaseAPI api,
             ImportProgress progress,
             AllocationTracker tracker,
+            HugeWeightMapBuilder weights,
+            ArrayBlockingQueue<RelationshipsBatch> queue,
             int threadIndex,
             long startId,
             int numberOfElements,
-            ArrayBlockingQueue<RelationshipsBatch> queue,
             int[] outDegrees,
-            HugeLongArray outOffsets,
-            HugeAdjacencyListBuilder outAdjacency,
+            HugeAdjacencyBuilder outAdjacency,
             int[] inDegrees,
-            HugeLongArray inOffsets,
-            HugeAdjacencyListBuilder inAdjacency) {
+            HugeAdjacencyBuilder inAdjacency) {
+        super(api);
         this.progress = progress;
         this.tracker = tracker;
+        this.weights = weights;
         this.threadIndex = threadIndex;
         this.startId = startId;
         this.numberOfElements = numberOfElements;
         this.queue = queue;
-        this.outOffsets = outOffsets;
+        this.outAdjacency = HugeAdjacencyBuilder.threadLocal(outAdjacency);
         this.outDegrees = outDegrees;
-        this.outAllocator = outAdjacency != null ? outAdjacency.newAllocator() : null;
-        this.outCompression = outAdjacency != null ? new AdjacencyCompression() : null;
-        this.inOffsets = inOffsets;
+        this.inAdjacency = HugeAdjacencyBuilder.threadLocal(inAdjacency);
         this.inDegrees = inDegrees;
-        this.inAllocator = inAdjacency != null ? inAdjacency.newAllocator() : null;
-        this.inCompression = inAdjacency != null ? new AdjacencyCompression() : null;
     }
 
     @Override
-    public void run() {
-        try (Revert ignored = RenamesCurrentThread.renameThread(threadName())) {
+    public void accept(final KernelTransaction transaction) {
+        try {
+            read = transaction.dataRead();
+            cursors = transaction.cursors();
             runImport();
         } catch (Exception e) {
             drainQueue(e);
+        } finally {
+            cursors = null;
+            read = null;
         }
     }
 
@@ -126,8 +130,8 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             outDegrees = null;
         }
         if (flushBuffers) {
-            flush(outTargets, outOffsets, outAllocator, outCompression);
-            flush(inTargets, inOffsets, inAllocator, inCompression);
+            flush(outTargets, outAdjacency);
+            flush(inTargets, outAdjacency);
         }
         if (outTargets != null) {
             tracker.remove(sizeOfObjectArray(outTargets.length));
@@ -137,11 +141,11 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             tracker.remove(sizeOfObjectArray(inTargets.length));
             inTargets = null;
         }
-        if (outCompression != null) {
-            outCompression.release();
+        if (outAdjacency != null) {
+            outAdjacency.release();
         }
-        if (inCompression != null) {
-            inCompression.release();
+        if (inAdjacency != null) {
+            inAdjacency.release();
         }
     }
 
@@ -178,16 +182,16 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
         switch (batch.direction) {
             case OUTGOING:
                 initOut();
-                addRelationship(batch, outTargets, outDegrees, outOffsets, outAllocator, outCompression);
+                addRelationship(batch, outTargets, outDegrees, outAdjacency);
                 break;
             case INCOMING:
                 initIn();
-                addRelationship(batch, inTargets, inDegrees, inOffsets, inAllocator, inCompression);
+                addRelationship(batch, inTargets, inDegrees, inAdjacency);
                 break;
             default:
                 throw new IllegalArgumentException(batch.direction + " unsupported in loading");
         }
-        progress.relationshipsImported(batch.length >> 1);
+        progress.relationshipsImported(batch.length / 3);
     }
 
     private void initOut() {
@@ -195,7 +199,7 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             initStatus |= INIT_OUT;
             outTargets = new CompressedLongArray[numberOfElements];
             tracker.add(sizeOfObjectArray(numberOfElements));
-            outAllocator.prepare();
+            outAdjacency.prepare();
         }
     }
 
@@ -204,30 +208,32 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
             initStatus |= INIT_IN;
             inTargets = new CompressedLongArray[numberOfElements];
             tracker.add(sizeOfObjectArray(numberOfElements));
-            inAllocator.prepare();
+            inAdjacency.prepare();
         }
     }
 
     private void addRelationship(
-            RelationshipsBatch batch, CompressedLongArray[] targets, int[] degrees,
-            HugeLongArray offsets, Allocator allocator, AdjacencyCompression compression) {
-        final long[] sourceAndTargets = batch.sourceAndTargets;
+            RelationshipsBatch batch,
+            CompressedLongArray[] targets, int[] degrees, HugeAdjacencyBuilder adjacency) {
+        final long[] sourceTargetIds = batch.sourceTargetIds;
         final int length = batch.length;
-        for (int i = 0; i < length; i += 2) {
-            final long source = sourceAndTargets[i];
-            final long target = sourceAndTargets[i + 1];
-            addRelationship(source, target, targets, degrees, offsets, allocator, compression);
+        for (int i = 0; i < length; i += 3) {
+            final long source = sourceTargetIds[i];
+            final long target = sourceTargetIds[1 + i];
+            final long relId = sourceTargetIds[2 + i];
+            addRelationship(source, target, relId, targets, degrees, adjacency);
         }
     }
 
     private void addRelationship(
-            long source, long target, CompressedLongArray[] targets, int[] degrees,
-            HugeLongArray offsets, Allocator allocator, AdjacencyCompression compression) {
+            long source, long target, long relId,
+            CompressedLongArray[] targets, int[] degrees, HugeAdjacencyBuilder adjacency) {
         int localFrom = (int) (source - startId);
         assert localFrom < numberOfElements;
         int degree = addTarget(localFrom, target, targets, degrees);
+        loadProperty(target, relId, localFrom);
         if (degree >= degrees[localFrom]) {
-            applyVariableDeltaEncoding(targets[localFrom], allocator, compression, source, offsets);
+            adjacency.applyVariableDeltaEncoding(targets[localFrom], source);
             targets[localFrom] = null;
         }
         ++size;
@@ -242,33 +248,20 @@ final class PerThreadRelationshipBuilder implements RenamesCurrentThread, Runnab
         return target.add(targetId);
     }
 
-    private void flush(
-            CompressedLongArray[] targetIds,
-            HugeLongArray offsets,
-            Allocator allocator,
-            AdjacencyCompression compression) {
-        if (targetIds != null && offsets != null && allocator != null) {
+    private void loadProperty(long target, long relId, int localSource) {
+        weights.load(relId, target, localSource, cursors, read);
+    }
+
+    private void flush(CompressedLongArray[] targetIds, HugeAdjacencyBuilder adjacency) {
+        if (targetIds != null && adjacency != null) {
             for (int i = 0, length = targetIds.length; i < length; i++) {
                 CompressedLongArray targets = targetIds[i];
                 if (targets != null) {
-                    applyVariableDeltaEncoding(targets, allocator, compression, i + startId, offsets);
+                    adjacency.applyVariableDeltaEncoding(targets, i + startId);
                     targetIds[i] = null;
                 }
             }
         }
-    }
-
-    private void applyVariableDeltaEncoding(
-            CompressedLongArray array,
-            Allocator allocator,
-            AdjacencyCompression compression,
-            long sourceId,
-            HugeLongArray offsets) {
-        compression.copyFrom(array);
-        compression.applyDeltaEncoding();
-        long address = array.compress(compression, allocator);
-        offsets.set(sourceId, address);
-        array.release();
     }
 
     @Override

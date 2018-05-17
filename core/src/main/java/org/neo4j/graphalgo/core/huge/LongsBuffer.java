@@ -35,11 +35,12 @@ class LongsBuffer {
         }
     }
 
-    int addRelationship(int bucketIndex, long source, long target) {
-        int len = lengths[bucketIndex] += 2;
-        long[] sourceAndTargets = targets[bucketIndex];
-        sourceAndTargets[len - 2] = source;
-        sourceAndTargets[len - 1] = target;
+    int addRelationship(int bucketIndex, long source, long target, long relId) {
+        int len = lengths[bucketIndex] += 3;
+        long[] sourceTargetIds = targets[bucketIndex];
+        sourceTargetIds[len - 3] = source;
+        sourceTargetIds[len - 2] = target;
+        sourceTargetIds[len - 1] = relId;
         return len;
     }
 
