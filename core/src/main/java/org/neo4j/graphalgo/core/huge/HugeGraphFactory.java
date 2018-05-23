@@ -68,10 +68,6 @@ public final class HugeGraphFactory extends GraphFactory {
 
     private HugeGraph importGraph() {
         GraphDimensions dimensions = this.dimensions;
-        log.info(
-                "Importing up to %d nodes and up to %d relationships",
-                dimensions.nodeCount(),
-                dimensions.maxRelCount());
         int concurrency = setup.concurrency();
         AllocationTracker tracker = setup.tracker;
         HugeIdMap mapping = loadHugeIdMap(tracker);

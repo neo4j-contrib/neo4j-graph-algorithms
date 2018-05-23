@@ -44,10 +44,5 @@ final class RelationshipsBatch implements AutoCloseable {
 
     private void returnToPool() {
         pool.add(this);
-//        while (true) {
-//            if (pool.offer(this)) {
-//                return;
-//            }
-//        }
     }
 }
