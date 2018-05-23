@@ -117,8 +117,9 @@ final class HugeAdjacencyList {
          * It is undefined behavior if this is called after {@link #hasNextVLong()} returns {@code false}.
          */
         long nextVLong() {
-            ++currentTarget;
-            return decompress.next(remaining());
+            int current = currentTarget++;
+            int remaining = maxTargets - current;
+            return decompress.next(remaining);
         }
 
         /**
