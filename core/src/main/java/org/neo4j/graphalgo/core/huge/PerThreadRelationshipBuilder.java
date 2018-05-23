@@ -27,7 +27,7 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
@@ -42,7 +42,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
     private final int threadIndex;
     private final long startId;
     private final int numberOfElements;
-    private final ArrayBlockingQueue<RelationshipsBatch> queue;
+    private final BlockingQueue<RelationshipsBatch> queue;
     private final ImportProgress progress;
     private final AllocationTracker tracker;
     private final HugeWeightMapBuilder weights;
@@ -66,7 +66,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeWeightMapBuilder weights,
-            ArrayBlockingQueue<RelationshipsBatch> queue,
+            BlockingQueue<RelationshipsBatch> queue,
             int threadIndex,
             long startId,
             int numberOfElements,
@@ -91,14 +91,12 @@ final class PerThreadRelationshipBuilder extends StatementAction {
     @Override
     public void accept(final KernelTransaction transaction) {
         try {
-            read = transaction.dataRead();
-            cursors = transaction.cursors();
+            useKernelTransaction(transaction);
             runImport();
         } catch (Exception e) {
             drainQueue(e);
         } finally {
-            cursors = null;
-            read = null;
+            unsetKernelTransaction();
         }
     }
 
@@ -117,6 +115,27 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         } catch (Exception e) {
             Exceptions.throwIfUnchecked(e);
             throw new RuntimeException(e);
+        }
+    }
+
+    void useKernelTransaction(KernelTransaction transaction) {
+        read = transaction.dataRead();
+        cursors = transaction.cursors();
+    }
+
+    private void unsetKernelTransaction() {
+        read = null;
+        cursors = null;
+    }
+
+    void pushBatch(RelationshipsBatch relationship) {
+        if (relationship == RelationshipsBatch.SENTINEL) {
+            initStatus |= QUEUE_DONE;
+            release(true);
+            return;
+        }
+        try(RelationshipsBatch batch = relationship) {
+            addRelationship(batch);
         }
     }
 

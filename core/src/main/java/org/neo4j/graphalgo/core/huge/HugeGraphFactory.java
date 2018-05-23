@@ -107,13 +107,8 @@ public final class HugeGraphFactory extends GraphFactory {
         final ScanningRelationshipImporter importer = ScanningRelationshipImporter.create(
                 setup, api, progress, tracker, mapping, weightsBuilder,
                 outAdjacency, inAdjacency, threadPool, concurrency);
-        HugeWeightMapping weights;
-        if (importer != null) {
-            weights = importer.run();
-        } else {
-            weights = new HugeNullWeightMap(setup.relationDefaultWeight);
-        }
 
+        HugeWeightMapping weights = importer.run();
         return HugeAdjacencyBuilder.apply(tracker, mapping, weights, inAdjacency, outAdjacency);
     }
 

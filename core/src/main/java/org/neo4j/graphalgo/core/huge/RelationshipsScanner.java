@@ -39,21 +39,18 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
-public final class RelationshipsScanner extends StatementAction {
+abstract class RelationshipsScanner extends StatementAction {
 
     private final ArrayBlockingQueue<RelationshipsBatch> pool;
-    private final ArrayBlockingQueue<RelationshipsBatch>[] threadQueues;
     private int[][] outDegrees;
     private int[][] inDegrees;
-    private final int threadsShift;
-    private final long threadsMask;
+    private final int numberOfThreads;
     private final int batchSize;
-
     private final HugeIdMap idMap;
-
     private final DegreeLoader loader;
     private final Emit emit;
     private final GraphSetup setup;
@@ -68,25 +65,21 @@ public final class RelationshipsScanner extends StatementAction {
             HugeIdMap idMap,
             int maxInFlight,
             int batchSize,
-            ArrayBlockingQueue<RelationshipsBatch>[] threadQueues,
+            int numberOfThreads,
             int[][] outDegrees,
-            int[][] inDegrees,
-            int perThreadSize) {
+            int[][] inDegrees) {
         super(api);
         assert (batchSize % 3) == 0 : "batchSize must be divisible by three";
-        assert BitUtil.isPowerOfTwo(perThreadSize);
         this.setup = setup;
         this.progress = progress;
         this.tracker = tracker;
         this.idMap = idMap;
-        this.threadQueues = threadQueues;
         this.outDegrees = outDegrees;
         this.inDegrees = inDegrees;
-        this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
-        this.threadsMask = (long)(perThreadSize - 1);
+        this.numberOfThreads = numberOfThreads;
         this.batchSize = batchSize;
         this.pool = newPool(maxInFlight);
-        Map.Entry<DegreeLoader, Emit> entry = setupDegreeLoaderAndEmit(setup, batchSize, threadQueues.length);
+        Map.Entry<DegreeLoader, Emit> entry = setupDegreeLoaderAndEmit(setup, batchSize, numberOfThreads);
         this.loader = entry.getKey();
         this.emit = entry.getValue();
     }
@@ -126,14 +119,15 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     @Override
-    public String threadName() {
+    public final String threadName() {
         return "relationship-store-scan";
     }
 
     @Override
-    public void accept(final KernelTransaction transaction) {
+    public final void accept(final KernelTransaction transaction) {
         boolean wasInterrupted = false;
         try {
+            prepareTransaction(transaction);
             loadDegrees(transaction);
             scanRelationships(transaction);
             sendLastBatch();
@@ -152,6 +146,14 @@ public final class RelationshipsScanner extends StatementAction {
             Thread.currentThread().interrupt();
         }
     }
+
+    abstract void prepareTransaction(KernelTransaction transaction);
+
+    abstract int threadIndex(long nodeId);
+
+    abstract int threadLocalId(long nodeId);
+
+    abstract void sendBatchToImportThread(int threadIndex, RelationshipsBatch rel) throws InterruptedException;
 
     private void loadDegrees(final KernelTransaction transaction) {
         try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-degrees")) {
@@ -214,14 +216,6 @@ public final class RelationshipsScanner extends StatementAction {
         }
     }
 
-    private int threadIndex(long nodeId) {
-        return (int) (nodeId >>> threadsShift);
-    }
-
-    private int threadLocalId(long nodeId) {
-        return (int) (nodeId & threadsMask);
-    }
-
     private void incOutDegree(long nodeId) {
         ++outDegrees[threadIndex(nodeId)][threadLocalId(nodeId)];
     }
@@ -244,8 +238,8 @@ public final class RelationshipsScanner extends StatementAction {
     }
 
     private void sendSentinels() throws InterruptedException {
-        for (ArrayBlockingQueue<RelationshipsBatch> threadQueue : threadQueues) {
-            spinWaitSend(threadQueue, RelationshipsBatch.SENTINEL);
+        for (int i = 0; i < numberOfThreads; i++) {
+            sendBatchToImportThread(i, RelationshipsBatch.SENTINEL);
         }
     }
 
@@ -285,7 +279,7 @@ public final class RelationshipsScanner extends StatementAction {
         RelationshipsBatch batch = nextRelationshipBatch();
         long[] newBuffer = setRelationshipBatch(batch, buffer.get(threadIndex), length, direction);
         buffer.reset(threadIndex, newBuffer);
-        spinWaitSend(threadQueues[threadIndex], batch);
+        sendBatchToImportThread(threadIndex, batch);
     }
 
     private void sendRelationshipOut(int threadIndex, long[] targets, int length) throws InterruptedException {
@@ -307,7 +301,7 @@ public final class RelationshipsScanner extends StatementAction {
         }
         RelationshipsBatch batch = nextRelationshipBatch();
         setRelationshipBatch(batch, targets, length, direction);
-        spinWaitSend(threadQueues[threadIndex], batch);
+        sendBatchToImportThread(threadIndex, batch);
     }
 
     private RelationshipsBatch nextRelationshipBatch() {
@@ -329,11 +323,6 @@ public final class RelationshipsScanner extends StatementAction {
             loaded.sourceTargetIds = batch;
             return sourceAndTargets;
         }
-    }
-
-    private void spinWaitSend(ArrayBlockingQueue<RelationshipsBatch> queue, RelationshipsBatch rel)
-    throws InterruptedException {
-        queue.put(rel);
     }
 
     private static ArrayBlockingQueue<RelationshipsBatch> newPool(int capacity) {
@@ -474,5 +463,90 @@ public final class RelationshipsScanner extends StatementAction {
         @Override
         public void emitLastBatch(RelationshipsScanner scanner) {
         }
+    }
+}
+
+final class QueueingScanner extends RelationshipsScanner {
+
+    private final BlockingQueue<RelationshipsBatch>[] threadQueues;
+    private final int threadsShift;
+    private final long threadsMask;
+
+    QueueingScanner(
+            GraphDatabaseAPI api,
+            GraphSetup setup,
+            ImportProgress progress,
+            AllocationTracker tracker,
+            HugeIdMap idMap,
+            int maxInFlight,
+            int batchSize,
+            BlockingQueue<RelationshipsBatch>[] threadQueues,
+            int[][] outDegrees,
+            int[][] inDegrees,
+            int perThreadSize) {
+        super(api, setup, progress, tracker, idMap, maxInFlight, batchSize, threadQueues.length, outDegrees, inDegrees);
+        assert BitUtil.isPowerOfTwo(perThreadSize);
+        this.threadQueues = threadQueues;
+        this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
+        this.threadsMask = (long) (perThreadSize - 1);
+    }
+
+    @Override
+    int threadIndex(long nodeId) {
+        return (int) (nodeId >>> threadsShift);
+    }
+
+    @Override
+    int threadLocalId(long nodeId) {
+        return (int) (nodeId & threadsMask);
+    }
+
+    @Override
+    void sendBatchToImportThread(int threadIndex, RelationshipsBatch rel) throws InterruptedException {
+        threadQueues[threadIndex].put(rel);
+    }
+
+    @Override
+    void prepareTransaction(final KernelTransaction transaction) {
+    }
+}
+
+final class NonQueueingScanner extends RelationshipsScanner {
+
+    private final PerThreadRelationshipBuilder builder;
+
+    NonQueueingScanner(
+            GraphDatabaseAPI api,
+            GraphSetup setup,
+            ImportProgress progress,
+            AllocationTracker tracker,
+            HugeIdMap idMap,
+            int maxInFlight,
+            int batchSize,
+            PerThreadRelationshipBuilder builder,
+            int[][] outDegrees,
+            int[][] inDegrees) {
+        super(api, setup, progress, tracker, idMap, maxInFlight, batchSize, 1, outDegrees, inDegrees);
+        this.builder = builder;
+    }
+
+    @Override
+    int threadIndex(long nodeId) {
+        return 0;
+    }
+
+    @Override
+    int threadLocalId(long nodeId) {
+        return (int) nodeId;
+    }
+
+    @Override
+    void sendBatchToImportThread(int threadIndex, RelationshipsBatch rel) {
+        builder.pushBatch(rel);
+    }
+
+    @Override
+    void prepareTransaction(final KernelTransaction transaction) {
+        builder.useKernelTransaction(transaction);
     }
 }

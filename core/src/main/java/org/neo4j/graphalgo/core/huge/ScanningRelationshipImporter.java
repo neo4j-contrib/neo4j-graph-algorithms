@@ -32,8 +32,32 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
-final class ScanningRelationshipImporter {
+interface ScanningRelationshipImporter {
+    HugeWeightMapping run();
+
+    static ScanningRelationshipImporter create(
+            GraphSetup setup,
+            GraphDatabaseAPI api,
+            ImportProgress progress,
+            AllocationTracker tracker,
+            HugeIdMap idMap,
+            HugeWeightMapBuilder weights,
+            HugeAdjacencyBuilder outAdjacency,
+            HugeAdjacencyBuilder inAdjacency,
+            ExecutorService threadPool,
+            int concurrency) {
+        if (!ParallelUtil.canRunInParallel(threadPool)) {
+            return new SerialScanning(setup, api, progress, tracker, idMap, weights, outAdjacency, inAdjacency);
+        }
+        return new ParallelScanning(
+                setup, api, progress, tracker, idMap, weights,
+                outAdjacency, inAdjacency, threadPool, concurrency);
+    }
+}
+
+final class ParallelScanning implements ScanningRelationshipImporter {
 
     private static final int PER_THREAD_IN_FLIGHT = 1 << 7;
 
@@ -48,7 +72,7 @@ final class ScanningRelationshipImporter {
     private final ExecutorService threadPool;
     private final int concurrency;
 
-    private ScanningRelationshipImporter(
+    ParallelScanning(
             GraphSetup setup,
             GraphDatabaseAPI api,
             ImportProgress progress,
@@ -71,27 +95,8 @@ final class ScanningRelationshipImporter {
         this.concurrency = concurrency;
     }
 
-    static ScanningRelationshipImporter create(
-            GraphSetup setup,
-            GraphDatabaseAPI api,
-            ImportProgress progress,
-            AllocationTracker tracker,
-            HugeIdMap idMap,
-            HugeWeightMapBuilder weights,
-            HugeAdjacencyBuilder outAdjacency,
-            HugeAdjacencyBuilder inAdjacency,
-            ExecutorService threadPool,
-            int concurrency) {
-        if (!ParallelUtil.canRunInParallel(threadPool)) {
-            // TODO: single thread impl
-            return null;
-        }
-        return new ScanningRelationshipImporter(
-                setup, api, progress, tracker, idMap, weights,
-                outAdjacency, inAdjacency, threadPool, concurrency);
-    }
-
-    HugeWeightMapping run() {
+    @Override
+    public HugeWeightMapping run() {
         final ThreadSizing threadSizing = new ThreadSizing(concurrency, idMap.nodeCount(), threadPool);
         return run(threadSizing.numberOfThreads(), threadSizing.batchSize());
     }
@@ -113,7 +118,7 @@ final class ScanningRelationshipImporter {
         int inFlight = threads * PER_THREAD_IN_FLIGHT;
         int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
         int queueBatchSize = 3 * baseQueueBatchSize;
-        final RelationshipsScanner scanner = new RelationshipsScanner(
+        final RelationshipsScanner scanner = new QueueingScanner(
                 api, setup, progress, tracker, idMap,
                 inFlight, queueBatchSize, loader.queues, loader.outDegrees, loader.inDegrees, batchSize);
         scanner.run();
@@ -194,5 +199,87 @@ final class ScanningRelationshipImporter {
                 }
             }
         }
+    }
+}
+
+final class SerialScanning implements ScanningRelationshipImporter {
+
+    private final GraphSetup setup;
+    private final GraphDatabaseAPI api;
+    private final ImportProgress progress;
+    private final AllocationTracker tracker;
+    private final HugeIdMap idMap;
+    private final HugeWeightMapBuilder weights;
+    private final HugeAdjacencyBuilder outAdjacency;
+    private final HugeAdjacencyBuilder inAdjacency;
+    private final int nodeCount;
+
+    SerialScanning(
+            GraphSetup setup,
+            GraphDatabaseAPI api,
+            ImportProgress progress,
+            AllocationTracker tracker,
+            HugeIdMap idMap,
+            HugeWeightMapBuilder weights,
+            HugeAdjacencyBuilder outAdjacency,
+            HugeAdjacencyBuilder inAdjacency) {
+        if (idMap.nodeCount() > Integer.MAX_VALUE) {
+            failForTooMuchNodes(idMap.nodeCount(), null);
+        }
+        this.nodeCount = (int) idMap.nodeCount();
+        this.setup = setup;
+        this.api = api;
+        this.progress = progress;
+        this.tracker = tracker;
+        this.idMap = idMap;
+        this.weights = weights;
+        this.outAdjacency = outAdjacency;
+        this.inAdjacency = inAdjacency;
+    }
+
+    @Override
+    public HugeWeightMapping run() {
+        weights.prepare(1);
+        int[][] outDegrees = null, inDegrees = null;
+        final PerThreadRelationshipBuilder builder;
+        try {
+            HugeWeightMapBuilder threadWeights = weights.threadLocalCopy(0, nodeCount);
+            int[] outDegree = null, inDegree = null;
+            if (outAdjacency != null) {
+                outDegrees = new int[1][nodeCount];
+                outDegree = outDegrees[0];
+                tracker.add(sizeOfIntArray(nodeCount) + sizeOfObjectArray(1));
+            }
+            if (inAdjacency != null) {
+                inDegrees = new int[1][nodeCount];
+                inDegree = inDegrees[0];
+                tracker.add(sizeOfIntArray(nodeCount) + sizeOfObjectArray(1));
+            }
+
+            builder = new PerThreadRelationshipBuilder(
+                    api, progress, tracker, threadWeights, null,
+                    0, 0L, nodeCount,
+                    outDegree, outAdjacency, inDegree, inAdjacency);
+        } catch (OutOfMemoryError oom) {
+            failForTooMuchNodes(idMap.nodeCount(), oom);
+            return null;
+        }
+
+        int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
+        int queueBatchSize = 3 * baseQueueBatchSize;
+
+        final RelationshipsScanner scanner = new NonQueueingScanner(
+                api, setup, progress, tracker, idMap,
+                1, queueBatchSize, builder, outDegrees, inDegrees);
+        scanner.run();
+        return weights.build();
+    }
+
+    private static void failForTooMuchNodes(long nodeCount, Throwable cause) {
+        String msg = String.format(
+                "Cannot import %d nodes in a single thread, you have to provide a valid thread pool",
+                nodeCount
+        );
+        throw new IllegalArgumentException(msg, cause);
     }
 }
