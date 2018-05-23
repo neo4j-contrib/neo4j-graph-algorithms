@@ -45,10 +45,10 @@ final class AdjacencyDecompression {
 
     int reset(byte[] array, int offset) {
         this.array = array;
-        this.offset = 4 + offset;
-        block[CHUNK_SIZE - 1] = 0L;
-        pos = CHUNK_SIZE;
-        return readInt(array, offset);
+        int remaining = readInt(array, offset);
+        this.offset = decodeDeltaVLongs(0L, array, 4 + offset, Math.min(remaining, CHUNK_SIZE), block);
+        pos = 0;
+        return remaining;
     }
 
     //@formatter:off
