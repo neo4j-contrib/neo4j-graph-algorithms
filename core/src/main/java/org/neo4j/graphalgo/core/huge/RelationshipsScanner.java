@@ -89,18 +89,12 @@ abstract class RelationshipsScanner extends StatementAction {
         final Emit emit;
         if (setup.loadAsUndirected) {
             loader = new LoadDegreeUndirected();
-            LongsBuffer buffer = new LongsBuffer(threadSize, batchSize);
-            emit = new EmitBoth(buffer, Direction.OUTGOING, buffer, Direction.OUTGOING);
+            emit = new EmitUndirected(threadSize, batchSize);
         } else {
             if (setup.loadOutgoing) {
                 if (setup.loadIncoming) {
                     loader = new LoadDegreeBoth();
-                    emit = new EmitBoth(
-                            new LongsBuffer(threadSize, batchSize),
-                            Direction.OUTGOING,
-                            new LongsBuffer(threadSize, batchSize),
-                            Direction.INCOMING);
-
+                    emit = new EmitBoth(threadSize, batchSize);
                 } else {
                     loader = new LoadDegreeOut();
                     emit = new EmitOut(threadSize, batchSize);
@@ -385,24 +379,40 @@ abstract class RelationshipsScanner extends StatementAction {
         void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException;
     }
 
-    private static final class EmitBoth implements Emit {
+    private static final class EmitUndirected implements Emit {
         private final LongsBuffer outBuffer;
-        private final Direction outDirection;
-        private final LongsBuffer inBuffer;
-        private final Direction inDirection;
 
-        private EmitBoth(LongsBuffer outBuffer, Direction outDirection, LongsBuffer inBuffer, Direction inDirection) {
-            this.outBuffer = outBuffer;
-            this.outDirection = outDirection;
-            this.inBuffer = inBuffer;
-            this.inDirection = inDirection;
+        private EmitUndirected(int numBuckets, int batchSize) {
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize);
         }
 
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, relId, outBuffer, outDirection);
-            scanner.batchRelationship(target, source, relId, inBuffer, inDirection);
+            scanner.batchRelationship(source, target, relId, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationship(target, source, relId, outBuffer, Direction.OUTGOING);
+        }
+
+        @Override
+        public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
+            outBuffer.drainAndRelease(scanner::sendRelationshipOut);
+        }
+    }
+
+    private static final class EmitBoth implements Emit {
+        private final LongsBuffer outBuffer;
+        private final LongsBuffer inBuffer;
+
+        private EmitBoth(int numBuckets, int batchSize) {
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize);
+            this.inBuffer = new LongsBuffer(numBuckets, batchSize);
+        }
+
+        @Override
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
+        throws InterruptedException {
+            scanner.batchRelationship(source, target, relId, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationship(target, source, relId, inBuffer, Direction.INCOMING);
         }
 
         @Override
@@ -448,7 +458,7 @@ abstract class RelationshipsScanner extends StatementAction {
 
         @Override
         public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
-            buffer.drainAndRelease(scanner::sendRelationshipOut);
+            buffer.drainAndRelease(scanner::sendRelationshipIn);
         }
     }
 
