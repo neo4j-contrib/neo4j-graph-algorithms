@@ -306,33 +306,22 @@ public class HugeGraphImpl implements HugeGraph {
     @Override
     public boolean exists(long sourceNodeId, long targetNodeId, Direction direction) {
         final boolean[] found = {false};
+        HugeRelationshipConsumer consumer = (s, t) -> {
+            if (t == targetNodeId) {
+                found[0] = true;
+                return false;
+            }
+            return true;
+        };
         switch (direction) {
             case OUTGOING:
-                forEachOutgoing(sourceNodeId, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachOutgoing(sourceNodeId, consumer);
                 break;
             case INCOMING:
-                forEachIncoming(sourceNodeId, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachIncoming(sourceNodeId, consumer);
                 break;
             default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
                 break;
         }
         return found[0];
@@ -340,7 +329,26 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-        return exists((long) sourceNodeId, (long) targetNodeId, direction);
+        final boolean[] found = {false};
+        RelationshipConsumer consumer = (s, t, r) -> {
+            if (t == targetNodeId) {
+                found[0] = true;
+                return false;
+            }
+            return true;
+        };
+        switch (direction) {
+            case OUTGOING:
+                forEachOutgoing(sourceNodeId, consumer);
+                break;
+            case INCOMING:
+                forEachIncoming(sourceNodeId, consumer);
+                break;
+            default:
+                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
+                break;
+        }
+        return found[0];
     }
 
     @Override
