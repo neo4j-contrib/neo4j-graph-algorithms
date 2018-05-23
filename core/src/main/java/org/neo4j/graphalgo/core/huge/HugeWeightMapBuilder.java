@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.core.huge;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.loading.ReadHelper;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
@@ -16,6 +17,7 @@ class HugeWeightMapBuilder {
     private final int weightProperty;
     private final double defaultWeight;
 
+    private int pageSize;
     private HugeWeightMap.Page[] pages;
     private HugeWeightMap.Page page;
 
@@ -36,11 +38,14 @@ class HugeWeightMapBuilder {
         this.page = page;
     }
 
-    void prepare(int numberOfPages) {
+    void prepare(int numberOfPages, int pageSize) {
+        assert pageSize == 0 || BitUtil.isPowerOfTwo(pageSize);
+        this.pageSize = pageSize == 0 ? Integer.MAX_VALUE : pageSize;
         pages = new HugeWeightMap.Page[numberOfPages];
     }
 
     HugeWeightMapBuilder threadLocalCopy(int threadIndex, int batchSize) {
+        assert batchSize <= pageSize;
         HugeWeightMap.Page page = new HugeWeightMap.Page(batchSize, tracker);
         pages[threadIndex] = page;
         return new HugeWeightMapBuilder(tracker, weightProperty, defaultWeight, page);
@@ -53,7 +58,16 @@ class HugeWeightMapBuilder {
     }
 
     HugeWeightMapping build() {
-        return new HugeWeightMap(pages, defaultWeight, tracker);
+        final int pageShift;
+        final int pageMask;
+        if (pageSize == Integer.MAX_VALUE) {
+            pageShift = 0;
+            pageMask = Integer.MAX_VALUE;
+        } else {
+            pageShift = Integer.numberOfTrailingZeros(pageSize);
+            pageMask = pageSize - 1;
+        }
+        return new HugeWeightMap(pages, pageShift, pageMask, defaultWeight, tracker);
     }
 
     void load(long relId, long target, int localSource, CursorFactory cursors, Read read) {
@@ -80,17 +94,17 @@ class HugeWeightMapBuilder {
         }
 
         @Override
-        void prepare(final int numberOfPages) {
+        void prepare(int numberOfPages, int pageSize) {
         }
 
 
         @Override
-        HugeWeightMapBuilder threadLocalCopy(final int threadIndex, final int batchSize) {
+        HugeWeightMapBuilder threadLocalCopy(int threadIndex, int batchSize) {
             return this;
         }
 
         @Override
-        void finish(final int numberOfPages) {
+        void finish(int numberOfPages) {
         }
 
         @Override

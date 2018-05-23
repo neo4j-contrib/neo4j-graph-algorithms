@@ -108,7 +108,8 @@ public final class HugeGraphFactory extends GraphFactory {
                 setup, api, progress, tracker, mapping, weightsBuilder,
                 outAdjacency, inAdjacency, threadPool, concurrency);
 
-        HugeWeightMapping weights = importer.run();
+        importer.run();
+        HugeWeightMapping weights = weightsBuilder.build();
         return HugeAdjacencyBuilder.apply(tracker, mapping, weights, inAdjacency, outAdjacency);
     }
 

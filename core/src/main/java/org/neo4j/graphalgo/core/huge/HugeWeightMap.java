@@ -19,14 +19,12 @@ final class HugeWeightMap implements HugeWeightMapping {
 
     private Page[] pages;
 
-    HugeWeightMap(Page[] pages, double defaultValue, AllocationTracker tracker) {
-        final int pageSize = pages.length;
-        assert BitUtil.isPowerOfTwo(pageSize);
-        this.pageShift = Integer.numberOfTrailingZeros(pageSize);
-        this.pageMask = (long) (pageSize - 1);
+    HugeWeightMap(Page[] pages, int pageShift, int pageMask, double defaultValue, AllocationTracker tracker) {
+        this.pageShift = pageShift;
+        this.pageMask = (long) pageMask;
         this.defaultValue = defaultValue;
         this.pages = pages;
-        tracker.add(CLASS_MEMORY + sizeOfObjectArray(pageSize));
+        tracker.add(CLASS_MEMORY + sizeOfObjectArray(pages.length));
     }
 
     @Override

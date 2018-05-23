@@ -35,7 +35,7 @@ import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 interface ScanningRelationshipImporter {
-    HugeWeightMapping run();
+    void run();
 
     static ScanningRelationshipImporter create(
             GraphSetup setup,
@@ -96,12 +96,13 @@ final class ParallelScanning implements ScanningRelationshipImporter {
     }
 
     @Override
-    public HugeWeightMapping run() {
+    public void run() {
         final ThreadSizing threadSizing = new ThreadSizing(concurrency, idMap.nodeCount(), threadPool);
-        return run(threadSizing.numberOfThreads(), threadSizing.batchSize());
+        run(threadSizing.numberOfThreads(), threadSizing.batchSize());
     }
 
-    private HugeWeightMapping run(int threads, int batchSize) {
+    private void run(int threads, int batchSize) {
+        weights.prepare(threads, batchSize);
         ThreadLoader loader = new ThreadLoader(tracker, weights, outAdjacency, inAdjacency, threads);
         long idBase = 0L;
         int elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
@@ -123,8 +124,6 @@ final class ParallelScanning implements ScanningRelationshipImporter {
                 inFlight, queueBatchSize, loader.queues, loader.outDegrees, loader.inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
-
-        return loader.weights.build();
     }
 
     private static final class ThreadLoader {
@@ -150,7 +149,6 @@ final class ParallelScanning implements ScanningRelationshipImporter {
             this.weights = weights;
             this.outAdjacency = outAdjacency;
             this.inAdjacency = inAdjacency;
-            weights.prepare(threads);
             //noinspection unchecked
             queues = new ArrayBlockingQueue[threads];
             builders = new PerThreadRelationshipBuilder[threads];
@@ -238,8 +236,8 @@ final class SerialScanning implements ScanningRelationshipImporter {
     }
 
     @Override
-    public HugeWeightMapping run() {
-        weights.prepare(1);
+    public void run() {
+        weights.prepare(1, 0);
         int[][] outDegrees = null, inDegrees = null;
         final PerThreadRelationshipBuilder builder;
         try {
@@ -262,7 +260,7 @@ final class SerialScanning implements ScanningRelationshipImporter {
                     outDegree, outAdjacency, inDegree, inAdjacency);
         } catch (OutOfMemoryError oom) {
             failForTooMuchNodes(idMap.nodeCount(), oom);
-            return null;
+            return;
         }
 
         int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
@@ -272,7 +270,6 @@ final class SerialScanning implements ScanningRelationshipImporter {
                 api, setup, progress, tracker, idMap,
                 1, queueBatchSize, builder, outDegrees, inDegrees);
         scanner.run();
-        return weights.build();
     }
 
     private static void failForTooMuchNodes(long nodeCount, Throwable cause) {
