@@ -40,12 +40,12 @@ class HugeWeightMapBuilder {
 
     void prepare(int numberOfPages, int pageSize) {
         assert pageSize == 0 || BitUtil.isPowerOfTwo(pageSize);
-        this.pageSize = pageSize == 0 ? Integer.MAX_VALUE : pageSize;
+        this.pageSize = pageSize;
         pages = new HugeWeightMap.Page[numberOfPages];
     }
 
     HugeWeightMapBuilder threadLocalCopy(int threadIndex, int batchSize) {
-        assert batchSize <= pageSize;
+        assert pageSize == 0 || batchSize <= pageSize;
         HugeWeightMap.Page page = new HugeWeightMap.Page(batchSize, tracker);
         pages[threadIndex] = page;
         return new HugeWeightMapBuilder(tracker, weightProperty, defaultWeight, page);
@@ -58,16 +58,7 @@ class HugeWeightMapBuilder {
     }
 
     HugeWeightMapping build() {
-        final int pageShift;
-        final int pageMask;
-        if (pageSize == Integer.MAX_VALUE) {
-            pageShift = 0;
-            pageMask = Integer.MAX_VALUE;
-        } else {
-            pageShift = Integer.numberOfTrailingZeros(pageSize);
-            pageMask = pageSize - 1;
-        }
-        return new HugeWeightMap(pages, pageShift, pageMask, defaultWeight, tracker);
+        return new HugeWeightMap(pages, pageSize, defaultWeight, tracker);
     }
 
     void load(long relId, long target, int localSource, CursorFactory cursors, Read read) {
