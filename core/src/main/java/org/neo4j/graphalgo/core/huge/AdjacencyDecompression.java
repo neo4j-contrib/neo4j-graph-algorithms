@@ -88,7 +88,7 @@ final class AdjacencyDecompression {
         // last block
         int targetPos = findPosStrictlyGreaterInBlock(target, pos, Math.min(pos + available, CHUNK_SIZE), block);
         available -= (1 + targetPos - pos);
-        consumed.value = 1 + remaining - available;
+        consumed.value = remaining - available;
         this.pos = 1 + targetPos;
         return block[targetPos];
     }
@@ -107,7 +107,7 @@ final class AdjacencyDecompression {
         // last block
         int targetPos = findPosInBlock(target, pos, Math.min(pos + available, CHUNK_SIZE), block);
         available -= (1 + targetPos - pos);
-        consumed.value = 1 + remaining - available;
+        consumed.value = remaining - available;
         this.pos = 1 + targetPos;
         return block[targetPos];
     }
