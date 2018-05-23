@@ -34,10 +34,8 @@ import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.AbstractCollection;
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -63,6 +61,7 @@ abstract class RelationshipsScanner extends StatementAction {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeIdMap idMap,
+            boolean loadWeights,
             int maxInFlight,
             int batchSize,
             int numberOfThreads,
@@ -79,37 +78,56 @@ abstract class RelationshipsScanner extends StatementAction {
         this.numberOfThreads = numberOfThreads;
         this.batchSize = batchSize;
         this.pool = newPool(maxInFlight);
-        Map.Entry<DegreeLoader, Emit> entry = setupDegreeLoaderAndEmit(setup, batchSize, numberOfThreads);
-        this.loader = entry.getKey();
-        this.emit = entry.getValue();
+        this.loader = setupDegreeLoader(setup);
+        this.emit = setupEmitter(setup, loadWeights, batchSize, numberOfThreads);
     }
 
-    private Map.Entry<DegreeLoader, Emit> setupDegreeLoaderAndEmit(GraphSetup setup, int batchSize, int threadSize) {
-        final DegreeLoader loader;
-        final Emit emit;
+    private DegreeLoader setupDegreeLoader(GraphSetup setup) {
         if (setup.loadAsUndirected) {
-            loader = new LoadDegreeUndirected();
-            emit = new EmitUndirected(threadSize, batchSize);
-        } else {
-            if (setup.loadOutgoing) {
-                if (setup.loadIncoming) {
-                    loader = new LoadDegreeBoth();
-                    emit = new EmitBoth(threadSize, batchSize);
-                } else {
-                    loader = new LoadDegreeOut();
-                    emit = new EmitOut(threadSize, batchSize);
-                }
-            } else {
-                if (setup.loadIncoming) {
-                    loader = new LoadDegreeIn();
-                    emit = new EmitIn(threadSize, batchSize);
-                } else {
-                    loader = new LoadDegreeNone();
-                    emit = new EmitNone();
-                }
-            }
+            return new LoadDegreeUndirected();
         }
-        return new AbstractMap.SimpleImmutableEntry<>(loader, emit);
+        if (setup.loadOutgoing && setup.loadIncoming) {
+            return new LoadDegreeBoth();
+        }
+        if (setup.loadOutgoing) {
+            return new LoadDegreeOut();
+        }
+        if (setup.loadIncoming) {
+            return new LoadDegreeIn();
+        }
+        return new LoadDegreeNone();
+    }
+
+    private Emit setupEmitter(
+            GraphSetup setup,
+            boolean loadWeights,
+            int batchSize,
+            int threadSize) {
+        if (setup.loadAsUndirected) {
+            if (loadWeights) {
+                return new EmitUndirected(threadSize, batchSize);
+            }
+            return new EmitUndirectedNoWeight(threadSize, batchSize);
+        }
+        if (setup.loadOutgoing && setup.loadIncoming) {
+            if (loadWeights) {
+                return new EmitBoth(threadSize, batchSize);
+            }
+            return new EmitBothNoWeight(threadSize, batchSize);
+        }
+        if (setup.loadOutgoing) {
+            if (loadWeights) {
+                return new EmitOut(threadSize, batchSize);
+            }
+            return new EmitOutNoWeight(threadSize, batchSize);
+        }
+        if (setup.loadIncoming) {
+            if (loadWeights) {
+                return new EmitIn(threadSize, batchSize);
+            }
+            return new EmitInNoWeight(threadSize, batchSize);
+        }
+        return new EmitNone();
     }
 
     @Override
@@ -218,12 +236,12 @@ abstract class RelationshipsScanner extends StatementAction {
         ++inDegrees[threadIndex(nodeId)][threadLocalId(nodeId)];
     }
 
-    private void batchRelationship(long source, long target, LongsBuffer buffer)
+    private void batchRelationship(long source, long target, LongsBuffer buffer, Direction direction)
     throws InterruptedException {
         int threadIndex = threadIndex(source);
         int len = buffer.addRelationship(threadIndex, source, target);
         if (len >= batchSize) {
-            sendRelationship(threadIndex, len, buffer, Direction.INCOMING);
+            sendRelationship(threadIndex, len, buffer, direction);
         }
     }
 
@@ -321,11 +339,10 @@ abstract class RelationshipsScanner extends StatementAction {
         if (loaded.sourceTargetIds == null) {
             loaded.sourceTargetIds = batch;
             return new long[length];
-        } else {
-            long[] sourceAndTargets = loaded.sourceTargetIds;
-            loaded.sourceTargetIds = batch;
-            return sourceAndTargets;
         }
+        long[] sourceAndTargets = loaded.sourceTargetIds;
+        loaded.sourceTargetIds = batch;
+        return sourceAndTargets;
     }
 
     private static ArrayBlockingQueue<RelationshipsBatch> newPool(int capacity) {
@@ -407,6 +424,25 @@ abstract class RelationshipsScanner extends StatementAction {
             outBuffer.drainAndRelease(scanner::sendRelationshipOut);
         }
     }
+    private static final class EmitUndirectedNoWeight implements Emit {
+        private final LongsBuffer outBuffer;
+
+        private EmitUndirectedNoWeight(int numBuckets, int batchSize) {
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+        }
+
+        @Override
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
+        throws InterruptedException {
+            scanner.batchRelationship(source, target, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationship(target, source, outBuffer, Direction.OUTGOING);
+        }
+
+        @Override
+        public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
+            outBuffer.drainAndRelease(scanner::sendRelationshipOut);
+        }
+    }
 
     private static final class EmitBoth implements Emit {
         private final LongsBuffer outBuffer;
@@ -421,7 +457,30 @@ abstract class RelationshipsScanner extends StatementAction {
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
             scanner.batchRelationshipWithId(source, target, relId, outBuffer, Direction.OUTGOING);
-            scanner.batchRelationship(target, source, inBuffer);
+            scanner.batchRelationship(target, source, inBuffer, Direction.INCOMING);
+        }
+
+        @Override
+        public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
+            outBuffer.drainAndRelease(scanner::sendRelationshipOut);
+            inBuffer.drainAndRelease(scanner::sendRelationshipIn);
+        }
+    }
+
+    private static final class EmitBothNoWeight implements Emit {
+        private final LongsBuffer outBuffer;
+        private final LongsBuffer inBuffer;
+
+        private EmitBothNoWeight(int numBuckets, int batchSize) {
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+            this.inBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+        }
+
+        @Override
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
+        throws InterruptedException {
+            scanner.batchRelationship(source, target, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationship(target, source, inBuffer, Direction.INCOMING);
         }
 
         @Override
@@ -451,6 +510,26 @@ abstract class RelationshipsScanner extends StatementAction {
         }
     }
 
+    private static final class EmitOutNoWeight implements Emit {
+
+        private final LongsBuffer buffer;
+
+        private EmitOutNoWeight(int numBuckets, int batchSize) {
+            buffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+        }
+
+        @Override
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
+        throws InterruptedException {
+            scanner.batchRelationship(source, target, buffer, Direction.OUTGOING);
+        }
+
+        @Override
+        public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
+            buffer.drainAndRelease(scanner::sendRelationshipOut);
+        }
+    }
+
     private static final class EmitIn implements Emit {
 
         private final LongsBuffer relBuffer;
@@ -464,7 +543,7 @@ abstract class RelationshipsScanner extends StatementAction {
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(target, source, relBuffer);
+            scanner.batchRelationship(target, source, relBuffer, Direction.INCOMING);
             scanner.batchRelationshipWithId(source, target, relId, weightBuffer, Direction.INCOMING);
         }
 
@@ -472,6 +551,26 @@ abstract class RelationshipsScanner extends StatementAction {
         public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
             relBuffer.drainAndRelease(scanner::sendRelationshipIn);
             weightBuffer.drainAndRelease(scanner::sendRelationshipIn);
+        }
+    }
+
+    private static final class EmitInNoWeight implements Emit {
+
+        private final LongsBuffer buffer;
+
+        private EmitInNoWeight(int numBuckets, int batchSize) {
+            buffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+        }
+
+        @Override
+        public void emit(long source, long target, long relId, RelationshipsScanner scanner)
+        throws InterruptedException {
+            scanner.batchRelationship(target, source, buffer, Direction.INCOMING);
+        }
+
+        @Override
+        public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
+            buffer.drainAndRelease(scanner::sendRelationshipIn);
         }
     }
 
@@ -501,13 +600,14 @@ final class QueueingScanner extends RelationshipsScanner {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeIdMap idMap,
+            boolean loadWeights,
             int maxInFlight,
             int batchSize,
             BlockingQueue<RelationshipsBatch>[] threadQueues,
             int[][] outDegrees,
             int[][] inDegrees,
             int perThreadSize) {
-        super(api, setup, progress, tracker, idMap, maxInFlight, batchSize, threadQueues.length, outDegrees, inDegrees);
+        super(api, setup, progress, tracker, idMap, loadWeights, maxInFlight, batchSize, threadQueues.length, outDegrees, inDegrees);
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.threadQueues = threadQueues;
         this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
@@ -544,12 +644,13 @@ final class NonQueueingScanner extends RelationshipsScanner {
             ImportProgress progress,
             AllocationTracker tracker,
             HugeIdMap idMap,
+            boolean loadWeights,
             int maxInFlight,
             int batchSize,
             PerThreadRelationshipBuilder builder,
             int[][] outDegrees,
             int[][] inDegrees) {
-        super(api, setup, progress, tracker, idMap, maxInFlight, batchSize, 1, outDegrees, inDegrees);
+        super(api, setup, progress, tracker, idMap, loadWeights, maxInFlight, batchSize, 1, outDegrees, inDegrees);
         this.builder = builder;
     }
 

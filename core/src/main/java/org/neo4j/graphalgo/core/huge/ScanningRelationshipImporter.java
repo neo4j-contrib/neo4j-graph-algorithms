@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.GraphSetup;
-import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
@@ -120,7 +119,7 @@ final class ParallelScanning implements ScanningRelationshipImporter {
         int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
         int queueBatchSize = 3 * baseQueueBatchSize;
         final RelationshipsScanner scanner = new QueueingScanner(
-                api, setup, progress, tracker, idMap,
+                api, setup, progress, tracker, idMap, weights.loadsWeights(),
                 inFlight, queueBatchSize, loader.queues, loader.outDegrees, loader.inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
@@ -267,7 +266,7 @@ final class SerialScanning implements ScanningRelationshipImporter {
         int queueBatchSize = 3 * baseQueueBatchSize;
 
         final RelationshipsScanner scanner = new NonQueueingScanner(
-                api, setup, progress, tracker, idMap,
+                api, setup, progress, tracker, idMap, weights.loadsWeights(),
                 1, queueBatchSize, builder, outDegrees, inDegrees);
         scanner.run();
     }

@@ -38,6 +38,10 @@ class HugeWeightMapBuilder {
         this.page = page;
     }
 
+    boolean loadsWeights() {
+        return true;
+    }
+
     void prepare(int numberOfPages, int pageSize) {
         assert pageSize == 0 || BitUtil.isPowerOfTwo(pageSize);
         this.pageSize = pageSize;
@@ -85,9 +89,13 @@ class HugeWeightMapBuilder {
         }
 
         @Override
-        void prepare(int numberOfPages, int pageSize) {
+        boolean loadsWeights() {
+            return false;
         }
 
+        @Override
+        void prepare(int numberOfPages, int pageSize) {
+        }
 
         @Override
         HugeWeightMapBuilder threadLocalCopy(int threadIndex, int batchSize) {
