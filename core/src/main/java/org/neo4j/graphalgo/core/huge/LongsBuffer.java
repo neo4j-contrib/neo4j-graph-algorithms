@@ -22,20 +22,23 @@ class LongsBuffer {
 
     @FunctionalInterface
     public interface BucketConsumer {
-        void apply(int bucketIndex, long[] bucket, int bucketLength) throws InterruptedException;
+
+        void apply(int bucketIndex, int baseFlags, long[] bucket, int bucketLength) throws InterruptedException;
     }
 
+    final int baseFlags;
     private long[][] targets;
     private int[] lengths;
 
-    LongsBuffer(int numBuckets, int batchSize) {
+    LongsBuffer(int numBuckets, int batchSize, int baseFlags) {
+        this.baseFlags = baseFlags;
         if (numBuckets > 0) {
             targets = new long[numBuckets][batchSize];
             lengths = new int[numBuckets];
         }
     }
 
-    int addRelationship(int bucketIndex, long source, long target, long relId) {
+    int addRelationshipWithId(int bucketIndex, long source, long target, long relId) {
         int len = lengths[bucketIndex] += 3;
         long[] sourceTargetIds = targets[bucketIndex];
         sourceTargetIds[len - 3] = source;
@@ -44,6 +47,13 @@ class LongsBuffer {
         return len;
     }
 
+    int addRelationship(int bucketIndex, long source, long target) {
+        int len = lengths[bucketIndex] += 2;
+        long[] sourceTargetIds = targets[bucketIndex];
+        sourceTargetIds[len - 2] = source;
+        sourceTargetIds[len - 1] = target;
+        return len;
+    }
 
     long[] get(int bucketIndex) {
         return targets[bucketIndex];
@@ -60,7 +70,7 @@ class LongsBuffer {
             int[] lengths = this.lengths;
             int length = targets.length;
             for (int i = 0; i < length; i++) {
-                consumer.apply(i, targets[i], lengths[i]);
+                consumer.apply(i, baseFlags, targets[i], lengths[i]);
                 targets[i] = null;
             }
             this.targets = null;

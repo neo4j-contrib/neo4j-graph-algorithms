@@ -218,10 +218,19 @@ abstract class RelationshipsScanner extends StatementAction {
         ++inDegrees[threadIndex(nodeId)][threadLocalId(nodeId)];
     }
 
-    private void batchRelationship(long source, long target, long relId, LongsBuffer buffer, Direction direction)
+    private void batchRelationship(long source, long target, LongsBuffer buffer)
     throws InterruptedException {
         int threadIndex = threadIndex(source);
-        int len = buffer.addRelationship(threadIndex, source, target, relId);
+        int len = buffer.addRelationship(threadIndex, source, target);
+        if (len >= batchSize) {
+            sendRelationship(threadIndex, len, buffer, Direction.INCOMING);
+        }
+    }
+
+    private void batchRelationshipWithId(long source, long target, long relId, LongsBuffer buffer, Direction direction)
+    throws InterruptedException {
+        int threadIndex = threadIndex(source);
+        int len = buffer.addRelationshipWithId(threadIndex, source, target, relId);
         if (len >= batchSize) {
             sendRelationship(threadIndex, len, buffer, direction);
         }
@@ -270,22 +279,23 @@ abstract class RelationshipsScanner extends StatementAction {
         if (length == 0) {
             return;
         }
-        RelationshipsBatch batch = nextRelationshipBatch();
-        long[] newBuffer = setRelationshipBatch(batch, buffer.get(threadIndex), length, direction);
+        RelationshipsBatch batch = nextRelationshipBatch(buffer.baseFlags, direction);
+        long[] newBuffer = setRelationshipBatch(batch, buffer.get(threadIndex), length);
         buffer.reset(threadIndex, newBuffer);
         sendBatchToImportThread(threadIndex, batch);
     }
 
-    private void sendRelationshipOut(int threadIndex, long[] targets, int length) throws InterruptedException {
-        sendRelationship(threadIndex, targets, length, Direction.OUTGOING);
+    private void sendRelationshipOut(int threadIndex, int baseFlags, long[] targets, int length) throws InterruptedException {
+        sendRelationship(threadIndex, baseFlags, targets, length, Direction.OUTGOING);
     }
 
-    private void sendRelationshipIn(int threadIndex, long[] targets, int length) throws InterruptedException {
-        sendRelationship(threadIndex, targets, length, Direction.INCOMING);
+    private void sendRelationshipIn(int threadIndex, int baseFlags, long[] targets, int length) throws InterruptedException {
+        sendRelationship(threadIndex, baseFlags, targets, length, Direction.INCOMING);
     }
 
     private void sendRelationship(
             int threadIndex,
+            int baseFlags,
             long[] targets,
             int length,
             Direction direction)
@@ -293,22 +303,21 @@ abstract class RelationshipsScanner extends StatementAction {
         if (length == 0) {
             return;
         }
-        RelationshipsBatch batch = nextRelationshipBatch();
-        setRelationshipBatch(batch, targets, length, direction);
+        RelationshipsBatch batch = nextRelationshipBatch(baseFlags, direction);
+        setRelationshipBatch(batch, targets, length);
         sendBatchToImportThread(threadIndex, batch);
     }
 
-    private RelationshipsBatch nextRelationshipBatch() {
-        RelationshipsBatch loaded;
-        do {
-            loaded = pool.poll();
-        } while (loaded == null);
+    private RelationshipsBatch nextRelationshipBatch(
+            final int baseFlags,
+            final Direction direction) throws InterruptedException {
+        RelationshipsBatch loaded = pool.take();
+        loaded.setInfo(direction, baseFlags);
         return loaded;
     }
 
-    private long[] setRelationshipBatch(RelationshipsBatch loaded, long[] batch, int length, Direction direction) {
+    private long[] setRelationshipBatch(RelationshipsBatch loaded, long[] batch, int length) {
         loaded.length = length;
-        loaded.direction = direction;
         if (loaded.sourceTargetIds == null) {
             loaded.sourceTargetIds = batch;
             return new long[length];
@@ -383,14 +392,14 @@ abstract class RelationshipsScanner extends StatementAction {
         private final LongsBuffer outBuffer;
 
         private EmitUndirected(int numBuckets, int batchSize) {
-            this.outBuffer = new LongsBuffer(numBuckets, batchSize);
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.RELS_AND_WEIGHTS);
         }
 
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, relId, outBuffer, Direction.OUTGOING);
-            scanner.batchRelationship(target, source, relId, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationshipWithId(source, target, relId, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationshipWithId(target, source, relId, outBuffer, Direction.OUTGOING);
         }
 
         @Override
@@ -404,15 +413,15 @@ abstract class RelationshipsScanner extends StatementAction {
         private final LongsBuffer inBuffer;
 
         private EmitBoth(int numBuckets, int batchSize) {
-            this.outBuffer = new LongsBuffer(numBuckets, batchSize);
-            this.inBuffer = new LongsBuffer(numBuckets, batchSize);
+            this.outBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.RELS_AND_WEIGHTS);
+            this.inBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
         }
 
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, relId, outBuffer, Direction.OUTGOING);
-            scanner.batchRelationship(target, source, relId, inBuffer, Direction.INCOMING);
+            scanner.batchRelationshipWithId(source, target, relId, outBuffer, Direction.OUTGOING);
+            scanner.batchRelationship(target, source, inBuffer);
         }
 
         @Override
@@ -427,13 +436,13 @@ abstract class RelationshipsScanner extends StatementAction {
         private final LongsBuffer buffer;
 
         private EmitOut(int numBuckets, int batchSize) {
-            buffer = new LongsBuffer(numBuckets, batchSize);
+            buffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.RELS_AND_WEIGHTS);
         }
 
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(source, target, relId, buffer, Direction.OUTGOING);
+            scanner.batchRelationshipWithId(source, target, relId, buffer, Direction.OUTGOING);
         }
 
         @Override
@@ -444,21 +453,25 @@ abstract class RelationshipsScanner extends StatementAction {
 
     private static final class EmitIn implements Emit {
 
-        private final LongsBuffer buffer;
+        private final LongsBuffer relBuffer;
+        private final LongsBuffer weightBuffer;
 
         private EmitIn(int numBuckets, int batchSize) {
-            buffer = new LongsBuffer(numBuckets, batchSize);
+            relBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_RELATIONSHIPS);
+            weightBuffer = new LongsBuffer(numBuckets, batchSize, RelationshipsBatch.JUST_WEIGHTS);
         }
 
         @Override
         public void emit(long source, long target, long relId, RelationshipsScanner scanner)
         throws InterruptedException {
-            scanner.batchRelationship(target, source, relId, buffer, Direction.INCOMING);
+            scanner.batchRelationship(target, source, relBuffer);
+            scanner.batchRelationshipWithId(source, target, relId, weightBuffer, Direction.INCOMING);
         }
 
         @Override
         public void emitLastBatch(RelationshipsScanner scanner) throws InterruptedException {
-            buffer.drainAndRelease(scanner::sendRelationshipIn);
+            relBuffer.drainAndRelease(scanner::sendRelationshipIn);
+            weightBuffer.drainAndRelease(scanner::sendRelationshipIn);
         }
     }
 

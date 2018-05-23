@@ -25,14 +25,41 @@ import java.util.concurrent.ArrayBlockingQueue;
 final class RelationshipsBatch implements AutoCloseable {
     static final RelationshipsBatch SENTINEL = new RelationshipsBatch(null);
 
+    private static final int D_OUT = 2;
+    private static final int D_IN = 4;
+    private static final int D_DIR = D_OUT | D_IN;
+    private static final int D_RELATIONSHIP = 8;
+    private static final int D_WEIGHT = 16;
+    private static final int D_DATA = D_RELATIONSHIP | D_WEIGHT;
+
+    static final int JUST_RELATIONSHIPS = D_RELATIONSHIP;
+    static final int JUST_WEIGHTS = D_WEIGHT;
+    static final int RELS_AND_WEIGHTS = D_RELATIONSHIP | D_WEIGHT;
+
     long[] sourceTargetIds;
     int length;
-    Direction direction;
 
     private final ArrayBlockingQueue<RelationshipsBatch> pool;
+    private int dataFlags;
 
     RelationshipsBatch(final ArrayBlockingQueue<RelationshipsBatch> pool) {
         this.pool = pool;
+    }
+
+    void setInfo(Direction direction, int baseFlags) {
+        dataFlags = baseFlags | (direction == Direction.OUTGOING ? D_OUT : D_IN);
+    }
+
+    boolean isOut() {
+        return (dataFlags & D_DIR) == D_OUT;
+    }
+
+    boolean isIn() {
+        return (dataFlags & D_DIR) == D_IN;
+    }
+
+    int dataFlag() {
+        return dataFlags & D_DATA;
     }
 
     @Override

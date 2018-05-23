@@ -59,7 +59,6 @@ final class PerThreadRelationshipBuilder extends StatementAction {
     private CompressedLongArray[] inTargets;
 
     private int initStatus;
-    private long size;
 
     PerThreadRelationshipBuilder(
             GraphDatabaseAPI api,
@@ -108,7 +107,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
                         initStatus |= QUEUE_DONE;
                         break;
                     }
-                    addRelationship(relationship);
+                    addRelationshipsBatch(relationship);
                 }
             }
             release(true);
@@ -134,8 +133,8 @@ final class PerThreadRelationshipBuilder extends StatementAction {
             release(true);
             return;
         }
-        try(RelationshipsBatch batch = relationship) {
-            addRelationship(batch);
+        try (RelationshipsBatch batch = relationship) {
+            addRelationshipsBatch(batch);
         }
     }
 
@@ -197,20 +196,84 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         }
     }
 
-    private void addRelationship(RelationshipsBatch batch) {
-        switch (batch.direction) {
-            case OUTGOING:
-                initOut();
-                addRelationship(batch, outTargets, outDegrees, outAdjacency);
+    private void addRelationshipsBatch(RelationshipsBatch batch) {
+        switch (batch.dataFlag()) {
+            case RelationshipsBatch.JUST_RELATIONSHIPS:
+                addRelationship(batch);
                 break;
-            case INCOMING:
-                initIn();
-                addRelationship(batch, inTargets, inDegrees, inAdjacency);
+            case RelationshipsBatch.JUST_WEIGHTS:
+                addWeight(batch);
+                break;
+            case RelationshipsBatch.RELS_AND_WEIGHTS:
+                addRelationshipAndWeight(batch);
                 break;
             default:
-                throw new IllegalArgumentException(batch.direction + " unsupported in loading");
+                throw new IllegalArgumentException("unsupported");
+        }
+    }
+
+    private void addRelationshipAndWeight(RelationshipsBatch batch) {
+        final long[] sourceTargetIds = batch.sourceTargetIds;
+        final int length = batch.length;
+        final CompressedLongArray[] targets;
+        final int[] degrees;
+        final HugeAdjacencyBuilder adjacency;
+        if (batch.isOut()) {
+            initOut();
+            targets = outTargets;
+            degrees = outDegrees;
+            adjacency = outAdjacency;
+        } else {
+            initIn();
+            targets = inTargets;
+            degrees = inDegrees;
+            adjacency = inAdjacency;
+        }
+
+        for (int i = 0; i < length; i += 3) {
+            final long source = sourceTargetIds[i];
+            final long target = sourceTargetIds[1 + i];
+            final long relId = sourceTargetIds[2 + i];
+            addRelationshipAndWeight(source, target, relId, targets, degrees, adjacency);
         }
         progress.relationshipsImported(batch.length / 3);
+    }
+
+    private void addRelationship(RelationshipsBatch batch) {
+        final long[] sourceTargetIds = batch.sourceTargetIds;
+        final int length = batch.length;
+        final CompressedLongArray[] targets;
+        final int[] degrees;
+        final HugeAdjacencyBuilder adjacency;
+        if (batch.isOut()) {
+            initOut();
+            targets = outTargets;
+            degrees = outDegrees;
+            adjacency = outAdjacency;
+        } else {
+            initIn();
+            targets = inTargets;
+            degrees = inDegrees;
+            adjacency = inAdjacency;
+        }
+
+        for (int i = 0; i < length; i += 2) {
+            final long source = sourceTargetIds[i];
+            final long target = sourceTargetIds[1 + i];
+            addRelationship(source, target, targets, degrees, adjacency);
+        }
+        progress.relationshipsImported(batch.length >> 1);
+    }
+
+    private void addWeight(RelationshipsBatch batch) {
+        final long[] sourceTargetIds = batch.sourceTargetIds;
+        final int length = batch.length;
+        for (int i = 0; i < length; i += 3) {
+            final long source = sourceTargetIds[i];
+            final long target = sourceTargetIds[1 + i];
+            final long relId = sourceTargetIds[2 + i];
+            addWeight(source, target, relId);
+        }
     }
 
     private void initOut() {
@@ -231,31 +294,35 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         }
     }
 
-    private void addRelationship(
-            RelationshipsBatch batch,
-            CompressedLongArray[] targets, int[] degrees, HugeAdjacencyBuilder adjacency) {
-        final long[] sourceTargetIds = batch.sourceTargetIds;
-        final int length = batch.length;
-        for (int i = 0; i < length; i += 3) {
-            final long source = sourceTargetIds[i];
-            final long target = sourceTargetIds[1 + i];
-            final long relId = sourceTargetIds[2 + i];
-            addRelationship(source, target, relId, targets, degrees, adjacency);
-        }
-    }
-
-    private void addRelationship(
+    private void addRelationshipAndWeight(
             long source, long target, long relId,
             CompressedLongArray[] targets, int[] degrees, HugeAdjacencyBuilder adjacency) {
         int localFrom = (int) (source - startId);
         assert localFrom < numberOfElements;
         int degree = addTarget(localFrom, target, targets, degrees);
-        loadProperty(target, relId, localFrom);
+        weights.load(relId, target, localFrom, cursors, read);
         if (degree >= degrees[localFrom]) {
             adjacency.applyVariableDeltaEncoding(targets[localFrom], source);
             targets[localFrom] = null;
         }
-        ++size;
+    }
+
+    private void addRelationship(
+            long source, long target,
+            CompressedLongArray[] targets, int[] degrees, HugeAdjacencyBuilder adjacency) {
+        int localFrom = (int) (source - startId);
+        assert localFrom < numberOfElements;
+        int degree = addTarget(localFrom, target, targets, degrees);
+        if (degree >= degrees[localFrom]) {
+            adjacency.applyVariableDeltaEncoding(targets[localFrom], source);
+            targets[localFrom] = null;
+        }
+    }
+
+    private void addWeight(long source, long target, long relId) {
+        int localFrom = (int) (source - startId);
+        assert localFrom < numberOfElements;
+        weights.load(relId, target, localFrom, cursors, read);
     }
 
     private int addTarget(int source, long targetId, CompressedLongArray[] targets, int[] degrees) {
@@ -265,10 +332,6 @@ final class PerThreadRelationshipBuilder extends StatementAction {
             return 1;
         }
         return target.add(targetId);
-    }
-
-    private void loadProperty(long target, long relId, int localSource) {
-        weights.load(relId, target, localSource, cursors, read);
     }
 
     private void flush(CompressedLongArray[] targetIds, HugeAdjacencyBuilder adjacency) {
@@ -288,7 +351,6 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         return "PerThreadBuilder{" +
                 "idBase=" + startId +
                 ", maxId=" + (startId + (long) numberOfElements) +
-                ", size=" + size +
                 '}';
     }
 }
