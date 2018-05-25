@@ -77,14 +77,14 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         this.progress = progress;
         this.tracker = tracker;
         this.weights = weights;
+        this.queue = queue;
         this.threadIndex = threadIndex;
         this.startId = startId;
         this.numberOfElements = numberOfElements;
-        this.queue = queue;
-        this.outAdjacency = HugeAdjacencyBuilder.threadLocal(outAdjacency);
         this.outDegrees = outDegrees;
-        this.inAdjacency = HugeAdjacencyBuilder.threadLocal(inAdjacency);
+        this.outAdjacency = HugeAdjacencyBuilder.threadLocal(outAdjacency, numberOfElements);
         this.inDegrees = inDegrees;
+        this.inAdjacency = HugeAdjacencyBuilder.threadLocal(inAdjacency, numberOfElements);
     }
 
     @Override
@@ -138,6 +138,14 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         }
     }
 
+    long[] outOffsets() {
+        return outAdjacency.offsets();
+    }
+
+    long[] inOffsets() {
+        return inAdjacency.offsets();
+    }
+
     private void release(boolean flushBuffers) {
         if (inDegrees != null) {
             tracker.remove(sizeOfIntArray(inDegrees.length));
@@ -149,7 +157,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         }
         if (flushBuffers) {
             flush(outTargets, outAdjacency);
-            flush(inTargets, outAdjacency);
+            flush(inTargets, inAdjacency);
         }
         if (outTargets != null) {
             tracker.remove(sizeOfObjectArray(outTargets.length));
@@ -302,7 +310,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         int degree = addTarget(localFrom, target, targets, degrees);
         weights.load(relId, target, localFrom, cursors, read);
         if (degree >= degrees[localFrom]) {
-            adjacency.applyVariableDeltaEncoding(targets[localFrom], source);
+            adjacency.applyVariableDeltaEncoding(targets[localFrom], localFrom);
             targets[localFrom] = null;
         }
     }
@@ -314,7 +322,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
         assert localFrom < numberOfElements;
         int degree = addTarget(localFrom, target, targets, degrees);
         if (degree >= degrees[localFrom]) {
-            adjacency.applyVariableDeltaEncoding(targets[localFrom], source);
+            adjacency.applyVariableDeltaEncoding(targets[localFrom], localFrom);
             targets[localFrom] = null;
         }
     }
@@ -339,7 +347,7 @@ final class PerThreadRelationshipBuilder extends StatementAction {
             for (int i = 0, length = targetIds.length; i < length; i++) {
                 CompressedLongArray targets = targetIds[i];
                 if (targets != null) {
-                    adjacency.applyVariableDeltaEncoding(targets, i + startId);
+                    adjacency.applyVariableDeltaEncoding(targets, i);
                     targetIds[i] = null;
                 }
             }

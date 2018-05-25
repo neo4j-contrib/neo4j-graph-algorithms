@@ -81,17 +81,16 @@ public final class HugeGraphFactory extends GraphFactory {
             AllocationTracker tracker,
             HugeIdMap mapping,
             int concurrency) {
-        final long nodeCount = dimensions.hugeNodeCount();
         HugeAdjacencyBuilder outAdjacency = null;
         HugeAdjacencyBuilder inAdjacency = null;
         if (setup.loadAsUndirected) {
-            outAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
+            outAdjacency = new HugeAdjacencyBuilder(tracker);
         } else {
             if (setup.loadOutgoing) {
-                outAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
+                outAdjacency = new HugeAdjacencyBuilder(tracker);
             }
             if (setup.loadIncoming) {
-                inAdjacency = new HugeAdjacencyBuilder(nodeCount, tracker);
+                inAdjacency = new HugeAdjacencyBuilder(tracker);
             }
         }
 

@@ -28,7 +28,6 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
@@ -86,8 +85,8 @@ public class HugeGraphImpl implements HugeGraph {
     private HugeWeightMapping weights;
     private HugeAdjacencyList inAdjacency;
     private HugeAdjacencyList outAdjacency;
-    private HugeLongArray inOffsets;
-    private HugeLongArray outOffsets;
+    private HugeAdjacencyOffsets inOffsets;
+    private HugeAdjacencyOffsets outOffsets;
     private HugeAdjacencyList.Cursor empty;
     private HugeAdjacencyList.Cursor inCache;
     private HugeAdjacencyList.Cursor outCache;
@@ -99,8 +98,8 @@ public class HugeGraphImpl implements HugeGraph {
             final HugeWeightMapping weights,
             final HugeAdjacencyList inAdjacency,
             final HugeAdjacencyList outAdjacency,
-            final HugeLongArray inOffsets,
-            final HugeLongArray outOffsets) {
+            final HugeAdjacencyOffsets inOffsets,
+            final HugeAdjacencyOffsets outOffsets) {
         this.idMapping = idMapping;
         this.tracker = tracker;
         this.weights = weights;
@@ -384,7 +383,7 @@ public class HugeGraphImpl implements HugeGraph {
         return adjacency != null ? adjacency.newCursor() : null;
     }
 
-    private int degree(long node, HugeLongArray offsets, HugeAdjacencyList array) {
+    private int degree(long node, HugeAdjacencyOffsets offsets, HugeAdjacencyList array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
@@ -395,7 +394,7 @@ public class HugeGraphImpl implements HugeGraph {
     private HugeAdjacencyList.Cursor cursor(
             long node,
             HugeAdjacencyList.Cursor reuse,
-            HugeLongArray offsets,
+            HugeAdjacencyOffsets offsets,
             HugeAdjacencyList array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {

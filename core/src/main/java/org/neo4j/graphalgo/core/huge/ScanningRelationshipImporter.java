@@ -110,7 +110,7 @@ final class ParallelScanning implements ScanningRelationshipImporter {
             idBase += (long) batchSize;
             elementsForThread = (int) Math.min(batchSize, idMap.nodeCount() - idBase);
         }
-        loader.finish();
+        loader.finish(batchSize);
 
         final Collection<Future<?>> jobs =
                 ParallelUtil.run(Arrays.asList(loader.builders), false, threadPool, null);
@@ -182,7 +182,7 @@ final class ParallelScanning implements ScanningRelationshipImporter {
                     outs, outAdjacency, ins, inAdjacency);
         }
 
-        void finish() {
+        void finish(int perThreadSize) {
             int length = index;
             weights.finish(length);
             if (length < queues.length) {
@@ -194,6 +194,16 @@ final class ParallelScanning implements ScanningRelationshipImporter {
                 if (outDegrees != null) {
                     outDegrees = Arrays.copyOf(outDegrees, length);
                 }
+            }
+            if (outAdjacency != null) {
+                long[][] offsets = new long[length][];
+                Arrays.setAll(offsets, i -> builders[i].outOffsets());
+                outAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, perThreadSize, tracker));
+            }
+            if (inAdjacency != null) {
+                long[][] offsets = new long[length][];
+                Arrays.setAll(offsets, i -> builders[i].inOffsets());
+                inAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, perThreadSize, tracker));
             }
         }
     }
@@ -257,6 +267,17 @@ final class SerialScanning implements ScanningRelationshipImporter {
                     api, progress, tracker, threadWeights, null,
                     0, 0L, nodeCount,
                     outDegree, outAdjacency, inDegree, inAdjacency);
+
+            if (outAdjacency != null) {
+                long[][] offsets = new long[1][];
+                offsets[0] = builder.outOffsets();
+                outAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, 0, tracker));
+            }
+            if (inAdjacency != null) {
+                long[][] offsets = new long[1][];
+                offsets[0] = builder.inOffsets();
+                inAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, 0, tracker));
+            }
         } catch (OutOfMemoryError oom) {
             failForTooMuchNodes(idMap.nodeCount(), oom);
             return;
