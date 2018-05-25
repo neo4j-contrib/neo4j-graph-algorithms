@@ -52,7 +52,7 @@ final class AdjacencyDecompression {
     }
 
     //@formatter:off
-    private int readInt(byte[] array, int offset) {
+    static int readInt(byte[] array, int offset) {
         return   array[    offset] & 255        |
                 (array[1 + offset] & 255) <<  8 |
                 (array[2 + offset] & 255) << 16 |

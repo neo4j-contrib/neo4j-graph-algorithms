@@ -47,9 +47,10 @@ final class HugeAdjacencyList {
         return memory;
     }
 
-    // TODO
     int getDegree(long index) {
-        return (int) pages[pageIndex(index, PAGE_SHIFT)][indexInPage(index, PAGE_MASK)];
+        return AdjacencyDecompression.readInt(
+                pages[pageIndex(index, PAGE_SHIFT)],
+                indexInPage(index, PAGE_MASK));
     }
 
     Cursor newCursor() {
