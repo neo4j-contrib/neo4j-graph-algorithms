@@ -62,7 +62,7 @@ class HugeWeightMapBuilder {
     }
 
     HugeWeightMapping build() {
-        return new HugeWeightMap(pages, pageSize, defaultWeight, tracker);
+        return HugeWeightMap.of(pages, pageSize, defaultWeight, tracker);
     }
 
     void load(long relId, long target, int localSource, CursorFactory cursors, Read read) {
