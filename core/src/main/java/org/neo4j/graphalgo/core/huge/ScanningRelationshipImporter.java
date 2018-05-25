@@ -30,7 +30,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfLongArray;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 interface ScanningRelationshipImporter {
@@ -119,7 +119,7 @@ final class ParallelScanning implements ScanningRelationshipImporter {
         int baseQueueBatchSize = Math.max(1 << 4, Math.min(1 << 12, setup.batchSize));
         int queueBatchSize = 3 * baseQueueBatchSize;
         final RelationshipsScanner scanner = new QueueingScanner(
-                api, setup, progress, tracker, idMap, weights.loadsWeights(),
+                api, setup, progress, idMap, weights.loadsWeights(),
                 inFlight, queueBatchSize, loader.queues, loader.outDegrees, loader.inDegrees, batchSize);
         scanner.run();
         ParallelUtil.awaitTermination(jobs);
@@ -133,8 +133,8 @@ final class ParallelScanning implements ScanningRelationshipImporter {
 
         private ArrayBlockingQueue<RelationshipsBatch>[] queues;
         private PerThreadRelationshipBuilder[] builders;
-        private int[][] outDegrees;
-        private int[][] inDegrees;
+        private long[][] outDegrees;
+        private long[][] inDegrees;
 
         private int index;
 
@@ -152,10 +152,12 @@ final class ParallelScanning implements ScanningRelationshipImporter {
             queues = new ArrayBlockingQueue[threads];
             builders = new PerThreadRelationshipBuilder[threads];
             if (outAdjacency != null) {
-                outDegrees = new int[threads][];
+                outDegrees = new long[threads][];
+                tracker.add(sizeOfObjectArray(threads));
             }
             if (inAdjacency != null) {
-                inDegrees = new int[threads][];
+                inDegrees = new long[threads][];
+                tracker.add(sizeOfObjectArray(threads));
             }
         }
 
@@ -166,20 +168,21 @@ final class ParallelScanning implements ScanningRelationshipImporter {
                 int numberOfElements) {
             int index = this.index++;
             queues[index] = new ArrayBlockingQueue<>(PER_THREAD_IN_FLIGHT);
-            int[] ins = null, outs = null;
-            if (inDegrees != null) {
-                tracker.add(sizeOfIntArray(numberOfElements));
-                ins = inDegrees[index] = new int[numberOfElements];
+            HugeAdjacencyBuilder outAB = null, inAB = null;
+            if (outAdjacency != null && outDegrees != null) {
+                long[] degrees = outDegrees[index] = new long[numberOfElements];
+                outAB = outAdjacency.threadLocalCopy(degrees);
+                tracker.add(sizeOfLongArray(numberOfElements));
             }
-            if (outDegrees != null) {
-                tracker.add(sizeOfIntArray(numberOfElements));
-                outs = outDegrees[index] = new int[numberOfElements];
+            if (inAdjacency != null && inDegrees != null) {
+                long[] degrees = inDegrees[index] = new long[numberOfElements];
+                inAB = inAdjacency.threadLocalCopy(degrees);
+                tracker.add(sizeOfLongArray(numberOfElements));
             }
             HugeWeightMapBuilder threadWeights = weights.threadLocalCopy(index, numberOfElements);
             builders[index] = new PerThreadRelationshipBuilder(
                     api, progress, tracker, threadWeights, queues[index],
-                    index, startId, numberOfElements,
-                    outs, outAdjacency, ins, inAdjacency);
+                    index, startId, numberOfElements, outAB, inAB);
         }
 
         void finish(int perThreadSize) {
@@ -195,15 +198,11 @@ final class ParallelScanning implements ScanningRelationshipImporter {
                     outDegrees = Arrays.copyOf(outDegrees, length);
                 }
             }
-            if (outAdjacency != null) {
-                long[][] offsets = new long[length][];
-                Arrays.setAll(offsets, i -> builders[i].outOffsets());
-                outAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, perThreadSize, tracker));
+            if (outAdjacency != null && outDegrees != null) {
+                outAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(outDegrees, perThreadSize));
             }
-            if (inAdjacency != null) {
-                long[][] offsets = new long[length][];
-                Arrays.setAll(offsets, i -> builders[i].inOffsets());
-                inAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, perThreadSize, tracker));
+            if (inAdjacency != null && inDegrees != null) {
+                inAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(inDegrees, perThreadSize));
             }
         }
     }
@@ -247,37 +246,16 @@ final class SerialScanning implements ScanningRelationshipImporter {
     @Override
     public void run() {
         weights.prepare(1, 0);
-        int[][] outDegrees = null, inDegrees = null;
+        long[][] outDegrees, inDegrees;
         final PerThreadRelationshipBuilder builder;
         try {
             HugeWeightMapBuilder threadWeights = weights.threadLocalCopy(0, nodeCount);
-            int[] outDegree = null, inDegree = null;
-            if (outAdjacency != null) {
-                outDegrees = new int[1][nodeCount];
-                outDegree = outDegrees[0];
-                tracker.add(sizeOfIntArray(nodeCount) + sizeOfObjectArray(1));
-            }
-            if (inAdjacency != null) {
-                inDegrees = new int[1][nodeCount];
-                inDegree = inDegrees[0];
-                tracker.add(sizeOfIntArray(nodeCount) + sizeOfObjectArray(1));
-            }
-
+            outDegrees = createDegreesBuffer(nodeCount, tracker, outAdjacency);
+            inDegrees = createDegreesBuffer(nodeCount, tracker, inAdjacency);
             builder = new PerThreadRelationshipBuilder(
-                    api, progress, tracker, threadWeights, null,
-                    0, 0L, nodeCount,
-                    outDegree, outAdjacency, inDegree, inAdjacency);
-
-            if (outAdjacency != null) {
-                long[][] offsets = new long[1][];
-                offsets[0] = builder.outOffsets();
-                outAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, 0, tracker));
-            }
-            if (inAdjacency != null) {
-                long[][] offsets = new long[1][];
-                offsets[0] = builder.inOffsets();
-                inAdjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(offsets, 0, tracker));
-            }
+                    api, progress, tracker, threadWeights, null, 0, 0L, nodeCount,
+                    HugeAdjacencyBuilder.threadLocal(outAdjacency, degrees(outDegrees)),
+                    HugeAdjacencyBuilder.threadLocal(inAdjacency, degrees(inDegrees)));
         } catch (OutOfMemoryError oom) {
             failForTooMuchNodes(idMap.nodeCount(), oom);
             return;
@@ -287,9 +265,26 @@ final class SerialScanning implements ScanningRelationshipImporter {
         int queueBatchSize = 3 * baseQueueBatchSize;
 
         final RelationshipsScanner scanner = new NonQueueingScanner(
-                api, setup, progress, tracker, idMap, weights.loadsWeights(),
+                api, setup, progress, idMap, weights.loadsWeights(),
                 1, queueBatchSize, builder, outDegrees, inDegrees);
         scanner.run();
+    }
+
+    private static long[][] createDegreesBuffer(
+            final int nodeCount,
+            final AllocationTracker tracker,
+            final HugeAdjacencyBuilder adjacency) {
+        if (adjacency != null) {
+            long[][] degrees = new long[1][nodeCount];
+            tracker.add(sizeOfLongArray(nodeCount) + sizeOfObjectArray(1));
+            adjacency.setGlobalOffsets(HugeAdjacencyOffsets.of(degrees, 0));
+            return degrees;
+        }
+        return null;
+    }
+
+    private static long[] degrees(long[][] degrees) {
+        return degrees != null ? degrees[0] : null;
     }
 
     private static void failForTooMuchNodes(long nodeCount, Throwable cause) {

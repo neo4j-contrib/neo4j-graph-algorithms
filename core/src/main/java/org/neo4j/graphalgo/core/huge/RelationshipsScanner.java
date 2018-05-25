@@ -23,7 +23,6 @@ import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.RenamesCurrentThread;
 import org.neo4j.graphalgo.core.utils.StatementAction;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.CursorFactory;
@@ -39,13 +38,12 @@ import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfObjectArray;
 
 abstract class RelationshipsScanner extends StatementAction {
 
     private final ArrayBlockingQueue<RelationshipsBatch> pool;
-    private int[][] outDegrees;
-    private int[][] inDegrees;
+    private long[][] outDegrees;
+    private long[][] inDegrees;
     private final int numberOfThreads;
     private final int batchSize;
     private final HugeIdMap idMap;
@@ -53,25 +51,22 @@ abstract class RelationshipsScanner extends StatementAction {
     private final Emit emit;
     private final GraphSetup setup;
     private final ImportProgress progress;
-    private final AllocationTracker tracker;
 
     RelationshipsScanner(
             GraphDatabaseAPI api,
             GraphSetup setup,
             ImportProgress progress,
-            AllocationTracker tracker,
             HugeIdMap idMap,
             boolean loadWeights,
             int maxInFlight,
             int batchSize,
             int numberOfThreads,
-            int[][] outDegrees,
-            int[][] inDegrees) {
+            long[][] outDegrees,
+            long[][] inDegrees) {
         super(api);
         assert (batchSize % 3) == 0 : "batchSize must be divisible by three";
         this.setup = setup;
         this.progress = progress;
-        this.tracker = tracker;
         this.idMap = idMap;
         this.outDegrees = outDegrees;
         this.inDegrees = inDegrees;
@@ -171,15 +166,8 @@ abstract class RelationshipsScanner extends StatementAction {
         try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-degrees")) {
             forAllRelationships(transaction, this::loadDegree);
         }
-        // remove references so that GC can eventually reclaim memory
-        if (inDegrees != null) {
-            tracker.remove(sizeOfObjectArray(inDegrees.length));
-            inDegrees = null;
-        }
-        if (outDegrees != null) {
-            tracker.remove(sizeOfObjectArray(outDegrees.length));
-            outDegrees = null;
-        }
+        inDegrees = null;
+        outDegrees = null;
     }
 
     private void loadDegree(RelationshipScanCursor rc) {
@@ -598,16 +586,15 @@ final class QueueingScanner extends RelationshipsScanner {
             GraphDatabaseAPI api,
             GraphSetup setup,
             ImportProgress progress,
-            AllocationTracker tracker,
             HugeIdMap idMap,
             boolean loadWeights,
             int maxInFlight,
             int batchSize,
             BlockingQueue<RelationshipsBatch>[] threadQueues,
-            int[][] outDegrees,
-            int[][] inDegrees,
+            long[][] outDegrees,
+            long[][] inDegrees,
             int perThreadSize) {
-        super(api, setup, progress, tracker, idMap, loadWeights, maxInFlight, batchSize, threadQueues.length, outDegrees, inDegrees);
+        super(api, setup, progress, idMap, loadWeights, maxInFlight, batchSize, threadQueues.length, outDegrees, inDegrees);
         assert BitUtil.isPowerOfTwo(perThreadSize);
         this.threadQueues = threadQueues;
         this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
@@ -642,15 +629,14 @@ final class NonQueueingScanner extends RelationshipsScanner {
             GraphDatabaseAPI api,
             GraphSetup setup,
             ImportProgress progress,
-            AllocationTracker tracker,
             HugeIdMap idMap,
             boolean loadWeights,
             int maxInFlight,
             int batchSize,
             PerThreadRelationshipBuilder builder,
-            int[][] outDegrees,
-            int[][] inDegrees) {
-        super(api, setup, progress, tracker, idMap, loadWeights, maxInFlight, batchSize, 1, outDegrees, inDegrees);
+            long[][] outDegrees,
+            long[][] inDegrees) {
+        super(api, setup, progress, idMap, loadWeights, maxInFlight, batchSize, 1, outDegrees, inDegrees);
         this.builder = builder;
     }
 

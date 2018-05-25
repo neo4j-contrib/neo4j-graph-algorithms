@@ -33,9 +33,9 @@ final class HugeAdjacencyBuilder {
         this.tracker = tracker;
     }
 
-    private HugeAdjacencyBuilder threadLocalCopy(int nodeCount) {
+    HugeAdjacencyBuilder threadLocalCopy(long[] offsets) {
         return new HugeAdjacencyBuilder(
-                adjacency, adjacency.newAllocator(), new AdjacencyCompression(), new long[nodeCount], tracker
+                adjacency, adjacency.newAllocator(), new AdjacencyCompression(), offsets, tracker
         );
     }
 
@@ -43,12 +43,12 @@ final class HugeAdjacencyBuilder {
         allocator.prepare();
     }
 
-    long[] offsets() {
-        return offsets;
-    }
-
     void setGlobalOffsets(HugeAdjacencyOffsets globalOffsets) {
         this.globalOffsets = globalOffsets;
+    }
+
+    int degree(int localId) {
+        return (int) offsets[localId];
     }
 
     void applyVariableDeltaEncoding(CompressedLongArray array, int localId) {
@@ -63,8 +63,8 @@ final class HugeAdjacencyBuilder {
         compression.release();
     }
 
-    static HugeAdjacencyBuilder threadLocal(HugeAdjacencyBuilder builder, int nodeCount) {
-        return builder != null ? builder.threadLocalCopy(nodeCount) : null;
+    static HugeAdjacencyBuilder threadLocal(HugeAdjacencyBuilder builder, long[] offsets) {
+        return builder != null ? builder.threadLocalCopy(offsets) : null;
     }
 
     static HugeGraph apply(

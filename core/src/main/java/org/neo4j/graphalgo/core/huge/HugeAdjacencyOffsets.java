@@ -1,20 +1,15 @@
 package org.neo4j.graphalgo.core.huge;
 
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 
 final class HugeAdjacencyOffsets {
 
-    static HugeAdjacencyOffsets of(long[][] pages, int pageSize, AllocationTracker tracker) {
+    static HugeAdjacencyOffsets of(long[][] pages, int pageSize) {
         long memoryUsed = MemoryUsage.sizeOfObjectArray(pages.length);
         for (long[] page : pages) {
             memoryUsed += MemoryUsage.sizeOfLongArray(page.length);
         }
-
-        tracker.add(MemoryUsage.shallowSizeOfInstance(HugeAdjacencyOffsets.class));
-        tracker.add(memoryUsed);
-
         return new HugeAdjacencyOffsets(pages, pageSize, memoryUsed);
     }
 
