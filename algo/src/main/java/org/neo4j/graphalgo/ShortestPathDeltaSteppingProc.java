@@ -90,6 +90,11 @@ public class ShortestPathDeltaSteppingProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0 || startNode == null) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final ShortestPathDeltaStepping algo = new ShortestPathDeltaStepping(graph, delta)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -124,6 +129,11 @@ public class ShortestPathDeltaSteppingProc {
                             configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
                     .withDirection(Direction.OUTGOING)
                     .load(configuration.getGraphImpl());
+        }
+
+        if (graph.nodeCount() == 0 || startNode == null) {
+            graph.release();
+            return Stream.empty();
         }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);

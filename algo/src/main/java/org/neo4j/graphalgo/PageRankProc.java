@@ -79,6 +79,12 @@ public final class PageRankProc {
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         AllocationTracker tracker = AllocationTracker.create();
         final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder, configuration);
+
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(statsBuilder.build());
+        }
+
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
 
@@ -103,6 +109,11 @@ public final class PageRankProc {
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         AllocationTracker tracker = AllocationTracker.create();
         final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder, configuration);
+
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         PageRankResult scores = evaluate(graph, tracker, terminationFlag, configuration, statsBuilder);
