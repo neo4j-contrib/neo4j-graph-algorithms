@@ -79,14 +79,18 @@ final class AdjacencyDecompression {
         long[] block = this.block;
         int available = remaining;
 
-        while (CHUNK_SIZE - available < pos && block[CHUNK_SIZE - 1] <= target) {
-            offset = decodeDeltaVLongs(block[CHUNK_SIZE - 1], array, offset, CHUNK_SIZE - pos, block);
-            available -= (CHUNK_SIZE - pos);
+        // skip blocks until we have either not enough available to decode or have advanced far enough
+        while (available > CHUNK_SIZE - pos && block[CHUNK_SIZE - 1] <= target) {
+            int skippedInThisBlock = CHUNK_SIZE - pos;
+            int needToDecode = Math.min(CHUNK_SIZE, available - skippedInThisBlock);
+            offset = decodeDeltaVLongs(block[CHUNK_SIZE - 1], array, offset, needToDecode, block);
+            available -= skippedInThisBlock;
             pos = 0;
         }
 
         // last block
         int targetPos = findPosStrictlyGreaterInBlock(target, pos, Math.min(pos + available, CHUNK_SIZE), block);
+        // we need to consume including targetPos, not to it, therefore +1
         available -= (1 + targetPos - pos);
         consumed.value = remaining - available;
         this.pos = 1 + targetPos;
@@ -98,14 +102,18 @@ final class AdjacencyDecompression {
         long[] block = this.block;
         int available = remaining;
 
-        while (CHUNK_SIZE - available < pos && block[CHUNK_SIZE - 1] < target) {
-            offset = decodeDeltaVLongs(block[CHUNK_SIZE - 1], array, offset, CHUNK_SIZE - pos, block);
-            available -= (CHUNK_SIZE - pos);
+        // skip blocks until we have either not enough available to decode or have advanced far enough
+        while (available > CHUNK_SIZE - pos && block[CHUNK_SIZE - 1] < target) {
+            int skippedInThisBlock = CHUNK_SIZE - pos;
+            int needToDecode = Math.min(CHUNK_SIZE, available - skippedInThisBlock);
+            offset = decodeDeltaVLongs(block[CHUNK_SIZE - 1], array, offset, needToDecode, block);
+            available -= skippedInThisBlock;
             pos = 0;
         }
 
         // last block
         int targetPos = findPosInBlock(target, pos, Math.min(pos + available, CHUNK_SIZE), block);
+        // we need to consume including targetPos, not to it, therefore +1
         available -= (1 + targetPos - pos);
         consumed.value = remaining - available;
         this.pos = 1 + targetPos;
