@@ -94,6 +94,11 @@ public class ShortestPathProc {
                 .withDirection(direction)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
+            graph.release();
+            return Stream.empty();
+        }
+
         return new ShortestPathDijkstra(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(Dijkstra)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -128,6 +133,11 @@ public class ShortestPathProc {
                             configuration.getWeightPropertyDefaultValue(1.0))
                     .withDirection(direction)
                     .load(configuration.getGraphImpl());
+        }
+
+        if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
+            graph.release();
+            return Stream.of(builder.build());
         }
 
         try (ProgressTimer timer = builder.timeEval()) {
@@ -180,6 +190,11 @@ public class ShortestPathProc {
     				.withOptionalRelationshipWeightsFromProperty(propertyName, configuration.getWeightPropertyDefaultValue(1.0))
     				.withDirection(direction)
     				.load(configuration.getGraphImpl());
+
+            if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
+                graph.release();
+                return Stream.empty();
+            }
     		
     		return new ShortestPathAStar(graph, api)
     				.withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(AStar)"))

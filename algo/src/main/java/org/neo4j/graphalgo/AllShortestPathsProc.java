@@ -78,6 +78,11 @@ public class AllShortestPathsProc {
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final MSBFSASPAlgorithm<?> algo;
 
         // use MSBFS ASP if no weightProperty is set

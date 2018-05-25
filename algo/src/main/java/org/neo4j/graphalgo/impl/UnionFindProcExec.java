@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
+ * <p>
  * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
+ * <p>
  * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -69,6 +69,15 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
         UnionFindProcExec uf = unionFind.get();
 
         final Graph graph = uf.load(builder::timeLoad, configuration, tracker);
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder
+                    .withNodeCount(graph.nodeCount())
+                    .withSetCount(0)
+                    .build());
+        }
+
         DSSResult dssResult = uf.evaluate(
                 builder::timeEval,
                 graph,
@@ -100,6 +109,12 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
         UnionFindProcExec uf = unionFind.get();
 
         final Graph graph = uf.load(configuration, tracker);
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         DSSResult result = uf.evaluate(graph, configuration, tracker);
         graph.release();
         return result.resultStream(graph);

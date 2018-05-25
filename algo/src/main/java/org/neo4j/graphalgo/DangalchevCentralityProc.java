@@ -74,6 +74,11 @@ public class DangalchevCentralityProc {
                 .asUndirected(true)
                 .load(configuration.getGraphImpl("huge"));
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final DangalchevClosenessCentrality algo = new DangalchevClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "DangalchevCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -114,6 +119,11 @@ public class DangalchevCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
 
         final DangalchevClosenessCentrality algo = new DangalchevClosenessCentrality(graph, concurrency, Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "DangalchevCentrality"))

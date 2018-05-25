@@ -71,6 +71,11 @@ public class MSColoringProc {
             graph = load(configuration);
         }
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
+
         // evaluation
         final AtomicIntegerArray struct;
         try (ProgressTimer timer = builder.timeEval()) {
@@ -101,6 +106,12 @@ public class MSColoringProc {
 
         // loading
         final Graph graph = load(configuration);
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
 
         // evaluation
         return new MSColoring(graph, Pools.DEFAULT, configuration.getConcurrency())
