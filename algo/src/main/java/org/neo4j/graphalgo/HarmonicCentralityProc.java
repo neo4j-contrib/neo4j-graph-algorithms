@@ -76,6 +76,11 @@ public class HarmonicCentralityProc {
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -116,6 +121,11 @@ public class HarmonicCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
 
         final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, concurrency)
                 .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))

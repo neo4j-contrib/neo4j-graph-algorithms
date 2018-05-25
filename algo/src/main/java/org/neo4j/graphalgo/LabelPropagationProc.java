@@ -96,6 +96,11 @@ public final class LabelPropagationProc {
 
         HeavyGraph graph = load(configuration, direction, partitionProperty, weightProperty, batchSize, concurrency, stats);
 
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(stats.build());
+        }
+
         int[] labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
             write(concurrency, partitionProperty, graph, labels, stats);
@@ -124,6 +129,11 @@ public final class LabelPropagationProc {
         final String weightProperty = configuration.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 
         HeavyGraph graph = load(configuration, direction, partitionProperty, weightProperty);
+
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
 
         int[] result = compute(direction, iterations, batchSize, concurrency, graph, new LabelPropagationStats.Builder());
 

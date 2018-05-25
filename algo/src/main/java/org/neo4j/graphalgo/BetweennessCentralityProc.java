@@ -80,6 +80,11 @@ public class BetweennessCentralityProc {
                 .withDirection(configuration.getDirection(Direction.OUTGOING))
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final RABrandesBetweennessCentrality algo =
                 new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, configuration.getConcurrency(), strategy(configuration, graph))
                         .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -112,6 +117,11 @@ public class BetweennessCentralityProc {
                 .withoutNodeProperties()
                 .withDirection(configuration.getDirection(DEFAULT_DIRECTION))
                 .load(configuration.getGraphImpl());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
 
         final int concurrency = configuration.getConcurrency();
         if (concurrency > 1) {
@@ -235,6 +245,12 @@ public class BetweennessCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
+
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final BetweennessCentrality bc = new BetweennessCentrality(graph)
                 .withTerminationFlag(terminationFlag)
@@ -289,6 +305,11 @@ public class BetweennessCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final ParallelBetweennessCentrality bc =

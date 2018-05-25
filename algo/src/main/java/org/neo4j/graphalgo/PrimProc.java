@@ -134,6 +134,12 @@ public class PrimProc {
                     .withLog(log)
                     .load(configuration.getGraphImpl(HugeGraph.TYPE));
         }
+
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
+
         final int root = graph.toMappedNodeId(startNode);
         final Prim mstPrim = new Prim(graph, graph, graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "Prim(MaximumSpanningTree)"))

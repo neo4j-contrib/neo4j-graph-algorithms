@@ -87,6 +87,11 @@ public class TriangleProc {
                         HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
                 ));
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleStream"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
@@ -119,6 +124,11 @@ public class TriangleProc {
                         HeavyGraph.TYPE,
                         HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE, HugeGraph.TYPE
                 ));
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
 
         return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))

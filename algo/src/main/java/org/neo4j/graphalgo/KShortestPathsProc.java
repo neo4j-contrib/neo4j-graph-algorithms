@@ -94,6 +94,12 @@ public class KShortestPathsProc {
             }
             graph = graphLoader.load(configuration.getGraphImpl());
         }
+
+        if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
+
         // eval
         try (ProgressTimer timer = builder.timeEval()) {
             algorithm = new YensKShortestPaths(graph)

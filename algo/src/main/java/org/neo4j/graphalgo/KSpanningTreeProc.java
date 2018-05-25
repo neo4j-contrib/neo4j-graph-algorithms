@@ -108,6 +108,12 @@ public class KSpanningTreeProc {
                     .withLog(log)
                     .load(configuration.getGraphImpl(HugeGraph.TYPE));
         }
+
+        if(graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.withEffectiveNodeCount(0).build());
+        }
+
         final int root = graph.toMappedNodeId(startNode);
 
         final KSpanningTree kSpanningTree = new KSpanningTree(graph, graph, graph)

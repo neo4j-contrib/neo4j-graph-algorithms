@@ -77,6 +77,11 @@ public class ShortestPathsProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0 || startNode == null) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final ShortestPaths algo = new ShortestPaths(graph)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -108,6 +113,11 @@ public class ShortestPathsProc {
                 .withDirection(Direction.OUTGOING)
                 .load(configuration.getGraphImpl());
         load.stop();
+
+        if (graph.nodeCount() == 0 || startNode == null) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final ShortestPaths algorithm = new ShortestPaths(graph)
