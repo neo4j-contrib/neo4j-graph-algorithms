@@ -77,6 +77,11 @@ public class ClosenessCentralityProc {
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.empty();
+        }
+
         final MSBFSCCAlgorithm<?> algo = newAlgo(tracker,
                 graph,
                 configuration.getConcurrency(),
@@ -139,6 +144,11 @@ public class ClosenessCentralityProc {
         }
 
         builder.withNodeCount(graph.nodeCount());
+
+        if (graph.nodeCount() == 0) {
+            graph.release();
+            return Stream.of(builder.build());
+        }
 
         final MSBFSCCAlgorithm<?> algo = newAlgo(tracker,
                 graph,
