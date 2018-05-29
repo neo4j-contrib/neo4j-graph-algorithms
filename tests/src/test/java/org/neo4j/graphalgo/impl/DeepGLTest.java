@@ -61,11 +61,13 @@ public class DeepGLTest {
                         "CREATE (d:Node {name:'d'})\n" +
                         "CREATE (e:Node {name:'e'})\n" +
                         "CREATE (f:Node {name:'f'})\n" +
+                        "CREATE (g:Node {name:'g'})\n" +
                         "CREATE" +
                         " (a)-[:TYPE]->(b),\n" +
                         " (a)-[:TYPE]->(f),\n" +
                         " (b)-[:TYPE]->(c),\n" +
                         " (c)-[:TYPE]->(d),\n" +
+                        " (d)-[:TYPE]->(g),\n" +
                         " (d)-[:TYPE]->(e)";
 
 
@@ -112,6 +114,6 @@ public class DeepGLTest {
                 .resultStream();
 
         resultStream
-                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + Arrays.toString(r.embedding)));
+                .forEach(r -> System.out.println(Arrays.toString(r.embedding)));
     }
 }
