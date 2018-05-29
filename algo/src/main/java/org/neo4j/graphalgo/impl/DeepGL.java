@@ -18,18 +18,12 @@
  */
 package org.neo4j.graphalgo.impl;
 
-import com.carrotsearch.hppc.IntArrayDeque;
-import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.container.Paths;
 import org.neo4j.graphdb.Direction;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,8 +101,30 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(featureFutures);
 
+        final int numFeatures = 3;
+        double[] featureMaxes = calculateMax(numFeatures);
+
+        nodeQueue.set(0);
+        final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
+        for (int i = 0; i < concurrency; i++) {
+            moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
+        }
+        ParallelUtil.awaitTermination(moreNormaliseFutures);
 
         return this;
+    }
+
+    private double[] calculateMax(int numFeatures) {
+        double[] maxes = new double[numFeatures];
+
+        for (int columnIndex = 0; columnIndex < embedding[0].length; columnIndex++) {
+            int maxPosition = columnIndex / numFeatures;
+            for (double[] anEmbedding : embedding) {
+                maxes[maxPosition] = maxes[maxPosition] < anEmbedding[columnIndex] ? anEmbedding[columnIndex] : maxes[maxPosition];
+            }
+        }
+
+        return maxes;
     }
 
     private double getGlobalMax() {
@@ -189,9 +205,9 @@ public class DeepGL extends Algorithm<DeepGL> {
     private class NormaliseTask implements Runnable {
 
 
-        private final double globalMax;
+        private final double[] globalMax;
 
-        public NormaliseTask(double globalMax) {
+        public NormaliseTask(double... globalMax) {
 
             this.globalMax = globalMax;
         }
@@ -204,8 +220,12 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
+                int sizeOfFeature = embedding[nodeId].length / globalMax.length;
+
                 for (int i = 0; i < embedding[nodeId].length; i++) {
-                    embedding[nodeId][i] /= globalMax;
+                    int feat = i / sizeOfFeature;
+
+                    embedding[nodeId][i] /= globalMax[feat];
                 }
             }
         }
@@ -220,15 +240,34 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
-                double[] sum = new double[prevEmbedding[0].length];
+                int lengthOfEachFeature = prevEmbedding[0].length;
+                double[] sum = new double[lengthOfEachFeature * 3];
                 Arrays.fill(sum, 0);
 
                 graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                    for (int i = 0; i < sum.length; i++) {
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
                         sum[i] += prevEmbedding[targetNodeId][i];
                     }
                     return true;
                 });
+
+                graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
+                    int offset = 3;
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
+                        sum[i + offset] += prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+
+                graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+                    int offset = 6;
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
+                        sum[i + offset] += prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+
+
                 embedding[nodeId] = sum;
             }
         }
