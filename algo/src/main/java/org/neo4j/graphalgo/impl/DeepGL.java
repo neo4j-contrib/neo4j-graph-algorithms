@@ -101,15 +101,15 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(featureFutures);
 
-        final int numFeatures = 3;
+        final int numFeatures = 6;
         double[] featureMaxes = calculateMax(numFeatures);
 
-        nodeQueue.set(0);
-        final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
-        }
-        ParallelUtil.awaitTermination(moreNormaliseFutures);
+//        nodeQueue.set(0);
+//        final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
+//        for (int i = 0; i < concurrency; i++) {
+//            moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
+//        }
+//        ParallelUtil.awaitTermination(moreNormaliseFutures);
 
         return this;
     }
@@ -240,13 +240,17 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
-                int lengthOfEachFeature = prevEmbedding[0].length;
-                double[] sum = new double[lengthOfEachFeature * 3];
-                Arrays.fill(sum, 0);
+                int numNeighbourhoods = 3;
+                int numFeatures = 2;
 
+                int lengthOfEachFeature = prevEmbedding[0].length;
+                double[] localEmbedding = new double[lengthOfEachFeature * numNeighbourhoods * numFeatures];
+                Arrays.fill(localEmbedding, 0);
+
+                /* Sum */
                 graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
                     for (int i = 0; i < lengthOfEachFeature; i++) {
-                        sum[i] += prevEmbedding[targetNodeId][i];
+                        localEmbedding[i] += prevEmbedding[targetNodeId][i];
                     }
                     return true;
                 });
@@ -254,7 +258,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
                     int offset = 3;
                     for (int i = 0; i < lengthOfEachFeature; i++) {
-                        sum[i + offset] += prevEmbedding[targetNodeId][i];
+                        localEmbedding[i + offset] += prevEmbedding[targetNodeId][i];
                     }
                     return true;
                 });
@@ -262,13 +266,50 @@ public class DeepGL extends Algorithm<DeepGL> {
                 graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                     int offset = 6;
                     for (int i = 0; i < lengthOfEachFeature; i++) {
-                        sum[i + offset] += prevEmbedding[targetNodeId][i];
+                        localEmbedding[i + offset] += prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+
+                /* Hadamard */
+                if (graph.degree(nodeId, Direction.OUTGOING) > 0) {
+                    Arrays.fill(localEmbedding, 9, 12, 1);
+                }
+                graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+
+                    int offset = 9;
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
+                        localEmbedding[i + offset] *= prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+
+                if (graph.degree(nodeId, Direction.INCOMING) > 0) {
+                    Arrays.fill(localEmbedding, 12, 15, 1);
+                }
+                graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
+                    int offset = 12;
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
+                        localEmbedding[i + offset] *= prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+
+                if (graph.degree(nodeId, Direction.BOTH) > 0) {
+                    Arrays.fill(localEmbedding, 15, 18, 1);
+                }
+                graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+                    int offset = 15;
+                    for (int i = 0; i < lengthOfEachFeature; i++) {
+                        localEmbedding[i + offset] *= prevEmbedding[targetNodeId][i];
                     }
                     return true;
                 });
 
 
-                embedding[nodeId] = sum;
+
+
+                embedding[nodeId] = localEmbedding;
             }
         }
     }
