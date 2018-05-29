@@ -334,5 +334,30 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
     };
 
-    RelOperator[] operators = new RelOperator[]{sum, hadamard};
+    RelOperator max = new RelOperator() {
+
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
+            for (int i = 0; i < lengthOfEachFeature; i++) {
+                if (prevEmbedding[targetNodeId][i] > embedding[nodeId][i + offset]) {
+                    embedding[nodeId][i + offset] = prevEmbedding[targetNodeId][i];
+                }
+            }
+
+        }
+
+        @Override
+        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
+        }
+
+        @Override
+        public double defaultVal() {
+            return 0;
+        }
+    };
+
+    RelOperator[] operators = new RelOperator[]{sum, hadamard, max};
 }
