@@ -21,15 +21,12 @@ package org.neo4j.graphalgo.impl;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.StatementApi;
 import org.neo4j.graphdb.Direction;
 
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -52,6 +49,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     private double divisor = 1.0;
     private volatile double[][] embedding;
     private volatile double[][] prevEmbedding;
+    private volatile int[] seenSoFarMapping;
 
     /**
      * constructs a parallel centrality solver
@@ -68,6 +66,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.embedding = new double[nodeCount][];
         this.prevEmbedding = new double[nodeCount][];
         this.numNeighbourhoods = 3;
+        this.seenSoFarMapping = new int[nodeCount];
     }
 
     public DeepGL withDirection(Direction direction) {
@@ -359,5 +358,29 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
     };
 
-    RelOperator[] operators = new RelOperator[]{sum, hadamard, max};
+    RelOperator mean = new RelOperator() {
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
+            // Returns the new average after including x
+            for (int i = 0; i < lengthOfEachFeature; i++) {
+                embedding[nodeId][i + offset] = (embedding[nodeId][i + offset] * seenSoFarMapping[nodeId] + prevEmbedding[targetNodeId][i]) / (seenSoFarMapping[nodeId] + 1);
+            }
+            seenSoFarMapping[nodeId]++;
+        }
+
+        @Override
+        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
+            seenSoFarMapping[nodeId] = 0;
+        }
+
+        @Override
+        public double defaultVal() {
+            return 0;
+        }
+    };
+
+    RelOperator[] operators = new RelOperator[]{sum, hadamard, max, mean};
 }
