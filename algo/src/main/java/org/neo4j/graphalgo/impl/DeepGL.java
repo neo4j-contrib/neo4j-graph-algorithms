@@ -81,6 +81,7 @@ public class DeepGL extends Algorithm<DeepGL> {
      * @return itself for method chaining
      */
     public DeepGL compute() {
+        // base features
         nodeQueue.set(0);
         final ArrayList<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -88,6 +89,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(futures);
 
+        // normalise
         nodeQueue.set(0);
         final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -98,6 +100,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         prevEmbedding = embedding;
         embedding = new double[nodeCount][];
 
+        // layer 1 features
         nodeQueue.set(0);
         final ArrayList<Future<?>> featureFutures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
@@ -105,15 +108,26 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(featureFutures);
 
+        // diffusion
+        nodeQueue.set(0);
+        final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
+        for (int i = 0; i < concurrency; i++) {
+            diffusionFutures.add(executorService.submit(new DiffusionTask()));
+        }
+        ParallelUtil.awaitTermination(diffusionFutures);
+
+
+        // normalise
         final int numFeatures = operators.length * numNeighbourhoods;
         double[] featureMaxes = calculateMax(numFeatures);
-
         nodeQueue.set(0);
         final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
             moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
         }
         ParallelUtil.awaitTermination(moreNormaliseFutures);
+
+
 
         return this;
     }
@@ -247,7 +261,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 }
 
                 int lengthOfEachFeature = prevEmbedding[0].length;
-                embedding[nodeId] = new double[lengthOfEachFeature * numNeighbourhoods * operators.length];
+                embedding[nodeId] = new double[lengthOfEachFeature * numNeighbourhoods * operators.length * 2];
                 Arrays.fill(embedding[nodeId], 0);
 
                 for (int i = 0; i < operators.length; i++) {
@@ -383,4 +397,25 @@ public class DeepGL extends Algorithm<DeepGL> {
     };
 
     RelOperator[] operators = new RelOperator[]{sum, hadamard, max, mean};
+
+    private class DiffusionTask implements Runnable {
+        @Override
+        public void run() {
+            for (; ; ) {
+                final int nodeId = nodeQueue.getAndIncrement();
+                if (nodeId >= nodeCount || !running()) {
+                    return;
+                }
+
+                graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
+                    int degreeOfTarget = graph.degree(targetNodeId, Direction.BOTH);
+
+                    for (int i = 0; i < embedding[targetNodeId].length / 2; i++) {
+                        embedding[nodeId][i + embedding[nodeId].length / 2] += embedding[targetNodeId][i] / degreeOfTarget;
+                    }
+                    return true;
+                });
+            }
+        }
+    }
 }
