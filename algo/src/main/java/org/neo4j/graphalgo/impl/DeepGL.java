@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 
 public class DeepGL extends Algorithm<DeepGL> {
 
+    private final int numNeighbourhoods;
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -66,6 +67,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.concurrency = concurrency;
         this.embedding = new double[nodeCount][];
         this.prevEmbedding = new double[nodeCount][];
+        this.numNeighbourhoods = 3;
     }
 
     public DeepGL withDirection(Direction direction) {
@@ -104,9 +106,8 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(featureFutures);
 
-        final int numFeatures = 6;
+        final int numFeatures = operators.length * numNeighbourhoods;
         double[] featureMaxes = calculateMax(numFeatures);
-        System.out.println("featureMaxes = " + Arrays.toString(featureMaxes));
 
         nodeQueue.set(0);
         final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
@@ -122,11 +123,9 @@ public class DeepGL extends Algorithm<DeepGL> {
         double[] maxes = new double[numFeatures];
 
         int length = embedding[0].length / numFeatures;
-        System.out.println("length = " + length);
         for (int columnIndex = 0; columnIndex < embedding[0].length; columnIndex++) {
             int maxPosition = columnIndex / length;
 
-            System.out.println("maxPosition = " + maxPosition);
             for (double[] anEmbedding : embedding) {
                 maxes[maxPosition] = maxes[maxPosition] < anEmbedding[columnIndex] ? anEmbedding[columnIndex] : maxes[maxPosition];
             }
@@ -248,82 +247,30 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
-                int numNeighbourhoods = 3;
-                int numFeatures = 2;
-
-                // for f in functions:
-                //  for n in neighbours:
-
                 int lengthOfEachFeature = prevEmbedding[0].length;
-                embedding[nodeId] = new double[lengthOfEachFeature * numNeighbourhoods * numFeatures];
+                embedding[nodeId] = new double[lengthOfEachFeature * numNeighbourhoods * operators.length];
                 Arrays.fill(embedding[nodeId], 0);
-
-                RelOperator sum = new RelOperator() {
-
-                    @Override
-                    public void apply(int offset, int lengthOfEachFeature, int targetNodeId) {
-                        for (int i = 0; i < lengthOfEachFeature; i++) {
-                            embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
-                        }
-                    }
-
-                    @Override
-                    public void initialise(int offset, int lengthOfEachFeature, Direction direction) {
-                        if (graph.degree(nodeId, direction) > 0) {
-                            Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
-                        }
-                    }
-
-                    @Override
-                    public double defaultVal() {
-                        return 0;
-                    }
-                };
-
-                RelOperator hadamard = new RelOperator() {
-                    @Override
-                    public void apply(int offset, int lengthOfEachFeature, int targetNodeId) {
-                        for (int i = 0; i < lengthOfEachFeature; i++) {
-                            embedding[nodeId][i + offset] *= prevEmbedding[targetNodeId][i];
-                        }
-                    }
-
-                    @Override
-                    public void initialise(int offset, int lengthOfEachFeature, Direction direction) {
-                        if (graph.degree(nodeId, direction) > 0) {
-                            System.out.println("offset: " + offset + "length: " + lengthOfEachFeature);
-                            Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
-                        }
-                    }
-
-                    @Override
-                    public double defaultVal() {
-                        return 1;
-                    }
-                };
-
-                RelOperator[] operators = new RelOperator[]{sum, hadamard};
 
                 for (int i = 0; i < operators.length; i++) {
                     RelOperator operator = operators[i];
                     int offset = i * lengthOfEachFeature * numNeighbourhoods;
 
 
-                    operator.initialise(offset, lengthOfEachFeature, Direction.OUTGOING);
+                    operator.initialise(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
                     graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(offset, lengthOfEachFeature, targetNodeId);
+                        operator.apply(nodeId, offset, lengthOfEachFeature, targetNodeId);
                         return true;
                     });
 
-                    operator.initialise(offset + 3, lengthOfEachFeature, Direction.INCOMING);
+                    operator.initialise(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
                     graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(offset + 3, lengthOfEachFeature, targetNodeId);
+                        operator.apply(nodeId, offset + 3, lengthOfEachFeature, targetNodeId);
                         return true;
                     });
 
-                    operator.initialise(offset + 6, lengthOfEachFeature, Direction.BOTH);
+                    operator.initialise(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
                     graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(offset + 6, lengthOfEachFeature, targetNodeId);
+                        operator.apply(nodeId, offset + 6, lengthOfEachFeature, targetNodeId);
                         return true;
                     });
                 }
@@ -339,8 +286,53 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     }
     interface RelOperator {
-        void apply(int offset, int lengthOfEachFeature, int targetNodeId);
-        void initialise(int offset, int lengthOfEachFeature, Direction direction);
+        void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId);
+        void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction);
         double defaultVal();
     }
+
+    RelOperator sum = new RelOperator() {
+
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
+            for (int i = 0; i < lengthOfEachFeature; i++) {
+                embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
+            }
+        }
+
+        @Override
+        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
+        }
+
+        @Override
+        public double defaultVal() {
+            return 0;
+        }
+    };
+
+    RelOperator hadamard = new RelOperator() {
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
+            for (int i = 0; i < lengthOfEachFeature; i++) {
+                embedding[nodeId][i + offset] *= prevEmbedding[targetNodeId][i];
+            }
+        }
+
+        @Override
+        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
+        }
+
+        @Override
+        public double defaultVal() {
+            return 1;
+        }
+    };
+
+    RelOperator[] operators = new RelOperator[]{sum, hadamard};
 }
