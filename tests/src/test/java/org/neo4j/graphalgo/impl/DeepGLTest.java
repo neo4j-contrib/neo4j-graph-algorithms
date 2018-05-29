@@ -60,8 +60,10 @@ public class DeepGLTest {
                         "CREATE (c:Node {name:'c'})\n" +
                         "CREATE (d:Node {name:'d'})\n" +
                         "CREATE (e:Node {name:'e'})\n" +
+                        "CREATE (f:Node {name:'f'})\n" +
                         "CREATE" +
                         " (a)-[:TYPE]->(b),\n" +
+                        " (a)-[:TYPE]->(f),\n" +
                         " (b)-[:TYPE]->(c),\n" +
                         " (c)-[:TYPE]->(d),\n" +
                         " (d)-[:TYPE]->(e)";
@@ -111,63 +113,5 @@ public class DeepGLTest {
 
         resultStream
                 .forEach(r -> System.out.println(name(r.nodeId) + " -> " + Arrays.toString(r.embedding)));
-    }
-
-    @Test
-    public void testMBC() throws Exception {
-
-        new MaxDepthBetweennessCentrality(graph, 3)
-                .compute()
-                .resultStream()
-                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
-    }
-
-
-    @Test
-    public void testRABrandes() throws Exception {
-
-        new RABrandesBetweennessCentrality(graph, Pools.DEFAULT, 3, new RandomSelectionStrategy(graph, 0.3))
-                .compute()
-                .resultStream()
-                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
-    }
-
-    @Test
-    public void testPBC() throws Exception {
-
-        new ParallelBetweennessCentrality(graph, Pools.DEFAULT, 4)
-                .compute()
-                .resultStream()
-                .forEach(r -> System.out.println(name(r.nodeId) + " -> " + r.centrality));
-    }
-
-    @Test
-    public void testSuccessorBrandes() throws Exception {
-
-        final TestConsumer mock = mock(TestConsumer.class);
-
-        final BetweennessCentralitySuccessorBrandes bc =
-                new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
-                        .compute();
-
-        final AtomicDoubleArray centrality = bc.getCentrality();
-
-
-        for (int i = 0; i < centrality.length(); i++) {
-            System.out.println(i + ":" + centrality.get(i));
-        }
-
-        bc.resultStream().forEach(r -> mock.consume(name(r.nodeId), r.centrality));
-
-        verify(mock, times(1)).consume(eq("a"), eq(0.0));
-        verify(mock, times(1)).consume(eq("b"), eq(3.0));
-        verify(mock, times(1)).consume(eq("c"), eq(4.0));
-        verify(mock, times(1)).consume(eq("d"), eq(3.0));
-        verify(mock, times(1)).consume(eq("e"), eq(0.0));
-    }
-
-    interface TestConsumer {
-
-        void consume(String name, double centrality);
     }
 }

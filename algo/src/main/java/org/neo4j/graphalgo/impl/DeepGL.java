@@ -53,6 +53,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     private Direction direction = Direction.OUTGOING;
     private double divisor = 1.0;
     private volatile double[][] embedding;
+    private volatile double[][] prevEmbedding;
 
     /**
      * constructs a parallel centrality solver
@@ -67,6 +68,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.executorService = executorService;
         this.concurrency = concurrency;
         this.embedding = new double[nodeCount][];
+        this.prevEmbedding = new double[nodeCount][];
     }
 
     public DeepGL withDirection(Direction direction) {
@@ -88,20 +90,32 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(futures);
 
-        double globalMax = Arrays.stream(embedding).parallel()
-                .mapToDouble(embedding -> embedding[2])
-                .max()
-                .getAsDouble();
-
         nodeQueue.set(0);
         final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
-            normaliseFutures.add(executorService.submit(new NormaliseTask(globalMax)));
+            normaliseFutures.add(executorService.submit(new NormaliseTask(getGlobalMax())));
         }
         ParallelUtil.awaitTermination(normaliseFutures);
 
+        prevEmbedding = embedding;
+        embedding = new double[nodeCount][];
+
+        nodeQueue.set(0);
+        final ArrayList<Future<?>> featureFutures = new ArrayList<>();
+        for (int i = 0; i < concurrency; i++) {
+            featureFutures.add(executorService.submit(new FeatureTask()));
+        }
+        ParallelUtil.awaitTermination(featureFutures);
+
 
         return this;
+    }
+
+    private double getGlobalMax() {
+        return Arrays.stream(embedding).parallel()
+                    .mapToDouble(embedding -> embedding[2])
+                    .max()
+                    .getAsDouble();
     }
 
     /**
@@ -197,4 +211,26 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
     }
 
+    private class FeatureTask implements Runnable {
+        @Override
+        public void run() {
+            for (; ; ) {
+                final int nodeId = nodeQueue.getAndIncrement();
+                if (nodeId >= nodeCount || !running()) {
+                    return;
+                }
+
+                double[] sum = new double[prevEmbedding[0].length];
+                Arrays.fill(sum, 0);
+
+                graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                    for (int i = 0; i < sum.length; i++) {
+                        sum[i] += prevEmbedding[targetNodeId][i];
+                    }
+                    return true;
+                });
+                embedding[nodeId] = sum;
+            }
+        }
+    }
 }
