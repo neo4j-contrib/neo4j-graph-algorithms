@@ -402,29 +402,53 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
     };
 
-//    RelOperator rbf = new RelOperator() {
-//        @Override
-//        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
-//            double sum = 0;
-//            for (int i = 0; i < lengthOfEachFeature; i++) {
-//
-//            }
-//        }
-//
-//        @Override
-//        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
-//            if (graph.degree(nodeId, direction) > 0) {
-//                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
-//            }
-//        }
-//
-//        @Override
-//        public double defaultVal() {
-//            return 0;
-//        }
-//    }
+    RelOperator rbf = new RelOperator() {
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
 
-    RelOperator[] operators = new RelOperator[]{sum, hadamard, max, mean};
+            double[] sum = new double[1];
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                     sum[0] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
+                }
+                return true;
+            });
+
+            double sigma = 1;
+            embedding[nodeId][offset] = Math.exp((-1 / Math.pow(sigma, 2)) * sum[0]);
+        }
+
+        @Override
+        public double defaultVal() {
+            return 0;
+        }
+    };
+
+    RelOperator l1Norm = new RelOperator() {
+        @Override
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+            if (graph.degree(nodeId, direction) > 0) {
+                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+            }
+
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                    embedding[nodeId][offset] += Math.abs(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i]);
+                }
+                return true;
+            });
+        }
+
+        @Override
+        public double defaultVal() {
+            return 0;
+        }
+    };
+
+    RelOperator[] operators = new RelOperator[]{sum, hadamard, max, mean, rbf, l1Norm};
 
 
     private class DiffusionTask implements Runnable {
