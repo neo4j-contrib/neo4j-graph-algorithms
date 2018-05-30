@@ -32,6 +32,14 @@ public class Pruning {
             this.features = features;
             this.embedding = embedding;
         }
+
+        public Feature[][] getFeatures() {
+            return features;
+        }
+
+        public double[][] getEmbedding() {
+            return embedding;
+        }
     }
 
     public Embedding prune(Embedding prevEmbedding, Embedding embedding) {

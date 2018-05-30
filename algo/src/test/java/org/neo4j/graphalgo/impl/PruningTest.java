@@ -12,6 +12,7 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -158,7 +159,96 @@ public class PruningTest {
 
     }
 
+    @Test
+    public void unionFindEmbeddings() {
+        double[][] one = {
+                {1,2,3},
+                {2,3,4},
+                {3,4,5}
+        };
 
+        // mean-in, mean-out, mean-both, other
 
+        double[][] two = {
+                {1,2,4,3},
+                {2,3,4,3},
+                {3,1,5,4}
+        };
 
+        Pruning pruning = new Pruning();
+
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN}, {OUT}, {BOTH}}, one);
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN, IN},{MEAN, OUT},{MEAN, BOTH},{OTHER}}, two);
+
+        int numPrevFeatures = prevEmbedding.getFeatures().length;
+        int nodeCount = numPrevFeatures + embedding.getFeatures().length;
+        IdMap idMap= new IdMap(nodeCount);
+
+        for (int i = 0; i < nodeCount; i++) {
+            idMap.add(i);
+        }
+        idMap.buildMappedIds();
+        WeightMapping relWeights = new WeightMap(nodeCount, 0, -1);
+        AdjacencyMatrix matrix = new AdjacencyMatrix(idMap.size(), false);
+
+        for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
+            for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
+                double[][] emb1 = getFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
+                double[][] emb2 = getFeature(embedding.getEmbedding(), featId, 1);
+
+                double score = pruning.score(emb1, emb2);
+
+                if(score > 0.5) {
+                    matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
+                    relWeights.set(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
+                    System.out.println("pruning.score(emb1,emb2) = " + Arrays.deepToString(emb1) + " " + Arrays.deepToString(emb2) + " " + score);
+
+                }
+
+            }
+        }
+
+        final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null, null);
+
+        GraphUnionFind algo = new GraphUnionFind(graph);
+        DisjointSetStruct struct = algo.compute();
+        algo.release();
+        DSSResult dssResult = new DSSResult(struct);
+        Stream<DisjointSetStruct.Result> resultStream = dssResult.resultStream(graph);
+
+        resultStream.forEach(item -> {
+            System.out.println(item.nodeId + " -> " + item.setId);
+        });
+    }
+
+    double[][] getFeature(double[][] embedding, int id, int featureWidth) {
+
+        double[][] feature = new double[embedding.length][featureWidth];
+        for (int i = 0; i < embedding.length; i++) {
+            for (int w = 0; w < featureWidth; w++) {
+                feature[i][w] = embedding[i][id + w];
+            }
+        }
+        return feature;
+    }
+
+    @Test
+    public void testGetFeature() {
+        double[][] one = {
+                {1,2,3},
+                {2,3,4},
+                {3,4,5}
+        };
+
+        // mean-in, mean-out, mean-both, other
+
+        double[][] two = {
+                {1,2,4,3},
+                {2,3,4,3},
+                {3,1,5,4}
+        };
+
+        double[][] feature = getFeature(two, 2, 2);
+        System.out.println("feature = " + Arrays.deepToString(feature));
+    }
 }
