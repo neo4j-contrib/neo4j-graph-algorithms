@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
@@ -52,6 +53,8 @@ public class DeepGL extends Algorithm<DeepGL> {
     private volatile int[] seenSoFarMapping;
     private volatile double[][] diffusion;
     private volatile double[][] prevDiffusion;
+    private volatile Pruning.Feature[][] features;
+    private volatile Pruning.Feature[][] prevFeatures;
 
     /**
      * constructs a parallel centrality solver
@@ -92,6 +95,11 @@ public class DeepGL extends Algorithm<DeepGL> {
             futures.add(executorService.submit(new BaseFeaturesTask()));
         }
         ParallelUtil.awaitTermination(futures);
+        this.features = new Pruning.Feature[][] {
+                {Pruning.Feature.IN_DEGREE},
+                {Pruning.Feature.OUT_DEGREE},
+                {Pruning.Feature.BOTH_DEGREE}
+        };
 
         // normalise
         nodeQueue.set(0);
@@ -102,7 +110,10 @@ public class DeepGL extends Algorithm<DeepGL> {
         ParallelUtil.awaitTermination(normaliseFutures);
 
         prevEmbedding = embedding;
+        prevFeatures = features;
+
         embedding = new double[nodeCount][];
+        features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
 
         // layer 1 features
         nodeQueue.set(0);
@@ -149,9 +160,18 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(moreNormaliseFutures);
 
-
+        doPruning();
 
         return this;
+    }
+
+    private void doPruning() {
+        System.out.println("features = " + Arrays.deepToString(features));
+        Pruning pruning = new Pruning();
+        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding), new Pruning.Embedding(features, embedding));
+        features = prunedEmbedding.getFeatures();
+        embedding = prunedEmbedding.getEmbedding();
+        System.out.println("features = " + Arrays.deepToString(features));
     }
 
     private double[] calculateMax(int numFeatures) {
@@ -230,7 +250,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                         graph.degree(nodeId, Direction.OUTGOING),
                         graph.degree(nodeId, Direction.BOTH)
                 };
-            }
+                }
         }
     }
 
@@ -286,14 +306,22 @@ public class DeepGL extends Algorithm<DeepGL> {
                 embedding[nodeId] = new double[lengthOfEachFeature * numNeighbourhoods * operators.length * 2];
                 Arrays.fill(embedding[nodeId], 0);
 
+
                 for (int i = 0; i < operators.length; i++) {
                     RelOperator operator = operators[i];
                     int offset = i * lengthOfEachFeature * numNeighbourhoods;
 
                     operator.apply(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
-                    operator.apply(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
-                    operator.apply(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
+                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i]};
+                    features[3*i] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[0]);
 
+                    operator.apply(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
+                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 1]};
+                    features[3*i+1] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[1]);
+
+                    operator.apply(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
+                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 2]};
+                    features[3*i+2] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[2]);
                 }
 
             }

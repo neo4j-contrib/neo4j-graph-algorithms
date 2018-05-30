@@ -1,6 +1,5 @@
 package org.neo4j.graphalgo.impl;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
@@ -12,7 +11,6 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -187,37 +185,4 @@ public class PruningTest {
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
     }
 
-    @Test
-    public void testPrunedEmbedding() {
-        // mean-in, mean-out, mean-both, other
-
-        double[][] two = {
-                {1, 2, 3, 4, 5, 6, 7, 8, 9},
-                {2, 3, 4, 3, 3, 4, 5, 7, 8},
-                {3, 1, 5, 4, 1, 1, 1, 1, 3}
-        };
-
-        double[][] doubles = Pruning.pruneEmbedding(two, 0, 2, 3);
-        System.out.println(Arrays.deepToString(doubles));
-    }
-
-    @Test
-    public void testGetFeature() {
-        double[][] one = {
-                {1,2,3},
-                {2,3,4},
-                {3,4,5}
-        };
-
-        // mean-in, mean-out, mean-both, other
-
-        double[][] two = {
-                {1,2,4,3},
-                {2,3,4,3},
-                {3,1,5,4}
-        };
-
-        double[][] feature = Pruning.extractFeature(two, 2, 2);
-        System.out.println("featureWidth = " + Arrays.deepToString(feature));
-    }
 }

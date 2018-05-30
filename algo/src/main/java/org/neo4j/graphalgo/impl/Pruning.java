@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.neo4j.graphalgo.impl.Pruning.Feature.*;
 
 public class Pruning {
 
@@ -23,7 +22,7 @@ public class Pruning {
 
         int numPrevFeatures = prevEmbedding.getFeatures().length;
         int nodeCount = numPrevFeatures + embedding.getFeatures().length;
-        IdMap idMap= new IdMap(nodeCount);
+        IdMap idMap = new IdMap(nodeCount);
 
         for (int i = 0; i < nodeCount; i++) {
             idMap.add(i);
@@ -34,15 +33,14 @@ public class Pruning {
 
         for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
             for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
-                double[][] emb1 = Pruning.extractFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
-                double[][] emb2 = Pruning.extractFeature(embedding.getEmbedding(), featId, 1);
+                double[][] emb1 = extractFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
+                double[][] emb2 = extractFeature(embedding.getEmbedding(), featId, 1);
 
                 double score = score(emb1, emb2);
 
-                if(score > 0.5) {
+                if (score > 0.5) {
                     matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
                     relWeights.set(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
-                    System.out.println("pruning.score(emb1,emb2) = " + Arrays.deepToString(emb1) + " " + Arrays.deepToString(emb2) + " " + score);
 
                 }
 
@@ -65,16 +63,13 @@ public class Pruning {
                 .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
                 .toArray();
 
-        double[][] prunedEmbedding = Pruning.pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
-//        System.out.println(Arrays.deepToString(prunedEmbedding));
-//        Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).forEach(features -> System.out.println(Arrays.toString(features)));
-
+        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
         Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
 
         return new Embedding(prunedFeatures, prunedEmbedding);
     }
 
-    public static double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
+    private double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
         double[][] prunedEmbedding = new double[origEmbedding.length][];
         for (int i = 0; i < origEmbedding.length; i++) {
             prunedEmbedding[i] = new double[featIdsToKeep.length];
@@ -86,7 +81,7 @@ public class Pruning {
         return prunedEmbedding;
     }
 
-    public static double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
+    private double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
 
         double[][] feature = new double[embedding.length][featureWidth];
         for (int i = 0; i < embedding.length; i++) {
@@ -98,12 +93,27 @@ public class Pruning {
     }
 
     public enum Feature {
-        IN_DEGREE,
-        OUT_DEGREE,
-        BOTH_DEGREE,
-        MEAN_IN_NEIGHBOURHOOD,
+        SUM_OUT_NEIGHBOURHOOD,
+        SUM_IN_NEIGHBOURHOOD,
+        SUM_BOTH_NEIGHOURHOOD,
+        HADAMARD_OUT_NEIGHBOURHOOD,
+        HADAMARD_IN_NEIGHBOURHOOD,
+        HADAMARD_BOTH_NEIGHOURHOOD,
+        MAX_OUT_NEIGHBOURHOOD,
+        MAX_IN_NEIGHBOURHOOD,
+        MAX_BOTH_NEIGHOURHOOD,
         MEAN_OUT_NEIGHBOURHOOD,
-        MEAN_BOTH_NEIGHOURHOOD
+        MEAN_IN_NEIGHBOURHOOD,
+        MEAN_BOTH_NEIGHOURHOOD,
+        RBF_OUT_NEIGHBOURHOOD,
+        RBF_IN_NEIGHBOURHOOD,
+        RBF_BOTH_NEIGHOURHOOD,
+        L1NORM_OUT_NEIGHBOURHOOD,
+        L1NORM_IN_NEIGHBOURHOOD,
+        L1NORM_BOTH_NEIGHOURHOOD,
+        OUT_DEGREE,
+        IN_DEGREE,
+        BOTH_DEGREE
     }
 
     static class Embedding {
