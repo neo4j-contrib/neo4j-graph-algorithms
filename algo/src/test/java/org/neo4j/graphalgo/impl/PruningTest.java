@@ -1,18 +1,18 @@
 package org.neo4j.graphalgo.impl;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.heavyweight.AdjacencyMatrix;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -92,8 +92,8 @@ public class PruningTest {
 
         Pruning pruning = new Pruning();
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN}, {OUT}, {BOTH}}, one);
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN, IN},{MEAN, OUT},{MEAN, BOTH},{OTHER}}, two);
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one);
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE},{MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE},{MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE},{MEAN_BOTH_NEIGHOURHOOD}}, two);
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
     }
@@ -115,7 +115,7 @@ public class PruningTest {
     public void connectedComponents() {
 
 //        Edge[] graph = {
-//                new Edge(new Pruning.Feature[][] { {IN} }, new Pruning.Feature[][] { {MEAN, IN} }, 1.0)
+//                new Edge(new Pruning.Feature[][] { {IN_DEGREE} }, new Pruning.Feature[][] { {MEAN, IN_DEGREE} }, 1.0)
 //        };
 
 //        calculateConnectedComponents(graph);
@@ -177,8 +177,10 @@ public class PruningTest {
 
         Pruning pruning = new Pruning();
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN}, {OUT}, {BOTH}}, one);
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN, IN},{MEAN, OUT},{MEAN, BOTH},{OTHER}}, two);
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one);
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE},{MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE},{MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE},{MEAN_OUT_NEIGHBOURHOOD}}, two);
+
+        Pruning.Feature[][] allFeatures = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
 
         int numPrevFeatures = prevEmbedding.getFeatures().length;
         int nodeCount = numPrevFeatures + embedding.getFeatures().length;
@@ -193,8 +195,8 @@ public class PruningTest {
 
         for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
             for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
-                double[][] emb1 = getFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
-                double[][] emb2 = getFeature(embedding.getEmbedding(), featId, 1);
+                double[][] emb1 = extractFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
+                double[][] emb2 = extractFeature(embedding.getEmbedding(), featId, 1);
 
                 double score = pruning.score(emb1, emb2);
 
@@ -216,12 +218,20 @@ public class PruningTest {
         DSSResult dssResult = new DSSResult(struct);
         Stream<DisjointSetStruct.Result> resultStream = dssResult.resultStream(graph);
 
-        resultStream.forEach(item -> {
-            System.out.println(item.nodeId + " -> " + item.setId);
-        });
+        long[] featureIdsToKeep = resultStream
+                .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
+                .collect(Collectors.groupingBy(item -> item.setId))
+                .values()
+                .stream()
+                .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
+                .toArray();
+
+        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
+        System.out.println(Arrays.deepToString(prunedEmbedding));
+        Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).forEach(features -> System.out.println(Arrays.toString(features)));
     }
 
-    double[][] getFeature(double[][] embedding, int id, int featureWidth) {
+    double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
 
         double[][] feature = new double[embedding.length][featureWidth];
         for (int i = 0; i < embedding.length; i++) {
@@ -230,6 +240,32 @@ public class PruningTest {
             }
         }
         return feature;
+    }
+
+    @Test
+    public void testPrunedEmbedding() {
+        // mean-in, mean-out, mean-both, other
+
+        double[][] two = {
+                {1, 2, 3, 4, 5, 6, 7, 8, 9},
+                {2, 3, 4, 3, 3, 4, 5, 7, 8},
+                {3, 1, 5, 4, 1, 1, 1, 1, 3}
+        };
+
+        double[][] doubles = pruneEmbedding(two, 0, 2, 3);
+        System.out.println(Arrays.deepToString(doubles));
+    }
+
+    double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
+        double[][] prunedEmbedding = new double[origEmbedding.length][];
+        for (int i = 0; i < origEmbedding.length; i++) {
+            prunedEmbedding[i] = new double[featIdsToKeep.length];
+            for (int j = 0; j < featIdsToKeep.length; j++) {
+                prunedEmbedding[i][j] = origEmbedding[i][(int) featIdsToKeep[j]];
+            }
+
+        }
+        return prunedEmbedding;
     }
 
     @Test
@@ -248,7 +284,7 @@ public class PruningTest {
                 {3,1,5,4}
         };
 
-        double[][] feature = getFeature(two, 2, 2);
-        System.out.println("feature = " + Arrays.deepToString(feature));
+        double[][] feature = extractFeature(two, 2, 2);
+        System.out.println("featureWidth = " + Arrays.deepToString(feature));
     }
 }

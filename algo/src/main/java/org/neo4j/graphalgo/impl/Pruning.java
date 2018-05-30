@@ -6,11 +6,12 @@ import java.util.Arrays;
 public class Pruning {
 
     public enum Feature implements F {
-        IN,
-        OUT,
-        BOTH,
-        MEAN,
-        OTHER;
+        IN_DEGREE,
+        OUT_DEGREE,
+        BOTH_DEGREE,
+        MEAN_IN_NEIGHBOURHOOD,
+        MEAN_OUT_NEIGHBOURHOOD,
+        MEAN_BOTH_NEIGHOURHOOD;
 
 
         @Override
@@ -39,6 +40,10 @@ public class Pruning {
 
         public double[][] getEmbedding() {
             return embedding;
+        }
+
+        public int numFeatures() {
+            return this.getFeatures().length;
         }
     }
 
