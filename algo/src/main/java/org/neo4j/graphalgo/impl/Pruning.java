@@ -1,27 +1,109 @@
 package org.neo4j.graphalgo.impl;
 
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.graphalgo.core.heavyweight.AdjacencyMatrix;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
+
 import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.neo4j.graphalgo.impl.Pruning.Feature.*;
 
 public class Pruning {
 
-    public enum Feature implements F {
+    public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
+
+        int numPrevFeatures = prevEmbedding.getFeatures().length;
+        int nodeCount = numPrevFeatures + embedding.getFeatures().length;
+        IdMap idMap= new IdMap(nodeCount);
+
+        for (int i = 0; i < nodeCount; i++) {
+            idMap.add(i);
+        }
+        idMap.buildMappedIds();
+        WeightMapping relWeights = new WeightMap(nodeCount, 0, -1);
+        AdjacencyMatrix matrix = new AdjacencyMatrix(idMap.size(), false);
+
+        for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
+            for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
+                double[][] emb1 = Pruning.extractFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
+                double[][] emb2 = Pruning.extractFeature(embedding.getEmbedding(), featId, 1);
+
+                double score = score(emb1, emb2);
+
+                if(score > 0.5) {
+                    matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
+                    relWeights.set(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
+                    System.out.println("pruning.score(emb1,emb2) = " + Arrays.deepToString(emb1) + " " + Arrays.deepToString(emb2) + " " + score);
+
+                }
+
+            }
+        }
+
+        final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null, null);
+
+        GraphUnionFind algo = new GraphUnionFind(graph);
+        DisjointSetStruct struct = algo.compute();
+        algo.release();
+        DSSResult dssResult = new DSSResult(struct);
+        Stream<DisjointSetStruct.Result> resultStream = dssResult.resultStream(graph);
+
+        long[] featureIdsToKeep = resultStream
+                .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
+                .collect(Collectors.groupingBy(item -> item.setId))
+                .values()
+                .stream()
+                .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
+                .toArray();
+
+        double[][] prunedEmbedding = Pruning.pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
+//        System.out.println(Arrays.deepToString(prunedEmbedding));
+//        Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).forEach(features -> System.out.println(Arrays.toString(features)));
+
+        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
+
+        return new Embedding(prunedFeatures, prunedEmbedding);
+    }
+
+    public static double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
+        double[][] prunedEmbedding = new double[origEmbedding.length][];
+        for (int i = 0; i < origEmbedding.length; i++) {
+            prunedEmbedding[i] = new double[featIdsToKeep.length];
+            for (int j = 0; j < featIdsToKeep.length; j++) {
+                prunedEmbedding[i][j] = origEmbedding[i][(int) featIdsToKeep[j]];
+            }
+
+        }
+        return prunedEmbedding;
+    }
+
+    public static double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
+
+        double[][] feature = new double[embedding.length][featureWidth];
+        for (int i = 0; i < embedding.length; i++) {
+            for (int w = 0; w < featureWidth; w++) {
+                feature[i][w] = embedding[i][id + w];
+            }
+        }
+        return feature;
+    }
+
+    public enum Feature {
         IN_DEGREE,
         OUT_DEGREE,
         BOTH_DEGREE,
         MEAN_IN_NEIGHBOURHOOD,
         MEAN_OUT_NEIGHBOURHOOD,
-        MEAN_BOTH_NEIGHOURHOOD;
-
-
-        @Override
-        public int multiplier() {
-            return 1;
-        }
-    }
-
-    interface F{
-        int multiplier();
+        MEAN_BOTH_NEIGHOURHOOD
     }
 
     static class Embedding {
@@ -45,11 +127,6 @@ public class Pruning {
         public int numFeatures() {
             return this.getFeatures().length;
         }
-    }
-
-    public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
-
-        return prevEmbedding;
     }
 
     double score(double[][] feat1, double[][] feat2) {
