@@ -313,23 +313,22 @@ public class DeepGL extends Algorithm<DeepGL> {
                     int offset = i * lengthOfEachFeature * numNeighbourhoods;
 
                     operator.apply(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
-                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i]};
-                    features[offset] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[0]);
-                    features[offset+1] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[1]);
-                    features[offset+2] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[2]);
+                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i]};
+                    for (int j = 0; j < prevFeatures.length; j++) {
+                        features[offset + j] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[j]);
+                    }
 
-                    operator.apply(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
-                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 1]};
-                    features[offset+3] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[0]);
-                    features[offset+4] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[1]);
-                    features[offset+5] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[2]);
+                    operator.apply(nodeId, offset + numNeighbourhoods, lengthOfEachFeature, Direction.INCOMING);
+                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 1]};
+                    for (int j = 0; j < prevFeatures.length; j++) {
+                        features[offset + j + prevFeatures.length] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[j]);
+                    }
 
-
-                    operator.apply(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
-                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 2]};
-                    features[offset+6] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[0]);
-                    features[offset+7] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[1]);
-                    features[offset+8] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[2]);
+                    operator.apply(nodeId, offset + 2 * numNeighbourhoods, lengthOfEachFeature, Direction.BOTH);
+                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 2]};
+                    for (int j = 0; j < prevFeatures.length; j++) {
+                        features[offset + j + 2 * prevFeatures.length] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[j]);
+                    }
                 }
 
             }
