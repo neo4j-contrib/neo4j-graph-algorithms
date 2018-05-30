@@ -290,24 +290,10 @@ public class DeepGL extends Algorithm<DeepGL> {
                     RelOperator operator = operators[i];
                     int offset = i * lengthOfEachFeature * numNeighbourhoods;
 
+                    operator.apply(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
+                    operator.apply(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
+                    operator.apply(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
 
-                    operator.initialise(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
-                    graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(nodeId, offset, lengthOfEachFeature, targetNodeId);
-                        return true;
-                    });
-
-                    operator.initialise(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
-                    graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(nodeId, offset + 3, lengthOfEachFeature, targetNodeId);
-                        return true;
-                    });
-
-                    operator.initialise(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
-                    graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                        operator.apply(nodeId, offset + 6, lengthOfEachFeature, targetNodeId);
-                        return true;
-                    });
                 }
 
             }
@@ -321,25 +307,24 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     }
     interface RelOperator {
-        void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId);
-        void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction);
+        void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction);
         double defaultVal();
     }
 
     RelOperator sum = new RelOperator() {
 
         @Override
-        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
-            for (int i = 0; i < lengthOfEachFeature; i++) {
-                embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
-            }
-        }
-
-        @Override
-        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
             if (graph.degree(nodeId, direction) > 0) {
                 Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
             }
+
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                    embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
+                }
+                return true;
+            });
         }
 
         @Override
@@ -350,17 +335,17 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     RelOperator hadamard = new RelOperator() {
         @Override
-        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
-            for (int i = 0; i < lengthOfEachFeature; i++) {
-                embedding[nodeId][i + offset] *= prevEmbedding[targetNodeId][i];
-            }
-        }
-
-        @Override
-        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
             if (graph.degree(nodeId, direction) > 0) {
                 Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
             }
+
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                    embedding[nodeId][i + offset] *= prevEmbedding[targetNodeId][i];
+                }
+                return true;
+            });
         }
 
         @Override
@@ -372,20 +357,20 @@ public class DeepGL extends Algorithm<DeepGL> {
     RelOperator max = new RelOperator() {
 
         @Override
-        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
-            for (int i = 0; i < lengthOfEachFeature; i++) {
-                if (prevEmbedding[targetNodeId][i] > embedding[nodeId][i + offset]) {
-                    embedding[nodeId][i + offset] = prevEmbedding[targetNodeId][i];
-                }
-            }
-
-        }
-
-        @Override
-        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
             if (graph.degree(nodeId, direction) > 0) {
                 Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
             }
+
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                    if (prevEmbedding[targetNodeId][i] > embedding[nodeId][i + offset]) {
+                        embedding[nodeId][i + offset] = prevEmbedding[targetNodeId][i];
+                    }
+                }
+                return true;
+            });
+
         }
 
         @Override
@@ -396,20 +381,19 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     RelOperator mean = new RelOperator() {
         @Override
-        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
-            // Returns the new average after including x
-            for (int i = 0; i < lengthOfEachFeature; i++) {
-                embedding[nodeId][i + offset] = (embedding[nodeId][i + offset] * seenSoFarMapping[nodeId] + prevEmbedding[targetNodeId][i]) / (seenSoFarMapping[nodeId] + 1);
-            }
-            seenSoFarMapping[nodeId]++;
-        }
-
-        @Override
-        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+        public void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
             if (graph.degree(nodeId, direction) > 0) {
                 Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
             }
-            seenSoFarMapping[nodeId] = 0;
+            int[] seenSoFar = {0};
+
+            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                for (int i = 0; i < lengthOfEachFeature; i++) {
+                    embedding[nodeId][i + offset] = (embedding[nodeId][i + offset] * seenSoFar[0] + prevEmbedding[targetNodeId][i]) / (seenSoFar[0] + 1);
+                }
+                seenSoFar[0]++;
+                return true;
+            });
         }
 
         @Override
@@ -417,6 +401,28 @@ public class DeepGL extends Algorithm<DeepGL> {
             return 0;
         }
     };
+
+//    RelOperator rbf = new RelOperator() {
+//        @Override
+//        public void apply(int nodeId, int offset, int lengthOfEachFeature, int targetNodeId) {
+//            double sum = 0;
+//            for (int i = 0; i < lengthOfEachFeature; i++) {
+//
+//            }
+//        }
+//
+//        @Override
+//        public void initialise(int nodeId, int offset, int lengthOfEachFeature, Direction direction) {
+//            if (graph.degree(nodeId, direction) > 0) {
+//                Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
+//            }
+//        }
+//
+//        @Override
+//        public double defaultVal() {
+//            return 0;
+//        }
+//    }
 
     RelOperator[] operators = new RelOperator[]{sum, hadamard, max, mean};
 
