@@ -38,7 +38,7 @@ import static org.neo4j.graphalgo.core.utils.ArrayUtil.*;
  *
  * @author mknblch
  */
-class AdjacencyMatrix {
+public class AdjacencyMatrix {
 
     private static final int[] EMPTY_INTS = new int[0];
 
@@ -61,7 +61,7 @@ class AdjacencyMatrix {
 
     private boolean sorted = false;
 
-    AdjacencyMatrix(int nodeCount, boolean sorted) {
+    public AdjacencyMatrix(int nodeCount, boolean sorted) {
         this(nodeCount, true, true, sorted);
     }
 

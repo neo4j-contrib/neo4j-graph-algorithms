@@ -409,16 +409,18 @@ public class DeepGL extends Algorithm<DeepGL> {
                 Arrays.fill(embedding[nodeId], offset, lengthOfEachFeature + offset, defaultVal());
             }
 
-            double[] sum = new double[1];
+            double[] sum = new double[lengthOfEachFeature];
             graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 for (int i = 0; i < lengthOfEachFeature; i++) {
-                     sum[0] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
+                     sum[i] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
                 }
                 return true;
             });
 
             double sigma = 1;
-            embedding[nodeId][offset] = Math.exp((-1 / Math.pow(sigma, 2)) * sum[0]);
+            for (int i = 0; i < sum.length; i++) {
+                embedding[nodeId][i + offset] = Math.exp((-1 / Math.pow(sigma, 2)) * sum[i]);
+            }
         }
 
         @Override
@@ -436,7 +438,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 for (int i = 0; i < lengthOfEachFeature; i++) {
-                    embedding[nodeId][offset] += Math.abs(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i]);
+                    embedding[nodeId][i + offset] += Math.abs(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i]);
                 }
                 return true;
             });
