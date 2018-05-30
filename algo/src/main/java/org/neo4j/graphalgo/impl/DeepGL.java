@@ -114,6 +114,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         embedding = new double[nodeCount][];
         features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
+        System.out.println("features = " + features.length);
 
         // layer 1 features
         nodeQueue.set(0);
@@ -313,15 +314,22 @@ public class DeepGL extends Algorithm<DeepGL> {
 
                     operator.apply(nodeId, offset, lengthOfEachFeature, Direction.OUTGOING);
                     Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i]};
-                    features[3*i] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[0]);
+                    features[offset] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[0]);
+                    features[offset+1] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[1]);
+                    features[offset+2] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[2]);
 
                     operator.apply(nodeId, offset + 3, lengthOfEachFeature, Direction.INCOMING);
                     Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 1]};
-                    features[3*i+1] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[1]);
+                    features[offset+3] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[0]);
+                    features[offset+4] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[1]);
+                    features[offset+5] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[2]);
+
 
                     operator.apply(nodeId, offset + 6, lengthOfEachFeature, Direction.BOTH);
                     Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[3 * i + 2]};
-                    features[3*i+2] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[2]);
+                    features[offset+6] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[0]);
+                    features[offset+7] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[1]);
+                    features[offset+8] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[2]);
                 }
 
             }
