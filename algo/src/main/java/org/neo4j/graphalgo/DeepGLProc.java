@@ -56,7 +56,7 @@ public class DeepGLProc {
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
-                .withDirection(configuration.getDirection(Direction.OUTGOING))
+                .withDirection(configuration.getDirection(Direction.BOTH))
                 .load(configuration.getGraphImpl());
 
         final DeepGL algo = new DeepGL(graph, Pools.DEFAULT, configuration.getConcurrency()).compute();
