@@ -49,12 +49,12 @@ public final class LoadGraphProc {
 
     @Procedure(name = "algo.graph.load")
     @Description("CALL algo.graph.load(" +
-            "linearBins:String, label:String, relationship:String" +
+            "name:String, label:String, relationship:String" +
             "{direction:'OUT/IN/BOTH', undirected:true/false, sorted:true/false, nodeProperty:'value', nodeWeight:'weight', relationshipWeight: 'weight', graph:'heavy/huge/cypher'}) " +
             "YIELD nodes, relationships, loadMillis, computeMillis, writeMillis, write, nodeProperty, nodeWeight, relationshipWeight - " +
             "load named graph")
     public Stream<LoadGraphStats> load(
-            @Name(value = "linearBins", defaultValue = "") String name,
+            @Name(value = "name", defaultValue = "") String name,
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationshipType,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -119,8 +119,8 @@ public final class LoadGraphProc {
     }
 
     @Procedure(name = "algo.graph.remove")
-    @Description("CALL algo.graph.remove(linearBins:String")
-    public Stream<GraphInfo> remove(@Name("linearBins") String name) {
+    @Description("CALL algo.graph.remove(name:String")
+    public Stream<GraphInfo> remove(@Name("name") String name) {
         GraphInfo info = new GraphInfo(name);
 
         Graph graph = LoadGraphFactory.get(name);
@@ -134,8 +134,8 @@ public final class LoadGraphProc {
     }
 
     @Procedure(name = "algo.graph.info")
-    @Description("CALL algo.graph.info(linearBins:String")
-    public Stream<GraphInfo> info(@Name("linearBins") String name) {
+    @Description("CALL algo.graph.info(name:String")
+    public Stream<GraphInfo> info(@Name("name") String name) {
         GraphInfo info = new GraphInfo(name);
         Graph graph = LoadGraphFactory.get(name);
         if (graph != null) {
