@@ -35,6 +35,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 
@@ -91,9 +92,9 @@ public class DeepGLTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        Stream<DeepGL.Result> resultStream = new DeepGL(graph, Pools.DEFAULT, 3, 10, 0.1)
-                .compute()
-                .resultStream();
+        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 10, 0.1);
+        deepGL.compute();
+        Stream<DeepGL.Result> resultStream = deepGL.resultStream();
 
         BufferedWriter writer = new BufferedWriter(new FileWriter("out.emb"));
 
@@ -111,6 +112,8 @@ public class DeepGLTest {
                     }
                 })
                 .forEach(r -> System.out.println(r.embedding));
+
+        deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
 
         writer.close();
     }

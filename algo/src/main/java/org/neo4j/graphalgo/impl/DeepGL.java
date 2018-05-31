@@ -235,6 +235,10 @@ public class DeepGL extends Algorithm<DeepGL> {
                                 embedding[nodeId]));
     }
 
+    public Stream<Pruning.Feature[]> featureStream() {
+        return Arrays.stream(features);
+    }
+
     @Override
     public DeepGL me() {
         return this;
