@@ -121,8 +121,8 @@ public class DeepGLTest {
 
         resultStream
                 .peek(r -> {
-                    String res = Arrays.stream(r.embedding)
-                            .mapToObj(Double::toString)
+                    String res = r.embedding.stream()
+                            .map(Object::toString)
                             .reduce((s, s2) -> String.join(" ", s, s2))
                             .get();
                     try {
@@ -132,7 +132,7 @@ public class DeepGLTest {
                         e.printStackTrace();
                     }
                 })
-                .forEach(r -> System.out.println(Arrays.toString(r.embedding)));
+                .forEach(r -> System.out.println(r.embedding));
 
         writer.close();
     }

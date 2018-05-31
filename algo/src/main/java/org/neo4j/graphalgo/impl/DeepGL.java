@@ -269,11 +269,11 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     public class Result {
         public final long nodeId;
-        public final double[] embedding;
+        public final List<Double> embedding;
 
         public Result(long nodeId, double[] embedding) {
             this.nodeId = nodeId;
-            this.embedding = embedding;
+            this.embedding = Arrays.asList(ArrayUtils.toObject(embedding));
         }
     }
 
