@@ -32,17 +32,17 @@ import static java.util.Collections.singletonMap;
 public class ListProc {
 
     private static final String QUERY = "CALL dbms.procedures() " +
-            " YIELD name, signature, description " +
-            " WHERE name starts with 'algo.' AND name <> 'algo.list' AND ($name IS NULL OR name CONTAINS $name) " +
-            " RETURN name, signature, description ORDER BY name";
+            " YIELD linearBins, signature, description " +
+            " WHERE linearBins starts with 'algo.' AND linearBins <> 'algo.list' AND ($linearBins IS NULL OR linearBins CONTAINS $linearBins) " +
+            " RETURN linearBins, signature, description ORDER BY linearBins";
 
     @Context
     public GraphDatabaseService db;
 
     @Procedure("algo.list")
     @Description("CALL algo.list - lists all algorithm procedures, their description and signature")
-    public Stream<ListResult> list(@Name(value = "name", defaultValue = "") String name) {
-        return db.execute(QUERY, singletonMap("name", name)).stream().map(ListResult::new);
+    public Stream<ListResult> list(@Name(value = "linearBins", defaultValue = "") String name) {
+        return db.execute(QUERY, singletonMap("linearBins", name)).stream().map(ListResult::new);
     }
 
     public static class ListResult {
@@ -51,7 +51,7 @@ public class ListProc {
         public String signature;
 
         public ListResult(Map<String, Object> row) {
-            this.name = (String) row.get("name");
+            this.name = (String) row.get("linearBins");
             this.description = (String) row.get("description");
             this.signature = (String) row.get("signature");
         }

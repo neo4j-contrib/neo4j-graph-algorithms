@@ -18,6 +18,16 @@ import java.util.stream.Stream;
 
 public class Pruning {
 
+    private final double lambda;
+
+    public Pruning() {
+        this(0.1);
+    }
+    public Pruning(double lambda) {
+
+        this.lambda = lambda;
+    }
+
     public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
 
         int numPrevFeatures = prevEmbedding.getFeatures().length;
@@ -38,7 +48,7 @@ public class Pruning {
 
                 double score = score(emb1, emb2);
 
-                if (score > 0.5) {
+                if (score > lambda) {
                     matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
                     relWeights.set(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
 
@@ -113,7 +123,8 @@ public class Pruning {
         L1NORM_BOTH_NEIGHOURHOOD,
         OUT_DEGREE,
         IN_DEGREE,
-        BOTH_DEGREE
+        BOTH_DEGREE,
+        DIFFUSE
     }
 
     static class Embedding {

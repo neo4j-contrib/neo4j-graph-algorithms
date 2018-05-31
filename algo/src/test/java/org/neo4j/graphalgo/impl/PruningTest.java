@@ -39,7 +39,7 @@ public class PruningTest {
         };
 
 
-        Pruning pruning = new Pruning();
+        Pruning pruning = new Pruning(0.1);
         assertEquals(1.0, pruning.score(one, two), 0.01);
         assertEquals(0.66, pruning.score(one, three), 0.01);
     }

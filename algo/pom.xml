@@ -17,6 +17,12 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>graph-algorithms-core</artifactId>
             <version>${project.version}</version>

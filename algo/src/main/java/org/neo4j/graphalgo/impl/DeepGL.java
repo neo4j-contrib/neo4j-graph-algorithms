@@ -109,70 +109,82 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(normaliseFutures);
 
-        prevEmbedding = embedding;
-        prevFeatures = features;
+        for (int iteration = 0; iteration < 3; iteration++) {
+            System.out.println("Current layer: " + (iteration + 1));
+            // swap the layers
+            prevEmbedding = embedding;
+            prevFeatures = features;
 
-        embedding = new double[nodeCount][];
-        features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
-        System.out.println("features = " + features.length);
+            embedding = new double[nodeCount][];
+            features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
 
-        // layer 1 features
-        nodeQueue.set(0);
-        final ArrayList<Future<?>> featureFutures = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            featureFutures.add(executorService.submit(new FeatureTask()));
-        }
-        ParallelUtil.awaitTermination(featureFutures);
-
-        // diffusion
-        for (int i = 0; i < embedding.length; i++) {
-            prevDiffusion[i] = new double[embedding[0].length / 2];
-            System.arraycopy(embedding[i], 0, prevDiffusion[i], 0, embedding[i].length / 2);
-        }
-
-        for (int iteration = 0; iteration < 10; iteration++) {
-
-            diffusion = new double[nodeCount][];
-            for (int j = 0; j < embedding.length; j++) {
-                diffusion[j] = new double[embedding[0].length / 2];
-            }
-
+            // layer 1 features
             nodeQueue.set(0);
-            final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
+            final ArrayList<Future<?>> featureFutures = new ArrayList<>();
             for (int i = 0; i < concurrency; i++) {
-                diffusionFutures.add(executorService.submit(new DiffusionTask()));
+                featureFutures.add(executorService.submit(new FeatureTask()));
             }
-            ParallelUtil.awaitTermination(diffusionFutures);
+            ParallelUtil.awaitTermination(featureFutures);
 
-            prevDiffusion = diffusion;
+            // diffusion
+            for (int i = 0; i < embedding.length; i++) {
+                prevDiffusion[i] = new double[embedding[0].length / 2];
+                System.arraycopy(embedding[i], 0, prevDiffusion[i], 0, embedding[i].length / 2);
+            }
+
+            features = ArrayUtils.addAll(features, features);
+            for (int i = features.length / 2; i < features.length; i++) {
+                features[i] = ArrayUtils.addAll(new Pruning.Feature[]{Pruning.Feature.DIFFUSE}, features[i]);
+            }
+
+            for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
+    
+                diffusion = new double[nodeCount][];
+                for (int j = 0; j < embedding.length; j++) {
+                    diffusion[j] = new double[embedding[0].length / 2];
+                }
+    
+                nodeQueue.set(0);
+                final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
+                for (int i = 0; i < concurrency; i++) {
+                    diffusionFutures.add(executorService.submit(new DiffusionTask()));
+                }
+                ParallelUtil.awaitTermination(diffusionFutures);
+    
+                prevDiffusion = diffusion;
+            }
+
+            for (int i = 0; i < embedding.length; i++) {
+                System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
+            }
+
+            // normalise
+            final int numFeatures = operators.length * numNeighbourhoods;
+            double[] featureMaxes = calculateMax(numFeatures);
+            nodeQueue.set(0);
+            final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
+            for (int i = 0; i < concurrency; i++) {
+                moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
+            }
+            ParallelUtil.awaitTermination(moreNormaliseFutures);
+
+            doPruning();
         }
-
-        for (int i = 0; i < embedding.length; i++) {
-            System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
-        }
-
-        // normalise
-        final int numFeatures = operators.length * numNeighbourhoods;
-        double[] featureMaxes = calculateMax(numFeatures);
-        nodeQueue.set(0);
-        final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
-        }
-        ParallelUtil.awaitTermination(moreNormaliseFutures);
-
-        doPruning();
 
         return this;
     }
 
     private void doPruning() {
-        System.out.println("features = " + Arrays.deepToString(features));
-        Pruning pruning = new Pruning();
+//        System.out.println("features = " + Arrays.deepToString(features));
+//        System.out.println("features = " + features.length);
+        System.out.println("embedding = " + embedding[0].length);
+        Pruning pruning = new Pruning(0.1);
         Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding), new Pruning.Embedding(features, embedding));
         features = prunedEmbedding.getFeatures();
         embedding = prunedEmbedding.getEmbedding();
-        System.out.println("features = " + Arrays.deepToString(features));
+//        System.out.println("features = " + Arrays.deepToString(features));
+//        System.out.println("features = " + features.length);
+        System.out.println("embedding = " + embedding[0].length);
     }
 
     private double[] calculateMax(int numFeatures) {
