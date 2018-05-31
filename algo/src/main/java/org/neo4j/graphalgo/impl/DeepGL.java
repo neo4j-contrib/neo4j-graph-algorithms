@@ -55,15 +55,17 @@ public class DeepGL extends Algorithm<DeepGL> {
     private volatile double[][] prevDiffusion;
     private volatile Pruning.Feature[][] features;
     private volatile Pruning.Feature[][] prevFeatures;
+    private int iterations;
+    private double pruningLambda;
 
     /**
      * constructs a parallel centrality solver
-     *
-     * @param graph           the graph iface
+     *  @param graph           the graph iface
      * @param executorService the executor service
      * @param concurrency     desired number of threads to spawn
+     * @param pruningLambda
      */
-    public DeepGL(Graph graph, ExecutorService executorService, int concurrency) {
+    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
@@ -74,6 +76,8 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.seenSoFarMapping = new int[nodeCount];
         this.diffusion = new double[nodeCount][];
         this.prevDiffusion = new double[nodeCount][];
+        this.iterations = iterations;
+        this.pruningLambda = pruningLambda;
     }
 
     public DeepGL withDirection(Direction direction) {
@@ -109,7 +113,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
         ParallelUtil.awaitTermination(normaliseFutures);
 
-        for (int iteration = 0; iteration < 3; iteration++) {
+        for (int iteration = 0; iteration < iterations; iteration++) {
             System.out.println("Current layer: " + (iteration + 1));
             // swap the layers
             prevEmbedding = embedding;
@@ -158,9 +162,9 @@ public class DeepGL extends Algorithm<DeepGL> {
                 System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
             }
 
-            // normalise
-            new Binning().linearBins(embedding, 100);
+            doBinning();
 
+            // normalise
             final int numFeatures = operators.length * numNeighbourhoods;
             double[] featureMaxes = calculateMax(numFeatures);
             nodeQueue.set(0);
@@ -171,24 +175,20 @@ public class DeepGL extends Algorithm<DeepGL> {
             ParallelUtil.awaitTermination(moreNormaliseFutures);
 
             doPruning();
-
-
         }
 
         return this;
     }
 
+    private void doBinning() {
+        new Binning().linearBins(embedding, 100);
+    }
+
     private void doPruning() {
-//        System.out.println("features = " + Arrays.deepToString(features));
-//        System.out.println("features = " + features.length);
-        System.out.println("embedding = " + embedding[0].length);
-        Pruning pruning = new Pruning(0.1);
+        Pruning pruning = new Pruning(pruningLambda);
         Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding), new Pruning.Embedding(features, embedding));
         features = prunedEmbedding.getFeatures();
         embedding = prunedEmbedding.getEmbedding();
-//        System.out.println("features = " + Arrays.deepToString(features));
-//        System.out.println("features = " + features.length);
-        System.out.println("embedding = " + embedding[0].length);
     }
 
     private double[] calculateMax(int numFeatures) {

@@ -18,7 +18,7 @@
 
         <dependency>
             <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-native</artifactId>
+            <artifactId>nd4j-native-platform</artifactId>
             <version>0.9.1</version>
         </dependency>
 

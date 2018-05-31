@@ -53,14 +53,22 @@ public class DeepGLProc {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
+        int iterations = configuration.getInt("iterations", 10);
+        double pruningLambda = configuration.get("pruningLambda", 0.1).doubleValue();
+
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
                 .withDirection(configuration.getDirection(Direction.BOTH))
                 .load(configuration.getGraphImpl());
 
-        final DeepGL algo = new DeepGL(graph, Pools.DEFAULT, configuration.getConcurrency()).compute();
+        DeepGL algo = new DeepGL(graph,
+                Pools.DEFAULT,
+                configuration.getConcurrency(),
+                iterations,
+                pruningLambda);
 
+        algo.compute();
         graph.release();
 
         return algo.resultStream();
