@@ -28,6 +28,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -92,27 +93,10 @@ public class DeepGLIntegrationTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        Stream<DeepGL.Result> resultStream = new DeepGL(graph, Pools.DEFAULT, 3)
-                .compute()
-                .resultStream();
+        Result result = db.execute("CALL algo.deepgl.stream('Node', 'TYPE')");
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter("out.emb"));
-
-        resultStream
-                .peek(r -> {
-                    String res = r.embedding.stream()
-                            .map(Object::toString)
-                            .reduce((s, s2) -> String.join(" ", s, s2))
-                            .get();
-                    try {
-                        writer.write(res);
-                        writer.newLine();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                })
-                .forEach(r -> System.out.println(r.embedding));
-
-        writer.close();
+        while (result.hasNext()) {
+            System.out.println("result.next() = " + result.next());
+        }
     }
 }
