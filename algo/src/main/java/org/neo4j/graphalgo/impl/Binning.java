@@ -4,11 +4,9 @@ package org.neo4j.graphalgo.impl;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import java.util.Arrays;
-
 public class Binning {
 
-    public void linearBins(double[][] embedding) {
+    public void linearBins(double[][] embedding, int numBins) {
 
 
         INDArray indArray = Nd4j.create(embedding);
@@ -17,7 +15,6 @@ public class Binning {
             INDArray[] indArrays = Nd4j.sortWithIndices(slice, 0, true);
             INDArray indices = indArrays[0];
             int maxRank = embedding.length;
-            int numBins = 3;
             for (int rank = 0; rank < indices.size(0); rank++) {
                 embedding[(int) indices.getDouble(rank)][column] = (int) (((double) rank / maxRank) * numBins);
 

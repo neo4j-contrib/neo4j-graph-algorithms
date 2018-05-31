@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
+import org.neo4j.graphalgo.DeepGLProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -38,7 +39,7 @@ import java.io.IOException;
 import java.util.stream.Stream;
 
 
-public class DeepGLTest {
+public class DeepGLIntegrationTest {
 
     private static GraphDatabaseAPI db;
     private static Graph graph;
@@ -72,7 +73,7 @@ public class DeepGLTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(BetweennessCentralityProc.class);
+                .registerProcedure(DeepGLProc.class);
 
         graph = new GraphLoader(db)
                 .withAnyRelationshipType()

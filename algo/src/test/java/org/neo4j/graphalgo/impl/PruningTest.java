@@ -137,11 +137,11 @@ public class PruningTest {
         matrix.addOutgoing(idMap.get(2), idMap.get(16));
         matrix.addOutgoing(idMap.get(4), idMap.get(14));
 
-        WeightMapping relWeights = new WeightMap(10, 0, -1);
-        relWeights.set(RawValues.combineIntInt(idMap.get(0), idMap.get(10)), 1.0);
-        relWeights.set(RawValues.combineIntInt(idMap.get(2), idMap.get(12)), 0.66);
-        relWeights.set(RawValues.combineIntInt(idMap.get(2), idMap.get(14)), 0.66);
-        relWeights.set(RawValues.combineIntInt(idMap.get(4), idMap.get(14)), 0.66);
+        WeightMap relWeights = new WeightMap(10, 0, -1);
+        relWeights.put(RawValues.combineIntInt(idMap.get(0), idMap.get(10)), 1.0);
+        relWeights.put(RawValues.combineIntInt(idMap.get(2), idMap.get(12)), 0.66);
+        relWeights.put(RawValues.combineIntInt(idMap.get(2), idMap.get(14)), 0.66);
+        relWeights.put(RawValues.combineIntInt(idMap.get(4), idMap.get(14)), 0.66);
 
         final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null, null);
 

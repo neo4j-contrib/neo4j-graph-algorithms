@@ -38,7 +38,7 @@ public class Pruning {
             idMap.add(i);
         }
         idMap.buildMappedIds();
-        WeightMapping relWeights = new WeightMap(nodeCount, 0, -1);
+        WeightMap relWeights = new WeightMap(nodeCount, 0, -1);
         AdjacencyMatrix matrix = new AdjacencyMatrix(idMap.size(), false);
 
         for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
@@ -50,7 +50,7 @@ public class Pruning {
 
                 if (score > lambda) {
                     matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
-                    relWeights.set(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
+                    relWeights.put(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
 
                 }
 

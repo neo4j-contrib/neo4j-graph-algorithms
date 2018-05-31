@@ -25,7 +25,7 @@ public class BinningTest {
         };
 
         Binning binning = new Binning();
-        binning.linearBins(embedding);
+        binning.linearBins(embedding, 3);
         System.out.println("embedding = " + Arrays.deepToString(embedding));
     }
 

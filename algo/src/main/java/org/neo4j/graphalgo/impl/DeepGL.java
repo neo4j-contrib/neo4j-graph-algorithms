@@ -159,6 +159,8 @@ public class DeepGL extends Algorithm<DeepGL> {
             }
 
             // normalise
+            new Binning().linearBins(embedding, 100);
+
             final int numFeatures = operators.length * numNeighbourhoods;
             double[] featureMaxes = calculateMax(numFeatures);
             nodeQueue.set(0);
@@ -169,6 +171,8 @@ public class DeepGL extends Algorithm<DeepGL> {
             ParallelUtil.awaitTermination(moreNormaliseFutures);
 
             doPruning();
+
+
         }
 
         return this;
