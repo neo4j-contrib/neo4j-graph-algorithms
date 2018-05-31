@@ -62,6 +62,10 @@ public class DeepGLProc {
                 .withDirection(configuration.getDirection(Direction.BOTH))
                 .load(configuration.getGraphImpl());
 
+        if (graph.nodeCount() == 0) {
+            return Stream.empty();
+        }
+
         DeepGL algo = new DeepGL(graph,
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
