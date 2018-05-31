@@ -43,7 +43,6 @@ import java.util.stream.Stream;
 public class DeepGLIntegrationTest {
 
     private static GraphDatabaseAPI db;
-    private static Graph graph;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -76,18 +75,11 @@ public class DeepGLIntegrationTest {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(DeepGLProc.class);
 
-        graph = new GraphLoader(db)
-                .withAnyRelationshipType()
-                .withAnyLabel()
-                .withoutNodeProperties()
-                .load(HeavyGraphFactory.class);
-
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
         if (db != null) db.shutdown();
-        graph = null;
     }
 
     @Test
