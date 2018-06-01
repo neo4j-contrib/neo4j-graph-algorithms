@@ -1,0 +1,26 @@
+ JvmTop 0.8.0 alpha - 09:46:03,  amd64,  8 cpus, Linux 4.9.0-6-a, load avg 2.52
+ http://code.google.com/p/jvmtop
+
+ Profiling PID 16827: com.neo4j.server.enterprise.CommercialEn 
+
+  35.70% (    43.80s) org.bytedeco.javacpp.Pointer.asDirectBuffer()
+  19.12% (    23.46s) org.neo4j.graphalgo.impl.Pruning.extractFeature()
+  14.41% (    17.68s) org.neo4j.graphalgo.impl.Pruning.prune()
+  12.83% (    15.75s) ....neo4j.graphalgo.impl.DeepGL$DiffusionTask.lambda$run()
+   7.77% (     9.53s) org.nd4j.linalg.factory.Nd4j.sortWithIndices()
+   5.57% (     6.84s) org.nd4j.linalg.api.ndarray.BaseNDArray.isMatrix()
+   2.38% (     2.92s) org.neo4j.graphalgo.impl.DeepGL$FeatureTask.run()
+   0.51% (     0.62s) ....nd4j.linalg.api.buffer.factory.DefaultDataBufferFact()
+   0.51% (     0.62s) org.nd4j.linalg.api.buffer.IntBuffer.<init>()
+   0.38% (     0.46s) org.nd4j.linalg.api.shape.Shape.length()
+   0.20% (     0.25s) io.netty.channel.epoll.Native.epollWait0()
+   0.09% (     0.11s) org.bytedeco.javacpp.FloatPointer.put()
+   0.09% (     0.11s) org.bytedeco.javacpp.Pointer.memset()
+   0.09% (     0.11s) scala.collection.immutable.VectorIterator.initFrom()
+   0.08% (     0.10s) org.neo4j.graphalgo.impl.DeepGL.compute()
+   0.07% (     0.09s) org.neo4j.helpers.NamedThreadFactory$2.run()
+   0.07% (     0.08s) ....neo4j.kernel.impl.store.CommonAbstractStore.readInto()
+   0.02% (     0.03s) org.nd4j.linalg.api.ndarray.BaseNDArray.<init>()
+   0.02% (     0.03s) org.jboss.netty.channel.socket.nio.SelectorUtil.select()
+   0.02% (     0.02s) org.neo4j.cypher.internal.runtime.DbmsCallMode.call()
+
