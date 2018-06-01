@@ -19,6 +19,8 @@
 package org.neo4j.graphalgo.impl;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 public class DeepGL extends Algorithm<DeepGL> {
 
     private final int numNeighbourhoods;
+    private final INDArray ndEmbedding;
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -61,9 +64,10 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     /**
      * constructs a parallel centrality solver
-     * @param graph           the graph iface
-     * @param executorService the executor service
-     * @param concurrency     desired number of threads to spawn
+     *
+     * @param graph              the graph iface
+     * @param executorService    the executor service
+     * @param concurrency        desired number of threads to spawn
      * @param pruningLambda
      * @param applyNormalisation
      */
@@ -74,6 +78,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.concurrency = concurrency;
         this.applyNormalisation = applyNormalisation;
         this.embedding = new double[nodeCount][];
+        this.ndEmbedding = Nd4j.create(nodeCount, 3);
         this.prevEmbedding = new double[nodeCount][];
         this.numNeighbourhoods = 3;
         this.seenSoFarMapping = new int[nodeCount];
@@ -102,7 +107,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             futures.add(executorService.submit(new BaseFeaturesTask()));
         }
         ParallelUtil.awaitTermination(futures);
-        this.features = new Pruning.Feature[][] {
+        this.features = new Pruning.Feature[][]{
                 {Pruning.Feature.IN_DEGREE},
                 {Pruning.Feature.OUT_DEGREE},
                 {Pruning.Feature.BOTH_DEGREE}
@@ -111,7 +116,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         doBinning();
 
         // normalise
-        if(applyNormalisation) {
+        if (applyNormalisation) {
             double featureMaxes = getGlobalMax();
             applyNormalisation(featureMaxes);
         }
@@ -147,19 +152,19 @@ public class DeepGL extends Algorithm<DeepGL> {
             }
 
             for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
-    
+
                 diffusion = new double[nodeCount][];
                 for (int j = 0; j < embedding.length; j++) {
                     diffusion[j] = new double[embedding[0].length / 2];
                 }
-    
+
                 nodeQueue.set(0);
                 final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
                 for (int i = 0; i < concurrency; i++) {
                     diffusionFutures.add(executorService.submit(new DiffusionTask()));
                 }
                 ParallelUtil.awaitTermination(diffusionFutures);
-    
+
                 prevDiffusion = diffusion;
             }
 
@@ -192,7 +197,9 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private void doBinning() {
 //        new Binning().linearBins(embedding, 100);
+//        new Binning().logBins(embedding);
         new Binning().logBins(embedding);
+        new Binning().logBins(ndEmbedding);
     }
 
     private void doPruning() {
@@ -223,9 +230,9 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private double getGlobalMax() {
         return Arrays.stream(embedding).parallel()
-                    .mapToDouble(embedding -> embedding[2])
-                    .max()
-                    .getAsDouble();
+                .mapToDouble(embedding -> embedding[2])
+                .max()
+                .getAsDouble();
     }
 
     /**
@@ -286,7 +293,13 @@ public class DeepGL extends Algorithm<DeepGL> {
                         graph.degree(nodeId, Direction.OUTGOING),
                         graph.degree(nodeId, Direction.BOTH)
                 };
-                }
+
+                ndEmbedding.putRow(nodeId, Nd4j.create(new double[]{
+                        graph.degree(nodeId, Direction.INCOMING),
+                        graph.degree(nodeId, Direction.OUTGOING),
+                        graph.degree(nodeId, Direction.BOTH)
+                }));
+            }
         }
     }
 
@@ -376,8 +389,10 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
 
     }
+
     interface RelOperator {
         void apply(int nodeId, int offset, int lengthOfEachFeature, Direction direction);
+
         double defaultVal();
     }
 
@@ -482,7 +497,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             double[] sum = new double[lengthOfEachFeature];
             graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 for (int i = 0; i < lengthOfEachFeature; i++) {
-                     sum[i] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
+                    sum[i] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
                 }
                 return true;
             });

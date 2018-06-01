@@ -40,4 +40,23 @@ public class Binning {
             }
         }
     }
+
+    public void logBins(INDArray indArray) {
+        for (int column = 0; column < indArray.size(1); column++) {
+            int remaining = indArray.size(0);
+            int binNumber = 0;
+
+            INDArray slice = indArray.slice(column, 1);
+            INDArray[] indArrays = Nd4j.sortWithIndices(slice, 0, true);
+            INDArray indices = indArrays[0];
+
+            for (int node = 0; node < indArray.size(0); node++) {
+                if (node + remaining == indArray.size(0)) {
+                    remaining /= 2;
+                    binNumber++;
+                }
+                indArray.putScalar((int) indices.getDouble(node), column, binNumber - 1);
+            }
+        }
+    }
 }
