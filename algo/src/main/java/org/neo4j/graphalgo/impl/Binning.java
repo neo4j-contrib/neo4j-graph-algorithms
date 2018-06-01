@@ -25,8 +25,7 @@ public class Binning {
     public void logBins(double[][] embedding) {
         INDArray indArray = Nd4j.create(embedding);
         for (int column = 0; column < embedding[0].length; column++) {
-            int n = embedding.length;
-            int remaining = n;
+            int remaining = embedding.length;
             int binNumber = 0;
             INDArray slice = indArray.slice(column, 1);
             INDArray[] indArrays = Nd4j.sortWithIndices(slice, 0, true);

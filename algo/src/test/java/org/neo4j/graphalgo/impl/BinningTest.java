@@ -51,9 +51,7 @@ public class BinningTest {
                 {3, 1, 5},
         };
 
-
-        INDArray indArray = Nd4j.create(embedding);
-        System.out.println("embedding = \n" + indArray);
+        System.out.println("embedding = \n" + Nd4j.create(embedding));
 
         Binning binning = new Binning();
         binning.logBins(embedding);

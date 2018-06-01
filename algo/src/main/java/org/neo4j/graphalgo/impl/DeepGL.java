@@ -105,13 +105,15 @@ public class DeepGL extends Algorithm<DeepGL> {
                 {Pruning.Feature.BOTH_DEGREE}
         };
 
-        // normalise
-        nodeQueue.set(0);
-        final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            normaliseFutures.add(executorService.submit(new NormaliseTask(getGlobalMax())));
-        }
-        ParallelUtil.awaitTermination(normaliseFutures);
+        doBinning();
+
+//        // normalise
+//        nodeQueue.set(0);
+//        final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
+//        for (int i = 0; i < concurrency; i++) {
+//            normaliseFutures.add(executorService.submit(new NormaliseTask(getGlobalMax())));
+//        }
+//        ParallelUtil.awaitTermination(normaliseFutures);
 
         for (int iteration = 0; iteration < iterations; iteration++) {
             System.out.println("Current layer: " + (iteration + 1));
@@ -164,15 +166,15 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             doBinning();
 
-            // normalise
-            final int numFeatures = operators.length * numNeighbourhoods;
-            double[] featureMaxes = calculateMax(numFeatures);
-            nodeQueue.set(0);
-            final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
-            for (int i = 0; i < concurrency; i++) {
-                moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
-            }
-            ParallelUtil.awaitTermination(moreNormaliseFutures);
+//            // normalise
+//            final int numFeatures = operators.length * numNeighbourhoods;
+//            double[] featureMaxes = calculateMax(numFeatures);
+//            nodeQueue.set(0);
+//            final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
+//            for (int i = 0; i < concurrency; i++) {
+//                moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
+//            }
+//            ParallelUtil.awaitTermination(moreNormaliseFutures);
 
             doPruning();
         }
@@ -181,7 +183,8 @@ public class DeepGL extends Algorithm<DeepGL> {
     }
 
     private void doBinning() {
-        new Binning().linearBins(embedding, 100);
+//        new Binning().linearBins(embedding, 100);
+        new Binning().logBins(embedding);
     }
 
     private void doPruning() {
