@@ -57,19 +57,22 @@ public class DeepGL extends Algorithm<DeepGL> {
     private volatile Pruning.Feature[][] prevFeatures;
     private int iterations;
     private double pruningLambda;
+    private boolean applyNormalisation;
 
     /**
      * constructs a parallel centrality solver
-     *  @param graph           the graph iface
+     * @param graph           the graph iface
      * @param executorService the executor service
      * @param concurrency     desired number of threads to spawn
      * @param pruningLambda
+     * @param applyNormalisation
      */
-    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda) {
+    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda, boolean applyNormalisation) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
+        this.applyNormalisation = applyNormalisation;
         this.embedding = new double[nodeCount][];
         this.prevEmbedding = new double[nodeCount][];
         this.numNeighbourhoods = 3;
@@ -107,16 +110,16 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         doBinning();
 
-//        // normalise
-//        nodeQueue.set(0);
-//        final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
-//        for (int i = 0; i < concurrency; i++) {
-//            normaliseFutures.add(executorService.submit(new NormaliseTask(getGlobalMax())));
-//        }
-//        ParallelUtil.awaitTermination(normaliseFutures);
+        // normalise
+        if(applyNormalisation) {
+            double featureMaxes = getGlobalMax();
+            applyNormalisation(featureMaxes);
+        }
 
         for (int iteration = 0; iteration < iterations; iteration++) {
-            System.out.println("Current layer: " + (iteration + 1));
+            getProgressLogger().logProgress(iteration / iterations);
+            getProgressLogger().log("Current layer: " + iteration);
+
             // swap the layers
             prevEmbedding = embedding;
             prevFeatures = features;
@@ -166,20 +169,25 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             doBinning();
 
-//            // normalise
-//            final int numFeatures = operators.length * numNeighbourhoods;
-//            double[] featureMaxes = calculateMax(numFeatures);
-//            nodeQueue.set(0);
-//            final ArrayList<Future<?>> moreNormaliseFutures = new ArrayList<>();
-//            for (int i = 0; i < concurrency; i++) {
-//                moreNormaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
-//            }
-//            ParallelUtil.awaitTermination(moreNormaliseFutures);
+            if (applyNormalisation) {
+                final int numFeatures = operators.length * numNeighbourhoods;
+                double[] featureMaxes = calculateMax(numFeatures);
+                applyNormalisation(featureMaxes);
+            }
 
             doPruning();
         }
 
         return this;
+    }
+
+    private void applyNormalisation(double... featureMaxes) {
+        nodeQueue.set(0);
+        final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
+        for (int i = 0; i < concurrency; i++) {
+            normaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
+        }
+        ParallelUtil.awaitTermination(normaliseFutures);
     }
 
     private void doBinning() {
@@ -188,10 +196,14 @@ public class DeepGL extends Algorithm<DeepGL> {
     }
 
     private void doPruning() {
+        int sizeBefore = embedding[0].length;
         Pruning pruning = new Pruning(pruningLambda);
         Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding), new Pruning.Embedding(features, embedding));
         features = prunedEmbedding.getFeatures();
         embedding = prunedEmbedding.getEmbedding();
+        int sizeAfter = embedding[0].length;
+
+        getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
     }
 
     private double[] calculateMax(int numFeatures) {

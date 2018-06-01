@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.impl.DeepGL;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -55,6 +56,7 @@ public class DeepGLProc {
 
         int iterations = configuration.getInt("iterations", 10);
         double pruningLambda = configuration.get("pruningLambda", 0.1).doubleValue();
+        boolean applyNormalisation = configuration.get("normalise", false).booleanValue();
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
@@ -70,7 +72,8 @@ public class DeepGLProc {
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
                 iterations,
-                pruningLambda);
+                pruningLambda, applyNormalisation);
+        algo.withProgressLogger(ProgressLogger.wrap(log, "DeepGL"));
 
         algo.compute();
         graph.release();
