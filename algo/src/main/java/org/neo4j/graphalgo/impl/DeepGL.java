@@ -93,7 +93,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         INDArray adjacencyMarix = Nd4j.create(nodeCount, nodeCount);
         PrimitiveIntIterator nodes = graph.nodeIterator();
-        while(nodes.hasNext()) {
+        while (nodes.hasNext()) {
             int nodeId = nodes.next();
 
             graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
@@ -296,7 +296,8 @@ public class DeepGL extends Algorithm<DeepGL> {
                 .mapToObj(nodeId ->
                         new DeepGL.Result(
                                 graph.toOriginalNodeId(nodeId),
-                                embedding[nodeId]));
+                                embedding[nodeId],
+                                ndEmbedding.getRow(nodeId)));
     }
 
     public Stream<Pruning.Feature[]> featureStream() {
@@ -348,10 +349,12 @@ public class DeepGL extends Algorithm<DeepGL> {
     public class Result {
         public final long nodeId;
         public final List<Double> embedding;
+        public final List<Double> ndEmbedding;
 
-        public Result(long nodeId, double[] embedding) {
+        public Result(long nodeId, double[] embedding, INDArray ndEmbedding) {
             this.nodeId = nodeId;
             this.embedding = Arrays.asList(ArrayUtils.toObject(embedding));
+            this.ndEmbedding = Arrays.asList(ArrayUtils.toObject(ndEmbedding.data().asDouble()));
         }
     }
 
@@ -449,7 +452,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
                 for (int i = 0; i < numOfFeatures; i++) {
                     embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
-                    ndEmbedding.putScalar(nodeId, i +offset, ndEmbedding.getDouble(nodeId, i + offset) + (ndPrevEmbedding.getDouble(targetNodeId, i)));
+                    ndEmbedding.putScalar(nodeId, i + offset, ndEmbedding.getDouble(nodeId, i + offset) + (ndPrevEmbedding.getDouble(targetNodeId, i)));
                 }
                 return true;
             });

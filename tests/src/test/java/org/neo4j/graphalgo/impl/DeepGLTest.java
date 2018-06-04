@@ -113,7 +113,11 @@ public class DeepGLTest {
                         e.printStackTrace();
                     }
                 })
-                .forEach(r -> System.out.println(r.embedding));
+                .forEach(r -> {
+                            System.out.println("emb: " + r.embedding);
+                            System.out.println("nd4j: " + r.ndEmbedding);
+                        }
+                    );
 
         deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
 
