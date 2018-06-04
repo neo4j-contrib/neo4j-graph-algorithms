@@ -22,6 +22,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.inverse.InvertMatrix;
+import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
@@ -158,6 +159,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             getProgressLogger().log("Current layer: " + iteration);
 
             // swap the layers
+            // TODO concat
             prevEmbedding = embedding;
             ndPrevEmbedding = ndEmbedding;
 
@@ -174,6 +176,22 @@ public class DeepGL extends Algorithm<DeepGL> {
                 featureFutures.add(executorService.submit(new FeatureTask()));
             }
             ParallelUtil.awaitTermination(featureFutures);
+
+            // layer 1 ndFeatures
+            INDArray[] seperateFeatures = new INDArray[operators.length * numNeighbourhoods];
+            for (int opId = 0; opId < operators.length; opId++) {
+                seperateFeatures[opId] = operators[opId].ndOp(ndPrevEmbedding, Direction.BOTH);
+            }
+            for (int opId = 0; opId < operators.length; opId++) {
+                seperateFeatures[opId + numNeighbourhoods * 1] = operators[opId].ndOp(ndPrevEmbedding, Direction.OUTGOING);
+            }
+            for (int opId = 0; opId < operators.length; opId++) {
+                seperateFeatures[opId + numNeighbourhoods * 2] = operators[opId].ndOp(ndPrevEmbedding, Direction.INCOMING);
+            }
+            ndEmbedding = Nd4j.hstack(seperateFeatures);
+
+            System.out.println("embedding = " + embedding);
+            System.out.println("ndEmbedding = " + ndEmbedding);
 
             // diffusion
             for (int i = 0; i < embedding.length; i++) {
@@ -456,6 +474,8 @@ public class DeepGL extends Algorithm<DeepGL> {
     interface RelOperator {
         void apply(int nodeId, int offset, int numOfFeatures, Direction direction);
 
+        INDArray ndOp(INDArray features, Direction direction);
+
         double defaultVal();
     }
 
@@ -477,6 +497,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
 
         @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            return adjacencyMarix.mmul(features);
+        }
+
+        @Override
         public double defaultVal() {
             return 0;
         }
@@ -495,6 +520,28 @@ public class DeepGL extends Algorithm<DeepGL> {
                 }
                 return true;
             });
+        }
+
+        @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            INDArray[] had = new INDArray[adjacencyMarix.columns()];
+            for (int column = 0; column < adjacencyMarix.columns(); column++) {
+                int finalColumn = column;
+                int[] indexes = IntStream.range(0, adjacencyMarix.rows())
+                        .filter(r -> adjacencyMarix.getDouble(finalColumn, r) != 0)
+                        .toArray();
+
+                if (indexes.length > 0) {
+                    had[column] = Nd4j.ones(features.columns());
+                    for (int index : indexes) {
+                        had[column].muli(features.getRow(index));
+                    }
+                } else {
+                    INDArray zeros = Nd4j.zeros(features.columns());
+                    had[column] = zeros;
+                }
+            }
+            return Nd4j.vstack(had);
         }
 
         @Override
@@ -523,6 +570,18 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
 
         @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            INDArray[] maxes = new INDArray[features.columns()];
+            for (int fCol = 0; fCol < features.columns(); fCol++) {
+                INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMarix.columns());
+                INDArray mul = adjacencyMarix.mul(repeat);
+                maxes[fCol] = mul.max(0).transpose();
+
+            }
+            return Nd4j.hstack(maxes);
+        }
+
+        @Override
         public double defaultVal() {
             return 0;
         }
@@ -543,6 +602,11 @@ public class DeepGL extends Algorithm<DeepGL> {
                 seenSoFar[0]++;
                 return true;
             });
+        }
+
+        @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            return adjacencyMarix.mmul(features).div(adjacencyMarix.sum(1).repeat(1, features.columns()));
         }
 
         @Override
@@ -573,6 +637,21 @@ public class DeepGL extends Algorithm<DeepGL> {
         }
 
         @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            double sigma = 16;
+            INDArray[] sumsOfSquareDiffs = new INDArray[adjacencyMarix.rows()];
+            for (int node = 0; node < adjacencyMarix.rows(); node++) {
+                INDArray nodeFeatures = features.getRow(node);
+                INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+                INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
+                INDArray sub = repeat.sub(features.mul(adjs));
+                sumsOfSquareDiffs[node] = Transforms.pow(sub, 2).sum(0);
+            }
+            INDArray sumOfSquareDiffs = Nd4j.vstack(sumsOfSquareDiffs).mul(-(1d / Math.pow(sigma, 2)));
+            return Transforms.exp(sumOfSquareDiffs);
+        }
+
+        @Override
         public double defaultVal() {
             return 0;
         }
@@ -591,6 +670,20 @@ public class DeepGL extends Algorithm<DeepGL> {
                 }
                 return true;
             });
+        }
+
+        @Override
+        public INDArray ndOp(INDArray features, Direction direction) {
+            INDArray[] norms = new INDArray[adjacencyMarix.rows()];
+            for (int node = 0; node < adjacencyMarix.rows(); node++) {
+                INDArray nodeFeatures = features.getRow(node);
+                INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+                INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
+                INDArray sub = repeat.sub(features.mul(adjs));
+                INDArray norm = sub.norm1(0);
+                norms[node] = norm;
+            }
+            return Nd4j.vstack(norms);
         }
 
         @Override
