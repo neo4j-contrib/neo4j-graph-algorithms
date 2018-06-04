@@ -217,9 +217,9 @@ include::scripts/closeness-centrality.cypher[tag=cypher-loading]
 ----
 
 
-== Versions
+== Graph type support
 
-We support the following versions of the closeness centrality algorithm:
+The Closeness Centrality algorithm supports the following graph types:
 
 * [x] directed, unweighted
 * [ ] directed, weighted

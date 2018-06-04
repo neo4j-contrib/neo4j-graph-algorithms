@@ -154,9 +154,9 @@ YIELD nodeId, cost
 |===
 
 
-== Versions
+== Graph type support
 
-We support the following versions of the shortest path algorithms:
+The shortest path algorithms support the following graph types:
 
 * [x] directed, unweighted:
 ** direction: 'OUTGOING' or INCOMING, weightProperty: null

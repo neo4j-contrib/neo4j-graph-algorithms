@@ -188,9 +188,9 @@ include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
 ----
 
 
-== Versions
+== Graph type support
 
-We support the following versions of the harmonic centrality algorithm:
+The Harmonic Centrality algorithm supports the following graph types:
 
 * [*] undirected, unweighted
 
