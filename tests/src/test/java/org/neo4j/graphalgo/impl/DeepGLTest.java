@@ -21,6 +21,15 @@ package org.neo4j.graphalgo.impl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.nd4j.linalg.api.complex.IComplexNumber;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.exception.ND4JException;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.conditions.BaseCondition;
+import org.nd4j.linalg.indexing.conditions.ConditionEquals;
+import org.nd4j.linalg.indexing.conditions.NotEqualsCondition;
+import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.TestProgressLogger;
@@ -33,10 +42,12 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import javax.xml.crypto.dsig.Transform;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 
@@ -122,5 +133,85 @@ public class DeepGLTest {
         deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
 
         writer.close();
+    }
+
+    @Test
+    public void testOperatorsForNDArrays() {
+
+
+        INDArray features = Nd4j.linspace(0, 20, 21).reshape(7, 3);
+        System.out.println("features = \n" + features);
+
+        INDArray adjacencyMarix = Nd4j.create(new double[][]{
+                {0.00, 1.00, 0.00, 0.00, 0.00, 1.00, 0.00},
+                {1.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00},
+                {0.00, 1.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+                {0.00, 0.00, 1.00, 0.00, 1.00, 0.00, 1.00},
+                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+                {1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00}
+        });
+
+        INDArray sum = adjacencyMarix.mmul(features);
+        System.out.println("sum = \n" + sum);
+
+        INDArray mean = adjacencyMarix.mmul(features).div(adjacencyMarix.sum(1).repeat(1, features.columns()));
+        System.out.println("mean = \n" + mean);
+
+
+        INDArray[] had = new INDArray[adjacencyMarix.columns()];
+        for (int column = 0; column < adjacencyMarix.columns(); column++) {
+            int finalColumn = column;
+            int[] indexes = IntStream.range(0, adjacencyMarix.rows())
+                    .filter(r -> adjacencyMarix.getDouble(finalColumn, r) != 0)
+                    .toArray();
+
+            if (indexes.length > 0) {
+                had[column] = Nd4j.ones(features.columns());
+                for (int index : indexes) {
+                    had[column].muli(features.getRow(index));
+                }
+            } else {
+                INDArray zeros = Nd4j.zeros(features.columns());
+                had[column] = zeros;
+            }
+        }
+        INDArray hadamard = Nd4j.vstack(had);
+        System.out.println("hadamard = \n" + hadamard);
+
+        INDArray[] maxes = new INDArray[features.columns()];
+        for (int fCol = 0; fCol < features.columns(); fCol++) {
+            INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMarix.columns());
+            INDArray mul = adjacencyMarix.mul(repeat);
+            maxes[fCol] = mul.max(0).transpose();
+
+        }
+        INDArray max = Nd4j.hstack(maxes);
+        System.out.println("max = \n" + max);
+
+        INDArray[] norms = new INDArray[adjacencyMarix.rows()];
+        for (int node = 0; node < adjacencyMarix.rows(); node++) {
+            INDArray nodeFeatures = features.getRow(node);
+            INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+            INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
+            INDArray sub = repeat.sub(features.mul(adjs));
+            INDArray norm = sub.norm1(0);
+            norms[node] = norm;
+        }
+        INDArray l1Norm = Nd4j.vstack(norms);
+        System.out.println("l1Norm = \n" + l1Norm);
+
+        double sigma = 16;
+        INDArray[] sumsOfSquareDiffs = new INDArray[adjacencyMarix.rows()];
+        for (int node = 0; node < adjacencyMarix.rows(); node++) {
+            INDArray nodeFeatures = features.getRow(node);
+            INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+            INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
+            INDArray sub = repeat.sub(features.mul(adjs));
+            sumsOfSquareDiffs[node] = Transforms.pow(sub, 2).sum(0);
+        }
+        INDArray sumOfSquareDiffs = Nd4j.vstack(sumsOfSquareDiffs).mul(-(1d / Math.pow(sigma, 2)));
+        INDArray rbf = Transforms.exp(sumOfSquareDiffs);
+        System.out.println("rbf = " + rbf);
     }
 }

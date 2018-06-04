@@ -39,6 +39,8 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private final int numNeighbourhoods;
     private final INDArray diffusionMatrix;
+    private final INDArray adjacencyMarixOut;
+    private final INDArray adjacencyMarixIn;
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -65,6 +67,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     private int iterations;
     private double pruningLambda;
     private boolean applyNormalisation;
+    private final INDArray adjacencyMarix;
 
     /**
      * constructs a parallel centrality solver
@@ -91,13 +94,23 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.iterations = iterations;
         this.pruningLambda = pruningLambda;
 
-        INDArray adjacencyMarix = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMarix = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMarixOut = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMarixIn = Nd4j.create(nodeCount, nodeCount);
         PrimitiveIntIterator nodes = graph.nodeIterator();
         while (nodes.hasNext()) {
             int nodeId = nodes.next();
 
             graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
                 adjacencyMarix.putScalar(nodeId, targetNodeId, 1);
+                return true;
+            });
+            graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
+                adjacencyMarixOut.putScalar(nodeId, targetNodeId, 1);
+                return true;
+            });
+            graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
+                adjacencyMarixIn.putScalar(nodeId, targetNodeId, 1);
                 return true;
             });
 
