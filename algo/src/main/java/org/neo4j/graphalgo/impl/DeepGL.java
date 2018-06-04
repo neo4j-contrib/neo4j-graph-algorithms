@@ -239,13 +239,20 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private void doPruning() {
         int sizeBefore = embedding[0].length;
+        int ndSizeBefore = ndEmbedding.size(1);
+
         Pruning pruning = new Pruning(pruningLambda);
-        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding), new Pruning.Embedding(features, embedding));
+        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding, ndPrevEmbedding), new Pruning.Embedding(features, embedding, ndEmbedding));
         features = prunedEmbedding.getFeatures();
         embedding = prunedEmbedding.getEmbedding();
+
+        ndEmbedding = prunedEmbedding.getNDEmbedding();
+
         int sizeAfter = embedding[0].length;
+        int ndSizeAfter = ndEmbedding.size(1);
 
         getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
+        getProgressLogger().log("ND Pruning: Before: [" + ndSizeBefore + "], After: [" + ndSizeAfter + "]");
     }
 
     private double[] calculateMax(int numFeatures) {

@@ -1,9 +1,8 @@
 package org.neo4j.graphalgo.impl;
 
 
-import org.apache.commons.lang3.ArrayUtils;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.heavyweight.AdjacencyMatrix;
@@ -30,6 +29,34 @@ public class Pruning {
 
     public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
 
+        final Graph graph = loadFeaturesGraph(prevEmbedding, embedding);
+        Stream<DisjointSetStruct.Result> resultStream = findConnectedComponents(graph);
+
+        long[] featureIdsToKeep = resultStream
+                .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
+                .collect(Collectors.groupingBy(item -> item.setId))
+                .values()
+                .stream()
+                .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
+                .toArray();
+
+        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
+        INDArray prunedNDEmbedding = embedding.getNDEmbedding();
+
+        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
+
+        return new Embedding(prunedFeatures, prunedEmbedding, prunedNDEmbedding);
+    }
+
+    private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
+        GraphUnionFind algo = new GraphUnionFind(graph);
+        DisjointSetStruct struct = algo.compute();
+        algo.release();
+        DSSResult dssResult = new DSSResult(struct);
+        return dssResult.resultStream(graph);
+    }
+
+    private Graph loadFeaturesGraph(Embedding prevEmbedding, Embedding embedding) {
         int numPrevFeatures = prevEmbedding.getFeatures().length;
         int nodeCount = numPrevFeatures + embedding.getFeatures().length;
         IdMap idMap = new IdMap(nodeCount);
@@ -51,32 +78,11 @@ public class Pruning {
                 if (score > lambda) {
                     matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
                     relWeights.put(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
-
                 }
-
             }
         }
 
-        final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null, null);
-
-        GraphUnionFind algo = new GraphUnionFind(graph);
-        DisjointSetStruct struct = algo.compute();
-        algo.release();
-        DSSResult dssResult = new DSSResult(struct);
-        Stream<DisjointSetStruct.Result> resultStream = dssResult.resultStream(graph);
-
-        long[] featureIdsToKeep = resultStream
-                .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
-                .collect(Collectors.groupingBy(item -> item.setId))
-                .values()
-                .stream()
-                .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
-                .toArray();
-
-        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
-        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
-
-        return new Embedding(prunedFeatures, prunedEmbedding);
+        return new HeavyGraph(idMap, matrix, relWeights, null, null);
     }
 
     private double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
@@ -130,11 +136,12 @@ public class Pruning {
     static class Embedding {
         private final Feature[][] features;
         private final double[][] embedding;
+        private INDArray ndEmbedding;
 
-        public Embedding(Feature[][] features, double[][] embedding) {
-
+        public Embedding(Feature[][] features, double[][] embedding, INDArray ndEmbedding) {
             this.features = features;
             this.embedding = embedding;
+            this.ndEmbedding = ndEmbedding;
         }
 
         public Feature[][] getFeatures() {
@@ -147,6 +154,10 @@ public class Pruning {
 
         public int numFeatures() {
             return this.getFeatures().length;
+        }
+
+        public INDArray getNDEmbedding() {
+            return ndEmbedding;
         }
     }
 
