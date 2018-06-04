@@ -213,9 +213,9 @@ include::scripts/label-propagation.cypher[tag=cypher-loading]
 ----
 
 
-== Versions
+== Graph type support
 
-We support the following versions of the Label Propagation algorithm:
+The Label Propagation algorithm supports the following graph types:
 
 * [x] directed, unweighted:
 ** direction: 'INCOMING' or 'OUTGOING', weightProperty: null

@@ -126,9 +126,9 @@ include::scripts/betweenness-centrality.cypher[tag=cypher-loading]
 ----
 
 
-== Versions
+== Graph type support
 
-We support the following versions of the betweenness centrality algorithm:
+The Betweenness Centrality algorithm supports the following graph types:
 
 * [x] directed, unweighted
 

@@ -221,7 +221,9 @@ include::scripts/louvain.cypher[tag=cypher-loading]
 ----
 
 
-== Versions
+== Graph type support
+
+The Louvain algorithm supports the following graph types:
 
 * [x] undirected, unweighted
 ** weightProperty: null
