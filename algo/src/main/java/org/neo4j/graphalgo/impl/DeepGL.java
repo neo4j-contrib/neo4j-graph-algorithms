@@ -354,7 +354,12 @@ public class DeepGL extends Algorithm<DeepGL> {
         public Result(long nodeId, double[] embedding, INDArray ndEmbedding) {
             this.nodeId = nodeId;
             this.embedding = Arrays.asList(ArrayUtils.toObject(embedding));
-            this.ndEmbedding = Arrays.asList(ArrayUtils.toObject(ndEmbedding.data().asDouble()));
+
+            double[] row = new double[ndEmbedding.size(1)];
+            for (int columnIndex = 0; columnIndex < ndEmbedding.size(1); columnIndex++) {
+                row[columnIndex] = ndEmbedding.getDouble(columnIndex);
+            }
+            this.ndEmbedding = Arrays.asList(ArrayUtils.toObject(row));
         }
     }
 
