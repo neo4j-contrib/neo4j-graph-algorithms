@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.Test;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
@@ -184,5 +185,46 @@ public class PruningTest {
         System.out.println("Features:");
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
     }
+
+    @Test
+    public void shouldSliceArray() throws Exception {
+        // given
+
+        INDArray embedding = Nd4j.create(new double[][]{
+                {1, 2, 3},
+                {4, 5, 6},
+                {7, 8, 9}
+        });
+
+        INDArray columns = embedding.getColumns(1,2);
+
+        System.out.println("columns = " + columns);
+    }
+
+    @Test
+    public void shouldConcatArrays() throws Exception {
+        // given
+        INDArray one = Nd4j.create(new double[][]{
+                {1, 2, 3},
+                {4, 5, 6},
+                {7, 8, 9}
+        });
+
+        INDArray two = Nd4j.create(new double[][]{
+                {10, 11, 12},
+                {13, 14, 15},
+                {16, 17, 18}
+        });
+
+        INDArray concat = Nd4j.concat(1, one, two);
+
+        System.out.println("concat = " + concat);
+
+
+        // when
+
+        // then
+    }
+
 
 }

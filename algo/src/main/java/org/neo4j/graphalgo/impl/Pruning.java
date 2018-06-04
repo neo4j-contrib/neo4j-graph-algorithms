@@ -2,6 +2,9 @@ package org.neo4j.graphalgo.impl;
 
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
@@ -13,6 +16,8 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.nd4j.linalg.indexing.NDArrayIndex.interval;
 
 
 public class Pruning {
@@ -32,16 +37,16 @@ public class Pruning {
         final Graph graph = loadFeaturesGraph(prevEmbedding, embedding);
         Stream<DisjointSetStruct.Result> resultStream = findConnectedComponents(graph);
 
-        long[] featureIdsToKeep = resultStream
+        int[] featureIdsToKeep = resultStream
                 .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
                 .collect(Collectors.groupingBy(item -> item.setId))
                 .values()
                 .stream()
-                .mapToLong(results -> results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures())
+                .mapToInt(results -> (int) (results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures()))
                 .toArray();
 
         double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
-        INDArray prunedNDEmbedding = embedding.getNDEmbedding();
+        INDArray prunedNDEmbedding = pruneEmbedding(embedding.getNDEmbedding(), featureIdsToKeep);
 
         Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
 
@@ -85,17 +90,24 @@ public class Pruning {
         return new HeavyGraph(idMap, matrix, relWeights, null, null);
     }
 
-    private double[][] pruneEmbedding(double[][] origEmbedding, long... featIdsToKeep) {
+    private double[][] pruneEmbedding(double[][] origEmbedding, int... featIdsToKeep) {
         double[][] prunedEmbedding = new double[origEmbedding.length][];
         for (int i = 0; i < origEmbedding.length; i++) {
             prunedEmbedding[i] = new double[featIdsToKeep.length];
             for (int j = 0; j < featIdsToKeep.length; j++) {
-                prunedEmbedding[i][j] = origEmbedding[i][(int) featIdsToKeep[j]];
+                prunedEmbedding[i][j] = origEmbedding[i][featIdsToKeep[j]];
             }
 
         }
         return prunedEmbedding;
     }
+
+    private INDArray pruneEmbedding(INDArray origEmbedding, int... featIdsToKeep) {
+        INDArray ndPrunedEmbedding = Nd4j.create(origEmbedding.shape());
+        Nd4j.copy(origEmbedding, ndPrunedEmbedding);
+        return ndPrunedEmbedding.getColumns(featIdsToKeep);
+    }
+
 
     private double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
 

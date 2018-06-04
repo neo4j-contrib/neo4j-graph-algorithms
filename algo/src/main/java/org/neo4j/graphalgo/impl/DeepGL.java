@@ -205,7 +205,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
             }
 
-            ndEmbedding = Nd4j.concat(0, ndEmbedding, ndDiffused);
+            ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
 
             doBinning();
 
