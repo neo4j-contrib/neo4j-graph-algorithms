@@ -156,6 +156,7 @@ public class DeepGLTest {
         System.out.println("sum = \n" + sum);
 
         INDArray mean = adjacencyMarix.mmul(features).div(adjacencyMarix.sum(1).repeat(1, features.columns()));
+        Nd4j.clearNans(mean);
         System.out.println("mean = \n" + mean);
 
 
