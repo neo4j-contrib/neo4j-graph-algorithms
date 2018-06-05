@@ -159,12 +159,12 @@ public class DeepGL extends Algorithm<DeepGL> {
             features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
 
             // layer 1 features
-            nodeQueue.set(0);
-            final ArrayList<Future<?>> featureFutures = new ArrayList<>();
-            for (int i = 0; i < concurrency; i++) {
-                featureFutures.add(executorService.submit(new FeatureTask()));
-            }
-            ParallelUtil.awaitTermination(featureFutures);
+//            nodeQueue.set(0);
+//            final ArrayList<Future<?>> featureFutures = new ArrayList<>();
+//            for (int i = 0; i < concurrency; i++) {
+//                featureFutures.add(executorService.submit(new FeatureTask()));
+//            }
+//            ParallelUtil.awaitTermination(featureFutures);
 
             // layer 1 ndFeatures
             System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
@@ -196,14 +196,14 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             ndEmbedding = Nd4j.hstack(arrays);
 
-            System.out.println("embedding = \n" + Nd4j.create(embedding));
+//            System.out.println("embedding = \n" + Nd4j.create(embedding));
             System.out.println("nd embedding = \n" + ndEmbedding);
 
             // diffusion
-            for (int i = 0; i < embedding.length; i++) {
-                prevDiffusion[i] = new double[embedding[0].length / 2];
-                System.arraycopy(embedding[i], 0, prevDiffusion[i], 0, embedding[i].length / 2);
-            }
+//            for (int i = 0; i < embedding.length; i++) {
+//                prevDiffusion[i] = new double[embedding[0].length / 2];
+//                System.arraycopy(embedding[i], 0, prevDiffusion[i], 0, embedding[i].length / 2);
+//            }
 
             INDArray ndDiffused = Nd4j.create(ndEmbedding.shape());
             Nd4j.copy(ndEmbedding, ndDiffused);
@@ -216,27 +216,27 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
 
-                diffusion = new double[nodeCount][];
-                for (int j = 0; j < embedding.length; j++) {
-                    diffusion[j] = new double[embedding[0].length / 2];
-                }
-
-                nodeQueue.set(0);
-                final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
-                for (int i = 0; i < concurrency; i++) {
-                    diffusionFutures.add(executorService.submit(new DiffusionTask()));
-                }
-                ParallelUtil.awaitTermination(diffusionFutures);
+//                diffusion = new double[nodeCount][];
+//                for (int j = 0; j < embedding.length; j++) {
+//                    diffusion[j] = new double[embedding[0].length / 2];
+//                }
+//
+//                nodeQueue.set(0);
+//                final ArrayList<Future<?>> diffusionFutures = new ArrayList<>();
+//                for (int i = 0; i < concurrency; i++) {
+//                    diffusionFutures.add(executorService.submit(new DiffusionTask()));
+//                }
+//                ParallelUtil.awaitTermination(diffusionFutures);
 
                 ndDiffused = diffusionMatrix.mmul(ndDiffused);
 
-                prevDiffusion = diffusion;
+//                prevDiffusion = diffusion;
 
             }
 
-            for (int i = 0; i < embedding.length; i++) {
-                System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
-            }
+//            for (int i = 0; i < embedding.length; i++) {
+//                System.arraycopy(diffusion[i], 0, embedding[i], embedding[i].length / 2, embedding[i].length / 2);
+//            }
 
             ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
 
@@ -251,12 +251,12 @@ public class DeepGL extends Algorithm<DeepGL> {
     }
 
     private void doBinning() {
-        new Binning().logBins(embedding);
+//        new Binning().logBins(embedding);
         new Binning().logBins(ndEmbedding);
     }
 
     private void doPruning() {
-        int sizeBefore = embedding[0].length;
+//        int sizeBefore = embedding[0].length;
         int ndSizeBefore = ndEmbedding.size(1);
 
         Pruning pruning = new Pruning(pruningLambda);
@@ -368,22 +368,22 @@ public class DeepGL extends Algorithm<DeepGL> {
                     int offset = i * numFeatures * numNeighbourhoods;
 
                     operator.apply(nodeId, offset, numFeatures, Direction.OUTGOING);
-                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i]};
-                    for (int j = 0; j < prevFeatures.length; j++) {
-                        features[offset + j] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[j]);
-                    }
+//                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i]};
+//                    for (int j = 0; j < prevFeatures.length; j++) {
+//                        features[offset + j] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[j]);
+//                    }
 
                     operator.apply(nodeId, offset + numNeighbourhoods, numFeatures, Direction.INCOMING);
-                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 1]};
-                    for (int j = 0; j < prevFeatures.length; j++) {
-                        features[offset + j + prevFeatures.length] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[j]);
-                    }
+//                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 1]};
+//                    for (int j = 0; j < prevFeatures.length; j++) {
+//                        features[offset + j + prevFeatures.length] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[j]);
+//                    }
 
                     operator.apply(nodeId, offset + 2 * numNeighbourhoods, numFeatures, Direction.BOTH);
-                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 2]};
-                    for (int j = 0; j < prevFeatures.length; j++) {
-                        features[offset + j + 2 * prevFeatures.length] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[j]);
-                    }
+//                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 2]};
+//                    for (int j = 0; j < prevFeatures.length; j++) {
+//                        features[offset + j + 2 * prevFeatures.length] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[j]);
+//                    }
                 }
 
             }
