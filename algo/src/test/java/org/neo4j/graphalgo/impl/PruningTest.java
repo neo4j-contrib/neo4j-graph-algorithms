@@ -220,11 +220,16 @@ public class PruningTest {
 
         System.out.println("concat = " + concat);
 
+        INDArray hstack = Nd4j.hstack(one, two);
+
+        System.out.println("hstack = " + hstack);
+
 
         // when
 
         // then
     }
+
 
 
 }

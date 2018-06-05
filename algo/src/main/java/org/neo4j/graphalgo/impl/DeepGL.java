@@ -40,8 +40,8 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private final int numNeighbourhoods;
     private final INDArray diffusionMatrix;
-    private final INDArray adjacencyMarixOut;
-    private final INDArray adjacencyMarixIn;
+    private final INDArray adjacencyMatrixOut;
+    private final INDArray adjacencyMatrixIn;
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
@@ -68,7 +68,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     private int iterations;
     private double pruningLambda;
     private boolean applyNormalisation;
-    private final INDArray adjacencyMatrix;
+    private final INDArray adjacencyMatrixBoth;
 
     /**
      * constructs a parallel centrality solver
@@ -95,30 +95,30 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.iterations = iterations;
         this.pruningLambda = pruningLambda;
 
-        adjacencyMatrix = Nd4j.create(nodeCount, nodeCount);
-        adjacencyMarixOut = Nd4j.create(nodeCount, nodeCount);
-        adjacencyMarixIn = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMatrixBoth = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMatrixOut = Nd4j.create(nodeCount, nodeCount);
+        adjacencyMatrixIn = Nd4j.create(nodeCount, nodeCount);
         PrimitiveIntIterator nodes = graph.nodeIterator();
         while (nodes.hasNext()) {
             int nodeId = nodes.next();
 
             graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                adjacencyMatrix.putScalar(nodeId, targetNodeId, 1);
+                adjacencyMatrixBoth.putScalar(nodeId, targetNodeId, 1);
                 return true;
             });
             graph.forEachRelationship(nodeId, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId) -> {
-                adjacencyMarixOut.putScalar(nodeId, targetNodeId, 1);
+                adjacencyMatrixOut.putScalar(nodeId, targetNodeId, 1);
                 return true;
             });
             graph.forEachRelationship(nodeId, Direction.INCOMING, (sourceNodeId, targetNodeId, relationId) -> {
-                adjacencyMarixIn.putScalar(nodeId, targetNodeId, 1);
+                adjacencyMatrixIn.putScalar(nodeId, targetNodeId, 1);
                 return true;
             });
 
 //            diffusionMatrix.putScalar(nodeId, nodeId, 1d / graph.degree(nodeId, Direction.BOTH));
         }
 
-        this.diffusionMatrix = InvertMatrix.invert(Nd4j.diag(adjacencyMatrix.sum(0)), false).mmul(adjacencyMatrix);
+        this.diffusionMatrix = InvertMatrix.invert(Nd4j.diag(adjacencyMatrixBoth.sum(0)), false).mmul(adjacencyMatrixBoth);
     }
 
     public DeepGL withDirection(Direction direction) {
@@ -181,21 +181,24 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             // layer 1 ndFeatures
             System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
-            INDArray[] seperateFeatures = new INDArray[operators.length * numNeighbourhoods];
+            INDArray[] separateFeatures = new INDArray[operators.length * numNeighbourhoods];
+
             // OUT
             for (int opId = 0; opId < operators.length; opId++) {
-                seperateFeatures[opId] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMarixOut);
-            }
-            // IN
-            for (int opId = 0; opId < operators.length; opId++) {
-                seperateFeatures[opId + operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMarixIn);
-            }
-            // BOTH
-            for (int opId = 0; opId < operators.length; opId++) {
-                seperateFeatures[opId + 2 * operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrix);
+                separateFeatures[opId] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut);
             }
 
-            ndEmbedding = Nd4j.hstack(seperateFeatures);
+            // IN
+            for (int opId = 0; opId < operators.length; opId++) {
+                separateFeatures[opId + operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn);
+            }
+
+            // BOTH
+            for (int opId = 0; opId < operators.length; opId++) {
+                separateFeatures[opId + 2 * operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth);
+            }
+
+            ndEmbedding = Nd4j.hstack(separateFeatures);
 
             // diffusion
             for (int i = 0; i < embedding.length; i++) {
