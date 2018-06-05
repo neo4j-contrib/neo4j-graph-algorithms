@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.api.rng.Random;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
@@ -121,11 +122,25 @@ public class DeepGLTest {
                             System.out.println("emb: " + r.embedding);
                             System.out.println("nd4j: " + r.ndEmbedding);
                         }
-                    );
+                );
 
         deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
 
         writer.close();
+    }
+
+    @Test
+    public void testBooleanIndexing() {
+
+        int rows = 3;
+        int cols = 3;
+        Random rnd = Nd4j.getRandomFactory().getNewRandomInstance(1234);
+
+        INDArray randomMatrix = Nd4j.rand(rows, cols, rnd);
+        System.out.println("randomMatrix = \n" + randomMatrix);
+
+        INDArray mask = Transforms.round(Nd4j.rand(rows, cols));
+        System.out.println("mask = \n" + mask);
     }
 
     @Test
@@ -142,7 +157,7 @@ public class DeepGLTest {
                 {0.00, 0.00, 1.00, 0.00, 1.00, 0.00, 1.00},
                 {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
                 {1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
-                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00}
+                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
         });
 
         INDArray sum = adjacencyMarix.mmul(features);

@@ -112,6 +112,9 @@ public class DeepGL extends Algorithm<DeepGL> {
 //            diffusionMatrix.putScalar(nodeId, nodeId, 1d / graph.degree(nodeId, Direction.BOTH));
         }
 
+        System.out.println("adjacencyMatrix = \n" + adjacencyMatrixBoth);
+        System.out.println("adjacencyMatrixIn = \n" + adjacencyMatrixIn);
+        System.out.println("adjacencyMatrixOut = \n" + adjacencyMatrixOut);
         this.diffusionMatrix = InvertMatrix.invert(Nd4j.diag(adjacencyMatrixBoth.sum(0)), false).mmul(adjacencyMatrixBoth);
     }
 
@@ -143,7 +146,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         // move base features to prevEmbedding layer
         ndPrevEmbedding = ndEmbedding;
 
-        for (int iteration = 0; iteration < iterations; iteration++) {
+        for (int iteration = 0; iteration < 1; iteration++) {
             getProgressLogger().logProgress((double) iteration / iterations);
             getProgressLogger().log("Current layer: " + iteration);
 
@@ -167,24 +170,19 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             // layer 1 ndFeatures
             System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
-            INDArray[] separateFeatures = new INDArray[operators.length * numNeighbourhoods];
 
             // OUT
+            List<INDArray> arrays = new LinkedList<>();
             for (int opId = 0; opId < operators.length; opId++) {
-                separateFeatures[opId] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut);
+                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
+                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
+                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
             }
 
-            // IN
-            for (int opId = 0; opId < operators.length; opId++) {
-                separateFeatures[opId + operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn);
-            }
+            ndEmbedding = Nd4j.hstack(arrays);
 
-            // BOTH
-            for (int opId = 0; opId < operators.length; opId++) {
-                separateFeatures[opId + 2 * operators.length] = operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth);
-            }
-
-            ndEmbedding = Nd4j.hstack(separateFeatures);
+            System.out.println("embedding = \n" + Nd4j.create(embedding));
+            System.out.println("nd embedding = \n" + ndEmbedding);
 
             // diffusion
             for (int i = 0; i < embedding.length; i++) {
