@@ -3,10 +3,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.cpu.nativecpu.NDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.WeightMap;
@@ -30,6 +27,7 @@ public class Pruning {
     public Pruning() {
         this(0.7);
     }
+
     public Pruning(double lambda) {
 
         this.lambda = lambda;
@@ -81,8 +79,8 @@ public class Pruning {
 
         for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
             for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
-                double[][] emb1 = extractFeature(prevEmbedding.getEmbedding(), prevFeatId, 1);
-                double[][] emb2 = extractFeature(embedding.getEmbedding(), featId, 1);
+                INDArray emb1 = extractFeature(prevEmbedding.getNDEmbedding(), prevFeatId, 1);
+                INDArray emb2 = extractFeature(embedding.getNDEmbedding(), featId, 1);
 
                 double score = score(emb1, emb2);
 
@@ -115,15 +113,17 @@ public class Pruning {
     }
 
 
-    private double[][] extractFeature(double[][] embedding, int id, int featureWidth) {
+    private INDArray extractFeature(INDArray embedding, int id, int featureWidth) {
 
-        double[][] feature = new double[embedding.length][featureWidth];
-        for (int i = 0; i < embedding.length; i++) {
-            for (int w = 0; w < featureWidth; w++) {
-                feature[i][w] = embedding[i][id + w];
-            }
-        }
-        return feature;
+        return embedding.getColumn(id);
+
+//        double[][] feature = new double[embedding.length][featureWidth];
+//        for (int i = 0; i < embedding.length; i++) {
+//            for (int w = 0; w < featureWidth; w++) {
+//                feature[i][w] = embedding[i][id + w];
+//            }
+//        }
+//        return feature;
     }
 
     public enum Feature {
@@ -187,6 +187,21 @@ public class Pruning {
             }
         }
         return (double) match / feat1.length;
+    }
+
+
+    double score(INDArray feat1, INDArray feat2) {
+
+        return feat1.eq(feat2).sum(0).getDouble(0,0) / feat1.size(1);
+//        int match = 0;
+//        for (int i = 0; i < feat1.length; i++) {
+//            if (Arrays.equals(feat1[i], feat2[i])) {
+//                match++;
+//            }
+//        }
+//        return (double) match / feat1.length;
+
+//        return 0;
     }
 
 
