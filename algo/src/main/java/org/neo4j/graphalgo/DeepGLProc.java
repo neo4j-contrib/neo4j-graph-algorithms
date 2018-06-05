@@ -72,7 +72,7 @@ public class DeepGLProc {
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
                 iterations,
-                pruningLambda, applyNormalisation);
+                pruningLambda);
         algo.withProgressLogger(ProgressLogger.wrap(log, "DeepGL"));
 
         algo.compute();

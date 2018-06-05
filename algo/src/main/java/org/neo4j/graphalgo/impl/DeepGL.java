@@ -39,35 +39,32 @@ import java.util.stream.Stream;
 public class DeepGL extends Algorithm<DeepGL> {
 
     private final int numNeighbourhoods;
-    private final INDArray diffusionMatrix;
-    private final INDArray adjacencyMatrixOut;
-    private final INDArray adjacencyMatrixIn;
     // the graph
     private Graph graph;
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
-    // atomic double array which supports only atomic-add
-    private AtomicDoubleArray centrality;
+
     // the node count
     private final int nodeCount;
     // global executor service
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private Direction direction = Direction.OUTGOING;
-    private double divisor = 1.0;
     private volatile double[][] embedding;
     private volatile double[][] prevEmbedding;
-    private INDArray ndEmbedding;
-    private INDArray ndPrevEmbedding;
-    private volatile int[] seenSoFarMapping;
+
     private volatile double[][] diffusion;
     private volatile double[][] prevDiffusion;
     private volatile Pruning.Feature[][] features;
     private volatile Pruning.Feature[][] prevFeatures;
     private int iterations;
     private double pruningLambda;
-    private boolean applyNormalisation;
+
+    private INDArray ndEmbedding;
+    private INDArray ndPrevEmbedding;
+    private final INDArray diffusionMatrix;
+    private final INDArray adjacencyMatrixOut;
+    private final INDArray adjacencyMatrixIn;
     private final INDArray adjacencyMatrixBoth;
 
     /**
@@ -77,19 +74,16 @@ public class DeepGL extends Algorithm<DeepGL> {
      * @param executorService    the executor service
      * @param concurrency        desired number of threads to spawn
      * @param pruningLambda
-     * @param applyNormalisation
      */
-    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda, boolean applyNormalisation) {
+    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.applyNormalisation = applyNormalisation;
         this.embedding = new double[nodeCount][];
         this.ndEmbedding = Nd4j.create(nodeCount, 3);
         this.prevEmbedding = new double[nodeCount][];
         this.numNeighbourhoods = 3;
-        this.seenSoFarMapping = new int[nodeCount];
         this.diffusion = new double[nodeCount][];
         this.prevDiffusion = new double[nodeCount][];
         this.iterations = iterations;
@@ -122,8 +116,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     }
 
     public DeepGL withDirection(Direction direction) {
-        this.direction = direction;
-        this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
         return this;
     }
 
@@ -147,12 +139,6 @@ public class DeepGL extends Algorithm<DeepGL> {
         };
 
         doBinning();
-
-        // normalise
-        if (applyNormalisation) {
-            double featureMaxes = getGlobalMax();
-            applyNormalisation(featureMaxes);
-        }
 
         // move base features to prevEmbedding layer
         ndPrevEmbedding = ndEmbedding;
@@ -242,13 +228,6 @@ public class DeepGL extends Algorithm<DeepGL> {
             ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
 
             doBinning();
-
-            if (applyNormalisation) {
-                final int numFeatures = operators.length * numNeighbourhoods;
-                double[] featureMaxes = calculateMax(numFeatures);
-                applyNormalisation(featureMaxes);
-            }
-
             doPruning();
 
             // concat the learned features to the feature matrix
@@ -258,18 +237,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         return this;
     }
 
-    private void applyNormalisation(double... featureMaxes) {
-        nodeQueue.set(0);
-        final ArrayList<Future<?>> normaliseFutures = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            normaliseFutures.add(executorService.submit(new NormaliseTask(featureMaxes)));
-        }
-        ParallelUtil.awaitTermination(normaliseFutures);
-    }
-
     private void doBinning() {
-//        new Binning().linearBins(embedding, 100);
-//        new Binning().logBins(embedding);
         new Binning().logBins(embedding);
         new Binning().logBins(ndEmbedding);
     }
@@ -290,37 +258,6 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
         getProgressLogger().log("ND Pruning: Before: [" + ndSizeBefore + "], After: [" + ndSizeAfter + "]");
-    }
-
-    private double[] calculateMax(int numFeatures) {
-        double[] maxes = new double[numFeatures];
-
-        int length = embedding[0].length / numFeatures;
-        for (int columnIndex = 0; columnIndex < embedding[0].length; columnIndex++) {
-            int maxPosition = columnIndex / length;
-
-            for (double[] anEmbedding : embedding) {
-                maxes[maxPosition] = maxes[maxPosition] < anEmbedding[columnIndex] ? anEmbedding[columnIndex] : maxes[maxPosition];
-            }
-        }
-
-        return maxes;
-    }
-
-    private double getGlobalMax() {
-        return Arrays.stream(embedding).parallel()
-                .mapToDouble(embedding -> embedding[2])
-                .max()
-                .getAsDouble();
-    }
-
-    /**
-     * get the centrality array
-     *
-     * @return array with centrality
-     */
-    public AtomicDoubleArray getCentrality() {
-        return centrality;
     }
 
     /**
@@ -349,7 +286,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     @Override
     public DeepGL release() {
         graph = null;
-        centrality = null;
         return null;
     }
 
@@ -397,35 +333,6 @@ public class DeepGL extends Algorithm<DeepGL> {
                 row[columnIndex] = ndEmbedding.getDouble(columnIndex);
             }
             this.ndEmbedding = Arrays.asList(ArrayUtils.toObject(row));
-        }
-    }
-
-    private class NormaliseTask implements Runnable {
-
-
-        private final double[] globalMax;
-
-        public NormaliseTask(double... globalMax) {
-
-            this.globalMax = globalMax;
-        }
-
-        @Override
-        public void run() {
-            for (; ; ) {
-                final int nodeId = nodeQueue.getAndIncrement();
-                if (nodeId >= nodeCount || !running()) {
-                    return;
-                }
-
-                int sizeOfFeature = embedding[nodeId].length / globalMax.length;
-
-                for (int i = 0; i < embedding[nodeId].length; i++) {
-                    int feat = i / sizeOfFeature;
-
-                    embedding[nodeId][i] /= globalMax[feat];
-                }
-            }
         }
     }
 

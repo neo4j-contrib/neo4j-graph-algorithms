@@ -21,14 +21,8 @@ package org.neo4j.graphalgo.impl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.nd4j.linalg.api.complex.IComplexNumber;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.cpu.nativecpu.NDArray;
-import org.nd4j.linalg.exception.ND4JException;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.conditions.BaseCondition;
-import org.nd4j.linalg.indexing.conditions.ConditionEquals;
-import org.nd4j.linalg.indexing.conditions.NotEqualsCondition;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
@@ -42,7 +36,6 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import javax.xml.crypto.dsig.Transform;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -104,7 +97,7 @@ public class DeepGLTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 4, 0.2, false);
+        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 4, 0.2);
         deepGL.withProgressLogger(new TestProgressLogger());
         deepGL.compute();
         Stream<DeepGL.Result> resultStream = deepGL.resultStream();
