@@ -97,28 +97,8 @@ public class PruningTest {
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
     }
 
-    class Edge {
-        private final Pruning.Feature[][] feat1;
-        private final Pruning.Feature[][] feat2;
-        private final double similarity;
-
-        Edge(Pruning.Feature[][] feat1, Pruning.Feature[][] feat2, double similarity) {
-
-            this.feat1 = feat1;
-            this.feat2 = feat2;
-            this.similarity = similarity;
-        }
-    }
-
     @Test
     public void connectedComponents() {
-
-//        Edge[] graph = {
-//                new Edge(new Pruning.Feature[][] { {IN_DEGREE} }, new Pruning.Feature[][] { {MEAN, IN_DEGREE} }, 1.0)
-//        };
-
-//        calculateConnectedComponents(graph);
-
         IdMap idMap = new IdMap(10);
 
         idMap.add(0);
@@ -160,7 +140,7 @@ public class PruningTest {
 
     @Test
     public void unionFindEmbeddings() {
-        double[][] one = {
+        double[][] prevLayer = {
                 {1, 2, 3},
                 {2, 3, 4},
                 {3, 4, 5}
@@ -168,7 +148,7 @@ public class PruningTest {
 
         // mean-in, mean-out, mean-both, other
 
-        double[][] two = {
+        double[][] layer = {
                 {1, 2, 4, 3},
                 {2, 3, 4, 3},
                 {3, 1, 5, 4}
@@ -176,8 +156,12 @@ public class PruningTest {
 
         Pruning pruning = new Pruning();
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one, Nd4j.create(one));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}}, two, Nd4j.create(two));
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, prevLayer, Nd4j.create(prevLayer));
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}}, layer, Nd4j.create(layer));
+
+
+        // make sure that we prune away the complex features
+        // i.e. we should keep the feature from prevEmbedding wherever possible
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
         System.out.println("Embedding:");
