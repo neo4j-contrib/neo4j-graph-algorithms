@@ -48,21 +48,21 @@ public class PruningTest {
     @Test
     public void multiColumnFeatures() {
         double[][] one = {
-                {1,2,3},
-                {2,3,4},
-                {3,4,5}
+                {1, 2, 3},
+                {2, 3, 4},
+                {3, 4, 5}
         };
 
         double[][] two = {
-                {1,2,4},
-                {2,3,4},
-                {3,1,5}
+                {1, 2, 4},
+                {2, 3, 4},
+                {3, 1, 5}
         };
 
         double[][] three = {
-                {1,2,3},
-                {2,3,4},
-                {5,4,3}
+                {1, 2, 3},
+                {2, 3, 4},
+                {5, 4, 3}
         };
 
 
@@ -76,23 +76,23 @@ public class PruningTest {
         // in, out, both
 
         double[][] one = {
-                {1,2,3},
-                {2,3,4},
-                {3,4,5}
+                {1, 2, 3},
+                {2, 3, 4},
+                {3, 4, 5}
         };
 
         // mean-in, mean-out, mean-both, other
 
         double[][] two = {
-                {1,2,4,3},
-                {2,3,4,3},
-                {3,1,5,4}
+                {1, 2, 4, 3},
+                {2, 3, 4, 3},
+                {3, 1, 5, 4}
         };
 
         Pruning pruning = new Pruning();
 
         Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one, Nd4j.create(one));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE},{MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE},{MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE},{MEAN_BOTH_NEIGHOURHOOD}}, two, Nd4j.create(two));
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD}}, two, Nd4j.create(two));
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
     }
@@ -102,7 +102,7 @@ public class PruningTest {
         private final Pruning.Feature[][] feat2;
         private final double similarity;
 
-        Edge(Pruning.Feature[][] feat1, Pruning.Feature[][] feat2, double similarity){
+        Edge(Pruning.Feature[][] feat1, Pruning.Feature[][] feat2, double similarity) {
 
             this.feat1 = feat1;
             this.feat2 = feat2;
@@ -119,7 +119,7 @@ public class PruningTest {
 
 //        calculateConnectedComponents(graph);
 
-        IdMap idMap= new IdMap(10);
+        IdMap idMap = new IdMap(10);
 
         idMap.add(0);
         idMap.add(2);
@@ -161,23 +161,23 @@ public class PruningTest {
     @Test
     public void unionFindEmbeddings() {
         double[][] one = {
-                {1,2,3},
-                {2,3,4},
-                {3,4,5}
+                {1, 2, 3},
+                {2, 3, 4},
+                {3, 4, 5}
         };
 
         // mean-in, mean-out, mean-both, other
 
         double[][] two = {
-                {1,2,4,3},
-                {2,3,4,3},
-                {3,1,5,4}
+                {1, 2, 4, 3},
+                {2, 3, 4, 3},
+                {3, 1, 5, 4}
         };
 
         Pruning pruning = new Pruning();
 
         Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one, Nd4j.create(one));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE},{MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE},{MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE},{MEAN_OUT_NEIGHBOURHOOD}}, two, Nd4j.create(two));
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}}, two, Nd4j.create(two));
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
         System.out.println("Embedding:");
@@ -185,51 +185,4 @@ public class PruningTest {
         System.out.println("Features:");
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
     }
-
-    @Test
-    public void shouldSliceArray() throws Exception {
-        // given
-
-        INDArray embedding = Nd4j.create(new double[][]{
-                {1, 2, 3},
-                {4, 5, 6},
-                {7, 8, 9}
-        });
-
-        INDArray columns = embedding.getColumns(1,2);
-
-        System.out.println("columns = " + columns);
-    }
-
-    @Test
-    public void shouldConcatArrays() throws Exception {
-        // given
-        INDArray one = Nd4j.create(new double[][]{
-                {1, 2, 3},
-                {4, 5, 6},
-                {7, 8, 9}
-        });
-
-        INDArray two = Nd4j.create(new double[][]{
-                {10, 11, 12},
-                {13, 14, 15},
-                {16, 17, 18}
-        });
-
-        INDArray concat = Nd4j.concat(1, one, two);
-
-        System.out.println("concat = " + concat);
-
-        INDArray hstack = Nd4j.hstack(one, two);
-
-        System.out.println("hstack = " + hstack);
-
-
-        // when
-
-        // then
-    }
-
-
-
 }
