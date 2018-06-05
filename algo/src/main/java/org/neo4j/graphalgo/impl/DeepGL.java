@@ -160,6 +160,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             // OUT
             List<INDArray> arrays = new LinkedList<>();
             for (int opId = 0; opId < operators.length; opId++) {
+                System.out.println("Operator " + operators[opId]);
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
@@ -178,7 +179,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
                 Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId + 2]};
                 for (int j = 0; j < prevFeatures.length; j++) {
-                    features[offset + j + 2 + prevFeatures.length] = ArrayUtils.addAll(prevFeatures[j], bothNeighbourhoodFeature);
+                    features[offset + j + (2 * prevFeatures.length)] = ArrayUtils.addAll(prevFeatures[j], bothNeighbourhoodFeature);
                 }
             }
 
@@ -226,6 +227,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         Pruning pruning = new Pruning(pruningLambda);
         Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding, ndPrevEmbedding), new Pruning.Embedding(features, embedding, ndEmbedding));
+
         features = prunedEmbedding.getFeatures();
         embedding = prunedEmbedding.getEmbedding();
 
