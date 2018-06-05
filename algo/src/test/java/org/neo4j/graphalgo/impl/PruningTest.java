@@ -14,6 +14,7 @@ import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.graphalgo.impl.Pruning.Feature.*;
 
@@ -139,34 +140,52 @@ public class PruningTest {
     }
 
     @Test
-    public void unionFindEmbeddings() {
+    public void pruneEmbeddingsAndFeatures() {
         double[][] prevLayer = {
                 {1, 2, 3},
                 {2, 3, 4},
                 {3, 4, 5}
         };
 
-        // mean-in, mean-out, mean-both, other
+        Pruning.Feature[][] prevLayerFeatures = {{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}};
 
         double[][] layer = {
-                {1, 2, 4, 3},
-                {2, 3, 4, 3},
-                {3, 1, 5, 4}
+                {1, 2, 3, 9},
+                {2, 3, 4, 9},
+                {3, 4, 5, 8}
         };
 
-        Pruning pruning = new Pruning();
+        Pruning.Feature[][] layerFeatures = {{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}};
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, prevLayer, Nd4j.create(prevLayer));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}}, layer, Nd4j.create(layer));
 
+        Pruning pruning = new Pruning(0.5);
 
         // make sure that we prune away the complex features
         // i.e. we should keep the feature from prevEmbedding wherever possible
-
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, prevLayer, Nd4j.create(prevLayer));
+        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, layer, Nd4j.create(layer));
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
+
         System.out.println("Embedding:");
-        System.out.println(Arrays.deepToString(prunedEmbedding.getEmbedding()));
+        System.out.println(prunedEmbedding.getNDEmbedding());
+
+        assertEquals(Nd4j.create(new double[][]{
+                {1, 2, 3, 9},
+                {2, 3, 4, 9},
+                {3, 4, 5, 8},
+        }), prunedEmbedding.getNDEmbedding());
+
         System.out.println("Features:");
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
+
+        Pruning.Feature[][] expected = new Pruning.Feature[][] {
+                {IN_DEGREE},
+                {OUT_DEGREE},
+                {BOTH_DEGREE},
+                {MEAN_OUT_NEIGHBOURHOOD}
+        };
+
+        assertArrayEquals(expected, prunedEmbedding.getFeatures());
+
     }
 }

@@ -41,20 +41,22 @@ public class Pruning {
         Stream<DisjointSetStruct.Result> resultStream = findConnectedComponents(graph);
 
         int[] featureIdsToKeep = resultStream
-                .filter(item -> item.nodeId >= prevEmbedding.numFeatures())
                 .collect(Collectors.groupingBy(item -> item.setId))
                 .values()
                 .stream()
                 .mapToInt(results -> (int) (results.stream().sorted(Comparator.comparingLong(value -> value.nodeId)).findFirst().get().nodeId))
                 .toArray();
 
-//        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
         INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
-//        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
+        Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
+        Feature[][] prunedFeatures = new Feature[featureIdsToKeep.length][];
+        for (int index = 0; index < featureIdsToKeep.length; index++) {
+            prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
+        }
 
-        return new Embedding(null, null, prunedNDEmbedding);
+        return new Embedding(prunedFeatures, null, prunedNDEmbedding);
     }
 
     private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
