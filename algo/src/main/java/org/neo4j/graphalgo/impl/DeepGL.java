@@ -211,16 +211,17 @@ public class DeepGL extends Algorithm<DeepGL> {
             prevFeatures = ArrayUtils.addAll(prevFeatures, features);
         }
 
+        ndEmbedding = ndPrevEmbedding;
+        features = prevFeatures;
+
         return this;
     }
 
     private void doBinning() {
-//        new Binning().logBins(embedding);
         new Binning().logBins(ndEmbedding);
     }
 
     private void doPruning() {
-//        int sizeBefore = embedding[0].length;
         int ndSizeBefore = ndEmbedding.size(1);
 
         Pruning pruning = new Pruning(pruningLambda);
@@ -230,10 +231,8 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         ndEmbedding = prunedEmbedding.getNDEmbedding();
 
-//        int sizeAfter = embedding[0].length;
         int ndSizeAfter = ndEmbedding.size(1);
 
-//        getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
         getProgressLogger().log("ND Pruning: Before: [" + ndSizeBefore + "], After: [" + ndSizeAfter + "]");
     }
 
@@ -247,7 +246,6 @@ public class DeepGL extends Algorithm<DeepGL> {
                 .mapToObj(nodeId ->
                         new DeepGL.Result(
                                 graph.toOriginalNodeId(nodeId),
-                                new double[0],
                                 ndEmbedding.getRow(nodeId)));
     }
 
@@ -299,66 +297,16 @@ public class DeepGL extends Algorithm<DeepGL> {
     public class Result {
         public final long nodeId;
         public final List<Double> embedding;
-        public final List<Double> ndEmbedding;
 
-        public Result(long nodeId, double[] embedding, INDArray ndEmbedding) {
+        public Result(long nodeId, INDArray ndEmbedding) {
             this.nodeId = nodeId;
-            this.embedding = Arrays.asList(ArrayUtils.toObject(embedding));
 
             double[] row = new double[ndEmbedding.size(1)];
             for (int columnIndex = 0; columnIndex < ndEmbedding.size(1); columnIndex++) {
                 row[columnIndex] = ndEmbedding.getDouble(columnIndex);
             }
-            this.ndEmbedding = Arrays.asList(ArrayUtils.toObject(row));
+            this.embedding = Arrays.asList(ArrayUtils.toObject(row));
         }
-    }
-
-    private class FeatureTask implements Runnable {
-        @Override
-        public void run() {
-            for (; ; ) {
-                final int nodeId = nodeQueue.getAndIncrement();
-                if (nodeId >= nodeCount || !running()) {
-                    return;
-                }
-
-                int numFeatures = prevEmbedding[0].length;
-                embedding[nodeId] = new double[numFeatures * numNeighbourhoods * operators.length * 2];
-                Arrays.fill(embedding[nodeId], 0);
-
-
-                for (int i = 0; i < operators.length; i++) {
-                    RelOperator operator = operators[i];
-                    int offset = i * numFeatures * numNeighbourhoods;
-
-                    operator.apply(nodeId, offset, numFeatures, Direction.OUTGOING);
-//                    Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i]};
-//                    for (int j = 0; j < prevFeatures.length; j++) {
-//                        features[offset + j] = ArrayUtils.addAll(outNeighbourhoodFeature, prevFeatures[j]);
-//                    }
-
-                    operator.apply(nodeId, offset + numNeighbourhoods, numFeatures, Direction.INCOMING);
-//                    Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 1]};
-//                    for (int j = 0; j < prevFeatures.length; j++) {
-//                        features[offset + j + prevFeatures.length] = ArrayUtils.addAll(inNeighbourhoodFeature, prevFeatures[j]);
-//                    }
-
-                    operator.apply(nodeId, offset + 2 * numNeighbourhoods, numFeatures, Direction.BOTH);
-//                    Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * i + 2]};
-//                    for (int j = 0; j < prevFeatures.length; j++) {
-//                        features[offset + j + 2 * prevFeatures.length] = ArrayUtils.addAll(bothNeighbourhoodFeature, prevFeatures[j]);
-//                    }
-                }
-
-            }
-        }
-
-        void sum(int offset, int lengthOfEachFeature, int targetNodeId, double defaultValue) {
-            for (int i = 0; i < lengthOfEachFeature; i++) {
-                embedding[targetNodeId][i + offset] += prevEmbedding[targetNodeId][i];
-            }
-        }
-
     }
 
     interface RelOperator {

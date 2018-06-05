@@ -55,8 +55,7 @@ public class DeepGLProc {
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         int iterations = configuration.getInt("iterations", 10);
-        double pruningLambda = configuration.get("pruningLambda", 0.1).doubleValue();
-        boolean applyNormalisation = configuration.get("normalise", false).booleanValue();
+        double pruningLambda = configuration.get("pruningLambda", 0.1);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)

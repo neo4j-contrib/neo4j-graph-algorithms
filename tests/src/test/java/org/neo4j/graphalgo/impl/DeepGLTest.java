@@ -98,7 +98,7 @@ public class DeepGLTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 4, 0.3);
+        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 4, 0.7);
         deepGL.withProgressLogger(new TestProgressLogger());
         deepGL.compute();
         Stream<DeepGL.Result> resultStream = deepGL.resultStream();
@@ -107,7 +107,7 @@ public class DeepGLTest {
 
         resultStream
                 .peek(r -> {
-                    String res = r.ndEmbedding.stream()
+                    String res = r.embedding.stream()
                             .map(Object::toString)
                             .reduce((s, s2) -> String.join(" ", s, s2))
                             .get();
@@ -120,7 +120,7 @@ public class DeepGLTest {
                 })
                 .forEach(r -> {
 //                            System.out.println("emb: " + r.embedding);
-                            System.out.println("nd4j: " + r.ndEmbedding);
+                            System.out.println("nd4j: " + r.embedding);
                         }
                 );
 
