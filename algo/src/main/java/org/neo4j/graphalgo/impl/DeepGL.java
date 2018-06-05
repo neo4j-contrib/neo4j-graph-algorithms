@@ -146,16 +146,14 @@ public class DeepGL extends Algorithm<DeepGL> {
         // move base features to prevEmbedding layer
         ndPrevEmbedding = ndEmbedding;
 
-        for (int iteration = 0; iteration < 1; iteration++) {
+        for (int iteration = 0; iteration < iterations; iteration++) {
             getProgressLogger().logProgress((double) iteration / iterations);
             getProgressLogger().log("Current layer: " + iteration);
 
             // swap the layers
-            // TODO concat
             prevEmbedding = embedding;
 
             embedding = new double[nodeCount][];
-//            ndEmbedding = Nd4j.create(nodeCount, numNeighbourhoods * operators.length * ndEmbedding.size(1));
 
             prevFeatures = features;
             features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
@@ -484,7 +482,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             INDArray[] maxes = new INDArray[features.columns()];
             for (int fCol = 0; fCol < features.columns(); fCol++) {
                 INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMatrix.columns());
-                INDArray mul = adjacencyMatrix.mul(repeat);
+                INDArray mul = adjacencyMatrix.transpose().mul(repeat);
                 maxes[fCol] = mul.max(0).transpose();
 
             }
@@ -590,7 +588,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             INDArray[] norms = new INDArray[adjacencyMatrix.rows()];
             for (int node = 0; node < adjacencyMatrix.rows(); node++) {
                 INDArray nodeFeatures = features.getRow(node);
-                INDArray adjs = adjacencyMatrix.getColumn(node).repeat(1, features.columns());
+                INDArray adjs = adjacencyMatrix.transpose().getColumn(node).repeat(1, features.columns());
                 INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
                 INDArray sub = repeat.sub(features.mul(adjs));
                 INDArray norm = sub.norm1(0);

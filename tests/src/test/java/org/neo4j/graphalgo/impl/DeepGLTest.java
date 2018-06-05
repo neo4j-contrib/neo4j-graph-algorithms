@@ -147,32 +147,53 @@ public class DeepGLTest {
     public void testOperatorsForNDArrays() {
 
 
-        INDArray features = Nd4j.linspace(0, 20, 21).reshape(7, 3);
+        INDArray features = Nd4j.create(new double[][]{
+                {0.00, 1.00, 0.00},
+                {0.00, 0.00, 1.00},
+                {0.00, 1.00, 1.00},
+                {0.00, 2.00, 2.00},
+                {1.00, 0.00, 0.00},
+                {1.00, 0.00, 0.00},
+                {2.00, 0.00, 0.00},
+        });
         System.out.println("features = \n" + features);
 
-        INDArray adjacencyMarix = Nd4j.create(new double[][]{
+        // BOTH directions
+//        INDArray adjacencyMarix = Nd4j.create(new double[][]{
+//                {0.00, 1.00, 0.00, 0.00, 0.00, 1.00, 0.00},
+//                {1.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00},
+//                {0.00, 1.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+//                {0.00, 0.00, 1.00, 0.00, 1.00, 0.00, 1.00},
+//                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+//                {1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+//                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+//        });
+
+        // OUT only
+        INDArray adjacencyMatrix = Nd4j.create(new double[][]{
                 {0.00, 1.00, 0.00, 0.00, 0.00, 1.00, 0.00},
-                {1.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00},
-                {0.00, 1.00, 0.00, 1.00, 0.00, 0.00, 0.00},
-                {0.00, 0.00, 1.00, 0.00, 1.00, 0.00, 1.00},
+                {0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00},
                 {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
-                {1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
-                {0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00},
+                {0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 1.00},
+                {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+                {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+                {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+
         });
 
-        INDArray sum = adjacencyMarix.mmul(features);
+        INDArray sum = adjacencyMatrix.mmul(features);
         System.out.println("sum = \n" + sum);
 
-        INDArray mean = adjacencyMarix.mmul(features).div(adjacencyMarix.sum(1).repeat(1, features.columns()));
+        INDArray mean = adjacencyMatrix.mmul(features).div(adjacencyMatrix.sum(1).repeat(1, features.columns()));
         Nd4j.clearNans(mean);
         System.out.println("mean = \n" + mean);
 
 
-        INDArray[] had = new INDArray[adjacencyMarix.columns()];
-        for (int column = 0; column < adjacencyMarix.columns(); column++) {
+        INDArray[] had = new INDArray[adjacencyMatrix.columns()];
+        for (int column = 0; column < adjacencyMatrix.columns(); column++) {
             int finalColumn = column;
-            int[] indexes = IntStream.range(0, adjacencyMarix.rows())
-                    .filter(r -> adjacencyMarix.getDouble(finalColumn, r) != 0)
+            int[] indexes = IntStream.range(0, adjacencyMatrix.rows())
+                    .filter(r -> adjacencyMatrix.getDouble(finalColumn, r) != 0)
                     .toArray();
 
             if (indexes.length > 0) {
@@ -190,18 +211,18 @@ public class DeepGLTest {
 
         INDArray[] maxes = new INDArray[features.columns()];
         for (int fCol = 0; fCol < features.columns(); fCol++) {
-            INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMarix.columns());
-            INDArray mul = adjacencyMarix.mul(repeat);
+            INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMatrix.columns());
+            INDArray mul = adjacencyMatrix.transpose().mul(repeat);
             maxes[fCol] = mul.max(0).transpose();
 
         }
         INDArray max = Nd4j.hstack(maxes);
         System.out.println("max = \n" + max);
 
-        INDArray[] norms = new INDArray[adjacencyMarix.rows()];
-        for (int node = 0; node < adjacencyMarix.rows(); node++) {
+        INDArray[] norms = new INDArray[adjacencyMatrix.rows()];
+        for (int node = 0; node < adjacencyMatrix.rows(); node++) {
             INDArray nodeFeatures = features.getRow(node);
-            INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+            INDArray adjs = adjacencyMatrix.transpose().getColumn(node).repeat(1, features.columns());
             INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
             INDArray sub = repeat.sub(features.mul(adjs));
             INDArray norm = sub.norm1(0);
@@ -211,10 +232,10 @@ public class DeepGLTest {
         System.out.println("l1Norm = \n" + l1Norm);
 
         double sigma = 16;
-        INDArray[] sumsOfSquareDiffs = new INDArray[adjacencyMarix.rows()];
-        for (int node = 0; node < adjacencyMarix.rows(); node++) {
+        INDArray[] sumsOfSquareDiffs = new INDArray[adjacencyMatrix.rows()];
+        for (int node = 0; node < adjacencyMatrix.rows(); node++) {
             INDArray nodeFeatures = features.getRow(node);
-            INDArray adjs = adjacencyMarix.getColumn(node).repeat(1, features.columns());
+            INDArray adjs = adjacencyMatrix.getColumn(node).repeat(1, features.columns());
             INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
             INDArray sub = repeat.sub(features.mul(adjs));
             sumsOfSquareDiffs[node] = Transforms.pow(sub, 2).sum(0);
