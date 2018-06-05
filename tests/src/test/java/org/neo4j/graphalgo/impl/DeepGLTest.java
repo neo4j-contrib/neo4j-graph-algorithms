@@ -124,7 +124,7 @@ public class DeepGLTest {
                         }
                 );
 
-//        deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
+        deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
 
         writer.close();
     }
