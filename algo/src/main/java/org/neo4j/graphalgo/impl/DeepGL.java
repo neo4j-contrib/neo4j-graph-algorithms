@@ -160,7 +160,6 @@ public class DeepGL extends Algorithm<DeepGL> {
             // OUT
             List<INDArray> arrays = new LinkedList<>();
             for (int opId = 0; opId < operators.length; opId++) {
-                System.out.println("Operator " + operators[opId]);
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
