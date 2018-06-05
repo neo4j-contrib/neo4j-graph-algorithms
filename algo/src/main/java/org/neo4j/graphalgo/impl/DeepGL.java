@@ -251,10 +251,10 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         ndEmbedding = prunedEmbedding.getNDEmbedding();
 
-        int sizeAfter = embedding[0].length;
+//        int sizeAfter = embedding[0].length;
         int ndSizeAfter = ndEmbedding.size(1);
 
-        getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
+//        getProgressLogger().log("Pruning: Before: [" + sizeBefore + "], After: [" + sizeAfter + "]");
         getProgressLogger().log("ND Pruning: Before: [" + ndSizeBefore + "], After: [" + ndSizeAfter + "]");
     }
 
@@ -268,7 +268,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 .mapToObj(nodeId ->
                         new DeepGL.Result(
                                 graph.toOriginalNodeId(nodeId),
-                                embedding[nodeId],
+                                new double[0],
                                 ndEmbedding.getRow(nodeId)));
     }
 

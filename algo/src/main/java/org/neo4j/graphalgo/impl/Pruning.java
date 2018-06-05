@@ -1,8 +1,10 @@
 package org.neo4j.graphalgo.impl;
 
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.neo4j.graphalgo.api.Graph;
@@ -14,6 +16,7 @@ import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,7 +28,7 @@ public class Pruning {
     private final double lambda;
 
     public Pruning() {
-        this(0.1);
+        this(0.7);
     }
     public Pruning(double lambda) {
 
@@ -42,15 +45,16 @@ public class Pruning {
                 .collect(Collectors.groupingBy(item -> item.setId))
                 .values()
                 .stream()
-                .mapToInt(results -> (int) (results.stream().findFirst().get().nodeId - prevEmbedding.numFeatures()))
+                .mapToInt(results -> (int) (results.stream().sorted(Comparator.comparingLong(value -> value.nodeId)).findFirst().get().nodeId))
                 .toArray();
 
-        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
-        INDArray prunedNDEmbedding = pruneEmbedding(embedding.getNDEmbedding(), featureIdsToKeep);
+//        double[][] prunedEmbedding = pruneEmbedding(embedding.getEmbedding(), featureIdsToKeep);
+        INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());
+        INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
-        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
+//        Feature[][] prunedFeatures = Arrays.stream(featureIdsToKeep).mapToObj(i -> embedding.getFeatures()[(int) i]).toArray(Feature[][]::new);
 
-        return new Embedding(prunedFeatures, prunedEmbedding, prunedNDEmbedding);
+        return new Embedding(null, null, prunedNDEmbedding);
     }
 
     private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
