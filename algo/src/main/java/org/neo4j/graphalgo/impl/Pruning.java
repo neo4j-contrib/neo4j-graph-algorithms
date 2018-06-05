@@ -42,13 +42,16 @@ public class Pruning {
                 .collect(Collectors.groupingBy(item -> item.setId))
                 .values()
                 .stream()
-                .mapToInt(results -> (int) (results.stream().sorted(Comparator.comparingLong(value -> value.nodeId)).findFirst().get().nodeId))
+                .mapToInt(results -> results.stream().mapToInt(value -> (int) value.nodeId).min().getAsInt())
                 .toArray();
+
+        System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
 
         INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
         Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
+        System.out.println("featuresToPrune = " + Arrays.deepToString(featuresToPrune));
         Feature[][] prunedFeatures = new Feature[featureIdsToKeep.length][];
         for (int index = 0; index < featureIdsToKeep.length; index++) {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
@@ -192,7 +195,7 @@ public class Pruning {
 
     double score(INDArray feat1, INDArray feat2) {
 
-        return feat1.eq(feat2).sum(0).getDouble(0,0) / feat1.size(1);
+        return feat1.eq(feat2).sum(0).getDouble(0,0) / feat1.size(0);
 //        int match = 0;
 //        for (int i = 0; i < feat1.length; i++) {
 //            if (Arrays.equals(feat1[i], feat2[i])) {

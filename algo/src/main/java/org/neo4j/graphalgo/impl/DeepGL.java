@@ -196,9 +196,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             }
 
             for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
-
                 ndDiffused = diffusionMatrix.mmul(ndDiffused);
-
             }
 
             ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
