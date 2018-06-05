@@ -175,6 +175,23 @@ public class DeepGL extends Algorithm<DeepGL> {
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
+
+                int offset = opId * prevFeatures.length * numNeighbourhoods;
+
+                Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId]};
+                for (int j = 0; j < prevFeatures.length; j++) {
+                    features[offset + j] = ArrayUtils.addAll(prevFeatures[j], outNeighbourhoodFeature);
+                }
+
+                Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId + 1]};
+                for (int j = 0; j < prevFeatures.length; j++) {
+                    features[offset + j + prevFeatures.length] = ArrayUtils.addAll(prevFeatures[j], inNeighbourhoodFeature);
+                }
+
+                Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId + 2]};
+                for (int j = 0; j < prevFeatures.length; j++) {
+                    features[offset + j + 2 + prevFeatures.length] = ArrayUtils.addAll(prevFeatures[j], bothNeighbourhoodFeature);
+                }
             }
 
             ndEmbedding = Nd4j.hstack(arrays);
@@ -194,7 +211,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             features = ArrayUtils.addAll(features, features);
             for (int i = features.length / 2; i < features.length; i++) {
-                features[i] = ArrayUtils.addAll(new Pruning.Feature[]{Pruning.Feature.DIFFUSE}, features[i]);
+                features[i] = ArrayUtils.addAll(features[i], Pruning.Feature.DIFFUSE);
             }
 
             for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
