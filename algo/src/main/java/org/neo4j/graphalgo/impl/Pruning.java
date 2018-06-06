@@ -74,7 +74,7 @@ public class Pruning {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
         }
 
-        return new Embedding(prunedFeatures, null, prunedNDEmbedding);
+        return new Embedding(prunedFeatures, prunedNDEmbedding);
     }
 
     private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
@@ -173,21 +173,15 @@ public class Pruning {
 
     static class Embedding {
         private final Feature[][] features;
-        private final double[][] embedding;
         private INDArray ndEmbedding;
 
-        public Embedding(Feature[][] features, double[][] embedding, INDArray ndEmbedding) {
+        public Embedding(Feature[][] features, INDArray ndEmbedding) {
             this.features = features;
-            this.embedding = embedding;
             this.ndEmbedding = ndEmbedding;
         }
 
         public Feature[][] getFeatures() {
             return features;
-        }
-
-        public double[][] getEmbedding() {
-            return embedding;
         }
 
         public int numFeatures() {

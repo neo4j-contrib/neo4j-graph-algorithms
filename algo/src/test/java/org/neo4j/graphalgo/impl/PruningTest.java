@@ -1,7 +1,6 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.Test;
-import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
@@ -92,8 +91,8 @@ public class PruningTest {
 
         Pruning pruning = new Pruning();
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, one, Nd4j.create(one));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD}}, two, Nd4j.create(two));
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, Nd4j.create(one));
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD}}, Nd4j.create(two));
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
     }
@@ -162,8 +161,8 @@ public class PruningTest {
 
         // make sure that we prune away the complex features
         // i.e. we should keep the feature from prevEmbedding wherever possible
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, prevLayer, Nd4j.create(prevLayer));
-        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, layer, Nd4j.create(layer));
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, Nd4j.create(prevLayer));
+        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, Nd4j.create(layer));
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
 
         System.out.println("Embedding:");
@@ -211,8 +210,8 @@ public class PruningTest {
 
         // make sure that we prune away the complex features
         // i.e. we should keep the feature from prevEmbedding wherever possible
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, prevLayer, Nd4j.create(prevLayer));
-        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, layer, Nd4j.create(layer));
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, Nd4j.create(prevLayer));
+        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, Nd4j.create(layer));
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
 
         assertEquals(Nd4j.create(new double[][]{

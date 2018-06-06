@@ -25,7 +25,6 @@ import org.nd4j.linalg.inverse.InvertMatrix;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
@@ -50,22 +49,21 @@ public class DeepGL extends Algorithm<DeepGL> {
     private final ExecutorService executorService;
     // number of threads to spawn
     private final int concurrency;
-    private volatile double[][] embedding;
-    private volatile double[][] prevEmbedding;
 
-    private volatile double[][] diffusion;
-    private volatile double[][] prevDiffusion;
-    private Pruning.Feature[][] features;
-    private Pruning.Feature[][] prevFeatures;
     private int iterations;
     private double pruningLambda;
 
-    private INDArray ndEmbedding;
-    private INDArray ndPrevEmbedding;
     private final INDArray diffusionMatrix;
     private final INDArray adjacencyMatrixOut;
     private final INDArray adjacencyMatrixIn;
     private final INDArray adjacencyMatrixBoth;
+
+    private Pruning.Feature[][] features;
+    private Pruning.Feature[][] prevFeatures;
+
+    private INDArray ndEmbedding;
+    private INDArray ndPrevEmbedding;
+
 
     /**
      * constructs a parallel centrality solver
@@ -80,12 +78,8 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.embedding = new double[nodeCount][];
         this.ndEmbedding = Nd4j.create(nodeCount, 3);
-        this.prevEmbedding = new double[nodeCount][];
         this.numNeighbourhoods = 3;
-        this.diffusion = new double[nodeCount][];
-        this.prevDiffusion = new double[nodeCount][];
         this.iterations = iterations;
         this.pruningLambda = pruningLambda;
 
@@ -202,6 +196,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
 
             doBinning();
+
             doPruning();
 
             // concat the learned features to the feature matrix
@@ -223,10 +218,9 @@ public class DeepGL extends Algorithm<DeepGL> {
         int ndSizeBefore = ndEmbedding.size(1);
 
         Pruning pruning = new Pruning(pruningLambda);
-        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevEmbedding, ndPrevEmbedding), new Pruning.Embedding(features, embedding, ndEmbedding));
+        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, ndPrevEmbedding), new Pruning.Embedding(features, ndEmbedding));
 
         features = prunedEmbedding.getFeatures();
-        embedding = prunedEmbedding.getEmbedding();
 
         ndEmbedding = prunedEmbedding.getNDEmbedding();
 
@@ -277,13 +271,6 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
-
-                embedding[nodeId] = new double[]{
-                        graph.degree(nodeId, Direction.INCOMING),
-                        graph.degree(nodeId, Direction.OUTGOING),
-                        graph.degree(nodeId, Direction.BOTH)
-                };
-
                 ndEmbedding.putRow(nodeId, Nd4j.create(new double[]{
                         graph.degree(nodeId, Direction.INCOMING),
                         graph.degree(nodeId, Direction.OUTGOING),
@@ -309,28 +296,11 @@ public class DeepGL extends Algorithm<DeepGL> {
     }
 
     interface RelOperator {
-        void apply(int nodeId, int offset, int numOfFeatures, Direction direction);
-
         INDArray ndOp(INDArray features, INDArray adjacencyMatrix);
-
         double defaultVal();
     }
 
     RelOperator sum = new RelOperator() {
-
-        @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    embedding[nodeId][i + offset] += prevEmbedding[targetNodeId][i];
-                }
-                return true;
-            });
-        }
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
@@ -344,19 +314,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     };
 
     RelOperator hadamard = new RelOperator() {
-        @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    embedding[nodeId][i + offset] *= prevEmbedding[targetNodeId][i];
-                }
-                return true;
-            });
-        }
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
@@ -389,23 +346,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     RelOperator max = new RelOperator() {
 
         @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    if (prevEmbedding[targetNodeId][i] > embedding[nodeId][i + offset]) {
-                        embedding[nodeId][i + offset] = prevEmbedding[targetNodeId][i];
-                    }
-                }
-                return true;
-            });
-
-        }
-
-        @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
             INDArray[] maxes = new INDArray[features.columns()];
             for (int fCol = 0; fCol < features.columns(); fCol++) {
@@ -424,21 +364,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     };
 
     RelOperator mean = new RelOperator() {
-        @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-            int[] seenSoFar = {0};
-
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    embedding[nodeId][i + offset] = (embedding[nodeId][i + offset] * seenSoFar[0] + prevEmbedding[targetNodeId][i]) / (seenSoFar[0] + 1);
-                }
-                seenSoFar[0]++;
-                return true;
-            });
-        }
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
@@ -455,25 +380,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     };
 
     RelOperator rbf = new RelOperator() {
-        @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-
-            double[] sum = new double[numOfFeatures];
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    sum[i] += Math.pow(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i], 2);
-                }
-                return true;
-            });
-
-            double sigma = 1;
-            for (int i = 0; i < sum.length; i++) {
-                embedding[nodeId][i + offset] = Math.exp((-1 / Math.pow(sigma, 2)) * sum[i]);
-            }
-        }
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
@@ -497,19 +403,6 @@ public class DeepGL extends Algorithm<DeepGL> {
     };
 
     RelOperator l1Norm = new RelOperator() {
-        @Override
-        public void apply(int nodeId, int offset, int numOfFeatures, Direction direction) {
-            if (graph.degree(nodeId, direction) > 0) {
-                Arrays.fill(embedding[nodeId], offset, numOfFeatures + offset, defaultVal());
-            }
-
-            graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
-                for (int i = 0; i < numOfFeatures; i++) {
-                    embedding[nodeId][i + offset] += Math.abs(prevEmbedding[targetNodeId][i] - prevEmbedding[nodeId][i]);
-                }
-                return true;
-            });
-        }
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
@@ -535,24 +428,4 @@ public class DeepGL extends Algorithm<DeepGL> {
 //    RelOperator[] operators = new RelOperator[]{sum};
 
 
-    private class DiffusionTask implements Runnable {
-        @Override
-        public void run() {
-            for (; ; ) {
-                final int nodeId = nodeQueue.getAndIncrement();
-                if (nodeId >= nodeCount || !running()) {
-                    return;
-                }
-
-                graph.forEachRelationship(nodeId, Direction.BOTH, (sourceNodeId, targetNodeId, relationId) -> {
-                    int degreeOfTarget = graph.degree(targetNodeId, Direction.BOTH);
-
-                    for (int i = 0; i < prevDiffusion[targetNodeId].length; i++) {
-                        diffusion[nodeId][i] += prevDiffusion[targetNodeId][i] / degreeOfTarget;
-                    }
-                    return true;
-                });
-            }
-        }
-    }
 }
