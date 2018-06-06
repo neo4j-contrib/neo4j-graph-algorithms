@@ -35,7 +35,8 @@ public class Pruning {
 
     public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
 
-        final Graph graph = loadFeaturesGraph(prevEmbedding, embedding);
+        INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());
+        final Graph graph = loadFeaturesGraph(embeddingToPrune);
 
         int[] featureIdsToKeep = findConnectedComponents(graph)
                 .collect(Collectors.groupingBy(item -> item.setId))
@@ -64,7 +65,7 @@ public class Pruning {
 //        System.out.println("featureIdsToRemove = " + featureIdsToRemove);
         System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
 
-        INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());
+        System.out.println("embeddingToPrune = \n" + embeddingToPrune);
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
         Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
@@ -80,6 +81,8 @@ public class Pruning {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
         }
 
+        System.out.println("prunedNDEmbedding = \n" + prunedNDEmbedding);
+
         return new Embedding(prunedFeatures, prunedNDEmbedding);
     }
 
@@ -91,9 +94,8 @@ public class Pruning {
         return dssResult.resultStream(graph);
     }
 
-    private Graph loadFeaturesGraph(Embedding prevEmbedding, Embedding embedding) {
-        int numPrevFeatures = prevEmbedding.getFeatures().length;
-        int nodeCount = numPrevFeatures + embedding.getFeatures().length;
+    private Graph loadFeaturesGraph(INDArray embedding) {
+        int nodeCount = embedding.columns();
         IdMap idMap = new IdMap(nodeCount);
 
         for (int i = 0; i < nodeCount; i++) {
@@ -103,18 +105,16 @@ public class Pruning {
         WeightMap relWeights = new WeightMap(nodeCount, 0, -1);
         AdjacencyMatrix matrix = new AdjacencyMatrix(idMap.size(), false);
 
-        for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
-            for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
-
-                INDArray emb1 = prevEmbedding.getNDEmbedding().getColumn(prevFeatId);
-
-                INDArray emb2 = embedding.getNDEmbedding().getColumn(featId);
+        for (int i = 0; i < nodeCount; i++) {
+            for (int j = 0; j < nodeCount; j++) {
+                INDArray emb1 = embedding.getColumn(i);
+                INDArray emb2 = embedding.getColumn(j);
 
                 double score = score(emb1, emb2);
 
                 if (score > lambda) {
-                    matrix.addOutgoing(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures));
-                    relWeights.put(RawValues.combineIntInt(idMap.get(prevFeatId), idMap.get(featId + numPrevFeatures)), score);
+                    matrix.addOutgoing(idMap.get(i), idMap.get(j));
+                    relWeights.put(RawValues.combineIntInt(idMap.get(i), idMap.get(j)), score);
                 }
             }
         }

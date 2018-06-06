@@ -21,6 +21,27 @@ import static org.neo4j.graphalgo.impl.Pruning.Feature.*;
 public class PruningTest {
 
     @Test
+    public void testGetCols() {
+
+        INDArray origEmbedding = Nd4j.create(new double[][]{
+                {0.00, 1.00, 0.00},
+                {0.00, 0.00, 1.00},
+                {0.00, 1.00, 1.00},
+                {0.00, 2.00, 2.00},
+                {1.00, 0.00, 0.00},
+                {1.00, 0.00, 0.00},
+                {2.00, 0.00, 0.00},
+        });
+
+        int[] featIdsToKeep = {2, 1, 0};
+
+        INDArray ndPrunedEmbedding = Nd4j.create(origEmbedding.shape());
+        Nd4j.copy(origEmbedding, ndPrunedEmbedding);
+        INDArray columns = ndPrunedEmbedding.getColumns(featIdsToKeep);
+        System.out.println("columns = \n" + columns);
+    }
+
+    @Test
     public void singleColumnFeatures() {
         INDArray one = Nd4j.create(new double[][]{
                 {1},
