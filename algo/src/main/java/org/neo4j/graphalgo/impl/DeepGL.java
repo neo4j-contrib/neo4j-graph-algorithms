@@ -63,17 +63,18 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private INDArray ndEmbedding;
     private INDArray ndPrevEmbedding;
+    private int diffusionIterations;
 
 
     /**
      * constructs a parallel centrality solver
-     *
-     * @param graph              the graph iface
+     *  @param graph              the graph iface
      * @param executorService    the executor service
      * @param concurrency        desired number of threads to spawn
      * @param pruningLambda
+     * @param diffusionIterations
      */
-    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda) {
+    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda, int diffusionIterations) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
@@ -82,6 +83,7 @@ public class DeepGL extends Algorithm<DeepGL> {
         this.numNeighbourhoods = 3;
         this.iterations = iterations;
         this.pruningLambda = pruningLambda;
+        this.diffusionIterations = diffusionIterations;
 
         adjacencyMatrixBoth = Nd4j.create(nodeCount, nodeCount);
         adjacencyMatrixOut = Nd4j.create(nodeCount, nodeCount);
@@ -190,7 +192,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 features[i] = ArrayUtils.addAll(features[i], Pruning.Feature.DIFFUSE);
             }
 
-            for (int diffIteration = 0; diffIteration < 10; diffIteration++) {
+            for (int diffIteration = 0; diffIteration < diffusionIterations; diffIteration++) {
                 ndDiffused = diffusionMatrix.mmul(ndDiffused);
             }
 

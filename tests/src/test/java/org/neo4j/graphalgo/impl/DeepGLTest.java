@@ -98,7 +98,7 @@ public class DeepGLTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 5, 0.8);
+        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 3, 0.7, 10);
         deepGL.withProgressLogger(new TestProgressLogger());
         deepGL.compute();
         Stream<DeepGL.Result> resultStream = deepGL.resultStream();

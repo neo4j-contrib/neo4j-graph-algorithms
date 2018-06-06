@@ -55,6 +55,7 @@ public class DeepGLProc {
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         int iterations = configuration.getInt("iterations", 10);
+        int diffusionIterations = configuration.getInt("diffusionIterations", 10);
         double pruningLambda = configuration.get("pruningLambda", 0.1);
 
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
@@ -71,7 +72,8 @@ public class DeepGLProc {
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
                 iterations,
-                pruningLambda);
+                pruningLambda,
+                diffusionIterations);
         algo.withProgressLogger(ProgressLogger.wrap(log, "DeepGL"));
 
         algo.compute();
