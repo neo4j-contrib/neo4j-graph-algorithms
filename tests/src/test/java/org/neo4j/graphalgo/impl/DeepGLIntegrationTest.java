@@ -37,6 +37,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Stream;
 
 
@@ -83,12 +85,28 @@ public class DeepGLIntegrationTest {
     }
 
     @Test
-    public void testDeepGL() throws Exception {
+    public void stream() throws Exception {
 
         Result result = db.execute("CALL algo.deepgl.stream('Node', 'TYPE')");
 
         while (result.hasNext()) {
             System.out.println("result.next() = " + result.next());
+        }
+    }
+
+    @Test
+    public void write() throws Exception {
+
+        Result result = db.execute("CALL algo.deepgl('Node', 'TYPE')");
+
+        while (result.hasNext()) {
+            System.out.println("summary = " + result.next());
+        }
+
+        Result embeddings = db.execute("MATCH (n:Node) RETURN n.embedding AS embedding");
+        while(embeddings.hasNext()) {
+            Map<String, Object> row = embeddings.next();
+            System.out.println("embeddings = " + Arrays.toString((double[])row.get("embedding")));
         }
     }
 }

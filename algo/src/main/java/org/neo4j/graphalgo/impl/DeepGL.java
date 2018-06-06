@@ -242,6 +242,10 @@ public class DeepGL extends Algorithm<DeepGL> {
         getProgressLogger().log("ND Pruning: Before: [" + ndSizeBefore + "], After: [" + ndSizeAfter + "]");
     }
 
+    public INDArray embedding() {
+        return ndEmbedding;
+    }
+
     /**
      * emit the result stream
      *
