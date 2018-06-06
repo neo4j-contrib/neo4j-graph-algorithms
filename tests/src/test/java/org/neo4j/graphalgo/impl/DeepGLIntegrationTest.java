@@ -97,7 +97,7 @@ public class DeepGLIntegrationTest {
     @Test
     public void write() throws Exception {
 
-        Result result = db.execute("CALL algo.deepgl('Node', 'TYPE')");
+        Result result = db.execute("CALL algo.deepgl('Node', 'TYPE', {writeProperty: 'foo'})");
 
         while (result.hasNext()) {
             System.out.println("summary = " + result.next());

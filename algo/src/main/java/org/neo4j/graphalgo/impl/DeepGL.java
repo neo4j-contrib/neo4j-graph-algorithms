@@ -65,6 +65,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     private INDArray ndPrevEmbedding;
     private int diffusionIterations;
 
+    private int numberOfLayers;
 
     /**
      * constructs a parallel centrality solver
@@ -104,18 +105,9 @@ public class DeepGL extends Algorithm<DeepGL> {
                 adjacencyMatrixIn.putScalar(nodeId, targetNodeId, 1);
                 return true;
             });
-
-//            diffusionMatrix.putScalar(nodeId, nodeId, 1d / graph.degree(nodeId, Direction.BOTH));
         }
 
-//        System.out.println("adjacencyMatrix = \n" + adjacencyMatrixBoth);
-//        System.out.println("adjacencyMatrixIn = \n" + adjacencyMatrixIn);
-//        System.out.println("adjacencyMatrixOut = \n" + adjacencyMatrixOut);
         this.diffusionMatrix = InvertMatrix.invert(Nd4j.diag(adjacencyMatrixBoth.sum(0)), false).mmul(adjacencyMatrixBoth);
-    }
-
-    public DeepGL withDirection(Direction direction) {
-        return this;
     }
 
     /**
@@ -137,24 +129,18 @@ public class DeepGL extends Algorithm<DeepGL> {
                 {Pruning.Feature.BOTH_DEGREE}
         };
 
-//        System.out.println("ndEmbedding = \n" + ndEmbedding);
         doBinning();
 
-        // move base features to prevEmbedding layer
         ndPrevEmbedding = ndEmbedding;
         prevFeatures = features;
 
-        for (int iteration = 0; iteration < iterations; iteration++) {
+        int iteration;
+        for (iteration = 1; iteration <= iterations; iteration++) {
             getProgressLogger().logProgress((double) iteration / iterations);
             getProgressLogger().log("Current layer: " + iteration);
 
-            // swap the layers
             features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
 
-            // layer 1 ndFeatures
-//            System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
-
-            // OUT
             List<INDArray> arrays = new LinkedList<>();
             for (int opId = 0; opId < operators.length; opId++) {
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
@@ -181,11 +167,8 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             ndEmbedding = Nd4j.hstack(arrays);
 
-//            System.out.println("nd embedding = \n" + ndEmbedding);
-
             INDArray ndDiffused = Nd4j.create(ndEmbedding.shape());
             Nd4j.copy(ndEmbedding, ndDiffused);
-
 
             features = ArrayUtils.addAll(features, features);
             for (int i = features.length / 2; i < features.length; i++) {
@@ -208,17 +191,15 @@ public class DeepGL extends Algorithm<DeepGL> {
             if (uniqueFeaturesSet.size() == 0) {
                 ndEmbedding = ndPrevEmbedding;
                 features = prevFeatures;
+                this.numberOfLayers = iteration;
                 break;
             }
 
-            // this layer contains concat of new learned features and prev layer
-            // so set prev layer = this layer
             ndPrevEmbedding = ndEmbedding;
             prevFeatures = this.features;
         }
 
-//        ndEmbedding = ndPrevEmbedding;
-//        features = prevFeatures;
+        this.numberOfLayers = iteration;
 
         return this;
     }
@@ -259,6 +240,10 @@ public class DeepGL extends Algorithm<DeepGL> {
                                 ndEmbedding.getRow(nodeId)));
     }
 
+    public Pruning.Feature[][] features() {
+        return features;
+    }
+
     public Stream<Pruning.Feature[]> featureStream() {
         return Arrays.stream(features);
     }
@@ -272,6 +257,10 @@ public class DeepGL extends Algorithm<DeepGL> {
     public DeepGL release() {
         graph = null;
         return null;
+    }
+
+    public int numberOfLayers() {
+        return numberOfLayers;
     }
 
     /**

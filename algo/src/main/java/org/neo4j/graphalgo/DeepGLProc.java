@@ -87,12 +87,12 @@ public class DeepGLProc {
                 .withTerminationFlag(terminationFlag);
 
         builder.timeEval(algo::compute);
+        graph.release();
 
         INDArray embedding = algo.embedding();
-
         builder.withEmbeddingSize(embedding.columns());
-
-        graph.release();
+        builder.withFeatures(algo.features());
+        builder.withLayers(algo.numberOfLayers());
 
         if (configuration.isWriteFlag()) {
             builder.timeWrite(() -> {
