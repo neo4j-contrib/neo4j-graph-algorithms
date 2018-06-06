@@ -12,9 +12,9 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.nd4j.linalg.indexing.NDArrayIndex.interval;
@@ -36,15 +36,32 @@ public class Pruning {
     public Embedding prune(Embedding prevEmbedding, Embedding embedding) {
 
         final Graph graph = loadFeaturesGraph(prevEmbedding, embedding);
-        Stream<DisjointSetStruct.Result> resultStream = findConnectedComponents(graph);
 
-        int[] featureIdsToKeep = resultStream
-                .collect(Collectors.groupingBy(item -> item.setId))
-                .values()
-                .stream()
-                .mapToInt(results -> results.stream().mapToInt(value -> (int) value.nodeId).min().getAsInt())
-                .toArray();
+//        int[] featureIdsToKeep = findConnectedComponents(graph)
+//                .collect(Collectors.groupingBy(item -> item.setId))
+//                .values()
+//                .stream()
+//                .mapToInt(results -> results.stream().mapToInt(value -> (int) value.nodeId).min().getAsInt())
+//                .toArray();
 
+        List<Integer> featureIdsToRemove = new ArrayList<>();
+        Map<Long, List<DisjointSetStruct.Result>> bySetId = findConnectedComponents(graph).collect(Collectors.groupingBy(item -> item.setId));
+        for (Long setId : bySetId.keySet()) {
+            if(bySetId.get(setId).size() > 1) {
+                int minId = bySetId.get(setId).stream().mapToInt(value -> (int) value.nodeId).min().getAsInt();
+
+                for (DisjointSetStruct.Result result : bySetId.get(setId)) {
+                    if(result.nodeId > minId) {
+                        featureIdsToRemove.add((int) result.nodeId);
+                    }
+                }
+            }
+        }
+
+        int nodeCount = prevEmbedding.getFeatures().length + embedding.getFeatures().length;
+        int[] featureIdsToKeep = IntStream.range(0, nodeCount).filter(item -> !featureIdsToRemove.contains(item)).toArray();
+
+        System.out.println("featureIdsToRemove = " + featureIdsToRemove);
         System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
 
         INDArray embeddingToPrune = Nd4j.hstack(prevEmbedding.getNDEmbedding(), embedding.getNDEmbedding());

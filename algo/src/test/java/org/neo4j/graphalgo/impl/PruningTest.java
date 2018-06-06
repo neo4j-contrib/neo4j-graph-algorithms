@@ -186,6 +186,50 @@ public class PruningTest {
         };
 
         assertArrayEquals(expected, prunedEmbedding.getFeatures());
+    }
+
+    @Test
+    public void shouldOnlyKeepFeaturesThatAddSomethingUnique() {
+        double[][] prevLayer = {
+                {1, 2, 3},
+                {2, 3, 4},
+                {3, 4, 5}
+        };
+
+        Pruning.Feature[][] prevLayerFeatures = {{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}};
+
+        double[][] layer = {
+                {1, 2, 3, 9},
+                {2, 3, 4, 9},
+                {3, 4, 5, 8}
+        };
+
+        Pruning.Feature[][] layerFeatures = {{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}};
+
+
+        Pruning pruning = new Pruning(0.5);
+
+        // make sure that we prune away the complex features
+        // i.e. we should keep the feature from prevEmbedding wherever possible
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(prevLayerFeatures, prevLayer, Nd4j.create(prevLayer));
+        Pruning.Embedding embedding = new Pruning.Embedding(layerFeatures, layer, Nd4j.create(layer));
+        Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
+
+        assertEquals(Nd4j.create(new double[][]{
+                {9},
+                {9},
+                {8},
+        }), prunedEmbedding.getNDEmbedding());
+
+        System.out.println("Features:");
+        System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
+
+        Pruning.Feature[][] expected = new Pruning.Feature[][] {
+                {MEAN_OUT_NEIGHBOURHOOD}
+        };
+
+        assertArrayEquals(expected, prunedEmbedding.getFeatures());
 
     }
+
 }
