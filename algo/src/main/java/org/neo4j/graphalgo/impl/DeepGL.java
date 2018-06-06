@@ -106,9 +106,9 @@ public class DeepGL extends Algorithm<DeepGL> {
 //            diffusionMatrix.putScalar(nodeId, nodeId, 1d / graph.degree(nodeId, Direction.BOTH));
         }
 
-        System.out.println("adjacencyMatrix = \n" + adjacencyMatrixBoth);
-        System.out.println("adjacencyMatrixIn = \n" + adjacencyMatrixIn);
-        System.out.println("adjacencyMatrixOut = \n" + adjacencyMatrixOut);
+//        System.out.println("adjacencyMatrix = \n" + adjacencyMatrixBoth);
+//        System.out.println("adjacencyMatrixIn = \n" + adjacencyMatrixIn);
+//        System.out.println("adjacencyMatrixOut = \n" + adjacencyMatrixOut);
         this.diffusionMatrix = InvertMatrix.invert(Nd4j.diag(adjacencyMatrixBoth.sum(0)), false).mmul(adjacencyMatrixBoth);
     }
 
@@ -199,9 +199,10 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             doPruning();
 
-            // concat the learned features to the feature matrix
-            ndPrevEmbedding = Nd4j.hstack(ndPrevEmbedding, ndEmbedding);
-            prevFeatures = ArrayUtils.addAll(prevFeatures, features);
+            // this layer contains concat of new learned features and prev layer
+            // so set prev layer = this layer
+            ndPrevEmbedding = ndEmbedding;
+            prevFeatures = features;
         }
 
         ndEmbedding = ndPrevEmbedding;
