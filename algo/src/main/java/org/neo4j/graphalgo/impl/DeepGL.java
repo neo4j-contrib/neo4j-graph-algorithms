@@ -135,6 +135,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 {Pruning.Feature.BOTH_DEGREE}
         };
 
+        System.out.println("ndEmbedding = \n" + ndEmbedding);
         doBinning();
 
         // move base features to prevEmbedding layer
@@ -199,14 +200,25 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             doPruning();
 
+            HashSet<Pruning.Feature[]> uniqueFeaturesSet = new HashSet<>(Arrays.asList(this.features));
+            HashSet<Pruning.Feature[]> prevFeaturesSet = new HashSet<>(Arrays.asList(this.prevFeatures));
+
+
+            uniqueFeaturesSet.removeAll(prevFeaturesSet);
+            if (uniqueFeaturesSet.size() == 0) {
+                ndEmbedding = ndPrevEmbedding;
+                features = prevFeatures;
+                break;
+            }
+
             // this layer contains concat of new learned features and prev layer
             // so set prev layer = this layer
             ndPrevEmbedding = ndEmbedding;
-            prevFeatures = features;
+            prevFeatures = this.features;
         }
 
-        ndEmbedding = ndPrevEmbedding;
-        features = prevFeatures;
+//        ndEmbedding = ndPrevEmbedding;
+//        features = prevFeatures;
 
         return this;
     }
