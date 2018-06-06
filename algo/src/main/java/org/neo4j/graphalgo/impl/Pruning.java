@@ -45,24 +45,6 @@ public class Pruning {
                 .mapToInt(results -> results.stream().mapToInt(value -> (int) value.nodeId).min().getAsInt())
                 .toArray();
 
-//        List<Integer> featureIdsToRemove = new ArrayList<>();
-//        Map<Long, List<DisjointSetStruct.Result>> bySetId = findConnectedComponents(graph).collect(Collectors.groupingBy(item -> item.setId));
-//        for (Long setId : bySetId.keySet()) {
-//            if(bySetId.get(setId).size() > 1) {
-//                int minId = bySetId.get(setId).stream().mapToInt(value -> (int) value.nodeId).min().getAsInt();
-//
-//                for (DisjointSetStruct.Result result : bySetId.get(setId)) {
-//                    if(result.nodeId > minId) {
-//                        featureIdsToRemove.add((int) result.nodeId);
-//                    }
-//                }
-//            }
-//        }
-//
-//        int nodeCount = prevEmbedding.getFeatures().length + embedding.getFeatures().length;
-//        int[] featureIdsToKeep = IntStream.range(0, nodeCount).filter(item -> !featureIdsToRemove.contains(item)).toArray();
-
-//        System.out.println("featureIdsToRemove = " + featureIdsToRemove);
         System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
 
         System.out.println("embeddingToPrune = \n" + embeddingToPrune);
@@ -106,7 +88,7 @@ public class Pruning {
         AdjacencyMatrix matrix = new AdjacencyMatrix(idMap.size(), false);
 
         for (int i = 0; i < nodeCount; i++) {
-            for (int j = 0; j < nodeCount; j++) {
+            for (int j = 0; j < i; j++) {
                 INDArray emb1 = embedding.getColumn(i);
                 INDArray emb2 = embedding.getColumn(j);
 
@@ -120,18 +102,6 @@ public class Pruning {
         }
 
         return new HeavyGraph(idMap, matrix, relWeights, null, null);
-    }
-
-    private double[][] pruneEmbedding(double[][] origEmbedding, int... featIdsToKeep) {
-        double[][] prunedEmbedding = new double[origEmbedding.length][];
-        for (int i = 0; i < origEmbedding.length; i++) {
-            prunedEmbedding[i] = new double[featIdsToKeep.length];
-            for (int j = 0; j < featIdsToKeep.length; j++) {
-                prunedEmbedding[i][j] = origEmbedding[i][featIdsToKeep[j]];
-            }
-
-        }
-        return prunedEmbedding;
     }
 
     private INDArray pruneEmbedding(INDArray origEmbedding, int... featIdsToKeep) {
