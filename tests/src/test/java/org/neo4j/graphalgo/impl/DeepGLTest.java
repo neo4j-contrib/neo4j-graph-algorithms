@@ -18,12 +18,32 @@
  */
 package org.neo4j.graphalgo.impl;
 
+import org.datavec.api.records.reader.RecordReader;
+import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
+import org.datavec.api.split.FileSplit;
+import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
+import org.deeplearning4j.eval.Evaluation;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.rng.Random;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.SplitTestAndTrain;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
+import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.learning.config.Sgd;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.graphalgo.BetweennessCentralityProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
@@ -37,9 +57,7 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -243,5 +261,81 @@ public class DeepGLTest {
         INDArray sumOfSquareDiffs = Nd4j.vstack(sumsOfSquareDiffs).mul(-(1d / Math.pow(sigma, 2)));
         INDArray rbf = Transforms.exp(sumOfSquareDiffs);
         System.out.println("rbf = " + rbf);
+    }
+
+    @Test
+    public void classifier() throws IOException, InterruptedException {
+
+        //First: get the dataset using the record reader. CSVRecordReader handles loading/parsing
+        int numLinesToSkip = 0;
+        char delimiter = ' ';
+        RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
+        File dataFile = new File("movies-and-people");
+        recordReader.initialize(new FileSplit(dataFile));
+
+        BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+        int numCols = reader.lines()
+                .findFirst()
+                .map(l -> l.split((String.valueOf(delimiter))))
+                .map(arr -> arr.length)
+                .get();
+
+        int numExamples = (int) reader.lines().count();
+
+        //Second: the RecordReaderDataSetIterator handles conversion to DataSet objects, ready for use in neural network
+        int numInputs = numCols - 1;
+        int labelIndex = numInputs;     //5 values in each row of the iris.txt CSV: 4 input features followed by an integer label (class) index. Labels are the 5th value (index 4) in each row
+        int numClasses = 2;     //3 classes (types of iris flowers) in the iris data set. Classes have integer values 0, 1 or 2
+        int batchSize = numExamples;    //Iris data set: 150 examples total. We are loading all of them into one DataSet (not recommended for large data sets)
+        long seed = 6;
+
+        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex,numClasses);
+        DataSet allData = iterator.next();
+        allData.shuffle();
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.67);  //Use 65% of data for training
+
+        DataSet trainingData = testAndTrain.getTrain();
+        DataSet testData = testAndTrain.getTest();
+
+        //We need to normalize our data. We'll use NormalizeStandardize (which gives us mean 0, unit variance):
+        DataNormalization normalizer = new NormalizerStandardize();
+        normalizer.fit(trainingData);           //Collect the statistics (mean/stdev) from the training data. This does not modify the input data
+        normalizer.transform(trainingData);     //Apply normalization to the training data
+        normalizer.transform(testData);         //Apply normalization to the test data. This is using statistics calculated from the *training* set
+
+
+
+        System.out.println("Build model....");
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .activation(Activation.TANH)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Sgd(0.1))
+                .l2(1e-4)
+                .list()
+                .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(30)
+                        .build())
+                .layer(1, new DenseLayer.Builder().nIn(30).nOut(30)
+                        .build())
+                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.SOFTMAX)
+                        .nIn(30).nOut(numClasses).build())
+                .backprop(true).pretrain(false)
+                .build();
+
+        //run the model
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model.init();
+        model.setListeners(new ScoreIterationListener(100));
+
+        for(int i=0; i<1000; i++ ) {
+            model.fit(trainingData);
+        }
+
+        //evaluate the model on the test set
+        Evaluation eval = new Evaluation(numClasses);
+        INDArray output = model.output(testData.getFeatureMatrix());
+        eval.eval(testData.getLabels(), output);
+        System.out.println(eval.stats());
     }
 }
