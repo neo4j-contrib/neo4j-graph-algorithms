@@ -99,8 +99,10 @@ public class Pruning {
 
         for (int prevFeatId = 0; prevFeatId < numPrevFeatures; prevFeatId++) {
             for (int featId = 0; featId < embedding.getFeatures().length; featId++) {
-                INDArray emb1 = extractFeature(prevEmbedding.getNDEmbedding(), prevFeatId, 1);
-                INDArray emb2 = extractFeature(embedding.getNDEmbedding(), featId, 1);
+
+                INDArray emb1 = prevEmbedding.getNDEmbedding().getColumn(prevFeatId);
+
+                INDArray emb2 = embedding.getNDEmbedding().getColumn(featId);
 
                 double score = score(emb1, emb2);
 
@@ -132,19 +134,6 @@ public class Pruning {
         return ndPrunedEmbedding.getColumns(featIdsToKeep);
     }
 
-
-    private INDArray extractFeature(INDArray embedding, int id, int featureWidth) {
-
-        return embedding.getColumn(id);
-
-//        double[][] feature = new double[embedding.length][featureWidth];
-//        for (int i = 0; i < embedding.length; i++) {
-//            for (int w = 0; w < featureWidth; w++) {
-//                feature[i][w] = embedding[i][id + w];
-//            }
-//        }
-//        return feature;
-    }
 
     public enum Feature {
         SUM_OUT_NEIGHBOURHOOD,
