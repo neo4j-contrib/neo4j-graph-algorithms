@@ -184,38 +184,13 @@ public class Pruning {
             return features;
         }
 
-        public int numFeatures() {
-            return this.getFeatures().length;
-        }
-
         public INDArray getNDEmbedding() {
             return ndEmbedding;
         }
     }
 
-    double score(double[][] feat1, double[][] feat2) {
-        int match = 0;
-        for (int i = 0; i < feat1.length; i++) {
-            if (Arrays.equals(feat1[i], feat2[i])) {
-                match++;
-            }
-        }
-        return (double) match / feat1.length;
-    }
-
-
     double score(INDArray feat1, INDArray feat2) {
-
         return feat1.eq(feat2).sum(0).getDouble(0,0) / feat1.size(0);
-//        int match = 0;
-//        for (int i = 0; i < feat1.length; i++) {
-//            if (Arrays.equals(feat1[i], feat2[i])) {
-//                match++;
-//            }
-//        }
-//        return (double) match / feat1.length;
-
-//        return 0;
     }
 
 

@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.junit.Test;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.IdMap;
@@ -21,53 +22,27 @@ public class PruningTest {
 
     @Test
     public void singleColumnFeatures() {
-        double[][] one = {
+        INDArray one = Nd4j.create(new double[][]{
                 {1},
                 {2},
                 {3}
-        };
+        });
 
-        double[][] two = {
+        INDArray two = Nd4j.create(new double[][]{
                 {1},
                 {2},
                 {3}
-        };
+        });
 
-        double[][] three = {
+        INDArray three = Nd4j.create(new double[][]{
                 {2},
                 {2},
                 {3}
-        };
+        });
 
 
         Pruning pruning = new Pruning(0.1);
         assertEquals(1.0, pruning.score(one, two), 0.01);
-        assertEquals(0.66, pruning.score(one, three), 0.01);
-    }
-
-    @Test
-    public void multiColumnFeatures() {
-        double[][] one = {
-                {1, 2, 3},
-                {2, 3, 4},
-                {3, 4, 5}
-        };
-
-        double[][] two = {
-                {1, 2, 4},
-                {2, 3, 4},
-                {3, 1, 5}
-        };
-
-        double[][] three = {
-                {1, 2, 3},
-                {2, 3, 4},
-                {5, 4, 3}
-        };
-
-
-        Pruning pruning = new Pruning();
-        assertEquals(0.33, pruning.score(one, two), 0.01);
         assertEquals(0.66, pruning.score(one, three), 0.01);
     }
 
