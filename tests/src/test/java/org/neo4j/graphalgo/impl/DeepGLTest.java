@@ -58,6 +58,7 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -264,16 +265,46 @@ public class DeepGLTest {
     }
 
     @Test
-    public void classifier() throws IOException, InterruptedException {
+    public void runClassifierOverEmbeddingFiles() throws IOException {
+        Process exec = Runtime.getRuntime().exec("ls\n");
+        InputStream inputStream = exec.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        reader.lines()
+                .flatMap(s -> Arrays.stream(s.split("\\s")))
+                .filter(s -> s.startsWith("embedding"))
+                .filter(s -> s.endsWith(".txt"))
+                .peek(System.out::println)
+                .forEach(inFileName -> {
+                    try {
+                        String results = classifyAndEvaluate(inFileName);
+                        String fileName = inFileName.substring(0, inFileName.length() - 4);
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName + ".result")));
+                        writer.write(fileName + "\n");
+                        writer.write(results + "\n");
+                        writer.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+
+    public String classifyAndEvaluate(String file) {
 
         //First: get the dataset using the record reader. CSVRecordReader handles loading/parsing
         int numLinesToSkip = 0;
         char delimiter = ' ';
         RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
-        File dataFile = new File("movies-and-people");
-        recordReader.initialize(new FileSplit(dataFile));
+        File dataFile = new File(file);
 
-        BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+        BufferedReader reader = null;
+        try {
+            recordReader.initialize(new FileSplit(dataFile));
+            reader = new BufferedReader(new FileReader(dataFile));
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
+        assert reader != null;
         int numCols = reader.lines()
                 .findFirst()
                 .map(l -> l.split((String.valueOf(delimiter))))
@@ -337,5 +368,6 @@ public class DeepGLTest {
         INDArray output = model.output(testData.getFeatureMatrix());
         eval.eval(testData.getLabels(), output);
         System.out.println(eval.stats());
+        return eval.stats();
     }
 }
