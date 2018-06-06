@@ -45,25 +45,25 @@ public class Pruning {
                 .mapToInt(results -> results.stream().mapToInt(value -> (int) value.nodeId).min().getAsInt())
                 .toArray();
 
-        System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
+//        System.out.println("featureIdsToKeep = " + Arrays.toString(featureIdsToKeep));
 
-        System.out.println("embeddingToPrune = \n" + embeddingToPrune);
+//        System.out.println("embeddingToPrune = \n" + embeddingToPrune);
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
         Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
-        System.out.println("features before pruning = " + Arrays.deepToString(featuresToPrune));
+//        System.out.println("features before pruning = " + Arrays.deepToString(featuresToPrune));
         String featuresToKeepNames = Arrays.stream(featureIdsToKeep)
                 .mapToObj(i -> featuresToPrune[i])
                 .map(Arrays::deepToString)
                 .reduce((s, s2) -> String.join(", ", s, s2))
                 .get();
-        System.out.println("features to keep = " + featuresToKeepNames);
+//        System.out.println("features to keep = " + featuresToKeepNames);
         Feature[][] prunedFeatures = new Feature[featureIdsToKeep.length][];
         for (int index = 0; index < featureIdsToKeep.length; index++) {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
         }
 
-        System.out.println("prunedNDEmbedding = \n" + prunedNDEmbedding);
+//        System.out.println("prunedNDEmbedding = \n" + prunedNDEmbedding);
 
         return new Embedding(prunedFeatures, prunedNDEmbedding);
     }

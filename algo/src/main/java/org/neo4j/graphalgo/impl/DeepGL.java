@@ -137,7 +137,7 @@ public class DeepGL extends Algorithm<DeepGL> {
                 {Pruning.Feature.BOTH_DEGREE}
         };
 
-        System.out.println("ndEmbedding = \n" + ndEmbedding);
+//        System.out.println("ndEmbedding = \n" + ndEmbedding);
         doBinning();
 
         // move base features to prevEmbedding layer
@@ -152,7 +152,7 @@ public class DeepGL extends Algorithm<DeepGL> {
             features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
 
             // layer 1 ndFeatures
-            System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
+//            System.out.println("ndPrevEmbedding = \n" + ndPrevEmbedding);
 
             // OUT
             List<INDArray> arrays = new LinkedList<>();
@@ -181,7 +181,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             ndEmbedding = Nd4j.hstack(arrays);
 
-            System.out.println("nd embedding = \n" + ndEmbedding);
+//            System.out.println("nd embedding = \n" + ndEmbedding);
 
             INDArray ndDiffused = Nd4j.create(ndEmbedding.shape());
             Nd4j.copy(ndEmbedding, ndDiffused);
@@ -199,12 +199,10 @@ public class DeepGL extends Algorithm<DeepGL> {
             ndEmbedding = Nd4j.concat(1, ndEmbedding, ndDiffused);
 
             doBinning();
-
             doPruning();
 
             HashSet<Pruning.Feature[]> uniqueFeaturesSet = new HashSet<>(Arrays.asList(this.features));
             HashSet<Pruning.Feature[]> prevFeaturesSet = new HashSet<>(Arrays.asList(this.prevFeatures));
-
 
             uniqueFeaturesSet.removeAll(prevFeaturesSet);
             if (uniqueFeaturesSet.size() == 0) {
