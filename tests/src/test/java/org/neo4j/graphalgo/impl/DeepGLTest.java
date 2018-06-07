@@ -43,7 +43,6 @@ import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
-import org.nd4j.linalg.indexing.IntervalIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -61,7 +60,6 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -146,8 +144,7 @@ public class DeepGLTest {
                         }
                 );
 
-        deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
-        deepGL.ffeatureStream().forEach(System.out::println);
+        deepGL.featureStream().forEach(System.out::println);
 
         writer.close();
     }
@@ -292,6 +289,15 @@ public class DeepGLTest {
                 });
     }
 
+
+    @Test
+    public void testingViews() {
+        INDArray reshape = Nd4j.arange(20).reshape(4, 5);
+        System.out.println("reshape = \n" + reshape);
+        INDArrayIndex[] interval = NDArrayIndex.indexesFor(2);
+        INDArray indArray = reshape.get(interval);
+        System.out.println("indArray = \n" + indArray);
+    }
 
     public String classifyAndEvaluate(String file) {
 

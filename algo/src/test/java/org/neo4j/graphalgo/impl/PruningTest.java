@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.neo4j.graphalgo.impl.Pruning.Feature.*;
 
 public class PruningTest {
 
@@ -87,8 +86,17 @@ public class PruningTest {
 
         Pruning pruning = new Pruning();
 
-        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[][]{{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}}, Nd4j.create(one));
-        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[][]{{MEAN_IN_NEIGHBOURHOOD, IN_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, OUT_DEGREE}, {MEAN_IN_NEIGHBOURHOOD, BOTH_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD}}, Nd4j.create(two));
+        Pruning.Embedding prevEmbedding = new Pruning.Embedding(new Pruning.Feature[]{
+                new Pruning.Feature("IN_DEGREE"),
+                new Pruning.Feature("OUT_DEGREE"),
+                new Pruning.Feature("BOTH_DEGREE"),
+        }, Nd4j.create(one));
+        Pruning.Embedding embedding = new Pruning.Embedding(new Pruning.Feature[]{
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("IN_DEGREE")),
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("OUT_DEGREE")),
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("BOTH_DEGREE")),
+                new Pruning.Feature("MEAN_BOTH_NEIGHBOURHOOD"),
+                }, Nd4j.create(two));
 
         Pruning.Embedding prunedEmbedding = pruning.prune(prevEmbedding, embedding);
     }
@@ -142,7 +150,11 @@ public class PruningTest {
                 {3, 4, 5}
         };
 
-        Pruning.Feature[][] prevLayerFeatures = {{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}};
+        Pruning.Feature[] prevLayerFeatures = new Pruning.Feature[]{
+                new Pruning.Feature("IN_DEGREE"),
+                new Pruning.Feature("OUT_DEGREE"),
+                new Pruning.Feature("BOTH_DEGREE"),
+        };
 
         double[][] layer = {
                 {1, 2, 3, 9},
@@ -150,8 +162,12 @@ public class PruningTest {
                 {3, 4, 5, 8}
         };
 
-        Pruning.Feature[][] layerFeatures = {{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}};
-
+        Pruning.Feature[] layerFeatures = new Pruning.Feature[]{
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("IN_DEGREE")),
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("OUT_DEGREE")),
+                new Pruning.Feature("MEAN_IN_NEIGHBOURHOOD", new Pruning.Feature("BOTH_DEGREE")),
+                new Pruning.Feature("MEAN_BOTH_NEIGHBOURHOOD"),
+        };
 
         Pruning pruning = new Pruning(0.5);
 
@@ -173,11 +189,11 @@ public class PruningTest {
         System.out.println("Features:");
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
 
-        Pruning.Feature[][] expected = new Pruning.Feature[][] {
-                {IN_DEGREE},
-                {OUT_DEGREE},
-                {BOTH_DEGREE},
-                {MEAN_OUT_NEIGHBOURHOOD}
+        Pruning.Feature[] expected = new Pruning.Feature[]{
+                new Pruning.Feature("IN_DEGREE"),
+                new Pruning.Feature("OUT_DEGREE"),
+                new Pruning.Feature("BOTH_DEGREE"),
+                new Pruning.Feature("MEAN_OUT_NEIGHBOURHOOD"),
         };
 
         assertArrayEquals(expected, prunedEmbedding.getFeatures());
@@ -191,7 +207,11 @@ public class PruningTest {
                 {3, 4, 5}
         };
 
-        Pruning.Feature[][] prevLayerFeatures = {{IN_DEGREE}, {OUT_DEGREE}, {BOTH_DEGREE}};
+        Pruning.Feature[] prevLayerFeatures = new Pruning.Feature[]{
+                new Pruning.Feature("IN_DEGREE"),
+                new Pruning.Feature("OUT_DEGREE"),
+                new Pruning.Feature("BOTH_DEGREE"),
+        };
 
         double[][] layer = {
                 {1, 2, 3, 9},
@@ -199,8 +219,12 @@ public class PruningTest {
                 {3, 4, 5, 8}
         };
 
-        Pruning.Feature[][] layerFeatures = {{MEAN_BOTH_NEIGHOURHOOD, IN_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, OUT_DEGREE}, {MEAN_BOTH_NEIGHOURHOOD, BOTH_DEGREE}, {MEAN_OUT_NEIGHBOURHOOD}};
-
+        Pruning.Feature[] layerFeatures = new Pruning.Feature[]{
+                new Pruning.Feature("MEAN_BOTH_NEIGHBOURHOOD", new Pruning.Feature("IN_DEGREE")),
+                new Pruning.Feature("MEAN_BOTH_NEIGHBOURHOOD", new Pruning.Feature("OUT_DEGREE")),
+                new Pruning.Feature("MEAN_BOTH_NEIGHBOURHOOD", new Pruning.Feature("BOTH_DEGREE")),
+                new Pruning.Feature("MEAN_OUT_NEIGHBOURHOOD"),
+        };
 
         Pruning pruning = new Pruning(0.5);
 
@@ -219,8 +243,8 @@ public class PruningTest {
         System.out.println("Features:");
         System.out.println(Arrays.deepToString(prunedEmbedding.getFeatures()));
 
-        Pruning.Feature[][] expected = new Pruning.Feature[][] {
-                {MEAN_OUT_NEIGHBOURHOOD}
+        Pruning.Feature[] expected = new Pruning.Feature[] {
+                new Pruning.Feature("MEAN_OUT_NEIGHBOURHOOD")
         };
 
         assertArrayEquals(expected, prunedEmbedding.getFeatures());

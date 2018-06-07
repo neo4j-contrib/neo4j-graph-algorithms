@@ -12,9 +12,7 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 
-import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.nd4j.linalg.indexing.NDArrayIndex.interval;
@@ -50,26 +48,18 @@ public class Pruning {
 //        System.out.println("embeddingToPrune = \n" + embeddingToPrune);
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
-        Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
-        fFeature[] ffeaturesToPrune = ArrayUtils.addAll(prevEmbedding.getfFeatures(), embedding.getfFeatures());
+        Feature[] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
 //        System.out.println("features before pruning = " + Arrays.deepToString(featuresToPrune));
-        String featuresToKeepNames = Arrays.stream(featureIdsToKeep)
-                .mapToObj(i -> featuresToPrune[i])
-                .map(Arrays::deepToString)
-                .reduce((s, s2) -> String.join(", ", s, s2))
-                .get();
 //        System.out.println("features to keep = " + featuresToKeepNames);
-        Feature[][] prunedFeatures = new Feature[featureIdsToKeep.length][];
-        fFeature[] prunedfFeatures = new fFeature[featureIdsToKeep.length];
+        Feature[] prunedFeatures = new Feature[featureIdsToKeep.length];
 
         for (int index = 0; index < featureIdsToKeep.length; index++) {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
-            prunedfFeatures[index] = ffeaturesToPrune[featureIdsToKeep[index]];
         }
 
 //        System.out.println("prunedNDEmbedding = \n" + prunedNDEmbedding);
 
-        return new Embedding(prunedFeatures, prunedfFeatures, prunedNDEmbedding);
+        return new Embedding(prunedFeatures, prunedNDEmbedding);
     }
 
     private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
@@ -115,16 +105,16 @@ public class Pruning {
     }
 
 
-    public static class fFeature {
+    public static class Feature {
         private final String name;
-        private final fFeature prev;
+        private final Feature prev;
 
-        public fFeature(String name, fFeature prev) {
+        public Feature(String name, Feature prev) {
             this.name = name;
             this.prev = prev;
         }
 
-        public fFeature(String name) {
+        public Feature(String name) {
             this.prev = null;
             this.name = name;
         }
@@ -133,55 +123,24 @@ public class Pruning {
         public String toString() {
             return prev == null ? name : name + "( " + prev.toString() + ")";
         }
-    }
-    public enum Feature {
-        SUM_OUT_NEIGHBOURHOOD,
-        SUM_IN_NEIGHBOURHOOD,
-        SUM_BOTH_NEIGHOURHOOD,
-        HADAMARD_OUT_NEIGHBOURHOOD,
-        HADAMARD_IN_NEIGHBOURHOOD,
-        HADAMARD_BOTH_NEIGHOURHOOD,
-        MAX_OUT_NEIGHBOURHOOD,
-        MAX_IN_NEIGHBOURHOOD,
-        MAX_BOTH_NEIGHOURHOOD,
-        MEAN_OUT_NEIGHBOURHOOD,
-        MEAN_IN_NEIGHBOURHOOD,
-        MEAN_BOTH_NEIGHOURHOOD,
-        RBF_OUT_NEIGHBOURHOOD,
-        RBF_IN_NEIGHBOURHOOD,
-        RBF_BOTH_NEIGHOURHOOD,
-        L1NORM_OUT_NEIGHBOURHOOD,
-        L1NORM_IN_NEIGHBOURHOOD,
-        L1NORM_BOTH_NEIGHOURHOOD,
-        OUT_DEGREE,
-        IN_DEGREE,
-        BOTH_DEGREE,
-        DIFFUSE
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof Feature) && toString().equals(obj.toString());
+        }
     }
 
     static class Embedding {
-        private final Feature[][] features;
         private INDArray ndEmbedding;
-        private fFeature[] fFeatures;
+        private Feature[] Features;
 
-        public Embedding(Feature[][] features, fFeature[] fFeatures, INDArray ndEmbedding) {
-            this.features = features;
-            this.fFeatures = fFeatures;
+        public Embedding(Feature[] Features, INDArray ndEmbedding) {
+            this.Features = Features;
             this.ndEmbedding = ndEmbedding;
         }
 
-        public Embedding(Feature[][] features, INDArray ndEmbedding) {
-            this.features = features;
-            this.fFeatures = null;
-            this.ndEmbedding = ndEmbedding;
-        }
-
-        public Feature[][] getFeatures() {
-            return features;
-        }
-
-        public fFeature[] getfFeatures() {
-            return fFeatures;
+        public Feature[] getFeatures() {
+            return Features;
         }
 
         public INDArray getNDEmbedding() {
