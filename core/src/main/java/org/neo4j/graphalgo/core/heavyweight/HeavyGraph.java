@@ -43,7 +43,7 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     private AdjacencyMatrix container;
     private WeightMapping relationshipWeights;
 
-    private Map<String, WeightMapping> nodePropertiesMapping = new HashMap<>();
+    private Map<String, WeightMapping> nodePropertiesMapping;
 
     private boolean canRelease = true;
 
@@ -142,7 +142,6 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
             default:
                 return container.hasOutgoing(sourceNodeId, targetNodeId) || container.hasIncoming(sourceNodeId, targetNodeId);
         }
-
     }
 
     @Override
