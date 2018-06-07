@@ -95,7 +95,7 @@ public class Pruning {
             }
         }
 
-        return new HeavyGraph(idMap, matrix, relWeights, null, null);
+        return new HeavyGraph(idMap, matrix, relWeights, null);
     }
 
     private INDArray pruneEmbedding(INDArray origEmbedding, int... featIdsToKeep) {

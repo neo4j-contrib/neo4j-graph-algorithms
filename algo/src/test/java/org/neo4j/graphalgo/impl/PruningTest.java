@@ -128,7 +128,7 @@ public class PruningTest {
         relWeights.put(RawValues.combineIntInt(idMap.get(2), idMap.get(14)), 0.66);
         relWeights.put(RawValues.combineIntInt(idMap.get(4), idMap.get(14)), 0.66);
 
-        final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null, null);
+        final Graph graph = new HeavyGraph(idMap, matrix, relWeights, null);
 
         GraphUnionFind algo = new GraphUnionFind(graph);
         DisjointSetStruct struct = algo.compute();
