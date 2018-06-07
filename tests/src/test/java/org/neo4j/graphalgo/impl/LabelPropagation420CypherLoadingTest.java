@@ -145,7 +145,7 @@ public final class LabelPropagation420CypherLoadingTest
                 graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT, propertyMappings);
+                Pools.DEFAULT);
 
         lp.compute(Direction.OUTGOING, 10);
 

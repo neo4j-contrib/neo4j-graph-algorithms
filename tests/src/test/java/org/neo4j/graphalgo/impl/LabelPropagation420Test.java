@@ -27,6 +27,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
@@ -120,6 +121,10 @@ public final class LabelPropagation420Test {
                 .withRelationshipWeightsFromProperty("weight", 1.0)
                 .withNodeWeightsFromProperty("weight", 1.0)
                 .withNodeProperty("partition", 0.0)
+                .withOptionalNodeProperties(
+                        PropertyMapping.of(LabelPropagation.PARTITION_TYPE, "partition", 0.0),
+                        PropertyMapping.of(LabelPropagation.WEIGHT_TYPE, "weight", 1.0)
+                )
                 .withDirection(Direction.BOTH)
                 .withConcurrency(Pools.DEFAULT_CONCURRENCY)
                 .load(HeavyGraphFactory.class);
@@ -141,7 +146,7 @@ public final class LabelPropagation420Test {
                 graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT, propertyMappings);
+                Pools.DEFAULT);
 
         lp.compute(Direction.OUTGOING, 10);
 

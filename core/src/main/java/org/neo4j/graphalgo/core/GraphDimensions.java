@@ -123,9 +123,13 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         }
         relWeightId = propertyKey(tokenRead, setup.shouldLoadRelationshipWeight(), setup.relationWeightPropertyName);
 
-        nodePropIds = new int[setup.nodePropertyMappings.length];
-        for (int i = 0; i < setup.nodePropertyMappings.length; i++) {
-            nodePropIds[i] = propertyKey(tokenRead, true, setup.nodePropertyMappings[i].propertyKey);
+        if(setup.nodePropertyMappings.length > 0) {
+            nodePropIds = new int[setup.nodePropertyMappings.length];
+            for (int i = 0; i < setup.nodePropertyMappings.length; i++) {
+                nodePropIds[i] = propertyKey(tokenRead, true, setup.nodePropertyMappings[i].propertyKey);
+            }
+        } else {
+            nodePropIds = new int[0];
         }
 
         nodeWeightId = propertyKey(tokenRead, setup.shouldLoadNodeWeight(), setup.nodeWeightPropertyName);

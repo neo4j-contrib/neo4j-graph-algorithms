@@ -37,6 +37,7 @@ import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -51,7 +52,7 @@ final class RelationshipImporter extends StatementAction {
 
     private final int nodeSize;
     private final int nodeOffset;
-    private final WeightMapping[] nodeProperties;
+    private final Map<String, WeightMapping> nodeProperties;
 
     private IdMap idMap;
     private AdjacencyMatrix matrix;
@@ -70,8 +71,7 @@ final class RelationshipImporter extends StatementAction {
             AdjacencyMatrix matrix,
             PrimitiveIntIterable nodes,
             Supplier<WeightMapping> relWeights,
-            Supplier<WeightMapping> nodeWeights,
-            Supplier<WeightMapping> nodeProps) {
+            Map<String, Supplier<WeightMapping>> nodePropertiesSupplier) {
         super(api);
         this.matrix = matrix;
         this.nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
@@ -83,13 +83,8 @@ final class RelationshipImporter extends StatementAction {
         this.relWeights = relWeights.get();
         this.relationId = dimensions.relationshipTypeId();
 
-        this.nodeProperties = new WeightMapping[] {
-                nodeWeights.get(),
-                nodeProps.get()
-        };
-//
-//        this.nodeWeights = nodeWeights.get();
-//        this.nodeProps = nodeProps.get();
+        this.nodeProperties = new HashMap<>();
+        nodePropertiesSupplier.forEach((key, value) -> this.nodeProperties.put(key, value.get()));
     }
 
     @Override
@@ -127,7 +122,7 @@ final class RelationshipImporter extends StatementAction {
             loader = prepareDirected(transaction, readOp, cursors);
         }
 
-        WeightMap[] weightMaps = Stream.of(nodeProperties)
+        WeightMap[] weightMaps = nodeProperties.values().stream()
                 .filter(prop -> prop instanceof WeightMap)
                 .map(prop -> (WeightMap) prop)
                 .toArray(WeightMap[]::new);
@@ -202,24 +197,32 @@ final class RelationshipImporter extends StatementAction {
 
     Graph toGraph(final IdMap idMap, final AdjacencyMatrix matrix) {
 
-        Map<String, WeightMapping> nodePropertyMappings = new HashMap<>();
-        nodePropertyMappings.put("weight", nodeWeights);
-        nodePropertyMappings.put("property", nodeProps);
-
         return new HeavyGraph(
                 idMap,
                 matrix,
                 relWeights,
-                nodePropertyMappings);
+                nodeProperties);
     }
 
+//    void writeInto(
+//            WeightMapping relWeights,
+//            WeightMapping nodeWeights,
+//            WeightMapping nodeProps) {
+//        combineMaps(relWeights, this.relWeights);
+//        combineMaps(nodeWeights, this.nodeWeights);
+//        combineMaps(nodeProps, this.nodeProps);
+//    }
+
     void writeInto(
-            WeightMapping relWeights,
-            WeightMapping nodeWeights,
-            WeightMapping nodeProps) {
+            WeightMapping relWeights, Map<String, WeightMapping> nodeProperties) {
         combineMaps(relWeights, this.relWeights);
-        combineMaps(nodeWeights, this.nodeWeights);
-        combineMaps(nodeProps, this.nodeProps);
+
+        for (Map.Entry<String, WeightMapping> entry : nodeProperties.entrySet()) {
+            combineMaps(nodeProperties.get(entry.getKey()), entry.getValue());
+        }
+
+//        combineMaps(nodeWeights, this.nodeWeights);
+//        combineMaps(nodeProps, this.nodeProps);
     }
 
     void release() {

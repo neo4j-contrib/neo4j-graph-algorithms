@@ -83,7 +83,7 @@ public class GraphLoader {
     private AllocationTracker tracker = AllocationTracker.EMPTY;
     private boolean sort = false;
     private boolean loadAsUndirected = false;
-    private PropertyMapping[] nodePropertyMappings;
+    private PropertyMapping[] nodePropertyMappings = new PropertyMapping[0];
 
     /**
      * Creates a new serial GraphLoader.
