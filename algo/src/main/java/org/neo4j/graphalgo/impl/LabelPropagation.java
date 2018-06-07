@@ -68,18 +68,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.label = label;
         }
     }
-
-    /*
-    CALL algo.lpa(null, null, {
-      partitionProperty "partition",
-      weightProperty: "weight"
-    })
-
-    CALL algo.deepwalk(null, null, {
-      nodeFeatures: ["feat1", "feat2", "feat3"]
-    })
-     */
-
+    
     public LabelPropagation(
             HeavyGraph graph,
             int batchSize,
