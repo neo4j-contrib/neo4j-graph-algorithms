@@ -25,6 +25,8 @@ import org.nd4j.linalg.inverse.InvertMatrix;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphdb.Direction;
 
@@ -39,7 +41,7 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private final int numNeighbourhoods;
     // the graph
-    private Graph graph;
+    private HeavyGraph graph;
     // AI counts up for every node until nodeCount is reached
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
 
@@ -69,18 +71,19 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     /**
      * constructs a parallel centrality solver
-     *  @param graph              the graph iface
-     * @param executorService    the executor service
-     * @param concurrency        desired number of threads to spawn
+     *
+     * @param graph               the graph iface
+     * @param executorService     the executor service
+     * @param concurrency         desired number of threads to spawn
      * @param pruningLambda
      * @param diffusionIterations
      */
-    public DeepGL(Graph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda, int diffusionIterations) {
+    public DeepGL(HeavyGraph graph, ExecutorService executorService, int concurrency, int iterations, double pruningLambda, int diffusionIterations) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
         this.concurrency = concurrency;
-        this.ndEmbedding = Nd4j.create(nodeCount, 3);
+        this.ndEmbedding = Nd4j.create(nodeCount, 3 + graph.availableNodeProperties().size());
         this.numNeighbourhoods = 3;
         this.iterations = iterations;
         this.pruningLambda = pruningLambda;
@@ -123,11 +126,21 @@ public class DeepGL extends Algorithm<DeepGL> {
             futures.add(executorService.submit(new BaseFeaturesTask()));
         }
         ParallelUtil.awaitTermination(futures);
-        this.features = new Pruning.Feature[]{
-                new Pruning.Feature("IN_DEGREE"),
-                new Pruning.Feature("OUT_DEGREE"),
-                new Pruning.Feature("BOTH_DEGREE"),
-        };
+
+        Set<String> nodeProperties = graph.availableNodeProperties();
+        this.features = new Pruning.Feature[3 + nodeProperties.size()];
+        this.features[0] = new Pruning.Feature("IN_DEGREE");
+        this.features[1] = new Pruning.Feature("OUT_DEGREE");
+        this.features[2] = new Pruning.Feature("BOTH_DEGREE");
+
+        Iterator<String> iterator = nodeProperties.iterator();
+        int counter = 3;
+
+        while (iterator.hasNext()) {
+            this.features[counter] = new Pruning.Feature(iterator.next().toUpperCase());
+            counter++;
+        }
+
 
         doBinning();
 
@@ -269,11 +282,22 @@ public class DeepGL extends Algorithm<DeepGL> {
                     return;
                 }
 
-                ndEmbedding.putRow(nodeId, Nd4j.create(new double[]{
-                        graph.degree(nodeId, Direction.INCOMING),
-                        graph.degree(nodeId, Direction.OUTGOING),
-                        graph.degree(nodeId, Direction.BOTH)
-                }));
+                Set<String> nodeProperties = graph.availableNodeProperties();
+
+                double[] row = new double[3 + nodeProperties.size()];
+                row[0] = graph.degree(nodeId, Direction.INCOMING);
+                row[1] = graph.degree(nodeId, Direction.OUTGOING);
+                row[2] = graph.degree(nodeId, Direction.BOTH);
+
+                Iterator<String> iterator = nodeProperties.iterator();
+                int counter = 3;
+
+                while (iterator.hasNext()) {
+                    row[counter] = graph.nodeProperties(iterator.next()).get(nodeId);
+                    counter++;
+                }
+
+                ndEmbedding.putRow(nodeId, Nd4j.create(row));
             }
         }
     }
@@ -295,7 +319,9 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     interface RelOperator {
         INDArray ndOp(INDArray features, INDArray adjacencyMatrix);
+
         double defaultVal();
+
         String name();
     }
 

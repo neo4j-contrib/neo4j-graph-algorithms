@@ -22,6 +22,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.DeepGL;
@@ -36,6 +37,8 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.values.storable.INDArrayPropertyTranslator;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -66,12 +69,14 @@ public class DeepGLProc {
 
         final DeepGLProcResult.Builder builder = DeepGLProcResult.builder();
 
-        Graph graph;
+
+        HeavyGraph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api, Pools.DEFAULT)
+            graph = (HeavyGraph) new GraphLoader(api, Pools.DEFAULT)
                     .init(log, label, relationship, configuration)
                     .withoutNodeProperties()
                     .withDirection(configuration.getDirection(Direction.BOTH))
+                    .withOptionalNodeProperties(extractNodeFeatures(config))
                     .load(configuration.getGraphImpl());
         }
 
@@ -123,10 +128,11 @@ public class DeepGLProc {
         int diffusions = configuration.getInt("diffusions", 10);
         double pruningLambda = configuration.get("pruningLambda", 0.1);
 
-        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        final HeavyGraph graph = (HeavyGraph) new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withoutNodeProperties()
                 .withDirection(configuration.getDirection(Direction.BOTH))
+                .withOptionalNodeProperties(extractNodeFeatures(config))
                 .load(configuration.getGraphImpl());
 
         if (graph.nodeCount() == 0) {
@@ -145,5 +151,15 @@ public class DeepGLProc {
         graph.release();
 
         return algo.resultStream();
+    }
+
+    private PropertyMapping[] extractNodeFeatures(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+        List<String> nodeFeatures = (List<String>) config.getOrDefault("nodeFeatures", Collections.emptyList());
+
+        PropertyMapping[] propertyMappings = new PropertyMapping[nodeFeatures.size()];
+        for (int i = 0; i < nodeFeatures.size(); i++) {
+            propertyMappings[i] = PropertyMapping.of(nodeFeatures.get(i), nodeFeatures.get(i), 0.0);
+        }
+        return propertyMappings;
     }
 }

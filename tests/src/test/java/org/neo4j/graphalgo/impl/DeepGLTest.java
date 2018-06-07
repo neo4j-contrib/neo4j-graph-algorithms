@@ -52,6 +52,7 @@ import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Transaction;
@@ -68,7 +69,7 @@ import java.util.stream.Stream;
 public class DeepGLTest {
 
     private static GraphDatabaseAPI db;
-    private static Graph graph;
+    private static HeavyGraph graph;
 
     @BeforeClass
     public static void setupGraph() throws KernelException {
@@ -101,7 +102,7 @@ public class DeepGLTest {
                 .resolveDependency(Procedures.class)
                 .registerProcedure(BetweennessCentralityProc.class);
 
-        graph = new GraphLoader(db)
+        graph = (HeavyGraph) new GraphLoader(db)
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()

@@ -98,16 +98,16 @@ public class DeepGLIntegrationTest {
     public void write() throws Exception {
 
         String writeProperty = "'foo'";
-        Result result = db.execute("CALL algo.deepgl('Node', 'TYPE', {writeProperty: " + writeProperty + "})");
+        Result result = db.execute("CALL algo.deepgl('Node', 'TYPE', {writeProperty: " + writeProperty + ", nodeFeatures:['prop1']})");
 
         while (result.hasNext()) {
             System.out.println("summary = " + result.next());
         }
 
-        Result embeddings = db.execute("MATCH (n:Node) RETURN n.embedding AS embedding");
+        Result embeddings = db.execute("MATCH (n:Node) RETURN n.foo AS foo");
         while(embeddings.hasNext()) {
             Map<String, Object> row = embeddings.next();
-            System.out.println("embeddings = " + Arrays.toString((double[])row.get(writeProperty)));
+            System.out.println("embeddings = " + Arrays.toString((double[])row.get("foo")));
         }
     }
 }

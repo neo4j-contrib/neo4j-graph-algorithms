@@ -18,6 +18,9 @@
  */
 package org.neo4j.graphalgo.api;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Getter interface for node properties.
  *
@@ -34,4 +37,5 @@ public interface NodeProperties {
 //    double valueOf(int nodeId, double defaultValue);
 
     WeightMapping nodeProperties(String type);
+    Set<String> availableNodeProperties();
 }
