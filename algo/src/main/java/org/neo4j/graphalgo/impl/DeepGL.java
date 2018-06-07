@@ -143,23 +143,15 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             List<INDArray> arrays = new LinkedList<>();
             List<Pruning.Feature> featuresList = new LinkedList<>();
-            for (int opId = 0; opId < operators.length; opId++) {
-                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
-                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
-                arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
+            for (RelOperator operator : operators) {
+                arrays.add(operator.ndOp(ndPrevEmbedding, adjacencyMatrixOut));
+                arrays.add(operator.ndOp(ndPrevEmbedding, adjacencyMatrixIn));
+                arrays.add(operator.ndOp(ndPrevEmbedding, adjacencyMatrixBoth));
 
-                int offset = opId * prevFeatures.length * numNeighbourhoods;
-
-                for (int j = 0; j < prevFeatures.length; j++) {
-                    featuresList.add(new Pruning.Feature(operators[opId].name() + "_out_neighbourhood", prevFeatures[j]));
-                }
-
-                for (int j = 0; j < prevFeatures.length; j++) {
-                    featuresList.add(new Pruning.Feature(operators[opId].name() + "_in_neighbourhood", prevFeatures[j]));
-                }
-
-                for (int j = 0; j < prevFeatures.length; j++) {
-                    featuresList.add(new Pruning.Feature(operators[opId].name() + "_both_neighbourhood", prevFeatures[j]));
+                for (String neighbourhood : new String[]{"_out", "_in", "_both"}) {
+                    for (Pruning.Feature prevFeature : prevFeatures) {
+                        featuresList.add(new Pruning.Feature(operator.name() + neighbourhood + "_neighbourhood", prevFeature));
+                    }
                 }
             }
 
