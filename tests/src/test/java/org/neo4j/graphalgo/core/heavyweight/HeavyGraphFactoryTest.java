@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
@@ -66,8 +67,14 @@ public class HeavyGraphFactoryTest {
 
         try (final Transaction transaction = db.beginTx()) {
             final Node node1 = db.createNode(Label.label("Node1"));
+            node1.setProperty("prop1", 1);
+
             final Node node2 = db.createNode(Label.label("Node2"));
+            node2.setProperty("prop2", 2);
+
             final Node node3 = db.createNode(Label.label("Node3"));
+            node3.setProperty("prop3", 3);
+
             final Relationship rel1 = node1.createRelationshipTo(node2, RelationshipType.withName("REL1"));
             final Relationship rel2 = node1.createRelationshipTo(node3, RelationshipType.withName("REL2"));
             final Relationship rel3 = node2.createRelationshipTo(node3, RelationshipType.withName("REL3"));
@@ -161,4 +168,20 @@ public class HeavyGraphFactoryTest {
                 .accept(eq(graph.toMappedNodeId(id1)), eq(graph.toMappedNodeId(id2)), anyLong(), eq(1.0));
     }
 
+    @Test
+    public void testWithNodeProperties() throws Exception {
+        final HeavyGraph graph = (HeavyGraph) new GraphLoader((GraphDatabaseAPI) db)
+                .withoutRelationshipWeights()
+                .withAnyRelationshipType()
+                .withOptionalNodeProperties(
+                        PropertyMapping.of("prop1", "prop1", 0D),
+                        PropertyMapping.of("prop2", "prop2", 0D),
+                        PropertyMapping.of("prop3", "prop3", 0D)
+                )
+                .load(HeavyGraphFactory.class);
+
+        assertEquals(1.0, graph.nodeProperties("prop1").get(graph.toMappedNodeId(0L)), 0.01);
+        assertEquals(2.0, graph.nodeProperties("prop2").get(graph.toMappedNodeId(1L)), 0.01);
+        assertEquals(3.0, graph.nodeProperties("prop3").get(graph.toMappedNodeId(2L)), 0.01);
+    }
 }

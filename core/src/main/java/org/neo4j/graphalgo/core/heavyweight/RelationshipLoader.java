@@ -222,7 +222,6 @@ final class ReadWithNodeProperties extends RelationshipLoader {
 
         for (WeightMap nodeProperty : nodeProperties) {
             readNodeWeight(sourceNode, localNodeId, nodeProperty, nodeProperty.propertyId());
-            readNodeWeight(sourceNode, localNodeId, nodeProperty, nodeProperty.propertyId());
         }
     }
 }

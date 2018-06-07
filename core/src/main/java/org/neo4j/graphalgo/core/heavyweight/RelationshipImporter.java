@@ -57,7 +57,7 @@ final class RelationshipImporter extends StatementAction {
     private AdjacencyMatrix matrix;
 
     private WeightMapping relWeights;
-    private final Map<String, WeightMapping> nodeProperties;
+    private Map<String, WeightMapping> nodeProperties;
 
     RelationshipImporter(
             GraphDatabaseAPI api,
@@ -200,7 +200,7 @@ final class RelationshipImporter extends StatementAction {
         this.idMap = null;
         this.matrix = null;
         this.relWeights = null;
-        this.nodeProperties.clear();
+        this.nodeProperties = null;
     }
 
     private void combineMaps(WeightMapping global, WeightMapping local) {
