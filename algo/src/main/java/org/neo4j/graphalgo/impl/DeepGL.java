@@ -60,6 +60,8 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     private Pruning.Feature[][] features;
     private Pruning.Feature[][] prevFeatures;
+    private Pruning.fFeature[] ffeatures;
+    private Pruning.fFeature[] prevffeatures;
 
     private INDArray ndEmbedding;
     private INDArray ndPrevEmbedding;
@@ -128,11 +130,17 @@ public class DeepGL extends Algorithm<DeepGL> {
                 {Pruning.Feature.OUT_DEGREE},
                 {Pruning.Feature.BOTH_DEGREE}
         };
+        this.ffeatures = new Pruning.fFeature[]{
+                new Pruning.fFeature("IN_DEGREE"),
+                new Pruning.fFeature("OUT_DEGREE"),
+                new Pruning.fFeature("BOTH_DEGREE"),
+        };
 
         doBinning();
 
         ndPrevEmbedding = ndEmbedding;
         prevFeatures = features;
+        prevffeatures = ffeatures;
 
         int iteration;
         for (iteration = 1; iteration <= iterations; iteration++) {
@@ -140,8 +148,10 @@ public class DeepGL extends Algorithm<DeepGL> {
             getProgressLogger().log("Current layer: " + iteration);
 
             features = new Pruning.Feature[numNeighbourhoods * operators.length * prevFeatures.length][];
+            ffeatures = new Pruning.fFeature[numNeighbourhoods * operators.length * prevFeatures.length];
 
             List<INDArray> arrays = new LinkedList<>();
+            List<Pruning.fFeature> ffeaturesList = new LinkedList<>();
             for (int opId = 0; opId < operators.length; opId++) {
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixOut));
                 arrays.add(operators[opId].ndOp(ndPrevEmbedding, adjacencyMatrixIn));
@@ -152,16 +162,19 @@ public class DeepGL extends Algorithm<DeepGL> {
                 Pruning.Feature[] outNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId]};
                 for (int j = 0; j < prevFeatures.length; j++) {
                     features[offset + j] = ArrayUtils.addAll(prevFeatures[j], outNeighbourhoodFeature);
+                    ffeaturesList.add(new Pruning.fFeature(operators[opId].name() + "_OUT_NEIGHBORHOOD", prevffeatures[j]));
                 }
 
                 Pruning.Feature[] inNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId + 1]};
                 for (int j = 0; j < prevFeatures.length; j++) {
                     features[offset + j + prevFeatures.length] = ArrayUtils.addAll(prevFeatures[j], inNeighbourhoodFeature);
+                    ffeaturesList.add(new Pruning.fFeature(operators[opId].name() + "_IN_NEIGHBORHOOD", prevffeatures[j]));
                 }
 
                 Pruning.Feature[] bothNeighbourhoodFeature = new Pruning.Feature[]{Pruning.Feature.values()[numNeighbourhoods * opId + 2]};
                 for (int j = 0; j < prevFeatures.length; j++) {
                     features[offset + j + (2 * prevFeatures.length)] = ArrayUtils.addAll(prevFeatures[j], bothNeighbourhoodFeature);
+                    ffeaturesList.add(new Pruning.fFeature(operators[opId].name() + "_BOTH_NEIGHBORHOOD", prevffeatures[j]));
                 }
             }
 
@@ -171,8 +184,12 @@ public class DeepGL extends Algorithm<DeepGL> {
             Nd4j.copy(ndEmbedding, ndDiffused);
 
             features = ArrayUtils.addAll(features, features);
+            ffeaturesList.addAll(ffeaturesList);
+            ffeatures = ffeaturesList.toArray(new Pruning.fFeature[0]);
+
             for (int i = features.length / 2; i < features.length; i++) {
                 features[i] = ArrayUtils.addAll(features[i], Pruning.Feature.DIFFUSE);
+                ffeatures[i] = new Pruning.fFeature("DIFFUSE", ffeatures[i]);
             }
 
             for (int diffIteration = 0; diffIteration < diffusionIterations; diffIteration++) {
@@ -186,17 +203,22 @@ public class DeepGL extends Algorithm<DeepGL> {
 
             HashSet<Pruning.Feature[]> uniqueFeaturesSet = new HashSet<>(Arrays.asList(this.features));
             HashSet<Pruning.Feature[]> prevFeaturesSet = new HashSet<>(Arrays.asList(this.prevFeatures));
+            HashSet<Pruning.fFeature> uniquefFeaturesSet = new HashSet<>(Arrays.asList(this.ffeatures));
+            HashSet<Pruning.fFeature> prevfFeaturesSet = new HashSet<>(Arrays.asList(this.prevffeatures));
 
             uniqueFeaturesSet.removeAll(prevFeaturesSet);
+            uniquefFeaturesSet.removeAll(prevfFeaturesSet);
             if (uniqueFeaturesSet.size() == 0) {
                 ndEmbedding = ndPrevEmbedding;
                 features = prevFeatures;
+                ffeatures = prevffeatures;
                 this.numberOfLayers = iteration;
                 break;
             }
 
             ndPrevEmbedding = ndEmbedding;
             prevFeatures = this.features;
+            prevffeatures = this.ffeatures;
         }
 
         this.numberOfLayers = iteration;
@@ -212,9 +234,10 @@ public class DeepGL extends Algorithm<DeepGL> {
         int ndSizeBefore = ndEmbedding.size(1);
 
         Pruning pruning = new Pruning(pruningLambda);
-        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, ndPrevEmbedding), new Pruning.Embedding(features, ndEmbedding));
+        Pruning.Embedding prunedEmbedding = pruning.prune(new Pruning.Embedding(prevFeatures, prevffeatures, ndPrevEmbedding), new Pruning.Embedding(features, ffeatures, ndEmbedding));
 
         features = prunedEmbedding.getFeatures();
+        ffeatures = prunedEmbedding.getfFeatures();
 
         ndEmbedding = prunedEmbedding.getNDEmbedding();
 
@@ -246,6 +269,10 @@ public class DeepGL extends Algorithm<DeepGL> {
 
     public Stream<Pruning.Feature[]> featureStream() {
         return Arrays.stream(features);
+    }
+
+    public Stream<Pruning.fFeature> ffeatureStream() {
+        return Arrays.stream(ffeatures);
     }
 
     @Override
@@ -304,6 +331,7 @@ public class DeepGL extends Algorithm<DeepGL> {
     interface RelOperator {
         INDArray ndOp(INDArray features, INDArray adjacencyMatrix);
         double defaultVal();
+        String name();
     }
 
     RelOperator sum = new RelOperator() {
@@ -316,6 +344,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         @Override
         public double defaultVal() {
             return 0;
+        }
+
+        @Override
+        public String name() {
+            return "sum";
         }
     };
 
@@ -347,6 +380,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         public double defaultVal() {
             return 1;
         }
+
+        @Override
+        public String name() {
+            return "hadamard";
+        }
     };
 
     RelOperator max = new RelOperator() {
@@ -367,6 +405,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         public double defaultVal() {
             return 0;
         }
+
+        @Override
+        public String name() {
+            return "max";
+        }
     };
 
     RelOperator mean = new RelOperator() {
@@ -382,6 +425,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         @Override
         public double defaultVal() {
             return 0;
+        }
+
+        @Override
+        public String name() {
+            return "mean";
         }
     };
 
@@ -406,6 +454,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         public double defaultVal() {
             return 0;
         }
+
+        @Override
+        public String name() {
+            return "rbf";
+        }
     };
 
     RelOperator l1Norm = new RelOperator() {
@@ -427,6 +480,11 @@ public class DeepGL extends Algorithm<DeepGL> {
         @Override
         public double defaultVal() {
             return 0;
+        }
+
+        @Override
+        public String name() {
+            return "l1Norm";
         }
     };
 

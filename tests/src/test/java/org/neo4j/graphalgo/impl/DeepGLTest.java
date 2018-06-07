@@ -42,6 +42,9 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
+import org.nd4j.linalg.indexing.IntervalIndex;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.nd4j.linalg.ops.transforms.Transforms;
@@ -117,7 +120,7 @@ public class DeepGLTest {
     @Test
     public void testDeepGL() throws Exception {
 
-        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 3, 0.7, 10);
+        DeepGL deepGL = new DeepGL(graph, Pools.DEFAULT, 3, 2, 0.8, 10);
         deepGL.withProgressLogger(new TestProgressLogger());
         deepGL.compute();
         Stream<DeepGL.Result> resultStream = deepGL.resultStream();
@@ -144,6 +147,7 @@ public class DeepGLTest {
                 );
 
         deepGL.featureStream().forEach(f -> System.out.println(Arrays.toString(f)));
+        deepGL.ffeatureStream().forEach(System.out::println);
 
         writer.close();
     }

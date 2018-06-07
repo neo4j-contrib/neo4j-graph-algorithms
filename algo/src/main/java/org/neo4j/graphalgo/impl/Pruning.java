@@ -51,6 +51,7 @@ public class Pruning {
         INDArray prunedNDEmbedding = pruneEmbedding(embeddingToPrune, featureIdsToKeep);
 
         Feature[][] featuresToPrune = ArrayUtils.addAll(prevEmbedding.getFeatures(), embedding.getFeatures());
+        fFeature[] ffeaturesToPrune = ArrayUtils.addAll(prevEmbedding.getfFeatures(), embedding.getfFeatures());
 //        System.out.println("features before pruning = " + Arrays.deepToString(featuresToPrune));
         String featuresToKeepNames = Arrays.stream(featureIdsToKeep)
                 .mapToObj(i -> featuresToPrune[i])
@@ -59,13 +60,16 @@ public class Pruning {
                 .get();
 //        System.out.println("features to keep = " + featuresToKeepNames);
         Feature[][] prunedFeatures = new Feature[featureIdsToKeep.length][];
+        fFeature[] prunedfFeatures = new fFeature[featureIdsToKeep.length];
+
         for (int index = 0; index < featureIdsToKeep.length; index++) {
             prunedFeatures[index] = featuresToPrune[featureIdsToKeep[index]];
+            prunedfFeatures[index] = ffeaturesToPrune[featureIdsToKeep[index]];
         }
 
 //        System.out.println("prunedNDEmbedding = \n" + prunedNDEmbedding);
 
-        return new Embedding(prunedFeatures, prunedNDEmbedding);
+        return new Embedding(prunedFeatures, prunedfFeatures, prunedNDEmbedding);
     }
 
     private Stream<DisjointSetStruct.Result> findConnectedComponents(Graph graph) {
@@ -111,6 +115,25 @@ public class Pruning {
     }
 
 
+    public static class fFeature {
+        private final String name;
+        private final fFeature prev;
+
+        public fFeature(String name, fFeature prev) {
+            this.name = name;
+            this.prev = prev;
+        }
+
+        public fFeature(String name) {
+            this.prev = null;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return prev == null ? name : name + "( " + prev.toString() + ")";
+        }
+    }
     public enum Feature {
         SUM_OUT_NEIGHBOURHOOD,
         SUM_IN_NEIGHBOURHOOD,
@@ -139,14 +162,26 @@ public class Pruning {
     static class Embedding {
         private final Feature[][] features;
         private INDArray ndEmbedding;
+        private fFeature[] fFeatures;
+
+        public Embedding(Feature[][] features, fFeature[] fFeatures, INDArray ndEmbedding) {
+            this.features = features;
+            this.fFeatures = fFeatures;
+            this.ndEmbedding = ndEmbedding;
+        }
 
         public Embedding(Feature[][] features, INDArray ndEmbedding) {
             this.features = features;
+            this.fFeatures = null;
             this.ndEmbedding = ndEmbedding;
         }
 
         public Feature[][] getFeatures() {
             return features;
+        }
+
+        public fFeature[] getfFeatures() {
+            return fFeatures;
         }
 
         public INDArray getNDEmbedding() {
