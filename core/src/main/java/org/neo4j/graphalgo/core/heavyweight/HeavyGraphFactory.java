@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;

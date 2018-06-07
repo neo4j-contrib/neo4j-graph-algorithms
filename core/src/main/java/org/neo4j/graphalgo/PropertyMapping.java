@@ -6,7 +6,6 @@ public class PropertyMapping {
     public final double defaultValue;
 
     public PropertyMapping(String type, String propertyKey, double defaultValue) {
-
         this.type = type;
         this.propertyKey = propertyKey;
         this.defaultValue = defaultValue;

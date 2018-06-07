@@ -244,3 +244,27 @@ final class ReadWithNodeWeightsAndProps extends RelationshipLoader {
         readNodeWeight(sourceNode, localNodeId, nodeProps, nodeProps.propertyId());
     }
 }
+
+final class ReadWithNodeProperties extends RelationshipLoader {
+    private final RelationshipLoader loader;
+    private final WeightMap[] nodeProperties;
+
+    ReadWithNodeProperties(
+            final RelationshipLoader loader,
+            final WeightMap...nodeProperties) {
+        super(loader);
+        this.loader = loader;
+
+        this.nodeProperties = nodeProperties;
+    }
+
+    @Override
+    void load(NodeCursor sourceNode, int localNodeId) {
+        loader.load(sourceNode, localNodeId);
+
+        for (WeightMap nodeProperty : nodeProperties) {
+            readNodeWeight(sourceNode, localNodeId, nodeProperty, nodeProperty.propertyId());
+            readNodeWeight(sourceNode, localNodeId, nodeProperty, nodeProperty.propertyId());
+        }
+    }
+}

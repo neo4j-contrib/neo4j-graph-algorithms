@@ -39,6 +39,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 
 final class RelationshipImporter extends StatementAction {
@@ -50,6 +51,7 @@ final class RelationshipImporter extends StatementAction {
 
     private final int nodeSize;
     private final int nodeOffset;
+    private final WeightMapping[] nodeProperties;
 
     private IdMap idMap;
     private AdjacencyMatrix matrix;
@@ -79,9 +81,15 @@ final class RelationshipImporter extends StatementAction {
         this.nodes = nodes;
         this.setup = setup;
         this.relWeights = relWeights.get();
-        this.nodeWeights = nodeWeights.get();
-        this.nodeProps = nodeProps.get();
         this.relationId = dimensions.relationshipTypeId();
+
+        this.nodeProperties = new WeightMapping[] {
+                nodeWeights.get(),
+                nodeProps.get()
+        };
+//
+//        this.nodeWeights = nodeWeights.get();
+//        this.nodeProps = nodeProps.get();
     }
 
     @Override
@@ -119,21 +127,28 @@ final class RelationshipImporter extends StatementAction {
             loader = prepareDirected(transaction, readOp, cursors);
         }
 
-        if (this.nodeWeights instanceof WeightMap) {
-            WeightMap nodeWeights = (WeightMap) this.nodeWeights;
+        WeightMap[] weightMaps = Stream.of(nodeProperties)
+                .filter(prop -> prop instanceof WeightMap)
+                .map(prop -> (WeightMap) prop)
+                .toArray(WeightMap[]::new);
 
-            if (this.nodeProps instanceof WeightMap) {
-                WeightMap nodeProps = (WeightMap) this.nodeProps;
-                return new ReadWithNodeWeightsAndProps(loader, nodeWeights, nodeProps);
-            }
-            return new ReadWithNodeWeights(loader, nodeWeights);
-        }
-        if (this.nodeProps instanceof WeightMap) {
-            WeightMap nodeProps = (WeightMap) this.nodeProps;
-            return new ReadWithNodeWeights(loader, nodeProps);
-        }
+        return new ReadWithNodeProperties(loader, weightMaps);
 
-        return loader;
+//        if (this.nodeWeights instanceof WeightMap) {
+//            WeightMap nodeWeights = (WeightMap) this.nodeWeights;
+//
+//            if (this.nodeProps instanceof WeightMap) {
+//                WeightMap nodeProps = (WeightMap) this.nodeProps;
+//                return new ReadWithNodeWeightsAndProps(loader, nodeWeights, nodeProps);
+//            }
+//            return new ReadWithNodeWeights(loader, nodeWeights);
+//        }
+//        if (this.nodeProps instanceof WeightMap) {
+//            WeightMap nodeProps = (WeightMap) this.nodeProps;
+//            return new ReadWithNodeWeights(loader, nodeProps);
+//        }
+//
+//        return loader;
     }
 
     private RelationshipLoader prepareDirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
