@@ -141,7 +141,7 @@ public final class LabelPropagation420Test {
                 graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT);
+                Pools.DEFAULT, propertyMappings);
 
         lp.compute(Direction.OUTGOING, 10);
 

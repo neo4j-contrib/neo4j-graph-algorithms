@@ -33,7 +33,6 @@ import org.junit.rules.ErrorCollector;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
@@ -146,7 +145,7 @@ public final class LabelPropagation420CypherLoadingTest
                 graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT);
+                Pools.DEFAULT, propertyMappings);
 
         lp.compute(Direction.OUTGOING, 10);
 

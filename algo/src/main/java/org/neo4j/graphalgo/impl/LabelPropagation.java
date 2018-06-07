@@ -26,6 +26,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
@@ -40,7 +41,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
+    public static final String PARTITION_TYPE = "property";
+    public static final String WEIGHT_TYPE = "weight";
+
     private static final int[] EMPTY_INTS = new int[0];
+
+    private final WeightMapping nodeProperties;
+    private final WeightMapping nodeWeights;
 
     private HeavyGraph graph;
     private final int batchSize;
@@ -83,6 +90,9 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         this.batchSize = batchSize;
         this.concurrency = concurrency;
         this.executor = executor;
+
+        this.nodeProperties = this.graph.nodeProperties(PARTITION_TYPE);
+        this.nodeWeights = this.graph.nodeProperties(WEIGHT_TYPE);
     }
 
     public LabelPropagation compute(
@@ -115,12 +125,13 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                         direction,
                         randomizeOrder,
                         getProgressLogger(),
-                        nodes
+                        nodes,
+                        this.nodeProperties
                 ),
                 executor);
 
         for (int i = 0, l = computeSteps.size(); i < l; i++) {
-            computeSteps.set(i, ((InitStep) computeSteps.get(i)).computeStep());
+            computeSteps.set(i, ((InitStep) computeSteps.get(i)).computeStep(this.nodeWeights));
         }
 
         for (long i = 0L; i < maxIterations; i++) {
@@ -202,15 +213,14 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                 Direction direction,
                 boolean randomizeOrder,
                 ProgressLogger progressLogger,
-                PrimitiveIntIterable nodes) {
+                PrimitiveIntIterable nodes, WeightMapping nodeProperties) {
             this.graph = graph;
             this.existingLabels = existingLabels;
             this.direction = direction;
             this.randomizeOrder = randomizeOrder;
             this.progressLogger = progressLogger;
             this.nodes = nodes;
-
-            nodeProperties = this.graph.nodeProperties("property");
+            this.nodeProperties = nodeProperties;
         }
 
         @Override
@@ -222,18 +232,19 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             PrimitiveIntIterator iterator = nodes.iterator();
             while (iterator.hasNext()) {
                 int nodeId = iterator.next();
-                existingLabels[nodeId] = (int) nodeProperties.get(nodeId, nodeId);
+                existingLabels[nodeId] = (int) this.nodeProperties.get(nodeId, nodeId);
             }
         }
 
-        private ComputeStep computeStep() {
+        private ComputeStep computeStep(WeightMapping nodeWeights) {
             return new ComputeStep(
                     graph,
                     existingLabels,
                     direction,
                     randomizeOrder,
                     progressLogger,
-                    nodes);
+                    nodes,
+                    nodeWeights);
         }
     }
 
@@ -257,7 +268,8 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                 Direction direction,
                 boolean randomizeOrder,
                 ProgressLogger progressLogger,
-                PrimitiveIntIterable nodes) {
+                PrimitiveIntIterable nodes,
+                WeightMapping nodeWeights) {
             this.graph = graph;
             this.existingLabels = existingLabels;
             this.direction = direction;
@@ -265,8 +277,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.nodes = RandomlySwitchingIterable.of(randomizeOrder, nodes);
             this.maxNode = (int) (graph.nodeCount() - 1L);
             this.votes = new IntDoubleScatterMap();
-
-            nodeWeights = this.graph.nodeProperties("weight");
+            this.nodeWeights = nodeWeights;
         }
 
         @Override

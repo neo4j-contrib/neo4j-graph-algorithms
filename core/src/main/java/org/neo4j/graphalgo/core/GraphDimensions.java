@@ -83,6 +83,10 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         return nodeWeightId;
     }
 
+    public int nodePropId() {
+        return nodePropId;
+    }
+
     public int nodePropertyKeyId(String type) {
         PropertyMapping[] mappings = setup.nodePropertyMappings;
 
@@ -105,10 +109,6 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         return 0.0;
     }
 
-    public int nodePropId() {
-        return nodePropId;
-    }
-
     @Override
     public GraphDimensions apply(final KernelTransaction transaction) throws RuntimeException {
         TokenRead tokenRead = transaction.tokenRead();
@@ -123,6 +123,7 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         }
         relWeightId = propertyKey(tokenRead, setup.shouldLoadRelationshipWeight(), setup.relationWeightPropertyName);
 
+        nodePropIds = new int[setup.nodePropertyMappings.length];
         for (int i = 0; i < setup.nodePropertyMappings.length; i++) {
             nodePropIds[i] = propertyKey(tokenRead, true, setup.nodePropertyMappings[i].propertyKey);
         }
