@@ -232,7 +232,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             PrimitiveIntIterator iterator = nodes.iterator();
             while (iterator.hasNext()) {
                 int nodeId = iterator.next();
-                existingLabels[nodeId] = (int) this.nodeProperties.get(nodeId, nodeId);
+                existingLabels[nodeId] = (int) this.nodeProperties.get(nodeId, (double)nodeId);
             }
         }
 

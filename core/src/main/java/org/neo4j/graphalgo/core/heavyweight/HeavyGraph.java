@@ -141,7 +141,6 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
 //        nodeWeights = null;
 //        nodeProperties = null;
         nodePropertiesMapping.clear();
-        nodePropertiesMapping = null;
     }
 
     @Override
