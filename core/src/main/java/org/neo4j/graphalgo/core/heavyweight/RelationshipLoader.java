@@ -203,48 +203,6 @@ final class ReadUndirected extends RelationshipLoader {
     }
 }
 
-final class ReadWithNodeWeights extends RelationshipLoader {
-    private final RelationshipLoader loader;
-    private final WeightMap nodeWeights;
-
-    ReadWithNodeWeights(
-            final RelationshipLoader loader,
-            final WeightMap nodeWeights) {
-        super(loader);
-        this.loader = loader;
-        this.nodeWeights = nodeWeights;
-    }
-
-    @Override
-    void load(NodeCursor sourceNode, int localNodeId) {
-        loader.load(sourceNode, localNodeId);
-        readNodeWeight(sourceNode, localNodeId, nodeWeights, nodeWeights.propertyId());
-    }
-}
-
-final class ReadWithNodeWeightsAndProps extends RelationshipLoader {
-    private final RelationshipLoader loader;
-    private final WeightMap nodeWeights;
-    private final WeightMap nodeProps;
-
-    ReadWithNodeWeightsAndProps(
-            final RelationshipLoader loader,
-            final WeightMap nodeWeights,
-            final WeightMap nodeProps) {
-        super(loader);
-        this.loader = loader;
-        this.nodeWeights = nodeWeights;
-        this.nodeProps = nodeProps;
-    }
-
-    @Override
-    void load(NodeCursor sourceNode, int localNodeId) {
-        loader.load(sourceNode, localNodeId);
-        readNodeWeight(sourceNode, localNodeId, nodeWeights, nodeWeights.propertyId());
-        readNodeWeight(sourceNode, localNodeId, nodeProps, nodeProps.propertyId());
-    }
-}
-
 final class ReadWithNodeProperties extends RelationshipLoader {
     private final RelationshipLoader loader;
     private final WeightMap[] nodeProperties;

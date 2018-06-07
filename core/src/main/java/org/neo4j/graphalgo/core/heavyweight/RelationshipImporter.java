@@ -52,13 +52,12 @@ final class RelationshipImporter extends StatementAction {
 
     private final int nodeSize;
     private final int nodeOffset;
-    private final Map<String, WeightMapping> nodeProperties;
 
     private IdMap idMap;
     private AdjacencyMatrix matrix;
+
     private WeightMapping relWeights;
-    private WeightMapping nodeWeights;
-    private WeightMapping nodeProps;
+    private final Map<String, WeightMapping> nodeProperties;
 
     RelationshipImporter(
             GraphDatabaseAPI api,
@@ -128,22 +127,6 @@ final class RelationshipImporter extends StatementAction {
                 .toArray(WeightMap[]::new);
 
         return new ReadWithNodeProperties(loader, weightMaps);
-
-//        if (this.nodeWeights instanceof WeightMap) {
-//            WeightMap nodeWeights = (WeightMap) this.nodeWeights;
-//
-//            if (this.nodeProps instanceof WeightMap) {
-//                WeightMap nodeProps = (WeightMap) this.nodeProps;
-//                return new ReadWithNodeWeightsAndProps(loader, nodeWeights, nodeProps);
-//            }
-//            return new ReadWithNodeWeights(loader, nodeWeights);
-//        }
-//        if (this.nodeProps instanceof WeightMap) {
-//            WeightMap nodeProps = (WeightMap) this.nodeProps;
-//            return new ReadWithNodeWeights(loader, nodeProps);
-//        }
-//
-//        return loader;
     }
 
     private RelationshipLoader prepareDirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
@@ -204,15 +187,6 @@ final class RelationshipImporter extends StatementAction {
                 nodeProperties);
     }
 
-//    void writeInto(
-//            WeightMapping relWeights,
-//            WeightMapping nodeWeights,
-//            WeightMapping nodeProps) {
-//        combineMaps(relWeights, this.relWeights);
-//        combineMaps(nodeWeights, this.nodeWeights);
-//        combineMaps(nodeProps, this.nodeProps);
-//    }
-
     void writeInto(
             WeightMapping relWeights, Map<String, WeightMapping> nodeProperties) {
         combineMaps(relWeights, this.relWeights);
@@ -220,17 +194,13 @@ final class RelationshipImporter extends StatementAction {
         for (Map.Entry<String, WeightMapping> entry : nodeProperties.entrySet()) {
             combineMaps(nodeProperties.get(entry.getKey()), entry.getValue());
         }
-
-//        combineMaps(nodeWeights, this.nodeWeights);
-//        combineMaps(nodeProps, this.nodeProps);
     }
 
     void release() {
         this.idMap = null;
         this.matrix = null;
         this.relWeights = null;
-        this.nodeWeights = null;
-        this.nodeProps = null;
+        this.nodeProperties.clear();
     }
 
     private void combineMaps(WeightMapping global, WeightMapping local) {

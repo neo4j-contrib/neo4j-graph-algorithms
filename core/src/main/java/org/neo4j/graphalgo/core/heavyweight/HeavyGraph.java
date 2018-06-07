@@ -42,8 +42,6 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     private final IdMap nodeIdMap;
     private AdjacencyMatrix container;
     private WeightMapping relationshipWeights;
-//    private WeightMapping nodeWeights;
-//    private WeightMapping nodeProperties;
 
     private Map<String, WeightMapping> nodePropertiesMapping = new HashMap<>();
 
@@ -123,23 +121,11 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
         return nodePropertiesMapping.get(name);
     }
 
-//    @Override
-//    public double weightOf(final int nodeId) {
-//        return nodeWeights.get(nodeId);
-//    }
-//
-//    @Override
-//    public double valueOf(final int nodeId, final double defaultValue) {
-//        return nodeProperties.get(nodeId, defaultValue);
-//    }
-
     @Override
     public void release() {
         if (!canRelease) return;
         container = null;
         relationshipWeights = null;
-//        nodeWeights = null;
-//        nodeProperties = null;
         nodePropertiesMapping.clear();
     }
 
