@@ -61,133 +61,110 @@ import java.util.concurrent.locks.StampedLock;
  * * Bulk operations appear atomic to concurrent readers
  * * Only caveat being that the iterator is not thread-safe
  */
-public class SimpleBitSet extends StampedLock implements PrimitiveIntIterable
-{
+public class SimpleBitSet extends StampedLock implements PrimitiveIntIterable {
     private long lastCheckPointKey;
     private long[] data;
 
-    public SimpleBitSet( int size )
-    {
+    public SimpleBitSet(int size) {
         int initialCapacity = size / 64;
         int capacity = 1;
-        while ( capacity < initialCapacity )
-        {
+        while (capacity < initialCapacity) {
             capacity <<= 1;
         }
         long stamp = writeLock();
         data = new long[capacity];
-        unlockWrite( stamp );
+        unlockWrite(stamp);
     }
 
-    public boolean contains( int key )
-    {
+    public boolean contains(int key) {
         int idx = key >>> 6;
         boolean result;
         long stamp;
-        do
-        {
+        do {
             stamp = tryOptimisticRead();
             result = data.length > idx && (data[idx] & ((1L << (key & 63)))) != 0;
         }
-        while ( !validate( stamp ) );
+        while (!validate(stamp));
         return result;
     }
 
-    public void put( int key )
-    {
+    public void put(int key) {
         long stamp = writeLock();
         int idx = key >>> 6;
-        ensureCapacity( idx );
+        ensureCapacity(idx);
         data[idx] = data[idx] | (1L << (key & 63));
-        unlockWrite( stamp );
+        unlockWrite(stamp);
     }
 
-    public void put( SimpleBitSet other )
-    {
+    public void put(SimpleBitSet other) {
         long stamp = writeLock();
-        ensureCapacity( other.data.length - 1 );
-        for ( int i = 0; i < data.length && i < other.data.length; i++ )
-        {
+        ensureCapacity(other.data.length - 1);
+        for (int i = 0; i < data.length && i < other.data.length; i++) {
             data[i] = data[i] | other.data[i];
         }
-        unlockWrite( stamp );
+        unlockWrite(stamp);
     }
 
-    public void clear(  )
-    {
+    public void clear() {
         long stamp = writeLock();
-        Arrays.fill( data, 0L);
-        unlockWrite( stamp );
+        Arrays.fill(data, 0L);
+        unlockWrite(stamp);
     }
 
-    public void remove( int key )
-    {
+    public void remove(int key) {
         long stamp = writeLock();
         int idx = key >>> 6;
-        if ( data.length > idx )
-        {
+        if (data.length > idx) {
             data[idx] = data[idx] & ~(1L << (key & 63));
         }
-        unlockWrite( stamp );
+        unlockWrite(stamp);
     }
 
-    public void remove( SimpleBitSet other )
-    {
+    public void remove(SimpleBitSet other) {
         long stamp = writeLock();
-        for ( int i = 0; i < data.length; i++ )
-        {
+        for (int i = 0; i < data.length; i++) {
             data[i] = data[i] & ~other.data[i];
         }
-        unlockWrite( stamp );
+        unlockWrite(stamp);
     }
 
-    public long checkPointAndPut( long checkPoint, int key )
-    {
+    public long checkPointAndPut(long checkPoint, int key) {
         // We only need to clear the bit set if it was modified since the last check point
-        if ( !validate( checkPoint ) || key != lastCheckPointKey )
-        {
+        if (!validate(checkPoint) || key != lastCheckPointKey) {
             long stamp = writeLock();
             int idx = key >>> 6;
-            if ( idx < data.length )
-            {
-                Arrays.fill( data, 0 );
-            }
-            else
-            {
+            if (idx < data.length) {
+                Arrays.fill(data, 0);
+            } else {
                 int len = data.length;
-                len = findNewLength( idx, len );
+                len = findNewLength(idx, len);
                 data = new long[len];
             }
             data[idx] = data[idx] | (1L << (key & 63));
             lastCheckPointKey = key;
-            checkPoint = tryConvertToOptimisticRead( stamp );
+            checkPoint = tryConvertToOptimisticRead(stamp);
         }
         return checkPoint;
     }
 
-    private int findNewLength( int idx, int len )
-    {
-        while ( len <= idx )
-        {
+    private int findNewLength(int idx, int len) {
+        while (len <= idx) {
             len *= 2;
         }
         return len;
     }
 
-    public int size()
-    {
+    public int size() {
         int size = 0;
-        for ( int i = 0; i < data.length; i++ )
-        {
-            size += Long.bitCount( data[i] );
+        for (int i = 0; i < data.length; i++) {
+            size += Long.bitCount(data[i]);
         }
         return size;
     }
 
-    private void ensureCapacity( int arrayIndex )
-    {
+    private void ensureCapacity(int arrayIndex) {
         if (data.length <= arrayIndex) {
-            data = Arrays.copyOf( data, findNewLength( arrayIndex, data.length ) );
+            data = Arrays.copyOf(data, findNewLength(arrayIndex, data.length));
         }
     }
 
@@ -196,34 +173,28 @@ public class SimpleBitSet extends StampedLock implements PrimitiveIntIterable
     //
 
     @Override
-    public PrimitiveIntIterator iterator()
-    {
-        return new PrimitiveIntIterator()
-        {
+    public PrimitiveIntIterator iterator() {
+        return new PrimitiveIntIterator() {
             private int next = 0;
             private final int size = data.length * 64;
 
             {
                 // Prefetch first
-                while ( next < size && !contains( next ) )
-                {
+                while (next < size && !contains(next)) {
                     next++;
                 }
             }
 
             @Override
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return next < size;
             }
 
             @Override
-            public int next()
-            {
+            public int next() {
                 int current = next;
                 next++;
-                while ( next < size && !contains( next ) )
-                {
+                while (next < size && !contains(next)) {
                     next++;
                 }
                 return current;

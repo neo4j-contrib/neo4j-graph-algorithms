@@ -97,7 +97,7 @@ public class Directions {
             case "outgoing":
             case "out":
             case "o":
-            case ">" :
+            case ">":
                 return Direction.OUTGOING;
 
             case "incoming":

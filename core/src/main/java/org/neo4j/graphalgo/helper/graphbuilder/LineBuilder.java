@@ -23,6 +23,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Random;
+
 /**
  * Create a line of nodes where each node is only connected to its successor
  *
@@ -32,8 +34,8 @@ public class LineBuilder extends GraphBuilder<LineBuilder> {
 
     private Node head, tail;
 
-    protected LineBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
-        super(api, label, relationship);
+    LineBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
+        super(api, label, relationship, random);
     }
 
     public LineBuilder withHead(Node head) {

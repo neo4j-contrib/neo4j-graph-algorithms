@@ -33,7 +33,14 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 
@@ -303,7 +310,7 @@ public class ProcedureConfiguration {
         }
     }
 
-    private static Set<String> RESERVED = new HashSet<>(asList(HeavyGraph.TYPE,HeavyCypherGraphFactory.TYPE,
+    private static Set<String> RESERVED = new HashSet<>(asList(HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE,
             LightGraph.TYPE, GraphView.TYPE, HeavyGraph.TYPE));
 
     public static boolean validCustomName(String name) {
@@ -312,13 +319,13 @@ public class ProcedureConfiguration {
 
     public final Class<? extends GraphFactory> getGraphImpl(
             String defaultImpl,
-            String ... alloweds) {
+            String... alloweds) {
         String graphName = getGraphName(defaultImpl);
         List<String> allowedNames = asList(alloweds);
         if (allowedNames.contains(graphName) || allowedNames.contains(LoadGraphFactory.getType(graphName))) {
             return getGraphImpl(defaultImpl);
         }
-        throw new IllegalArgumentException("The graph algorithm only supports these graph types; "+allowedNames);
+        throw new IllegalArgumentException("The graph algorithm only supports these graph types; " + allowedNames);
     }
 
     /**
@@ -394,7 +401,8 @@ public class ProcedureConfiguration {
         }
         throw new IllegalArgumentException("Unknown impl: " + cls);
     }
+
     public Map<String, Object> getParams() {
-        return (Map<String, Object>)config.getOrDefault("params", Collections.emptyMap());
+        return (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
     }
 }

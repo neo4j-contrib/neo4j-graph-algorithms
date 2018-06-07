@@ -20,11 +20,17 @@ package org.neo4j.graphalgo.core.utils;
 
 public interface RenamesCurrentThread {
 
+    // override AutoCloseable to remove checked throws declaration
+    interface Revert extends AutoCloseable {
+        @Override
+        void close();
+    }
+
     default String threadName() {
         return getClass().getSimpleName() + "-" + System.identityHashCode(this);
     }
 
-    static Runnable renameThread(final String newThreadName) {
+    static Revert renameThread(final String newThreadName) {
         Thread currentThread = Thread.currentThread();
         String oldThreadName = currentThread.getName();
 
@@ -38,11 +44,11 @@ public interface RenamesCurrentThread {
             }
         }
 
-        final boolean finalRenamed = renamed;
-        return () -> {
-            if (finalRenamed) {
-                currentThread.setName(oldThreadName);
-            }
-        };
+        if (renamed) {
+            return () -> currentThread.setName(oldThreadName);
+        }
+        return EMPTY;
     }
+
+    Revert EMPTY = () -> {};
 }

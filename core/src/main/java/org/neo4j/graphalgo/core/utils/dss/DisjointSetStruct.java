@@ -346,6 +346,7 @@ public final class DisjointSetStruct {
             this.nodeId = nodeId;
             this.setId = (long) setId;
         }
+
         public Result(long nodeId, long setId) {
             this.nodeId = nodeId;
             this.setId = setId;

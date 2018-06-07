@@ -130,7 +130,7 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
     LoadRelationshipsOfSingleType(final CursorFactory cursors, final int type) {
         this.cursors = cursors;
         this.type = type;
-        this.types = new int[] {type};
+        this.types = new int[]{type};
     }
 
     @Override

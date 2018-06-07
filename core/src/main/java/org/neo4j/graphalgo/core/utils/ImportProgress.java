@@ -19,23 +19,17 @@
 package org.neo4j.graphalgo.core.utils;
 
 public interface ImportProgress {
-    void nodeProgress();
+    void nodeImported();
 
-    void relProgress();
-
-    void resetForRelationships();
+    void relationshipsImported(int numImported);
 
     ImportProgress EMPTY = new ImportProgress() {
         @Override
-        public void nodeProgress() {
+        public void nodeImported() {
         }
 
         @Override
-        public void relProgress() {
-        }
-
-        @Override
-        public void resetForRelationships() {
+        public void relationshipsImported(final int numImported) {
         }
     };
 }

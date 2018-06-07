@@ -31,7 +31,7 @@ public interface BatchNodeIterable {
 
     /**
      * @return a collection of iterables over every node, partitioned by
-     * the given batch size.
+     *         the given batch size.
      */
     Collection<PrimitiveIntIterable> batchIterables(int batchSize);
 }

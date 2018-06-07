@@ -28,9 +28,9 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.NodeCursor;
 
 import java.util.Collection;
 import java.util.function.LongPredicate;
@@ -47,7 +47,7 @@ import java.util.function.LongPredicate;
  * <code>degree</code> ~ <code>targetId</code><sub><code>1</code></sub> ~ <code>targetId</code><sub><code>2</code></sub> ~ <code>targetId</code><sub><code>n</code></sub>
  * </blockquote>
  * The {@code degree} is stored as a fill-sized 4 byte long {@code int}
- * (the neo kernel api returns an int for {@link org.neo4j.kernel.api.ReadOperations#nodeGetDegree(long, Direction)}).
+ * (the neo kernel api returns an int for {@link org.neo4j.internal.kernel.api.helpers.Nodes#countAll(NodeCursor, CursorFactory)}).
  * Every target ID is first sorted, then delta encoded, and finally written as variable-length vlongs.
  * The delta encoding does not write the actual value but only the difference to the previous value, which plays very nice with the vlong encoding.
  * <p>
@@ -83,23 +83,23 @@ public class HugeGraphImpl implements HugeGraph {
     private final AllocationTracker tracker;
 
     private HugeWeightMapping weights;
-    private ByteArray inAdjacency;
-    private ByteArray outAdjacency;
-    private HugeLongArray inOffsets;
-    private HugeLongArray outOffsets;
-    private ByteArray.DeltaCursor empty;
-    private ByteArray.DeltaCursor inCache;
-    private ByteArray.DeltaCursor outCache;
+    private HugeAdjacencyList inAdjacency;
+    private HugeAdjacencyList outAdjacency;
+    private HugeAdjacencyOffsets inOffsets;
+    private HugeAdjacencyOffsets outOffsets;
+    private HugeAdjacencyList.Cursor empty;
+    private HugeAdjacencyList.Cursor inCache;
+    private HugeAdjacencyList.Cursor outCache;
     private boolean canRelease = true;
 
     HugeGraphImpl(
             final AllocationTracker tracker,
             final HugeIdMap idMapping,
             final HugeWeightMapping weights,
-            final ByteArray inAdjacency,
-            final ByteArray outAdjacency,
-            final HugeLongArray inOffsets,
-            final HugeLongArray outOffsets) {
+            final HugeAdjacencyList inAdjacency,
+            final HugeAdjacencyList outAdjacency,
+            final HugeAdjacencyOffsets inOffsets,
+            final HugeAdjacencyOffsets outOffsets) {
         this.idMapping = idMapping;
         this.tracker = tracker;
         this.weights = weights;
@@ -251,8 +251,11 @@ public class HugeGraphImpl implements HugeGraph {
         forEachIncoming((long) nodeId, inAdjacency.newCursor(), toHugeInConsumer(consumer));
     }
 
-    private void forEachIncoming(long node, ByteArray.DeltaCursor newCursor, final HugeRelationshipConsumer consumer) {
-        ByteArray.DeltaCursor cursor = cursor(node, newCursor, inOffsets, inAdjacency);
+    private void forEachIncoming(
+            long node,
+            HugeAdjacencyList.Cursor newCursor,
+            final HugeRelationshipConsumer consumer) {
+        HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, inOffsets, inAdjacency);
         consumeNodes(node, cursor, consumer);
     }
 
@@ -270,8 +273,11 @@ public class HugeGraphImpl implements HugeGraph {
         forEachOutgoing((long) nodeId, outAdjacency.newCursor(), toHugeOutConsumer(consumer));
     }
 
-    private void forEachOutgoing(long node, ByteArray.DeltaCursor newCursor, final HugeRelationshipConsumer consumer) {
-        ByteArray.DeltaCursor cursor = cursor(node, newCursor, outOffsets, outAdjacency);
+    private void forEachOutgoing(
+            long node,
+            HugeAdjacencyList.Cursor newCursor,
+            final HugeRelationshipConsumer consumer) {
+        HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, outOffsets, outAdjacency);
         consumeNodes(node, cursor, consumer);
     }
 
@@ -299,38 +305,49 @@ public class HugeGraphImpl implements HugeGraph {
     @Override
     public boolean exists(long sourceNodeId, long targetNodeId, Direction direction) {
         final boolean[] found = {false};
+        HugeRelationshipConsumer consumer = (s, t) -> {
+            if (t == targetNodeId) {
+                found[0] = true;
+                return false;
+            }
+            return true;
+        };
         switch (direction) {
             case OUTGOING:
-                forEachOutgoing(sourceNodeId, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachOutgoing(sourceNodeId, consumer);
+                break;
             case INCOMING:
-                forEachIncoming(sourceNodeId, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachIncoming(sourceNodeId, consumer);
+                break;
             default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, (s, t) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
+                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
+                break;
         }
         return found[0];
     }
 
     @Override
     public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-        return exists((long) sourceNodeId, (long) targetNodeId, direction);
+        final boolean[] found = {false};
+        RelationshipConsumer consumer = (s, t, r) -> {
+            if (t == targetNodeId) {
+                found[0] = true;
+                return false;
+            }
+            return true;
+        };
+        switch (direction) {
+            case OUTGOING:
+                forEachOutgoing(sourceNodeId, consumer);
+                break;
+            case INCOMING:
+                forEachIncoming(sourceNodeId, consumer);
+                break;
+            default:
+                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
+                break;
+        }
+        return found[0];
     }
 
     @Override
@@ -362,23 +379,23 @@ public class HugeGraphImpl implements HugeGraph {
         weights = null;
     }
 
-    private ByteArray.DeltaCursor newCursor(final ByteArray adjacency) {
+    private HugeAdjacencyList.Cursor newCursor(final HugeAdjacencyList adjacency) {
         return adjacency != null ? adjacency.newCursor() : null;
     }
 
-    private int degree(long node, HugeLongArray offsets, ByteArray array) {
+    private int degree(long node, HugeAdjacencyOffsets offsets, HugeAdjacencyList array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
         }
-        return array.getInt(offset);
+        return array.getDegree(offset);
     }
 
-    private ByteArray.DeltaCursor cursor(
+    private HugeAdjacencyList.Cursor cursor(
             long node,
-            ByteArray.DeltaCursor reuse,
-            HugeLongArray offsets,
-            ByteArray array) {
+            HugeAdjacencyList.Cursor reuse,
+            HugeAdjacencyOffsets offsets,
+            HugeAdjacencyList array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {
             return empty;
@@ -388,10 +405,10 @@ public class HugeGraphImpl implements HugeGraph {
 
     private void consumeNodes(
             long startNode,
-            ByteArray.DeltaCursor cursor,
+            HugeAdjacencyList.Cursor cursor,
             HugeRelationshipConsumer consumer) {
         //noinspection StatementWithEmptyBody
-        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong())) ;
     }
 
     private HugeRelationshipConsumer toHugeOutConsumer(RelationshipConsumer consumer) {

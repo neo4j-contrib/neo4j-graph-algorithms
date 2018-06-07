@@ -19,16 +19,21 @@
 package org.neo4j.graphalgo.core;
 
 import org.neo4j.graphalgo.core.utils.ImportProgress;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class NodeImporter extends BaseNodeImporter<IdMap> {
 
+    private final AllocationTracker tracker;
+
     public NodeImporter(
             GraphDatabaseAPI api,
+            AllocationTracker tracker,
             ImportProgress progress,
             int nodeCount,
             int labelId) {
         super(api, progress, nodeCount, labelId);
+        this.tracker = tracker;
     }
 
     @Override
@@ -43,6 +48,6 @@ public final class NodeImporter extends BaseNodeImporter<IdMap> {
 
     @Override
     protected void finish(final IdMap map) {
-        map.buildMappedIds();
+        map.buildMappedIds(tracker);
     }
 }

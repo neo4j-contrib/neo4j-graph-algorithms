@@ -30,8 +30,8 @@ public interface WeightedRelationshipConsumer {
      *
      * @param sourceNodeId mapped source node id
      * @param targetNodeId mapped target node id
-     * @param relationId deprecated
-     * @param weight the weight/cost of this edge
+     * @param relationId   deprecated
+     * @param weight       the weight/cost of this edge
      */
     boolean accept(int sourceNodeId, int targetNodeId, @Deprecated long relationId, double weight);
 }

@@ -23,6 +23,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import java.util.Collection;
 import java.util.function.IntToLongFunction;
@@ -35,7 +36,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldReturnSingleIteratorForLargeBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(AllocationTracker.EMPTY);
 
         Collection<PrimitiveIntIterable> iterables = idMap.batchIterables(100);
         assertEquals(1, iterables.size());
@@ -47,7 +48,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldReturnMultipleIteratorsForSmallBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(AllocationTracker.EMPTY);
 
         int expectedBatches = ids.length / 3;
         if (ids.length % 3 != 0) {
@@ -64,7 +65,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldFailForZeroBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         addRandomIds(idMap);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(AllocationTracker.EMPTY);
 
         try {
             idMap.batchIterables(0);
@@ -78,7 +79,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldFailForNegativeBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         addRandomIds(idMap);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(AllocationTracker.EMPTY);
 
         int batchSize = between(Integer.MIN_VALUE, -1);
 

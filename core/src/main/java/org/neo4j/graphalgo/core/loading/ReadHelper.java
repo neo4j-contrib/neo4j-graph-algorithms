@@ -23,7 +23,6 @@ import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.NodeLabelIndexCursor;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.values.storable.FloatingPointValue;
 import org.neo4j.values.storable.IntegralValue;
 import org.neo4j.values.storable.Value;
@@ -44,10 +43,6 @@ public final class ReadHelper {
             }
         }
         return defaultValue;
-    }
-
-    public static void readNodes(KernelTransaction transaction, int labelId, LongConsumer action) {
-        readNodes(transaction.cursors(), transaction.dataRead(), labelId, action);
     }
 
     public static void readNodes(CursorFactory cursors, Read dataRead, int labelId, LongConsumer action) {

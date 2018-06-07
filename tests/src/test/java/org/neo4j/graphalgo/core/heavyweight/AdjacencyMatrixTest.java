@@ -27,6 +27,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -51,7 +52,7 @@ public class AdjacencyMatrixTest {
     @BeforeClass
     public static void setup() {
 
-        matrix = new AdjacencyMatrix(3, false);
+        matrix = new AdjacencyMatrix(3, false, AllocationTracker.EMPTY);
 
         // 0 -> {1, 2}
         matrix.armOut(0, 2);

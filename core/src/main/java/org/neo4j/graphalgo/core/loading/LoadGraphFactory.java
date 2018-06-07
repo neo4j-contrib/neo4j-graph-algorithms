@@ -45,7 +45,7 @@ public final class LoadGraphFactory extends GraphFactory {
             throw new IllegalArgumentException("Both name and graph must be not null");
         }
         if (graphs.putIfAbsent(name, graph) != null) {
-            throw new IllegalStateException("Graph name "+name+" already loaded");
+            throw new IllegalStateException("Graph name " + name + " already loaded");
         }
         graph.canRelease(false);
     }
@@ -61,7 +61,7 @@ public final class LoadGraphFactory extends GraphFactory {
     public static boolean remove(String name) {
         if (name == null) return false;
         Graph graph = graphs.remove(name);
-        if (graph!=null) {
+        if (graph != null) {
             graph.canRelease(true);
             graph.release();
             return true;

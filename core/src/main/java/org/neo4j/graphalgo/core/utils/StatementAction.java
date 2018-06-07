@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public abstract class StatementAction extends StatementApi implements RenamesCurrentThread, Runnable, StatementApi.Consumer {
+public abstract class StatementAction extends StatementApi implements RenamesCurrentThread, Runnable, StatementApi.TxConsumer {
 
     protected StatementAction(GraphDatabaseAPI api) {
         super(api);
@@ -29,14 +29,11 @@ public abstract class StatementAction extends StatementApi implements RenamesCur
 
     @Override
     public void run() {
-        Runnable revertName = RenamesCurrentThread.renameThread(threadName());
-        try {
+        try (Revert ignored = RenamesCurrentThread.renameThread(threadName())) {
             acceptInTransaction(this);
         } catch (Exception e) {
             Exceptions.throwIfUnchecked(e);
             throw new RuntimeException(e);
-        } finally {
-            revertName.run();
         }
     }
 }

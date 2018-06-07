@@ -40,6 +40,7 @@ public final class GraphViewFactory extends GraphFactory {
         GraphDimensions dimensions = new GraphDimensions(api, setup).call();
         IdMap idMap = new NodeImporter(
                 api,
+                setup.tracker,
                 ImportProgress.EMPTY,
                 dimensions.nodeCount(),
                 dimensions.labelId()

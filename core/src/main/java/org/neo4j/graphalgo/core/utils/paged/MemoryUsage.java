@@ -187,6 +187,10 @@ public final class MemoryUsage {
         return alignObjectSize((long) BYTES_ARRAY_HEADER + ((long) length << SHIFT_OBJECT_REF));
     }
 
+    public static long sizeOfObjectArrayElements(int length) {
+        return alignObjectSize((long) length << SHIFT_OBJECT_REF);
+    }
+
     public static long sizeOfArray(int length, long bytesPerElement) {
         return alignObjectSize((long) BYTES_ARRAY_HEADER + (long) length * bytesPerElement);
     }

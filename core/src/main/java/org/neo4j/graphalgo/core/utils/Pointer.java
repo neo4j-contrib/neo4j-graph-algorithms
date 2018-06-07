@@ -55,7 +55,7 @@ public class Pointer {
         }
     }
 
-    public static class GenericPointer<G>  {
+    public static class GenericPointer<G> {
         public G v;
 
         public GenericPointer(G v) {

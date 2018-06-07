@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 
 /**
  * Atomic double Array implementation
+ *
  * @author mknblch
  */
 public class AtomicDoubleArray {
@@ -32,6 +33,7 @@ public class AtomicDoubleArray {
 
     /**
      * Create a new AtomicDoubleArray
+     *
      * @param capacity its capacity
      */
     public AtomicDoubleArray(int capacity) {
@@ -41,6 +43,7 @@ public class AtomicDoubleArray {
 
     /**
      * get the value at index
+     *
      * @param index the index
      * @return value at index
      */
@@ -50,6 +53,7 @@ public class AtomicDoubleArray {
 
     /**
      * Sets the element at position i to the given value.
+     *
      * @param index the index
      * @param value the value
      */
@@ -59,6 +63,7 @@ public class AtomicDoubleArray {
 
     /**
      * add argument to value at index. Behaves exactly like standard java double arithmetic.
+     *
      * @param index index
      * @param value value to add
      */
@@ -72,6 +77,7 @@ public class AtomicDoubleArray {
 
     /**
      * return capacity
+     *
      * @return the capacity
      */
     public int length() {

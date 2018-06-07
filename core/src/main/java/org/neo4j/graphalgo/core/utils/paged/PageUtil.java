@@ -28,19 +28,19 @@ public final class PageUtil {
         return PAGE_SIZE_IN_BYTES >> Integer.numberOfTrailingZeros(sizeOfElement);
     }
 
-    static int numPagesFor(long capacity, int pageSize) {
+    public static int numPagesFor(long capacity, int pageSize) {
         int pageShift = Integer.numberOfTrailingZeros(pageSize);
         int pageMask = pageSize - 1;
         return numPagesFor(capacity, pageShift, pageMask);
     }
 
-    static int numPagesFor(long capacity, int pageShift, int pageMask) {
+    public static int numPagesFor(long capacity, int pageShift, long pageMask) {
         final long numPages = (capacity + pageMask) >>> pageShift;
         assert numPages <= Integer.MAX_VALUE : "pageSize=" + (pageMask + 1) + " is too small for such as capacity: " + capacity;
         return (int) numPages;
     }
 
-    static long capacityFor(int numPages, int pageShift) {
+    public static long capacityFor(int numPages, int pageShift) {
         return ((long) numPages) << pageShift;
     }
 
@@ -49,6 +49,10 @@ public final class PageUtil {
     }
 
     public static int indexInPage(long index, int pageMask) {
+        return (int) (index & (long) pageMask);
+    }
+
+    public static int indexInPage(long index, long pageMask) {
         return (int) (index & pageMask);
     }
 
