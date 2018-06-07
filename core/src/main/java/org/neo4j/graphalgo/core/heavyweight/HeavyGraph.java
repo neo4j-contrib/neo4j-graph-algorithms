@@ -117,8 +117,8 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     }
 
     @Override
-    public WeightMapping nodeProperties(String name) {
-        return nodePropertiesMapping.get(name);
+    public WeightMapping nodeProperties(String type) {
+        return nodePropertiesMapping.get(type);
     }
 
     @Override

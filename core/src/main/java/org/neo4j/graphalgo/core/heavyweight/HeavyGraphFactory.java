@@ -61,13 +61,6 @@ public class HeavyGraphFactory extends GraphFactory {
                     dimensions.nodePropertyDefaultValue(propertyMapping.type)));
         }
 
-//        final Supplier<WeightMapping> nodeWeights = () -> newWeightMap(
-//                dimensions.nodePropertyKeyId("weight"),
-//                dimensions.nodePropertyDefaultValue("weight"));
-//        final Supplier<WeightMapping> nodeProps = () -> newWeightMap(
-//                dimensions.nodePropertyKeyId("property"),
-//                dimensions.nodePropertyDefaultValue("property"));
-
         int concurrency = setup.concurrency();
         final int nodeCount = dimensions.nodeCount();
         final AdjacencyMatrix matrix = new AdjacencyMatrix(
