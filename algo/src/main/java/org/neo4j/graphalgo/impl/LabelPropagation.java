@@ -27,6 +27,7 @@ import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
@@ -60,6 +61,17 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.label = label;
         }
     }
+
+    /*
+    CALL algo.lpa(null, null, {
+      partitionProperty "partition",
+      weightProperty: "weight"
+    })
+
+    CALL algo.deepwalk(null, null, {
+      nodeFeatures: ["feat1", "feat2", "feat3"]
+    })
+     */
 
     public LabelPropagation(
             HeavyGraph graph,
@@ -182,6 +194,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private final boolean randomizeOrder;
         private final ProgressLogger progressLogger;
         private final PrimitiveIntIterable nodes;
+        private final WeightMapping nodeProperties;
 
         private InitStep(
                 HeavyGraph graph,
@@ -196,6 +209,8 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.randomizeOrder = randomizeOrder;
             this.progressLogger = progressLogger;
             this.nodes = nodes;
+
+            nodeProperties = this.graph.nodeProperties("property");
         }
 
         @Override
@@ -207,7 +222,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             PrimitiveIntIterator iterator = nodes.iterator();
             while (iterator.hasNext()) {
                 int nodeId = iterator.next();
-                existingLabels[nodeId] = (int) graph.valueOf(nodeId, nodeId);
+                existingLabels[nodeId] = (int) nodeProperties.get(nodeId, nodeId);
             }
         }
 
@@ -231,6 +246,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private final PrimitiveIntIterable nodes;
         private final int maxNode;
         private final IntDoubleHashMap votes;
+        private final WeightMapping nodeWeights;
 
         private boolean didChange = true;
         private long iteration = 0L;
@@ -249,6 +265,8 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.nodes = RandomlySwitchingIterable.of(randomizeOrder, nodes);
             this.maxNode = (int) (graph.nodeCount() - 1L);
             this.votes = new IntDoubleScatterMap();
+
+            nodeWeights = this.graph.nodeProperties("weight");
         }
 
         @Override
@@ -293,7 +311,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
                 final int targetNodeId,
                 final long relationId) {
             int partition = existingLabels[targetNodeId];
-            double weight = graph.weightOf(sourceNodeId, targetNodeId) * graph.weightOf(targetNodeId);
+            double weight = graph.weightOf(sourceNodeId, targetNodeId) * nodeWeights.get(targetNodeId);
             votes.addTo(partition, weight);
             return true;
         }

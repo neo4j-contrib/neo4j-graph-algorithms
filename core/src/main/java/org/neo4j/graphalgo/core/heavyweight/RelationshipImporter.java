@@ -36,6 +36,8 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 
@@ -184,12 +186,16 @@ final class RelationshipImporter extends StatementAction {
     }
 
     Graph toGraph(final IdMap idMap, final AdjacencyMatrix matrix) {
+
+        Map<String, WeightMapping> nodePropertyMappings = new HashMap<>();
+        nodePropertyMappings.put("weight", nodeWeights);
+        nodePropertyMappings.put("property", nodeProps);
+
         return new HeavyGraph(
                 idMap,
                 matrix,
                 relWeights,
-                nodeWeights,
-                nodeProps);
+                nodePropertyMappings);
     }
 
     void writeInto(

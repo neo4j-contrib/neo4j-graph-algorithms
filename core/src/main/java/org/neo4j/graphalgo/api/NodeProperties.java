@@ -32,5 +32,7 @@ public interface NodeProperties {
      * @param defaultValue a default value
      * @return the property value
      */
-    double valueOf(int nodeId, double defaultValue);
+//    double valueOf(int nodeId, double defaultValue);
+
+    WeightMapping nodeProperties(String name);
 }

@@ -137,7 +137,12 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         if (setup.sort) {
             relationships.matrix.sortAll(setup.executor, setup.concurrency);
         }
-        return new HeavyGraph(nodes.idMap, relationships.matrix, relationships.weights(), nodes.nodeWeights(), nodes.nodeValues());
+
+        Map<String, WeightMapping> nodePropertyMappings = new HashMap<>();
+        nodePropertyMappings.put("weight", nodes.nodeWeights());
+        nodePropertyMappings.put("property", nodes.nodeValues());
+
+        return new HeavyGraph(nodes.idMap, relationships.matrix, relationships.weights(), nodePropertyMappings);
     }
 
     private Relationships batchLoadRelationships(int batchSize, Nodes nodes) {

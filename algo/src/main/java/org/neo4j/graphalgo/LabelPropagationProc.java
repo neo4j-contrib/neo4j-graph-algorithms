@@ -149,6 +149,9 @@ public final class LabelPropagationProc {
         return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
                     .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
                     .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
+                    .withOptionalNodeProperties(
+                            PropertyMapping.of("partition", partitionProperty, 0d),
+                            PropertyMapping.of("weight", weightKey, 1d))
                     .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
                     .withOptionalNodeProperty(partitionProperty, 0.0d)
                     .withDirection(direction)

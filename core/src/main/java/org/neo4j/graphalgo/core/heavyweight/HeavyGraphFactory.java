@@ -27,6 +27,8 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -51,12 +53,13 @@ public class HeavyGraphFactory extends GraphFactory {
         final Supplier<WeightMapping> relWeights = () -> newWeightMap(
                 dimensions.relWeightId(),
                 setup.relationDefaultWeight);
+
         final Supplier<WeightMapping> nodeWeights = () -> newWeightMap(
-                dimensions.nodeWeightId(),
-                setup.nodeDefaultWeight);
+                dimensions.nodePropertyKeyId("weight"),
+                dimensions.nodePropertyDefaultValue("weight"));
         final Supplier<WeightMapping> nodeProps = () -> newWeightMap(
-                dimensions.nodePropId(),
-                setup.nodeDefaultPropertyValue);
+                dimensions.nodePropertyKeyId("property"),
+                dimensions.nodePropertyDefaultValue("property"));
 
         int concurrency = setup.concurrency();
         final int nodeCount = dimensions.nodeCount();
@@ -124,11 +127,14 @@ public class HeavyGraphFactory extends GraphFactory {
             task.release();
         }
 
+        Map<String, WeightMapping> nodePropertyMappings = new HashMap<>();
+        nodePropertyMappings.put("weight", nodeWeights);
+        nodePropertyMappings.put("property", nodeProps);
+
         return new HeavyGraph(
                 idMap,
                 matrix,
                 relWeights,
-                nodeWeights,
-                nodeProps);
+                nodePropertyMappings);
     }
 }
