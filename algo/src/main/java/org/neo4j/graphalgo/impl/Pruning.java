@@ -132,15 +132,15 @@ public class Pruning {
 
     static class Embedding {
         private INDArray ndEmbedding;
-        private Feature[] Features;
+        private Feature[] features;
 
         public Embedding(Feature[] Features, INDArray ndEmbedding) {
-            this.Features = Features;
+            this.features = Features;
             this.ndEmbedding = ndEmbedding;
         }
 
         public Feature[] getFeatures() {
-            return Features;
+            return features;
         }
 
         public INDArray getNDEmbedding() {
