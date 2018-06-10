@@ -384,10 +384,8 @@ public class DeepGL extends Algorithm<DeepGL> {
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
             INDArray[] maxes = new INDArray[features.columns()];
             for (int fCol = 0; fCol < features.columns(); fCol++) {
-                INDArray repeat = features.getColumn(fCol).repeat(1, adjacencyMatrix.columns());
-                INDArray mul = adjacencyMatrix.transpose().mul(repeat);
+                INDArray mul = adjacencyMatrix.transpose().mulColumnVector(features.getColumn(fCol));
                 maxes[fCol] = mul.max(0).transpose();
-
             }
             return Nd4j.hstack(maxes);
         }
@@ -407,10 +405,12 @@ public class DeepGL extends Algorithm<DeepGL> {
 
         @Override
         public INDArray ndOp(INDArray features, INDArray adjacencyMatrix) {
-            INDArray div = adjacencyMatrix.mmul(features).div(adjacencyMatrix.sum(1).repeat(1, features.columns()));
+            INDArray mean = adjacencyMatrix
+                    .mmul(features)
+                    .diviColumnVector(adjacencyMatrix.sum(1));
             // clear NaNs from div by 0 - these entries should have a 0 instead.
-            Nd4j.clearNans(div);
-            return div;
+            Nd4j.clearNans(mean);
+            return mean;
         }
 
         @Override
@@ -431,13 +431,12 @@ public class DeepGL extends Algorithm<DeepGL> {
             double sigma = 16;
             INDArray[] sumsOfSquareDiffs = new INDArray[adjacencyMatrix.rows()];
             for (int node = 0; node < adjacencyMatrix.rows(); node++) {
-                INDArray nodeFeatures = features.getRow(node);
-                INDArray adjs = adjacencyMatrix.getColumn(node).repeat(1, features.columns());
-                INDArray repeat = nodeFeatures.repeat(0, features.rows()).mul(adjs);
-                INDArray sub = repeat.sub(features.mul(adjs));
+                INDArray column = adjacencyMatrix.getColumn(node);
+                INDArray repeat = features.getRow(node).repeat(0, features.rows()).muliColumnVector(column);
+                INDArray sub = repeat.sub(features.mulColumnVector(column));
                 sumsOfSquareDiffs[node] = Transforms.pow(sub, 2).sum(0);
             }
-            INDArray sumOfSquareDiffs = Nd4j.vstack(sumsOfSquareDiffs).mul(-(1d / Math.pow(sigma, 2)));
+            INDArray sumOfSquareDiffs = Nd4j.vstack(sumsOfSquareDiffs).muli(-(1d / Math.pow(sigma, 2)));
             return Transforms.exp(sumOfSquareDiffs);
         }
 

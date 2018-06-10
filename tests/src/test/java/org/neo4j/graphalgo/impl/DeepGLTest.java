@@ -379,6 +379,16 @@ public class DeepGLTest {
         INDArray output = model.output(testData.getFeatureMatrix());
         eval.eval(testData.getLabels(), output);
         System.out.println(eval.stats());
-        return eval.stats();
+        ROCBinary rocEval = new ROCBinary(0);
+        rocEval.eval(testData.getLabels(), output);
+        System.out.println(rocEval.stats());
+        System.out.println("Average AUC: " + rocEval.calculateAverageAuc());
+        System.out.println("========================================================================\n\n");
+        return eval.stats()
+                + rocEval.stats()
+                + "\nAverage AUC: " + rocEval.calculateAverageAuc()
+                + "\n========================================================================\n\n";
+
+
     }
 }
