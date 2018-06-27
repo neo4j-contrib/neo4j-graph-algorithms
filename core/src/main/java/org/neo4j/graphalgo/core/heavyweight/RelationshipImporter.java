@@ -36,7 +36,11 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 
 final class RelationshipImporter extends StatementAction {
@@ -51,9 +55,9 @@ final class RelationshipImporter extends StatementAction {
 
     private IdMap idMap;
     private AdjacencyMatrix matrix;
+
     private WeightMapping relWeights;
-    private WeightMapping nodeWeights;
-    private WeightMapping nodeProps;
+    private Map<String, WeightMapping> nodeProperties;
 
     RelationshipImporter(
             GraphDatabaseAPI api,
@@ -66,8 +70,7 @@ final class RelationshipImporter extends StatementAction {
             AdjacencyMatrix matrix,
             PrimitiveIntIterable nodes,
             Supplier<WeightMapping> relWeights,
-            Supplier<WeightMapping> nodeWeights,
-            Supplier<WeightMapping> nodeProps) {
+            Map<String, Supplier<WeightMapping>> nodePropertiesSupplier) {
         super(api);
         this.matrix = matrix;
         this.nodeSize = Math.min(batchSize, idMap.size() - nodeOffset);
@@ -77,9 +80,10 @@ final class RelationshipImporter extends StatementAction {
         this.nodes = nodes;
         this.setup = setup;
         this.relWeights = relWeights.get();
-        this.nodeWeights = nodeWeights.get();
-        this.nodeProps = nodeProps.get();
         this.relationId = dimensions.relationshipTypeId();
+
+        this.nodeProperties = new HashMap<>();
+        nodePropertiesSupplier.forEach((key, value) -> this.nodeProperties.put(key, value.get()));
     }
 
     @Override
@@ -117,21 +121,12 @@ final class RelationshipImporter extends StatementAction {
             loader = prepareDirected(transaction, readOp, cursors);
         }
 
-        if (this.nodeWeights instanceof WeightMap) {
-            WeightMap nodeWeights = (WeightMap) this.nodeWeights;
+        WeightMap[] weightMaps = nodeProperties.values().stream()
+                .filter(prop -> prop instanceof WeightMap)
+                .map(prop -> (WeightMap) prop)
+                .toArray(WeightMap[]::new);
 
-            if (this.nodeProps instanceof WeightMap) {
-                WeightMap nodeProps = (WeightMap) this.nodeProps;
-                return new ReadWithNodeWeightsAndProps(loader, nodeWeights, nodeProps);
-            }
-            return new ReadWithNodeWeights(loader, nodeWeights);
-        }
-        if (this.nodeProps instanceof WeightMap) {
-            WeightMap nodeProps = (WeightMap) this.nodeProps;
-            return new ReadWithNodeWeights(loader, nodeProps);
-        }
-
-        return loader;
+        return new ReadWithNodeProperties(loader, weightMaps);
     }
 
     private RelationshipLoader prepareDirected(final KernelTransaction transaction, final Read readOp, final CursorFactory cursors) {
@@ -184,29 +179,28 @@ final class RelationshipImporter extends StatementAction {
     }
 
     Graph toGraph(final IdMap idMap, final AdjacencyMatrix matrix) {
+
         return new HeavyGraph(
                 idMap,
                 matrix,
                 relWeights,
-                nodeWeights,
-                nodeProps);
+                nodeProperties);
     }
 
     void writeInto(
-            WeightMapping relWeights,
-            WeightMapping nodeWeights,
-            WeightMapping nodeProps) {
+            WeightMapping relWeights, Map<String, WeightMapping> nodeProperties) {
         combineMaps(relWeights, this.relWeights);
-        combineMaps(nodeWeights, this.nodeWeights);
-        combineMaps(nodeProps, this.nodeProps);
+
+        for (Map.Entry<String, WeightMapping> entry : nodeProperties.entrySet()) {
+            combineMaps(nodeProperties.get(entry.getKey()), entry.getValue());
+        }
     }
 
     void release() {
         this.idMap = null;
         this.matrix = null;
         this.relWeights = null;
-        this.nodeWeights = null;
-        this.nodeProps = null;
+        this.nodeProperties = null;
     }
 
     private void combineMaps(WeightMapping global, WeightMapping local) {

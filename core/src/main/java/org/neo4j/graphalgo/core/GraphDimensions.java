@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.StatementFunction;
 import org.neo4j.internal.kernel.api.Read;
@@ -38,8 +39,10 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
     private int labelId;
     private int[] relationId;
     private int relWeightId;
+
     private int nodeWeightId;
     private int nodePropId;
+    private int[] nodePropIds;
 
     public GraphDimensions(
             GraphDatabaseAPI api,
@@ -84,6 +87,28 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         return nodePropId;
     }
 
+    public int nodePropertyKeyId(String type) {
+        PropertyMapping[] mappings = setup.nodePropertyMappings;
+
+        for (int i = 0; i < mappings.length; i++) {
+            if (mappings[i].type.equals(type)) {
+                return nodePropIds[i];
+            }
+        }
+        return -1;
+    }
+
+    public double nodePropertyDefaultValue(String type) {
+        PropertyMapping[] mappings = setup.nodePropertyMappings;
+
+        for (PropertyMapping mapping : mappings) {
+            if (mapping.type.equals(type)) {
+                return mapping.defaultValue;
+            }
+        }
+        return 0.0;
+    }
+
     @Override
     public GraphDimensions apply(final KernelTransaction transaction) throws RuntimeException {
         TokenRead tokenRead = transaction.tokenRead();
@@ -97,8 +122,19 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
             }
         }
         relWeightId = propertyKey(tokenRead, setup.shouldLoadRelationshipWeight(), setup.relationWeightPropertyName);
+
+        if(setup.nodePropertyMappings.length > 0) {
+            nodePropIds = new int[setup.nodePropertyMappings.length];
+            for (int i = 0; i < setup.nodePropertyMappings.length; i++) {
+                nodePropIds[i] = propertyKey(tokenRead, true, setup.nodePropertyMappings[i].propertyKey);
+            }
+        } else {
+            nodePropIds = new int[0];
+        }
+
         nodeWeightId = propertyKey(tokenRead, setup.shouldLoadNodeWeight(), setup.nodeWeightPropertyName);
         nodePropId = propertyKey(tokenRead, setup.shouldLoadNodeProperty(), setup.nodePropertyName);
+
         nodeCount = dataRead.countsForNode(labelId);
         allNodesCount = getHighestPossibleNodeCount(dataRead);
         maxRelCount = Math.max(

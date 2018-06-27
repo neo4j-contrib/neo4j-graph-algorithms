@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.core.loading.LoadGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.impl.LabelPropagation;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -64,8 +65,8 @@ public final class LoadGraphProc {
                 .overrideRelationshipTypeOrQuery(relationshipType);
 
         final Direction direction = configuration.getDirection(Direction.OUTGOING);
-        final String nodeWeight = configuration.getString("nodeWeight", null);
         final String relationshipWeight = configuration.getString("relationshipWeight", null);
+        final String nodeWeight = configuration.getString("nodeWeight", null);
         final String nodeProperty = configuration.getString("nodeProperty", null);
 
         LoadGraphStats stats = new LoadGraphStats();
@@ -94,9 +95,13 @@ public final class LoadGraphProc {
                             configuration.getRelationshipOrQuery(), configuration)
                     .withName(name)
                     .withAllocationTracker(new AllocationTracker())
+                    .withOptionalRelationshipWeightsFromProperty(relationshipWeight, 1.0d)
                     .withOptionalNodeProperty(nodeProperty, 0.0d)
                     .withOptionalNodeWeightsFromProperty(nodeWeight, 1.0d)
-                    .withOptionalRelationshipWeightsFromProperty(relationshipWeight, 1.0d)
+                    .withOptionalNodeProperties(
+                            PropertyMapping.of(LabelPropagation.PARTITION_TYPE, nodeProperty, 0.0d),
+                            PropertyMapping.of(LabelPropagation.WEIGHT_TYPE, nodeWeight, 1.0d)
+                    )
                     .withDirection(direction)
                     .withSort(stats.sorted)
                     .asUndirected(stats.undirected)

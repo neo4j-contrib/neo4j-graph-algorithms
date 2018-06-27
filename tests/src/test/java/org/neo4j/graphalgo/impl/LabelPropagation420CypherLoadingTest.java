@@ -30,13 +30,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
+import org.neo4j.test.Property;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -123,8 +124,10 @@ public final class LabelPropagation420CypherLoadingTest
                 .withRelationshipType("MATCH (u1:User)-[rel:FOLLOW]->(u2:User) \n" +
                         "RETURN id(u1) as source,id(u2) as target")
                 .withRelationshipWeightsFromProperty("weight", 1.0)
-                .withNodeWeightsFromProperty("weight", 1.0)
-                .withNodeProperty("partition", 0.0)
+                .withOptionalNodeProperties(
+                        PropertyMapping.of(LabelPropagation.WEIGHT_TYPE, LabelPropagation.WEIGHT_TYPE, 1.0),
+                        PropertyMapping.of(LabelPropagation.PARTITION_TYPE, LabelPropagation.PARTITION_TYPE, 0.0)
+                )
                 .withDirection(Direction.BOTH)
                 .withConcurrency(Pools.DEFAULT_CONCURRENCY)
                 .withName( "cypher" )

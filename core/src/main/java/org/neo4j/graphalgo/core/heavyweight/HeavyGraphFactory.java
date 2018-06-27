@@ -18,15 +18,17 @@
  */
 package org.neo4j.graphalgo.core.heavyweight;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -51,12 +53,13 @@ public class HeavyGraphFactory extends GraphFactory {
         final Supplier<WeightMapping> relWeights = () -> newWeightMap(
                 dimensions.relWeightId(),
                 setup.relationDefaultWeight);
-        final Supplier<WeightMapping> nodeWeights = () -> newWeightMap(
-                dimensions.nodeWeightId(),
-                setup.nodeDefaultWeight);
-        final Supplier<WeightMapping> nodeProps = () -> newWeightMap(
-                dimensions.nodePropId(),
-                setup.nodeDefaultPropertyValue);
+
+        Map<String, Supplier<WeightMapping>> nodePropertySuppliers = new HashMap<>();
+        for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {
+            nodePropertySuppliers.put(propertyMapping.type, () -> newWeightMap(
+                    dimensions.nodePropertyKeyId(propertyMapping.type),
+                    dimensions.nodePropertyDefaultValue(propertyMapping.type)));
+        }
 
         int concurrency = setup.concurrency();
         final int nodeCount = dimensions.nodeCount();
@@ -85,8 +88,7 @@ public class HeavyGraphFactory extends GraphFactory {
                         matrix,
                         nodeIds,
                         relWeights,
-                        nodeWeights,
-                        nodeProps
+                        nodePropertySuppliers
                 ),
                 threadPool);
 
@@ -94,8 +96,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 matrix,
                 idMap,
                 relWeights,
-                nodeWeights,
-                nodeProps,
+                nodePropertySuppliers,
                 tasks);
 
         progressLogger.logDone();
@@ -106,8 +107,7 @@ public class HeavyGraphFactory extends GraphFactory {
             final AdjacencyMatrix matrix,
             final IdMap idMap,
             final Supplier<WeightMapping> relWeightsSupplier,
-            final Supplier<WeightMapping> nodeWeightsSupplier,
-            final Supplier<WeightMapping> nodePropsSupplier,
+            final Map<String, Supplier<WeightMapping>> nodePropertySuppliers,
             Collection<RelationshipImporter> tasks) {
         if (tasks.size() == 1) {
             RelationshipImporter importer = tasks.iterator().next();
@@ -117,10 +117,12 @@ public class HeavyGraphFactory extends GraphFactory {
         }
 
         final WeightMapping relWeights = relWeightsSupplier.get();
-        final WeightMapping nodeWeights = nodeWeightsSupplier.get();
-        final WeightMapping nodeProps = nodePropsSupplier.get();
+
+        Map<String, WeightMapping> nodeProperties = new HashMap<>();
+        nodePropertySuppliers.forEach((key, value) -> nodeProperties.put(key, value.get()));
+
         for (RelationshipImporter task : tasks) {
-            task.writeInto(relWeights, nodeWeights, nodeProps);
+            task.writeInto(relWeights, nodeProperties);
             task.release();
         }
 
@@ -128,7 +130,6 @@ public class HeavyGraphFactory extends GraphFactory {
                 idMap,
                 matrix,
                 relWeights,
-                nodeWeights,
-                nodeProps);
+                nodeProperties);
     }
 }
