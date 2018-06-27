@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
@@ -82,6 +83,7 @@ public class GraphLoader {
     private AllocationTracker tracker = AllocationTracker.EMPTY;
     private boolean sort = false;
     private boolean loadAsUndirected = false;
+    private PropertyMapping[] nodePropertyMappings = new PropertyMapping[0];
 
     /**
      * Creates a new serial GraphLoader.
@@ -508,7 +510,8 @@ public class GraphLoader {
                 sort,
                 loadAsUndirected,
                 tracker,
-                name);
+                name,
+                nodePropertyMappings);
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -568,5 +571,10 @@ public class GraphLoader {
                 .withConcurrency(config.getConcurrency())
                 .withBatchSize(config.getBatchSize())
                 .withParams(config.getParams());
+    }
+
+    public GraphLoader withOptionalNodeProperties(PropertyMapping... nodePropertyMappings) {
+        this.nodePropertyMappings = nodePropertyMappings;
+        return this;
     }
 }

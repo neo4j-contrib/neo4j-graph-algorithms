@@ -26,11 +26,12 @@ package org.neo4j.graphalgo.api;
 public interface NodeProperties {
 
     /**
-     * return the property value for a node
+     * return the property mapping for a type
      *
-     * @param nodeId       the node id
-     * @param defaultValue a default value
-     * @return the property value
+     * @param type       the node property type
+     * @return the mapping associated with that type
      */
-    double valueOf(int nodeId, double defaultValue);
+//    double valueOf(int nodeId, double defaultValue);
+
+    WeightMapping nodeProperties(String type);
 }

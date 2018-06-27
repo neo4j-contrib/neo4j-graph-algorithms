@@ -22,9 +22,12 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.IntPredicate;
 
 /**
@@ -32,28 +35,27 @@ import java.util.function.IntPredicate;
  *
  * @author mknblch
  */
-public class HeavyGraph implements Graph, NodeWeights, NodeProperties, RelationshipPredicate {
+public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate {
 
     public final static String TYPE = "heavy";
 
     private final IdMap nodeIdMap;
     private AdjacencyMatrix container;
     private WeightMapping relationshipWeights;
-    private WeightMapping nodeWeights;
-    private WeightMapping nodeProperties;
+
+    private Map<String, WeightMapping> nodePropertiesMapping;
+
     private boolean canRelease = true;
 
     HeavyGraph(
             IdMap nodeIdMap,
             AdjacencyMatrix container,
             final WeightMapping relationshipWeights,
-            final WeightMapping nodeWeights,
-            final WeightMapping nodeProperties) {
+            Map<String, WeightMapping> nodePropertiesMapping) {
         this.nodeIdMap = nodeIdMap;
         this.container = container;
         this.relationshipWeights = relationshipWeights;
-        this.nodeWeights = nodeWeights;
-        this.nodeProperties = nodeProperties;
+        this.nodePropertiesMapping = nodePropertiesMapping;
     }
 
     @Override
@@ -115,13 +117,8 @@ public class HeavyGraph implements Graph, NodeWeights, NodeProperties, Relations
     }
 
     @Override
-    public double weightOf(final int nodeId) {
-        return nodeWeights.get(nodeId);
-    }
-
-    @Override
-    public double valueOf(final int nodeId, final double defaultValue) {
-        return nodeProperties.get(nodeId, defaultValue);
+    public WeightMapping nodeProperties(String type) {
+        return nodePropertiesMapping.get(type);
     }
 
     @Override
@@ -129,8 +126,7 @@ public class HeavyGraph implements Graph, NodeWeights, NodeProperties, Relations
         if (!canRelease) return;
         container = null;
         relationshipWeights = null;
-        nodeWeights = null;
-        nodeProperties = null;
+        nodePropertiesMapping.clear();
     }
 
     @Override
@@ -146,7 +142,6 @@ public class HeavyGraph implements Graph, NodeWeights, NodeProperties, Relations
             default:
                 return container.hasOutgoing(sourceNodeId, targetNodeId) || container.hasIncoming(sourceNodeId, targetNodeId);
         }
-
     }
 
     @Override

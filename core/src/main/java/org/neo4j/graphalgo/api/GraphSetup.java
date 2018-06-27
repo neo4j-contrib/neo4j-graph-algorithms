@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.api;
 
+import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
@@ -82,6 +83,8 @@ public class GraphSetup {
     // in/out adjacencies are allowed to be merged into an undirected view of the graph
     public final boolean loadAsUndirected;
 
+    public final PropertyMapping[] nodePropertyMappings;
+
     /**
      * main ctor
      * @param startLabel the start label. null means any label.
@@ -122,7 +125,8 @@ public class GraphSetup {
             boolean sort,
             boolean loadAsUndirected,
             AllocationTracker tracker,
-            String name) {
+            String name,
+            PropertyMapping[] nodePropertyMappings) {
 
         this.startLabel = startLabel;
         this.endLabel = endLabel;
@@ -146,6 +150,7 @@ public class GraphSetup {
         this.loadAsUndirected = loadAsUndirected;
         this.tracker = tracker;
         this.name = name;
+        this.nodePropertyMappings = nodePropertyMappings;
     }
 
     /**
@@ -192,7 +197,8 @@ public class GraphSetup {
                 false,
                 false,
                 AllocationTracker.EMPTY,
-                null
+                null,
+                new PropertyMapping[0]
         );
     }
 
