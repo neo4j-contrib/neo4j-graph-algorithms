@@ -28,6 +28,7 @@ import org.neo4j.graphdb.Direction;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.IntPredicate;
 
 /**
@@ -47,7 +48,7 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
 
     private boolean canRelease = true;
 
-    HeavyGraph(
+    public HeavyGraph(
             IdMap nodeIdMap,
             AdjacencyMatrix container,
             final WeightMapping relationshipWeights,
@@ -119,6 +120,11 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     @Override
     public WeightMapping nodeProperties(String type) {
         return nodePropertiesMapping.get(type);
+    }
+
+    @Override
+    public Set<String> availableNodeProperties() {
+        return nodePropertiesMapping.keySet();
     }
 
     @Override
