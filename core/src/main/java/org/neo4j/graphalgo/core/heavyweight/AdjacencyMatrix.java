@@ -61,7 +61,7 @@ public class AdjacencyMatrix {
 
     private boolean sorted = false;
 
-    AdjacencyMatrix(int nodeCount, boolean sorted) {
+    public AdjacencyMatrix(int nodeCount, boolean sorted) {
         this(nodeCount, true, true, sorted);
     }
 
