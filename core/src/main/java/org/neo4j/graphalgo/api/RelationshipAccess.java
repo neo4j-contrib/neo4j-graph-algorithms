@@ -18,20 +18,9 @@
  */
 package org.neo4j.graphalgo.api;
 
+import org.neo4j.graphdb.Direction;
 
-/**
- * Composition of often used source interfaces
- *
- * @author mknblch
- */
-public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterable, RelationshipWeights, RelationshipIterator, RelationshipPredicate, WeightedRelationshipIterator, RelationshipAccess {
+public interface RelationshipAccess {
 
-    /**
-     * release resources which are not part of the result or IdMapping
-     */
-    default void release() {}
-
-    String getType();
-
-    void canRelease(boolean canRelease);
+    int getTarget(int nodeId, int index, Direction direction);
 }

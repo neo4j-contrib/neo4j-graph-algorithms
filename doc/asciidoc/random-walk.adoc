@@ -1,0 +1,262 @@
+[[algorithms-random-walk]]
+= The Random Walk algorithm
+
+[abstract]
+--
+This section describes the Random Walk algorithm in the Neo4j Graph Algorithms library.
+--
+
+// tag::introduction[]
+Random Walk is an algorithm that provides random paths in a graph.
+
+It is be computed by randomly traversing the graph choosing the relationship to follow at random or based on a probability computed from input parameters.
+// end::introduction[]
+
+
+[[algorithms-random-walk-context]]
+== History and explanation
+
+// tag::explanation[]
+
+// end::explanation[]
+
+
+
+[[algorithms-random-walk-usecase]]
+== Use-cases - when to use the Random Walk algorithm
+
+// tag::use-case[]
+Random Walk is often used as input for other algorithms: 
+
+* to compute a (personalized) page-rank
+* for determining node-embeddings, e.g. for node2vec, graph2vec
+* many of the use-cases of <<algorithms-random-walk-usecase,PageRank>> also apply to Random Walks
+
+// end::use-case[]
+
+
+[[algorithms-random-walk-limitations]]
+== Constraints - when not to use the Random Walk algorithm
+
+// tag::constraint[]
+The constraints of <<algorithms-random-walk-usecase,PageRank>> also apply to Random Walks.
+
+* If there are no links from within a group of pages to outside of the group, then the group is considered a spider trap.
+
+* Sinks can occur when a network of links form an infinite cycle.
+
+* Dead-ends occur when pages have no out-links. 
+  A random walk can also use directions of both kinds to avoid that.
+
+// end::constraint[]
+
+
+[[algorithms-pagerank-sample]]
+== Random Walk algorithm sample
+
+This sample will explain the Random Walk algorithm, using a simple graph:
+
+image::pagerank.png[]
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=create-sample-graph]
+----
+
+.The following will run the algorithm and stream a _single 5 hop path_ as result:
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=stream-sample-graph]
+----
+
+// tag::stream-sample-graph-result[]
+.Results
+[opts="header",cols="1"]
+|===
+| page
+|"Home"
+|"Product"
+|"Links"
+|"Site B"
+|"Site D"
+|===
+// end::stream-sample-graph-result[]
+
+// tag::stream-sample-graph-explanation[]
+////
+TODO
+As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
+We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
+////
+// end::stream-sample-graph-explanation[]
+
+
+[[algorithms-random-walk-example]]
+== Example usage
+
+In this example we will run Random Walk on Yelp's social network to find potential influencers.
+
+When <<yelp-import, importing the Yelp dataset>> we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
+Relationships in Neo4j always have a direction, but in this domain the direction is irrelevant.
+If `Person A` is a `FRIEND` with `Person B`, we can say that `Person B` is also a `FRIEND` with `Person A`.
+
+The default label and relationship-type selection syntax won't work for us here, because it will project a directed social network.
+Instead, we can project our undirected social network using *Cypher loading*.
+We can also apply this approach to other algorithms that use *Cypher loading*.
+
+.The following will run the algorithm on Yelp social network:
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=random-walk-stream-yelp-social]
+----
+
+
+[[algorithms-pagerank-syntax]]
+== Syntax
+
+.The following will run the algorithm and stream results:
+[source, cypher]
+----
+CALL algo.randomWalk.stream(label:String, relationship:String,
+     start:Object, steps: 100, walks: 10000,
+    {graph:'heavy', direction:"IN/OUT/BOTH", mode:"node2vec"/"random", inOut: 1.0, return: 1.0, path:false, concurrency:4})
+YIELD nodes, path
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name          | Type   | Default        | Optional | Description
+| label         | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship  | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
+| start         | object | null           | yes      | starting points: null - whole graph, "Label" - nodes with that label, node-id - that node, list of node-ids - these nodes
+| steps         | int    | 10             | yes      | length of paths returned, in case of error only path of lenght 1 is returned
+| walks         | int    | 1              | yes      | number of paths returned
+| direction     | string | 'BOTH'         | yes      | direction of relationships to follow
+| mode          | string | random         | yes      | strategy for choosing the next relationship, modes: random and node2vec
+| inOut         | float  | 1.0            | yes      | parameter for node2vec
+| return        | float  | 1.0            | yes      | parameter for node2vec
+| path          | boolean| false          | yes      | if the more expensive operation of creating a path from node-ids should be performed and returned in results
+| concurrency   | int    | available CPUs | yes      | The number of concurrent threads
+| graph         | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+|===
+
+.Results
+[opts="header"]
+|===
+| Name  | Type  | Description
+| nodes  | list of long  | List of Node ID forming a path
+| path | Path | Optional Path (without relationships)
+|===
+
+
+////
+== Huge graph projection
+
+If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
+
+.Set `graph:'huge'` in the config:
+
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=huge-projection]
+----
+////
+
+== Cypher projection
+
+If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+You must ensure that `graph:'cypher'` is set in the config:
+
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=cypher-loading]
+----
+
+
+== Graph type support
+
+The PageRank algorithm supports the following graph types:
+
+* [x] directed, unweighted
+
+* [ ] undirected, unweighted
+
+
+ifndef::env-docs[]
+== References
+
+// tag::references[]
+
+* https://en.wikipedia.org/wiki/Random_walk
+
+// * TODO
+
+// end::references[]
+endif::env-docs[]
+
+
+ifdef::implementation[]
+
+// tag::implementation[]
+== Implementation details
+
+:leveloffset: +1
+
+PageRank is the popular search algorithm developed by Google.
+
+For more information, see the https://en.wikipedia.org/wiki/Random_walk[Random Walk page on Wikipedia].
+
+## Progress
+
+- [x] single threaded implementation
+- [x] tests
+- [x] simple manual benchmark
+- [ ] simple benchmark
+- [x] implement procedure
+- [x] manual benchmark on bigger graphs
+- [ ] benchmark on bigger graphs
+- [x] parallelization
+- [ ] evaluation
+
+## Requirements
+
+- different start points
+- direction support: in, out, both
+- random and node2vec modes
+- streaming output
+
+## Data structured involved
+
+We use an QueueBasedSpliterator on a blocking queue to handle the parallel stream of results
+
+
+### Parallelization
+
+We parallelize batches of Random Walk as tasks, multiple of these tasks are run in parallel.
+
+### evaluation
+
+- Performance tests on different dataset sizes / level of concurrency
+
+## Future Improvements
+
+- Better handling input parallelization
+- Performance on larger results (> 10M)
+
+== Details
+
+. create a stream of ids based on start value
+. compute batch size based on concurrency and result count
+. determine strategy for random walk
+* "random" just uses ThreadLocalRandom
+* "node2vec" computes a probability distribution of the previous neighbours and selects the index above a certain random probability
+. create batches of tasks that all do `batchSize` random Walks
+. results are sent to a blocking queue
+. blocking queue via spliterator and tombstone into stream
+. depending on "path" parameter lookup nodes, *relationships are not computed for the path*
+
+
+// end::implementation[]
+endif::implementation[]

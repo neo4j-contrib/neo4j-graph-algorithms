@@ -160,7 +160,7 @@
                     <maxMemory>1g</maxMemory>
                     <parallelism>1</parallelism>
                     <printSummary>true</printSummary>
-                    <jvmArgs>-ea</jvmArgs>
+                    <jvmArgs><jvmArg>-ea</jvmArg></jvmArgs>
 
                     <listeners>
                         <report-text showThrowable="true" showStackTraces="true" showOutput="always" showStatusOk="true"
