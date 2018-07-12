@@ -46,7 +46,7 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
             return 0.;
         }
         if (wassermanFaust) {
-            return (componentSize / ((double) farness)) * (farness / (nodeCount - 1.));
+            return (componentSize / ((double) farness)) * ((componentSize - 1.) / (nodeCount - 1.));
         }
         return componentSize / ((double) farness);
     }
