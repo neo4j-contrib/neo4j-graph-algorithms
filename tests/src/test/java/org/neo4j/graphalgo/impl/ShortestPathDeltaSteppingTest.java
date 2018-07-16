@@ -65,6 +65,7 @@ public final class ShortestPathDeltaSteppingTest {
                         "CREATE (h:Node {name:'h'})\n" +
                         "CREATE (i:Node {name:'i'})\n" +
                         "CREATE (x:Node {name:'x'})\n" +
+                        "CREATE (z:Node {name:'z'})\n" +
                         "CREATE" +
                         " (s)-[:TYPE {cost:5}]->(a),\n" +
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
@@ -132,6 +133,15 @@ public final class ShortestPathDeltaSteppingTest {
                 .getShortestPaths();
 
         assertEquals(8, sp[graph.toMappedNodeId(tail)],0.1);
+    }
+
+    @Test
+    public void distanceToNodeInDifferentComponentShouldBeInfinity() throws Exception {
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
+
+        final double[] sp = sssp.compute(head).getShortestPaths();
+
+        assertEquals(Double.POSITIVE_INFINITY, sp[graph.toMappedNodeId(getNode("z").getId())],0.1);
     }
 
     public static Node getNode(String name) {
