@@ -18,7 +18,6 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
-import org.apache.lucene.util.ArrayUtil;
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.loading.ReadHelper;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
@@ -34,6 +33,8 @@ import java.util.Arrays;
 
 abstract class VisitRelationship {
 
+    private static final long[] EMPTY_LONGS = new long[0];
+
     private final HugeIdMap idMap;
 
     private long[] targets;
@@ -46,7 +47,7 @@ abstract class VisitRelationship {
 
     VisitRelationship(final HugeIdMap idMap) {
         this.idMap = idMap;
-        this.targets = new long[0];
+        this.targets = EMPTY_LONGS;
     }
 
     abstract void visit(RelationshipSelectionCursor cursor);
@@ -58,7 +59,13 @@ abstract class VisitRelationship {
         prevNode = -1L;
         isSorted = true;
         if (targets.length < degree) {
-            targets = new long[ArrayUtil.oversize(degree, Long.BYTES)];
+            // give leeway in case of nodes with a reference to themselves
+            // due to automatic skipping of identical targets, just adding one is enough to cover the
+            // self-reference case, as it is handled as two relationships that aren't counted by BOTH
+            // avoid repeated re-allocation for smaller degrees
+            // avoid generous over-allocation for larger degrees
+            int newSize = Math.max(32, 1 + degree);
+            targets = new long[newSize];
         }
     }
 
