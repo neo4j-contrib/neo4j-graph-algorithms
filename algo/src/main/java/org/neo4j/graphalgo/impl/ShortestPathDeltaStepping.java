@@ -161,7 +161,8 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
      * @return the overall distance from source to nodeId
      */
     private double get(int nodeId) {
-        return distance.get(nodeId) / multiplier;
+        int distance = this.distance.get(nodeId);
+        return distance == Integer.MAX_VALUE ? Double.POSITIVE_INFINITY : distance / multiplier;
     }
 
     /**
