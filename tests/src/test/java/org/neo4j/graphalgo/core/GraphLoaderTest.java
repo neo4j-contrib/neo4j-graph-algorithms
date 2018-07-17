@@ -18,39 +18,143 @@
  */
 package org.neo4j.graphalgo.core;
 
-import org.junit.*;
+import com.carrotsearch.hppc.IntArrayList;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author mknblch
  */
+@RunWith(Parameterized.class)
 public class GraphLoaderTest {
 
-    @ClassRule
-    public static ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
+    @Rule
+    public ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
 
-    @BeforeClass
-    public static void setupGraph() {
-        DB.execute("FOREACH (x IN range(1, 4098) | CREATE (:Node {index:x}))");
-        DB.execute("MATCH (n) WHERE n.index IN [1, 2, 3] DELETE n");
+    private Class<? extends GraphFactory> graphImpl;
+
+    @Parameterized.Parameters(name = "{1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
+        );
+    }
+
+    @SuppressWarnings("unused")
+    public GraphLoaderTest(
+            Class<? extends GraphFactory> graphImpl,
+            String nameIgnoredOnlyForTestName) {
+        this.graphImpl = graphImpl;
     }
 
     @Test
-    public void testHeavy() {
-        new GraphLoader(DB, Pools.DEFAULT)
+    public void testLargerGraphWithDeletions() {
+        db.execute("FOREACH (x IN range(1, 4098) | CREATE (:Node {index:x}))");
+        db.execute("MATCH (n) WHERE n.index IN [1, 2, 3] DELETE n");
+        new GraphLoader(db, Pools.DEFAULT)
                 .withLabel("Node")
                 .withAnyRelationshipType()
-                .load(HeavyGraphFactory.class);
+                .load(graphImpl);
     }
 
     @Test
-    public void testHuge() {
-        new GraphLoader(DB, Pools.DEFAULT)
-                .withLabel("Node")
+    public void testUndirectedNodeWithSelfReference() {
+        runUndirectedNodeWithSelfReference("" +
+                "CREATE (a:Node),(b:Node) " +
+                "CREATE" +
+                " (a)-[:REL]->(a)," +
+                " (a)-[:REL]->(b)"
+        );
+    }
+
+    @Test
+    public void testUndirectedNodeWithSelfReference2() {
+        runUndirectedNodeWithSelfReference("" +
+                "CREATE (a:Node),(b:Node) " +
+                "CREATE" +
+                " (a)-[:REL]->(b)," +
+                " (a)-[:REL]->(a)"
+        );
+    }
+
+    private void runUndirectedNodeWithSelfReference(String cypher) {
+        db.execute(cypher);
+        final Graph graph = new GraphLoader(db)
+                .withAnyLabel()
                 .withAnyRelationshipType()
-                .load(HugeGraphFactory.class);
+                .asUndirected(true)
+                .load(graphImpl);
+
+        assertEquals(2L, graph.nodeCount());
+        checkRelationships(graph, 0, 0, 1);
+        checkRelationships(graph, 1, 0);
+    }
+
+    @Test
+    public void testUndirectedNodesWithMultipleSelfReferences() {
+        runUndirectedNodesWithMultipleSelfReferences("" +
+                "CREATE (a:Node),(b:Node),(c:Node),(d:Node) " +
+                "CREATE" +
+                " (a)-[:REL]->(a)," +
+                " (b)-[:REL]->(b)," +
+                " (a)-[:REL]->(b)," +
+                " (b)-[:REL]->(c)," +
+                " (b)-[:REL]->(d)"
+        );
+    }
+
+    @Test
+    public void testUndirectedNodesWithMultipleSelfReferences2() {
+        runUndirectedNodesWithMultipleSelfReferences("" +
+                "CREATE (a:Node),(b:Node),(c:Node),(d:Node) " +
+                "CREATE" +
+                " (a)-[:REL]->(b)," +
+                " (a)-[:REL]->(a)," +
+                " (b)-[:REL]->(c)," +
+                " (b)-[:REL]->(d)," +
+                " (b)-[:REL]->(b)"
+        );
+    }
+
+    private void runUndirectedNodesWithMultipleSelfReferences(String cypher) {
+        db.execute(cypher);
+        final Graph graph = new GraphLoader(db)
+                .withAnyLabel()
+                .withAnyRelationshipType()
+                .asUndirected(true)
+                .load(graphImpl);
+
+        assertEquals(4L, graph.nodeCount());
+        checkRelationships(graph, 0, 0, 1);
+        checkRelationships(graph, 1, 0, 1, 2, 3);
+        checkRelationships(graph, 2, 1);
+        checkRelationships(graph, 3, 1);
+    }
+
+    private void checkRelationships(Graph graph, int node, int... expected) {
+        IntArrayList idList = new IntArrayList();
+        graph.forEachOutgoing(node, (s, t, r) -> {
+            idList.add(t);
+            return true;
+        });
+        final int[] ids = idList.toArray();
+        Arrays.sort(ids);
+        Arrays.sort(expected);
+        assertArrayEquals(expected, ids);
     }
 }
