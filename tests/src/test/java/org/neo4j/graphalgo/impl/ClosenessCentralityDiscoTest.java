@@ -21,12 +21,9 @@ package org.neo4j.graphalgo.impl;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -35,9 +32,9 @@ import org.neo4j.graphalgo.impl.closeness.HugeMSClosenessCentrality;
 import org.neo4j.graphalgo.impl.closeness.MSClosenessCentrality;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.function.BiConsumer;
 import java.util.function.DoubleConsumer;
 
+import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,14 +79,14 @@ public class ClosenessCentralityDiscoTest {
                 .withRelationshipType("TYPE")
                 .asUndirected(true)
                 .load(HeavyGraphFactory.class);
-        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, 2, Pools.DEFAULT, true );
+        final MSClosenessCentrality algo = new MSClosenessCentrality(graph, 2, Pools.DEFAULT, true);
         final DoubleConsumer mock = mock(DoubleConsumer.class);
         algo.compute()
                 .resultStream()
                 .peek(System.out::println)
                 .forEach(r -> mock.accept(r.centrality));
-        verify(mock, times(3)).accept(AdditionalMatchers.eq(0.5, 0.01));
-        verify(mock, times(2)).accept(AdditionalMatchers.eq(0.25, 0.01));
+        verify(mock, times(3)).accept(eq(0.25, 0.01));
+        verify(mock, times(2)).accept(eq(0.0, 0.01));
     }
 
     @Test
@@ -101,7 +98,8 @@ public class ClosenessCentralityDiscoTest {
                 .withRelationshipType("TYPE")
                 .asUndirected(true)
                 .load(HugeGraphFactory.class);
-        final HugeMSClosenessCentrality algo = new HugeMSClosenessCentrality(graph,
+        final HugeMSClosenessCentrality algo = new HugeMSClosenessCentrality(
+                graph,
                 AllocationTracker.EMPTY,
                 2,
                 Pools.DEFAULT,
@@ -112,7 +110,7 @@ public class ClosenessCentralityDiscoTest {
                 .peek(System.out::println)
                 .forEach(r -> mock.accept(r.centrality));
 
-        verify(mock, times(3)).accept(AdditionalMatchers.eq(0.5, 0.01));
-        verify(mock, times(2)).accept(AdditionalMatchers.eq(0.25, 0.01));
+        verify(mock, times(3)).accept(eq(0.25, 0.01));
+        verify(mock, times(2)).accept(eq(0.0, 0.01));
     }
 }
