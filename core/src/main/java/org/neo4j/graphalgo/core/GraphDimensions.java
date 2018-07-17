@@ -24,10 +24,7 @@ import org.neo4j.graphalgo.core.utils.StatementFunction;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
-import org.neo4j.kernel.impl.store.id.IdGenerator;
-import org.neo4j.kernel.impl.store.id.IdGeneratorFactory;
-import org.neo4j.kernel.impl.store.id.IdType;
-import org.neo4j.kernel.impl.util.UnsatisfiedDependencyException;
+import org.neo4j.kernel.impl.newapi.InternalReadOps;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class GraphDimensions extends StatementFunction<GraphDimensions> {
@@ -136,7 +133,7 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         nodePropId = propertyKey(tokenRead, setup.shouldLoadNodeProperty(), setup.nodePropertyName);
 
         nodeCount = dataRead.countsForNode(labelId);
-        allNodesCount = getHighestPossibleNodeCount(dataRead);
+        allNodesCount = InternalReadOps.getHighestPossibleNodeCount(dataRead, api);
         maxRelCount = Math.max(
                 dataRead.countsForRelationshipWithoutTxState(
                         labelId,
@@ -156,17 +153,4 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         return load ? tokenRead.propertyKey(propertyName) : TokenRead.NO_TOKEN;
     }
 
-    private long getHighestPossibleNodeCount(Read readOp) {
-        try {
-            IdGeneratorFactory idGeneratorFactory = resolve(IdGeneratorFactory.class);
-            if (idGeneratorFactory != null) {
-                final IdGenerator idGenerator = idGeneratorFactory.get(IdType.NODE);
-                if (idGenerator != null) {
-                    return idGenerator.getHighId();
-                }
-            }
-        } catch (IllegalArgumentException | UnsatisfiedDependencyException ignored) {
-        }
-        return readOp.nodesGetCount();
-    }
 }
