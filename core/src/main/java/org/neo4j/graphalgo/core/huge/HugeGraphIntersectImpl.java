@@ -21,18 +21,17 @@ package org.neo4j.graphalgo.core.huge;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 
 class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     private HugeAdjacencyList adjacency;
-    private HugeLongArray offsets;
+    private HugeAdjacencyOffsets offsets;
     private HugeAdjacencyList.Cursor empty;
     private HugeAdjacencyList.Cursor cache;
     private HugeAdjacencyList.Cursor cacheA;
     private HugeAdjacencyList.Cursor cacheB;
 
-    HugeGraphIntersectImpl(final HugeAdjacencyList adjacency, final HugeLongArray offsets) {
+    HugeGraphIntersectImpl(final HugeAdjacencyList adjacency, final HugeAdjacencyOffsets offsets) {
         assert adjacency != null;
         assert offsets != null;
         this.adjacency = adjacency;
@@ -56,7 +55,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     @Override
     public void intersectAll(long nodeIdA, IntersectionConsumer consumer) {
-        HugeLongArray offsets = this.offsets;
+        HugeAdjacencyOffsets offsets = this.offsets;
         HugeAdjacencyList adjacency = this.adjacency;
 
         HugeAdjacencyList.Cursor mainCursor = cursor(nodeIdA, cache, offsets, adjacency);
@@ -103,7 +102,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
         }
     }
 
-    private int degree(long node, HugeLongArray offsets, HugeAdjacencyList array) {
+    private int degree(long node, HugeAdjacencyOffsets offsets, HugeAdjacencyList array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
@@ -114,7 +113,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
     private HugeAdjacencyList.Cursor cursor(
             long node,
             HugeAdjacencyList.Cursor reuse,
-            HugeLongArray offsets,
+            HugeAdjacencyOffsets offsets,
             HugeAdjacencyList array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {

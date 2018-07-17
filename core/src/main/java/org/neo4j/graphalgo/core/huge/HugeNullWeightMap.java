@@ -16,42 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core;
+package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.HugeWeightMapping;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.PagedLongLongDoubleMap;
 
-public final class HugeWeightMap implements HugeWeightMapping {
+/**
+ * WeightMapping implementation which always returns
+ * a given default weight upon invocation
+ *
+ * @author mknblch
+ */
+class HugeNullWeightMap implements HugeWeightMapping {
 
-    private PagedLongLongDoubleMap weights;
     private final double defaultValue;
 
-    public HugeWeightMap(long capacity, double defaultValue, AllocationTracker tracker) {
+    HugeNullWeightMap(double defaultValue) {
         this.defaultValue = defaultValue;
-        this.weights = PagedLongLongDoubleMap.newMap(capacity, tracker);
     }
 
     @Override
     public double weight(final long source, final long target) {
-        return weights.getOrDefault(source, target, defaultValue);
-    }
-
-    public double defaultValue() {
         return defaultValue;
-    }
-
-    public void put(long key1, long key2, double value) {
-        weights.put(key1, key2, value);
     }
 
     @Override
     public long release() {
-        if (weights != null) {
-            long freed = weights.release();
-            weights = null;
-            return freed;
-        }
         return 0L;
     }
 }

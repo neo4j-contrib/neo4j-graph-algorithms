@@ -19,8 +19,6 @@
 package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphalgo.core.GraphDimensions;
-import org.neo4j.graphalgo.core.HugeNullWeightMap;
-import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NodeImporter;
 import org.neo4j.graphalgo.core.NullWeightMap;
@@ -113,15 +111,6 @@ public abstract class GraphFactory {
         return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(defaultValue)
                 : new WeightMap(dimensions.nodeCount(), defaultValue, propertyId);
-    }
-
-    protected HugeWeightMapping hugeWeightMapping(
-            AllocationTracker tracker,
-            int propertyId,
-            double defaultValue) {
-        return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                    ? new HugeNullWeightMap(defaultValue)
-                    : new HugeWeightMap(dimensions.hugeNodeCount(), defaultValue, tracker);
     }
 
     private static ProgressLogger progressLogger(Log log, long time, TimeUnit unit) {

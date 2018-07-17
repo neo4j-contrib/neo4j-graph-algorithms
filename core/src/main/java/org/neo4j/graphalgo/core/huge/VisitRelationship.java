@@ -18,17 +18,14 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
-import org.neo4j.graphalgo.core.HugeWeightMap;
-import org.neo4j.graphalgo.core.loading.ReadHelper;
 import org.neo4j.internal.kernel.api.CursorFactory;
-import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
 
+import static org.neo4j.graphalgo.core.huge.AdjacencyCompression.EMPTY_LONGS;
+
 
 abstract class VisitRelationship {
-
-    private static final long[] EMPTY_LONGS = new long[0];
 
     private final HugeIdMap idMap;
 
@@ -45,7 +42,9 @@ abstract class VisitRelationship {
         this.targets = EMPTY_LONGS;
     }
 
-    abstract void visit(RelationshipSelectionCursor cursor);
+    abstract void visit(
+            RelationshipSelectionCursor cursor,
+            WeightBuilder weightBuilder);
 
     final void prepareNextNode(int degree, long sourceGraphId) {
         this.sourceGraphId = sourceGraphId;
@@ -90,47 +89,61 @@ abstract class VisitRelationship {
         return true;
     }
 
-    final long flush(HugeAdjacencyBuilder builder) {
-        return builder.applyVariableDeltaEncoding(targets, length);
+    final int flush(HugeAdjacencyBuilder builder, int localId) {
+        return builder.applyVariableDeltaEncoding(targets, length, localId);
     }
 
     static void visitWeight(
             Read readOp,
             CursorFactory cursors,
+            WeightBuilder weightBuilder,
             long sourceGraphId,
             long targetGraphId,
-            HugeWeightMap weights,
-            int weightProperty,
-            long propertiesRef,
-            long relationshipId) {
-        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
-            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
-            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-            if (weight != weights.defaultValue()) {
-                weights.put(sourceGraphId, targetGraphId, weight);
-            }
-        }
+            long relationshipId,
+            long propertiesReference) {
+        weightBuilder.addWeight(
+                cursors,
+                readOp,
+                relationshipId,
+                propertiesReference,
+                sourceGraphId,
+                targetGraphId
+        );
+
+//        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
+//            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
+//            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
+//            if (weight != weights.defaultValue()) {
+//                weights.put(sourceGraphId, targetGraphId, weight);
+//            }
+//        }
     }
 
     static void visitUndirectedWeight(
             Read readOp,
             CursorFactory cursors,
+            WeightBuilder weightBuilder,
             long sourceGraphId,
             long targetGraphId,
-            HugeWeightMap weights,
-            int weightProperty,
-            long propertiesRef,
-            long relationshipId) {
+            long relationshipId,
+            long propertiesReference) {
+        weightBuilder.addWeight(cursors, readOp, relationshipId, propertiesReference, sourceGraphId, targetGraphId);
+        weightBuilder.addWeight(cursors, readOp, relationshipId, propertiesReference, targetGraphId, sourceGraphId);
 
-        // TODO: make access to rel properties better
-        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
-            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
-            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-            if (weight != weights.defaultValue()) {
-                weights.put(sourceGraphId, targetGraphId, weight);
-                weights.put(targetGraphId, sourceGraphId, weight);
-            }
-        }
+//        // TODO: make access to rel properties better
+//        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
+//             PropertyCursor pc = cursors.allocatePropertyCursor()) {
+//            readOp.singleRelationship(relationshipId, scanCursor);
+//            while (scanCursor.next()) {
+//                scanCursor.properties(pc);
+//
+//                double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
+//                if (weight != weights.defaultValue()) {
+//                    weights.put(sourceGraphId, targetGraphId, weight);
+//                    weights.put(targetGraphId, sourceGraphId, weight);
+//                }
+//            }
+//        }
     }
 }
 
@@ -141,7 +154,7 @@ final class VisitOutgoingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor, WeightBuilder weightBuilder) {
         addNode(cursor.targetNodeReference());
     }
 }
@@ -153,7 +166,7 @@ final class VisitIncomingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor, WeightBuilder weightBuilder) {
         addNode(cursor.sourceNodeReference());
     }
 }
@@ -162,34 +175,28 @@ final class VisitOutgoingWithWeight extends VisitRelationship {
 
     private final Read readOp;
     private final CursorFactory cursors;
-    private final HugeWeightMap weights;
-    private final int weightProperty;
 
     VisitOutgoingWithWeight(
             final Read readOp,
             final CursorFactory cursors,
-            final HugeIdMap idMap,
-            final HugeWeightMap weights,
-            final int weightProperty) {
+            final HugeIdMap idMap) {
         super(idMap);
         this.readOp = readOp;
         this.cursors = cursors;
-        this.weights = weights;
-        this.weightProperty = weightProperty;
     }
 
     @Override
-    public void visit(final RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor, WeightBuilder weightBuilder) {
         if (addNode(cursor.targetNodeReference())) {
             visitWeight(
                     readOp,
                     cursors,
+                    weightBuilder,
                     sourceGraphId,
                     prevTarget,
-                    weights,
-                    weightProperty,
-                    cursor.propertiesReference(),
-                    cursor.relationshipReference());
+                    cursor.relationshipReference(),
+                    cursor.propertiesReference()
+            );
         }
     }
 }
@@ -198,34 +205,28 @@ final class VisitIncomingWithWeight extends VisitRelationship {
 
     private final Read readOp;
     private final CursorFactory cursors;
-    private final HugeWeightMap weights;
-    private final int weightProperty;
 
     VisitIncomingWithWeight(
             final Read readOp,
             final CursorFactory cursors,
-            final HugeIdMap idMap,
-            final HugeWeightMap weights,
-            final int weightProperty) {
+            final HugeIdMap idMap) {
         super(idMap);
         this.readOp = readOp;
         this.cursors = cursors;
-        this.weights = weights;
-        this.weightProperty = weightProperty;
     }
 
     @Override
-    public void visit(final RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor, WeightBuilder weightBuilder) {
         if (addNode(cursor.sourceNodeReference())) {
             visitWeight(
                     readOp,
                     cursors,
+                    weightBuilder,
                     prevTarget,
                     sourceGraphId,
-                    weights,
-                    weightProperty,
-                    cursor.propertiesReference(),
-                    cursor.relationshipReference());
+                    cursor.relationshipReference(),
+                    cursor.propertiesReference()
+            );
         }
     }
 }
@@ -234,34 +235,28 @@ final class VisitUndirectedOutgoingWithWeight extends VisitRelationship {
 
     private final Read readOp;
     private final CursorFactory cursors;
-    private final HugeWeightMap weights;
-    private final int weightProperty;
 
     VisitUndirectedOutgoingWithWeight(
             final Read readOp,
             final CursorFactory cursors,
-            final HugeIdMap idMap,
-            final HugeWeightMap weights,
-            final int weightProperty) {
+            final HugeIdMap idMap) {
         super(idMap);
         this.readOp = readOp;
         this.cursors = cursors;
-        this.weights = weights;
-        this.weightProperty = weightProperty;
     }
 
     @Override
-    public void visit(final RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor, WeightBuilder weightBuilder) {
         if (addNode(cursor.targetNodeReference())) {
             visitUndirectedWeight(
                     readOp,
                     cursors,
+                    weightBuilder,
                     sourceGraphId,
                     prevTarget,
-                    weights,
-                    weightProperty,
-                    cursor.propertiesReference(),
-                    cursor.relationshipReference());
+                    cursor.relationshipReference(),
+                    cursor.propertiesReference()
+            );
         }
     }
 }

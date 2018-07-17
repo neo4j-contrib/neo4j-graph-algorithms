@@ -20,15 +20,19 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
+import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
+
+import static org.neo4j.graphalgo.core.huge.AdjacencyCompression.applyDeltaEncodingAndCalculateRequiredBytes;
+import static org.neo4j.graphalgo.core.huge.AdjacencyCompression.writeDegree;
 
 class HugeAdjacencyBuilder {
 
     private final HugeAdjacencyListBuilder adjacency;
 
     private HugeAdjacencyListBuilder.Allocator allocator;
-    private AdjacencyCompression compression;
+    private HugeAdjacencyOffsets globalOffsets;
+    private long[] offsets;
 
     private final AllocationTracker tracker;
 
@@ -37,22 +41,22 @@ class HugeAdjacencyBuilder {
         this.tracker = tracker;
     }
 
-    HugeAdjacencyBuilder(
+    private HugeAdjacencyBuilder(
             HugeAdjacencyListBuilder adjacency,
             HugeAdjacencyListBuilder.Allocator allocator,
-            AdjacencyCompression compression,
+            long[] offsets,
             AllocationTracker tracker) {
         this.adjacency = adjacency;
         this.allocator = allocator;
-        this.compression = compression;
+        this.offsets = offsets;
         this.tracker = tracker;
     }
 
-    final HugeAdjacencyBuilder threadLocalCopy() {
+    final HugeAdjacencyBuilder threadLocalCopy(long[] offsets) {
         return new HugeAdjacencyBuilder(
                 adjacency,
                 adjacency.newAllocator(),
-                new AdjacencyCompression(),
+                offsets,
                 tracker);
     }
 
@@ -60,12 +64,25 @@ class HugeAdjacencyBuilder {
         allocator.prepare();
     }
 
-    final long applyVariableDeltaEncoding(long[] targets, int length) {
-        compression.copyFrom(targets, length);
-        int requiredBytes = compression.applyDeltaEncodingAndCalculateRequiredBytes();
+    final void setGlobalOffsets(HugeAdjacencyOffsets globalOffsets) {
+        this.globalOffsets = globalOffsets;
+    }
+
+    final int applyVariableDeltaEncoding(long[] targets, int length, int localId) {
+        long requiredBytesAndLength = applyDeltaEncodingAndCalculateRequiredBytes(targets, length);
+        int degree = RawValues.getHead(requiredBytesAndLength);
+        int requiredBytes = RawValues.getTail(requiredBytesAndLength);
+        final long address = allocateIds(targets, requiredBytes, degree);
+        offsets[localId] = address;
+        return degree;
+    }
+
+    private synchronized long allocateIds(long[] targets, int requiredBytes, int degree) {
+        // sizeOf(degree) + compression bytes
         long address = allocator.allocate(4 + requiredBytes);
-        int offset = compression.writeDegree(allocator.page, allocator.offset);
-        offset = compression.compress(allocator.page, offset);
+        int offset = allocator.offset;
+        offset = writeDegree(allocator.page, offset, degree);
+        offset = AdjacencyCompression.compress(targets, degree, allocator.page, offset);
         allocator.offset = offset;
         return address;
     }
@@ -75,17 +92,19 @@ class HugeAdjacencyBuilder {
             final HugeIdMap idMapping,
             final HugeWeightMapping weights,
             final HugeAdjacencyBuilder inAdjacency,
-            final HugeAdjacencyBuilder outAdjacency,
-            final HugeLongArray inOffsets,
-            final HugeLongArray outOffsets) {
+            final HugeAdjacencyBuilder outAdjacency) {
 
         HugeAdjacencyList outAdjacencyList = null;
+        HugeAdjacencyOffsets outOffsets = null;
         if (outAdjacency != null) {
             outAdjacencyList = outAdjacency.adjacency.build();
+            outOffsets = outAdjacency.globalOffsets;
         }
         HugeAdjacencyList inAdjacencyList = null;
+        HugeAdjacencyOffsets inOffsets = null;
         if (inAdjacency != null) {
             inAdjacencyList = inAdjacency.adjacency.build();
+            inOffsets = inAdjacency.globalOffsets;
         }
 
         return new HugeGraphImpl(
