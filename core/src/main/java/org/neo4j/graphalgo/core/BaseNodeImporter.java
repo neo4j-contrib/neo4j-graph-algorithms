@@ -48,6 +48,11 @@ public abstract class BaseNodeImporter<T> extends StatementFunction<T> {
         return mapping;
     }
 
+    @Override
+    public String threadName() {
+        return "node-importer";
+    }
+
     protected abstract T newNodeMap(long nodeCount);
 
     protected abstract void addNodeId(T map, long nodeId);

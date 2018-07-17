@@ -24,16 +24,16 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public abstract class StatementApi {
 
-    public interface Consumer {
+    public interface TxConsumer {
         void accept(KernelTransaction transaction) throws KernelException;
     }
 
-    public interface Function<T> {
+    public interface TxFunction<T> {
         T apply(KernelTransaction transaction) throws KernelException;
     }
 
 
-    private final GraphDatabaseAPI api;
+    protected final GraphDatabaseAPI api;
     private final TransactionWrapper tx;
 
     protected StatementApi(GraphDatabaseAPI api) {
@@ -41,11 +41,7 @@ public abstract class StatementApi {
         this.tx = new TransactionWrapper(api);
     }
 
-    protected <T> T resolve(Class<T> dependency) {
-        return api.getDependencyResolver().resolveDependency(dependency);
-    }
-
-    protected final <T> T applyInTransaction(Function<T> fun) {
+    protected final <T> T applyInTransaction(TxFunction<T> fun) {
         return tx.apply(ktx -> {
             try {
                 return fun.apply(ktx);
@@ -55,7 +51,7 @@ public abstract class StatementApi {
         });
     }
 
-    protected final void acceptInTransaction(Consumer fun) {
+    protected final void acceptInTransaction(TxConsumer fun) {
         tx.accept(ktx -> {
             try {
                 fun.accept(ktx);
@@ -63,5 +59,9 @@ public abstract class StatementApi {
                 ExceptionUtil.throwKernelException(e);
             }
         });
+    }
+
+    protected <T> T resolve(Class<T> dependency) {
+        return api.getDependencyResolver().resolveDependency(dependency);
     }
 }
