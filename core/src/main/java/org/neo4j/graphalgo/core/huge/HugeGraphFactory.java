@@ -24,8 +24,10 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.HugeWeightMap;
+import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.ByteArray;
@@ -50,6 +52,30 @@ public final class HugeGraphFactory extends GraphFactory {
         return importGraph();
     }
 
+    @Override
+    protected ImportProgress importProgress(
+            final ProgressLogger progressLogger,
+            final GraphDimensions dimensions,
+            final GraphSetup setup) {
+
+        // ops for scanning degrees
+        long relOperations = 0L;
+
+        // batching for undirected double the amount of rels imported
+        if (setup.loadIncoming || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+        if (setup.loadOutgoing || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+
+        return new ApproximatedImportProgress(
+                progressLogger,
+                setup.tracker,
+                dimensions.hugeNodeCount(),
+                relOperations
+        );
+    }
 
     private HugeGraph importGraph() {
         int concurrency = setup.concurrency();
@@ -296,14 +322,15 @@ public final class HugeGraphFactory extends GraphFactory {
 
             try (NodeCursor nodeCursor = cursors.allocateNodeCursor()) {
                 NodeQueue nodes = this.nodes;
-                long nodeId;
+                int imported;
+                long sourceNodeId, nodeId;
                 while ((nodeId = nodes.next()) != -1L) {
-                    long sourceNodeId = idMap.toOriginalNodeId(nodeId);
+                    sourceNodeId = idMap.toOriginalNodeId(nodeId);
                     readOp.singleNode(sourceNodeId, nodeCursor);
                     if (nodeCursor.next()) {
-                        loader.load(nodeCursor, nodeId);
+                        imported = loader.load(nodeCursor, nodeId);
+                        progress.relationshipsImported(imported);
                     }
-                    progress.relProgress();
                 }
             }
         }

@@ -44,9 +44,9 @@ abstract class RelationshipLoader {
         this.loadRelationships = other.loadRelationships;
     }
 
-    abstract void load(NodeCursor sourceNode, long localNodeId);
+    abstract int load(NodeCursor sourceNode, long localNodeId);
 
-    void readOutgoingRelationships(
+    int readOutgoingRelationships(
             VisitRelationship visit,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
@@ -54,20 +54,20 @@ abstract class RelationshipLoader {
             long localGraphId) {
 
         int degree = loadRelationships.degreeOut(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visit.prepareNextNode(degree, localGraphId);
-        visitOut(sourceNode, visit);
+            visit.prepareNextNode(degree, localGraphId);
+            visitOut(sourceNode, visit);
 
-        long adjacencyIdx = visit.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visit.flush(allocator);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
-    void readIncomingRelationships(
+    int readIncomingRelationships(
             VisitRelationship visit,
             HugeLongArray offsets,
             ByteArray.LocalAllocator allocator,
@@ -75,20 +75,20 @@ abstract class RelationshipLoader {
             long localGraphId) {
 
         int degree = loadRelationships.degreeIn(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visit.prepareNextNode(degree, localGraphId);
-        visitIn(sourceNode, visit);
+            visit.prepareNextNode(degree, localGraphId);
+            visitIn(sourceNode, visit);
 
-        long adjacencyIdx = visit.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visit.flush(allocator);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
-    void readUndirected(
+    int readUndirected(
             VisitRelationship visitOut,
             VisitRelationship visitIn,
             HugeLongArray offsets,
@@ -97,19 +97,19 @@ abstract class RelationshipLoader {
             long localGraphId) {
 
         int degree = loadRelationships.degreeBoth(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visitIn.prepareNextNode(degree, localGraphId);
-        this.visitIn(sourceNode, visitIn);
-        visitOut.prepareNextNode(visitIn);
-        this.visitOut(sourceNode, visitOut);
+            visitIn.prepareNextNode(degree, localGraphId);
+            this.visitIn(sourceNode, visitIn);
+            visitOut.prepareNextNode(visitIn);
+            this.visitOut(sourceNode, visitOut);
 
-        long adjacencyIdx = visitOut.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visitOut.flush(allocator);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
     private void visitOut(NodeCursor cursor, VisitRelationship visit) {
@@ -135,7 +135,8 @@ final class ReadNothing extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return 0;
     }
 }
 
@@ -157,8 +158,8 @@ final class ReadOutgoing extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readOutgoingRelationships(visitOutgoing, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readOutgoingRelationships(visitOutgoing, offsets, allocator, sourceNode, localNodeId);
     }
 }
 
@@ -180,8 +181,8 @@ final class ReadIncoming extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readIncomingRelationships(visitIncoming, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readIncomingRelationships(visitIncoming, offsets, allocator, sourceNode, localNodeId);
     }
 }
 
@@ -208,9 +209,9 @@ final class ReadBoth extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readOutgoingRelationships(visitOutgoing, outOffsets, outAllocator, sourceNode, localNodeId);
-        readIncomingRelationships(visitIncoming, inOffsets, inAllocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readOutgoingRelationships(visitOutgoing, outOffsets, outAllocator, sourceNode, localNodeId) +
+                readIncomingRelationships(visitIncoming, inOffsets, inAllocator, sourceNode, localNodeId);
     }
 }
 
@@ -235,7 +236,7 @@ final class ReadUndirected extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readUndirected(visitOutgoing, visitIncoming, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readUndirected(visitOutgoing, visitIncoming, offsets, allocator, sourceNode, localNodeId);
     }
 }

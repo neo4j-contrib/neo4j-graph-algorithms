@@ -106,9 +106,9 @@ final class RelationshipImporter extends StatementAction {
                 final long sourceNodeId = idMap.toOriginalNodeId(nodeId);
                 readOp.singleNode(sourceNodeId, nodeCursor);
                 if (nodeCursor.next()) {
-                    loader.load(nodeCursor, nodeId);
+                    int imported = loader.load(nodeCursor, nodeId);
+                    progress.relationshipsImported(imported);
                 }
-                progress.relProgress();
             }
         }
     }
