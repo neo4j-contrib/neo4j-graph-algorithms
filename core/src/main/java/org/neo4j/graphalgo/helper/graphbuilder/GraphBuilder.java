@@ -20,7 +20,10 @@ package org.neo4j.graphalgo.helper.graphbuilder;
 
 import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.TransactionWrapper;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.internal.kernel.api.exceptions.InvalidTransactionTypeKernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -41,8 +44,9 @@ public abstract class GraphBuilder<ME extends GraphBuilder<ME>> {
 
     protected final HashSet<Node> nodes;
     protected final HashSet<Relationship> relationships;
-    protected final GraphDatabaseAPI api;
-    protected final TransactionWrapper tx;
+
+    private final GraphDatabaseAPI api;
+    private final TransactionWrapper tx;
 
     protected Label label;
     protected RelationshipType relationship;

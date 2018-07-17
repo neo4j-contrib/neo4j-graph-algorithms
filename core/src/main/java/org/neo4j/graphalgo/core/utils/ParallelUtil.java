@@ -330,8 +330,8 @@ public final class ParallelUtil {
      * and never tried again.
      *
      * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
-     * @param executor the executor to submit the tasks to
+     * @param tasks       the tasks to execute
+     * @param executor    the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -385,10 +385,10 @@ public final class ParallelUtil {
      * tasks and if it signals termination, running tasks are cancelled and
      * not-yet-started tasks are abandoned.
      *
-     * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
+     * @param concurrency     how many tasks should be run simultaneous
+     * @param tasks           the tasks to execute
      * @param terminationFlag a flag to check periodically if the execution should be terminated
-     * @param executor the executor to submit the tasks to
+     * @param executor        the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -440,10 +440,10 @@ public final class ParallelUtil {
      * and retry submitting the tasks indefinitely.
      *
      * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
-     * @param waitTime how long to wait between retries
-     * @param timeUnit the unit for {@code waitTime}
-     * @param executor the executor to submit the tasks to
+     * @param tasks       the tasks to execute
+     * @param waitTime    how long to wait between retries
+     * @param timeUnit    the unit for {@code waitTime}
+     * @param executor    the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -499,12 +499,12 @@ public final class ParallelUtil {
      * tasks and if it signals termination, running tasks are cancelled and
      * not-yet-started tasks are abandoned.
      *
-     * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
-     * @param waitTime how long to wait between retries
-     * @param timeUnit the unit for {@code waitTime}
+     * @param concurrency     how many tasks should be run simultaneous
+     * @param tasks           the tasks to execute
+     * @param waitTime        how long to wait between retries
+     * @param timeUnit        the unit for {@code waitTime}
      * @param terminationFlag a flag to check periodically if the execution should be terminated
-     * @param executor the executor to submit the tasks to
+     * @param executor        the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -558,11 +558,11 @@ public final class ParallelUtil {
      * and retry submitting the tasks at most {@code maxRetries} times.
      *
      * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
-     * @param maxRetries how many retries when submitting on a full pool before giving up
-     * @param waitTime how long to wait between retries
-     * @param timeUnit the unit for {@code waitTime}
-     * @param executor the executor to submit the tasks to
+     * @param tasks       the tasks to execute
+     * @param maxRetries  how many retries when submitting on a full pool before giving up
+     * @param waitTime    how long to wait between retries
+     * @param timeUnit    the unit for {@code waitTime}
+     * @param executor    the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -619,13 +619,13 @@ public final class ParallelUtil {
      * tasks and if it signals termination, running tasks are cancelled and
      * not-yet-started tasks are abandoned.
      *
-     * @param concurrency how many tasks should be run simultaneous
-     * @param tasks the tasks to execute
-     * @param maxRetries how many retries when submitting on a full pool before giving up
-     * @param waitTime how long to wait between retries
-     * @param timeUnit the unit for {@code waitTime}
+     * @param concurrency     how many tasks should be run simultaneous
+     * @param tasks           the tasks to execute
+     * @param maxRetries      how many retries when submitting on a full pool before giving up
+     * @param waitTime        how long to wait between retries
+     * @param timeUnit        the unit for {@code waitTime}
      * @param terminationFlag a flag to check periodically if the execution should be terminated
-     * @param executor the executor to submit the tasks to
+     * @param executor        the executor to submit the tasks to
      */
     public static void runWithConcurrency(
             int concurrency,
@@ -674,7 +674,7 @@ public final class ParallelUtil {
             //noinspection StatementWithEmptyBody - add first concurrency tasks
             while (concurrency-- > 0
                     && terminationFlag.running()
-                    && completionService.trySubmit(ts));
+                    && completionService.trySubmit(ts)) ;
 
             if (!terminationFlag.running()) {
                 return;
@@ -849,7 +849,7 @@ public final class ParallelUtil {
                 running.remove(this);
                 if (!isCancelled()) {
                     //noinspection StatementWithEmptyBody - spin-wait on free slot
-                    while (!completionQueue.offer(this));
+                    while (!completionQueue.offer(this)) ;
                 }
             }
         }

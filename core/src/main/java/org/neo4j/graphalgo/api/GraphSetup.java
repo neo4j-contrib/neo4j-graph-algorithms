@@ -87,22 +87,23 @@ public class GraphSetup {
 
     /**
      * main ctor
-     * @param startLabel the start label. null means any label.
-     * @param endLabel not implemented yet
-     * @param relationshipType the relation type identifier. null for any relationship
+     *
+     * @param startLabel                 the start label. null means any label.
+     * @param endLabel                   not implemented yet
+     * @param relationshipType           the relation type identifier. null for any relationship
      * @param relationWeightPropertyName property name which holds the weights / costs of a relation.
      *                                   null means the default value is used for each weight.
-     * @param relationDefaultWeight the default relationship weight if property is not given.
-     * @param nodeWeightPropertyName property name which holds the weights / costs of a node.
-     *                               null means the default value is used for each weight.
-     * @param nodeDefaultWeight the default node weight if property is not given.
-     * @param nodePropertyName property name which holds additional values of a node.
-     *                         null means the default value is used for each value.
-     * @param nodeDefaultPropertyValue the default node value if property is not given.
-     * @param executor the executor. null means single threaded evaluation
-     * @param batchSize batch size for parallel loading
-     * @param accumulateWeights true if relationship-weights should be summed within the loader
-     * @param sort true if relationships should stored in sorted ascending order
+     * @param relationDefaultWeight      the default relationship weight if property is not given.
+     * @param nodeWeightPropertyName     property name which holds the weights / costs of a node.
+     *                                   null means the default value is used for each weight.
+     * @param nodeDefaultWeight          the default node weight if property is not given.
+     * @param nodePropertyName           property name which holds additional values of a node.
+     *                                   null means the default value is used for each value.
+     * @param nodeDefaultPropertyValue   the default node value if property is not given.
+     * @param executor                   the executor. null means single threaded evaluation
+     * @param batchSize                  batch size for parallel loading
+     * @param accumulateWeights          true if relationship-weights should be summed within the loader
+     * @param sort                       true if relationships should stored in sorted ascending order
      */
     public GraphSetup(
             String startLabel,
