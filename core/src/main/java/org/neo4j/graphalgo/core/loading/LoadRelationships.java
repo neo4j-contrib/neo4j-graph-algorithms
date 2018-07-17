@@ -79,7 +79,7 @@ public interface LoadRelationships {
         if (relationshipType == null || relationshipType.length == 0) {
             return new LoadAllRelationships(cursors);
         }
-        return new LoadRelationshipsOfSingleType(cursors, relationshipType[0]);
+        return new LoadRelationshipsOfSingleType(cursors, relationshipType);
     }
 }
 
@@ -127,10 +127,10 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
     private final int type;
     private final int[] types;
 
-    LoadRelationshipsOfSingleType(final CursorFactory cursors, final int type) {
+    LoadRelationshipsOfSingleType(final CursorFactory cursors, final int[] types) {
         this.cursors = cursors;
-        this.type = type;
-        this.types = new int[] {type};
+        this.type = types[0];
+        this.types = types;
     }
 
     @Override
