@@ -24,6 +24,8 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Random;
+
 /**
  * default builder makes methods
  * from abstract graphBuilder accessible
@@ -32,8 +34,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
  */
 public class DefaultBuilder extends GraphBuilder<DefaultBuilder> {
 
-    protected DefaultBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
-        super(api, label, relationship);
+    protected DefaultBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
+        super(api, label, relationship, random);
     }
 
     /**
