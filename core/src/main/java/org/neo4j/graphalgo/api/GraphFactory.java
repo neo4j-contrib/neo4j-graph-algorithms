@@ -79,6 +79,7 @@ public abstract class GraphFactory {
     protected IdMap loadIdMap() {
         final NodeImporter nodeImporter = new NodeImporter(
                 api,
+                setup.tracker,
                 progress,
                 dimensions.nodeCount(),
                 dimensions.labelId());

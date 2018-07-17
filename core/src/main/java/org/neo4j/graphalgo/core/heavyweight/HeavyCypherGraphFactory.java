@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import com.carrotsearch.hppc.LongIntHashMap;
-import com.carrotsearch.hppc.LongIntMap;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 import com.carrotsearch.hppc.procedures.LongIntProcedure;
 import org.neo4j.graphalgo.PropertyMapping;
@@ -218,7 +217,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         // data structures for merged information
         int capacity = INITIAL_NODE_COUNT * 10;
-        LongIntMap nodeToGraphIds = new LongIntHashMap(capacity);
+        LongIntHashMap nodeToGraphIds = new LongIntHashMap(capacity);
 
         Map<PropertyMapping, WeightMap> nodeProperties = new HashMap<>();
         for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {
@@ -369,7 +368,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         NodeRowVisitor visitor = new NodeRowVisitor();
         api.execute(setup.startLabel, params(offset, batchSize)).accept(visitor);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(setup.tracker);
         return new Nodes(offset, visitor.rows, idMap, null, null, nodeProperties, setup.nodeDefaultWeight, setup.nodeDefaultPropertyValue);
     }
 
