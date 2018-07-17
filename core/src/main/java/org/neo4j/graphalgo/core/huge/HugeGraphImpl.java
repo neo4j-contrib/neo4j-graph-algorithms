@@ -310,6 +310,7 @@ public class HugeGraphImpl implements HugeGraph {
                     }
                     return true;
                 });
+                break;
             case INCOMING:
                 forEachIncoming(sourceNodeId, (s, t) -> {
                     if (t == targetNodeId) {
@@ -318,6 +319,7 @@ public class HugeGraphImpl implements HugeGraph {
                     }
                     return true;
                 });
+                break;
             default:
                 forEachRelationship(sourceNodeId, Direction.BOTH, (s, t) -> {
                     if (t == targetNodeId) {
@@ -326,6 +328,7 @@ public class HugeGraphImpl implements HugeGraph {
                     }
                     return true;
                 });
+                break;
         }
         return found[0];
     }
