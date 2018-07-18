@@ -260,38 +260,17 @@ public class GraphView implements Graph {
     }
 
     @Override
+    public int getTarget(int nodeId, int index, Direction direction) {
+        GetTargetConsumer consumer = new GetTargetConsumer(index);
+        forEachRelationship(nodeId, direction, consumer);
+        return consumer.found;
+    }
+
+    @Override
     public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-
-        final boolean[] found = {false};
-        switch (direction) {
-            case OUTGOING:
-                forEachOutgoing(sourceNodeId, (s, t, r) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
-            case INCOMING:
-                forEachIncoming(sourceNodeId, (s, t, r) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
-
-            default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, (s, t, r) -> {
-                    if (t == targetNodeId) {
-                        found[0] = true;
-                        return false;
-                    }
-                    return true;
-                });
-        }
-
-        return found[0];
+        ExistsConsumer existsConsumer = new ExistsConsumer(targetNodeId);
+        forEachRelationship(sourceNodeId, direction, existsConsumer);
+        return existsConsumer.found;
     }
 
     @Override
@@ -368,6 +347,45 @@ public class GraphView implements Graph {
         @Override
         public void run() {
             throw this;
+        }
+    }
+
+    private static class GetTargetConsumer implements RelationshipConsumer {
+        private final int index;
+        int count;
+        int found;
+
+        public GetTargetConsumer(int index) {
+            this.index = index;
+            count = index;
+            found = -1;
+        }
+
+        @Override
+        public boolean accept(int s, int t, long r) {
+            if (count-- == 0) {
+                found = t;
+                return false;
+            }
+            return true;
+        }
+    }
+
+    private static class ExistsConsumer implements RelationshipConsumer {
+        private final int targetNodeId;
+        private boolean found = false;
+
+        public ExistsConsumer(int targetNodeId) {
+            this.targetNodeId = targetNodeId;
+        }
+
+        @Override
+        public boolean accept(int s, int t, long r) {
+            if (t == targetNodeId) {
+                found = true;
+                return false;
+            }
+            return true;
         }
     }
 }
