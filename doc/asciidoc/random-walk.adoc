@@ -118,9 +118,9 @@ include::scripts/random-walk.cypher[tag=random-walk-stream-yelp-social]
 .The following will run the algorithm and stream results:
 [source, cypher]
 ----
-CALL algo.randomWalk.stream(label:String, relationship:String,
-     start:Object, steps: 100, walks: 10000,
-    {graph:'heavy', direction:"IN/OUT/BOTH", mode:"node2vec"/"random", inOut: 1.0, return: 1.0, path:false, concurrency:4})
+CALL algo.randomWalk.stream(start:Object, steps: 100, walks: 10000,
+    {graph:'heavy', nodeQuery:'label or query', relationshipQuery:' type or query', direction:"IN/OUT/BOTH",
+     mode:"node2vec"/"random", inOut: 1.0, return: 1.0, path:false, concurrency:4})
 YIELD nodes, path
 ----
 
@@ -128,26 +128,27 @@ YIELD nodes, path
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name          | Type   | Default        | Optional | Description
-| label         | string | null           | yes      | The label to load from the graph. If null, load all nodes
-| relationship  | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
 | start         | object | null           | yes      | starting points: null - whole graph, "Label" - nodes with that label, node-id - that node, list of node-ids - these nodes
 | steps         | int    | 10             | yes      | length of paths returned, in case of error only path of lenght 1 is returned
 | walks         | int    | 1              | yes      | number of paths returned
+| graph         | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
+| nodeQuery         | string | null           | yes      | The label or node-query to load from the graph. If null, load all nodes
+| relationshipQuery  | string | null           | yes      | The relationship-type or query to load from the graph. If null, load all relationships.
 | direction     | string | 'BOTH'         | yes      | direction of relationships to follow
 | mode          | string | random         | yes      | strategy for choosing the next relationship, modes: random and node2vec
 | inOut         | float  | 1.0            | yes      | parameter for node2vec
 | return        | float  | 1.0            | yes      | parameter for node2vec
 | path          | boolean| false          | yes      | if the more expensive operation of creating a path from node-ids should be performed and returned in results
 | concurrency   | int    | available CPUs | yes      | The number of concurrent threads
-| graph         | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
 .Results
 [opts="header"]
 |===
 | Name  | Type  | Description
-| nodes  | list of long  | List of Node ID forming a path
-| path | Path | Optional Path (without relationships)
+| startNodeId  | long  | Node ID starting the path
+| nodeIds  | list of long  | List of Node ID forming a path
+| path | Path | Optional Path (with virtual relationships)
 |===
 
 

@@ -56,7 +56,7 @@ public class RandomWalkLargeResultTest {
 
     @Test
     public void shouldHandleLargeResults() {
-        Result results = db.execute("CALL algo.randomWalk.stream(null,null, null, 100, 100000)");
+        Result results = db.execute("CALL algo.randomWalk.stream(null, 100, 100000)");
 
         assertEquals(100000,Iterators.count(results));
     }

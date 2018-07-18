@@ -37,11 +37,9 @@ public class NodeWalkerProc  {
 
 
     @Procedure(name = "algo.randomWalk.stream", mode = Mode.READ)
-    @Description("CALL algo.randomWalk.stream(label, relationship, start:null=all/[ids]/label, steps, walks, {mode:random/node2vec, return:1.0, inOut:1.0, path:false/true concurrency:4, direction:'BOTH'}) " +
+    @Description("CALL algo.randomWalk.stream(start:null=all/[ids]/label, steps, walks, {graph: 'heavy/cypher', nodeQuery:nodeLabel/query, relationshipQuery:relType/query, mode:random/node2vec, return:1.0, inOut:1.0, path:false/true concurrency:4, direction:'BOTH'}) " +
             "YIELD nodes, path - computes random walks from given starting points")
     public Stream<WalkResult> randomWalk(
-            @Name(value = "label", defaultValue = "") String label,
-            @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "start", defaultValue = "null") Object start,
             @Name(value = "steps", defaultValue = "10") long steps,
             @Name(value = "walks", defaultValue = "1") long walks,
@@ -54,6 +52,9 @@ public class NodeWalkerProc  {
         AllocationTracker tracker = AllocationTracker.create();
 
         Direction direction = configuration.getDirection(Direction.BOTH);
+
+        String label = configuration.getNodeLabelOrQuery();
+        String relationship = configuration.getRelationshipOrQuery();
 
         final Graph graph = load(label, relationship, tracker, configuration.getGraphImpl(), statsBuilder, configuration);
 

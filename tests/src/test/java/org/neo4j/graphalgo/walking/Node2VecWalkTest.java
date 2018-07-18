@@ -62,7 +62,7 @@ public class Node2VecWalkTest {
 
     @Test
     public void shouldHaveGivenStartNodeRandom() {
-        try (ResourceIterator<List<Long>> result = db.execute("CALL algo.randomWalk.stream(null,null, 1, 1, 1)").columnAs("nodes")) {
+        try (ResourceIterator<List<Long>> result = db.execute("CALL algo.randomWalk.stream(1, 1, 1)").columnAs("nodeIds")) {
 
             List<Long> path = result.next();
             assertEquals(1L, path.get(0).longValue());
@@ -72,14 +72,14 @@ public class Node2VecWalkTest {
 
     @Test(timeout = 100)
     public void shouldHaveResultsRandom() {
-        Result results = db.execute("CALL algo.randomWalk.stream(null,null, null, 1, 5)");
+        Result results = db.execute("CALL algo.randomWalk.stream(null, 1, 5)");
 
         assertTrue(results.hasNext());
     }
 
     @Test
     public void shouldHandleLargeResults() {
-        Result results = db.execute("CALL algo.randomWalk.stream(null,null, null, 100, 100000)");
+        Result results = db.execute("CALL algo.randomWalk.stream(null, 100, 100000)");
 
         assertEquals(100000,Iterators.count(results));
     }
@@ -87,12 +87,12 @@ public class Node2VecWalkTest {
     @Test
     public void shouldHaveSameTypesForStartNodesRandom() {
         // TODO: make this test predictable (i.e. set random seed)
-        ResourceIterator<Path> results = db.execute("CALL algo.randomWalk.stream(null,null, 'Fred', 2, 5,{path:true})").columnAs("path");
+        ResourceIterator<Path> results = db.execute("CALL algo.randomWalk.stream('Fred', 2, 5,{path:true})").columnAs("path");
         int count = 0;
         while (results.hasNext()) {
             Path path = results.next();
             assertTrue("Nodes should be of type 'Fred'.", path.startNode().hasLabel(Label.label("Fred")));
-            assertEquals(1, path.length());
+            assertEquals(2, path.length());
             Relationship firstRel = path.relationships().iterator().next();
             assertEquals(path.startNode(), firstRel.getStartNode());
             count ++;
@@ -102,7 +102,7 @@ public class Node2VecWalkTest {
 
     @Test(timeout = 200)
     public void shouldHaveStartedFromEveryNodeRandom() {
-        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null,null,null,1,100)").columnAs("nodes");
+        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null,1,100)").columnAs("nodeIds");
 
         Set<Long> nodeIds = new HashSet<>();
         while (results.hasNext()) {
@@ -114,7 +114,7 @@ public class Node2VecWalkTest {
 
     @Test
     public void shouldNotFailRandom() {
-        Result results = db.execute("CALL algo.randomWalk.stream(null,null, 2, 7, 2)");
+        Result results = db.execute("CALL algo.randomWalk.stream(2, 7, 2)");
 
         results.next();
         results.next();
@@ -131,21 +131,21 @@ public class Node2VecWalkTest {
 
     @Test
     public void shouldHaveGivenStartNode() {
-        List<Long> result = db.execute("CALL algo.randomWalk.stream(null, null, 1, 1, 1, {mode:'node2vec', return: 1, inOut:1})").<List<Long>>columnAs("nodes").next();
+        List<Long> result = db.execute("CALL algo.randomWalk.stream(1, 1, 1, {mode:'node2vec', return: 1, inOut:1})").<List<Long>>columnAs("nodeIds").next();
 
         assertThat( 1L, equalTo(result.get(0)));
     }
 
     @Test(timeout = 100)
     public void shouldHaveResultsN2V() {
-        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null, null, null, 1, 5, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodes");
+        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null, 1, 5, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodeIds");
 
         assertTrue(results.hasNext());
     }
 
     @Test
     public void shouldHaveStartedFromEveryNodeN2V() {
-        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null, null, null, 1, 100, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodes");
+        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null, 1, 100, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodeIds");
 
         Set<Long> nodeIds = new HashSet<>();
         while (results.hasNext()) {
@@ -157,7 +157,7 @@ public class Node2VecWalkTest {
 
     @Test
     public void shouldNotFailN2V() {
-        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(null, null, 2, 7, 2, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodes");
+        ResourceIterator<List<Long>> results = db.execute("CALL algo.randomWalk.stream(2, 7, 2, {mode:'node2vec', return: 1, inOut:1})").columnAs("nodeIds");
 
         results.next();
         results.next();

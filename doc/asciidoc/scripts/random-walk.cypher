@@ -28,10 +28,10 @@ MERGE (d)-[:LINKS]->(home)
 
 // tag::stream-sample-graph[]
 
-CALL algo.randomWalk.stream('Page', 'LINKS', 'Page', 5, 1)
-YIELD nodes
+CALL algo.randomWalk.stream('Page', 5, 1, {nodeQuery:'Page', relationshipQuery:'LINKS'})
+YIELD nodeIds
 
-MATCH (node) WHERE id(node) IN nodes
+MATCH (node) WHERE id(node) IN nodeIds
 
 RETURN node.name AS page
 
@@ -51,12 +51,12 @@ CALL algo.pageRank.stream(
 // tag::random-walk-stream-yelp-social[]
 
 CALL algo.randomWalk.stream(
-  'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
-  'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target',
-  null, 10, 100, 
-  {graph:'cypher'}
-) YIELD nodes
-MATCH (node) where id(node) IN nodes
+  null, 10, 100,
+  {graph:'cypher',
+   nodeQuery:'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
+   relationshipQuery:'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target'}
+) YIELD nodeIds
+MATCH (node) where id(node) IN nodeIds
 WITH nodes, collect(node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny}) as info
 RETURN info
 

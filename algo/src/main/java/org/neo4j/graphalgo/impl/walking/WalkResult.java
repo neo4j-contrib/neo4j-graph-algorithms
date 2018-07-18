@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WalkResult {
+    public Long startNodeId;
+    public List<Long> nodeIds;
     public Path path;
-    public List<Long> nodes;
 
     public WalkResult(long[] nodes, Path path) {
-        this.nodes = new ArrayList<>(nodes.length);
-        for (long node : nodes) this.nodes.add(node);
+        this.startNodeId = nodes.length > 0 ? nodes[0] : null;
+        this.nodeIds = new ArrayList<>(nodes.length);
+        for (long node : nodes) this.nodeIds.add(node);
         this.path = path;
     }
 }
