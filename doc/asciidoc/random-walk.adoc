@@ -21,7 +21,7 @@ It’s similar to how a drunk person traverses a city.
 // tag::explanation[]
 
 The term "random walk" was first mentioned by Karl Pearson in 1905 in a letter to Nature magazine titled https://www.nature.com/physics/looking-back/pearson/index.html[The Problem of the Random Walk^].
-Study of random walks date back even further to the https://en.wikipedia.org/wiki/Gambler%27s_ruin[Gambler's ruin^] problem where it could be used to show that a gambler would eventually go bankrupt against an opponent with infinite wealth.
+Study of random walks date back even further to the https://en.wikipedia.org/wiki/Gambler%27s_ruin[Gambler's ruin^] problem, where it could be used to show that a gambler would eventually go bankrupt against an opponent with infinite wealth.
 
 It's only in the last couple of decades, however, that researchers have studied them with respect to networks.
 
@@ -33,14 +33,14 @@ It's only in the last couple of decades, however, that researchers have studied 
 == Use-cases - when to use the Random Walk algorithm
 
 // tag::use-case[]
-Random Walk is often used as part of other algorithms.
+Random Walk is often used as part of other algorithms:
 
-* it is used as part of the node2vec and graph2vec algorithms that create node embeddings.
+* It can be used as part of the *node2vec* and *graph2vec* algorithms, that create node embeddings.
 
-* as part of the Walktrap and Infomap community detection algorithms.
-If a random walk returns a small set of nodes repeatedly then it indicates that those set of nodes may have a community structure.
+* It can be used as part of the *Walktrap* and *Infomap community detection* algorithms.
+  If a random walk returns a small set of nodes repeatedly, then it indicates that those set of nodes may have a community structure.
 
-* as part of the training process of machine learning model as describe in David Mack's article https://medium.com/octavian-ai/review-prediction-with-neo4j-and-tensorflow-1cd33996632a[Review prediction with Neo4j and TensorFlow^].
+* It can be used as part of the training process of machine learning model, as described in David Mack's article https://medium.com/octavian-ai/review-prediction-with-neo4j-and-tensorflow-1cd33996632a[Review prediction with Neo4j and TensorFlow^].
 
 You can read about more use cases in https://arxiv.org/pdf/1612.03281.pdf[Random walks and diffusion on networks^].
 
@@ -53,21 +53,21 @@ Many of the use-cases of <<algorithms-pagerank-usecase,PageRank>> also apply to 
 == Constraints - when not to use the Random Walk algorithm
 
 // tag::constraint[]
-The constraints of <<algorithms-pagerank-limitations,PageRank>> also apply to Random Walks.
+The constraints of <<algorithms-pagerank-limitations,PageRank>> also apply to Random Walks:
 
 * Dead-ends occur when pages have no out-links.
-In this case the random walk will abort and a path containing only the first first node will be returned.
-This problem can be avoided by passing the `direction: BOTH` parameter so that the random walk will traverse relationships in both directions
+  In this case, the random walk will abort and a path containing only the first first node will be returned.
+  This problem can be avoided by passing the `direction: BOTH` parameter, so that the random walk will traverse relationships in both directions
 
 * If there are no links from within a group of pages to outside of the group, then the group is considered a spider trap.
-Random walks starting from any of the nodes in that group will only traverse to the others in the group - our implementation of the algorithm doesn't allow a random walk to jump to non neighbouring nodes.
-
+  Random walks starting from any of the nodes in that group will only traverse to the others in the group - our implementation of the algorithm doesn't allow a random walk to jump to non-neighbouring nodes.
+  
 * Sinks can occur when a network of links form an infinite cycle.
 
 // end::constraint[]
 
 
-[[algorithms-pagerank-sample]]
+[[algorithms-random-walk-sample]]
 == Random Walk algorithm sample
 
 This sample will explain the Random Walk algorithm, using a simple graph:
@@ -80,7 +80,7 @@ image::pagerank.png[]
 include::scripts/random-walk.cypher[tag=create-sample-graph]
 ----
 
-.The following will run the algorithm starting from the Home page and returning a 1 random walk of path length 3:
+.The following will run the algorithm starting from the Home page and returning a 1 random walk, of path length 3:
 [source, cypher]
 ----
 include::scripts/random-walk.cypher[tag=stream-sample-graph]
@@ -103,7 +103,7 @@ include::scripts/random-walk.cypher[tag=stream-sample-graph]
 // end::stream-sample-graph-explanation[]
 
 
-[[algorithms-pagerank-syntax]]
+[[algorithms-random-walk-syntax]]
 == Syntax
 
 .The following will run the algorithm and stream results:
