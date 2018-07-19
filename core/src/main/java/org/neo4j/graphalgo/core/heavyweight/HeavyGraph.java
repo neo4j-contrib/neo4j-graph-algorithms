@@ -28,11 +28,9 @@ import org.neo4j.graphalgo.api.RelationshipPredicate;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntPredicate;
@@ -155,6 +153,20 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
                 return container.hasOutgoing(sourceNodeId, targetNodeId) || container.hasIncoming(
                         sourceNodeId,
                         targetNodeId);
+        }
+    }
+
+    @Override
+    public int getTarget(int nodeId, int index, Direction direction) {
+        switch (direction) {
+            case OUTGOING:
+                return container.getTargetOutgoing(nodeId, index);
+
+            case INCOMING:
+                return container.getTargetIncoming(nodeId, index);
+
+            default:
+                return container.getTargetBoth(nodeId, index);
         }
     }
 

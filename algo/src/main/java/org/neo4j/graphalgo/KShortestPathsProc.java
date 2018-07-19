@@ -50,6 +50,8 @@ public class KShortestPathsProc {
 
     public static final String DEFAULT_TARGET_PROPERTY = "PATH_";
     public static final String PREFIX_IDENTIFIER = "writePropertyPrefix";
+    public static final String REL_TYPE_PROPERTY_IDENTIFIER = "writeRelationshipTypeProperty";
+    public static final String DEFAULT_RELATIONSHIP_PROPERTY = "weight";
 
     @Context
     public GraphDatabaseAPI api;
@@ -118,7 +120,9 @@ public class KShortestPathsProc {
                 new WeightedPathExporter(api,
                         Pools.DEFAULT,
                         graph,
-                        configuration.getString(PREFIX_IDENTIFIER, DEFAULT_TARGET_PROPERTY))
+                        graph,
+                        configuration.getString(PREFIX_IDENTIFIER, DEFAULT_TARGET_PROPERTY),
+                        configuration.getString(REL_TYPE_PROPERTY_IDENTIFIER, DEFAULT_RELATIONSHIP_PROPERTY))
                         .export(algorithm.getPaths());
             }
         }

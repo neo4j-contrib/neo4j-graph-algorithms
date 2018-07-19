@@ -25,9 +25,13 @@ import org.neo4j.graphalgo.KShortestPathsProc;
 import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -94,5 +98,29 @@ public class YensKShortestPathsTest {
             assertEquals(39, DB.getAllRelationships().stream().count());
             transaction.success();
         }
+
+        Map<String, Double> combinations = new HashMap<>();
+        combinations.put("PATH_0", 3.0);
+        combinations.put("PATH_1", 3.0);
+        combinations.put("PATH_2", 4.0);
+        combinations.put("PATH_3", 4.0);
+        combinations.put("PATH_4", 5.0);
+        combinations.put("PATH_5", 5.0);
+        combinations.put("PATH_6", 5.0);
+        combinations.put("PATH_7", 8.0);
+        combinations.put("PATH_8", 8.0);
+
+        for (String relationshipType : combinations.keySet()) {
+            final String shortestPathsQuery = String.format("MATCH p=(:Node {name: $one})-[r:%s*]->(:Node {name: $two})\n" +
+                    "UNWIND relationships(p) AS pair\n" +
+                    "return sum(pair.weight) AS distance", relationshipType);
+
+            DB.execute(shortestPathsQuery, MapUtil.map("one", "a", "two", "f")).accept(row -> {
+                assertEquals(combinations.get(relationshipType), row.getNumber("distance").doubleValue(), 0.01);
+                return true;
+            });
+        }
+
+
     }
 }

@@ -202,6 +202,37 @@ public class AdjacencyMatrix {
         return linearSearch(rels, degree, targetNodeId);
     }
 
+    public int getTargetOutgoing(int nodeId, int index) {
+        final int degree = outOffsets[nodeId];
+        if (index < 0 || index >= degree) {
+            return -1;
+        }
+        return outgoing[nodeId][index];
+    }
+
+    public int getTargetIncoming(int nodeId, int index) {
+        final int degree = inOffsets[nodeId];
+        if (index < 0 || index >= degree) {
+            return -1;
+        }
+        return incoming[nodeId][index];
+    }
+
+    public int getTargetBoth(int nodeId, int index) {
+        final int outDegree = outOffsets[nodeId];
+        if (index >= 0 && index < outDegree) {
+            return outgoing[nodeId][index];
+        } else {
+            index -= outDegree;
+            final int inDegree = inOffsets[nodeId];
+            if (index >= 0 && index < inDegree) {
+                return incoming[nodeId][index];
+            }
+        }
+        return -1;
+    }
+
+
     /**
      * checks for incoming target node
      */

@@ -300,19 +300,12 @@ public class HugeGraphImpl implements HugeGraph {
         return new HugeGraphIntersectImpl(outAdjacency, outOffsets);
     }
 
-    /**
+    /*
      * O(n) !
      */
     @Override
     public boolean exists(long sourceNodeId, long targetNodeId, Direction direction) {
-        final boolean[] found = {false};
-        HugeRelationshipConsumer consumer = (s, t) -> {
-            if (t == targetNodeId) {
-                found[0] = true;
-                return false;
-            }
-            return true;
-        };
+        ExistsConsumer consumer = new ExistsConsumer(targetNodeId);
         switch (direction) {
             case OUTGOING:
                 forEachOutgoing(sourceNodeId, consumer);
@@ -324,7 +317,29 @@ public class HugeGraphImpl implements HugeGraph {
                 forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
                 break;
         }
-        return found[0];
+        return consumer.found;
+    }
+
+    @Override
+    public int getTarget(int nodeId, int index, Direction direction) {
+        return Math.toIntExact(getTarget(Integer.toUnsignedLong(nodeId), Integer.toUnsignedLong(index), direction));
+    }
+
+    /*
+     * O(n) !
+     */
+    @Override
+    public long getTarget(long sourceNodeId, long index, Direction direction) {
+        GetTargetConsumer consumer = new GetTargetConsumer(index);
+        switch (direction) {
+            case OUTGOING:
+                forEachOutgoing(sourceNodeId, consumer);
+            case INCOMING:
+                forEachIncoming(sourceNodeId, consumer);
+            default:
+                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
+        }
+        return consumer.target;
     }
 
     /**
@@ -332,26 +347,7 @@ public class HugeGraphImpl implements HugeGraph {
      */
     @Override
     public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-        final boolean[] found = {false};
-        RelationshipConsumer consumer = (s, t, r) -> {
-            if (t == targetNodeId) {
-                found[0] = true;
-                return false;
-            }
-            return true;
-        };
-        switch (direction) {
-            case OUTGOING:
-                forEachOutgoing(sourceNodeId, consumer);
-                break;
-            case INCOMING:
-                forEachIncoming(sourceNodeId, consumer);
-                break;
-            default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
-                break;
-        }
-        return found[0];
+        return exists(Integer.toUnsignedLong(sourceNodeId), Integer.toUnsignedLong(targetNodeId), direction);
     }
 
     @Override
@@ -449,5 +445,41 @@ public class HugeGraphImpl implements HugeGraph {
                     RawValues.combineIntInt((int) t, (int) s),
                     weight);
         };
+    }
+
+    private static class GetTargetConsumer implements HugeRelationshipConsumer {
+        private long count;
+        private long target = -1;
+
+        public GetTargetConsumer(long count) {
+            this.count = count;
+        }
+
+        @Override
+        public boolean accept(long s, long t) {
+            if (count-- == 0) {
+                target = t;
+                return false;
+            }
+            return true;
+        }
+    }
+
+    private static class ExistsConsumer implements HugeRelationshipConsumer {
+        private final long targetNodeId;
+        private boolean found = false;
+
+        public ExistsConsumer(long targetNodeId) {
+            this.targetNodeId = targetNodeId;
+        }
+
+        @Override
+        public boolean accept(long s, long t) {
+            if (t == targetNodeId) {
+                found = true;
+                return false;
+            }
+            return true;
+        }
     }
 }
