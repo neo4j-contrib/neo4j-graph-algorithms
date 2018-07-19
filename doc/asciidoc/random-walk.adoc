@@ -9,7 +9,9 @@ This section describes the Random Walk algorithm in the Neo4j Graph Algorithms l
 // tag::introduction[]
 Random Walk is an algorithm that provides random paths in a graph.
 
-It is be computed by randomly traversing the graph choosing the relationship to follow at random or based on a probability computed from input parameters.
+A random walk means that we start at one node, choose a neighbor to navigate to at random or based on a provided probability distribution, and then do the same from that node, keeping the resulting path in a list.
+It’s similar to how a drunk person traverses a city.
+
 // end::introduction[]
 
 
@@ -17,6 +19,11 @@ It is be computed by randomly traversing the graph choosing the relationship to 
 == History and explanation
 
 // tag::explanation[]
+
+The term "random walk" was first mentioned by Karl Pearson in 1905 in a letter to Nature magazine titled https://www.nature.com/physics/looking-back/pearson/index.html[The Problem of the Random Walk^].
+Study of random walks date back even further to the https://en.wikipedia.org/wiki/Gambler%27s_ruin[Gambler's ruin^] problem where it could be used to show that a gambler would eventually go bankrupt against an opponent with infinite wealth.
+
+It's only in the last couple of decades, however, that researchers have studied them with respect to networks.
 
 // end::explanation[]
 
@@ -26,11 +33,16 @@ It is be computed by randomly traversing the graph choosing the relationship to 
 == Use-cases - when to use the Random Walk algorithm
 
 // tag::use-case[]
-Random Walk is often used as input for other algorithms: 
+Random Walk is often used as part of other algorithms.
 
-* to compute a (personalized) page-rank
-* for determining node-embeddings, e.g. for node2vec, graph2vec
-* many of the use-cases of <<algorithms-random-walk-usecase,PageRank>> also apply to Random Walks
+* it is used as part of the node2vec and graph2vec algorithms that create node embeddings.
+
+* as part of the Walktrap and Infomap community detection algorithms.
+If a random walk returns a small set of nodes repeatedly then it indicates that those set of nodes may have a community structure.
+
+You can read about more use cases in https://arxiv.org/pdf/1612.03281.pdf[Random walks and diffusion on networks^].
+
+Many of the use-cases of <<algorithms-pagerank-usecase,PageRank>> also apply to Random Walks.
 
 // end::use-case[]
 
@@ -39,14 +51,16 @@ Random Walk is often used as input for other algorithms:
 == Constraints - when not to use the Random Walk algorithm
 
 // tag::constraint[]
-The constraints of <<algorithms-random-walk-usecase,PageRank>> also apply to Random Walks.
+The constraints of <<algorithms-pagerank-limitations,PageRank>> also apply to Random Walks.
+
+* Dead-ends occur when pages have no out-links.
+In this case the random walk will abort and a path containing only the first first node will be returned.
+This problem can be avoided by passing the `direction: BOTH` parameter so that the random walk will traverse relationships in both directions
 
 * If there are no links from within a group of pages to outside of the group, then the group is considered a spider trap.
+Random walks starting from any of the nodes in that group will only traverse to the others in the group - our implementation of the algorithm doesn't allow a random walk to jump to non neighbouring nodes.
 
 * Sinks can occur when a network of links form an infinite cycle.
-
-* Dead-ends occur when pages have no out-links. 
-  A random walk can also use directions of both kinds to avoid that.
 
 // end::constraint[]
 
@@ -64,7 +78,7 @@ image::pagerank.png[]
 include::scripts/random-walk.cypher[tag=create-sample-graph]
 ----
 
-.The following will run the algorithm and stream a _single 5 hop path_ as result:
+.The following will run the algorithm starting from the Home page and returning a 1 random walk of path length 3:
 [source, cypher]
 ----
 include::scripts/random-walk.cypher[tag=stream-sample-graph]
@@ -76,40 +90,15 @@ include::scripts/random-walk.cypher[tag=stream-sample-graph]
 |===
 | page
 |"Home"
-|"Product"
+|"Site C"
 |"Links"
-|"Site B"
-|"Site D"
+|"Site A"
 |===
 // end::stream-sample-graph-result[]
 
 // tag::stream-sample-graph-explanation[]
-////
-TODO
-As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
-We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
-////
+
 // end::stream-sample-graph-explanation[]
-
-
-[[algorithms-random-walk-example]]
-== Example usage
-
-In this example we will run Random Walk on Yelp's social network to find potential influencers.
-
-When <<yelp-import, importing the Yelp dataset>> we stored the social network as a https://en.wikipedia.org/wiki/Bidirected_graph[undirected graph^].
-Relationships in Neo4j always have a direction, but in this domain the direction is irrelevant.
-If `Person A` is a `FRIEND` with `Person B`, we can say that `Person B` is also a `FRIEND` with `Person A`.
-
-The default label and relationship-type selection syntax won't work for us here, because it will project a directed social network.
-Instead, we can project our undirected social network using *Cypher loading*.
-We can also apply this approach to other algorithms that use *Cypher loading*.
-
-.The following will run the algorithm on Yelp social network:
-[source, cypher]
-----
-include::scripts/random-walk.cypher[tag=random-walk-stream-yelp-social]
-----
 
 
 [[algorithms-pagerank-syntax]]
@@ -151,19 +140,6 @@ YIELD nodes, path
 | path | Path | Optional Path (with virtual relationships)
 |===
 
-
-////
-== Huge graph projection
-
-If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-
-.Set `graph:'huge'` in the config:
-
-[source, cypher]
-----
-include::scripts/random-walk.cypher[tag=huge-projection]
-----
-////
 
 == Cypher projection
 
