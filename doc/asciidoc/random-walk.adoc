@@ -40,6 +40,8 @@ Random Walk is often used as part of other algorithms.
 * as part of the Walktrap and Infomap community detection algorithms.
 If a random walk returns a small set of nodes repeatedly then it indicates that those set of nodes may have a community structure.
 
+* as part of the training process of machine learning model as describe in David Mack's article https://medium.com/octavian-ai/review-prediction-with-neo4j-and-tensorflow-1cd33996632a[Review prediction with Neo4j and TensorFlow^].
+
 You can read about more use cases in https://arxiv.org/pdf/1612.03281.pdf[Random walks and diffusion on networks^].
 
 Many of the use-cases of <<algorithms-pagerank-usecase,PageRank>> also apply to Random Walks.
