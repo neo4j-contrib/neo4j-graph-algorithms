@@ -32,6 +32,8 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class HugeGraphFactory extends GraphFactory {
 
+    static final boolean LOAD_DEGREES = true;
+
     public HugeGraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         super(api, setup);
     }
@@ -48,7 +50,7 @@ public final class HugeGraphFactory extends GraphFactory {
             final GraphSetup setup) {
 
         // ops for scanning degrees
-        long relOperations = 0L;
+        long relOperations = LOAD_DEGREES ? dimensions.maxRelCount() : 0L;
 
         // batching for undirected double the amount of rels imported
         if (setup.loadIncoming || setup.loadAsUndirected) {
@@ -102,6 +104,10 @@ public final class HugeGraphFactory extends GraphFactory {
         final Runnable importer = new NodesBasedImporter(
                 setup, api, dimensions, progress, tracker, mapping, weightsBuilder,
                 outAdjacency, inAdjacency, threadPool, concurrency);
+
+//        final Runnable importer = ScanningRelationshipImporter.create(
+//                setup, api, dimensions, progress, tracker, mapping, weightsBuilder,
+//                outAdjacency, inAdjacency, threadPool, LOAD_DEGREES, concurrency);
 
         importer.run();
         HugeWeightMapping weights = weightsBuilder.build();

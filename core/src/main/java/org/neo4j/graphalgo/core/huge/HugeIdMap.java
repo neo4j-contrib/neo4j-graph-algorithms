@@ -49,6 +49,12 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
         nodeToGraphIds = SparseLongArray.newArray(fullCapacity, tracker);
     }
 
+    HugeIdMap(HugeLongArray graphIds, SparseLongArray nodeToGraphIds, long nextGraphId) {
+        this.nextGraphId = nextGraphId;
+        this.graphIds = graphIds;
+        this.nodeToGraphIds = nodeToGraphIds;
+    }
+
     void add(long longValue) {
         long internalId = nextGraphId++;
         nodeToGraphIds.set(longValue, internalId);

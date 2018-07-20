@@ -18,7 +18,6 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
-
 import org.neo4j.graphalgo.core.utils.RawValues;
 
 import java.util.Arrays;
@@ -29,11 +28,61 @@ import static org.neo4j.graphalgo.core.huge.VarLongEncoding.encodedVLongSize;
 final class AdjacencyCompression {
 
     static final int CHUNK_SIZE = 64;
-
     static final long[] EMPTY_LONGS = new long[0];
 
     static abstract class IntValue {
         int value;
+    }
+
+    private long[] ids;
+    private int length;
+
+    AdjacencyCompression() {
+        this.ids = EMPTY_LONGS;
+    }
+
+    void copyFrom(CompressedLongArray array) {
+        if (ids.length < array.length()) {
+            ids = new long[array.length()];
+        }
+        length = array.uncompress(ids);
+    }
+
+    void copyFrom(long[] targets, int length) {
+        ids = targets;
+        this.length = length;
+    }
+
+    void applyDeltaEncoding() {
+        Arrays.sort(ids, 0, length);
+        length = applyDelta(ids, length);
+    }
+
+    int applyDeltaEncodingAndCalculateRequiredBytes() {
+        long lengthAndBytes = applyDeltaEncodingAndCalculateRequiredBytes(ids, length);
+        length = RawValues.getHead(lengthAndBytes);
+        return RawValues.getTail(lengthAndBytes);
+    }
+
+    int writeDegree(byte[] out, int offset) {
+        return writeDegree(out, offset, length);
+    }
+
+    int compress(byte[] out) {
+        return encodeVLongs(ids, length, out);
+    }
+
+    int compress(byte[] out, int offset) {
+        return encodeVLongs(ids, length, out, offset);
+    }
+
+    int degree() {
+        return length;
+    }
+
+    void release() {
+        ids = null;
+        length = 0;
     }
 
     static long applyDeltaEncodingAndCalculateRequiredBytes(long[] ids, int length) {
@@ -67,5 +116,18 @@ final class AdjacencyCompression {
             }
         }
         return RawValues.combineIntInt(out, bytes);
+    }
+
+    private int applyDelta(long values[], int length) {
+        long value = values[0], delta;
+        int in = 1, out = 1;
+        for (; in < length; ++in) {
+            delta = values[in] - value;
+            value = values[in];
+            if (delta > 0L) {
+                values[out++] = delta;
+            }
+        }
+        return out;
     }
 }

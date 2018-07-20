@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
+
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
@@ -31,6 +32,7 @@ class HugeAdjacencyBuilder {
     private final HugeAdjacencyListBuilder adjacency;
 
     private HugeAdjacencyListBuilder.Allocator allocator;
+    private AdjacencyCompression compression;
     private HugeAdjacencyOffsets globalOffsets;
     private long[] offsets;
 
@@ -44,20 +46,26 @@ class HugeAdjacencyBuilder {
     private HugeAdjacencyBuilder(
             HugeAdjacencyListBuilder adjacency,
             HugeAdjacencyListBuilder.Allocator allocator,
+            AdjacencyCompression compression,
             long[] offsets,
             AllocationTracker tracker) {
         this.adjacency = adjacency;
         this.allocator = allocator;
+        this.compression = compression;
         this.offsets = offsets;
         this.tracker = tracker;
     }
 
-    final HugeAdjacencyBuilder threadLocalCopy(long[] offsets) {
-        return new HugeAdjacencyBuilder(
-                adjacency,
-                adjacency.newAllocator(),
-                offsets,
-                tracker);
+    final HugeAdjacencyBuilder threadLocalCopy(long[] offsets, boolean loadDegrees) {
+        if (loadDegrees) {
+            return new HugeAdjacencyBuilder(
+                    adjacency,
+                    adjacency.newAllocator(),
+                    new AdjacencyCompression(),
+                    offsets,
+                    tracker);
+        }
+        return new NoDegreeHAB(adjacency, adjacency.newAllocator(), new AdjacencyCompression(), offsets, tracker);
     }
 
     final void prepare() {
@@ -77,6 +85,14 @@ class HugeAdjacencyBuilder {
         return degree;
     }
 
+    final void applyVariableDeltaEncoding(CompressedLongArray array, int localId) {
+        compression.copyFrom(array);
+        compression.applyDeltaEncoding();
+        long address = array.compress(compression, allocator);
+        offsets[localId] = address;
+        array.release();
+    }
+
     private synchronized long allocateIds(long[] targets, int requiredBytes, int degree) {
         // sizeOf(degree) + compression bytes
         long address = allocator.allocate(4 + requiredBytes);
@@ -85,6 +101,18 @@ class HugeAdjacencyBuilder {
         offset = AdjacencyCompression.compress(targets, degree, allocator.page, offset);
         allocator.offset = offset;
         return address;
+    }
+
+    int degree(int localId) {
+        return (int) offsets[localId];
+    }
+
+    final void release() {
+        compression.release();
+    }
+
+    static HugeAdjacencyBuilder threadLocal(HugeAdjacencyBuilder builder, long[] offsets, boolean loadDegrees) {
+        return builder != null ? builder.threadLocalCopy(offsets, loadDegrees) : null;
     }
 
     static HugeGraph apply(
@@ -111,5 +139,21 @@ class HugeAdjacencyBuilder {
                 tracker, idMapping, weights,
                 inAdjacencyList, outAdjacencyList, inOffsets, outOffsets
         );
+    }
+
+    private static final class NoDegreeHAB extends HugeAdjacencyBuilder {
+        private NoDegreeHAB(
+                HugeAdjacencyListBuilder adjacency,
+                HugeAdjacencyListBuilder.Allocator allocator,
+                AdjacencyCompression compression,
+                long[] offsets,
+                AllocationTracker tracker) {
+            super(adjacency, allocator, compression, offsets, tracker);
+        }
+
+        @Override
+        int degree(final int localId) {
+            return Integer.MAX_VALUE;
+        }
     }
 }

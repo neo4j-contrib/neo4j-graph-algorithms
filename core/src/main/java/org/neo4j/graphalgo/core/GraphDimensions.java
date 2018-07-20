@@ -33,6 +33,7 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
     private long nodeCount;
     private long allNodesCount;
     private long maxRelCount;
+    private long allRelsCount;
     private int labelId;
     private int[] relationId;
     private int relWeightId;
@@ -62,6 +63,10 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
 
     public long maxRelCount() {
         return maxRelCount;
+    }
+
+    public long allRelsCount() {
+        return allRelsCount;
     }
 
     public int labelId() {
@@ -146,6 +151,7 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
                         labelId
                 )
         );
+        allRelsCount = InternalReadOps.getHighestPossibleRelationshipCount(dataRead, api);
         return this;
     }
 

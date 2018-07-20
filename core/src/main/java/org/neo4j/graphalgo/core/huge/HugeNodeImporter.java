@@ -39,7 +39,6 @@ public final class HugeNodeImporter extends BaseNodeImporter<HugeIdMap> {
         this.allNodesCount = allNodesCount;
     }
 
-    @Override
     protected HugeIdMap newNodeMap(final long nodeCount) {
         return new HugeIdMap(nodeCount, allNodesCount, tracker);
     }
