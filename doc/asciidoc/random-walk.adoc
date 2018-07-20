@@ -61,7 +61,7 @@ The constraints of <<algorithms-pagerank-limitations,PageRank>> also apply to Ra
 
 * If there are no links from within a group of pages to outside of the group, then the group is considered a spider trap.
   Random walks starting from any of the nodes in that group will only traverse to the others in the group - our implementation of the algorithm doesn't allow a random walk to jump to non-neighbouring nodes.
-  
+
 * Sinks can occur when a network of links form an infinite cycle.
 
 // end::constraint[]
@@ -156,7 +156,7 @@ include::scripts/random-walk.cypher[tag=cypher-loading]
 
 == Graph type support
 
-The PageRank algorithm supports the following graph types:
+The Random Walk algorithm supports the following graph types:
 
 * [x] directed, unweighted
 
@@ -182,8 +182,6 @@ ifdef::implementation[]
 == Implementation details
 
 :leveloffset: +1
-
-PageRank is the popular search algorithm developed by Google.
 
 For more information, see the https://en.wikipedia.org/wiki/Random_walk[Random Walk page on Wikipedia].
 
