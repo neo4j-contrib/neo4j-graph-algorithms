@@ -28,23 +28,31 @@ MERGE (d)-[:LINKS]->(home)
 
 // tag::stream-sample-graph[]
 
-CALL algo.randomWalk.stream('Page', 5, 1, {nodeQuery:'Page', relationshipQuery:'LINKS'})
+MATCH (home:Page {name: "Home"})
+CALL algo.randomWalk.stream(id(home), 3, 1)
 YIELD nodeIds
 
-MATCH (node) WHERE id(node) IN nodeIds
+UNWIND nodeIds AS nodeId
+MATCH (n) WHERE id(n) = nodeId
 
-RETURN node.name AS page
+RETURN n.name AS page
 
 // end::stream-sample-graph[]
 
 // tag::cypher-loading[]
 
-CALL algo.pageRank.stream(
-  'MATCH (p:Page) RETURN id(p) as id',
-  'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
-  null, 5, 1,
-  {graph:'cypher'}
-)
+MATCH (home:Page {name: "Home"})
+CALL algo.randomWalk.stream(id(home), 5, 1, {
+  nodeQuery: "MATCH (p:Page) RETURN id(p) as id",
+  relationshipQuery: "MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target",
+  graph: "cypher"
+})
+YIELD nodeIds
+
+UNWIND nodeIds AS nodeId
+MATCH (n) WHERE id(n) = nodeId
+
+RETURN n.name AS page
 
 // end::cypher-loading[]
 

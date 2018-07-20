@@ -142,6 +142,10 @@ include::connected-components.adoc[leveloffset=2,tags=implementation]
 
 include::strongly-connected-components.adoc[leveloffset=2,tags=implementation]
 
+=== Random Walk
+
+include::random-walk.adoc[leveloffset=2,tags=implementation]
+
 endif::env-docs[]
 
 ifdef::backend-html5[]
