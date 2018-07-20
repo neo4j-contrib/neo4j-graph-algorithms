@@ -52,3 +52,5 @@ include::louvain.adoc[leveloffset=2]
 include::connected-components.adoc[leveloffset=2]
 
 include::strongly-connected-components.adoc[leveloffset=2]
+
+include::random-walk.adoc[leveloffset=2]

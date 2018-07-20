@@ -7,7 +7,7 @@ image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.3[
 This library provides efficiently implemented, parallel versions of common graph algorithms for Neo4j 3.x, exposed as Cypher procedures.
 
 ifndef::env-docs[]
-You can find the documentation here: http://neo4j-contrib.github.io/neo4j-graph-algorithms
+You can find the documentation here: https://neo4j.com/docs/graph-algorithms/current/
 endif::env-docs[]
 
 Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
@@ -47,6 +47,7 @@ These algorithms help find the shortest path or evaluate the availability and qu
 * All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
 * A* Algorithm (`algo.shortestPath.astar`)
 * Yen's K-Shortest Paths (`algo.kShortestPaths`)
+* Random Walk (`algo.randomWalk`)
 
 // end::algorithms[]
 
