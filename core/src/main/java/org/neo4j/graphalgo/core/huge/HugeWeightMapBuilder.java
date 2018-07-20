@@ -25,6 +25,7 @@ import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.RelationshipScanCursor;
 
 import java.util.Arrays;
 
@@ -82,6 +83,16 @@ class HugeWeightMapBuilder {
         return HugeWeightMap.of(pages, pageSize, defaultWeight, tracker);
     }
 
+    // TODO: eliminate additional single rel scan
+    void load(long relId, long target, int localSource, CursorFactory cursors, Read read) {
+        try (RelationshipScanCursor rsc = cursors.allocateRelationshipScanCursor())  {
+            read.singleRelationship(relId, rsc);
+            while (rsc.next()) {
+                load(rsc.relationshipReference(), rsc.propertiesReference(), target, localSource, cursors, read);
+            }
+        }
+    }
+
     void load(
             long relationshipReference,
             long propertiesReference,
@@ -128,6 +139,10 @@ class HugeWeightMapBuilder {
         @Override
         HugeWeightMapping build() {
             return new HugeNullWeightMap(defaultValue);
+        }
+
+        @Override
+        void load(long source, long target, int localSource, CursorFactory cursors, Read read) {
         }
 
         @Override

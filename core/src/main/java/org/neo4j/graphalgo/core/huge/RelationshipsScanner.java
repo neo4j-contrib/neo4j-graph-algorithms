@@ -18,17 +18,13 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
-import org.neo4j.function.ThrowingConsumer;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.RenamesCurrentThread;
 import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.internal.kernel.api.CursorFactory;
-import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipScanCursor;
-import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.newapi.PartialCursors;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -38,72 +34,74 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 abstract class RelationshipsScanner extends StatementAction {
 
-    private final ArrayBlockingQueue<RelationshipsBatch> pool;
+    private interface ImporterAction {
+        void run(RelationshipScanCursor rc, long source, long target) throws InterruptedException;
+    }
+
+    private static final AtomicInteger GLOBAL_ORD = new AtomicInteger();
+
+    private final ImportProgress progress;
+    private final HugeIdMap idMap;
+    private final ImportRange importRange;
     private long[][] outDegrees;
     private long[][] inDegrees;
     private final boolean loadDegrees;
     private final int numberOfThreads;
     private final int batchSize;
-    private final long startId;
-    private final long endId;
-    private final HugeIdMap idMap;
-    private final DegreeLoader loader;
+    private final ArrayBlockingQueue<RelationshipsBatch> pool;
     private final Emit emit;
-    private final GraphSetup setup;
-    private final ImportProgress progress;
+    private final DegreeLoader loader;
+    private final int scannerIndex;
 
     RelationshipsScanner(
             GraphDatabaseAPI api,
-            GraphSetup setup,
             ImportProgress progress,
             HugeIdMap idMap,
-            long startId,
-            long endId,
-            boolean loadWeights,
-            int maxInFlight,
-            int batchSize,
-            int numberOfThreads,
-            boolean loadDegrees,
+            ImportRange importRange,
             long[][] outDegrees,
-            long[][] inDegrees) {
+            long[][] inDegrees,
+            boolean loadDegrees,
+            int numberOfThreads,
+            int batchSize,
+            GraphSetup setup,
+            int maxInFlight,
+            boolean loadWeights) {
         super(api);
         assert (batchSize % 3) == 0 : "batchSize must be divisible by three";
-        this.setup = setup;
         this.progress = progress;
         this.idMap = idMap;
-        this.startId = startId;
-        this.endId = endId;
+        this.importRange = importRange;
         this.outDegrees = outDegrees;
         this.inDegrees = inDegrees;
-        this.loadDegrees = loadDegrees;
+        this.loadDegrees = needsDegreeLoading(setup, loadDegrees);
         this.numberOfThreads = numberOfThreads;
         this.batchSize = batchSize;
         this.pool = newPool(maxInFlight);
-        this.loader = setupDegreeLoader(setup, loadDegrees);
         this.emit = setupEmitter(setup, loadWeights, batchSize, numberOfThreads);
+        this.loader = this.loadDegrees ? setupDegreeLoader(setup) : null;
+        this.scannerIndex = GLOBAL_ORD.getAndIncrement();
     }
 
-    private DegreeLoader setupDegreeLoader(GraphSetup setup, boolean loadDegrees) {
-        if (!loadDegrees) {
-            return new LoadDegreeNone();
-        }
+    private boolean needsDegreeLoading(GraphSetup setup, boolean loadDegrees) {
+        return loadDegrees && (setup.loadAsUndirected || setup.loadOutgoing || setup.loadIncoming);
+    }
+
+    private DegreeLoader setupDegreeLoader(GraphSetup setup) {
         if (setup.loadAsUndirected) {
             return new LoadDegreeUndirected();
         }
-        if (setup.loadOutgoing && setup.loadIncoming) {
-            return new LoadDegreeBoth();
-        }
         if (setup.loadOutgoing) {
+            if (setup.loadIncoming) {
+                return new LoadDegreeBoth();
+            }
             return new LoadDegreeOut();
         }
-        if (setup.loadIncoming) {
-            return new LoadDegreeIn();
-        }
-        return new LoadDegreeNone();
+        return new LoadDegreeIn();
     }
 
     private Emit setupEmitter(
@@ -177,60 +175,60 @@ abstract class RelationshipsScanner extends StatementAction {
 
     abstract void sendSentinelToImportThread(int threadIndex) throws InterruptedException;
 
-    private void loadDegrees(final KernelTransaction transaction) {
+    private void loadDegrees(final KernelTransaction transaction) throws InterruptedException {
         if (loadDegrees) {
-            try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-degrees")) {
-                forAllRelationships(transaction, this::loadDegree);
+            try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-degrees-" + scannerIndex)) {
+                forAllRelationships(transaction, true, this::loadDegree);
             }
         }
         inDegrees = null;
         outDegrees = null;
     }
 
-    private void loadDegree(RelationshipScanCursor rc) {
-        int imported = 0;
-        while (rc.next()) {
-            long source = idMap.toHugeMappedNodeId(rc.sourceNodeReference());
-            long target = idMap.toHugeMappedNodeId(rc.targetNodeReference());
-            if (source != -1L && target != -1L) {
-                loader.load(source, target, this);
-            }
-            if (++imported == 100_000) {
-                progress.relationshipsImported(100_000);
-                imported = 0;
-            }
-        }
-        progress.relationshipsImported(imported);
-    }
-
     private void scanRelationships(final KernelTransaction transaction) throws InterruptedException {
-        forAllRelationships(transaction, this::scanRelationship);
-    }
-
-    private void scanRelationship(RelationshipScanCursor rc) throws InterruptedException {
-        while (rc.next()) {
-            long source = idMap.toHugeMappedNodeId(rc.sourceNodeReference());
-            long target = idMap.toHugeMappedNodeId(rc.targetNodeReference());
-            if (source != -1L && target != -1L) {
-                emit.emit(source, target, rc.relationshipReference(), this);
-            }
+        try (Revert ignore = RenamesCurrentThread.renameThread("huge-scan-relationships-" + scannerIndex)) {
+            forAllRelationships(transaction, false, this::scanRelationship);
         }
     }
 
-    private <E extends Exception> void forAllRelationships(
+    private void loadDegree(RelationshipScanCursor rc, long source, long target) {
+        loader.load(source, target, this);
+    }
+
+    private void scanRelationship(RelationshipScanCursor rc, long source, long target) throws InterruptedException {
+        emit.emit(source, target, rc.relationshipReference(), this);
+    }
+
+    private void forAllRelationships(
             KernelTransaction transaction,
-            ThrowingConsumer<RelationshipScanCursor, E> block) throws E {
-        TokenRead tokenRead = transaction.tokenRead();
+            boolean logProgress,
+            ImporterAction block) throws InterruptedException {
+        try (RelationshipScanCursor rc = PartialCursors.allocateNewCursor(transaction.cursors())) {
+            PartialCursors.partialScan(
+                    transaction.dataRead(),
+                    importRange.relationshipType(),
+                    importRange.relationshipStartId,
+                    importRange.relationshipEndId,
+                    rc);
 
-        int typeId = setup.loadAnyRelationshipType()
-                ? Read.ANY_RELATIONSHIP_TYPE
-                : tokenRead.relationshipType(setup.relationshipType);
-
-        CursorFactory cursors = transaction.cursors();
-
-        try (RelationshipScanCursor rc = PartialCursors.allocateNewCursor(cursors)) {
-            PartialCursors.partialScan(transaction.dataRead(), typeId, startId, endId, rc);
-            block.accept(rc);
+            final HugeIdMap idMap = this.idMap;
+            final ImportProgress progress = logProgress ? this.progress : ImportProgress.EMPTY;
+            long source, target;
+            int imported = 0;
+            while (rc.next()) {
+                source = idMap.toHugeMappedNodeId(rc.sourceNodeReference());
+                if (source != -1L) {
+                    target = idMap.toHugeMappedNodeId(rc.targetNodeReference());
+                    if (target != -1L) {
+                        block.run(rc, source, target);
+                    }
+                }
+                if (++imported == 100_000) {
+                    progress.relationshipsImported(100_000);
+                    imported = 0;
+                }
+            }
+            progress.relationshipsImported(imported);
         }
     }
 
@@ -397,13 +395,6 @@ abstract class RelationshipsScanner extends StatementAction {
         @Override
         public void load(long source, long target, RelationshipsScanner scanner) {
             scanner.incInDegree(target);
-        }
-    }
-
-    private static final class LoadDegreeNone implements DegreeLoader {
-
-        @Override
-        public void load(long source, long target, RelationshipsScanner scanner) {
         }
     }
 
@@ -599,87 +590,88 @@ abstract class RelationshipsScanner extends StatementAction {
 
 final class QueueingScanner extends RelationshipsScanner {
 
+    private final boolean forwardSentinel;
     private final BlockingQueue<RelationshipsBatch>[] threadQueues;
     private final int threadsShift;
     private final long threadsMask;
-    private final boolean forwardSentinel;
 
     @FunctionalInterface
     interface Creator {
-        RelationshipsScanner ofRange(long startId, long endId);
+        RelationshipsScanner ofRange(ImportRange importRange);
+
+        default RelationshipsScanner ofRange(long start, long end, int[] relType) {
+            return ofRange(new ImportRange(start, end, relType));
+        }
 
         default RelationshipsScanner ofAll() {
-            return ofRange(0L, Long.MAX_VALUE);
+            return ofRange(ImportRange.ALL);
         }
     }
 
     static Creator of(
             GraphDatabaseAPI api,
-            GraphSetup setup,
             ImportProgress progress,
             HugeIdMap idMap,
-            boolean loadWeights,
-            int maxInFlight,
-            int batchSize,
-            BlockingQueue<RelationshipsBatch>[] threadQueues,
-            boolean loadDegrees,
             long[][] outDegrees,
             long[][] inDegrees,
+            boolean loadDegrees,
+            int batchSize,
+            GraphSetup setup,
+            int maxInFlight,
+            boolean loadWeights,
+            BlockingQueue<RelationshipsBatch>[] threadQueues,
             int perThreadSize) {
-        return (startId, endId) ->
+        return (range) ->
                 new QueueingScanner(
                         api,
-                        setup,
                         progress,
                         idMap,
-                        (endId - startId) == Long.MAX_VALUE,
-                        startId,
-                        endId,
-                        loadWeights,
-                        maxInFlight,
-                        batchSize,
-                        threadQueues,
-                        loadDegrees,
+                        range,
                         outDegrees,
                         inDegrees,
+                        loadDegrees,
+                        batchSize,
+                        setup,
+                        maxInFlight,
+                        loadWeights,
+                        range.isAllRelationships(),
+                        threadQueues,
                         perThreadSize);
     }
 
     private QueueingScanner(
             GraphDatabaseAPI api,
-            GraphSetup setup,
             ImportProgress progress,
             HugeIdMap idMap,
-            boolean forwardSentinel,
-            long startId,
-            long endId,
-            boolean loadWeights,
-            int maxInFlight,
-            int batchSize,
-            BlockingQueue<RelationshipsBatch>[] threadQueues,
-            boolean loadDegrees,
+            ImportRange importRange,
             long[][] outDegrees,
             long[][] inDegrees,
+            boolean loadDegrees,
+            int batchSize,
+            GraphSetup setup,
+            int maxInFlight,
+            boolean loadWeights,
+            boolean forwardSentinel,
+            BlockingQueue<RelationshipsBatch>[] threadQueues,
             int perThreadSize) {
         super(
                 api,
-                setup,
                 progress,
                 idMap,
-                startId,
-                endId,
-                loadWeights,
-                maxInFlight,
-                batchSize,
-                threadQueues.length,
-                loadDegrees,
+                importRange,
                 outDegrees,
-                inDegrees);
+                inDegrees,
+                loadDegrees,
+                threadQueues.length,
+                batchSize,
+                setup,
+                maxInFlight,
+                loadWeights);
         assert BitUtil.isPowerOfTwo(perThreadSize);
+        this.forwardSentinel = forwardSentinel;
         this.threadQueues = threadQueues;
         this.threadsShift = Integer.numberOfTrailingZeros(perThreadSize);
         this.threadsMask = (long) (perThreadSize - 1);
-        this.forwardSentinel = forwardSentinel;
     }
 
     @Override
@@ -729,30 +721,28 @@ final class NonQueueingScanner extends RelationshipsScanner {
 
     NonQueueingScanner(
             GraphDatabaseAPI api,
-            GraphSetup setup,
             ImportProgress progress,
             HugeIdMap idMap,
-            boolean loadWeights,
-            int maxInFlight,
-            int batchSize,
-            PerThreadRelationshipBuilder builder,
-            boolean loadDegrees,
             long[][] outDegrees,
-            long[][] inDegrees) {
+            long[][] inDegrees,
+            boolean loadDegrees,
+            int batchSize,
+            GraphSetup setup,
+            boolean loadWeights,
+            PerThreadRelationshipBuilder builder) {
         super(
                 api,
-                setup,
                 progress,
                 idMap,
-                0L,
-                Long.MAX_VALUE,
-                loadWeights,
-                maxInFlight,
-                batchSize,
-                1,
-                loadDegrees,
+                ImportRange.ALL,
                 outDegrees,
-                inDegrees);
+                inDegrees,
+                loadDegrees,
+                1,
+                batchSize,
+                setup,
+                1,
+                loadWeights);
         this.builder = builder;
     }
 

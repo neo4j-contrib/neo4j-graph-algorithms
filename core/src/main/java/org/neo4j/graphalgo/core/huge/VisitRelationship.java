@@ -24,7 +24,6 @@ import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
 
 import static org.neo4j.graphalgo.core.huge.AdjacencyCompression.EMPTY_LONGS;
 
-
 abstract class VisitRelationship {
 
     private final HugeIdMap idMap;
@@ -109,14 +108,6 @@ abstract class VisitRelationship {
                 sourceGraphId,
                 targetGraphId
         );
-
-//        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
-//            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
-//            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-//            if (weight != weights.defaultValue()) {
-//                weights.put(sourceGraphId, targetGraphId, weight);
-//            }
-//        }
     }
 
     static void visitUndirectedWeight(
@@ -129,21 +120,6 @@ abstract class VisitRelationship {
             long propertiesReference) {
         weightBuilder.addWeight(cursors, readOp, relationshipId, propertiesReference, sourceGraphId, targetGraphId);
         weightBuilder.addWeight(cursors, readOp, relationshipId, propertiesReference, targetGraphId, sourceGraphId);
-
-//        // TODO: make access to rel properties better
-//        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
-//             PropertyCursor pc = cursors.allocatePropertyCursor()) {
-//            readOp.singleRelationship(relationshipId, scanCursor);
-//            while (scanCursor.next()) {
-//                scanCursor.properties(pc);
-//
-//                double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-//                if (weight != weights.defaultValue()) {
-//                    weights.put(sourceGraphId, targetGraphId, weight);
-//                    weights.put(targetGraphId, sourceGraphId, weight);
-//                }
-//            }
-//        }
     }
 }
 

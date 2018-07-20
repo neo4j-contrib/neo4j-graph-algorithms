@@ -29,6 +29,7 @@ final class NodesBasedImporter implements Runnable {
     private final HugeAdjacencyBuilder outAdjacency;
     private final HugeAdjacencyBuilder inAdjacency;
     private final ExecutorService threadPool;
+    private final boolean loadDegrees;
     private final int concurrency;
 
     NodesBasedImporter(
@@ -42,6 +43,7 @@ final class NodesBasedImporter implements Runnable {
             final HugeAdjacencyBuilder outAdjacency,
             final HugeAdjacencyBuilder inAdjacency,
             final ExecutorService threadPool,
+            final boolean loadDegrees,
             final int concurrency) {
         this.setup = setup;
         this.api = api;
@@ -53,6 +55,7 @@ final class NodesBasedImporter implements Runnable {
         this.outAdjacency = outAdjacency;
         this.inAdjacency = inAdjacency;
         this.threadPool = threadPool;
+        this.loadDegrees = loadDegrees;
         this.concurrency = concurrency;
     }
 
@@ -82,8 +85,8 @@ final class NodesBasedImporter implements Runnable {
 
         for (int idx = 0; idx < pages; idx++) {
             weightBuilder.addWeightImporter(idx);
-            outBuilder.addAdjacencyImporter(tracker, idx);
-            inBuilder.addAdjacencyImporter(tracker, idx);
+            outBuilder.addAdjacencyImporter(tracker, loadDegrees, idx);
+            inBuilder.addAdjacencyImporter(tracker, loadDegrees, idx);
         }
         weightBuilder.finish();
         outBuilder.finish();

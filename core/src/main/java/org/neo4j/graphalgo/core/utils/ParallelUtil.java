@@ -118,16 +118,19 @@ public final class ParallelUtil {
         return executor != null && !(executor.isShutdown() || executor.isTerminated());
     }
 
-    public static int availableThreads(ExecutorService executor, int desiredConcurrency) {
+    public static int availableThreads(ExecutorService executor) {
         if (!canRunInParallel(executor)) {
             return 0;
         }
         if (executor instanceof ThreadPoolExecutor) {
             ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
-            int availableConcurrency = pool.getCorePoolSize() - pool.getActiveCount();
-            return Math.min(availableConcurrency, desiredConcurrency);
+            // TPE only increases to max threads if the queue is full, (see their JavaDoc)
+            // so the number of threads available that are guaranteed to start immediately is
+            // only based on the number of core threads.
+            return pool.getCorePoolSize() - pool.getActiveCount();
         }
-        return desiredConcurrency;
+        // If we have another pool, we just have to hope for the best (or, maybe throw?)
+        return Integer.MAX_VALUE;
     }
 
     /**

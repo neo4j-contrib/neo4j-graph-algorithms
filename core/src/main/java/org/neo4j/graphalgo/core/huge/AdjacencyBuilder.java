@@ -9,6 +9,7 @@ abstract class AdjacencyBuilder {
 
     abstract void addAdjacencyImporter(
             AllocationTracker tracker,
+            boolean loadDegrees,
             int pageIndex);
 
     abstract int add(
@@ -54,10 +55,10 @@ abstract class AdjacencyBuilder {
         }
 
         @Override
-        void addAdjacencyImporter(AllocationTracker tracker, int pageIndex) {
+        void addAdjacencyImporter(AllocationTracker tracker, boolean loadDegrees, int pageIndex) {
             tracker.add(sizeOfLongArray(pageSize));
             long[] offsets = degrees[pageIndex] = new long[pageSize];
-            builders[pageIndex] = adjacency.threadLocalCopy(offsets);
+            builders[pageIndex] = adjacency.threadLocalCopy(offsets, loadDegrees);
             builders[pageIndex].prepare();
         }
 
@@ -82,6 +83,7 @@ abstract class AdjacencyBuilder {
         @Override
         void addAdjacencyImporter(
                 AllocationTracker tracker,
+                boolean loadDegrees,
                 int pageIndex) {
         }
 

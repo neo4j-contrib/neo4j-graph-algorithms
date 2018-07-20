@@ -28,11 +28,19 @@ import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.kernel.api.StatementConstants;
+import org.neo4j.graphdb.DependencyResolver;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.io.ByteUnit;
+import org.neo4j.kernel.configuration.Config;
+import org.neo4j.kernel.impl.storageengine.impl.recordstorage.RecordStorageEngine;
+import org.neo4j.kernel.impl.store.NeoStores;
+import org.neo4j.kernel.impl.store.RelationshipStore;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public final class HugeGraphFactory extends GraphFactory {
 
-    static final boolean LOAD_DEGREES = true;
+    // TODO: make this configurable from somewhere
+    private static final boolean LOAD_DEGREES = true;
 
     public HugeGraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         super(api, setup);
@@ -101,17 +109,60 @@ public final class HugeGraphFactory extends GraphFactory {
                 ? new HugeWeightMapBuilder.NullBuilder(setup.relationDefaultWeight)
                 : new HugeWeightMapBuilder(tracker, weightProperty, setup.relationDefaultWeight);
 
-        final Runnable importer = new NodesBasedImporter(
-                setup, api, dimensions, progress, tracker, mapping, weightsBuilder,
-                outAdjacency, inAdjacency, threadPool, concurrency);
-
-//        final Runnable importer = ScanningRelationshipImporter.create(
-//                setup, api, dimensions, progress, tracker, mapping, weightsBuilder,
-//                outAdjacency, inAdjacency, threadPool, LOAD_DEGREES, concurrency);
+        final Runnable importer = determineImportStrategy(
+                dimensions, tracker, mapping, weightsBuilder,
+                outAdjacency, inAdjacency, concurrency
+        );
 
         importer.run();
         HugeWeightMapping weights = weightsBuilder.build();
         return HugeAdjacencyBuilder.apply(tracker, mapping, weights, inAdjacency, outAdjacency);
     }
 
+    private Runnable determineImportStrategy(
+            GraphDimensions dimensions,
+            AllocationTracker tracker,
+            HugeIdMap idMap,
+            HugeWeightMapBuilder weights,
+            HugeAdjacencyBuilder outAdjacency,
+            HugeAdjacencyBuilder inAdjacency,
+            int concurrency) {
+        long pageCacheOversizing = getPageCacheOversizing();
+        if (pageCacheOversizing > 0L) {
+            return new NodesBasedImporter(
+                    setup, api, dimensions, progress, tracker, idMap, weights,
+                    outAdjacency, inAdjacency, threadPool, LOAD_DEGREES, concurrency);
+        } else {
+            return ScanningRelationshipImporter.create(
+                    setup, api, dimensions, progress, tracker, idMap, weights,
+                    outAdjacency, inAdjacency, threadPool, LOAD_DEGREES, concurrency);
+        }
+    }
+
+    private long getPageCacheOversizing() {
+        try {
+            DependencyResolver dep = api.getDependencyResolver();
+            Config config = dep.resolveDependency(Config.class);
+            String mem = config.get(GraphDatabaseSettings.pagecache_memory);
+            long maxPageCacheAvailable = ByteUnit.parse(mem);
+
+            RecordStorageEngine storageEngine = dep.resolveDependency(RecordStorageEngine.class);
+            NeoStores neoStores = storageEngine.testAccessNeoStores();
+            RelationshipStore relationshipStore = neoStores.getRelationshipStore();
+            long relsInUse = relationshipStore.getNumberOfIdsInUse();
+            int recordsPerPage = relationshipStore.getRecordsPerPage();
+            long idsInPages = align(relsInUse, (long) recordsPerPage);
+            long requiredBytes = idsInPages * (long) relationshipStore.getRecordDataSize();
+
+            return maxPageCacheAvailable - requiredBytes;
+        } catch (Exception e) {
+            log.warn("Could not determine sizes of page cache and relationship store", e);
+            // pretend that the page cache and relationship store are perfectly balanced, as all things should be
+            return 0L;
+        }
+    }
+
+    private static long align(long value, long boundary) {
+        return ((value + (boundary - 1L)) / boundary) * boundary;
+    }
 }

@@ -52,7 +52,9 @@ abstract class ScanningRelationshipImporter {
             boolean loadDegrees,
             int concurrency) {
         if (!ParallelUtil.canRunInParallel(threadPool)) {
-            return new SerialScanning(setup, api, progress, tracker, idMap, weights, outAdjacency, inAdjacency, loadDegrees);
+            return new SerialScanning(
+                    setup, api, progress, tracker, idMap, weights,
+                    outAdjacency, inAdjacency, loadDegrees);
         }
         return new ParallelScanning(
                 setup, api, dimensions, progress, tracker, idMap, weights, loadDegrees,
@@ -108,7 +110,7 @@ final class ParallelScanning implements Runnable {
 
     @Override
     public void run() {
-        run(new ThreadSizing(concurrency, idMap.nodeCount(), threadPool));
+        run(ThreadSizing.of(concurrency, idMap.nodeCount(), threadPool));
     }
 
     private void run(ThreadSizing threadSizing) {
@@ -133,8 +135,8 @@ final class ParallelScanning implements Runnable {
         int queueBatchSize = 3 * baseQueueBatchSize;
 
         QueueingScanner.Creator creator = QueueingScanner.of(
-                api, setup, progress, idMap, weights.loadsWeights(),
-                inFlight, queueBatchSize, loader.queues, loadDegrees, loader.outDegrees, loader.inDegrees, batchSize);
+                api, progress, idMap, loader.outDegrees, loader.inDegrees, loadDegrees, queueBatchSize,
+                setup, inFlight, weights.loadsWeights(), loader.queues, batchSize);
 
         Collection<Future<?>> scannerFutures = null;
         int scanners = threadSizing.numberOfThreads() - threads;
@@ -143,7 +145,7 @@ final class ParallelScanning implements Runnable {
             Collection<Runnable> scannerTasks = new ArrayList<>(scanners);
             for (int i = 0; i < scanners; i++) {
                 long start = ids[i], end = ids[i + 1];
-                RelationshipsScanner scanner = creator.ofRange(start, end);
+                RelationshipsScanner scanner = creator.ofRange(start, end, dimensions.relationshipTypeId());
                 scannerTasks.add(scanner);
             }
             scannerFutures = ParallelUtil.run(scannerTasks, true, threadPool, null);
@@ -306,8 +308,8 @@ final class SerialScanning implements Runnable {
         int queueBatchSize = 3 * baseQueueBatchSize;
 
         final RelationshipsScanner scanner = new NonQueueingScanner(
-                api, setup, progress, idMap, weights.loadsWeights(),
-                1, queueBatchSize, builder, loadDegrees, outDegrees, inDegrees);
+                api, progress, idMap, outDegrees, inDegrees, loadDegrees,
+                queueBatchSize, setup, weights.loadsWeights(), builder);
         scanner.run();
     }
 

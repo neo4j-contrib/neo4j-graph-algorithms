@@ -42,12 +42,13 @@ public final class PartialCursors {
         if (!(read instanceof Read)) {
             throw new IllegalArgumentException("Unexpected read: " + read);
         }
-        if (!(cursor instanceof PartialRelationshipScanCursor)) {
+        if (cursor instanceof PartialRelationshipScanCursor) {
+            Read apiRead = (Read) read;
+            apiRead.ktx.assertOpen();
+            ((PartialRelationshipScanCursor) cursor).scan(type, from, to, apiRead);
+        } else {
             throw new IllegalArgumentException("Unexpected cursor: " + cursor);
         }
-        Read apiRead = (Read) read;
-        apiRead.ktx.assertOpen();
-        ((PartialRelationshipScanCursor) cursor).scan(type, from, to, apiRead);
     }
 
     public static long[] splitIdIntoPartialSegments(long relationshipHighMark, int numberOfReaders) {

@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil;
 
-public final class UnsafeArrayCas {
+final class UnsafeArrayCas {
 
     private static final long LONGV_BASE;
     private static final int LONGV_SHIFT;
@@ -34,7 +34,6 @@ public final class UnsafeArrayCas {
         }
         LONGV_SHIFT = 31 - Integer.numberOfLeadingZeros(scale);
     }
-
 
     static void increment(long[] array, int index) {
         long offset = checkedByteOffset(array, index);

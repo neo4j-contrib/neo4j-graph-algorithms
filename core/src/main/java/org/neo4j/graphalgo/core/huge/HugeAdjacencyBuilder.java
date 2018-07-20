@@ -43,7 +43,7 @@ class HugeAdjacencyBuilder {
         this.tracker = tracker;
     }
 
-    private HugeAdjacencyBuilder(
+    HugeAdjacencyBuilder(
             HugeAdjacencyListBuilder adjacency,
             HugeAdjacencyListBuilder.Allocator allocator,
             AdjacencyCompression compression,

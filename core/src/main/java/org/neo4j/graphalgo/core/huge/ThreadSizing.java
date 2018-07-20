@@ -18,10 +18,10 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
+import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.BitUtil;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 
 final class ThreadSizing {
 
@@ -42,45 +42,54 @@ final class ThreadSizing {
     private final int importerThreads;
     private final int importerBatchSize;
 
-    ThreadSizing(int concurrency, long nodeCount, ExecutorService executor) {
-        // we need at least that many threads, probably more
-        long threadLowerBound = nodeCount / MAX_BATCH_SIZE;
+    private ThreadSizing(
+            final int totalThreads,
+            final int importerThreads,
+            final int importerBatchSize) {
+        this.totalThreads = totalThreads;
+        this.importerThreads = importerThreads;
+        this.importerBatchSize = importerBatchSize;
+    }
 
-        // start with the desired level of concurrency
-        long targetThreads = (long) concurrency;
+    static ThreadSizing of(int concurrency, long nodeCount, ExecutorService executor) {
+        long availableThreads = (long) ParallelUtil.availableThreads(executor);
+        return determineBestThreadSize(nodeCount, availableThreads, (long) concurrency);
+    }
 
-        // aim for 3:1 of importer:scanner threads
-        long targetImporterThreads = targetThreads * 3L / 4L;
+    private static ThreadSizing determineBestThreadSize(long nodeCount, long availableThreads, long targetThreads) {
+        // we need to run all threads at the same time and not have them queued
+        // or else we risk a deadlock where the scanner waits on an importer thread to finish
+        // but that importer thread is queued and hasn't even started
+        if (targetThreads > availableThreads) {
+            return determineBestThreadSize(
+                    nodeCount,
+                    availableThreads,
+                    availableThreads
+            );
+        }
+
+        // aim for 1:1 of importer:scanner threads
+        long targetImporterThreads = targetThreads >> 1L;
 
         // we batch by shifting on the node id, so the batchSize must be a power of 2
         long batchSize = BitUtil.nextHighestPowerOfTwo(ceilDiv(nodeCount, targetImporterThreads));
 
         // increase thread size until we have a small enough batch size
-        while (batchSize > MAX_BATCH_SIZE) {
-            targetImporterThreads = Math.max(threadLowerBound, 1L + targetImporterThreads);
-            targetThreads = targetImporterThreads * 4L / 3L;
-            batchSize = BitUtil.nextHighestPowerOfTwo(ceilDiv(nodeCount, targetImporterThreads));
-        }
+        if (batchSize > MAX_BATCH_SIZE) {
+            long newTargetThreads = Math.max(nodeCount / MAX_BATCH_SIZE, 1L + targetImporterThreads) << 1L;
 
-        // we need to run all threads at the same time and not have them queued
-        // or else we risk a deadlock where the scanner waits on an importer thread to finish
-        // but that importer thread is queued and hasn't even started
-        // If we have another pool, we just have to hope for the best (or, maybe throw?)
-        if (executor instanceof ThreadPoolExecutor) {
-            ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
-            // TPE only increases to max threads if the queue is full, (see their JavaDoc)
-            // but by that point it's already too late for us, so we have to fit every thread in the core pool
-            long availableThreads = (long) (pool.getCorePoolSize() - pool.getActiveCount());
-            if (availableThreads < targetThreads) {
-                targetThreads = availableThreads;
-                targetImporterThreads = targetThreads * 3L / 4L;
-                batchSize = BitUtil.nextHighestPowerOfTwo(ceilDiv(nodeCount, targetImporterThreads));
-                if (batchSize > MAX_BATCH_SIZE) {
-                    throw new IllegalArgumentException(
-                            String.format(NOT_ENOUGH_THREADS_AVAILABLE, availableThreads, nodeCount, batchSize)
-                    );
-                }
+            // to avoid an endless loop because we're reducing the threadSize again at the beginning of this method
+            if (newTargetThreads > availableThreads) {
+                throw new IllegalArgumentException(
+                        String.format(NOT_ENOUGH_THREADS_AVAILABLE, availableThreads, nodeCount, batchSize)
+                );
             }
+
+            return determineBestThreadSize(
+                    nodeCount,
+                    availableThreads,
+                    newTargetThreads
+            );
         }
 
         if (targetThreads > MAX_BATCH_SIZE) {
@@ -89,10 +98,12 @@ final class ThreadSizing {
             );
         }
 
-        // int casts are safe as both are < MAX_BATCH_SIZE
-        this.totalThreads = (int) targetThreads;
-        this.importerThreads = (int) targetImporterThreads;
-        this.importerBatchSize = (int) batchSize;
+        // int casts are safe as all are < MAX_BATCH_SIZE
+        return new ThreadSizing(
+                (int) targetThreads,
+                (int) targetImporterThreads,
+                (int) batchSize
+        );
     }
 
     int numberOfThreads() {

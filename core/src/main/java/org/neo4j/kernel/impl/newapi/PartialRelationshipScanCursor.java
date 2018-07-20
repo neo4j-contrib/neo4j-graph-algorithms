@@ -24,18 +24,18 @@ import org.neo4j.graphalgo.core.utils.PrivateLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
+import java.lang.invoke.MethodType;
+
 class PartialRelationshipScanCursor extends DefaultRelationshipScanCursor {
+    private static final MethodHandle RESET;
     private static final MethodHandle SET_NEXT;
-    private static final MethodHandle SET_TYPE;
-    private static final MethodHandle SET_HIGH_MARK;
 
     static {
         MethodHandles.Lookup lookup = PrivateLookup.lookup();
         try {
+            RESET = lookup.findVirtual(DefaultRelationshipScanCursor.class, "reset", MethodType.methodType(void.class));
             SET_NEXT = lookup.findSetter(DefaultRelationshipScanCursor.class, "next", long.class);
-            SET_TYPE = lookup.findSetter(DefaultRelationshipScanCursor.class, "type", int.class);
-            SET_HIGH_MARK = lookup.findSetter(DefaultRelationshipScanCursor.class, "highMark", long.class);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (IllegalAccessException | NoSuchMethodException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
     }
@@ -47,29 +47,35 @@ class PartialRelationshipScanCursor extends DefaultRelationshipScanCursor {
     }
 
     void scan(int type, long from, long to, Read read) {
-        single(from, read);
+        scan(type, read);
         maxId = to;
-        try {
-            SET_TYPE.invoke(this, type);
-            SET_HIGH_MARK.invoke(this, Math.min(to, read.relationshipHighMark()));
-        } catch (Throwable throwable) {
-            throw ExceptionUtil.asUnchecked(throwable);
+        if (from > 0L) {
+            setNext(from);
         }
     }
 
     @Override
     public boolean next() {
-        boolean hasNext = super.next();
-        if (hasNext && getId() >= maxId) {
-            setEmptyNext();
-            return false;
+        if (super.next()) {
+            if (getId() < maxId) {
+                return true;
+            }
+            callReset();
         }
-        return hasNext;
+        return false;
     }
 
-    private void setEmptyNext() {
+    private void setNext(long next) {
         try {
-            SET_NEXT.invoke(this, (long) NO_ID);
+            SET_NEXT.invoke(this, next);
+        } catch (Throwable throwable) {
+            throw ExceptionUtil.asUnchecked(throwable);
+        }
+    }
+
+    private void callReset() {
+        try {
+            RESET.invoke(this);
         } catch (Throwable throwable) {
             throw ExceptionUtil.asUnchecked(throwable);
         }

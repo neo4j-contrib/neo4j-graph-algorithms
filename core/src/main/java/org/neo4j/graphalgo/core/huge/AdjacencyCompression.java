@@ -48,20 +48,9 @@ final class AdjacencyCompression {
         length = array.uncompress(ids);
     }
 
-    void copyFrom(long[] targets, int length) {
-        ids = targets;
-        this.length = length;
-    }
-
     void applyDeltaEncoding() {
         Arrays.sort(ids, 0, length);
         length = applyDelta(ids, length);
-    }
-
-    int applyDeltaEncodingAndCalculateRequiredBytes() {
-        long lengthAndBytes = applyDeltaEncodingAndCalculateRequiredBytes(ids, length);
-        length = RawValues.getHead(lengthAndBytes);
-        return RawValues.getTail(lengthAndBytes);
     }
 
     int writeDegree(byte[] out, int offset) {
@@ -70,14 +59,6 @@ final class AdjacencyCompression {
 
     int compress(byte[] out) {
         return encodeVLongs(ids, length, out);
-    }
-
-    int compress(byte[] out, int offset) {
-        return encodeVLongs(ids, length, out, offset);
-    }
-
-    int degree() {
-        return length;
     }
 
     void release() {

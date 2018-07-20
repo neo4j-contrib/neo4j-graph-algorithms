@@ -75,9 +75,10 @@ final class CompressedLongArray {
             HugeAdjacencyListBuilder.Allocator allocator) {
         int requiredBytes = compression.compress(storage);
         long address = allocator.allocate(4 + requiredBytes);
-        compression.writeDegree(allocator.page, allocator.offset);
-        System.arraycopy(storage, 0, allocator.page, 4 + allocator.offset, requiredBytes);
-        allocator.offset += (4 + requiredBytes);
+        int offset = allocator.offset;
+        offset = compression.writeDegree(allocator.page, offset);
+        System.arraycopy(storage, 0, allocator.page, offset, requiredBytes);
+        allocator.offset = (offset + requiredBytes);
         return address;
     }
 
