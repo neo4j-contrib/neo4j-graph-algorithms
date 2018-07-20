@@ -38,6 +38,8 @@
       </d:tocentry>
       <d:tocentry linkend="algorithms-strongly-connected-components"><?dbhtml filename="algorithms/strongly-connected-components/index.html"?>
       </d:tocentry>
+      <d:tocentry linkend="algorithms-random-walk"><?dbhtml filename="algorithms/random-walk/index.html"?>
+      </d:tocentry>
     </d:tocentry>
   </d:tocentry>
 </d:toc>
