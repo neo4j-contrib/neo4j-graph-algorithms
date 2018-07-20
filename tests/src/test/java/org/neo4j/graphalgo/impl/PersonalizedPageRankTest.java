@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
@@ -30,16 +31,14 @@ import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -47,7 +46,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public final class PageRankTest {
+public final class PersonalizedPageRankTest {
 
     private Class<? extends GraphFactory> graphImpl;
 
@@ -56,51 +55,33 @@ public final class PageRankTest {
         return Arrays.asList(
                 new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
                 new Object[]{HeavyCypherGraphFactory.class, "HeavyCypherGraphFactory"},
-                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"},
-                new Object[]{GraphViewFactory.class, "GraphViewFactory"}
+                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
         );
     }
-
     private static final String DB_CYPHER = "" +
-            "CREATE (_:Label0 {name:\"_\"})\n" +
-            "CREATE (a:Label1 {name:\"a\"})\n" +
-            "CREATE (b:Label1 {name:\"b\"})\n" +
-            "CREATE (c:Label1 {name:\"c\"})\n" +
-            "CREATE (d:Label1 {name:\"d\"})\n" +
-            "CREATE (e:Label1 {name:\"e\"})\n" +
-            "CREATE (f:Label1 {name:\"f\"})\n" +
-            "CREATE (g:Label1 {name:\"g\"})\n" +
-            "CREATE (h:Label1 {name:\"h\"})\n" +
-            "CREATE (i:Label1 {name:\"i\"})\n" +
-            "CREATE (j:Label1 {name:\"j\"})\n" +
-            "CREATE (k:Label2 {name:\"k\"})\n" +
-            "CREATE (l:Label2 {name:\"l\"})\n" +
-            "CREATE (m:Label2 {name:\"m\"})\n" +
-            "CREATE (n:Label2 {name:\"n\"})\n" +
-            "CREATE (o:Label2 {name:\"o\"})\n" +
-            "CREATE (p:Label2 {name:\"p\"})\n" +
-            "CREATE (q:Label2 {name:\"q\"})\n" +
-            "CREATE (r:Label2 {name:\"r\"})\n" +
-            "CREATE (s:Label2 {name:\"s\"})\n" +
-            "CREATE (t:Label2 {name:\"t\"})\n" +
+            "CREATE (iphone:Product {name:\"iPhone5\"})\n" +
+            "CREATE (kindle:Product {name:\"Kindle Fire\"})\n" +
+            "CREATE (fitbit:Product {name:\"Fitbit Flex Wireless\"})\n" +
+            "CREATE (potter:Product {name:\"Harry Potter\"})\n" +
+            "CREATE (hobbit:Product {name:\"Hobbit\"})\n" +
+
+            "CREATE (todd:Person {name:\"Todd\"})\n" +
+            "CREATE (mary:Person {name:\"Mary\"})\n" +
+            "CREATE (jill:Person {name:\"Jill\"})\n" +
+            "CREATE (john:Person {name:\"John\"})\n" +
+
             "CREATE\n" +
-            "  (b)-[:TYPE1]->(c),\n" +
-            "  (c)-[:TYPE1]->(b),\n" +
-            "  (d)-[:TYPE1]->(a),\n" +
-            "  (d)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(b),\n" +
-            "  (e)-[:TYPE1]->(d),\n" +
-            "  (e)-[:TYPE1]->(f),\n" +
-            "  (f)-[:TYPE1]->(b),\n" +
-            "  (f)-[:TYPE1]->(e),\n" +
-            "  (g)-[:TYPE2]->(b),\n" +
-            "  (g)-[:TYPE2]->(e),\n" +
-            "  (h)-[:TYPE2]->(b),\n" +
-            "  (h)-[:TYPE2]->(e),\n" +
-            "  (i)-[:TYPE2]->(b),\n" +
-            "  (i)-[:TYPE2]->(e),\n" +
-            "  (j)-[:TYPE2]->(e),\n" +
-            "  (k)-[:TYPE2]->(e)\n";
+            "  (john)-[:PURCHASED]->(iphone),\n" +
+            "  (john)-[:PURCHASED]->(kindle),\n" +
+            "  (mary)-[:PURCHASED]->(iphone),\n" +
+            "  (mary)-[:PURCHASED]->(kindle),\n" +
+            "  (mary)-[:PURCHASED]->(fitbit),\n" +
+            "  (jill)-[:PURCHASED]->(iphone),\n" +
+            "  (jill)-[:PURCHASED]->(kindle),\n" +
+            "  (jill)-[:PURCHASED]->(fitbit),\n" +
+            "  (todd)-[:PURCHASED]->(fitbit),\n" +
+            "  (todd)-[:PURCHASED]->(potter),\n" +
+            "  (todd)-[:PURCHASED]->(hobbit)";
 
     private static GraphDatabaseAPI db;
 
@@ -118,7 +99,7 @@ public final class PageRankTest {
         if (db!=null) db.shutdown();
     }
 
-    public PageRankTest(
+    public PersonalizedPageRankTest(
             Class<? extends GraphFactory> graphImpl,
             String nameIgnoredOnlyForTestName) {
         this.graphImpl = graphImpl;
@@ -126,40 +107,48 @@ public final class PageRankTest {
 
     @Test
     public void test() throws Exception {
-        final Label label = Label.label("Label1");
+        Label personLabel = Label.label("Person");
+        Label productLabel = Label.label("Product");
         final Map<Long, Double> expected = new HashMap<>();
 
         try (Transaction tx = db.beginTx()) {
-            expected.put(db.findNode(label, "name", "a").getId(), 0.243007);
-            expected.put(db.findNode(label, "name", "b").getId(), 1.9183995);
-            expected.put(db.findNode(label, "name", "c").getId(), 1.7806315);
-            expected.put(db.findNode(label, "name", "d").getId(), 0.21885);
-            expected.put(db.findNode(label, "name", "e").getId(), 0.243007);
-            expected.put(db.findNode(label, "name", "f").getId(), 0.21885);
-            expected.put(db.findNode(label, "name", "g").getId(), 0.15);
-            expected.put(db.findNode(label, "name", "h").getId(), 0.15);
-            expected.put(db.findNode(label, "name", "i").getId(), 0.15);
-            expected.put(db.findNode(label, "name", "j").getId(), 0.15);
+
+            expected.put(db.findNode(personLabel, "name", "John").getId(), 0.24851499999999993);
+            expected.put(db.findNode(personLabel, "name", "Jill").getId(), 0.12135449999999998);
+            expected.put(db.findNode(personLabel, "name", "Mary").getId(), 0.12135449999999998);
+            expected.put(db.findNode(personLabel, "name", "Todd").getId(), 0.043511499999999995);
+
+            expected.put(db.findNode(productLabel, "name", "Kindle Fire").getId(), 0.17415649999999996);
+            expected.put(db.findNode(productLabel, "name", "iPhone5").getId(), 0.17415649999999996);
+            expected.put(db.findNode(productLabel, "name", "Fitbit Flex Wireless").getId(), 0.08085200000000001);
+            expected.put(db.findNode(productLabel, "name", "Harry Potter").getId(), 0.01224);
+            expected.put(db.findNode(productLabel, "name", "Hobbit").getId(), 0.01224);
             tx.close();
         }
 
         final Graph graph;
         if (graphImpl.isAssignableFrom(HeavyCypherGraphFactory.class)) {
             graph = new GraphLoader(db)
-                    .withLabel("MATCH (n:Label1) RETURN id(n) as id")
-                    .withRelationshipType("MATCH (n:Label1)-[:TYPE1]->(m:Label1) RETURN id(n) as source,id(m) as target")
+                    .withLabel("MATCH (n) RETURN id(n) as id")
+                    .withRelationshipType("MATCH (n)-[:PURCHASED]-(m) RETURN id(n) as source,id(m) as target")
                     .load(graphImpl);
 
         } else {
             graph = new GraphLoader(db)
-                    .withLabel(label)
-                    .withRelationshipType("TYPE1")
-                    .withDirection(Direction.OUTGOING)
+                    .withDirection(Direction.BOTH)
+                    .withRelationshipType("PURCHASED")
+                    .asUndirected(true)
                     .load(graphImpl);
         }
 
+        LongStream sourceNodeIds;
+        try(Transaction tx = db.beginTx()) {
+            Node node = db.findNode(personLabel, "name", "John");
+            sourceNodeIds = LongStream.of(node.getId());
+        }
+
         final PageRankResult rankResult = PageRankAlgorithm
-                .of(graph, 0.85, LongStream.empty())
+                .of(graph,0.85, sourceNodeIds, Pools.DEFAULT, 2, 1)
                 .compute(40)
                 .result();
 
@@ -172,5 +161,8 @@ public final class PageRankTest {
                     1e-2
             );
         });
+
     }
+
+
 }

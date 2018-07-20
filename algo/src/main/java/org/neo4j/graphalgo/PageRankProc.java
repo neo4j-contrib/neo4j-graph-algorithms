@@ -33,6 +33,7 @@ import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.PageRankAlgorithm;
 import org.neo4j.graphalgo.results.PageRankScore;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Node;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -42,6 +43,8 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -104,7 +107,7 @@ public final class PageRankProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+            ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         PageRankScore.Stats.Builder statsBuilder = new PageRankScore.Stats.Builder();
         AllocationTracker tracker = AllocationTracker.create();
@@ -150,12 +153,18 @@ public final class PageRankProc {
             AllocationTracker tracker,
             Class<? extends GraphFactory> graphFactory,
             PageRankScore.Stats.Builder statsBuilder, ProcedureConfiguration configuration) {
-
         GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, label, relationship, configuration)
                 .withAllocationTracker(tracker)
-                .withDirection(Direction.OUTGOING)
                 .withoutRelationshipWeights();
+
+        Direction direction = configuration.getDirection(Direction.OUTGOING);
+        if (direction == Direction.BOTH) {
+            graphLoader.asUndirected(true);
+        } else {
+            graphLoader.withDirection(direction);
+        }
+
 
         try (ProgressTimer timer = statsBuilder.timeLoad()) {
             Graph graph = graphLoader.load(graphFactory);
@@ -177,10 +186,14 @@ public final class PageRankProc {
         final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
         log.debug("Computing page rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
+
+        List<Node> sourceNodes = configuration.get("sourceNodes", new ArrayList<>());
+        LongStream sourceNodeIds = sourceNodes.stream().mapToLong(Node::getId);
         PageRankAlgorithm prAlgo = PageRankAlgorithm.of(
                 tracker,
                 graph,
                 dampingFactor,
+                sourceNodeIds,
                 Pools.DEFAULT,
                 concurrency,
                 batchSize);
@@ -188,6 +201,7 @@ public final class PageRankProc {
                 .algorithm()
                 .withLog(log)
                 .withTerminationFlag(terminationFlag);
+
 
         statsBuilder.timeEval(() -> prAlgo.compute(iterations));
 

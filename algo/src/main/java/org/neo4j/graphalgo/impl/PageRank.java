@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
+ * <p>
  * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
+ * <p>
  * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,11 +20,7 @@ package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.IntArrayList;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.Degrees;
-import org.neo4j.graphalgo.api.IdMapping;
-import org.neo4j.graphalgo.api.NodeIterator;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipIterator;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.write.Exporter;
@@ -32,12 +28,10 @@ import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphdb.Direction;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
@@ -101,21 +95,16 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
      * Forces sequential use. If you want parallelism, prefer
      * {@link #PageRank(ExecutorService, int, int, IdMapping, NodeIterator, RelationshipIterator, Degrees, double)}
      */
-    PageRank(
-            IdMapping idMapping,
-            NodeIterator nodeIterator,
-            RelationshipIterator relationshipIterator,
-            Degrees degrees,
-            double dampingFactor) {
+    PageRank(Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds) {
         this(
                 null,
                 -1,
                 ParallelUtil.DEFAULT_BATCH_SIZE,
-                idMapping,
-                nodeIterator,
-                relationshipIterator,
-                degrees,
-                dampingFactor);
+                graph,
+                dampingFactor,
+                sourceNodeIds);
     }
 
     /**
@@ -127,28 +116,27 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             ExecutorService executor,
             int concurrency,
             int batchSize,
-            IdMapping idMapping,
-            NodeIterator nodeIterator,
-            RelationshipIterator relationshipIterator,
-            Degrees degrees,
-            double dampingFactor) {
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds) {
         List<Partition> partitions;
         if (ParallelUtil.canRunInParallel(executor)) {
             partitions = partitionGraph(
                     adjustBatchSize(batchSize),
-                    idMapping,
-                    nodeIterator,
-                    degrees);
+                    graph,
+                    graph,
+                    graph);
         } else {
             executor = null;
-            partitions = createSinglePartition(idMapping, degrees);
+            partitions = createSinglePartition(graph, graph);
         }
 
         computeSteps = createComputeSteps(
                 concurrency,
                 dampingFactor,
-                relationshipIterator,
-                degrees,
+                sourceNodeIds.mapToInt(graph::toMappedNodeId).filter(mappedId -> mappedId != -1L).toArray(),
+                graph,
+                graph,
                 partitions,
                 executor);
     }
@@ -220,6 +208,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
     private ComputeSteps createComputeSteps(
             int concurrency,
             double dampingFactor,
+            int[] sourceNodeIds,
             RelationshipIterator relationshipIterator,
             Degrees degrees,
             List<Partition> partitions,
@@ -252,6 +241,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
             computeSteps.add(new ComputeStep(
                     dampingFactor,
+                    sourceNodeIds,
                     relationshipIterator,
                     degrees,
                     partitionCount,
@@ -389,6 +379,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private int[] starts;
         private int[] lengths;
+        private int[] sourceNodeIds;
         private final RelationshipIterator relationshipIterator;
         private final Degrees degrees;
 
@@ -408,12 +399,14 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         ComputeStep(
                 double dampingFactor,
+                int[] sourceNodeIds,
                 RelationshipIterator relationshipIterator,
                 Degrees degrees,
                 int partitionSize,
                 int startNode) {
             this.dampingFactor = dampingFactor;
             this.alpha = 1.0 - dampingFactor;
+            this.sourceNodeIds = sourceNodeIds;
             this.relationshipIterator = relationshipIterator;
             this.degrees = degrees;
             this.partitionSize = partitionSize;
@@ -446,7 +439,21 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             Arrays.setAll(nextScores, i -> new int[lengths[i]]);
 
             double[] partitionRank = new double[partitionSize];
-            Arrays.fill(partitionRank, alpha);
+
+            if(sourceNodeIds.length == 0) {
+                Arrays.fill(partitionRank, alpha);
+            } else {
+                Arrays.fill(partitionRank,0);
+
+                int[] partitionSourceNodeIds = IntStream.of(sourceNodeIds)
+                        .filter(sourceNodeId -> sourceNodeId >= startNode && sourceNodeId < endNode)
+                        .toArray();
+
+                for (int sourceNodeId : partitionSourceNodeIds) {
+                    partitionRank[sourceNodeId - this.startNode] = alpha;
+                }
+            }
+
 
             this.pageRank = partitionRank;
             this.deltas = Arrays.copyOf(partitionRank, partitionSize);
@@ -509,6 +516,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             int length = allScores.length;
             for (int i = 0; i < length; i++) {
                 int sum = allScores[i];
+
                 double delta = dampingFactor * (sum / 100_000.0);
                 pageRank[i] += delta;
                 deltas[i] = delta;

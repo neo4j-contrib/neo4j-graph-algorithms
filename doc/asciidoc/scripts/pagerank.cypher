@@ -46,6 +46,28 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 
 // end::write-sample-graph[]
 
+// tag::ppr-stream-sample-graph[]
+MATCH (siteA:Page {name: "Site A"})
+
+CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85, sourceNodes: [siteA]})
+YIELD nodeId, score
+
+MATCH (node) WHERE id(node) = nodeId
+
+RETURN node.name AS page,score
+ORDER BY score DESC
+
+// end::ppr-stream-sample-graph[]
+
+// tag::ppr-write-sample-graph[]
+
+MATCH (siteA:Page {name: "Site A"})
+CALL algo.pageRank('Page', 'LINKS',
+{iterations:20, dampingFactor:0.85, sourceNodes: [siteA], write: true, writeProperty:"ppr"})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
+RETURN *
+// end::ppr-write-sample-graph[]
+
 // tag::cypher-loading[]
 
 CALL algo.pageRank(
