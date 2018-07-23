@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.serialize;
+package org.neo4j.graphalgo.core.utils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -35,6 +35,10 @@ public final class PrivateLookup {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new Error(e);
         }
+    }
+
+    public static Lookup lookup() {
+        return LOOKUP;
     }
 
     public static <T, U> MethodHandle field(

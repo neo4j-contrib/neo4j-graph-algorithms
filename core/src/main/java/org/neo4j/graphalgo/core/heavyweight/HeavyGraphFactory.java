@@ -68,7 +68,8 @@ public class HeavyGraphFactory extends GraphFactory {
                 setup.loadIncoming && !setup.loadAsUndirected,
                 setup.loadOutgoing || setup.loadAsUndirected,
                 setup.sort || setup.loadAsUndirected,
-                false);
+                false,
+                setup.tracker);
         int actualBatchSize = ParallelUtil.adjustBatchSize(
                 nodeCount,
                 concurrency,
@@ -99,7 +100,7 @@ public class HeavyGraphFactory extends GraphFactory {
                 nodePropertySuppliers,
                 tasks);
 
-        progressLogger.logDone();
+        progressLogger.logDone(setup.tracker);
         return graph;
     }
 

@@ -24,11 +24,12 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.HugeWeightMap;
+import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
+import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.StatementAction;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
@@ -50,6 +51,30 @@ public final class HugeGraphFactory extends GraphFactory {
         return importGraph();
     }
 
+    @Override
+    protected ImportProgress importProgress(
+            final ProgressLogger progressLogger,
+            final GraphDimensions dimensions,
+            final GraphSetup setup) {
+
+        // ops for scanning degrees
+        long relOperations = 0L;
+
+        // batching for undirected double the amount of rels imported
+        if (setup.loadIncoming || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+        if (setup.loadOutgoing || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+
+        return new ApproximatedImportProgress(
+                progressLogger,
+                setup.tracker,
+                dimensions.hugeNodeCount(),
+                relOperations
+        );
+    }
 
     private HugeGraph importGraph() {
         int concurrency = setup.concurrency();
@@ -84,22 +109,22 @@ public final class HugeGraphFactory extends GraphFactory {
 
         HugeLongArray inOffsets = null;
         HugeLongArray outOffsets = null;
-        ByteArray inAdjacency = null;
-        ByteArray outAdjacency = null;
+        HugeAdjacencyBuilder inAdjacency = null;
+        HugeAdjacencyBuilder outAdjacency = null;
         if (setup.loadIncoming) {
             inOffsets = HugeLongArray.newArray(nodeCount, tracker);
-            inAdjacency = ByteArray.newArray(0, tracker);
+            inAdjacency = new HugeAdjacencyBuilder(tracker);
         }
         if (setup.loadOutgoing) {
             outOffsets = HugeLongArray.newArray(nodeCount, tracker);
-            outAdjacency = ByteArray.newArray(nodeCount, tracker);
+            outAdjacency = new HugeAdjacencyBuilder(tracker);
         }
         if (setup.loadIncoming || setup.loadOutgoing) {
             // needs final b/c of reference from lambda
             final HugeLongArray finalInOffsets = inOffsets;
             final HugeLongArray finalOutOffsets = outOffsets;
-            final ByteArray finalInAdjacency = inAdjacency;
-            final ByteArray finalOutAdjacency = outAdjacency;
+            final HugeAdjacencyBuilder finalInAdjacency = inAdjacency;
+            final HugeAdjacencyBuilder finalOutAdjacency = outAdjacency;
 
             NodeQueue nodes = new NodeQueue(nodeCount);
             HugeRelationshipImporter[] tasks = new HugeRelationshipImporter[concurrency];
@@ -121,7 +146,7 @@ public final class HugeGraphFactory extends GraphFactory {
             ParallelUtil.run(Arrays.asList(tasks), threadPool);
         }
 
-        return new HugeGraphImpl(
+        return HugeAdjacencyBuilder.apply(
                 tracker,
                 mapping,
                 weights,
@@ -144,7 +169,7 @@ public final class HugeGraphFactory extends GraphFactory {
         final int weightId = dimensions.relWeightId();
 
         HugeLongArray offsets = HugeLongArray.newArray(nodeCount, tracker);
-        ByteArray adjacency = ByteArray.newArray(0, tracker);
+        HugeAdjacencyBuilder adjacency = new HugeAdjacencyBuilder(tracker);
 
         NodeQueue nodes = new NodeQueue(nodeCount);
         HugeRelationshipImporter[] tasks = new HugeRelationshipImporter[concurrency];
@@ -165,7 +190,7 @@ public final class HugeGraphFactory extends GraphFactory {
         ));
         ParallelUtil.run(Arrays.asList(tasks), threadPool);
 
-        return new HugeGraphImpl(
+        return HugeAdjacencyBuilder.apply(
                 tracker,
                 mapping,
                 weights,
@@ -197,8 +222,8 @@ public final class HugeGraphFactory extends GraphFactory {
         private final HugeIdMap idMap;
         private final HugeLongArray inOffsets;
         private final HugeLongArray outOffsets;
-        private final ByteArray.LocalAllocator inAllocator;
-        private final ByteArray.LocalAllocator outAllocator;
+        private final HugeAdjacencyBuilder inAllocator;
+        private final HugeAdjacencyBuilder outAllocator;
         private final int[] relationId;
         private final int weightId;
         private final HugeWeightMapping weights;
@@ -212,8 +237,8 @@ public final class HugeGraphFactory extends GraphFactory {
                 HugeIdMap idMap,
                 HugeLongArray inOffsets,
                 HugeLongArray outOffsets,
-                ByteArray inAdjacency,
-                ByteArray outAdjacency,
+                HugeAdjacencyBuilder inAdjacency,
+                HugeAdjacencyBuilder outAdjacency,
                 boolean undirected,
                 int[] relationId,
                 int weightId,
@@ -225,8 +250,8 @@ public final class HugeGraphFactory extends GraphFactory {
             this.idMap = idMap;
             this.inOffsets = inOffsets;
             this.outOffsets = outOffsets;
-            this.inAllocator = inAdjacency != null ? inAdjacency.newAllocator() : null;
-            this.outAllocator = outAdjacency != null ? outAdjacency.newAllocator() : null;
+            this.inAllocator = inAdjacency != null ? inAdjacency.threadLocalCopy() : null;
+            this.outAllocator = outAdjacency != null ? outAdjacency.threadLocalCopy() : null;
             this.relationId = relationId;
             this.weightId = weightId;
             this.weights = weights;
@@ -296,14 +321,15 @@ public final class HugeGraphFactory extends GraphFactory {
 
             try (NodeCursor nodeCursor = cursors.allocateNodeCursor()) {
                 NodeQueue nodes = this.nodes;
-                long nodeId;
+                int imported;
+                long sourceNodeId, nodeId;
                 while ((nodeId = nodes.next()) != -1L) {
-                    long sourceNodeId = idMap.toOriginalNodeId(nodeId);
+                    sourceNodeId = idMap.toOriginalNodeId(nodeId);
                     readOp.singleNode(sourceNodeId, nodeCursor);
                     if (nodeCursor.next()) {
-                        loader.load(nodeCursor, nodeId);
+                        imported = loader.load(nodeCursor, nodeId);
+                        progress.relationshipsImported(imported);
                     }
-                    progress.relProgress();
                 }
             }
         }

@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.core.loading.LoadRelationships;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
@@ -44,72 +43,72 @@ abstract class RelationshipLoader {
         this.loadRelationships = other.loadRelationships;
     }
 
-    abstract void load(NodeCursor sourceNode, long localNodeId);
+    abstract int load(NodeCursor sourceNode, long localNodeId);
 
-    void readOutgoingRelationships(
+    int readOutgoingRelationships(
             VisitRelationship visit,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             NodeCursor sourceNode,
             long localGraphId) {
 
         int degree = loadRelationships.degreeOut(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visit.prepareNextNode(degree, localGraphId);
-        visitOut(sourceNode, visit);
+            visit.prepareNextNode(degree, localGraphId);
+            visitOut(sourceNode, visit);
 
-        long adjacencyIdx = visit.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visit.flush(builder);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
-    void readIncomingRelationships(
+    int readIncomingRelationships(
             VisitRelationship visit,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             NodeCursor sourceNode,
             long localGraphId) {
 
         int degree = loadRelationships.degreeIn(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visit.prepareNextNode(degree, localGraphId);
-        visitIn(sourceNode, visit);
+            visit.prepareNextNode(degree, localGraphId);
+            visitIn(sourceNode, visit);
 
-        long adjacencyIdx = visit.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visit.flush(builder);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
-    void readUndirected(
+    int readUndirected(
             VisitRelationship visitOut,
             VisitRelationship visitIn,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             NodeCursor sourceNode,
             long localGraphId) {
 
         int degree = loadRelationships.degreeBoth(sourceNode);
-        if (degree <= 0) {
-            return;
-        }
+        if (degree > 0) {
 
-        visitIn.prepareNextNode(degree, localGraphId);
-        this.visitIn(sourceNode, visitIn);
-        visitOut.prepareNextNode(visitIn);
-        this.visitOut(sourceNode, visitOut);
+            visitIn.prepareNextNode(degree, localGraphId);
+            this.visitIn(sourceNode, visitIn);
+            visitOut.prepareNextNode(visitIn);
+            this.visitOut(sourceNode, visitOut);
 
-        long adjacencyIdx = visitOut.flush(allocator);
-        if (adjacencyIdx != 0L) {
-            offsets.set(localGraphId, adjacencyIdx);
+            long adjacencyIdx = visitOut.flush(builder);
+            if (adjacencyIdx != 0L) {
+                offsets.set(localGraphId, adjacencyIdx);
+            }
         }
+        return degree;
     }
 
     private void visitOut(NodeCursor cursor, VisitRelationship visit) {
@@ -135,53 +134,54 @@ final class ReadNothing extends RelationshipLoader {
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return 0;
     }
 }
 
 final class ReadOutgoing extends RelationshipLoader {
     final VisitRelationship visitOutgoing;
     final HugeLongArray offsets;
-    final ByteArray.LocalAllocator allocator;
+    final HugeAdjacencyBuilder builder;
 
     ReadOutgoing(
             final KernelTransaction transaction,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             final int[] relationType,
             final VisitRelationship visitOutgoing) {
         super(transaction, relationType);
         this.offsets = offsets;
-        this.allocator = allocator;
+        this.builder = builder;
         this.visitOutgoing = visitOutgoing;
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readOutgoingRelationships(visitOutgoing, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readOutgoingRelationships(visitOutgoing, offsets, builder, sourceNode, localNodeId);
     }
 }
 
 final class ReadIncoming extends RelationshipLoader {
     private final VisitRelationship visitIncoming;
     private final HugeLongArray offsets;
-    private final ByteArray.LocalAllocator allocator;
+    private final HugeAdjacencyBuilder builder;
 
     ReadIncoming(
             final KernelTransaction transaction,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             final int[] relationType,
             final VisitRelationship visitIncoming) {
         super(transaction, relationType);
         this.offsets = offsets;
-        this.allocator = allocator;
+        this.builder = builder;
         this.visitIncoming = visitIncoming;
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readIncomingRelationships(visitIncoming, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readIncomingRelationships(visitIncoming, offsets, builder, sourceNode, localNodeId);
     }
 }
 
@@ -189,28 +189,28 @@ final class ReadBoth extends RelationshipLoader {
     private final VisitRelationship visitOutgoing;
     private final VisitRelationship visitIncoming;
     private final HugeLongArray inOffsets;
-    private final ByteArray.LocalAllocator inAllocator;
+    private final HugeAdjacencyBuilder inBuilder;
     private final HugeLongArray outOffsets;
-    private final ByteArray.LocalAllocator outAllocator;
+    private final HugeAdjacencyBuilder outBuilder;
 
     ReadBoth(
             final ReadOutgoing readOut,
             final VisitRelationship visitIncoming,
             final HugeLongArray inOffsets,
-            final ByteArray.LocalAllocator inAllocator) {
+            final HugeAdjacencyBuilder inBuilder) {
         super(readOut);
         this.visitOutgoing = readOut.visitOutgoing;
         this.visitIncoming = visitIncoming;
         this.outOffsets = readOut.offsets;
-        this.outAllocator = readOut.allocator;
+        this.outBuilder = readOut.builder;
         this.inOffsets = inOffsets;
-        this.inAllocator = inAllocator;
+        this.inBuilder = inBuilder;
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readOutgoingRelationships(visitOutgoing, outOffsets, outAllocator, sourceNode, localNodeId);
-        readIncomingRelationships(visitIncoming, inOffsets, inAllocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readOutgoingRelationships(visitOutgoing, outOffsets, outBuilder, sourceNode, localNodeId) +
+                readIncomingRelationships(visitIncoming, inOffsets, inBuilder, sourceNode, localNodeId);
     }
 }
 
@@ -218,24 +218,24 @@ final class ReadUndirected extends RelationshipLoader {
     private final VisitRelationship visitOutgoing;
     private final VisitRelationship visitIncoming;
     private final HugeLongArray offsets;
-    private final ByteArray.LocalAllocator allocator;
+    private final HugeAdjacencyBuilder builder;
 
     ReadUndirected(
             final KernelTransaction transaction,
             HugeLongArray offsets,
-            ByteArray.LocalAllocator allocator,
+            HugeAdjacencyBuilder builder,
             final int[] relationType,
             final VisitRelationship visitOutgoing,
             final VisitRelationship visitIncoming) {
         super(transaction, relationType);
         this.offsets = offsets;
-        this.allocator = allocator;
+        this.builder = builder;
         this.visitOutgoing = visitOutgoing;
         this.visitIncoming = visitIncoming;
     }
 
     @Override
-    void load(final NodeCursor sourceNode, final long localNodeId) {
-        readUndirected(visitOutgoing, visitIncoming, offsets, allocator, sourceNode, localNodeId);
+    int load(final NodeCursor sourceNode, final long localNodeId) {
+        return readUndirected(visitOutgoing, visitIncoming, offsets, builder, sourceNode, localNodeId);
     }
 }

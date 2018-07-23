@@ -19,6 +19,14 @@
         <uberjar.name>benchmark</uberjar.name>
     </properties>
 
+
+    <repositories>
+        <repository>
+            <id>ej-technologies</id>
+            <url>http://maven.ej-technologies.com/repository</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.neo4j</groupId>
@@ -52,6 +60,13 @@
             <artifactId>procedure-compiler</artifactId>
             <version>${neo4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.jprofiler</groupId>
+            <artifactId>jprofiler-agent</artifactId>
+            <version>10.1-PRE4</version>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>

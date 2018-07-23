@@ -21,19 +21,18 @@ package org.neo4j.graphalgo.core.huge;
 import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 
 class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
-    private ByteArray adjacency;
+    private HugeAdjacencyList adjacency;
     private HugeLongArray offsets;
-    private ByteArray.DeltaCursor empty;
-    private ByteArray.DeltaCursor cache;
-    private ByteArray.DeltaCursor cacheA;
-    private ByteArray.DeltaCursor cacheB;
+    private HugeAdjacencyList.Cursor empty;
+    private HugeAdjacencyList.Cursor cache;
+    private HugeAdjacencyList.Cursor cacheA;
+    private HugeAdjacencyList.Cursor cacheB;
 
-    HugeGraphIntersectImpl(final ByteArray adjacency, final HugeLongArray offsets) {
+    HugeGraphIntersectImpl(final HugeAdjacencyList adjacency, final HugeLongArray offsets) {
         assert adjacency != null;
         assert offsets != null;
         this.adjacency = adjacency;
@@ -46,7 +45,7 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     @Override
     public void forEachRelationship(long nodeId, HugeRelationshipConsumer consumer) {
-        ByteArray.DeltaCursor cursor = cursor(nodeId, cache, offsets, adjacency);
+        HugeAdjacencyList.Cursor cursor = cursor(nodeId, cache, offsets, adjacency);
         consumeNodes(nodeId, cursor, consumer);
     }
 
@@ -58,15 +57,15 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
     @Override
     public void intersectAll(long nodeIdA, IntersectionConsumer consumer) {
         HugeLongArray offsets = this.offsets;
-        ByteArray adjacency = this.adjacency;
+        HugeAdjacencyList adjacency = this.adjacency;
 
-        ByteArray.DeltaCursor mainCursor = cursor(nodeIdA, cache, offsets, adjacency);
+        HugeAdjacencyList.Cursor mainCursor = cursor(nodeIdA, cache, offsets, adjacency);
         long nodeIdB = mainCursor.skipUntil(nodeIdA);
         if (nodeIdB <= nodeIdA) {
             return;
         }
 
-        ByteArray.DeltaCursor lead, follow, cursorA = cacheA, cursorB = cacheB;
+        HugeAdjacencyList.Cursor lead, follow, cursorA = cacheA, cursorB = cacheB;
         long nodeIdC, currentA, s, t;
         boolean hasNext = true;
 
@@ -104,19 +103,19 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
         }
     }
 
-    private int degree(long node, HugeLongArray offsets, ByteArray array) {
+    private int degree(long node, HugeLongArray offsets, HugeAdjacencyList array) {
         long offset = offsets.get(node);
         if (offset == 0L) {
             return 0;
         }
-        return array.getInt(offset);
+        return array.getDegree(offset);
     }
 
-    private ByteArray.DeltaCursor cursor(
+    private HugeAdjacencyList.Cursor cursor(
             long node,
-            ByteArray.DeltaCursor reuse,
+            HugeAdjacencyList.Cursor reuse,
             HugeLongArray offsets,
-            ByteArray array) {
+            HugeAdjacencyList array) {
         final long offset = offsets.get(node);
         if (offset == 0L) {
             return empty;
@@ -126,9 +125,9 @@ class HugeGraphIntersectImpl implements HugeRelationshipIntersect {
 
     private void consumeNodes(
             long startNode,
-            ByteArray.DeltaCursor cursor,
+            HugeAdjacencyList.Cursor cursor,
             HugeRelationshipConsumer consumer) {
         //noinspection StatementWithEmptyBody
-        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong()));
+        while (cursor.hasNextVLong() && consumer.accept(startNode, cursor.nextVLong())) ;
     }
 }

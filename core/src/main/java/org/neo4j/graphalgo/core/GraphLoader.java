@@ -73,7 +73,7 @@ public class GraphLoader {
     private ExecutorService executorService;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
-    private Map<String,Object> params = new HashMap<>();
+    private Map<String, Object> params = new HashMap<>();
     private double nodePropDefault = 0.0;
     private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
     private int concurrency = Pools.DEFAULT_CONCURRENCY;
@@ -115,6 +115,7 @@ public class GraphLoader {
      * Log progress every {@code interval} time units.
      * At most 1 message will be logged within this interval, but it is not
      * guaranteed that a message will be logged at all.
+     *
      * @see #withDefaultLogInterval()
      */
     public GraphLoader withLogInterval(long value, TimeUnit unit) {
@@ -124,6 +125,7 @@ public class GraphLoader {
 
     /**
      * Log progress in the default interval specified by {@link ProgressLoggerAdapter}.
+     *
      * @see #withLogInterval(long, TimeUnit)
      */
     public GraphLoader withDefaultLogInterval() {
@@ -307,7 +309,7 @@ public class GraphLoader {
      * Instructs the loader to load relationship weights by reading the given property.
      * If the property is not set, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a weight property, use {@link #withoutRelationshipWeights()} instead.
+     * @param property             May not be null; to remove a weight property, use {@link #withoutRelationshipWeights()} instead.
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -321,7 +323,7 @@ public class GraphLoader {
      * Instructs the loader to load relationship weights by reading the given property.
      * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
-     * @param property May be null
+     * @param property             May be null
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -335,7 +337,7 @@ public class GraphLoader {
      * Instructs the loader to load node weights by reading the given property.
      * If the property is not set, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a weight property, use {@link #withoutNodeWeights()} instead.
+     * @param property             May not be null; to remove a weight property, use {@link #withoutNodeWeights()} instead.
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -349,7 +351,7 @@ public class GraphLoader {
      * Instructs the loader to load node weights by reading the given property.
      * If the property is not set at the relationship, the propertyDefaultValue is used instead.
      *
-     * @param property May be null
+     * @param property             May be null
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -363,7 +365,7 @@ public class GraphLoader {
      * Instructs the loader to load node values by reading the given property.
      * If the property is not set, the propertyDefaultValue is used instead.
      *
-     * @param property May not be null; to remove a node property, use {@link #withoutNodeProperties()} instead.
+     * @param property             May not be null; to remove a node property, use {@link #withoutNodeProperties()} instead.
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -377,7 +379,7 @@ public class GraphLoader {
      * Instructs the loader to load node values by reading the given property.
      * If the property is not set at the node, the propertyDefaultValue is used instead.
      *
-     * @param property May be null
+     * @param property             May be null
      * @param propertyDefaultValue the default value to use if property is not set
      * @return itself to enable fluent interface
      */
@@ -460,7 +462,7 @@ public class GraphLoader {
         return this;
     }
 
-    public GraphLoader withParams(Map<String,Object> params) {
+    public GraphLoader withParams(Map<String, Object> params) {
         this.params.putAll(params);
         return this;
     }

@@ -20,7 +20,13 @@ package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.NodeProperties;
+import org.neo4j.graphalgo.api.NodeWeights;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipPredicate;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphdb.Direction;
 
@@ -144,7 +150,9 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
                 return container.hasIncoming(sourceNodeId, targetNodeId);
 
             default:
-                return container.hasOutgoing(sourceNodeId, targetNodeId) || container.hasIncoming(sourceNodeId, targetNodeId);
+                return container.hasOutgoing(sourceNodeId, targetNodeId) || container.hasIncoming(
+                        sourceNodeId,
+                        targetNodeId);
         }
     }
 
