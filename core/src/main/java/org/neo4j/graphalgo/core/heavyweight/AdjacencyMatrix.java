@@ -19,17 +19,25 @@
 package org.neo4j.graphalgo.core.heavyweight;
 
 import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.*;
+import org.neo4j.graphalgo.api.NodeIterator;
+import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.WeightMapping;
+import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.IntPredicate;
 
-import static org.neo4j.graphalgo.core.utils.ArrayUtil.*;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.LINEAR_SEARCH_LIMIT;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.binarySearch;
+import static org.neo4j.graphalgo.core.utils.ArrayUtil.linearSearch;
 
 /**
  * Relation Container built of multiple arrays. The node capacity must be constant and the node IDs have to be
@@ -61,28 +69,54 @@ public class AdjacencyMatrix {
 
     private boolean sorted = false;
 
-    public AdjacencyMatrix(int nodeCount, boolean sorted) {
-        this(nodeCount, true, true, sorted);
+    private final AllocationTracker tracker;
+
+    public AdjacencyMatrix(int nodeCount, boolean sorted, AllocationTracker tracker) {
+        this(nodeCount, true, true, sorted, tracker);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted) {
-        this(nodeCount, withIncoming, withOutgoing, sorted, true);
+    AdjacencyMatrix(
+            int nodeCount,
+            boolean withIncoming,
+            boolean withOutgoing,
+            boolean sorted,
+            AllocationTracker tracker) {
+        this(nodeCount, withIncoming, withOutgoing, sorted, true, tracker);
     }
 
-    AdjacencyMatrix(int nodeCount, boolean withIncoming, boolean withOutgoing, boolean sorted, boolean preFill) {
-        this.outOffsets = withOutgoing ? new int[nodeCount] : null;
-        this.inOffsets = withIncoming ? new int[nodeCount] : null;
-        this.outgoing = withOutgoing ? new int[nodeCount][] : null;
-        this.incoming = withIncoming ? new int[nodeCount][] : null;
-        this.sorted = sorted;
-        if (preFill) {
-            if (withOutgoing) {
+    AdjacencyMatrix(
+            int nodeCount,
+            boolean withIncoming,
+            boolean withOutgoing,
+            boolean sorted,
+            boolean preFill,
+            AllocationTracker tracker) {
+        if (withOutgoing) {
+            tracker.add(MemoryUsage.sizeOfIntArray(nodeCount));
+            tracker.add(MemoryUsage.sizeOfObjectArray(nodeCount));
+            this.outOffsets = new int[nodeCount];
+            this.outgoing = new int[nodeCount][];
+            if (preFill) {
                 Arrays.fill(outgoing, EMPTY_INTS);
             }
-            if (withIncoming) {
+        } else {
+            this.outOffsets = null;
+            this.outgoing = null;
+        }
+        if (withIncoming) {
+            tracker.add(MemoryUsage.sizeOfIntArray(nodeCount));
+            tracker.add(MemoryUsage.sizeOfObjectArray(nodeCount));
+            this.inOffsets = new int[nodeCount];
+            this.incoming = new int[nodeCount][];
+            if (preFill) {
                 Arrays.fill(incoming, EMPTY_INTS);
             }
+        } else {
+            this.inOffsets = null;
+            this.incoming = null;
         }
+        this.sorted = sorted;
+        this.tracker = tracker;
     }
 
     /**
@@ -90,6 +124,7 @@ public class AdjacencyMatrix {
      */
     public int[] armOut(int sourceNodeId, int degree) {
         if (degree > 0) {
+            tracker.add(MemoryUsage.sizeOfIntArray(degree));
             outgoing[sourceNodeId] = new int[degree];
         }
         return outgoing[sourceNodeId];
@@ -100,6 +135,7 @@ public class AdjacencyMatrix {
      */
     public int[] armIn(int targetNodeId, int degree) {
         if (degree > 0) {
+            tracker.add(MemoryUsage.sizeOfIntArray(degree));
             incoming[targetNodeId] = new int[degree];
         }
         return incoming[targetNodeId];
@@ -117,14 +153,27 @@ public class AdjacencyMatrix {
      * grow array for outgoing connections
      */
     private void growOut(int sourceNodeId, int length) {
-        outgoing[sourceNodeId] = ArrayUtil.grow(outgoing[sourceNodeId], length);
+        assert length >= 0 : "size must be positive (got " + length + "): likely integer overflow?";
+        if (outgoing[sourceNodeId].length < length) {
+            outgoing[sourceNodeId] = growArray(outgoing[sourceNodeId], length);
+        }
     }
 
     /**
      * grow array for incoming connections
      */
     private void growIn(int targetNodeId, int length) {
-        incoming[targetNodeId] = ArrayUtil.grow(incoming[targetNodeId], length);
+        assert length >= 0 : "size must be positive (got " + length + "): likely integer overflow?";
+        if (incoming[targetNodeId].length < length) {
+            incoming[targetNodeId] = growArray(incoming[targetNodeId], length);
+        }
+    }
+
+    private int[] growArray(int[] array, int length) {
+        int newSize = ArrayUtil.oversize(length, RamUsageEstimator.NUM_BYTES_INT);
+        tracker.remove(MemoryUsage.sizeOfIntArray(array.length));
+        tracker.add(MemoryUsage.sizeOfIntArray(newSize));
+        return Arrays.copyOf(array, newSize);
     }
 
     /**
@@ -133,9 +182,7 @@ public class AdjacencyMatrix {
     public void addOutgoing(int sourceNodeId, int targetNodeId) {
         final int degree = outOffsets[sourceNodeId];
         final int nextDegree = degree + 1;
-        if (outgoing[sourceNodeId].length < nextDegree) {
-            growOut(sourceNodeId, nextDegree);
-        }
+        growOut(sourceNodeId, nextDegree);
         outgoing[sourceNodeId][degree] = targetNodeId;
         outOffsets[sourceNodeId] = nextDegree;
     }
@@ -207,9 +254,7 @@ public class AdjacencyMatrix {
     public void addIncoming(int sourceNodeId, int targetNodeId) {
         final int degree = inOffsets[targetNodeId];
         final int nextDegree = degree + 1;
-        if (incoming[targetNodeId].length < nextDegree) {
-            growIn(targetNodeId, nextDegree);
-        }
+        growIn(targetNodeId, nextDegree);
         incoming[targetNodeId][degree] = sourceNodeId;
         inOffsets[targetNodeId] = nextDegree;
     }

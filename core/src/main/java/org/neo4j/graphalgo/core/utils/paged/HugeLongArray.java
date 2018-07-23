@@ -77,8 +77,8 @@ public abstract class HugeLongArray {
      * Computes the bit-wise AND ({@code &}) of the existing value and the provided value at the given index.
      * If there was no previous value, the final result is set to the 0 ({@code x & 0 == 0}).
      *
-     * @throws ArrayIndexOutOfBoundsException if the index is not within {@link #size()}
      * @return the now current value after the operation
+     * @throws ArrayIndexOutOfBoundsException if the index is not within {@link #size()}
      */
     abstract public long and(long index, final long value);
 
@@ -188,13 +188,21 @@ public abstract class HugeLongArray {
      */
     public static abstract class Cursor implements AutoCloseable {
 
-        /** the base for the index to get the global index */
+        /**
+         * the base for the index to get the global index
+         */
         public long base;
-        /** a slice of values currently being traversed */
+        /**
+         * a slice of values currently being traversed
+         */
         public long[] array;
-        /** the offset into the array */
+        /**
+         * the offset into the array
+         */
         public final int offset = 0;
-        /** the limit of the array, exclusive – the first index not to be contained */
+        /**
+         * the limit of the array, exclusive – the first index not to be contained
+         */
         public int limit;
 
         Cursor() {

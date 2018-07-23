@@ -30,8 +30,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 public class Pools {
-    public static final int DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
+    public static final int DEFAULT_CONCURRENCY;
+
+    static {
+        Integer definedProcessors = null;
+        try {
+            definedProcessors = Integer.getInteger("neo4j.graphalgo.processors");
+        } catch (SecurityException ignored) {
+        }
+        if (definedProcessors != null) {
+            DEFAULT_CONCURRENCY = definedProcessors;
+        } else {
+            DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
+        }
+    }
+
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;
+
     public final static ExecutorService DEFAULT = createDefaultPool();
     public final static ForkJoinPool FJ_POOL = createFJPool();
 

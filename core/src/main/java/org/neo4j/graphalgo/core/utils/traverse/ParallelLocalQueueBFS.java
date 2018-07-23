@@ -24,7 +24,9 @@ import org.neo4j.graphalgo.core.utils.container.AtomicBitSet;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -93,7 +95,11 @@ public class ParallelLocalQueueBFS implements BFS {
      *
      * NOTE: predicate and visitor must be thread safe
      */
-    public ParallelLocalQueueBFS bfs(int startNodeId, Direction direction, IntPredicate predicate, IntConsumer visitor) {
+    public ParallelLocalQueueBFS bfs(
+            int startNodeId,
+            Direction direction,
+            IntPredicate predicate,
+            IntConsumer visitor) {
         if (!predicate.test(startNodeId)) {
             return this;
         }

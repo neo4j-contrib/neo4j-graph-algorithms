@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
-import org.neo4j.graphalgo.serialize.PrivateLookup;
+import org.neo4j.graphalgo.core.utils.PrivateLookup;
 
 import java.lang.invoke.MethodHandle;
 

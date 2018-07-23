@@ -20,15 +20,10 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.loading.ReadHelper;
-import org.neo4j.graphalgo.core.utils.paged.ByteArray;
-import org.neo4j.graphalgo.core.utils.paged.DeltaEncoding;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.internal.kernel.api.RelationshipScanCursor;
 import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
-
-import java.util.Arrays;
 
 
 abstract class VisitRelationship {
@@ -95,22 +90,8 @@ abstract class VisitRelationship {
         return true;
     }
 
-    final long flush(ByteArray.LocalAllocator allocator) {
-        long requiredSize = applyDelta();
-        int degree = length;
-        if (degree == 0) {
-            return 0L;
-        }
-
-        long adjacencyIdx = allocator.allocate(requiredSize);
-        ByteArray.BulkAdder bulkAdder = allocator.adder;
-        bulkAdder.addUnsignedInt(degree);
-        long[] targets = this.targets;
-        for (int i = 0; i < degree; i++) {
-            bulkAdder.addVLong(targets[i]);
-        }
-
-        return adjacencyIdx;
+    final long flush(HugeAdjacencyBuilder builder) {
+        return builder.applyVariableDeltaEncoding(targets, length);
     }
 
     static void visitWeight(
@@ -120,18 +101,13 @@ abstract class VisitRelationship {
             long targetGraphId,
             HugeWeightMap weights,
             int weightProperty,
+            long propertiesRef,
             long relationshipId) {
-
-        // TODO: make access to rel properties better
-        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
-             PropertyCursor pc = cursors.allocatePropertyCursor()) {
-            readOp.singleRelationship(relationshipId, scanCursor);
-            while (scanCursor.next()) {
-                scanCursor.properties(pc);
-                double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-                if (weight != weights.defaultValue()) {
-                    weights.put(sourceGraphId, targetGraphId, weight);
-                }
+        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
+            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
+            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
+            if (weight != weights.defaultValue()) {
+                weights.put(sourceGraphId, targetGraphId, weight);
             }
         }
     }
@@ -143,50 +119,18 @@ abstract class VisitRelationship {
             long targetGraphId,
             HugeWeightMap weights,
             int weightProperty,
+            long propertiesRef,
             long relationshipId) {
 
         // TODO: make access to rel properties better
-        try (RelationshipScanCursor scanCursor = cursors.allocateRelationshipScanCursor();
-             PropertyCursor pc = cursors.allocatePropertyCursor()) {
-            readOp.singleRelationship(relationshipId, scanCursor);
-            while (scanCursor.next()) {
-                scanCursor.properties(pc);
-                double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
-                if (weight != weights.defaultValue()) {
-                    weights.put(sourceGraphId, targetGraphId, weight);
-                    weights.put(targetGraphId, sourceGraphId, weight);
-                }
+        try (PropertyCursor pc = cursors.allocatePropertyCursor()) {
+            readOp.relationshipProperties(relationshipId, propertiesRef, pc);
+            double weight = ReadHelper.readProperty(pc, weightProperty, weights.defaultValue());
+            if (weight != weights.defaultValue()) {
+                weights.put(sourceGraphId, targetGraphId, weight);
+                weights.put(targetGraphId, sourceGraphId, weight);
             }
         }
-    }
-
-    private long applyDelta() {
-        int length = this.length;
-        if (length == 0) {
-            return 0L;
-        }
-
-        long[] targets = this.targets;
-        if (!isSorted) {
-            Arrays.sort(targets, 0, length);
-        }
-
-        long delta = targets[0];
-        int writePos = 1;
-        long requiredBytes = 4L + DeltaEncoding.vSize(delta);  // length as full-int
-
-        for (int i = 1; i < length; ++i) {
-            long nextDelta = targets[i];
-            long value = targets[writePos] = nextDelta - delta;
-            if (value > 0L) {
-                ++writePos;
-                requiredBytes += DeltaEncoding.vSize(value);
-                delta = nextDelta;
-            }
-        }
-
-        this.length = writePos;
-        return requiredBytes;
     }
 }
 
@@ -197,7 +141,7 @@ final class VisitOutgoingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(final RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor) {
         addNode(cursor.targetNodeReference());
     }
 }
@@ -209,7 +153,7 @@ final class VisitIncomingNoWeight extends VisitRelationship {
     }
 
     @Override
-    public void visit(final RelationshipSelectionCursor cursor) {
+    public void visit(RelationshipSelectionCursor cursor) {
         addNode(cursor.sourceNodeReference());
     }
 }
@@ -244,6 +188,7 @@ final class VisitOutgoingWithWeight extends VisitRelationship {
                     prevTarget,
                     weights,
                     weightProperty,
+                    cursor.propertiesReference(),
                     cursor.relationshipReference());
         }
     }
@@ -279,6 +224,7 @@ final class VisitIncomingWithWeight extends VisitRelationship {
                     sourceGraphId,
                     weights,
                     weightProperty,
+                    cursor.propertiesReference(),
                     cursor.relationshipReference());
         }
     }
@@ -314,6 +260,7 @@ final class VisitUndirectedOutgoingWithWeight extends VisitRelationship {
                     prevTarget,
                     weights,
                     weightProperty,
+                    cursor.propertiesReference(),
                     cursor.relationshipReference());
         }
     }

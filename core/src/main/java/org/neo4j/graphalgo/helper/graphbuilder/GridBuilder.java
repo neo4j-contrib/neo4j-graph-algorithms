@@ -25,6 +25,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Builds a grid of nodes
@@ -41,8 +42,8 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
 
     private List<List<Node>> lines = new ArrayList<>();
 
-    protected GridBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship) {
-        super(api, label, relationship);
+    GridBuilder(GraphDatabaseAPI api, Label label, RelationshipType relationship, Random random) {
+        super(api, label, relationship, random);
     }
 
     public GridBuilder createGrid(int width, int height) {
@@ -56,7 +57,7 @@ public class GridBuilder extends GraphBuilder<GridBuilder> {
                 List<Node> line = createLine(width);
                 if (null != temp) {
                     for (int j = 0; j < width; j++) {
-                        if (Math.random() < connectivity) {
+                        if (randomDouble() < connectivity) {
                             createRelationship(temp.get(j), line.get(j));
                         }
                     }

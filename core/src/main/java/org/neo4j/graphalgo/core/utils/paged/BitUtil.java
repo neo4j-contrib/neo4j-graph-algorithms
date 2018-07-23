@@ -28,16 +28,25 @@ public final class BitUtil {
      * returns the previous highest power of two, or the current value if it's already a power of two or zero
      */
     public static int previousPowerOfTwo(int v) {
-        int i = nextHighestPowerOfTwo(v);
-        return (i == v) ? v : i >>> 1;
+        v |= (v >>  1);
+        v |= (v >>  2);
+        v |= (v >>  4);
+        v |= (v >>  8);
+        v |= (v >> 16);
+        return v - (v >>> 1);
     }
 
     /**
      * returns the previous highest power of two, or the current value if it's already a power of two or zero
      */
     public static long previousPowerOfTwo(long v) {
-        long i = nextHighestPowerOfTwo(v);
-        return (i == v) ? v : i >>> 1;
+        v |= (v >>  1);
+        v |= (v >>  2);
+        v |= (v >>  4);
+        v |= (v >>  8);
+        v |= (v >> 16);
+        v |= (v >> 32);
+        return v - (v >>> 1);
     }
 
     public static int nearbyPowerOfTwo(int x) {
@@ -79,6 +88,11 @@ public final class BitUtil {
         v |= v >> 32;
         v++;
         return v;
+    }
+
+    public static long align(long value, int alignment) {
+        assert isPowerOfTwo(alignment) : "alignment must be a power of 2:" + alignment;
+        return value + (long) (alignment - 1) & (long) (~(alignment - 1));
     }
 
     private BitUtil() {

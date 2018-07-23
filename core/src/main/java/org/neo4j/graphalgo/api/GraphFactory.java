@@ -54,9 +54,8 @@ public abstract class GraphFactory {
     protected final GraphSetup setup;
     protected final GraphDimensions dimensions;
     protected final ImportProgress progress;
-
-    protected Log log;
-    protected ProgressLogger progressLogger;
+    protected final Log log;
+    protected final ProgressLogger progressLogger;
 
     public GraphFactory(GraphDatabaseAPI api, GraphSetup setup) {
         this.threadPool = setup.executor;
@@ -65,20 +64,34 @@ public abstract class GraphFactory {
         this.log = setup.log;
         this.progressLogger = progressLogger(log, setup.logMillis, TimeUnit.MILLISECONDS);
         dimensions = new GraphDimensions(api, setup).call();
-        progress = new ApproximatedImportProgress(
-                progressLogger,
-                setup.tracker,
-                dimensions.hugeNodeCount(),
-                dimensions.maxRelCount(),
-                setup.loadIncoming,
-                setup.loadOutgoing);
+        progress = importProgress(progressLogger, dimensions, setup);
     }
 
     public abstract Graph build();
 
+    protected ImportProgress importProgress(
+            ProgressLogger progressLogger,
+            GraphDimensions dimensions,
+            GraphSetup setup) {
+        long relOperations = 0L;
+        if (setup.loadIncoming || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+        if (setup.loadOutgoing || setup.loadAsUndirected) {
+            relOperations += dimensions.maxRelCount();
+        }
+        return new ApproximatedImportProgress(
+                progressLogger,
+                setup.tracker,
+                dimensions.hugeNodeCount(),
+                relOperations
+        );
+    }
+
     protected IdMap loadIdMap() {
         final NodeImporter nodeImporter = new NodeImporter(
                 api,
+                setup.tracker,
                 progress,
                 dimensions.nodeCount(),
                 dimensions.labelId());

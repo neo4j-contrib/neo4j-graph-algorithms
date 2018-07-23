@@ -103,14 +103,15 @@ public class DegreesTest {
                 new Object[]{HugeGraphFactory.class, "huge"}
         );
     }
-    
+
     private void setup(String cypher, Direction direction) {
         DB.execute(cypher);
         graph = new GraphLoader(DB)
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withDirection(direction)
+                .withDirection(direction == null ? Direction.BOTH : direction)
+                .asUndirected(direction == null)
                 .withRelationshipWeightsFromProperty("w", 0.0)
                 .load(graphImpl);
     }
@@ -162,14 +163,22 @@ public class DegreesTest {
         assertEquals(2, graph.degree(nodeId("c"), Direction.INCOMING));
     }
 
-    @Ignore("what is expected here")
+    @Test
+    public void testBidirectionalBoth() throws Exception {
+
+        setup(bidirectional, Direction.BOTH);
+        assertEquals(4, graph.degree(nodeId("a"), Direction.BOTH));
+        assertEquals(4, graph.degree(nodeId("b"), Direction.BOTH));
+        assertEquals(4, graph.degree(nodeId("c"), Direction.BOTH));
+    }
+
     @Test
     public void testBidirectionalUndirected() throws Exception {
 
-        setup(bidirectional, Direction.BOTH);
-        assertEquals(2, graph.degree(nodeId("a"), Direction.BOTH));
-        assertEquals(2, graph.degree(nodeId("b"), Direction.BOTH));
-        assertEquals(2, graph.degree(nodeId("c"), Direction.BOTH));
+        setup(bidirectional, null);
+        assertEquals(2, graph.degree(nodeId("a"), Direction.OUTGOING));
+        assertEquals(2, graph.degree(nodeId("b"), Direction.OUTGOING));
+        assertEquals(2, graph.degree(nodeId("c"), Direction.OUTGOING));
     }
 
 }
