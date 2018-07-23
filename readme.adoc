@@ -66,6 +66,27 @@ endif::env-docs[]
 
 == Installation
 
+You can install the Graph Algorithms library directly from the link:#installation-desktop[Neo4j Desktop].
+Outside of the Neo4j Desktop, you can also deploy Graph Algorithms by following the link:#installation-server[Server instructions].
+
+[[installation-desktop]]
+=== Desktop
+
+You can install the Graph Algorithms library from the Neo4j Desktop, which you can download from https://neo4j.com/download/[neo4j.com/download^].
+
+When you have downloaded the Desktop, and created a project, you can follow these steps to install Graph Algorithms:
+
+. Scroll down to the `Plugins` section.
+. Click `Install` for the Graph Algorithms.
+. Click `Install` again on the pop-up message.
+
+image::install.png[]
+
+For more detailed instructions, you can read Jennifer Reif's blog post about https://medium.com/neo4j/explore-new-worlds-adding-plugins-to-neo4j-26e6a8e5d37e[adding plugins to Neo4j^].
+
+[[installation-server]]
+=== Server
+
 Download `graph-algorithms-algo-[version].jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] and copy it into your `$NEO4J_HOME/plugins` directory.
 
 Because the algorithms use the lower level Kernel API to read from, and to write to Neo4j, for security purposes you will also have to enable them in the configuration:
