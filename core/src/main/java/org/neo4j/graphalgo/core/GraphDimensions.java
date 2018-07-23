@@ -126,7 +126,8 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         if(setup.nodePropertyMappings.length > 0) {
             nodePropIds = new int[setup.nodePropertyMappings.length];
             for (int i = 0; i < setup.nodePropertyMappings.length; i++) {
-                nodePropIds[i] = propertyKey(tokenRead, true, setup.nodePropertyMappings[i].propertyKey);
+                String propertyKey = setup.nodePropertyMappings[i].propertyKey;
+                nodePropIds[i] = propertyKey(tokenRead, propertyKey != null, propertyKey);
             }
         } else {
             nodePropIds = new int[0];
