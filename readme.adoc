@@ -74,7 +74,7 @@ Outside of the Neo4j Desktop, you can also deploy Graph Algorithms by following 
 
 You can install the Graph Algorithms library from the Neo4j Desktop, which you can download from https://neo4j.com/download/[neo4j.com/download^].
 
-When you have downloaded the Desktop, and created a project you can follow these steps to install Graph Algorithms:
+When you have downloaded the Desktop, and created a project, you can follow these steps to install Graph Algorithms:
 
 . Scroll down to the `Plugins` section.
 . Click `Install` for the Graph Algorithms.
