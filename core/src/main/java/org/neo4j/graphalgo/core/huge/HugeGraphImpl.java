@@ -140,23 +140,7 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public void forEachRelationship(long nodeId, Direction direction, HugeRelationshipConsumer consumer) {
-        switch (direction) {
-            case INCOMING:
-                forEachIncoming(nodeId, consumer);
-                return;
-
-            case OUTGOING:
-                forEachOutgoing(nodeId, consumer);
-                return;
-
-            case BOTH:
-                forEachOutgoing(nodeId, consumer);
-                forEachIncoming(nodeId, consumer);
-                return;
-
-            default:
-                throw new IllegalArgumentException(direction + "");
-        }
+        runForEach(nodeId, direction, consumer, /* reuseCursor */ true);
     }
 
     @Override
@@ -170,13 +154,9 @@ public class HugeGraphImpl implements HugeGraph {
                 forEachOutgoing(nodeId, consumer);
                 return;
 
-            case BOTH:
+            default:
                 forEachOutgoing(nodeId, consumer);
                 forEachIncoming(nodeId, consumer);
-                return;
-
-            default:
-                throw new IllegalArgumentException(direction + "");
         }
     }
 
@@ -191,13 +171,9 @@ public class HugeGraphImpl implements HugeGraph {
                 forEachOutgoing(nodeId, consumer);
                 return;
 
-            case BOTH:
+            default:
                 forEachOutgoing(nodeId, consumer);
                 forEachIncoming(nodeId, consumer);
-                return;
-
-            default:
-                throw new IllegalArgumentException(direction + "");
         }
     }
 
@@ -240,46 +216,50 @@ public class HugeGraphImpl implements HugeGraph {
 
     @Override
     public void forEachIncoming(long node, final HugeRelationshipConsumer consumer) {
-        forEachIncoming(node, inCache, consumer);
+        runForEach(node, Direction.INCOMING, consumer, /* reuseCursor */ true);
     }
 
     @Override
     public void forEachIncoming(int nodeId, RelationshipConsumer consumer) {
-        forEachIncoming((long) nodeId, inAdjacency.newCursor(), toHugeInConsumer(consumer));
+        runForEach(
+                Integer.toUnsignedLong(nodeId),
+                Direction.INCOMING,
+                toHugeInConsumer(consumer),
+                /* reuseCursor */ false
+        );
     }
 
     public void forEachIncoming(int nodeId, WeightedRelationshipConsumer consumer) {
-        forEachIncoming((long) nodeId, inAdjacency.newCursor(), toHugeInConsumer(consumer));
-    }
-
-    private void forEachIncoming(
-            long node,
-            HugeAdjacencyList.Cursor newCursor,
-            final HugeRelationshipConsumer consumer) {
-        HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, inOffsets, inAdjacency);
-        consumeNodes(node, cursor, consumer);
+        runForEach(
+                Integer.toUnsignedLong(nodeId),
+                Direction.INCOMING,
+                toHugeInConsumer(consumer),
+                /* reuseCursor */ false
+        );
     }
 
     @Override
     public void forEachOutgoing(long node, final HugeRelationshipConsumer consumer) {
-        forEachOutgoing(node, outCache, consumer);
+        runForEach(node, Direction.OUTGOING, consumer, /* reuseCursor */ true);
     }
 
     @Override
     public void forEachOutgoing(int nodeId, RelationshipConsumer consumer) {
-        forEachOutgoing((long) nodeId, outAdjacency.newCursor(), toHugeOutConsumer(consumer));
+        runForEach(
+                Integer.toUnsignedLong(nodeId),
+                Direction.OUTGOING,
+                toHugeOutConsumer(consumer),
+                /* reuseCursor */ false
+        );
     }
 
     public void forEachOutgoing(int nodeId, WeightedRelationshipConsumer consumer) {
-        forEachOutgoing((long) nodeId, outAdjacency.newCursor(), toHugeOutConsumer(consumer));
-    }
-
-    private void forEachOutgoing(
-            long node,
-            HugeAdjacencyList.Cursor newCursor,
-            final HugeRelationshipConsumer consumer) {
-        HugeAdjacencyList.Cursor cursor = cursor(node, newCursor, outOffsets, outAdjacency);
-        consumeNodes(node, cursor, consumer);
+        runForEach(
+                Integer.toUnsignedLong(nodeId),
+                Direction.OUTGOING,
+                toHugeOutConsumer(consumer),
+                /* reuseCursor */ false
+        );
     }
 
     @Override
@@ -300,29 +280,49 @@ public class HugeGraphImpl implements HugeGraph {
         return new HugeGraphIntersectImpl(outAdjacency, outOffsets);
     }
 
-    /*
+    /**
+     * O(n) !
+     */
+    @Override
+    public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
+        return exists(
+                Integer.toUnsignedLong(sourceNodeId),
+                Integer.toUnsignedLong(targetNodeId),
+                direction,
+                // Graph interface should be thread-safe
+                false
+        );
+    }
+
+    /**
      * O(n) !
      */
     @Override
     public boolean exists(long sourceNodeId, long targetNodeId, Direction direction) {
+        return exists(
+                sourceNodeId,
+                targetNodeId,
+                direction,
+                // HugeGraph interface make no promises about thread-safety (that's what concurrentCopy is for)
+                true
+        );
+    }
+
+    private boolean exists(long sourceNodeId, long targetNodeId, Direction direction, boolean reuseCursor) {
         ExistsConsumer consumer = new ExistsConsumer(targetNodeId);
-        switch (direction) {
-            case OUTGOING:
-                forEachOutgoing(sourceNodeId, consumer);
-                break;
-            case INCOMING:
-                forEachIncoming(sourceNodeId, consumer);
-                break;
-            default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
-                break;
-        }
+        runForEach(sourceNodeId, direction, consumer, reuseCursor);
         return consumer.found;
     }
 
     @Override
     public int getTarget(int nodeId, int index, Direction direction) {
-        return Math.toIntExact(getTarget(Integer.toUnsignedLong(nodeId), Integer.toUnsignedLong(index), direction));
+        return Math.toIntExact(getTarget(
+                Integer.toUnsignedLong(nodeId),
+                Integer.toUnsignedLong(index),
+                direction,
+                // Graph interface should be thread-safe
+                false
+        ));
     }
 
     /*
@@ -330,24 +330,52 @@ public class HugeGraphImpl implements HugeGraph {
      */
     @Override
     public long getTarget(long sourceNodeId, long index, Direction direction) {
+        return getTarget(
+                sourceNodeId,
+                index,
+                direction,
+                // HugeGraph interface make no promises about thread-safety (that's what concurrentCopy is for)
+                true
+        );
+    }
+
+    private long getTarget(long sourceNodeId, long index, Direction direction, boolean reuseCursor) {
         GetTargetConsumer consumer = new GetTargetConsumer(index);
-        switch (direction) {
-            case OUTGOING:
-                forEachOutgoing(sourceNodeId, consumer);
-            case INCOMING:
-                forEachIncoming(sourceNodeId, consumer);
-            default:
-                forEachRelationship(sourceNodeId, Direction.BOTH, consumer);
-        }
+        runForEach(sourceNodeId, direction, consumer, reuseCursor);
         return consumer.target;
     }
 
-    /**
-     * O(n) !
-     */
-    @Override
-    public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-        return exists(Integer.toUnsignedLong(sourceNodeId), Integer.toUnsignedLong(targetNodeId), direction);
+    private void runForEach(
+            long sourceNodeId,
+            Direction direction,
+            HugeRelationshipConsumer consumer,
+            boolean reuseCursor) {
+        if (direction == Direction.BOTH) {
+            runForEach(sourceNodeId, Direction.OUTGOING, consumer, reuseCursor);
+            runForEach(sourceNodeId, Direction.INCOMING, consumer, reuseCursor);
+            return;
+        }
+        HugeAdjacencyList.Cursor cursor = forEachCursor(sourceNodeId, direction, reuseCursor);
+        consumeNodes(sourceNodeId, cursor, consumer);
+    }
+
+    private HugeAdjacencyList.Cursor forEachCursor(
+            long sourceNodeId,
+            Direction direction,
+            boolean reuseCursor) {
+        if (direction == Direction.OUTGOING) {
+            return cursor(
+                    sourceNodeId,
+                    reuseCursor ? outCache : outAdjacency.newCursor(),
+                    outOffsets,
+                    outAdjacency);
+        } else {
+            return cursor(
+                    sourceNodeId,
+                    reuseCursor ? inCache : inAdjacency.newCursor(),
+                    inOffsets,
+                    inAdjacency);
+        }
     }
 
     @Override

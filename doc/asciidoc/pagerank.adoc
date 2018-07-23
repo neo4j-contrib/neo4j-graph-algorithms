@@ -124,6 +124,42 @@ As we might expect, the Home page has the highest PageRank because it has incomi
 We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
 // end::stream-sample-graph-explanation[]
 
+=== Personalized PageRank
+
+Personalized PageRank is a variation of PageRank which is biased towards a set of `sourceNodes`.
+This variant of PageRank is often used as part of https://www.r-bloggers.com/from-random-walks-to-personalized-pagerank/[recommender systems^].
+
+The following examples show how to run PageRank centered around 'Site A'.
+
+.The following will run the algorithm and stream results:
+[source,cypher]
+----
+include::scripts/pagerank.cypher[tag=ppr-stream-sample-graph]
+----
+
+.The following will run the algorithm and write back results:
+[source,cypher]
+----
+include::scripts/pagerank.cypher[tag=ppr-write-sample-graph]
+----
+
+// tag::ppr-stream-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name    | PageRank
+| Home    | 0.399
+| Site A  | 0.169
+| About   | 0.112
+| Product | 0.112
+| Links   | 0.112
+| Site B  | 0.019
+| Site C  | 0.019
+| Site D  | 0.019
+|===
+// end::ppr-stream-graph-result[]
+
+
 
 [[algorithms-pagerank-example]]
 == Example usage

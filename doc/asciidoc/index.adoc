@@ -6,6 +6,8 @@
 :toclevels: 2
 :env-docs: true
 
+Copyright (C) 2018 Neo4j, Inc.
+
 License: link:{common-license-page-uri}[Creative Commons 4.0]
 
 [abstract]

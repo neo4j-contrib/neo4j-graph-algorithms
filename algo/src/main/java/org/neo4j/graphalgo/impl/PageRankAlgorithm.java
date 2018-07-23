@@ -23,6 +23,8 @@ import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import java.util.concurrent.ExecutorService;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public interface PageRankAlgorithm {
 
@@ -33,35 +35,39 @@ public interface PageRankAlgorithm {
     Algorithm<?> algorithm();
 
     static PageRankAlgorithm of(
-        Graph graph,
-        double dampingFactor) {
-        return of(AllocationTracker.EMPTY, graph, dampingFactor);
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds) {
+        return of(AllocationTracker.EMPTY, dampingFactor, sourceNodeIds, graph);
     }
 
     static PageRankAlgorithm of(
             AllocationTracker tracker,
-            Graph graph,
-            double dampingFactor) {
+            double dampingFactor,
+            LongStream sourceNodeIds,
+            Graph graph) {
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
-            return new HugePageRank(tracker, huge, huge, huge, huge, dampingFactor);
+            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds);
         }
-        return new PageRank(graph, graph, graph, graph, dampingFactor);
+        return new PageRank(graph, dampingFactor, sourceNodeIds);
     }
 
     static PageRankAlgorithm of(
         Graph graph,
         double dampingFactor,
+        LongStream sourceNodeIds,
         ExecutorService pool,
         int concurrency,
         int batchSize) {
-        return of(AllocationTracker.EMPTY, graph, dampingFactor, pool, concurrency, batchSize);
+        return of(AllocationTracker.EMPTY, graph, dampingFactor, sourceNodeIds, pool, concurrency, batchSize);
     }
 
     static PageRankAlgorithm of(
             AllocationTracker tracker,
             Graph graph,
             double dampingFactor,
+            LongStream sourceNodeIds,
             ExecutorService pool,
             int concurrency,
             int batchSize) {
@@ -73,19 +79,16 @@ public interface PageRankAlgorithm {
                     batchSize,
                     tracker,
                     huge,
-                    huge,
-                    huge,
-                    huge,
-                    dampingFactor);
+                    dampingFactor,
+                    sourceNodeIds
+                    );
         }
         return new PageRank(
                 pool,
                 concurrency,
                 batchSize,
                 graph,
-                graph,
-                graph,
-                graph,
-                dampingFactor);
+                dampingFactor,
+                sourceNodeIds);
     }
 }
