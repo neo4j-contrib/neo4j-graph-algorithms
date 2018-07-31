@@ -52,6 +52,12 @@ image::yens.png[]
 include::scripts/yens-k-shortest-paths.cypher[tag=create-sample-graph]
 ----
 
+.The following will run the algorithm and stream results:
+[source, cypher]
+----
+include::scripts/yens-k-shortest-paths.cypher[tag=stream-sample-graph]
+----
+
 .The following will run the algorithm and write back results:
 [source, cypher]
 ----

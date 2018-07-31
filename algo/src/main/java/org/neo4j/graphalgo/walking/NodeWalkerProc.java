@@ -10,7 +10,6 @@ import org.neo4j.graphalgo.impl.walking.NodeWalker;
 import org.neo4j.graphalgo.impl.walking.WalkPath;
 import org.neo4j.graphalgo.impl.walking.WalkResult;
 import org.neo4j.graphalgo.results.PageRankScore;
-import org.neo4j.graphalgo.results.VirtualRelationship;
 import org.neo4j.graphdb.*;
 import org.neo4j.internal.kernel.api.NodeLabelIndexCursor;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -24,7 +23,6 @@ import java.util.stream.*;
 
 public class NodeWalkerProc  {
 
-    private static final RelationshipType NEXT = RelationshipType.withName("NEXT");
     @Context
     public GraphDatabaseAPI api;
 
@@ -33,7 +31,6 @@ public class NodeWalkerProc  {
 
     @Context
     public KernelTransaction transaction;
-
 
 
     @Procedure(name = "algo.randomWalk.stream", mode = Mode.READ)
@@ -84,32 +81,9 @@ public class NodeWalkerProc  {
 
         Stream<long[]> randomWalks = new NodeWalker().randomWalk(graph, (int) steps, strategy, terminationFlag, concurrency, limit, idStream);
         return randomWalks
-                .map( nodes -> new WalkResult(nodes, returnPath ? toPath(api, nodes,direction) : null));
+                .map( nodes -> new WalkResult(nodes, returnPath ? WalkPath.toPath(api, nodes) : null));
     }
 
-
-
-    private Path toPath(GraphDatabaseAPI api, long[] nodes, Direction direction) {
-        if (nodes.length == 0) return WalkPath.EMPTY;
-        WalkPath result = new WalkPath(nodes.length);
-        Node node = api.getNodeById(nodes[0]);
-        result.addNode(node);
-        for (int i = 1; i < nodes.length; i++) {
-            Node nextNode = api.getNodeById(nodes[i]);
-            result.addRelationship(new VirtualRelationship(node, nextNode, NEXT));
-            // result.addRelationship(findRelationship(direction, result.endNode(), nextNode)); // todo use virtual relationship?
-            result.addNode(nextNode);
-            node = nextNode;
-        }
-        return result;
-    }
-
-    private Relationship findRelationship(Direction direction, Node start, Node end) {
-        for (Relationship rel : start.getRelationships(direction)) {
-            if (rel.getOtherNode(start).equals(end)) return rel;
-        }
-        return null;
-    }
 
     private IntStream idStream(@Name(value = "start", defaultValue = "null") Object start, Graph graph, int limit) {
         int nodeCount = Math.toIntExact(graph.nodeCount());
