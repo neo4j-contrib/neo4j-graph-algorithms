@@ -1,10 +1,9 @@
 package org.neo4j.graphalgo.impl.walking;
 
 
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphalgo.results.VirtualRelationship;
+import org.neo4j.graphdb.*;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +12,7 @@ import java.util.List;
 
 public class WalkPath implements Path {
     public static final Path EMPTY = new WalkPath(0);
+    private static final RelationshipType NEXT = RelationshipType.withName("NEXT");
 
     private List<Node> nodes;
     private List<Relationship> relationships;
@@ -22,6 +22,36 @@ public class WalkPath implements Path {
         nodes = new ArrayList<>(size);
         relationships = new ArrayList<>(Math.max(0, size - 1)); // for empty paths
         this.size = size;
+    }
+
+    public static Path toPath(GraphDatabaseAPI api, long[] nodes) {
+        if (nodes.length == 0) return EMPTY;
+        WalkPath result = new WalkPath(nodes.length);
+        Node node = api.getNodeById(nodes[0]);
+        result.addNode(node);
+        for (int i = 1; i < nodes.length; i++) {
+            Node nextNode = api.getNodeById(nodes[i]);
+            result.addRelationship(new VirtualRelationship(node, nextNode, NEXT));
+            result.addNode(nextNode);
+            node = nextNode;
+        }
+        return result;
+    }
+
+    public static Path toPath(GraphDatabaseAPI api, long[] nodes, double[] costs) {
+        if (nodes.length == 0) return EMPTY;
+        WalkPath result = new WalkPath(nodes.length);
+        Node node = api.getNodeById(nodes[0]);
+        result.addNode(node);
+        for (int i = 1; i < nodes.length; i++) {
+            Node nextNode = api.getNodeById(nodes[i]);
+            VirtualRelationship relationship = new VirtualRelationship(node, nextNode, NEXT);
+            relationship.setProperty("cost", costs[i-1]);
+            result.addRelationship(relationship);
+            result.addNode(nextNode);
+            node = nextNode;
+        }
+        return result;
     }
 
     public void addNode(Node node) {

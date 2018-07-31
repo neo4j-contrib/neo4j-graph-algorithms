@@ -21,21 +21,25 @@ package org.neo4j.graphalgo;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.*;
+import org.neo4j.graphalgo.impl.walking.WalkPath;
+import org.neo4j.graphalgo.impl.yens.WeightedPath;
 import org.neo4j.graphalgo.impl.yens.WeightedPathExporter;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 import java.util.stream.Stream;
 
 /**
@@ -128,6 +132,115 @@ public class KShortestPathsProc {
         }
         return Stream.of(builder.build());
     }
+
+    @Procedure(value = "algo.kShortestPaths.stream", mode = Mode.READ)
+    @Description("CALL algo.kShortestPaths.stream(startNode:Node, endNode:Node, k:int, weightProperty:String" +
+            "{nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'OUT', defaultValue:1.0, maxDepth:42}) " +
+            "YIELD sourceNodeId, targetNodeId, nodeIds, costs")
+    public Stream<KspStreamResult> yensStreaming(
+            @Name("startNode") Node startNode,
+            @Name("endNode") Node endNode,
+            @Name("k") long k,
+            @Name("propertyName") String propertyName,
+            @Name(value = "config", defaultValue = "{}")
+                    Map<String, Object> config) {
+
+        final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        final KspResult.Builder builder = new KspResult.Builder();
+        final Graph graph;
+        final YensKShortestPaths algorithm;
+        Direction direction = configuration.getDirection(Direction.BOTH);
+        // load
+        try (ProgressTimer timer = builder.timeLoad()) {
+            final GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
+                    .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
+                    .withOptionalRelationshipWeightsFromProperty(
+                            propertyName,
+                            configuration.getWeightPropertyDefaultValue(1.0));
+            // use undirected traversal if direction is BOTH
+            if (direction == Direction.BOTH) {
+                direction = Direction.OUTGOING; // rewrite
+                graphLoader.asUndirected(true);
+            } else {
+                graphLoader.withDirection(direction);
+            }
+            graph = graphLoader.load(configuration.getGraphImpl());
+        }
+
+        if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
+            graph.release();
+            return Stream.empty();
+        }
+
+        // eval
+        try (ProgressTimer timer = builder.timeEval()) {
+            algorithm = new YensKShortestPaths(graph)
+                    .withProgressLogger(ProgressLogger.wrap(log, "KShortestPaths(Yen)"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .compute(startNode.getId(),
+                            endNode.getId(),
+                            direction,
+                            Math.toIntExact(k),
+                            configuration.getNumber("maxDepth", Integer.MAX_VALUE).intValue());
+            builder.withResultCount(algorithm.getPaths().size());
+        }
+
+        Boolean returnPath = configuration.get("path", false);
+
+        final Pointer.IntPointer counter = Pointer.wrap(0);
+        return algorithm.getPaths().stream().map(weightedPath -> {
+            long[] nodeIds = new long[weightedPath.size()];
+            AtomicInteger count = new AtomicInteger(0);
+            weightedPath.forEach(i -> {
+                long originalNodeId = graph.toOriginalNodeId(i);
+                nodeIds[count.getAndIncrement()] = originalNodeId;
+                return true;
+            });
+
+            count.set(0);
+
+            double[] costs = new double[weightedPath.size()-1];
+            weightedPath.forEachEdge((sourceNode, targetNode) -> {
+                double cost = graph.weightOf(sourceNode, targetNode);
+                costs[count.getAndIncrement()] = cost;
+            });
+
+            Path path = null;
+            if (returnPath) {
+                if (propertyName != null) {
+                    path = WalkPath.toPath(api, nodeIds, costs);
+                } else {
+                    path = WalkPath.toPath(api, nodeIds);
+                }
+            }
+
+            return new KspStreamResult(counter.v++, nodeIds, path, costs);
+        });
+    }
+
+    public static class KspStreamResult {
+        public Long index;
+        public Long sourceNodeId;
+        public Long targetNodeId;
+        public List<Long> nodeIds;
+        public List<Double> costs;
+        public Path path;
+
+        public KspStreamResult(long index, long[] nodes, Path path, double[] costs) {
+            this.index = index;
+            this.sourceNodeId = nodes.length > 0 ? nodes[0] : null;
+            this.targetNodeId = nodes.length > 0 ? nodes[nodes.length - 1] : null;
+
+            this.nodeIds = new ArrayList<>(nodes.length);
+            for (long node : nodes) this.nodeIds.add(node);
+
+            this.costs = new ArrayList<>(costs.length);
+            for (double cost : costs) this.costs.add(cost);
+
+            this.path = path;
+        }
+    }
+
 
     public static class KspResult {
 
