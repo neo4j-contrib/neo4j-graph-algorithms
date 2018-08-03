@@ -18,11 +18,13 @@
  */
 package org.neo4j.graphalgo.algo;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphalgo.GetNodeFunc;
 import org.neo4j.graphalgo.IsFiniteFunc;
+import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
@@ -53,6 +55,11 @@ public class GetNodeFuncTest {
 
         proceduresService.registerProcedure(Procedures.class, true);
         proceduresService.registerFunction(GetNodeFunc.class, true);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        DB.shutdown();
     }
 
     @Test
