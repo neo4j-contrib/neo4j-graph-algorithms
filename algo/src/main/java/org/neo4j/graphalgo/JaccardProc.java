@@ -29,31 +29,35 @@ public class JaccardProc {
     @Context
     public KernelTransaction transaction;
 
-
     @Procedure(name = "algo.jaccard.stream", mode = Mode.READ)
     @Description("CALL algo.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD source1, source2, count1, count2, intersection, jaccard - computes jaccard similarities")
     public Stream<JaccardResult> jaccard(
-            @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
+            @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        double similiarityCutoff = ((Number) config.getOrDefault("similarityCutoff", -1D)).doubleValue();
+        double similarityCutoff = ((Number) config.getOrDefault("similarityCutoff", -1D)).doubleValue();
         long degreeCutoff = ((Number) config.getOrDefault("degreeCutoff", 0L)).longValue();
+
         InputData[] ids = fillIds(data, degreeCutoff);
         int length = ids.length;
-        return IntStream.range(0, length)
-                .parallel()
-                .mapToObj(idx -> idx)
+        Stream<Integer> sourceIds = IntStream.range(0, length).parallel().boxed();
+
+        return jaccardStream(similarityCutoff, ids, length, sourceIds);
+    }
+
+    private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds) {
+        return sourceIds
                 .flatMap(idx1 -> {
                     InputData e1 = ids[idx1];
                     return IntStream.range(idx1 + 1, length).mapToObj(idx2 -> {
                         InputData e2 = ids[idx2];
-                        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, similiarityCutoff);
+                        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, similarityCutoff);
                     }).filter(Objects::nonNull);
                 });
     }
 
-    private static class InputData implements  Comparable<InputData> {
+    private static class InputData implements Comparable<InputData> {
         long id;
         LongHashSet targets;
 
@@ -74,7 +78,7 @@ public class JaccardProc {
         for (Map<String, Object> row : data) {
             List<Long> targetIds = (List<Long>) row.get("targets");
             int size = targetIds.size();
-            if ( size > degreeCutoff) {
+            if (size > degreeCutoff) {
                 LongHashSet targets = new LongHashSet();
                 for (Long id : targetIds) {
                     targets.add(id);
@@ -88,9 +92,9 @@ public class JaccardProc {
     }
 
     public static class JaccardResult {
+        public final long source1;
         public final long source2;
         public final long count1;
-        public final long source1;
         public final long count2;
         public final long intersection;
         public final double jaccard;
@@ -105,16 +109,29 @@ public class JaccardProc {
         }
 
         public static JaccardResult of(long source1, long source2, LongHashSet targets1, LongHashSet targets2, double similiarityCutoff) {
-            LongHashSet intersectionSet = new LongHashSet(targets1);
-            intersectionSet.retainAll(targets2);
-            long intersection = intersectionSet.size();
-            if (similiarityCutoff >= 0d && intersection == 0) return null;
+            long intersection = calculateIntersection(targets1, targets2);
+
+            if (similiarityCutoff >= 0d && intersection == 0) {
+                return null;
+            }
+
             int count1 = targets1.size();
             int count2 = targets2.size();
             long denominator = count1 + count2 - intersection;
-            double jaccard = denominator == 0 ? 0 : (double)intersection / denominator;
-            if (jaccard < similiarityCutoff) return null;
+
+            double jaccard = denominator == 0 ? 0 : (double) intersection / denominator;
+
+            if (jaccard < similiarityCutoff) {
+                return null;
+            }
+
             return new JaccardResult(source1, source2, count1, count2, intersection, jaccard);
+        }
+
+        private static long calculateIntersection(LongHashSet targets1, LongHashSet targets2) {
+            LongHashSet intersectionSet = new LongHashSet(targets1);
+            intersectionSet.retainAll(targets2);
+            return (long) intersectionSet.size();
         }
     }
 }

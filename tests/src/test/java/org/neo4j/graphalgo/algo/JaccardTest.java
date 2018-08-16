@@ -73,7 +73,7 @@ public class JaccardTest {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
-                "call algo.jaccard.stream(data) yield source1, source2, count1, count2, intersection, jaccard RETURN * ORDER BY source1,source2";
+                "CALL algo.jaccard.stream(data) yield source1, source2, count1, count2, intersection, jaccard RETURN * ORDER BY source1,source2";
 
 
         Result results = db.execute(query);
