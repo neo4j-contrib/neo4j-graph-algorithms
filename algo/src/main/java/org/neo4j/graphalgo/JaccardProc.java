@@ -49,12 +49,23 @@ public class JaccardProc {
     private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds) {
         return sourceIds
                 .flatMap(idx1 -> {
-                    InputData e1 = ids[idx1];
                     return IntStream.range(idx1 + 1, length).mapToObj(idx2 -> {
-                        InputData e2 = ids[idx2];
-                        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, similarityCutoff);
+                        return calculateJaccard(similarityCutoff, ids[idx1], ids[idx2]);
                     }).filter(Objects::nonNull);
                 });
+    }
+
+    private Stream<JaccardResult> jaccardParallelStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds) {
+        return sourceIds
+                .flatMap(idx1 -> {
+                    return IntStream.range(idx1 + 1, length).mapToObj(idx2 -> {
+                        return calculateJaccard(similarityCutoff, ids[idx1], ids[idx2]);
+                    }).filter(Objects::nonNull);
+                });
+    }
+
+    private JaccardResult calculateJaccard(double similarityCutoff, InputData e1, InputData e2) {
+        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, similarityCutoff);
     }
 
     private static class InputData implements Comparable<InputData> {
