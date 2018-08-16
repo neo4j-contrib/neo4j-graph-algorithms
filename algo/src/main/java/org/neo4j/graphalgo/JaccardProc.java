@@ -49,11 +49,11 @@ public class JaccardProc {
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         int concurrency = configuration.getConcurrency();
-        return jaccardParallelStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+        return jaccardStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
     }
 
-    private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds, TerminationFlag terminationFlag) {
-        return sourceIds
+    private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIdStream, TerminationFlag terminationFlag, int concurrency) {
+        return sourceIdStream
                 .flatMap(idx1 -> IntStream.range(idx1 + 1, length)
                         .mapToObj(idx2 -> calculateJaccard(similarityCutoff, ids[idx1], ids[idx2])).filter(Objects::nonNull));
     }
@@ -71,7 +71,10 @@ public class JaccardProc {
 
         sourceIdStream.forEach(sourceId -> {
             IntStream.range(sourceId + 1, length).forEach(otherId -> {
-                put(queue,calculateJaccard(similarityCutoff, ids[sourceId], ids[otherId]));
+                JaccardResult result = calculateJaccard(similarityCutoff, ids[sourceId], ids[otherId]);
+                if (result != null) {
+                    put(queue, result);
+                }
             });
         });
 
