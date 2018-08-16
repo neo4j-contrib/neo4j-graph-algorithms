@@ -49,7 +49,13 @@ public class JaccardProc {
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         int concurrency = configuration.getConcurrency();
-        return jaccardStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+
+        if (concurrency == 1) {
+            return jaccardStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+        } else {
+            return jaccardParallelStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+        }
+
     }
 
     private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIdStream, TerminationFlag terminationFlag, int concurrency) {
@@ -70,23 +76,26 @@ public class JaccardProc {
         JaccardResult TOMB = JaccardResult.TOMB;
 
         sourceIdStream.forEach(sourceId -> {
-            IntStream.range(sourceId + 1, length).forEach(otherId -> {
-                JaccardResult result = calculateJaccard(similarityCutoff, ids[sourceId], ids[otherId]);
-                if (result != null) {
-                    put(queue, result);
-                }
+            tasks.add(() -> {
+                IntStream.range(sourceId + 1, length).forEach(otherId -> {
+                    JaccardResult result = calculateJaccard(similarityCutoff, ids[sourceId], ids[otherId]);
+                    if (result != null) {
+                        put(queue, result);
+                    }
+                });
             });
         });
 
 
         new Thread(() -> {
             ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
-            put(queue,TOMB);
+            put(queue, TOMB);
         }).start();
 
         QueueBasedSpliterator<JaccardResult> spliterator = new QueueBasedSpliterator<>(queue, TOMB, terminationFlag, timeout);
         return StreamSupport.stream(spliterator, false);
     }
+
     private static <T> void put(BlockingQueue<T> queue, T items) {
         try {
             queue.put(items);
@@ -141,7 +150,7 @@ public class JaccardProc {
         public final long intersection;
         public final double jaccard;
 
-        public static JaccardResult TOMB = new JaccardResult(-1,-1,-1,-1,-1, -1);
+        public static JaccardResult TOMB = new JaccardResult(-1, -1, -1, -1, -1, -1);
 
         public JaccardResult(long source1, long source2, long count1, long count2, long intersection, double jaccard) {
             this.source1 = source1;
