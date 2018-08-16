@@ -1,6 +1,8 @@
 package org.neo4j.graphalgo;
 
 import com.carrotsearch.hppc.LongHashSet;
+import org.HdrHistogram.DoubleHistogram;
+import org.HdrHistogram.Histogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -18,6 +20,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Arrays.asList;
+
 public class JaccardProc {
 
     @Context
@@ -32,10 +36,9 @@ public class JaccardProc {
     @Procedure(name = "algo.jaccard.stream", mode = Mode.READ)
     @Description("CALL algo.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD source1, source2, count1, count2, intersection, jaccard - computes jaccard similarities")
-    public Stream<JaccardResult> jaccard(
+    public Stream<JaccardResult> jaccardStream(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
 
@@ -50,12 +53,50 @@ public class JaccardProc {
 
         int concurrency = configuration.getConcurrency();
 
+        return jaccardStreamMe(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+    }
+
+    private Histogram values = new Histogram(3);
+    private DoubleHistogram doubles;
+    private List<Double> percentiles = asList(0.5D,0.75D,0.9D,0.95D,0.9D,0.99D);
+
+    @Procedure(name = "algo.jaccard", mode = Mode.READ)
+    @Description("CALL algo.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+            "YIELD source1, source2, count1, count2, intersection, jaccard - computes jaccard similarities")
+    public Stream<JaccardSummaryResult> jaccard(
+            @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+
+        double similarityCutoff = ((Number) config.getOrDefault("similarityCutoff", -1D)).doubleValue();
+        long degreeCutoff = ((Number) config.getOrDefault("degreeCutoff", 0L)).longValue();
+
+        InputData[] ids = fillIds(data, degreeCutoff);
+        int length = ids.length;
+        Stream<Integer> sourceIds = IntStream.range(0, length).parallel().boxed();
+
+        TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
+
+        int concurrency = configuration.getConcurrency();
+
+        DoubleHistogram histogram = new DoubleHistogram(5);
+
+        Stream<JaccardResult> stream = jaccardStreamMe(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+
+        stream.forEach(result -> {
+
+        });
+
+        return stream;
+    }
+
+    private Stream<JaccardResult> jaccardStreamMe(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds, TerminationFlag terminationFlag, int concurrency) {
         if (concurrency == 1) {
             return jaccardStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
         } else {
             return jaccardParallelStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
         }
-
     }
 
     private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIdStream, TerminationFlag terminationFlag, int concurrency) {
@@ -140,6 +181,10 @@ public class JaccardProc {
         if (idx != ids.length) ids = Arrays.copyOf(ids, idx);
         Arrays.sort(ids);
         return ids;
+    }
+
+    public static class JaccardSummaryResult {
+
     }
 
     public static class JaccardResult {
