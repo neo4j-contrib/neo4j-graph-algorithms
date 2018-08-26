@@ -69,7 +69,7 @@ public class JaccardTest {
 
 
     @Test
-    public void simpleJaccardTest() {
+    public void simpleJaccardStreamingTest() {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
@@ -106,4 +106,19 @@ public class JaccardTest {
         assertEquals(0D, row.get("jaccard"));
         count++;
         assertEquals(3, count);
-    }}
+    }
+
+    @Test
+    public void simpleJaccardTest() {
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "CALL algo.jaccard(data, {similarityCutoff: 0.0}) yield percentile50, percentile75, percentile90, percentile99, nodes, similarityPairs RETURN *";
+
+
+        Result results = db.execute(query);
+        Map<String, Object> row = results.next();
+        System.out.println("row = " + row);
+
+    }
+}

@@ -2,7 +2,6 @@ package org.neo4j.graphalgo;
 
 import com.carrotsearch.hppc.LongHashSet;
 import org.HdrHistogram.DoubleHistogram;
-import org.HdrHistogram.Histogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -16,11 +15,10 @@ import org.neo4j.procedure.*;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static java.util.Arrays.asList;
 
 public class JaccardProc {
 
@@ -47,18 +45,28 @@ public class JaccardProc {
 
         InputData[] ids = fillIds(data, degreeCutoff);
         int length = ids.length;
-        Stream<Integer> sourceIds = IntStream.range(0, length).parallel().boxed();
+        IntStream sourceIds = IntStream.range(0, length);
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         int concurrency = configuration.getConcurrency();
 
-        return jaccardStreamMe(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+        return jaccardStreamMe(ids, length, sourceIds, terminationFlag, concurrency, similarityCutOff(similarityCutoff));
     }
 
-    private Histogram values = new Histogram(3);
-    private DoubleHistogram doubles;
-    private List<Double> percentiles = asList(0.5D,0.75D,0.9D,0.95D,0.9D,0.99D);
+    private SimilarityCutoff similarityCutOff(double similarityCutoff) {
+        return new SimilarityCutoff() {
+            @Override
+            public boolean checkOne() {
+                return similarityCutoff >= 0d;
+            }
+
+            @Override
+            public boolean checkTwo(double jaccard) {
+                return jaccard < similarityCutoff;
+            }
+        };
+    }
 
     @Procedure(name = "algo.jaccard", mode = Mode.READ)
     @Description("CALL algo.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
@@ -68,13 +76,12 @@ public class JaccardProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-
         double similarityCutoff = ((Number) config.getOrDefault("similarityCutoff", -1D)).doubleValue();
         long degreeCutoff = ((Number) config.getOrDefault("degreeCutoff", 0L)).longValue();
 
         InputData[] ids = fillIds(data, degreeCutoff);
-        int length = ids.length;
-        Stream<Integer> sourceIds = IntStream.range(0, length).parallel().boxed();
+        long length = ids.length;
+        IntStream sourceIds = IntStream.range(0, (int) length);
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
@@ -82,58 +89,84 @@ public class JaccardProc {
 
         DoubleHistogram histogram = new DoubleHistogram(5);
 
-        Stream<JaccardResult> stream = jaccardStreamMe(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+        Stream<JaccardResult> stream = jaccardStreamMe(ids, (int) length, sourceIds, terminationFlag, concurrency, similarityCutOff(similarityCutoff));
 
+        AtomicLong similarityPairs = new AtomicLong();
         stream.forEach(result -> {
-
+            try {
+                histogram.recordValue(result.jaccard);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+            similarityPairs.getAndIncrement();
         });
 
-        return stream;
+        return Stream.of(new JaccardSummaryResult(
+                length,
+                similarityPairs.get(),
+                histogram.getValueAtPercentile(50),
+                histogram.getValueAtPercentile(75),
+                histogram.getValueAtPercentile(90),
+                histogram.getValueAtPercentile(99)
+        ));
     }
 
-    private Stream<JaccardResult> jaccardStreamMe(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIds, TerminationFlag terminationFlag, int concurrency) {
+    private Stream<JaccardResult> jaccardStreamMe(InputData[] ids, int length, IntStream sourceIds, TerminationFlag terminationFlag, int concurrency, SimilarityCutoff cutoffFn) {
         if (concurrency == 1) {
-            return jaccardStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+            return jaccardStream(ids, length, sourceIds, terminationFlag, concurrency, cutoffFn);
         } else {
-            return jaccardParallelStream(similarityCutoff, ids, length, sourceIds, terminationFlag, concurrency);
+            return jaccardParallelStream(ids, length, sourceIds, terminationFlag, concurrency, cutoffFn);
         }
     }
 
-    private Stream<JaccardResult> jaccardStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIdStream, TerminationFlag terminationFlag, int concurrency) {
+    private Stream<JaccardResult> jaccardStream(InputData[] ids, int length, IntStream sourceIdStream, TerminationFlag terminationFlag, int concurrency, SimilarityCutoff cutoffFn) {
         return sourceIdStream
-                .flatMap(idx1 -> IntStream.range(idx1 + 1, length)
-                        .mapToObj(idx2 -> calculateJaccard(similarityCutoff, ids[idx1], ids[idx2])).filter(Objects::nonNull));
+                .boxed().flatMap(idx1 -> IntStream.range(idx1 + 1, length)
+                        .mapToObj(idx2 -> calculateJaccard(ids[idx1], ids[idx2], cutoffFn)).filter(Objects::nonNull));
     }
 
-    private Stream<JaccardResult> jaccardParallelStream(double similarityCutoff, InputData[] ids, int length, Stream<Integer> sourceIdStream, TerminationFlag terminationFlag, int concurrency) {
+    private Stream<JaccardResult> jaccardParallelStream(InputData[] ids, int length, IntStream sourceIdStream, TerminationFlag terminationFlag, int concurrency, SimilarityCutoff cutoffFn) {
 
         int timeout = 100;
         int queueSize = 1000;
 
         int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 100);
-        Collection<Runnable> tasks = new ArrayList<>((length / batchSize) + 1);
+        int taskCount = (length / batchSize) + 1;
+        Collection<Runnable> tasks = new ArrayList<>(taskCount);
 
         ArrayBlockingQueue<JaccardResult> queue = new ArrayBlockingQueue<>(queueSize);
-        JaccardResult TOMB = JaccardResult.TOMB;
 
-        sourceIdStream.forEach(sourceId -> {
+        int[] sourceIds = sourceIdStream.toArray();
+        int multiplier = batchSize < length ? batchSize : 1;
+        for (int task = 0; task < taskCount; task++) {
+            int taskOffset = task;
             tasks.add(() -> {
-                IntStream.range(sourceId + 1, length).forEach(otherId -> {
-                    JaccardResult result = calculateJaccard(similarityCutoff, ids[sourceId], ids[otherId]);
-                    if (result != null) {
-                        put(queue, result);
+                IntStream.range(0,batchSize).forEach(offset -> {
+                    int sourceId = offset * multiplier + taskOffset;
+                    if (sourceId < length) {
+                        IntStream.range(sourceId + 1, length).forEach(otherId -> {
+                            JaccardResult result = calculateJaccard(ids[sourceId], ids[otherId], cutoffFn);
+                            if (result != null) {
+                                put(queue, result);
+                            }
+                        });
                     }
                 });
             });
-        });
+        }
 
 
         new Thread(() -> {
-            ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
-            put(queue, TOMB);
+            try {
+                ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
+            } catch(Exception e) {
+                e.printStackTrace();
+            } finally {
+                put(queue, JaccardResult.TOMB);
+            }
         }).start();
 
-        QueueBasedSpliterator<JaccardResult> spliterator = new QueueBasedSpliterator<>(queue, TOMB, terminationFlag, timeout);
+        QueueBasedSpliterator<JaccardResult> spliterator = new QueueBasedSpliterator<>(queue, JaccardResult.TOMB, terminationFlag, timeout);
         return StreamSupport.stream(spliterator, false);
     }
 
@@ -145,8 +178,8 @@ public class JaccardProc {
         }
     }
 
-    private JaccardResult calculateJaccard(double similarityCutoff, InputData e1, InputData e2) {
-        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, similarityCutoff);
+    private JaccardResult calculateJaccard(InputData e1, InputData e2, SimilarityCutoff cutoffFun) {
+        return JaccardResult.of(e1.id, e2.id, e1.targets, e2.targets, cutoffFun);
     }
 
     private static class InputData implements Comparable<InputData> {
@@ -185,6 +218,26 @@ public class JaccardProc {
 
     public static class JaccardSummaryResult {
 
+        public final Long nodes;
+        public final Long similarityPairs;
+        public final Double percentile50;
+        public final double percentile75;
+        public final double percentile90;
+        public final Double percentile99;
+
+        public JaccardSummaryResult(long nodes, long similarityPairs, double percentile50, double percentile75, double percentile90, Double percentile99) {
+            this.nodes = nodes;
+            this.similarityPairs = similarityPairs;
+            this.percentile50 = percentile50;
+            this.percentile75 = percentile75;
+            this.percentile90 = percentile90;
+            this.percentile99 = percentile99;
+        }
+    }
+
+    interface SimilarityCutoff {
+        boolean checkOne();
+        boolean checkTwo(double jaccard);
     }
 
     public static class JaccardResult {
@@ -206,10 +259,10 @@ public class JaccardProc {
             this.jaccard = jaccard;
         }
 
-        public static JaccardResult of(long source1, long source2, LongHashSet targets1, LongHashSet targets2, double similiarityCutoff) {
+        public static JaccardResult of(long source1, long source2, LongHashSet targets1, LongHashSet targets2, SimilarityCutoff cutoffFn) {
             long intersection = calculateIntersection(targets1, targets2);
 
-            if (similiarityCutoff >= 0d && intersection == 0) {
+            if (cutoffFn.checkOne() && intersection == 0) {
                 return null;
             }
 
@@ -219,7 +272,7 @@ public class JaccardProc {
 
             double jaccard = denominator == 0 ? 0 : (double) intersection / denominator;
 
-            if (jaccard < similiarityCutoff) {
+            if (cutoffFn.checkTwo(jaccard)) {
                 return null;
             }
 
