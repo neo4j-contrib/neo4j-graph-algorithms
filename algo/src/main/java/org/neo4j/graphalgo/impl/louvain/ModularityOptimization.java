@@ -147,6 +147,8 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         m = m2 / 2;
         m22 = Math.pow(m2, 2.0);
         Arrays.setAll(communities, i -> i);
+        System.out.println("m = " + m);
+        System.out.println("ki = " + Arrays.toString(ki));
     }
 
     /**
@@ -179,6 +181,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             }
             // save current modularity
             this.q = candidate.q;
+            System.out.println("q = " + q);
             // sync all tasks with the best candidate for the next round
             sync(candidate, tasks);
         }

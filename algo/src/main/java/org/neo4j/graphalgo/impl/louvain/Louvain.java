@@ -93,7 +93,7 @@ public class Louvain extends Algorithm<Louvain> {
      */
     private Graph rebuildGraph(Graph graph, int[] communityIds) {
 
-        Arrays.fill(nodeWeights, .0);
+        Arrays.fill(nodeWeights, 1.0);
 
         // count and normalize community structure
         final int nodeCount = communityIds.length;
@@ -110,9 +110,9 @@ public class Louvain extends Algorithm<Louvain> {
                 // mapping
                 final int target = communityIds[t];
                 final double value = graph.weightOf(s, t);
-                if (source == target) {
-                    nodeWeights[source] += value;
-                }
+//                if (source == target) {
+//                    nodeWeights[source] += value;
+//                }
                 // add IN and OUT relation
                 computeIfAbsent(relationships, target).add(source);
                 computeIfAbsent(relationships, source).add(target);
