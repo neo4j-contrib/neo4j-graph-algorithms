@@ -15,10 +15,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Modularity based clustering algorithm. Uses {@link ModularityOptimization} algorithm
- * to perform optimization. if a better community structure has been found it is taken as
- * input for the next round. the algorithm creates a virtual graph based on the previous
- * community structure.
  *
  * @author mknblch
  */
