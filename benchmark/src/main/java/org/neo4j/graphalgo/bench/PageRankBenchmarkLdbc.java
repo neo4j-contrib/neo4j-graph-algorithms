@@ -85,6 +85,7 @@ public class PageRankBenchmarkLdbc {
         Pools.DEFAULT.shutdownNow();
     }
 
+    /*
     @Benchmark
     public PageRankResult run() throws Exception {
         return PageRankAlgorithm.of(
@@ -96,4 +97,5 @@ public class PageRankBenchmarkLdbc {
                 .compute(iterations)
                 .result();
     }
+    */
 }

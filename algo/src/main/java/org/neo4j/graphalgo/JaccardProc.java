@@ -55,9 +55,9 @@ public class JaccardProc {
 
     private static class InputData implements  Comparable<InputData> {
         long id;
-        LongHashSet targets;
+        long[] targets;
 
-        public InputData(long id, LongHashSet targets) {
+        public InputData(long id, long[] targets) {
             this.id = id;
             this.targets = targets;
         }
@@ -75,10 +75,12 @@ public class JaccardProc {
             List<Long> targetIds = (List<Long>) row.get("targets");
             int size = targetIds.size();
             if ( size > degreeCutoff) {
-                LongHashSet targets = new LongHashSet();
+                long[] targets = new long[size];
+                int i=0;
                 for (Long id : targetIds) {
-                    targets.add(id);
+                    targets[i++]=id;
                 }
+                Arrays.sort(targets);
                 ids[idx++] = new InputData((Long) row.get("source"), targets);
             }
         }
@@ -104,17 +106,75 @@ public class JaccardProc {
             this.jaccard = jaccard;
         }
 
-        public static JaccardResult of(long source1, long source2, LongHashSet targets1, LongHashSet targets2, double similiarityCutoff) {
-            LongHashSet intersectionSet = new LongHashSet(targets1);
-            intersectionSet.retainAll(targets2);
-            long intersection = intersectionSet.size();
+        public static JaccardResult of(long source1, long source2, long[] targets1, long[] targets2, double similiarityCutoff) {
+            long intersection = intersection3(targets1,targets2);
             if (similiarityCutoff >= 0d && intersection == 0) return null;
-            int count1 = targets1.size();
-            int count2 = targets2.size();
+            int count1 = targets1.length;
+            int count2 = targets2.length;
             long denominator = count1 + count2 - intersection;
             double jaccard = denominator == 0 ? 0 : (double)intersection / denominator;
             if (jaccard < similiarityCutoff) return null;
             return new JaccardResult(source1, source2, count1, count2, intersection, jaccard);
         }
     }
+
+
+    public static long intersection(LongHashSet targets1, LongHashSet targets2) {
+        LongHashSet intersectionSet = new LongHashSet(targets1);
+        intersectionSet.retainAll(targets2);
+        return intersectionSet.size();
+    }
+    public static long intersection2(long[] targets1, long[] targets2) {
+        LongHashSet intersectionSet = LongHashSet.from(targets1);
+        intersectionSet.retainAll(LongHashSet.from(targets2));
+        return intersectionSet.size();
+    }
+
+    // assume both are sorted
+    public static long intersection3(long[] targets1, long[] targets2) {
+        int len2;
+        if ((len2 = targets2.length) == 0) return 0;
+        int off2 = 0;
+        long intersection = 0;
+        for (long value1 : targets1) {
+            if (value1 > targets2[off2]) {
+                while (++off2 != len2 && value1 > targets2[off2]);
+                if (off2 == len2) return intersection;
+            }
+            if (value1 == targets2[off2]) {
+                intersection++;
+                off2++;
+                if (off2 == len2) return intersection;
+            }
+        }
+        return intersection;
+    }
+
+    // idea, compute differences, when 0 then equal?
+    // assume both are sorted
+    public static long intersection4(long[] targets1, long[] targets2) {
+        if (targets2.length == 0) return 0;
+        int off2 = 0;
+        long intersection = 0;
+        for (int off1 = 0; off1 < targets1.length; off1++) {
+            if (off2 == targets2.length) return intersection;
+            long value1 = targets1[off1];
+
+            if (value1 > targets2[off2]) {
+                for (;off2 < targets2.length;off2++) {
+                    if (value1 <= targets2[off2]) break;
+                }
+                // while (++off2 != targets2.length && value1 > targets2[off2]);
+                if (off2 == targets2.length) return intersection;
+            }
+            if (value1 == targets2[off2]) {
+                intersection++;
+                off2++;
+            }
+        }
+        return intersection;
+    }
+
+    // roaring bitset
+    // test with JMH
 }
