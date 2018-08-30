@@ -27,20 +27,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
-import org.neo4j.graphalgo.impl.louvain.HugeParallelLouvain;
-import org.neo4j.graphalgo.impl.louvain.Louvain;
-import org.neo4j.graphalgo.impl.louvain.LouvainAlgorithm;
-import org.neo4j.graphalgo.impl.louvain.ParallelLouvain;
-import org.neo4j.graphalgo.impl.louvain.WeightedLouvain;
+import org.neo4j.graphalgo.impl.louvain.*;
 import org.neo4j.graphalgo.TestProgressLogger;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
@@ -59,7 +53,7 @@ import static org.junit.Assume.assumeTrue;
  *  @author mknblch
  */
 @RunWith(Parameterized.class)
-public class LouvainTest {
+public class LouvainWeightedGraphTest {
 
     private static final String unidirectional =
             "CREATE (a:Node {name:'a'})\n" +
@@ -86,7 +80,7 @@ public class LouvainTest {
                     " (f)-[:TYPE]->(g),\n" +
                     " (g)-[:TYPE]->(h),\n" +
 
-                    " (e)-[:TYPE {w:5}]->(b)";
+                    " (e)-[:TYPE {w:4}]->(b)";
 
 
     private static final int MAX_ITERATIONS = 10;
@@ -103,7 +97,7 @@ public class LouvainTest {
     private Graph graph;
     private final Map<String, Integer> nameMap;
 
-    public LouvainTest(
+    public LouvainWeightedGraphTest(
             Class<? extends GraphFactory> graphImpl,
             String name) {
         this.graphImpl = graphImpl;
@@ -124,8 +118,7 @@ public class LouvainTest {
                 .withAnyRelationshipType()
                 .withAnyLabel()
                 .withoutNodeProperties()
-                .withRelationshipWeightsFromProperty("w", 1.0)
-                .withDirection(Direction.BOTH)
+                .withOptionalRelationshipWeightsFromProperty("w", 1.0)
                 .asUndirected(true)
                 .load(graphImpl);
 
@@ -139,7 +132,7 @@ public class LouvainTest {
         }
     }
 
-    public void printCommunities(LouvainAlgorithm louvain) {
+    public void printCommunities(Louvain louvain) {
         try (Transaction transaction = DB.beginTx()) {
             louvain.resultStream()
                     .forEach(r -> {
@@ -150,70 +143,31 @@ public class LouvainTest {
     }
 
     @Test
-    public void testWeightedSequential() throws Exception {
-        setup(unidirectional);
-        final LouvainAlgorithm louvain = new WeightedLouvain(graph, Pools.DEFAULT, 1, MAX_ITERATIONS)
-                .compute();
-
-        printCommunities(louvain);
-        System.out.println("louvain.getRuns() = " + louvain.getIterations());
-        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
-        assertWeightedCommunities(louvain);
-        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
-    }
-
-    @Test
     public void testWeightedLouvain() throws Exception {
         setup(unidirectional);
-        final LouvainAlgorithm louvain =
-                new Louvain(graph, 100, Pools.DEFAULT, 3, AllocationTracker.EMPTY)
+        final Louvain louvain =
+                new Louvain(graph,Pools.DEFAULT, 1, AllocationTracker.EMPTY)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
-                .compute();
+                .compute(10, 10);
 
+        final int[][] dendogram = louvain.getDendrogram();
+        for (int i = 0; i < dendogram.length; i++) {
+            if (null == dendogram[i]) {
+                break;
+            }
+            System.out.println("level " + i + ": " + Arrays.toString(dendogram[i]));
+        }
         printCommunities(louvain);
-        System.out.println("louvain.getRuns() = " + louvain.getIterations());
-        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
-        assertWeightedCommunities(louvain);
-        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
-    }
-
-    @Test
-    public void testUnweightedSequential() throws Exception {
-        assumeTrue(graph instanceof HugeGraph);
-        setup(unidirectional);
-        final LouvainAlgorithm louvain = new HugeParallelLouvain((HugeGraph) graph, Pools.DEFAULT, AllocationTracker.EMPTY,1, MAX_ITERATIONS)
-                .compute();
-
-        printCommunities(louvain);
-        System.out.println("louvain.getRuns() = " + louvain.getIterations());
+        System.out.println("louvain.getRuns() = " + louvain.getLevel());
         System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
         assertCommunities(louvain);
-        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
+        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getLevel() < MAX_ITERATIONS);
     }
 
-    @Test
-    public void testUnweightedParallel() throws Exception {
-        setup(unidirectional);
-        final LouvainAlgorithm louvain = new ParallelLouvain(graph, graph, graph, Pools.DEFAULT,Pools.DEFAULT_CONCURRENCY, MAX_ITERATIONS)
-                .compute();
-
-        printCommunities(louvain);
-        System.out.println("louvain.getRuns() = " + louvain.getIterations());
-        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
-        assertCommunities(louvain);
-        assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getIterations() < MAX_ITERATIONS);
-    }
-
-    public void assertCommunities(LouvainAlgorithm louvain) {
-        // TODO should b & e build its own set or belong to either a or f
+    public void assertCommunities(Louvain louvain) {
         assertUnion(new String[]{"a", "c", "d"}, louvain.getCommunityIds());
         assertUnion(new String[]{"f", "g", "h"}, louvain.getCommunityIds());
         assertDisjoint(new String[]{"a", "f", "z"}, louvain.getCommunityIds());
-    }
-
-    public void assertWeightedCommunities(LouvainAlgorithm louvain) {
-        assertCommunities(louvain);
-        // TODO should b & e build its own set or belong to either a or f
         assertUnion(new String[]{"b", "e"}, louvain.getCommunityIds());
     }
 
@@ -247,9 +201,7 @@ public class LouvainTest {
             final HugeLongArray array = (HugeLongArray) communityIds;
             final long size = array.size();
             final int[] data = new int[Math.toIntExact(size)];
-            for (int i = 0; i < size; i++) {
-                data[i] = Math.toIntExact(array.get(i));
-            }
+            Arrays.setAll(data, i -> Math.toIntExact(array.get(i)));
             return data;
         }
         return (int[]) communityIds;

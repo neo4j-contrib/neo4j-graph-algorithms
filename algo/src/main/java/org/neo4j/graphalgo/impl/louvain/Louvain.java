@@ -1,376 +1,265 @@
-/**
- * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
- * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
- * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package org.neo4j.graphalgo.impl.louvain;
 
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.IntObjectScatterMap;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.NodeIterator;
-import org.neo4j.graphalgo.core.sources.ShuffledNodeIterator;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.Pointer;
+import org.neo4j.graphalgo.api.NodeWeights;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.RawValues;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphdb.Direction;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * sequential weighted undirected modularity based localCommunities detection
- * (first phase of louvain algo)
+ * Louvain Clustering Algorithm.
+ * <p>
+ * The algo performs modularity optimization as long as the
+ * modularity keeps incrementing. Every optimization step leads
+ * to an array of length nodeCount containing the nodeId->community mapping.
+ * <p>
+ * After each step a new graph gets built from the actual community mapping
+ * and is used as input for the next step.
  *
  * @author mknblch
  */
-public class Louvain extends Algorithm<Louvain> implements LouvainAlgorithm {
+public class Louvain extends Algorithm<Louvain> {
 
-    /**
-     * only outgoing directions are visited since the graph itself has to
-     * be loaded as undirected.
-     */
-    private static final Direction D = Direction.OUTGOING;
-    private static final int NONE = -1;
-    private static final double MINIMUM_MODULARITY = Double.NEGATIVE_INFINITY; // -1.0;
-
-    private Graph graph;
-    private ExecutorService pool;
-    private NodeIterator nodeIterator;
-    private final int nodeCount;
-    private final int maxIterations;
+    private final int rootNodeCount;
+    private int level;
+    private final ExecutorService pool;
     private final int concurrency;
     private final AllocationTracker tracker;
-    private double m, m2;
+    private ProgressLogger progressLogger;
+    private TerminationFlag terminationFlag;
     private int[] communities;
-    private double[] ki;
-    private int iterations;
-    private double q = MINIMUM_MODULARITY;
-    private AtomicInteger counter = new AtomicInteger(0);
+    private int[][] dendrogram;
+    private double[] nodeWeights;
+    private Graph root;
+    private int communityCount = 0;
 
-    public Louvain(Graph graph, int maxIterations, ExecutorService pool, int concurrency, AllocationTracker tracker) {
-        this.graph = graph;
-        nodeCount = Math.toIntExact(graph.nodeCount());
-        this.maxIterations = maxIterations;
+    public Louvain(Graph graph,
+                   ExecutorService pool,
+                   int concurrency,
+                   AllocationTracker tracker) {
+        this.root = graph;
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeIterator = new ShuffledNodeIterator(nodeCount);
-        ki = new double[nodeCount];
-        communities = new int[nodeCount];
-        // (1x double + 1x int) * N
-        tracker.add(12 * nodeCount);
-    }
-
-    /**
-     * init ki, sTot & m
-     */
-    private void init() {
-        final ProgressLogger progressLogger = getProgressLogger();
-        for (int node = 0; node < nodeCount; node++) {
-            graph.forEachRelationship(node, D, (s, t, r) -> {
-                final double w = graph.weightOf(s, t);
-                m += w;
-                ki[s] += w;
-                ki[t] += w;
-                return true;
-            });
-            progressLogger.logProgress(node, nodeCount, () -> "Init");
-        }
-        m2 = 2 * m;
+        rootNodeCount = Math.toIntExact(graph.nodeCount());
+        communities = new int[rootNodeCount];
+        nodeWeights = new double[rootNodeCount];
+        tracker.add(4 * rootNodeCount);
+        communityCount = rootNodeCount;
         Arrays.setAll(communities, i -> i);
-        progressLogger.logDone(() -> "Init complete");
     }
 
-    /**
-     * compute first phase louvain
-     * @return
-     */
-    public Louvain compute() {
-        // init helper values & initial community structure
-        init();
-        final ProgressLogger progressLogger = getProgressLogger();
-        // create an array of tasks for parallel exec
-        final ArrayList<Task> tasks = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
-            tasks.add(new Task());
-        }
-        // (2x double + 1x int) * N * threads
-        tracker.add(20 * nodeCount * concurrency);
-        // as long as maxIterations is not reached
-        for (iterations = 0; iterations < maxIterations; iterations++) {
-            // reset node counter (for logging)
-            counter.set(0);
-            // run all tasks
-            ParallelUtil.runWithConcurrency(concurrency, tasks, pool);
-            // take the best candidate
-            Task candidate = best(tasks);
-            if (null == candidate || candidate.q <= this.q) {
-                // best candidate's modularity did not improve
+    public Louvain compute(int maxLevel, int maxIterations) {
+        // temporary graph
+        Graph graph = this.root;
+        // result arrays
+        dendrogram = new int[maxLevel][];
+        int nodeCount = rootNodeCount;
+        for (level = 0; level < maxLevel; level++) {
+            // start modularity opzimization
+            final ModularityOptimization modularityOptimization =
+                    new ModularityOptimization(graph,
+                            nodeId -> nodeWeights[nodeId], // TODO feels hacky
+                            pool,
+                            concurrency,
+                            tracker)
+                            .withProgressLogger(progressLogger)
+                            .withTerminationFlag(terminationFlag)
+                            .compute(maxIterations);
+            // rebuild graph based on the community structure
+            final int[] communityIds = modularityOptimization.getCommunityIds();
+            communityCount = ModularityOptimization.normalize(communityIds);
+            // release the old algo instance
+            modularityOptimization.release();
+            progressLogger.log(
+                    "level: " + (level + 1) +
+                            " communities: " + communityCount +
+                            " q: " + modularityOptimization.getModularity());
+            if (communityCount >= nodeCount) {
                 break;
             }
-            // memorize current modularity
-            this.q = candidate.q;
-            // sync all tasks with the best candidate for the next round
-            sync(candidate, tasks);
-            progressLogger.logDone(() -> String.format("Iteration %d led to a modularity %.4f", iterations, q));
+            nodeCount = communityCount;
+            dendrogram[level] = rebuildCommunityStructure(communityIds);
+            graph = rebuildGraph(graph, communityIds, communityCount);
         }
-        tracker.remove(20 * nodeCount * concurrency);
-        progressLogger.logDone(() -> String.format("Done in %d iterations with Q=%.5f)", iterations, q));
+        dendrogram = Arrays.copyOf(dendrogram, level);
         return this;
     }
 
     /**
-     * get the task with the best community distribution
-     * (highest modularity value) of an array of tasks
+     * create a virtual graph based on the community structure of the
+     * previous louvain round
      *
-     * @return best task
+     * @param graph        previous graph
+     * @param communityIds community structure
+     * @return a new graph built from a community structure
      */
-    private static Task best(Collection<Task> tasks) {
-        Task best = null;
-        double q = MINIMUM_MODULARITY;
-        for (Task task : tasks) {
-            final double modularity = task.getModularity();
-            if (modularity > q) {
-                q = modularity;
-                best = task;
-            }
+    private Graph rebuildGraph(Graph graph, int[] communityIds, int communityCount) {
+        // count and normalize community structure
+        final int nodeCount = communityIds.length;
+        // bag of nodeId->{nodeId, ..}
+        final IntObjectMap<IntScatterSet> relationships = new IntObjectScatterMap<>(nodeCount);
+        // accumulated weights
+        final LongDoubleScatterMap relationshipWeights = new LongDoubleScatterMap(nodeCount);
+        // for each node in the current graph
+        for (int i = 0; i < nodeCount; i++) {
+            // map node nodeId to community nodeId
+            final int source = communityIds[i];
+            // get transitions from current node
+            graph.forEachOutgoing(i, (s, t, r) -> {
+                // mapping
+                final int target = communityIds[t];
+                final double value = graph.weightOf(s, t);
+                if (source == target) {
+                    nodeWeights[source] += value;
+                }
+                // add IN and OUT relation
+                computeIfAbsent(relationships, target).add(source);
+                computeIfAbsent(relationships, source).add(target);
+                relationshipWeights.addTo(RawValues.combineIntInt(source, target), value / 2); // TODO validate
+                relationshipWeights.addTo(RawValues.combineIntInt(target, source), value / 2);
+                return true;
+            });
         }
-        return best;
+
+        // create temporary graph
+        return new LouvainGraph(communityCount, relationships, relationshipWeights);
     }
 
-    /**
-     * sync parent Task with all other task except itself and
-     * copy community structure to global community structure
-     */
-    private void sync(Task parent, Collection<Task> tasks) {
-        for (Task task : tasks) {
-            if (task == parent) {
-                continue;
-            }
-            task.sync(parent);
-        }
-        System.arraycopy(parent.localCommunities, 0, communities, 0, nodeCount);
-    }
-
-    /**
-     * get communities
-     * @return node-id to localCommunities id mapping
-     */
-    @Override
-    public int[] getCommunityIds() {
+    private int[] rebuildCommunityStructure(int[] communityIds) {
+        // rebuild community array
+        final int[] ints = new int[rootNodeCount];
+        Arrays.setAll(ints, i -> communityIds[communities[i]]);
+        communities = ints;
         return communities;
     }
 
     /**
-     * number of iterations
-     * @return number of iterations
+     * nodeId to community mapping array
+     *
+     * @return
      */
-    @Override
-    public int getIterations() {
-        return iterations;
+    public int[] getCommunityIds() {
+        return communities;
+    }
+
+    public int[] getCommunityIds(int level) {
+        return dendrogram[level];
+    }
+
+    public int[][] getDendrogram() {
+        return dendrogram;
     }
 
     /**
-     * calculate number of communities
-     * @return community count
+     * number of outer iterations
+     *
+     * @return
      */
-    @Override
+    public int getLevel() {
+        return level;
+    }
+
+    /**
+     * number of distinct communities
+     *
+     * @return
+     */
     public long getCommunityCount() {
-        final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
-        for (int i = 0; i < nodeCount; i++) {
-            bitSet.put(communities[i]);
-        }
-        return bitSet.size();
+        return communityCount;
     }
 
     /**
-     * return a stream of nodeId-CommunityId tuples
-     * @return result tuple stream
+     * result stream
+     *
+     * @return
      */
-    @Override
     public Stream<Result> resultStream() {
-        return IntStream.range(0, nodeCount)
-                .mapToObj(i -> new Result(graph.toOriginalNodeId(i), communities[i]));
+        return IntStream.range(0, rootNodeCount)
+                .mapToObj(i -> new Result(i, communities[i]));
     }
 
-    /**
-     * @return this
-     */
+    public Stream<StreamingResult> dendrogramStream() {
+        return IntStream.range(0, rootNodeCount)
+                .mapToObj(i -> {
+                    List<Long> communities = new ArrayList<>(dendrogram.length);
+                    for (int[] community : dendrogram) {
+                        communities.add((long) community[i]);
+                    }
+
+                    return new StreamingResult(root.toOriginalNodeId(i), communities);
+                });
+    }
+
     @Override
     public Louvain me() {
         return this;
     }
 
-    /**
-     * release structures
-     * @return this
-     */
     @Override
     public Louvain release() {
-        this.graph = null;
-        this.pool = null;
-        this.communities = null;
-        this.ki = null;
-        tracker.remove(12 * nodeCount);
+        tracker.add(4 * rootNodeCount);
+        communities = null;
         return this;
     }
 
+    @Override
+    public Louvain withProgressLogger(ProgressLogger progressLogger) {
+        this.progressLogger = progressLogger;
+        return this;
+    }
+
+    @Override
+    public Louvain withTerminationFlag(TerminationFlag terminationFlag) {
+        this.terminationFlag = terminationFlag;
+        return this;
+    }
+
+    private static IntScatterSet computeIfAbsent(IntObjectMap<IntScatterSet> relationships, int n) {
+        final IntScatterSet intCursors = relationships.get(n);
+        if (null == intCursors) {
+            final IntScatterSet newList = new IntScatterSet();
+            relationships.put(n, newList);
+            return newList;
+        }
+        return intCursors;
+    }
+
     /**
-     * Restartable task to perform modularity optimization
+     * result object
      */
-    private class Task implements Runnable {
+    public static final class Result {
 
-        private final double[] sTot, sIn;
-        private final int[] localCommunities;
-        private double bestGain, bestWeight;
-        private int bestCommunity;
-        private double q = MINIMUM_MODULARITY;
+        public final long nodeId;
+        public final long community;
 
-        /**
-         * at creation the task copies the community-structure
-         * and initializes its helper arrays
-         */
-        public Task() {
-            sTot = new double[nodeCount];
-            sIn = new double[nodeCount];
-            localCommunities = new int[nodeCount];
-            System.arraycopy(ki, 0, sTot, 0, nodeCount);
-            System.arraycopy(communities, 0, localCommunities, 0, nodeCount);
-            Arrays.fill(sIn, 0.);
+        public Result(long id, long community) {
+            this.nodeId = id;
+            this.community = community;
         }
+    }
 
-        /**
-         * copy community structure and helper arrays from parent
-         * task into this task
-         */
-        public void sync(Task parent) {
-            System.arraycopy(parent.localCommunities, 0, localCommunities, 0, nodeCount);
-            System.arraycopy(parent.sTot, 0, sTot, 0, nodeCount);
-            System.arraycopy(parent.sIn, 0, sIn, 0, nodeCount);
+    public static final class StreamingResult {
+        public final long nodeId;
+        public final List<Long> communities;
+
+        public StreamingResult(long nodeId, List<Long> communities) {
+
+            this.nodeId = nodeId;
+            this.communities = communities;
         }
-
-        @Override
-        public void run() {
-            final ProgressLogger progressLogger = getProgressLogger();
-            final Pointer.BoolPointer improvement = Pointer.wrap(false);
-            final int denominator = nodeCount * concurrency;
-            nodeIterator.forEachNode(node -> {
-                improvement.v |= move(node);
-                progressLogger.logProgress(
-                        counter.getAndIncrement(),
-                        denominator,
-                        () -> String.format("Iteration %d", iterations));
-                return true;
-            });
-            if (improvement.v) {
-                this.q = modularity();
-            }
-        }
-
-        /**
-         * get the graph modularity of the calculated community structure
-         * @return
-         */
-        public double getModularity() {
-            return q;
-        }
-
-        /**
-         * calc mod-gain for a node and move it into the best community
-         * @param node node id
-         * @return true if the node has been moved
-         */
-        private boolean move(int node) {
-            final int currentCommunity = bestCommunity = localCommunities[node];
-            sTot[currentCommunity] -= ki[node];
-            sIn[currentCommunity] -= 2. * weightIntoCom(node, currentCommunity);
-            localCommunities[node] = NONE;
-            bestGain = .0;
-            bestWeight = .0;
-            forEachConnectedCommunity(node, c -> {
-                final double wic = weightIntoCom(node, c);
-                final double g = 2. * wic - sTot[c] * ki[node] / m;
-                if (g > bestGain) {
-                    bestGain = g;
-                    bestCommunity = c;
-                    bestWeight = wic;
-                }
-            });
-            sTot[bestCommunity] += ki[node];
-            sIn[bestCommunity] += 2. * bestWeight;
-            localCommunities[node] = bestCommunity;
-            return bestCommunity != currentCommunity;
-        }
-
-        /**
-         * apply consumer to each connected community one time
-         * @param node node id
-         * @param consumer community id consumer
-         */
-        private void forEachConnectedCommunity(int node, IntConsumer consumer) {
-            final SimpleBitSet visited = new SimpleBitSet(nodeCount);
-            graph.forEachRelationship(node, D, (s, t, r) -> {
-                final int c = localCommunities[t];
-                if (visited.contains(c)) {
-                    return true;
-                }
-                visited.put(c);
-                consumer.accept(c);
-                return true;
-            });
-        }
-
-        /**
-         * calc graph modularity
-         */
-        private double modularity() {
-            double q = .0;
-            final SimpleBitSet bitSet = new SimpleBitSet(nodeCount);
-            for (int k = 0; k < nodeCount; k++) {
-                final int c = localCommunities[k];
-                if (!bitSet.contains(c)) {
-                    bitSet.put(c);
-                    q += (sIn[c] / m2) - (Math.pow(sTot[c] / m2, 2.));
-                }
-            }
-            return q;
-        }
-
-        /**
-         * sum weights from node into community c
-         * @param node node id
-         * @param c community id
-         * @return sum of weights from node into community c
-         */
-        private double weightIntoCom(int node, int c) {
-            final Pointer.DoublePointer p = Pointer.wrap(.0);
-            graph.forEachRelationship(node, D, (s, t, r) -> {
-                if (localCommunities[t] == c) {
-                    p.v += graph.weightOf(s, t);
-                }
-                return true;
-            });
-            return p.v;
-        }
-
     }
 }
