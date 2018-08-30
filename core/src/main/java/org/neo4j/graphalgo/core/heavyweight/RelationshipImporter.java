@@ -201,11 +201,10 @@ final class RelationshipImporter extends StatementAction {
                 nodeProperties);
     }
 
-    void writeInto(
-            WeightMapping relWeights, Map<String, WeightMapping> nodeProperties) {
+    void writeInto(WeightMapping relWeights, Map<String, WeightMapping> nodeProperties) {
         combineMaps(relWeights, this.relWeights);
 
-        for (Map.Entry<String, WeightMapping> entry : nodeProperties.entrySet()) {
+        for (Map.Entry<String, WeightMapping> entry : this.nodeProperties.entrySet()) {
             combineMaps(nodeProperties.get(entry.getKey()), entry.getValue());
         }
     }

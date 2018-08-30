@@ -81,8 +81,6 @@ public final class LabelPropagationProc {
                 .overrideRelationshipTypeOrQuery(relationshipType)
                 .overrideDirection(directionName);
 
-        final Direction direction = configuration.getDirection(Direction.OUTGOING);
-
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
         final int concurrency = configuration.getConcurrency();
@@ -94,8 +92,15 @@ public final class LabelPropagationProc {
                 .partitionProperty(partitionProperty)
                 .weightProperty(weightProperty);
 
-        HeavyGraph graph = load(configuration, direction, partitionProperty, weightProperty, batchSize, concurrency, stats,
-                createPropertyMappings(partitionProperty, weightProperty));
+        GraphLoader graphLoader = graphLoader(configuration, partitionProperty, weightProperty, createPropertyMappings(partitionProperty, weightProperty));
+        Direction direction = configuration.getDirection(Direction.OUTGOING);
+        if (direction == Direction.BOTH) {
+            graphLoader.asUndirected(true);
+            direction = Direction.OUTGOING;
+        } else {
+            graphLoader.withDirection(direction);
+        }
+        HeavyGraph graph = load(graphLoader, configuration);
 
         if(graph.nodeCount() == 0) {
             graph.release();
@@ -122,7 +127,6 @@ public final class LabelPropagationProc {
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        final Direction direction = configuration.getDirection(Direction.OUTGOING);
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
         final int concurrency = configuration.getConcurrency();
@@ -131,7 +135,16 @@ public final class LabelPropagationProc {
 
         PropertyMapping[] propertyMappings = createPropertyMappings(partitionProperty, weightProperty);
 
-        HeavyGraph graph = load(configuration, direction, partitionProperty, weightProperty, propertyMappings);
+        GraphLoader graphLoader = graphLoader(configuration, partitionProperty, weightProperty, propertyMappings);
+        Direction direction = configuration.getDirection(Direction.OUTGOING);
+        if (direction == Direction.BOTH) {
+            graphLoader.asUndirected(true);
+            direction = Direction.OUTGOING;
+        } else {
+            graphLoader.withDirection(direction);
+        }
+        HeavyGraph graph = load(graphLoader, configuration);
+
 
         if(graph.nodeCount() == 0) {
             graph.release();
@@ -153,32 +166,20 @@ public final class LabelPropagationProc {
             };
     }
 
-    private HeavyGraph load(ProcedureConfiguration config, Direction direction, String partitionProperty, String weightKey, PropertyMapping... propertyMappings) {
+    private HeavyGraph load(GraphLoader graphLoader, ProcedureConfiguration config) {
         Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
                 HeavyGraph.TYPE, HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE);
-        return (HeavyGraph) new GraphLoader(dbAPI, Pools.DEFAULT)
+        return (HeavyGraph) graphLoader.load(graphImpl);
+
+    }
+
+    private GraphLoader graphLoader(ProcedureConfiguration config,  String partitionProperty, String weightKey, PropertyMapping... propertyMappings) {
+        return new GraphLoader(dbAPI, Pools.DEFAULT)
                 .init(log, config.getNodeLabelOrQuery(), config.getRelationshipOrQuery(), config)
                 .withOptionalRelationshipWeightsFromProperty(weightKey, 1.0d)
                 .withOptionalNodeProperties(propertyMappings)
-                    .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
-                    .withOptionalNodeProperty(partitionProperty, 0.0d)
-                    .withDirection(direction)
-                    .load(graphImpl);
-    }
-
-    private HeavyGraph load(
-            ProcedureConfiguration config,
-            Direction direction,
-            String partitionKey,
-            String weightKey,
-            int batchSize,
-            int concurrency,
-            LabelPropagationStats.Builder stats,
-            PropertyMapping... propertyMappings) {
-
-        try (ProgressTimer timer = stats.timeLoad()) {
-            return load(config, direction, partitionKey, weightKey, propertyMappings);
-        }
+                .withOptionalNodeWeightsFromProperty(weightKey, 1.0d)
+                .withOptionalNodeProperty(partitionProperty, 0.0d);
     }
 
     private int[] compute(
