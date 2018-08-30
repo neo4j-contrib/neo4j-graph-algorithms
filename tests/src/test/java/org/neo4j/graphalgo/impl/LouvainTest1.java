@@ -50,7 +50,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * (a)-(b)-(d)
- *  | /
+ *  | /            -> (abc)-(d)
  * (c)
  *
  *  @author mknblch
@@ -67,36 +67,10 @@ public class LouvainTest1 {
                     " (a)-[:TYPE]->(b),\n" +
                     " (b)-[:TYPE]->(c),\n" +
                     " (c)-[:TYPE]->(a),\n" +
-                    " (d)-[:TYPE]->(c)";
-
-    private static final String unidirectional2 =
-            "CREATE (a:Node {name:'a'})\n" +
-                    "CREATE (b:Node {name:'b'})\n" +
-                    "CREATE (c:Node {name:'c'})\n" +
-                    "CREATE" +
-                    " (a)-[:TYPE]->(b),\n" +
-                    " (b)-[:TYPE]->(c),\n" +
-                    " (c)-[:TYPE]->(a)";
-
-    private static final String bidirectional =
-            "CREATE (a:Node {name:'a'})\n" +
-                    "CREATE (b:Node {name:'b'})\n" +
-                    "CREATE (c:Node {name:'c'})\n" +
-                    "CREATE (d:Node {name:'d'})\n" +
-                    "CREATE" +
-                    " (a)-[:TYPE]->(b),\n" +
-                    " (b)-[:TYPE]->(a),\n" +
-                    " (a)-[:TYPE]->(c),\n" +
-                    " (c)-[:TYPE]->(a),\n" +
-                    " (b)-[:TYPE]->(c),\n" +
-                    " (c)-[:TYPE]->(b),\n" +
-                    " (b)-[:TYPE]->(c),\n" +
-                    " (d)-[:TYPE]->(b),\n" +
-                    " (b)-[:TYPE]->(d)";
-
+                    " (a)-[:TYPE]->(c)";
 
     public static final Label LABEL = Label.label("Node");
-    public static final String ABCD = "abc";
+    public static final String ABCD = "abcd";
 
     @Rule
     public ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
@@ -171,14 +145,8 @@ public class LouvainTest1 {
     }
 
     public void assertCommunities(Louvain louvain) {
-        //assertUnion(new String[]{"a", "c", "d"}, louvain.getCommunityIds());
-        //assertUnion(new String[]{"f", "g", "h"}, louvain.getCommunityIds());
-        //assertDisjoint(new String[]{"a", "f", "z"}, louvain.getCommunityIds());
-    }
-
-    public void assertWeightedCommunities(Louvain louvain) {
-        //assertCommunities(louvain);
-        //assertUnion(new String[]{"b", "e"}, louvain.getCommunityIds());
+        assertUnion(new String[]{"a", "b", "c"}, louvain.getCommunityIds());
+        assertDisjoint(new String[]{"a", "d"}, louvain.getCommunityIds());
     }
 
     private void assertUnion(String[] nodeNames, Object values) {

@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,10 +53,12 @@ import static org.junit.Assert.assertTrue;
  *   (d)-(e)                (DEF)
  *    \  /
  *    (f)
+ *
+ *
  *  @author mknblch
  */
 @RunWith(Parameterized.class)
-public class LouvainTest2 {
+public class LouvainMultiLevelTest {
 
     private static final String COMPLEX_CYPHER =
             "CREATE (a:Node {name:'a'})\n" +
@@ -85,18 +88,6 @@ public class LouvainTest2 {
                     " (c)-[:TYPE]->(e),\n" +
                     " (f)-[:TYPE]->(i)";
 
-    private static final String SIMPLE_CYPHER =
-            "CREATE (a:Node {name:'a'})\n" +
-                    "CREATE (b:Node {name:'b'})\n" +
-                    "CREATE (c:Node {name:'c'})\n" +
-                    "CREATE" +
-
-                    " (a)-[:TYPE]->(b),\n" +
-                    " (a)-[:TYPE]->(c),\n" +
-                    " (b)-[:TYPE]->(c)";
-
-
-
     public static final Label LABEL = Label.label("Node");
 
     @Rule
@@ -108,7 +99,7 @@ public class LouvainTest2 {
     private Class<? extends GraphFactory> graphImpl;
     private Graph graph;
 
-    public LouvainTest2(
+    public LouvainMultiLevelTest(
             Class<? extends GraphFactory> graphImpl,
             String name) {
         this.graphImpl = graphImpl;
@@ -129,10 +120,8 @@ public class LouvainTest2 {
                 .withAnyLabel()
                 .withoutNodeProperties()
                 .withOptionalRelationshipWeightsFromProperty("w", 1.0)
-                //.withDirection(Direction.BOTH)
                 .asUndirected(true)
                 .load(graphImpl);
-
     }
 
     @Test
@@ -148,20 +137,6 @@ public class LouvainTest2 {
             }
             System.out.println("level " + i + ": " + Arrays.toString(dendogram[i - 1]));
         }
-    }
-
-    @Test
-    public void testSimple() throws Exception {
-        setup(SIMPLE_CYPHER);
-        final Louvain algorithm = new Louvain(graph, Pools.DEFAULT, 1, AllocationTracker.EMPTY)
-                .withProgressLogger(TestProgressLogger.INSTANCE)
-                .compute(10, 10);
-        final int[][] dendogram = algorithm.getDendogram();
-        for (int i = 1; i <= dendogram.length; i++) {
-            if (null == dendogram[i - 1]) {
-                break;
-            }
-            System.out.println("level " + i + ": " + Arrays.toString(dendogram[i - 1]));
-        }
+        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 2, 2, 2}, dendogram[0]);
     }
 }

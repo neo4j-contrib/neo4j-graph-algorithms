@@ -147,8 +147,6 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         m = m2 / 2;
         m22 = Math.pow(m2, 2.0);
         Arrays.setAll(communities, i -> i);
-        System.out.println("m = " + m);
-        System.out.println("ki = " + Arrays.toString(ki));
     }
 
     /**
