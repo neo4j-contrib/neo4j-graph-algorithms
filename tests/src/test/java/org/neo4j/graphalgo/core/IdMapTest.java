@@ -36,7 +36,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldReturnSingleIteratorForLargeBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds(AllocationTracker.EMPTY);
+        idMap.buildMappedIds();
 
         Collection<PrimitiveIntIterable> iterables = idMap.batchIterables(100);
         assertEquals(1, iterables.size());
@@ -48,7 +48,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldReturnMultipleIteratorsForSmallBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds(AllocationTracker.EMPTY);
+        idMap.buildMappedIds();
 
         int expectedBatches = ids.length / 3;
         if (ids.length % 3 != 0) {
@@ -65,7 +65,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldFailForZeroBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         addRandomIds(idMap);
-        idMap.buildMappedIds(AllocationTracker.EMPTY);
+        idMap.buildMappedIds();
 
         try {
             idMap.batchIterables(0);
@@ -79,7 +79,7 @@ public final class IdMapTest extends RandomizedTest {
     public void shouldFailForNegativeBatchSize() throws Exception {
         IdMap idMap = new IdMap(20);
         addRandomIds(idMap);
-        idMap.buildMappedIds(AllocationTracker.EMPTY);
+        idMap.buildMappedIds();
 
         int batchSize = between(Integer.MIN_VALUE, -1);
 

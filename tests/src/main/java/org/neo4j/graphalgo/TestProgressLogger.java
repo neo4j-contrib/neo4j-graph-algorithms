@@ -29,9 +29,17 @@ public class TestProgressLogger implements ProgressLogger {
 
     public static final ProgressLogger INSTANCE = new TestProgressLogger();
 
+    public static final long TIMEOUT = 3000;
+
+    private long lastLog = 0;
+
     @Override
     public void logProgress(double percentDone, Supplier<String> msg) {
-        System.out.printf("%.0f%% (%s)%n", percentDone * 100, msg.get());
+        final long now = System.currentTimeMillis();
+        if (lastLog + TIMEOUT < now) {
+            lastLog = now;
+            System.out.printf("[%s] %.0f%% (%s)%n", Thread.currentThread().getName(), percentDone * 100, msg.get());
+        }
     }
 
     @Override
