@@ -27,8 +27,6 @@ import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.IdMapping;
 import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,13 +42,13 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
     private final IdIterator iter;
     private int nextGraphId;
     private long[] graphIds;
-    private LongIntHashMap nodeToGraphIds;
+    private LongIntMap nodeToGraphIds;
 
     /**
      * initialize the map with maximum node capacity
      */
     public IdMap(final int capacity) {
-        nodeToGraphIds = new LongIntHashMap(capacity);
+        nodeToGraphIds = new LongIntHashMap((int) Math.ceil(capacity / 0.99), 0.99);
         iter = new IdIterator();
     }
 
@@ -59,7 +57,7 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
      */
     public IdMap(
             long[] graphIds,
-            LongIntHashMap nodeToGraphIds) {
+            LongIntMap nodeToGraphIds) {
         this.nextGraphId = graphIds.length;
         this.graphIds = graphIds;
         this.nodeToGraphIds = nodeToGraphIds;
@@ -88,11 +86,7 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         return nodeToGraphIds.getOrDefault(longValue, -1);
     }
 
-    public void buildMappedIds(AllocationTracker tracker) {
-        tracker.add(MemoryUsage.shallowSizeOfInstance(IdMap.class));
-        tracker.add(MemoryUsage.sizeOfLongArray(nodeToGraphIds.keys.length));
-        tracker.add(MemoryUsage.sizeOfIntArray(nodeToGraphIds.values.length));
-        tracker.add(MemoryUsage.sizeOfLongArray(size()));
+    public void buildMappedIds() {
         graphIds = new long[size()];
         for (final LongIntCursor cursor : nodeToGraphIds) {
             graphIds[cursor.value] = cursor.key;
@@ -171,11 +165,11 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         return Arrays.asList(iterators);
     }
 
-    private static final class IdIterable implements PrimitiveIntIterable {
+    public static final class IdIterable implements PrimitiveIntIterable {
         private final int start;
         private final int length;
 
-        private IdIterable(int start, int length) {
+        public IdIterable(int start, int length) {
             this.start = start;
             this.length = length;
         }

@@ -18,6 +18,8 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
+import java.util.function.Function;
+
 /**
  * @author mknblch
  */
@@ -29,6 +31,11 @@ public class Pointer {
         public BoolPointer(boolean v) {
             this.v = v;
         }
+
+        public BoolPointer map(Function<Boolean, Boolean> function) {
+            v = function.apply(v);
+            return this;
+        }
     }
 
     public static class IntPointer {
@@ -36,6 +43,11 @@ public class Pointer {
 
         public IntPointer(int v) {
             this.v = v;
+        }
+
+        public IntPointer map(Function<Integer, Integer> function) {
+            v = function.apply(v);
+            return this;
         }
     }
 
@@ -45,6 +57,11 @@ public class Pointer {
         public LongPointer(long v) {
             this.v = v;
         }
+
+        public LongPointer map(Function<Long, Long> function) {
+            v = function.apply(v);
+            return this;
+        }
     }
 
     public static class DoublePointer {
@@ -53,6 +70,11 @@ public class Pointer {
         public DoublePointer(double v) {
             this.v = v;
         }
+
+        public DoublePointer map(Function<Double, Double> function) {
+            v = function.apply(v);
+            return this;
+        }
     }
 
     public static class GenericPointer<G> {
@@ -60,6 +82,11 @@ public class Pointer {
 
         public GenericPointer(G v) {
             this.v = v;
+        }
+
+        public GenericPointer<G> map(Function<G, G> function) {
+            v = function.apply(v);
+            return this;
         }
     }
 
