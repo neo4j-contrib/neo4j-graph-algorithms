@@ -67,7 +67,7 @@ abstract class RelationshipLoader {
             VisitRelationship visitIn,
             long sourceNodeId,
             int localNodeId) throws EntityNotFoundException {
-        final int degree = degree(sourceNodeId, Direction.BOTH);
+        final int degree = degree(sourceNodeId, Direction.INCOMING) + degree(sourceNodeId, Direction.OUTGOING);
         if (degree > 0) {
             final int[] targets = matrix.armOut(localNodeId, degree);
             visitIn.prepareNextNode(localNodeId, targets);

@@ -165,11 +165,11 @@ public final class IdMap implements IdMapping, NodeIterator, BatchNodeIterable {
         return Arrays.asList(iterators);
     }
 
-    private static final class IdIterable implements PrimitiveIntIterable {
+    public static final class IdIterable implements PrimitiveIntIterable {
         private final int start;
         private final int length;
 
-        private IdIterable(int start, int length) {
+        public IdIterable(int start, int length) {
             this.start = start;
             this.length = length;
         }

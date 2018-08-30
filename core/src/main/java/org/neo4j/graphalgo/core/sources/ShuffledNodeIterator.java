@@ -50,7 +50,7 @@ public class ShuffledNodeIterator implements NodeIterator {
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        return new ShuffledIterAdapter(nodeCount, System.nanoTime());
+        return new ShuffledIterAdapter(nodeCount, System.currentTimeMillis());
     }
 
     public PrimitiveIntIterator nodeIterator(long seed) {
