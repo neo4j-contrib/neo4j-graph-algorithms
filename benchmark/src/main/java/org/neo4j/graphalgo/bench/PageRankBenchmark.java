@@ -108,6 +108,7 @@ public class PageRankBenchmark {
         db.shutdown();
     }
 
+    /*
     @Benchmark
     public PageRankResult run() throws Exception {
         final Graph graph = new GraphLoader(db)
@@ -122,4 +123,5 @@ public class PageRankBenchmark {
             graph.release();
         }
     }
+    */
 }
