@@ -376,11 +376,11 @@ public class AdjacencyMatrix {
     }
 
     public void sortIncoming(int node) {
-        Arrays.sort(incoming[node]);
+        Arrays.sort(incoming[node], 0, inOffsets[node]);
     }
 
     public void sortOutgoing(int node) {
-        Arrays.sort(outgoing[node]);
+        Arrays.sort(outgoing[node], 0, outOffsets[node]);
     }
 
     public void sortAll(ExecutorService pool, int concurrency) {
