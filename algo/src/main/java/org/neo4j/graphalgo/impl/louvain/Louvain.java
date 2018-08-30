@@ -1,13 +1,16 @@
 package org.neo4j.graphalgo.impl.louvain;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.IntObjectScatterMap;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.LongDoubleScatterMap;
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.NodeWeights;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +18,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * Louvain Clustering Algorithm.
+ * <p>
+ * The algo performs modularity optimization as long as the
+ * modularity keeps incrementing. Every optimization step leads
+ * to an array of length nodeCount containing the nodeId->community mapping.
+ * <p>
+ * After each step a new graph gets built from the actual community mapping
+ * and is used as input for the next step.
  *
  * @author mknblch
  */
@@ -58,7 +69,11 @@ public class Louvain extends Algorithm<Louvain> {
         for (level = 0; level < maxLevel; level++) {
             // start modularity opzimization
             final ModularityOptimization modularityOptimization =
-                    new ModularityOptimization(graph, pool, concurrency, tracker, nodeWeights)
+                    new ModularityOptimization(graph,
+                            nodeId -> nodeWeights[nodeId], // TODO feels hacky
+                            pool,
+                            concurrency,
+                            tracker)
                             .withProgressLogger(progressLogger)
                             .withTerminationFlag(terminationFlag)
                             .compute(maxIterations);
@@ -76,8 +91,7 @@ public class Louvain extends Algorithm<Louvain> {
             }
             nodeCount = communityCount;
             dendogram[level] = rebuildCommunityStructure(communityIds);
-            // System.out.println("dendogram = " + Arrays.toString(dendogram[level]) + " " + q);
-            graph = rebuildGraph(graph, communityIds);
+            graph = rebuildGraph(graph, communityIds, communityCount);
         }
         dendogram = Arrays.copyOf(dendogram, level);
         return this;
@@ -87,43 +101,40 @@ public class Louvain extends Algorithm<Louvain> {
      * create a virtual graph based on the community structure of the
      * previous louvain round
      *
-     * @param graph previous graph
+     * @param graph        previous graph
      * @param communityIds community structure
      * @return a new graph built from a community structure
      */
-    private Graph rebuildGraph(Graph graph, int[] communityIds) {
-
-        Arrays.fill(nodeWeights, 1.0);
-
+    private Graph rebuildGraph(Graph graph, int[] communityIds, int communityCount) {
         // count and normalize community structure
         final int nodeCount = communityIds.length;
         // bag of nodeId->{nodeId, ..}
         final IntObjectMap<IntScatterSet> relationships = new IntObjectScatterMap<>(nodeCount);
         // accumulated weights
-        final LongDoubleScatterMap weights = new LongDoubleScatterMap(nodeCount);
+        final LongDoubleScatterMap relationshipWeights = new LongDoubleScatterMap(nodeCount);
         // for each node in the current graph
         for (int i = 0; i < nodeCount; i++) {
             // map node nodeId to community nodeId
             final int source = communityIds[i];
             // get transitions from current node
-            graph.forEachRelationship(i, Direction.OUTGOING, (s, t, r) -> {
+            graph.forEachOutgoing(i, (s, t, r) -> {
                 // mapping
                 final int target = communityIds[t];
                 final double value = graph.weightOf(s, t);
-//                if (source == target) {
-//                    nodeWeights[source] += value;
-//                }
+                if (source == target) {
+                    nodeWeights[source] += value;
+                }
                 // add IN and OUT relation
                 computeIfAbsent(relationships, target).add(source);
                 computeIfAbsent(relationships, source).add(target);
-                weights.addTo(RawValues.combineIntInt(source, target), value / 2); // TODO
-                weights.addTo(RawValues.combineIntInt(target, source), value / 2); // TODO
+                relationshipWeights.addTo(RawValues.combineIntInt(source, target), value / 2); // TODO validate
+                relationshipWeights.addTo(RawValues.combineIntInt(target, source), value / 2);
                 return true;
             });
         }
 
         // create temporary graph
-        return new LouvainGraph(communityCount, relationships, weights);
+        return new LouvainGraph(communityCount, relationships, relationshipWeights);
     }
 
     private int[] rebuildCommunityStructure(int[] communityIds) {
@@ -136,14 +147,11 @@ public class Louvain extends Algorithm<Louvain> {
 
     /**
      * nodeId to community mapping array
+     *
      * @return
      */
     public int[] getCommunityIds() {
         return communities;
-    }
-
-    public int[] getCommunityIds(int level) {
-        return dendogram[level];
     }
 
     public int[][] getDendogram() {
@@ -152,6 +160,7 @@ public class Louvain extends Algorithm<Louvain> {
 
     /**
      * number of outer iterations
+     *
      * @return
      */
     public int getLevel() {
@@ -160,6 +169,7 @@ public class Louvain extends Algorithm<Louvain> {
 
     /**
      * number of distinct communities
+     *
      * @return
      */
     public long getCommunityCount() {
@@ -168,6 +178,7 @@ public class Louvain extends Algorithm<Louvain> {
 
     /**
      * result stream
+     *
      * @return
      */
     public Stream<Result> resultStream() {
@@ -210,7 +221,7 @@ public class Louvain extends Algorithm<Louvain> {
     }
 
     /**
-     *
+     * result object
      */
     public static final class Result {
 

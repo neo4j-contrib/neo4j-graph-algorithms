@@ -23,6 +23,7 @@ import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.NodeIterator;
+import org.neo4j.graphalgo.api.NodeWeights;
 import org.neo4j.graphalgo.core.sources.ShuffledNodeIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pointer;
@@ -50,34 +51,33 @@ import java.util.function.IntConsumer;
  */
 public class ModularityOptimization extends Algorithm<ModularityOptimization> {
 
-    public static final double MINIMUM_MODULARITY = -1.0; //-Double.MAX_VALUE; // -1.0;
+    private static final double MINIMUM_MODULARITY = -1.0;
     /**
-     * only outgoing directions are visited since the graph itself has to
-     * be loaded as undirected!
+     * only outgoing directions are visited since the graph itself must be loaded using {@code .asUndirected(true) } !
      */
     private static final Direction D = Direction.OUTGOING;
     private static final int NONE = -1;
     private final int nodeCount;
     private final int concurrency;
     private final AllocationTracker tracker;
+    private final NodeWeights nodeWeights;
     private Graph graph;
     private ExecutorService pool;
     private NodeIterator nodeIterator;
     private double m, m2, m22;
     private int[] communities;
-    private double[] nodeWeight;
     private double[] ki;
     private int iterations;
     private double q = MINIMUM_MODULARITY;
     private AtomicInteger counter = new AtomicInteger(0);
 
-    public ModularityOptimization(Graph graph, ExecutorService pool, int concurrency, AllocationTracker tracker, double[] nodeWeight) {
+    ModularityOptimization(Graph graph, NodeWeights nodeWeights, ExecutorService pool, int concurrency, AllocationTracker tracker) {
         this.graph = graph;
+        this.nodeWeights = nodeWeights;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeWeight = nodeWeight;
         this.nodeIterator = new ShuffledNodeIterator(nodeCount);
         ki = new double[nodeCount];
         communities = new int[nodeCount];
@@ -179,7 +179,6 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             }
             // save current modularity
             this.q = candidate.q;
-            System.out.println("q = " + q);
             // sync all tasks with the best candidate for the next round
             sync(candidate, tasks);
         }
@@ -265,10 +264,8 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         Task() {
             sTot = new double[nodeCount];
             System.arraycopy(ki, 0, sTot, 0, nodeCount); // ki -> sTot
-
             localCommunities = new int[nodeCount];
             System.arraycopy(communities, 0, localCommunities, 0, nodeCount);
-
             sIn = new double[nodeCount];
             Arrays.fill(sIn, 0.);
         }
@@ -318,7 +315,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             final int currentCommunity = bestCommunity = localCommunities[node];
             final double w = weightIntoCom(node, currentCommunity);
             sTot[currentCommunity] -= ki[node];
-            sIn[currentCommunity] -= 2 * (w + nodeWeight[node]);
+            sIn[currentCommunity] -= 2 * (w + nodeWeights.weightOf(node));
             localCommunities[node] = NONE;
             bestGain = .0;
             bestWeight = w;
@@ -332,7 +329,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                 }
             });
             sTot[bestCommunity] += ki[node];
-            sIn[bestCommunity] += 2 * (bestWeight + nodeWeight[node]);
+            sIn[bestCommunity] += 2 * (bestWeight + nodeWeights.weightOf(node));
             localCommunities[node] = bestCommunity;
             return bestCommunity != currentCommunity;
         }
@@ -370,7 +367,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             final Pointer.DoublePointer p = Pointer.wrap(.0);
             graph.forEachRelationship(node, D, (s, t, r) -> {
                 if (localCommunities[t] == c) {
-                    p.v += graph.weightOf(s, t);
+                    p.map(v -> v + graph.weightOf(s, t));
                 }
                 return true;
             });
@@ -378,18 +375,16 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         }
 
         private double calcModularity() {
-
             final Pointer.DoublePointer pointer = Pointer.wrap(.0);
-            nodeIterator.forEachNode(node -> {
+            for (int node = 0; node < nodeCount; node++) {
                 graph.forEachOutgoing(node, (s, t, r) -> {
                     if (localCommunities[s] != localCommunities[t]) {
                         return true;
                     }
-                    pointer.v += graph.weightOf(s, t) - (ki[s] * ki[t] / m2);
+                    pointer.map(v -> v + graph.weightOf(s, t) - (ki[s] * ki[t] / m2));
                     return true;
                 });
-                return true;
-            });
+            }
             return pointer.v / m2;
         }
     }
