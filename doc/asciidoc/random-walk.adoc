@@ -33,6 +33,10 @@ It's only in the last couple of decades, however, that researchers have studied 
 == Use-cases - when to use the Random Walk algorithm
 
 // tag::use-case[]
+* It has be shown to relate to Brownian motion and also to the movement and dispersal of animals in the study of https://www.researchgate.net/publication/5425681_Random_walks_in_biology[Random walk models in biology].
+
+* It has been used to analyse ALSI index of the JSE stock exchange and show that the index followed the random walk hypothesis between years 2000 and 2011. This means the movement of stock prices was random and the ability of investors to perform relied more on luck than anything else. Find this study in https://www.researchgate.net/publication/297750180_The_Random_Walk_Theory_And_Stock_Prices_Evidence_From_Johannesburg_Stock_Exchange[The Random Walk Theory And Stock Prices: Evidence From Johannesburg Stock Exchange]
+
 Random Walk is often used as part of other algorithms:
 
 * It can be used as part of the *node2vec* and *graph2vec* algorithms, that create node embeddings.
