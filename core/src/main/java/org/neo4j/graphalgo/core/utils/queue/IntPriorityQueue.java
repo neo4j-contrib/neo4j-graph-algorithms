@@ -239,9 +239,16 @@ public abstract class IntPriorityQueue implements PrimitiveIntIterable {
 
     private void ensureCapacityForInsert() {
         if (size >= heap.length) {
-            heap = Arrays.copyOf(
-                    heap,
-                    ArrayUtil.oversize(size + 1, Integer.BYTES));
+            try {
+                final int oversize = ArrayUtil.oversize(size + 1, Integer.BYTES);
+                heap = Arrays.copyOf(
+                        heap,
+                        oversize);
+
+            } catch (Exception e) {
+                e.printStackTrace(); // TODO
+                throw e;
+            }
         }
     }
 
