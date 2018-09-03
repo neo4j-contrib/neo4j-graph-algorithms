@@ -18,13 +18,29 @@
  */
 package org.neo4j.graphalgo;
 
-import org.neo4j.procedure.Description;
-import org.neo4j.procedure.UserFunction;
+public class SimilaritySummaryResult {
 
-public class Version {
-    @UserFunction("algo.version")
-    @Description("RETURN algo.version() | return the current graph algorithms installed version")
-    public String version() {
-        return ""+Version.class.getPackage().getImplementationVersion();
+    public final long nodes;
+    public final long similarityPairs;
+    public final double p50;
+    public final double p75;
+    public final double p90;
+    public final double p95;
+    public final double p99;
+    public final double p999;
+    public final double p100;
+
+    public SimilaritySummaryResult(long nodes, long similarityPairs,
+                                   double p50, double p75, double p90, double p95,
+                                   double p99, double p999, double p100) {
+        this.nodes = nodes;
+        this.similarityPairs = similarityPairs;
+        this.p50 = p50;
+        this.p75 = p75;
+        this.p90 = p90;
+        this.p95 = p95;
+        this.p99 = p99;
+        this.p999 = p999;
+        this.p100 = p100;
     }
 }

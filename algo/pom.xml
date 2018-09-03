@@ -36,6 +36,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.hdrhistogram</groupId>
+            <artifactId>HdrHistogram</artifactId>
+            <version>2.1.9</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.biville.florent</groupId>
             <artifactId>neo4j-sproc-compiler</artifactId>
             <scope>provided</scope>
