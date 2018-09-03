@@ -79,22 +79,17 @@ public class JaccardProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        double similarityCutoff = ((Number) config.getOrDefault("similarityCutoff", -1D)).doubleValue();
-        long degreeCutoff = ((Number) config.getOrDefault("degreeCutoff", 0L)).longValue();
+        double similarityCutoff = configuration.get("similarityCutoff", -1D);
+        long degreeCutoff = configuration.get("degreeCutoff", 0L);
 
         InputData[] ids = fillIds(data, degreeCutoff);
         long length = ids.length;
-        IntStream sourceIds = IntStream.range(0, (int) length);
-
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-
         int concurrency = configuration.getConcurrency();
 
         DoubleHistogram histogram = new DoubleHistogram(5);
-
-        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff);
-
         AtomicLong similarityPairs = new AtomicLong();
+        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff);
 
         if(configuration.isWriteFlag() && similarityCutoff > 0.0) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api,
