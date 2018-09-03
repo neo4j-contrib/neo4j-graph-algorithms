@@ -52,8 +52,8 @@ public class JaccardProc {
     public KernelTransaction transaction;
 
 
-    @Procedure(name = "algo.jaccard.stream", mode = Mode.READ)
-    @Description("CALL algo.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Procedure(name = "algo.similarity.jaccard.stream", mode = Mode.READ)
+    @Description("CALL algo.similarity.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD source1, source2, count1, count2, intersection, jaccard - computes jaccard similarities")
     public Stream<SimilarityResult> jaccardStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
@@ -71,8 +71,8 @@ public class JaccardProc {
         return jaccardStreamMe(ids, length, terminationFlag, concurrency, similarityCutoff);
     }
 
-    @Procedure(name = "algo.jaccard", mode = Mode.WRITE)
-    @Description("CALL algo.jaccard([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
+    @Description("CALL algo.similarity.jaccard([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD p50, p75, p90, p99, p999, p100 - computes jaccard similarities")
     public Stream<SimilaritySummaryResult> jaccard(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,

@@ -91,7 +91,7 @@ public class JaccardTest {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
-                "call algo.jaccard.stream(data) " +
+                "call algo.similarity.jaccard.stream(data) " +
                 "yield source1, source2, count1, count2, intersection, similarity " +
                 "RETURN * ORDER BY source1,source2";
 
@@ -133,7 +133,7 @@ public class JaccardTest {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
-                "CALL algo.jaccard(data, {similarityCutoff: 0.0}) " +
+                "CALL algo.similarity.jaccard(data, {similarityCutoff: 0.0}) " +
                 "yield p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
                 "RETURN *";
 
@@ -152,7 +152,7 @@ public class JaccardTest {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
-                "CALL algo.jaccard(data, {similarityCutoff: 0.1, write: true}) " +
+                "CALL algo.similarity.jaccard(data, {similarityCutoff: 0.1, write: true}) " +
                 "yield p50, p75, p90, p99, p999, p100, nodes, similarityPairs " +
                 "RETURN *";
 
