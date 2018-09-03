@@ -27,8 +27,8 @@ import java.util.List;
 
 public class Similarity {
 
-    @UserFunction("algo.jaccardSimilarity")
-    @Description("algo.jaccardSimilarity([vector1], [vector2]) " +
+    @UserFunction("algo.similarity.jaccard")
+    @Description("algo.similarity.jaccard([vector1], [vector2]) " +
             "given two collection vectors, calculate jaccard similarity")
     public double jaccardSimilarity(@Name("vector1") List<Number> vector1, @Name("vector2") List<Number> vector2) {
         if (vector1 == null || vector2 == null) return 0;
@@ -41,8 +41,8 @@ public class Similarity {
         return denominator == 0 ? 0 : (double)intersection / denominator;
     }
 
-    @UserFunction("algo.cosineSimilarity")
-    @Description("algo.cosineSimilarity([vector1], [vector2]) " +
+    @UserFunction("algo.similarity.cosine")
+    @Description("algo.similarity.cosine([vector1], [vector2]) " +
             "given two collection vectors, calculate cosine similarity")
     public double cosineSimilarity(@Name("vector1") List<Number> vector1, @Name("vector2") List<Number> vector2) {
         if (vector1.size() != vector2.size() || vector1.size() == 0) {
@@ -67,8 +67,8 @@ public class Similarity {
         return dotProduct / (xLength * yLength);
     }
 
-    @UserFunction("algo.euclideanDistance")
-    @Description("algo.euclideanDistance([vector1], [vector2]) " +
+    @UserFunction("algo.similarity.euclideanDistance")
+    @Description("algo.similarity.euclideanDistance([vector1], [vector2]) " +
             "given two collection vectors, calculate the euclidean distance (square root of the sum of the squared differences)")
     public double euclideanDistance(@Name("vector1") List<Number> vector1, @Name("vector2") List<Number> vector2) {
         if (vector1.size() != vector2.size() || vector1.size() == 0) {
@@ -86,8 +86,8 @@ public class Similarity {
         return distance;
     }
 
-    @UserFunction("algo.euclideanSimilarity")
-    @Description("algo.euclideanSimilarity([vector1], [vector2]) " +
+    @UserFunction("algo.similarity.euclidean")
+    @Description("algo.similarity.euclidean([vector1], [vector2]) " +
             "given two collection vectors, calculate similarity based on euclidean distance")
     public double euclideanSimilarity(@Name("vector1") List<Number> vector1, @Name("vector2") List<Number> vector2) {
         return 1.0d / (1 + euclideanDistance(vector1, vector2));

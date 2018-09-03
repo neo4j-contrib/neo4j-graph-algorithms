@@ -94,7 +94,7 @@ public class SimilarityTest {
         Result result = db.execute(
                 "MATCH (p1:Employee)-[x:HAS_SKILL]->(sk:Skill)<-[y:REQUIRES_SKILL]-(p2:Role {name:'Role 1-Analytics Manager'})\n" +
                         "WITH p1, COLLECT(coalesce(x.proficiency, 0.0d)) as v1, COLLECT(coalesce(y.proficiency, 0.0d)) as v2\n" +
-                        "WITH p1.name as name, algo.cosineSimilarity(v1, v2) as cosineSim ORDER BY name ASC\n" +
+                        "WITH p1.name as name, algo.similarity.cosine(v1, v2) as cosineSim ORDER BY name ASC\n" +
                         "RETURN name, toString(toInteger(cosineSim*10000)/10000.0) as cosineSim");
         assertEquals(bobSimilarity, result.next().get("cosineSim"));
         assertEquals(jimSimilarity, result.next().get("cosineSim"));
@@ -126,7 +126,7 @@ public class SimilarityTest {
                         "MATCH (p1:Employee)\n" +
                         "OPTIONAL MATCH (p1)-[x:HAS_SKILL]->(sk)\n" +
                         "WITH p1, COLLECT(coalesce(x.proficiency, 0.0d)) as v1, COLLECT(coalesce(y.proficiency, 0.0d)) as v2\n" +
-                        "WITH p1.name as name, algo.cosineSimilarity(v1, v2) as cosineSim ORDER BY name ASC\n" +
+                        "WITH p1.name as name, algo.similarity.cosine(v1, v2) as cosineSim ORDER BY name ASC\n" +
                         "RETURN name, toString(toInteger(cosineSim*10000)/10000.0) as cosineSim");
 
         assertEquals(bobSimilarity, result.next().get("cosineSim"));
@@ -155,7 +155,7 @@ public class SimilarityTest {
                         "MATCH (p1:Employee)\n" +
                         "OPTIONAL MATCH (p1)-[x:HAS_SKILL]->(sk)\n" +
                         "WITH p1, COLLECT(coalesce(x.proficiency, 0.0d)) as v1, COLLECT(coalesce(y.proficiency, 0.0d)) as v2\n" +
-                        "WITH p1.name as name, algo.euclideanDistance(v1, v2) as euclidDist ORDER BY name ASC\n" +
+                        "WITH p1.name as name, algo.similarity.euclideanDistance(v1, v2) as euclidDist ORDER BY name ASC\n" +
                         "RETURN name, toString(toInteger(euclidDist*10000)/10000.0) as euclidDist");
 
         assertEquals(bobDist, result.next().get("euclidDist"));
@@ -182,7 +182,7 @@ public class SimilarityTest {
         Result result = db.execute(
                         "MATCH (p1:Employee),(p2:Employee) WHERE p1 <> p2\n" +
                         "WITH p1, [(p1)-[:HAS_SKILL]->(sk) | id(sk)] as v1, p2, [(p2)-[:HAS_SKILL]->(sk) | id(sk)] as v2\n" +
-                        "WITH p1.name as name1, p2.name as name2, algo.jaccardSimilarity(v1, v2) as jaccardSim ORDER BY name1,name2\n" +
+                        "WITH p1.name as name1, p2.name as name2, algo.similarity.jaccard(v1, v2) as jaccardSim ORDER BY name1,name2\n" +
                         "RETURN name1, name2, toString(toInteger(jaccardSim*10000)/10000.0) as jaccardSim");
 
         assertEquals(bobSim, result.next().get("jaccardSim"));
@@ -211,7 +211,7 @@ public class SimilarityTest {
                         "MATCH (p1:Employee)\n" +
                         "OPTIONAL MATCH (p1)-[x:HAS_SKILL]->(sk)\n" +
                         "WITH p1, COLLECT(coalesce(x.proficiency, 0.0d)) as v1, COLLECT(coalesce(y.proficiency, 0.0d)) as v2\n" +
-                        "WITH p1.name as name, algo.euclideanSimilarity(v1, v2) as euclidSim ORDER BY name ASC\n" +
+                        "WITH p1.name as name, algo.similarity.euclidean(v1, v2) as euclidSim ORDER BY name ASC\n" +
                         "RETURN name, toString(toInteger(euclidSim*10000)/10000.0) as euclidSim");
 
         assertEquals(bobSim, result.next().get("euclidSim"));
