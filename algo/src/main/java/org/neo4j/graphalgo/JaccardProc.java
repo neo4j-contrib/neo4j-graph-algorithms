@@ -106,13 +106,17 @@ public class JaccardProc {
         SimilaritySummaryResult result = new SimilaritySummaryResult(
                 length,
                 similarityPairs.get(),
-                histogram.getValueAtPercentile(50),
-                histogram.getValueAtPercentile(75),
-                histogram.getValueAtPercentile(90),
-                histogram.getValueAtPercentile(95),
-                histogram.getValueAtPercentile(99),
-                histogram.getValueAtPercentile(99.9),
-                histogram.getValueAtPercentile(100)
+                histogram.getMinValue(),
+                histogram.getMaxValue(),
+                histogram.getMean(),
+                histogram.getStdDeviation(),
+                histogram.getValueAtPercentile(0.5),
+                histogram.getValueAtPercentile(0.75),
+                histogram.getValueAtPercentile(0.9),
+                histogram.getValueAtPercentile(0.95),
+                histogram.getValueAtPercentile(0.99),
+                histogram.getValueAtPercentile(0.999),
+                histogram.getValueAtPercentile(1.0)
         );
 
 
