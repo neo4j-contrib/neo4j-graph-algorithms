@@ -20,7 +20,7 @@ package org.neo4j.graphalgo;
 
 import java.util.Objects;
 
-public class SimilarityResult {
+public class SimilarityResult implements Comparable<SimilarityResult> {
     public final long source2;
     public final long count1;
     public final long source1;
@@ -67,5 +67,10 @@ public class SimilarityResult {
         double jaccard = denominator == 0 ? 0 : (double)intersection / denominator;
         if (jaccard < similarityCutoff) return null;
         return new SimilarityResult(source1, source2, count1, count2, intersection, jaccard);
+    }
+
+    @Override
+    public int compareTo(SimilarityResult o) {
+        return Double.compare(o.similarity,this.similarity);
     }
 }
