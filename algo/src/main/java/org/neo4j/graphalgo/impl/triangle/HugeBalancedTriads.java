@@ -55,7 +55,7 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
     private final LongAdder unbalancedTriangleCount;
     private final AtomicLong queue;
     private final AtomicLong visitedNodes;
-    private BalancedPredicate balancedPredicate = (w1, w2, w3) -> (w1 * w2 * w3) > .0;
+    private BalancedPredicate balancedPredicate = (w1, w2, w3) -> (w1 * w2 * w3) >= .0;
 
     public HugeBalancedTriads(HugeGraph graph, ExecutorService executorService, int concurrency, AllocationTracker tracker) {
         this.graph = graph;
@@ -133,6 +133,15 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
             this.nodeId = nodeId;
             this.balanced = balanced;
             this.unbalanced = unbalanced;
+        }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                    "nodeId=" + nodeId +
+                    ", balanced=" + balanced +
+                    ", unbalanced=" + unbalanced +
+                    '}';
         }
     }
 
