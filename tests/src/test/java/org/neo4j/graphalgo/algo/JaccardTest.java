@@ -87,6 +87,21 @@ public class JaccardTest {
 
 
     @Test
+    public void jaccardSingleMultiThreadComparision() {
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data,{similarityCutoff:-0.1,concurrency:$threads}) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN source1, source2, count1, count2, intersection, similarity ORDER BY source1,source2";
+        Result result1 = db.execute(query, Collections.singletonMap("threads", 1));
+        Result result2 = db.execute(query, Collections.singletonMap("threads", 2));
+        while (result1.hasNext()) {
+            Map<String, Object> row1 = result1.next();
+            assertEquals(row1.toString(), row1,result2.next());
+        }
+    }
+    @Test
     public void simpleJaccardStreamTest() {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
