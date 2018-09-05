@@ -91,7 +91,7 @@ public class JaccardProc {
         AtomicLong similarityPairs = new AtomicLong();
         Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff);
 
-        if(configuration.isWriteFlag() && similarityCutoff > 0.0) {
+        if(configuration.isWriteFlag(false) && similarityCutoff > 0.0) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api,
                     configuration.get("relationshipType", "SIMILAR"),
                     configuration.getWriteProperty("score"));
