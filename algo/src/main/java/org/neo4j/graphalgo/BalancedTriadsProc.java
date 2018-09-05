@@ -54,8 +54,8 @@ public class BalancedTriadsProc {
 
     @Procedure("algo.balancedTriads.stream")
     @Description("CALL algo.balancedTriads.stream(label, relationship, {concurrency:8}) " +
-            "YIELD nodeId, balancedTriangleCount, unblanacedTriangleCount")
-    public Stream<HugeBalancedTriads.Result> triangleCountQueueStream(
+            "YIELD nodeId, balancedTriadCount, unbalancedTriadCount")
+    public Stream<HugeBalancedTriads.Result> balancedTriadsStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -91,10 +91,10 @@ public class BalancedTriadsProc {
 
 
     @Procedure(value = "algo.balancedTriads", mode = Mode.WRITE)
-    @Description("CALL algo.balancedTriads(label, relationship, " +
-            "{concurrency:4, write:true, balancedProperty:'balanced', unbalancedProperty:'unbalanced'}) " +
-            "YIELD loadMillis, computeMillis, writeMillis, nodeCount, balancedCount, unbalancedCount")
-    public Stream<Result> triangleCountQueue(
+    @Description("CALL algo.balancedTriads(label, relationship" +
+            "{concurrency:4, write:true, weightProperty:'w', balancedProperty:'balanced', unbalancedProperty:'unbalanced'}) " +
+            "YIELD loadMillis, computeMillis, writeMillis, nodeCount, balancedTriadCount, unbalancedTriadCount")
+    public Stream<Result> balancedTriads(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -113,7 +113,7 @@ public class BalancedTriadsProc {
             graph = (HugeGraph) new GraphLoader(api, Pools.DEFAULT)
                     .withOptionalLabel(configuration.getNodeLabelOrQuery())
                     .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                    .withoutRelationshipWeights()
+                    .withRelationshipWeightsFromProperty(configuration.getWeightProperty(), 0.0)
                     .withoutNodeWeights()
                     .withSort(true)
                     .withLog(log)
