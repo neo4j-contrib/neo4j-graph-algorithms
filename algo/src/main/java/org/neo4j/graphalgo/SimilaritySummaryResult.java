@@ -26,6 +26,7 @@ public class SimilaritySummaryResult {
     public final double max;
     public final double mean;
     public final double stdDev;
+    public final double p25;
     public final double p50;
     public final double p75;
     public final double p90;
@@ -36,7 +37,7 @@ public class SimilaritySummaryResult {
 
     public SimilaritySummaryResult(long nodes, long similarityPairs,
                                    double min, double max, double mean, double stdDev,
-                                   double p50, double p75, double p90, double p95,
+                                   double p25, double p50, double p75, double p90, double p95,
                                    double p99, double p999, double p100) {
         this.nodes = nodes;
         this.similarityPairs = similarityPairs;
@@ -44,6 +45,7 @@ public class SimilaritySummaryResult {
         this.max = max;
         this.mean = mean;
         this.stdDev = stdDev;
+        this.p25 = p25;
         this.p50 = p50;
         this.p75 = p75;
         this.p90 = p90;
