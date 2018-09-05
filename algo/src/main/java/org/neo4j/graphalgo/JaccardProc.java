@@ -25,6 +25,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.impl.util.TopKConsumer;
 import org.neo4j.graphalgo.impl.yens.SimilarityExporter;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -194,10 +195,13 @@ public class JaccardProc {
     }
 
     private Stream<SimilarityResult> topK(Stream<SimilarityResult> stream, int topK) {
-        if (topK > 0) {
-            stream = stream.sorted().limit(topK);
+        if (topK <= 0) {
+            return stream;
         }
-        return stream;
+        if (topK > 10000) {
+            return stream.sorted().limit(topK);
+        }
+        return TopKConsumer.topK(stream,topK);
     }
 
     private SimilarityResult calculateJaccard(double similarityCutoff, InputData e1, InputData e2) {
