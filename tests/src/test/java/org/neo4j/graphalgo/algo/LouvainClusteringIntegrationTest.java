@@ -27,6 +27,7 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -113,12 +114,12 @@ public class LouvainClusteringIntegrationTest {
     @Test
     public void testStream() {
         final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1}) " +
-                "YIELD nodeId, community";
+                "YIELD nodeId, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
-            final int community = row.getNumber("community").intValue();
+            final long community = ((List<Long>) row.get("communities")).get(0);
             System.out.println(community);
-            testMap.addTo(community, 1);
+            testMap.addTo((int) community, 1);
             return false;
         });
         assertEquals(3, testMap.size());
