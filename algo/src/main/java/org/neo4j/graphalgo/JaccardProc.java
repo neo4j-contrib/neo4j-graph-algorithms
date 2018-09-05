@@ -110,13 +110,14 @@ public class JaccardProc {
                 histogram.getMaxValue(),
                 histogram.getMean(),
                 histogram.getStdDeviation(),
-                histogram.getValueAtPercentile(0.5),
-                histogram.getValueAtPercentile(0.75),
-                histogram.getValueAtPercentile(0.9),
-                histogram.getValueAtPercentile(0.95),
-                histogram.getValueAtPercentile(0.99),
-                histogram.getValueAtPercentile(0.999),
-                histogram.getValueAtPercentile(1.0)
+                histogram.getValueAtPercentile(25D),
+                histogram.getValueAtPercentile(50D),
+                histogram.getValueAtPercentile(75D),
+                histogram.getValueAtPercentile(90D),
+                histogram.getValueAtPercentile(95D),
+                histogram.getValueAtPercentile(99D),
+                histogram.getValueAtPercentile(99.9D),
+                histogram.getValueAtPercentile(100D)
         );
 
 
