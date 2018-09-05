@@ -151,7 +151,7 @@ public class JaccardProc {
         int timeout = 100;
         int queueSize = 1000;
 
-        int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 100);
+        int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 1);
         int taskCount = (length / batchSize) + 1;
         Collection<Runnable> tasks = new ArrayList<>(taskCount);
 
@@ -162,7 +162,7 @@ public class JaccardProc {
             int taskOffset = task;
             tasks.add(() -> {
                 IntStream.range(0,batchSize).forEach(offset -> {
-                    int sourceId = offset * multiplier + taskOffset;
+                    int sourceId = taskOffset * multiplier + offset;
                     if (sourceId < length) {
                         IntStream.range(sourceId + 1, length).forEach(otherId -> {
                             SimilarityResult result = calculateJaccard(similiarityCutoff, ids[sourceId], ids[otherId]);
