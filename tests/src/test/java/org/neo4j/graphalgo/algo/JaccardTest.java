@@ -101,12 +101,13 @@ public class JaccardTest {
             assertEquals(row1.toString(), row1,result2.next());
         }
     }
+
     @Test
-    public void simpleJaccardStreamTest() {
+    public void topKJaccardStreamTest() {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
-                "call algo.similarity.jaccard.stream(data) " +
+                "call algo.similarity.jaccard.stream(data,{top:2}) " +
                 "yield source1, source2, count1, count2, intersection, similarity " +
                 "RETURN * ORDER BY source1,source2";
 
@@ -131,16 +132,8 @@ public class JaccardTest {
         assertEquals(1L, row.get("intersection"));
         assertEquals(1.0D / 3, row.get("similarity"));
         count++;
-        assertTrue(results.hasNext());
-        row = results.next();
-        assertEquals(1L, row.get("source1"));
-        assertEquals(2L, row.get("source2"));
-        assertEquals(2L, row.get("count1"));
-        assertEquals(1L, row.get("count2"));
-        assertEquals(0L, row.get("intersection"));
-        assertEquals(0D, row.get("similarity"));
-        count++;
-        assertEquals(3, count);
+        assertFalse(results.hasNext());
+        assertEquals(2, count);
     }
 
     @Test
