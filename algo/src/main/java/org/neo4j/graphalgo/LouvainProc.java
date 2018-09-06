@@ -147,7 +147,7 @@ public class LouvainProc {
                 configuration.getConcurrency(),
                 graph,
                 communities[0].length,
-                configuration.getWriteProperty("dendogram"))
+                configuration.getWriteProperty(DEFAULT_CLUSTER_PROPERTY))
                 .export(communities);
     }
 }
