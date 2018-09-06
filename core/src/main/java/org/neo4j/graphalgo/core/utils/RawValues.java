@@ -47,6 +47,13 @@ public class RawValues {
         return combineIntInt(head, tail);
     }
 
+    public static long combineOrdered(int a, int b) {
+        if (a < b) {
+            return combineIntInt(a, b);
+        }
+        return combineIntInt(b, a);
+    }
+
     public static IdCombiner combiner(Direction direction) {
         return (direction == Direction.INCOMING) ? INCOMING : OUTGOING;
     }
