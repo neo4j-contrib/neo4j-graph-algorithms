@@ -25,6 +25,7 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.impl.util.TopKConsumer;
 import org.neo4j.graphalgo.impl.yens.SimilarityExporter;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -64,11 +65,12 @@ public class JaccardProc {
 
         InputData[] ids = fillIds(data, degreeCutoff);
         int length = ids.length;
+        int topK = configuration.getInt("top",0);
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         int concurrency = configuration.getConcurrency();
 
-        return jaccardStreamMe(ids, length, terminationFlag, concurrency, similarityCutoff);
+        return jaccardStreamMe(ids, length, terminationFlag, concurrency, similarityCutoff, topK);
     }
 
     @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
@@ -86,10 +88,11 @@ public class JaccardProc {
         long length = ids.length;
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         int concurrency = configuration.getConcurrency();
+        int topK = configuration.getInt("top",0);
 
         DoubleHistogram histogram = new DoubleHistogram(5);
         AtomicLong similarityPairs = new AtomicLong();
-        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff);
+        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff, topK);
 
         if(configuration.isWriteFlag(false) && similarityCutoff > 0.0) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api,
@@ -137,21 +140,22 @@ public class JaccardProc {
         };
     }
 
-    private Stream<SimilarityResult> jaccardStreamMe(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similarityCutoff) {
+    private Stream<SimilarityResult> jaccardStreamMe(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similarityCutoff, int topK) {
         if (concurrency == 1) {
-            return jaccardStream(ids, length, similarityCutoff);
+            return jaccardStream(ids, length, similarityCutoff, topK);
         } else {
-            return jaccardParallelStream(ids, length, terminationFlag, concurrency, similarityCutoff);
+            return jaccardParallelStream(ids, length, terminationFlag, concurrency, similarityCutoff, topK);
         }
     }
 
-    private Stream<SimilarityResult> jaccardStream(InputData[] ids, int length, double similiarityCutoff) {
-        return IntStream.range(0, length)
+    private Stream<SimilarityResult> jaccardStream(InputData[] ids, int length, double similiarityCutoff, int topK) {
+        Stream<SimilarityResult> stream = IntStream.range(0, length)
                 .boxed().flatMap(idx1 -> IntStream.range(idx1 + 1, length)
                         .mapToObj(idx2 -> calculateJaccard(similiarityCutoff, ids[idx1], ids[idx2])).filter(Objects::nonNull));
+        return topK(stream,topK);
     }
 
-    private Stream<SimilarityResult> jaccardParallelStream(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff) {
+    private Stream<SimilarityResult> jaccardParallelStream(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff, int topK) {
 
         int timeout = 100;
         int queueSize = 1000;
@@ -192,7 +196,17 @@ public class JaccardProc {
         }).start();
 
         QueueBasedSpliterator<SimilarityResult> spliterator = new QueueBasedSpliterator<>(queue, SimilarityResult.TOMB, terminationFlag, timeout);
-        return StreamSupport.stream(spliterator, false);
+        return topK(StreamSupport.stream(spliterator, false), topK);
+    }
+
+    private Stream<SimilarityResult> topK(Stream<SimilarityResult> stream, int topK) {
+        if (topK <= 0) {
+            return stream;
+        }
+        if (topK > 10000) {
+            return stream.sorted().limit(topK);
+        }
+        return TopKConsumer.topK(stream,topK);
     }
 
     private SimilarityResult calculateJaccard(double similarityCutoff, InputData e1, InputData e2) {
