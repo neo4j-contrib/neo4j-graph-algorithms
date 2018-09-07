@@ -75,6 +75,21 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
         return balance;
     }
 
+    public double getWeight(long nodeA, long nodeB) {
+
+        final long mappedA = graph.toMappedNodeId(nodeA);
+        final long mappedB = graph.toMappedNodeId(nodeB);
+        final double weight = getWeight(mappedA, mappedB);
+        if (!balance.getOrDefault(mappedA, mappedB, true)) {
+            return -weight;
+        }
+        return weight;
+    }
+
+    public HugeLocalTriadDynamics compute() {
+        return compute(0.5);
+    }
+
     public HugeLocalTriadDynamics compute(double probability) {
         visitedNodes.set(0);
         queue.set(0);

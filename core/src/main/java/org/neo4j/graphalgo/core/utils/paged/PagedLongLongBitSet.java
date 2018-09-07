@@ -62,6 +62,9 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
 
     public void clear() {
         for (NestedMap page : pages) {
+            if (null == page) {
+                continue; // TODO break ?
+            }
             page.clear();
         }
     }

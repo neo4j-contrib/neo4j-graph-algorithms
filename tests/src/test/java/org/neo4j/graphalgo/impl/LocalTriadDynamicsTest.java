@@ -97,7 +97,7 @@ public class LocalTriadDynamicsTest {
     public void testStream() throws Exception {
 
         final PagedLongLongBitSet balance = new HugeLocalTriadDynamics(graph, Pools.DEFAULT, 1, AllocationTracker.EMPTY)
-                .compute(0.1)
+                .compute()
                 .getBalance();
 
         try (Transaction transaction = DB.beginTx()) {

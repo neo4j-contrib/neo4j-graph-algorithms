@@ -98,15 +98,14 @@ public class LocalTriadDynamicsProc {
         // write
         if (configuration.isWriteFlag()) {
             try (ProgressTimer timer = builder.timeWrite()) {
-                final PagedLongLongBitSet balance = localTriadDynamics.getBalance();
                 new RelationExporter(api, configuration.getWeightProperty())
-                        .export((s, e) -> Values.booleanValue(balance.getOrDefault(graph.toMappedNodeId(s), graph.toMappedNodeId(e), true)));
+                        .export((s, t) -> Values.doubleValue(localTriadDynamics.getWeight(s, t)));
             }
         }
 
-        // result
+        // release
+        localTriadDynamics.release();
         return Stream.of(builder.withNodeCount(graph.nodeCount())
-                .withRebalancedTriadCount(localTriadDynamics.getBalance().size())
                 .build());
     }
 
@@ -119,33 +118,25 @@ public class LocalTriadDynamicsProc {
         public final long computeMillis;
         public final long writeMillis;
         public final long nodeCount;
-        public final long rebalancedTriadCount;
 
         public Result(
                 long loadMillis,
                 long computeMillis,
                 long writeMillis,
-                long nodeCount, long rebalancedTriadCount) {
+                long nodeCount) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.writeMillis = writeMillis;
             this.nodeCount = nodeCount;
-            this.rebalancedTriadCount = rebalancedTriadCount;
         }
     }
 
     public class LocalTriadDynamicsResultBuilder extends AbstractResultBuilder<Result> {
 
         private long nodeCount = 0;
-        private long rebalancedTriadCount = 0;
 
         public LocalTriadDynamicsResultBuilder withNodeCount(long nodeCount) {
             this.nodeCount = nodeCount;
-            return this;
-        }
-
-        public LocalTriadDynamicsResultBuilder withRebalancedTriadCount(long balancedTriadCount) {
-            this.rebalancedTriadCount = balancedTriadCount;
             return this;
         }
 
@@ -155,8 +146,7 @@ public class LocalTriadDynamicsProc {
                     loadDuration,
                     evalDuration,
                     writeDuration,
-                    nodeCount,
-                    rebalancedTriadCount);
+                    nodeCount);
         }
     }
 
