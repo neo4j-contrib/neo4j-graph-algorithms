@@ -31,8 +31,8 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
     // TODO
     private static BiFunction<AllocationTracker, Long, PageAllocator.Factory<NestedMap>> ALLOCATOR_FUNCTION =
             (AllocationTracker a, Long l) -> {
-                int pageSize = PageUtil.pageSizeFor(BYTES_OBJECT_REF);
-                long pageUsage = shallowSizeOfInstance(NestedMap.class);
+                int pageSize = 1024;
+                long pageUsage = 1000;
 
                 return PageAllocator.of(
                         pageSize,
