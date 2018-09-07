@@ -53,26 +53,42 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
         assert index1 < capacity();
         int pageIndex = pageIndex(index1);
         int indexInPage = indexInPage(index1);
-        // TODO: null checks
-        return pages[pageIndex].get(indexInPage, index2, defaultValue);
+        final NestedMap page = pages[pageIndex];
+        if (null == page) {
+            return defaultValue;
+        }
+        return page.get(indexInPage, index2, defaultValue);
     }
 
     public void clear() {
-
+        for (NestedMap page : pages) {
+            page.clear();
+        }
     }
 
     public void flip(long index1, long index2) {
         assert index1 < capacity();
         int pageIndex = pageIndex(index1);
         int indexInPage = indexInPage(index1);
-        pages[pageIndex].flip(indexInPage, index2);
+        final NestedMap page = pages[pageIndex];
+        if (null == page) {
+            put(index1, index2, true);
+        } else {
+            page.flip(indexInPage, index2);
+        }
     }
 
     public void put(long index1, long index2, boolean value) {
         assert index1 < capacity();
         int pageIndex = pageIndex(index1);
         int indexInPage = indexInPage(index1);
-        pages[pageIndex].put(indexInPage, index2, value);
+
+        NestedMap page = pages[pageIndex];
+        if (null == page) {
+            pages[pageIndex] = page = super.allocateNewPage();
+        }
+
+        page.put(indexInPage, index2, value);
     }
 
     static final class NestedMap {
@@ -115,6 +131,14 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
                 map = page[indexInPage] = new BitSet();
             }
             return map;
+        }
+
+        public void clear() {
+            for (BitSet bitSet : page) {
+                if (null != bitSet) {
+                    bitSet.clear();
+                }
+            }
         }
     }
 }
