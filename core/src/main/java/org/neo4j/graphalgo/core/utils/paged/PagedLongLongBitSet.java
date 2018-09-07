@@ -42,8 +42,8 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
             };
 
 
-    public static PagedLongLongBitSet newBitSet(long size, AllocationTracker tracker) {
-        return new PagedLongLongBitSet(size, ALLOCATOR_FUNCTION.apply(tracker, size).newAllocator(tracker));
+    public static PagedLongLongBitSet newBitSet(long capacity, AllocationTracker tracker) {
+        return new PagedLongLongBitSet(capacity, ALLOCATOR_FUNCTION.apply(tracker, capacity).newAllocator(tracker));
     }
 
     private PagedLongLongBitSet(long size, PageAllocator<NestedMap> allocator) {
@@ -55,6 +55,10 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
         int pageIndex = pageIndex(index1);
         int indexInPage = indexInPage(index1);
         return pages[pageIndex].get(indexInPage, index2, defaultValue);
+    }
+
+    public void clear() {
+
     }
 
     public void flip(long index1, long index2) {
