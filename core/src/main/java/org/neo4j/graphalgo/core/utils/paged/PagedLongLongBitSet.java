@@ -18,42 +18,42 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
-import org.apache.lucene.util.LongBitSet;
-
-import java.util.function.BiFunction;
-
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
+import com.carrotsearch.hppc.BitSet;
 
 
 public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongBitSet.NestedMap> {
 
-    // TODO
-    private static BiFunction<AllocationTracker, Long, PageAllocator.Factory<NestedMap>> ALLOCATOR_FUNCTION =
-            (AllocationTracker a, Long l) -> {
-                int pageSize = 1024;
-                long pageUsage = 1000;
+    private static PageAllocator.Factory<NestedMap> ALLOCATOR_FACTORY;
 
-                return PageAllocator.of(
-                        pageSize,
-                        pageUsage,
-                        (tracker) -> new NestedMap(pageSize, l, tracker),
-                        new NestedMap[0]);
-            };
+    private static final int PAGE_SIZE = 1024;
 
+    static {
+        long pageUsage = MemoryUsage.sizeOfObjectArray(PAGE_SIZE) + MemoryUsage.shallowSizeOfInstance(NestedMap.class);
+        ALLOCATOR_FACTORY = PageAllocator.of(
+                PAGE_SIZE,
+                pageUsage,
+                (tracker) -> new NestedMap(PAGE_SIZE),
+                new NestedMap[0]);
+    }
 
     public static PagedLongLongBitSet newBitSet(long capacity, AllocationTracker tracker) {
-        return new PagedLongLongBitSet(capacity, ALLOCATOR_FUNCTION.apply(tracker, capacity).newAllocator(tracker));
+        final NestedMap[] pages = new NestedMap[PageUtil.numPagesFor(capacity, PAGE_SIZE)];
+        return new PagedLongLongBitSet(capacity, pages, ALLOCATOR_FACTORY.newAllocator(tracker));
     }
 
     private PagedLongLongBitSet(long size, PageAllocator<NestedMap> allocator) {
         super(size, allocator);
     }
 
+    private PagedLongLongBitSet(long size, PagedLongLongBitSet.NestedMap[] pages, PageAllocator<NestedMap> allocator) {
+        super(size, pages, allocator);
+    }
+
     public boolean getOrDefault(long index1, long index2, boolean defaultValue) {
         assert index1 < capacity();
         int pageIndex = pageIndex(index1);
         int indexInPage = indexInPage(index1);
+        // TODO: null checks
         return pages[pageIndex].get(indexInPage, index2, defaultValue);
     }
 
@@ -76,23 +76,19 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
     }
 
     static final class NestedMap {
-        private final LongBitSet[] page;
-        private final long nodeCount;
-        private final AllocationTracker tracker;
+        private final BitSet[] page;
 
-        NestedMap(final int pageSize, final long nodeCount, final AllocationTracker tracker) {
-            this.nodeCount = nodeCount;
-            this.tracker = tracker;
-            page = new LongBitSet[pageSize];
+        NestedMap(final int pageSize) {
+            page = new BitSet[pageSize];
         }
 
         boolean get(int indexInPage, long index2, boolean defaultValue) {
-            LongBitSet map = page[indexInPage];
+            BitSet map = page[indexInPage];
             return map != null ? map.get(index2) : defaultValue;
         }
 
         void flip(int indexInPage, long index2) {
-            LongBitSet map = mapForIndex(indexInPage);
+            BitSet map = mapForIndex(indexInPage);
             map.flip(index2);
         }
 
@@ -104,19 +100,19 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
             }
         }
 
-        private LongBitSet mapForIndex(int indexInPage) {
-            LongBitSet map = page[indexInPage];
+        private BitSet mapForIndex(int indexInPage) {
+            BitSet map = page[indexInPage];
             if (map == null) {
                 map = createNewPage(indexInPage);
             }
             return map;
         }
 
-        synchronized private LongBitSet createNewPage(final int indexInPage) {
-            LongBitSet map;
+        synchronized private BitSet createNewPage(final int indexInPage) {
+            BitSet map;
             map = page[indexInPage];
             if (map == null) {
-                map = page[indexInPage] = new LongBitSet(nodeCount);
+                map = page[indexInPage] = new BitSet();
             }
             return map;
         }
