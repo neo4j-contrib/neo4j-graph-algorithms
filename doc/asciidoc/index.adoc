@@ -53,9 +53,9 @@ This chapter contains a reference of all the procedures in the Neo4j Graph Algor
 
 
 [[table-all]]
-[separator=¦,opts=header,cols="1m,5m"]
+[separator=¦,opts=header,cols="1m,5m,1m"]
 |===
-include::../../target/generated-documentation/org.neo4j.graphalgo.csv[]
+include::../../target/generated-documentation/documentation.csv[]
 |===
 
 include::algorithms.adoc[leveloffset=1]
