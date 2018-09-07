@@ -46,7 +46,7 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
     private final AtomicLong queue;
     private final AtomicLong visitedNodes;
     private final LongAdder rebalancedTriads = new LongAdder();
-    private final PagedLongLongBitSet negate;
+    private final PagedLongLongBitSet balance;
 
     public HugeLocalTriadDynamics(HugeGraph graph, ExecutorService executorService, int concurrency, AllocationTracker tracker) {
         this.graph = graph;
@@ -56,7 +56,7 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
         nodeCount = graph.nodeCount();
         visitedNodes = new AtomicLong();
         queue = new AtomicLong();
-        negate = PagedLongLongBitSet.newBitSet(nodeCount, tracker);
+        balance = PagedLongLongBitSet.newBitSet(nodeCount, tracker);
     }
 
     @Override
@@ -69,6 +69,10 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
         executorService = null;
         graph = null;
         return this;
+    }
+
+    public PagedLongLongBitSet getBalance() {
+        return balance;
     }
 
     public HugeLocalTriadDynamics compute(double probability) {
@@ -89,7 +93,7 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
      * @return true if positive(friendly), false(unfriendly) otherwise
      */
     public boolean sign(long nodeA, long nodeB) {
-        return (graph.weightOf(nodeA, nodeB) >= 0) == negate.getOrDefault(nodeA, nodeB, true); // balanced is default // TODO
+        return (graph.weightOf(nodeA, nodeB) >= 0) == balance.getOrDefault(nodeA, nodeB, true); // balanced is default // TODO
     }
 
     public boolean friendly(long nodeA, long nodeB) {
@@ -102,7 +106,7 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
     }
 
     private void flip(long nodeA, long nodeB) {
-        negate.flip(nodeA, nodeB);
+        balance.flip(nodeA, nodeB);
     }
 
     /**
