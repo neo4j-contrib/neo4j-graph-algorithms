@@ -14,7 +14,7 @@ MERGE (d)-[:LINK]->(e);
 
 // tag::stream-sample-graph[]
 
-CALL algo.closeness.harmonic.stream('Node', 'LINKS') YIELD nodeId, centrality
+CALL algo.closeness.harmonic.stream('Node', 'LINK') YIELD nodeId, centrality
 RETURN nodeId,centrality
 ORDER BY centrality DESC
 LIMIT 20;
@@ -40,7 +40,7 @@ CALL algo.closeness.harmonic(
 
 // tag::huge-projection[]
 
-CALL algo.closeness.harmonic('Node', 'LINK', {graph:'huge'}) 
+CALL algo.closeness.harmonic('Node', 'LINK', {graph:'huge'})
 YIELD nodes,loadMillis, computeMillis, writeMillis;
 
 // end::huge-projection[]
