@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
+ * <p>
  * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
+ * <p>
  * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -21,9 +21,9 @@ package org.neo4j.graphalgo.core.utils.paged;
 import org.apache.lucene.util.LongBitSet;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.*;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.BYTES_OBJECT_REF;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.shallowSizeOfInstance;
 
 
 public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongBitSet.NestedMap> {
@@ -63,6 +63,7 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
         int indexInPage = indexInPage(index1);
         pages[pageIndex].flip(indexInPage, index2);
     }
+
     public void put(long index1, long index2, boolean value) {
         assert index1 < capacity();
         int pageIndex = pageIndex(index1);
@@ -87,7 +88,7 @@ public final class PagedLongLongBitSet extends PagedDataStructure<PagedLongLongB
         }
 
         void flip(int indexInPage, long index2) {
-            LongBitSet map = page[indexInPage];
+            LongBitSet map = mapForIndex(indexInPage);
             map.flip(index2);
         }
 

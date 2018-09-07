@@ -44,9 +44,6 @@ import java.util.stream.Stream;
  */
 public class LocalTriadDynamicsProc {
 
-    public static final String DEFAULT_BALANCED_PROPERTY = "balanced";
-    public static final String DEFAULT_UNBALANCED_PROPERTY = "unbalanced";
-
     @Context
     public GraphDatabaseAPI api;
 
@@ -55,7 +52,7 @@ public class LocalTriadDynamicsProc {
 
     @Context
     public KernelTransaction transaction;
-    private double probability;
+
 
     @Procedure(value = "algo.localTriadDynamics", mode = Mode.WRITE)
     @Description("CALL algo.localTriadDynamics(label, relationship, probability" +
@@ -66,7 +63,6 @@ public class LocalTriadDynamicsProc {
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "probability", defaultValue = "") double probability,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        this.probability = probability;
 
         final HugeGraph graph;
         final HugeLocalTriadDynamics localTriadDynamics;
