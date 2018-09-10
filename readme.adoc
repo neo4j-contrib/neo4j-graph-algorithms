@@ -17,37 +17,50 @@ Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algori
 == Algorithms
 
 // tag::algorithms[]
+Graph algorithms are used to compute metrics for graphs, nodes, or relationships.
+
+They can provide insights on relevant entities in the graph (centralities, ranking), or inherent structures like communities (community-detection, graph-partitioning, clustering).
+
+Many graph algorithms are iterative approaches that frequently traverse the graph for the computation using random walks, breadth-first or depth-first searches, or pattern matching.
+
+Due to the exponential growth of possible paths with increasing distance, many of the approaches also have high algorithmic complexity.
+
+Fortunately, optimized algorithms exist that utilize certain structures of the graph, memoize already explored parts, and parallelize operations.
+Whenever possible, we've applied these optimizations.
 
 
 === Centralities
 
 These algorithms determine the importance of distinct nodes in a network:
 
-* PageRank (`algo.pageRank`)
-* Betweenness Centrality (`algo.betweenness`)
-* Closeness Centrality (`algo.closeness`)
+* <<algorithms-pagerank, PageRank>> (`algo.pageRank`)
+* <<algorithms-betweenness-centrality, Betweenness Centrality>> (`algo.betweenness`)
+* <<algorithms-closeness-centrality, Closeness Centrality>> (`algo.closeness`)
+* <<algorithms-harmonic-centrality, Harmonic Centrality>> (`algo.closeness.harmonic`)
 
 
 === Community detection
 
 These algorithms evaluate how a group is clustered or partitioned, as well as its tendency to strengthen or break apart:
 
-* Louvain (`algo.louvain`)
-* Label Propagation (`algo.labelPropagation`)
-* (Weakly) Connected Components (`algo.unionFind`)
-* Strongly Connected Components (`algo.scc`)
-* Triangle Count / Clustering Coefficient (`algo.triangleCount`)
+* <<algorithms-louvain, Louvain>> (`algo.louvain`)
+* <<algorithms-label-propagation, Label Propagation>> (`algo.labelPropagation`)
+* <<algorithms-connected-components, Connected Components>> (`algo.unionFind`)
+* <<algorithms-strongly-connected-components, Strongly Connected Components>> (`algo.scc`)
+* <<algorithms-triangle-count-clustering-coefficient, Triangle Counting / Clustering Coefficient>> (`algo.triangleCount`)
 
 
 === Path finding
 
 These algorithms help find the shortest path or evaluate the availability and quality of routes:
 
-* Minimum Weight Spanning Tree (`algo.mst`)
-* All Pairs- and Single Source - Shortest Path (`algo.shortestPath`, `algo.allShortestPaths`)
-* A* Algorithm (`algo.shortestPath.astar`)
-* Yen's K-Shortest Paths (`algo.kShortestPaths`)
-* Random Walk (`algo.randomWalk`)
+* <<algorithms-minimum-weight-spanning-tree, Minimum Weight Spanning Tree>> (`algo.mst`)
+* <<algorithms-shortest-path, Shortest Path>> (`algo.shortestPath`)
+* <<algorithms-single-source-shortest-path, Single Source Shortest Path>> (`algo.shortestPath`)
+* <<algorithm-all-pairs-shortest-path, All Pairs Shortest Path>> (`algo.allShortestPaths`)
+* <<algorithms-a_star, A*>> (`algo.shortestPath.astar`)
+* <<algorithms-yens-k-shortest-path, Yen’s K-shortest paths>> (`algo.kShortestPaths`)
+* <<algorithms-random-walk, Random Walk>> (`algo.randomWalk`)
 
 // end::algorithms[]
 
