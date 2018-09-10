@@ -30,6 +30,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.*;
 
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
 
@@ -42,7 +43,6 @@ public class JaccardTest {
     public static void beforeClass() throws KernelException {
         db = TestDatabaseCreator.createTestDatabase();
         db.getDependencyResolver().resolveDependency(Procedures.class).registerProcedure(JaccardProc.class);
-
         db.execute(buildDatabaseQuery()).close();
     }
 
@@ -61,6 +61,17 @@ public class JaccardTest {
         tx.close();
     }
 
+    private static void buildRandomDB(int size) {
+        db.execute("MATCH (n) DETACH DELETE n").close();
+        db.execute("UNWIND range(1,$size/10) as _ CREATE (:Person) CREATE (:Item) ",singletonMap("size",size)).close();
+        String statement =
+                "MATCH (p:Person) WITH collect(p) as people " +
+                "MATCH (i:Item) WITH people, collect(i) as items " +
+                "UNWIND range(1,$size) as _ " +
+                "WITH people[toInteger(rand()*size(people))] as p, items[toInteger(rand()*size(items))] as i " +
+                "MERGE (p)-[:LIKES]->(i) RETURN count(*) ";
+        db.execute(statement,singletonMap("size",size)).close();
+    }
     private static String buildDatabaseQuery() {
         return "CREATE (a:Person {name:'Alice'})\n" +
                 "CREATE (b:Person {name:'Bob'})\n" +
@@ -88,22 +99,58 @@ public class JaccardTest {
 
     @Test
     public void jaccardSingleMultiThreadComparision() {
+        int size = 3333;
+        buildRandomDB(size);
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
                 "call algo.similarity.jaccard.stream(data,{similarityCutoff:-0.1,concurrency:$threads}) " +
                 "yield source1, source2, count1, count2, intersection, similarity " +
                 "RETURN source1, source2, count1, count2, intersection, similarity ORDER BY source1,source2";
-        Result result1 = db.execute(query, Collections.singletonMap("threads", 1));
-        Result result2 = db.execute(query, Collections.singletonMap("threads", 2));
+        Result result1 = db.execute(query, singletonMap("threads", 1));
+        Result result2 = db.execute(query, singletonMap("threads", 2));
+        Result result4 = db.execute(query, singletonMap("threads", 4));
+        Result result8 = db.execute(query, singletonMap("threads", 8));
+        int count=0;
         while (result1.hasNext()) {
             Map<String, Object> row1 = result1.next();
             assertEquals(row1.toString(), row1,result2.next());
+            assertEquals(row1.toString(), row1,result4.next());
+            assertEquals(row1.toString(), row1,result8.next());
+            count++;
         }
+        int people = size/10;
+        assertEquals((people * people - people)/2,count);
     }
 
     @Test
-    public void topKJaccardStreamTest() {
+    public void jaccardSingleMultiThreadComparisionTopK() {
+        int size = 3333;
+        buildRandomDB(size);
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data,{similarityCutoff:-0.1,concurrency:$threads,topK:1}) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN source1, source2, count1, count2, intersection, similarity ORDER BY source1,source2";
+        Result result1 = db.execute(query, singletonMap("threads", 1));
+        Result result2 = db.execute(query, singletonMap("threads", 2));
+        Result result4 = db.execute(query, singletonMap("threads", 4));
+        Result result8 = db.execute(query, singletonMap("threads", 8));
+        int count=0;
+        while (result1.hasNext()) {
+            Map<String, Object> row1 = result1.next();
+            assertEquals(row1.toString(), row1,result2.next());
+            assertEquals(row1.toString(), row1,result4.next());
+            assertEquals(row1.toString(), row1,result8.next());
+            count++;
+        }
+        int people = size/10;
+        assertEquals(people,count);
+    }
+
+    @Test
+    public void topNJaccardStreamTest() {
         String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
                 "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
                 "WITH collect(userData) as data\n" +
@@ -134,6 +181,91 @@ public class JaccardTest {
         count++;
         assertFalse(results.hasNext());
         assertEquals(2, count);
+    }
+
+    @Test
+    public void jaccardStreamTest() {
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN * ORDER BY source1,source2";
+
+
+        Result results = db.execute(query);
+        int count = 0;
+        assertTrue(results.hasNext());
+        Map<String, Object> row = results.next();
+        assertEquals(0L, row.get("source1"));
+        assertEquals(1L, row.get("source2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(2L, row.get("count2"));
+        assertEquals(2L, row.get("intersection"));
+        assertEquals(2.0D / 3, row.get("similarity"));
+        count++;
+        assertTrue(results.hasNext());
+        row = results.next();
+        assertEquals(0L, row.get("source1"));
+        assertEquals(2L, row.get("source2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(1L, row.get("count2"));
+        assertEquals(1L, row.get("intersection"));
+        assertEquals(1.0D / 3, row.get("similarity"));
+        count++;
+        row = results.next();
+        assertEquals(1L, row.get("source1"));
+        assertEquals(2L, row.get("source2"));
+        assertEquals(2L, row.get("count1"));
+        assertEquals(1L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0D / 3, row.get("similarity"));
+        count++;
+        assertFalse(results.hasNext());
+        assertEquals(3, count);
+    }
+
+    @Test
+    public void topKJaccardStreamTest() {
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data,{topK:1, concurrency:1}) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN * ORDER BY source1,source2";
+
+        System.out.println(db.execute(query).resultAsString());
+
+        Result results = db.execute(query);
+        int count = 0;
+        assertTrue(results.hasNext());
+        Map<String, Object> row = results.next();
+        assertEquals(0L, row.get("source1"));
+        assertEquals(1L, row.get("source2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(2L, row.get("count2"));
+        assertEquals(2L, row.get("intersection"));
+        assertEquals(2.0D / 3, row.get("similarity"));
+        count++;
+        row = results.next();
+        assertEquals(1L, row.get("source1"));
+        assertEquals(0L, row.get("source2"));
+        assertEquals(2L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(2L, row.get("intersection"));
+        assertEquals(2.0D / 3, row.get("similarity"));
+        count++;
+        assertTrue(results.hasNext());
+        row = results.next();
+        assertEquals(2L, row.get("source1"));
+        assertEquals(0L, row.get("source2"));
+        assertEquals(1L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(1L, row.get("intersection"));
+        assertEquals(1D / 3, row.get("similarity"));
+        count++;
+        assertFalse(results.hasNext());
+        assertEquals(3, count);
     }
 
     @Test

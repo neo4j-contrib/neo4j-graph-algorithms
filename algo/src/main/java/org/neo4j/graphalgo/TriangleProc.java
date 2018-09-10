@@ -22,10 +22,8 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
@@ -186,7 +184,6 @@ public class TriangleProc {
 
         final Graph graph;
         final TriangleCountAlgorithm triangleCount;
-        final double[] clusteringCoefficients;
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
@@ -215,7 +212,7 @@ public class TriangleProc {
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
-            clusteringCoefficients = triangleCount.getCoefficients();
+            triangleCount.getCoefficients();
         }
 
         if (configuration.isWriteFlag()) {
@@ -247,11 +244,11 @@ public class TriangleProc {
                 .parallel(Pools.DEFAULT, configuration.getConcurrency(), flag)
                 .build();
 
-        if (algorithm instanceof HugeTriangleCount) {
+        if (algorithm instanceof IntersectingTriangleCount) {
             if (coefficientProperty.isPresent()) {
                 // huge with coefficients
-                final DoubleArray coefficients = ((HugeTriangleCount) algorithm).getCoefficients();
-                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                final DoubleArray coefficients = ((IntersectingTriangleCount) algorithm).getCoefficients();
+                final PagedAtomicIntegerArray triangles = ((IntersectingTriangleCount) algorithm).getTriangles();
                 exporter.write(
                         configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                         triangles,
@@ -262,7 +259,7 @@ public class TriangleProc {
                 );
             } else {
                 // huge without coefficients
-                final PagedAtomicIntegerArray triangles = ((HugeTriangleCount) algorithm).getTriangles();
+                final PagedAtomicIntegerArray triangles = ((IntersectingTriangleCount) algorithm).getTriangles();
                 exporter.write(
                         configuration.getWriteProperty(DEFAULT_WRITE_PROPERTY_VALUE),
                         triangles,

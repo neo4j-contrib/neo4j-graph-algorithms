@@ -21,8 +21,9 @@ package org.neo4j.graphalgo.impl.triangle;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
@@ -111,9 +112,8 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         queue.set(0);
         runningThreads.set(0);
         final Collection<Runnable> tasks;
-        if (graph instanceof HugeGraph) {
-            HugeGraph hugeGraph = (HugeGraph) graph;
-            tasks = ParallelUtil.tasks(concurrency, () -> new HugeTask(hugeGraph));
+        if (graph instanceof HugeGraph || graph instanceof HeavyGraph) {
+            tasks = ParallelUtil.tasks(concurrency, () -> new IntersectTask(graph));
         } else {
             tasks = ParallelUtil.tasks(concurrency, Task::new);
         }
@@ -182,17 +182,17 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         }
     }
 
-    private final class HugeTask extends BaseTask implements IntersectionConsumer {
+    private final class IntersectTask extends BaseTask implements IntersectionConsumer {
 
-        private HugeRelationshipIntersect hg;
+        private RelationshipIntersect intersect;
 
-        HugeTask(HugeGraph graph) {
-            hg = graph.intersectionCopy();
+        IntersectTask(Graph graph) {
+            intersect = graph.intersection();
         }
 
         @Override
         void evaluateNode(final int nodeId) {
-            hg.intersectAll(nodeId, this);
+            intersect.intersectAll(nodeId, this);
         }
 
         @Override
