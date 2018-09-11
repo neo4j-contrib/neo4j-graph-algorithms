@@ -18,22 +18,19 @@
  */
 package org.neo4j.graphalgo.impl.triangle;
 
-import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.DoubleArray;
-import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -44,9 +41,9 @@ import java.util.stream.Stream;
  *
  * @author mknblch
  */
-public class HugeTriangleCount extends Algorithm<HugeTriangleCount> implements TriangleCountAlgorithm {
+public class IntersectingTriangleCount extends Algorithm<IntersectingTriangleCount> implements TriangleCountAlgorithm {
 
-    private HugeGraph graph;
+    private Graph graph;
     private ExecutorService executorService;
     private final int concurrency;
     private final long nodeCount;
@@ -57,7 +54,7 @@ public class HugeTriangleCount extends Algorithm<HugeTriangleCount> implements T
     private PagedAtomicIntegerArray triangles;
     private double averageClusteringCoefficient;
 
-    public HugeTriangleCount(HugeGraph graph, ExecutorService executorService, int concurrency, AllocationTracker tracker) {
+    public IntersectingTriangleCount(Graph graph, ExecutorService executorService, int concurrency, AllocationTracker tracker) {
         this.graph = graph;
         this.tracker = tracker;
         this.executorService = executorService;
@@ -106,12 +103,12 @@ public class HugeTriangleCount extends Algorithm<HugeTriangleCount> implements T
     }
 
     @Override
-    public final HugeTriangleCount me() {
+    public final IntersectingTriangleCount me() {
         return this;
     }
 
     @Override
-    public HugeTriangleCount release() {
+    public IntersectingTriangleCount release() {
         executorService = null;
         graph = null;
         triangles = null;
@@ -119,41 +116,44 @@ public class HugeTriangleCount extends Algorithm<HugeTriangleCount> implements T
     }
 
     @Override
-    public HugeTriangleCount compute() {
+    public IntersectingTriangleCount compute() {
         visitedNodes.set(0);
         queue.set(0);
         triangleCount.reset();
         averageClusteringCoefficient = 0.0;
         // create tasks
-        final Collection<? extends Runnable> tasks = ParallelUtil.tasks(concurrency, () -> new HugeTask(graph));
+        final Collection<? extends Runnable> tasks = ParallelUtil.tasks(concurrency, () -> new IntersectTask(graph));
         // run
         ParallelUtil.run(tasks, executorService);
         return this;
     }
 
-    private class HugeTask implements Runnable, IntersectionConsumer {
+    private class IntersectTask implements Runnable, IntersectionConsumer {
 
-        private HugeRelationshipIntersect hg;
+        private RelationshipIntersect intersect;
 
-        HugeTask(HugeGraph graph) {
-            hg = graph.intersectionCopy();
+        IntersectTask(Graph graph) {
+            intersect = graph.intersection();
         }
 
         @Override
         public void run() {
             long node;
             while ((node = queue.getAndIncrement()) < nodeCount && running()) {
-                hg.intersectAll(node, this);
+                intersect.intersectAll(node, this);
                 getProgressLogger().logProgress(visitedNodes.incrementAndGet(), nodeCount);
             }
         }
 
         @Override
         public void accept(final long nodeA, final long nodeB, final long nodeC) {
-            triangles.add((int) nodeA, 1);
-            triangles.add((int) nodeB, 1);
-            triangles.add((int) nodeC, 1);
-            triangleCount.increment();
+            // only use this triangle where the id's are in order, not the other 5
+            if  (nodeA < nodeB) { //  && nodeB < nodeC
+                triangles.add((int) nodeA, 1);
+                triangles.add((int) nodeB, 1);
+                triangles.add((int) nodeC, 1);
+                triangleCount.increment();
+            }
         }
     }
 }

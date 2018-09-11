@@ -22,12 +22,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.internal.kernel.api.TokenWrite;
 import org.neo4j.internal.kernel.api.Write;
 import org.neo4j.kernel.api.KernelTransaction;
-import org.neo4j.kernel.api.Statement;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
@@ -40,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 public final class HugeIntersectionTest {
 
     private static final int DEGREE = 25;
-    private static HugeRelationshipIntersect INTERSECT;
+    private static RelationshipIntersect INTERSECT;
     private static long START1;
     private static long START2;
     private static long[] TARGETS;
@@ -82,7 +81,7 @@ public final class HugeIntersectionTest {
         });
 
         final HugeGraph graph = (HugeGraph) new GraphLoader(DB).asUndirected(true).load(HugeGraphFactory.class);
-        INTERSECT = graph.intersectionCopy();
+        INTERSECT = graph.intersection();
         START1 = graph.toHugeMappedNodeId(neoStarts[0]);
         START2 = graph.toHugeMappedNodeId(neoStarts[1]);
         TARGETS = Arrays.stream(neoTargets).map(graph::toHugeMappedNodeId).toArray();

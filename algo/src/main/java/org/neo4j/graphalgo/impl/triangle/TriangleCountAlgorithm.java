@@ -20,7 +20,7 @@ package org.neo4j.graphalgo.impl.triangle;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
@@ -82,8 +82,8 @@ public interface TriangleCountAlgorithm {
     }
 
     static TriangleCountAlgorithm instance(Graph graph, ExecutorService pool, int concurrency) {
-        if (graph instanceof HugeGraph) {
-            return new HugeTriangleCount((HugeGraph) graph, pool, concurrency, AllocationTracker.create());
+        if (graph instanceof HugeGraph || graph instanceof HeavyGraph) {
+            return new IntersectingTriangleCount(graph, pool, concurrency, AllocationTracker.create());
         } else {
             return new TriangleCountQueue(graph, pool, concurrency);
         }

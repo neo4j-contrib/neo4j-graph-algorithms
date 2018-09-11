@@ -20,13 +20,7 @@ package org.neo4j.graphalgo.core.heavyweight;
 
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.NodeProperties;
-import org.neo4j.graphalgo.api.NodeWeights;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipPredicate;
-import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphdb.Direction;
 
@@ -40,7 +34,7 @@ import java.util.function.IntPredicate;
  *
  * @author mknblch
  */
-public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate {
+public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate, RelationshipIntersect {
 
     public final static String TYPE = "heavy";
 
@@ -171,6 +165,11 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     }
 
     @Override
+    public void intersectAll(long node, IntersectionConsumer consumer) {
+        container.intersectAll(Math.toIntExact(node), consumer);
+    }
+
+    @Override
     public String getType() {
         return TYPE;
     }
@@ -178,5 +177,10 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate 
     @Override
     public void canRelease(boolean canRelease) {
         this.canRelease = canRelease;
+    }
+
+    @Override
+    public RelationshipIntersect intersection() {
+        return this;
     }
 }

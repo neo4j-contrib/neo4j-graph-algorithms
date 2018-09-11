@@ -19,7 +19,7 @@
 package org.neo4j.graphalgo.bench;
 
 import com.carrotsearch.hppc.LongHashSet;
-import org.neo4j.graphalgo.JaccardProc;
+import org.neo4j.graphalgo.core.utils.Intersections;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -91,7 +91,7 @@ public class IntersectionBenchmark {
     @Benchmark
     public void intersection(Blackhole bh) throws Exception {
         for (long[][] row : data) {
-            bh.consume(JaccardProc.intersection(LongHashSet.from(row[0]),LongHashSet.from(row[1])));
+            bh.consume(Intersections.intersection(LongHashSet.from(row[0]),LongHashSet.from(row[1])));
 
         }
     }
@@ -99,7 +99,7 @@ public class IntersectionBenchmark {
     @Benchmark
     public void intersection2(Blackhole bh) throws Exception {
         for (long[][] row : data) {
-            bh.consume(JaccardProc.intersection2(row[0],row[1]));
+            bh.consume(Intersections.intersection2(row[0],row[1]));
         }
 
     }
@@ -107,14 +107,14 @@ public class IntersectionBenchmark {
     @Benchmark
     public void intersection3(Blackhole bh) throws Exception {
         for (long[][] row : data) {
-            bh.consume(JaccardProc.intersection3(row[0],row[1]));
+            bh.consume(Intersections.intersection3(row[0],row[1]));
         }
     }
 
     @Benchmark
     public void intersection4(Blackhole bh) throws Exception {
         for (long[][] row : data) {
-            bh.consume(JaccardProc.intersection4(row[0],row[1]));
+            bh.consume(Intersections.intersection4(row[0],row[1]));
         }
     }
 
