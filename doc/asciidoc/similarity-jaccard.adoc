@@ -7,7 +7,8 @@ This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algor
 --
 
 // tag::introduction[]
-<intro text>
+Jaccard similarity (coefficient) measures similarities between sets and the term was coined by https://en.wikipedia.org/wiki/Paul_Jaccard[Paul Jaccard^].
+It is defined as the size of the intersection divided by the size of the union of two sets.
 // end::introduction[]
 
 
@@ -16,9 +17,7 @@ This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algor
 
 // tag::explanation[]
 
-all the text
-
-It is calculated using the following formula:
+Jaccard Similarity is computed using the following formula:
 
 ```
 J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
@@ -32,9 +31,9 @@ J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
 == Use-cases - when to use the Jaccard Similarity algorithm
 
 // tag::use-case[]
-* one
-* two
-* threee
+We can use the Jaccard Similarity algorithm to work out the similarity between two things.
+We might then use the computed similarity as part of a recommendation query.
+e.g. show me the products that were purchased by people similar to me in terms of previous products purchased
 // end::use-case[]
 
 
