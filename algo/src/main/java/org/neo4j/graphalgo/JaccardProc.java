@@ -37,9 +37,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
 
 public class JaccardProc {
 
@@ -65,12 +68,13 @@ public class JaccardProc {
 
         InputData[] ids = fillIds(data, degreeCutoff);
         int length = ids.length;
-        int topK = configuration.getInt("top",0);
+        int topN = configuration.getInt("top",0);
+        int topK = configuration.getInt("topK",0);
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         int concurrency = configuration.getConcurrency();
 
-        return jaccardStreamMe(ids, length, terminationFlag, concurrency, similarityCutoff, topK);
+        return jaccardStreamMe(ids, length, terminationFlag, concurrency, similarityCutoff, topN, topK);
     }
 
     @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
@@ -88,11 +92,12 @@ public class JaccardProc {
         long length = ids.length;
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         int concurrency = configuration.getConcurrency();
-        int topK = configuration.getInt("top",0);
+        int topN = configuration.getInt("top",0);
+        int topK = configuration.getInt("topK",0);
 
         DoubleHistogram histogram = new DoubleHistogram(5);
         AtomicLong similarityPairs = new AtomicLong();
-        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff, topK);
+        Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff, topN, topK);
 
         if(configuration.isWriteFlag(false) && similarityCutoff > 0.0) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api,
@@ -140,22 +145,52 @@ public class JaccardProc {
         };
     }
 
-    private Stream<SimilarityResult> jaccardStreamMe(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similarityCutoff, int topK) {
+    private Stream<SimilarityResult> jaccardStreamMe(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similarityCutoff, int topN, int topK) {
         if (concurrency == 1) {
-            return jaccardStream(ids, length, similarityCutoff, topK);
+            if (topK > 0) {
+                return jaccardStreamTopK(ids, length, similarityCutoff, topN, topK);
+            } else {
+                return jaccardStream(ids, length, similarityCutoff, topN);
+            }
         } else {
-            return jaccardParallelStream(ids, length, terminationFlag, concurrency, similarityCutoff, topK);
+            if (topK > 0) {
+                return jaccardParallelStreamTopK(ids, length, terminationFlag, concurrency, similarityCutoff, topN, topK);
+            } else {
+                return jaccardParallelStream(ids, length, terminationFlag, concurrency, similarityCutoff, topN);
+            }
         }
     }
 
-    private Stream<SimilarityResult> jaccardStream(InputData[] ids, int length, double similiarityCutoff, int topK) {
+    private Stream<SimilarityResult> jaccardStream(InputData[] ids, int length, double similiarityCutoff, int topN) {
         Stream<SimilarityResult> stream = IntStream.range(0, length)
-                .boxed().flatMap(idx1 -> IntStream.range(idx1 + 1, length)
-                        .mapToObj(idx2 -> calculateJaccard(similiarityCutoff, ids[idx1], ids[idx2])).filter(Objects::nonNull));
-        return topK(stream,topK);
+                .boxed().flatMap(sourceId -> IntStream.range(sourceId + 1, length)
+                        .mapToObj(targetId -> calculateJaccard(similiarityCutoff, ids[sourceId], ids[targetId])).filter(Objects::nonNull));
+        return topN(stream,topN);
     }
 
-    private Stream<SimilarityResult> jaccardParallelStream(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff, int topK) {
+    private Stream<SimilarityResult> jaccardStreamTopK(InputData[] ids, int length, double similiarityCutoff, int topN, int topK) {
+        TopKConsumer<SimilarityResult>[] topKHolder = initializeTopKConsumers(length, topK);
+
+        for (int sourceId = 0;sourceId < length;sourceId++) {
+            computeJaccardForSourceIndex(sourceId, ids, length, similiarityCutoff, (sourceIndex, targetIndex, similarityResult) -> {
+                topKHolder[sourceIndex].accept(similarityResult);
+                topKHolder[targetIndex].accept(similarityResult.reverse());
+            });
+        }
+        return topN(Arrays.stream(topKHolder).flatMap(TopKConsumer::stream),topN);
+    }
+
+    interface SimilarityConsumer {
+        void accept(int sourceIndex, int targetIndex, SimilarityResult result);
+    }
+
+    private TopKConsumer<SimilarityResult>[] initializeTopKConsumers(int length, int topK) {
+        TopKConsumer<SimilarityResult>[] results = new TopKConsumer[length];
+        for (int i = 0; i < results.length; i++) results[i] = new TopKConsumer<>(topK);
+        return results;
+    }
+
+    private Stream<SimilarityResult> jaccardParallelStream(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff, int topN) {
 
         int timeout = 100;
         int queueSize = 1000;
@@ -167,46 +202,66 @@ public class JaccardProc {
         ArrayBlockingQueue<SimilarityResult> queue = new ArrayBlockingQueue<>(queueSize);
 
         int multiplier = batchSize < length ? batchSize : 1;
-        for (int task = 0; task < taskCount; task++) {
-            int taskOffset = task;
+        for (int taskId = 0; taskId < taskCount; taskId++) {
+            int taskOffset = taskId;
             tasks.add(() -> {
-                IntStream.range(0,batchSize).forEach(offset -> {
+                for (int offset = 0; offset < batchSize; offset++) {
                     int sourceId = taskOffset * multiplier + offset;
-                    if (sourceId < length) {
-                        IntStream.range(sourceId + 1, length).forEach(otherId -> {
-                            SimilarityResult result = calculateJaccard(similiarityCutoff, ids[sourceId], ids[otherId]);
-                            if (result != null) {
-                                put(queue, result);
-                            }
-                        });
-                    }
-                });
+                    if (sourceId < length)
+                        computeJaccardForSourceIndex(sourceId, ids, length, similiarityCutoff, (s, t, result) -> put(queue, result));
+                }
             });
         }
-
 
         new Thread(() -> {
             try {
                 ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
-            } catch(Exception e) {
-                e.printStackTrace();
             } finally {
                 put(queue, SimilarityResult.TOMB);
             }
         }).start();
 
         QueueBasedSpliterator<SimilarityResult> spliterator = new QueueBasedSpliterator<>(queue, SimilarityResult.TOMB, terminationFlag, timeout);
-        return topK(StreamSupport.stream(spliterator, false), topK);
+        Stream<SimilarityResult> stream = StreamSupport.stream(spliterator, false);
+        return topN(stream, topN);
     }
 
-    private Stream<SimilarityResult> topK(Stream<SimilarityResult> stream, int topK) {
-        if (topK <= 0) {
+
+    private Stream<SimilarityResult> jaccardParallelStreamTopK(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff, int topN, int topK) {
+        int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 1);
+        int taskCount = (length / batchSize) + 1;
+        Collection<TopKTask> tasks = new ArrayList<>(taskCount);
+
+        int multiplier = batchSize < length ? batchSize : 1;
+        for (int taskId = 0; taskId < taskCount; taskId++) {
+            tasks.add(new TopKTask(batchSize, taskId, multiplier, length, ids, similiarityCutoff, topK));
+        }
+
+        ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
+
+        TopKConsumer<SimilarityResult>[] topKConsumers = initializeTopKConsumers(length, topK);
+        for (Runnable task : tasks) ((TopKTask)task).mergeInto(topKConsumers);
+        Stream<SimilarityResult> stream = Arrays.stream(topKConsumers).flatMap(TopKConsumer::stream);
+        return topN(stream, topN);
+    }
+
+    private void computeJaccardForSourceIndex(int sourceId, InputData[] ids, int length, double similiarityCutoff, SimilarityConsumer consumer) {
+        for (int targetId=sourceId+1;targetId<length;targetId++) {
+            SimilarityResult similarity = calculateJaccard(similiarityCutoff, ids[sourceId], ids[targetId]);
+            if (similarity != null) {
+                consumer.accept(sourceId, targetId, similarity);
+            }
+        }
+    }
+
+    private Stream<SimilarityResult> topN(Stream<SimilarityResult> stream, int topN) {
+        if (topN <= 0) {
             return stream;
         }
-        if (topK > 10000) {
-            return stream.sorted().limit(topK);
+        if (topN > 10000) {
+            return stream.sorted().limit(topN);
         }
-        return TopKConsumer.topK(stream,topK);
+        return topK(stream,topN);
     }
 
     private SimilarityResult calculateJaccard(double similarityCutoff, InputData e1, InputData e2) {
@@ -257,62 +312,44 @@ public class JaccardProc {
         return ids;
     }
 
+    private class TopKTask implements Runnable {
+        private final int batchSize;
+        private final int taskOffset;
+        private final int multiplier;
+        private final int length;
+        private final InputData[] ids;
+        private final double similiarityCutoff;
+        private final TopKConsumer<SimilarityResult>[] topKConsumers;
 
-    public static long intersection(LongHashSet targets1, LongHashSet targets2) {
-        LongHashSet intersectionSet = new LongHashSet(targets1);
-        intersectionSet.retainAll(targets2);
-        return intersectionSet.size();
-    }
-    public static long intersection2(long[] targets1, long[] targets2) {
-        LongHashSet intersectionSet = LongHashSet.from(targets1);
-        intersectionSet.retainAll(LongHashSet.from(targets2));
-        return intersectionSet.size();
-    }
-
-    // assume both are sorted
-    public static long intersection3(long[] targets1, long[] targets2) {
-        int len2;
-        if ((len2 = targets2.length) == 0) return 0;
-        int off2 = 0;
-        long intersection = 0;
-        for (long value1 : targets1) {
-            if (value1 > targets2[off2]) {
-                while (++off2 != len2 && value1 > targets2[off2]);
-                if (off2 == len2) return intersection;
-            }
-            if (value1 == targets2[off2]) {
-                intersection++;
-                off2++;
-                if (off2 == len2) return intersection;
-            }
+        public TopKTask(int batchSize, int taskOffset, int multiplier, int length, InputData[] ids, double similiarityCutoff, int topK) {
+            this.batchSize = batchSize;
+            this.taskOffset = taskOffset;
+            this.multiplier = multiplier;
+            this.length = length;
+            this.ids = ids;
+            this.similiarityCutoff = similiarityCutoff;
+            topKConsumers = initializeTopKConsumers(length, topK);
         }
-        return intersection;
-    }
 
-    // idea, compute differences, when 0 then equal?
-    // assume both are sorted
-    public static long intersection4(long[] targets1, long[] targets2) {
-        if (targets2.length == 0) return 0;
-        int off2 = 0;
-        long intersection = 0;
-        for (int off1 = 0; off1 < targets1.length; off1++) {
-            if (off2 == targets2.length) return intersection;
-            long value1 = targets1[off1];
-
-            if (value1 > targets2[off2]) {
-                for (;off2 < targets2.length;off2++) {
-                    if (value1 <= targets2[off2]) break;
+        @Override
+        public void run() {
+            for (int offset = 0; offset < batchSize; offset++) {
+                int sourceId = taskOffset * multiplier + offset;
+                if (sourceId < length) {
+                    JaccardProc.this.computeJaccardForSourceIndex(sourceId, ids, length, similiarityCutoff, (s, t, result) -> {
+                        topKConsumers[s].accept(result);
+                        topKConsumers[t].accept(result.reverse());
+                    });
                 }
-                // while (++off2 != targets2.length && value1 > targets2[off2]);
-                if (off2 == targets2.length) return intersection;
-            }
-            if (value1 == targets2[off2]) {
-                intersection++;
-                off2++;
             }
         }
-        return intersection;
+        public void mergeInto(TopKConsumer<SimilarityResult>[] target) {
+            for (int i = 0; i < target.length; i++) {
+                target[i].accept(topKConsumers[i]);
+            }
+        }
     }
+
 
     // roaring bitset
     // test with JMH

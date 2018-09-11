@@ -8,9 +8,9 @@ import java.util.stream.Stream;
 
 public class TopKConsumer<T extends Comparable<T>> implements Consumer<T> {
     private final int topK;
-    T[] heap;
-    int count;
-    T minValue;
+    private final T[] heap;
+    private int count;
+    private T minValue;
 
     public TopKConsumer(int topK) {
         this.topK = topK;
@@ -50,5 +50,13 @@ public class TopKConsumer<T extends Comparable<T>> implements Consumer<T> {
     public List<T> list() {
         List<T> list = Arrays.asList(heap);
         return count< topK ? list.subList(0,count)  : list;
+    }
+
+    public void accept(TopKConsumer<T> other) {
+        if (minValue == null || other.minValue != null && other.minValue.compareTo(minValue) < 0) {
+            for (int i=0;i<other.count;i++) {
+                accept(other.heap[i]);
+            }
+        }
     }
 }
