@@ -53,7 +53,7 @@ public class TopKConsumer<T extends Comparable<T>> implements Consumer<T> {
     }
 
     public void accept(TopKConsumer<T> other) {
-        if (minValue == null || other.minValue != null && other.minValue.compareTo(minValue) < 0) {
+        if (minValue == null || count < topK || other.minValue != null && other.minValue.compareTo(minValue) < 0) {
             for (int i=0;i<other.count;i++) {
                 accept(other.heap[i]);
             }
