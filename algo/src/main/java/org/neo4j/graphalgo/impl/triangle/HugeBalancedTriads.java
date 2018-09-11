@@ -19,8 +19,8 @@
 package org.neo4j.graphalgo.impl.triangle;
 
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
@@ -147,10 +147,10 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
 
     private class HugeTask implements Runnable, IntersectionConsumer {
 
-        private HugeRelationshipIntersect hg;
+        private RelationshipIntersect hg;
 
         HugeTask(HugeGraph graph) {
-            hg = graph.intersectionCopy();
+            hg = graph.intersection();
         }
 
         @Override
