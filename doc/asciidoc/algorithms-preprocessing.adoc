@@ -1,0 +1,15 @@
+[[algorithms-preprocessing]]
+= Preprocessing functions and procedurs
+
+ifdef::env-docs[]
+[abstract]
+--
+This chapter provides explanations and examples for each of the preprocessing functions and procedures in the Neo4j Graph Algorithms library.
+--
+endif::env-docs[]
+
+The following features and procedures can be used as part of the data preparation process:
+
+* <<algorithms-one-hot-encoding, One Hot Encoding>> (`algo.ml.oneHotEncoding`)
+
+include::one-hot-encoding.adoc[leveloffset=2]
