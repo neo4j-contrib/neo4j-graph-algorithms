@@ -18,6 +18,13 @@ This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algor
 
 all the text
 
+It is calculated using the following formula:
+
+```
+J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
+       = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
+```
+
 // end::explanation[]
 
 
@@ -34,31 +41,48 @@ all the text
 [[algorithms-similarity-jaccard-sample]]
 == Jaccard algorithm sample
 
-.The following will create a sample graph:
+.The following will return the Jaccard similarity of two lists of numbers
 [source, cypher]
 ----
-include::scripts/triangle-count.cypher[tag=create-sample-graph]
+include::scripts/similarity-jaccard.cypher[tag=function]
 ----
 
 // tag::function[]
 .Results
-[opts="header",cols="1,1,1"]
+[opts="header",cols="1"]
 |===
-| nodeA   | nodeB   | nodeC
-| Will    | Michael | Chris
-| Will    | Mark    | Michael
-| Michael | Karin   | Chris
+| similarity
+| 0.4
 |===
 // end::function[]
 
+// tag::function-explanation[]
+These two lists of numbers have a Jaccard similarity of 0.4.
+We can see how this result is derived by breaking down the formula:
 
-.The following will return a stream of triples, with `nodeId` for each triangle:
+```
+J(A,B) = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
+J(A,B) = 2 / 3 + 4 - 2
+       = 2 / 5
+       = 0.4
+```
+// end::function-explanation[]
+
+
+
+.The following will create a sample graph:
 [source, cypher]
 ----
-include::scripts/triangle-count.cypher[tag=stream-triples]
+include::scripts/similarity-jaccard.cypher[tag=create-sample-graph]
 ----
 
-// tag::stream-triples-result[]
+.The following will return a stream of node pairs along with their intersection and Jaccard similarities
+[source, cypher]
+----
+include::scripts/similarity-jaccard.cypher[tag=stream]
+----
+
+// tag::stream[]
 .Results
 [opts="header",cols="1,1,1"]
 |===
@@ -67,12 +91,12 @@ include::scripts/triangle-count.cypher[tag=stream-triples]
 | Will    | Mark    | Michael
 | Michael | Karin   | Chris
 |===
-// end::stream-triples-result[]
+// end::stream[]
 
-// tag::stream-triples-explanation[]
+// tag::stream-explanation[]
 We can see that there are `KNOWS` triangles containing "Will, Michael, and Chris", "Will, Mark, and Michael", and "Michael, Karin, and Chris".
 This means that everybody in the triangle knows each other.
-// end::stream-triples-explanation[]
+// end::stream-explanation[]
 
 .The following will count the number of triangles that a node is member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
 [source, cypher]
