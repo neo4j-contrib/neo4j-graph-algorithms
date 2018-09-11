@@ -141,7 +141,7 @@ include::scripts/similarity-jaccard.cypher[tag=stream-topk]
 |===
 | from     | to       | similarity
 | Arya     | Karin    | 0.66
-| Karin    | Arya     | 0.33
+| Karin    | Arya     | 0.66
 | Michael  | Zhen     | 0.66
 | Praveena | Zhen     | 0.33
 | Zhen     | Michael  | 0.66
