@@ -1,0 +1,124 @@
+[[algorithms-similarity-jaccard]]
+= The Jaccard Similarity algorithm
+
+[abstract]
+--
+This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algorithms library.
+--
+
+// tag::introduction[]
+<intro text>
+// end::introduction[]
+
+
+[[algorithms-similarity-jaccard-context]]
+== History and explanation
+
+// tag::explanation[]
+
+all the text
+
+// end::explanation[]
+
+
+[[algorithms-similarity-jaccard-usecase]]
+== Use-cases - when to use the Jaccard Similarity algorithm
+
+// tag::use-case[]
+* one
+* two
+* threee
+// end::use-case[]
+
+
+[[algorithms-similarity-jaccard-sample]]
+== Jaccard algorithm sample
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/triangle-count.cypher[tag=create-sample-graph]
+----
+
+// tag::function[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| nodeA   | nodeB   | nodeC
+| Will    | Michael | Chris
+| Will    | Mark    | Michael
+| Michael | Karin   | Chris
+|===
+// end::function[]
+
+
+.The following will return a stream of triples, with `nodeId` for each triangle:
+[source, cypher]
+----
+include::scripts/triangle-count.cypher[tag=stream-triples]
+----
+
+// tag::stream-triples-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| nodeA   | nodeB   | nodeC
+| Will    | Michael | Chris
+| Will    | Mark    | Michael
+| Michael | Karin   | Chris
+|===
+// end::stream-triples-result[]
+
+// tag::stream-triples-explanation[]
+We can see that there are `KNOWS` triangles containing "Will, Michael, and Chris", "Will, Mark, and Michael", and "Michael, Karin, and Chris".
+This means that everybody in the triangle knows each other.
+// end::stream-triples-explanation[]
+
+.The following will count the number of triangles that a node is member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
+[source, cypher]
+----
+include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
+----
+
+.The following will count the number of triangles that a node is member of, and return a stream with `nodeId` and `triangleCount`:
+[source, cypher]
+----
+include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
+----
+
+// tag::triangle-stream-sample-graph-result[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| Name    | Triangles | Coefficient
+| Karin   | 1         | 1
+| Mark    | 1         | 1
+| Chris   | 2         | 0.6666666666666666
+| Will    | 2         | 0.6666666666666666
+| Michael | 3         | 0.3
+| Alice   | 0         | 0
+|===
+// end::triangle-stream-sample-graph-result[]
+
+// tag::triangle-stream-sample-graph-explanation[]
+We learn that Michael is part of the most triangles, but it's Karin and Mark who are the best at introducing their friends - all of the people who know them, know each other!
+// end::triangle-stream-sample-graph-explanation[]
+
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name         | Type   | Default        | Optional | Description
+| label        | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
+| concurrency  | int    | available CPUs | yes      | The number of concurrent threads
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| Name  | Type | Description
+| nodeA | int  | The ID of node in the given triangle
+| nodeB | int  | The ID of node in the given triangle
+| nodeC | int  | The ID of node in the given triangle
+|===
