@@ -1,3 +1,7 @@
+// tag::function[]
+RETURN algo.similarity.jaccard([1,2,3], [1,2,4,5]) AS similarity
+// end::function[]
+
 // tag::create-sample-graph[]
 
 MERGE (alice:Person{id:"Alice"})
@@ -17,10 +21,6 @@ MERGE (will)-[:KNOWS]->(chris)
 MERGE (chris)-[:KNOWS]->(karin);
 
 // end::create-sample-graph[]
-
-// tag::function[]
-
-// end::function[]
 
 // tag::stream[]
 
