@@ -69,7 +69,6 @@ J(A,B) = 2 / 3 + 4 - 2
 // end::function-explanation[]
 
 
-
 .The following will create a sample graph:
 [source, cypher]
 ----
@@ -84,21 +83,51 @@ include::scripts/similarity-jaccard.cypher[tag=stream]
 
 // tag::stream[]
 .Results
-[opts="header",cols="1,1,1"]
+[opts="header",cols="1,1,1,1"]
 |===
-| nodeA   | nodeB   | nodeC
-| Will    | Michael | Chris
-| Will    | Mark    | Michael
-| Michael | Karin   | Chris
+| from     | to       | intersection | similarity
+| Arya     | Karin    | 2            | 0.66
+| Zhen     | Praveena | 1            | 0.33
+| Zhen     | Michael  | 1            | 0.33
+| Michael  | Karin    | 1            | 0.33
+| Praveena | Arya     | 1            | 0.25
+| Michael  | Arya     | 1            | 0.25
+| Praveena | Michael  | 0            | 0
+| Praveena | Karin    | 0            | 0
+| Zhen     | Arya     | 0            | 0
+| Zhen     | Karin    | 0            | 0
 |===
 // end::stream[]
 
-// tag::stream-explanation[]
-We can see that there are `KNOWS` triangles containing "Will, Michael, and Chris", "Will, Mark, and Michael", and "Michael, Karin, and Chris".
-This means that everybody in the triangle knows each other.
-// end::stream-explanation[]
+Arya and Karin have the most similar food preferences, with two overlapping cuisines for a similarity of 0.66.
+We also have 4 pairs of users who are not similar at all.
+We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
-.The following will count the number of triangles that a node is member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
+.The following will return a stream of node pairs that have a similarity of at least 0.1 along with their intersection and Jaccard similarities
+[source, cypher]
+----
+include::scripts/similarity-jaccard.cypher[tag=stream-similarity-cutoff]
+----
+
+// tag::stream-similarity-cutoff[]
+.Results
+[opts="header",cols="1,1,1,1"]
+|===
+| from     | to       | intersection | similarity
+| Arya     | Karin    | 2            | 0.66
+| Zhen     | Praveena | 1            | 0.33
+| Zhen     | Michael  | 1            | 0.33
+| Michael  | Karin    | 1            | 0.33
+| Praveena | Arya     | 1            | 0.25
+| Michael  | Arya     | 1            | 0.25
+|===
+// end::stream-similarity-cutoff[]
+
+We can see that those users with no similarity have been filtered out.
+If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` users for a given user.
+We can do that by passing in the `topK` parameter
+
+.The following will return a stream of pairs containing the most similar user
 [source, cypher]
 ----
 include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
