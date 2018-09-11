@@ -1,6 +1,6 @@
 // tag::basic[]
 RETURN algo.ml.oneHotEncoding(["Chinese", "Indian", "Italian"], ["Italian"]) AS vector
-// tag::basic[]
+// end::basic[]
 
 // tag::create-sample-graph[]
 
