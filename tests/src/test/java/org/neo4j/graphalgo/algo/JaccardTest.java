@@ -21,9 +21,7 @@ package org.neo4j.graphalgo.algo;
 import org.junit.*;
 import org.neo4j.graphalgo.JaccardProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
-import org.neo4j.graphalgo.walking.NodeWalkerProc;
 import org.neo4j.graphdb.*;
-import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -31,7 +29,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import java.util.*;
 
 import static java.util.Collections.singletonMap;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
 
 public class JaccardTest {
@@ -76,6 +73,7 @@ public class JaccardTest {
         return "CREATE (a:Person {name:'Alice'})\n" +
                 "CREATE (b:Person {name:'Bob'})\n" +
                 "CREATE (c:Person {name:'Charlie'})\n" +
+                "CREATE (d:Person {name:'Dana'})\n" +
                 "CREATE (i1:Item {name:'p1'})\n" +
                 "CREATE (i2:Item {name:'p2'})\n" +
                 "CREATE (i3:Item {name:'p3'})\n" +
@@ -266,6 +264,59 @@ public class JaccardTest {
         count++;
         assertFalse(results.hasNext());
         assertEquals(3, count);
+    }
+
+    @Test
+    public void topK4JaccardStreamTest() {
+        String statement = "MATCH (i:Item {name:'p1'})  MATCH (d:Person {name:'Dana'}) CREATE (d)-[:LIKES]->(i)\n";
+        db.execute(statement).close();
+
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data,{topK:4, concurrency:4, similarityCutoff:-0.1}) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN * ORDER BY source1,source2";
+
+        System.out.println(db.execute(query).resultAsString());
+
+        Result results = db.execute(query);
+        assertSameSource(results, 3, 0L);
+        assertSameSource(results, 3, 1L);
+        assertSameSource(results, 3, 2L);
+        assertSameSource(results, 3, 3L);
+        assertFalse(results.hasNext());
+    }
+
+    @Test
+    public void topK3JaccardStreamTest() {
+        String query = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+                "WITH {source:id(p), targets: collect(distinct id(i))} as userData\n" +
+                "WITH collect(userData) as data\n" +
+                "call algo.similarity.jaccard.stream(data,{topK:3, concurrency:3}) " +
+                "yield source1, source2, count1, count2, intersection, similarity " +
+                "RETURN * ORDER BY source1,source2";
+
+        System.out.println(db.execute(query).resultAsString());
+
+        Result results = db.execute(query);
+        assertSameSource(results, 2, 0L);
+        assertSameSource(results, 2, 1L);
+        assertSameSource(results, 2, 2L);
+        assertFalse(results.hasNext());
+    }
+
+    private void assertSameSource(Result results, int count, long source) {
+        Map<String, Object> row;
+        long target = 0;
+        for (int i = 0; i<count; i++) {
+            if (target == source) target++;
+            assertTrue(results.hasNext());
+            row = results.next();
+            assertEquals(source, row.get("source1"));
+            assertEquals(target, row.get("source2"));
+            target++;
+        }
     }
 
     @Test

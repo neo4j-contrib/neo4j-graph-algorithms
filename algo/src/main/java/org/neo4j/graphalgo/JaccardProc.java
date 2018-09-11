@@ -233,7 +233,7 @@ public class JaccardProc {
 
     private Stream<SimilarityResult> jaccardParallelStreamTopK(InputData[] ids, int length, TerminationFlag terminationFlag, int concurrency, double similiarityCutoff, int topN, int topK) {
         int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 1);
-        int taskCount = (length / batchSize) + 1;
+        int taskCount = (length / batchSize) + (length % batchSize > 0 ? 1 : 0);
         Collection<TopKTask> tasks = new ArrayList<>(taskCount);
 
         int multiplier = batchSize < length ? batchSize : 1;
