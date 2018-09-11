@@ -1,5 +1,5 @@
 [[algorithms-preprocessing]]
-= Preprocessing functions and procedurs
+= Preprocessing functions and procedures
 
 ifdef::env-docs[]
 [abstract]
