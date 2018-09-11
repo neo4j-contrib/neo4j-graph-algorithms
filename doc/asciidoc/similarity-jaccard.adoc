@@ -136,7 +136,7 @@ include::scripts/similarity-jaccard.cypher[tag=stream-topk]
 
 // tag::stream-topk[]
 .Results
-[opts="header",cols="1,1,1,1"]
+[opts="header",cols="1,1,1"]
 |===
 | from     | to       | similarity
 | Arya     | Karin    | 0.66
