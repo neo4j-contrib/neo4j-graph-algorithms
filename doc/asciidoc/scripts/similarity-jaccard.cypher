@@ -24,6 +24,7 @@ MERGE (zhen)-[:LIKES]->(indian)
 
 MERGE (michael)-[:LIKES]->(french)
 MERGE (michael)-[:LIKES]->(italian)
+MERGE (michael)-[:LIKES]->(indian)
 
 MERGE (arya)-[:LIKES]->(lebanese)
 MERGE (arya)-[:LIKES]->(italian)
@@ -55,14 +56,13 @@ ORDER BY similarity DESC
 // end::stream-similarity-cutoff[]
 
 // tag::stream-topk[]
-MATCH (p:Person)-[:LIKED]->(cuisine)
+MATCH (p:Person)-[:LIKES]->(cuisine)
 WITH {source:id(p), targets: collect(id(cuisine))} as userData
 WITH collect(userData) as data
-CALL algo.similarity.jaccard.stream(data, {topK:3, similarityCutoff:0.5, degreeCutoff:10})
+CALL algo.similarity.jaccard.stream(data, {topK: 1})
 YIELD source1, source2, count1, count2, intersection, similarity
-WHERE source1 < source2
-WITH algo.getNodeById(source1) AS from, algo.getNodeById(source2) AS to
-RETURN from.name AS from, to.name AS to, similarity
+RETURN algo.getNodeById(source1).name AS from, algo.getNodeById(source2).name AS to, similarity
+ORDER BY from
 // end::stream-topk[]
 
 // tag::write-back[]
