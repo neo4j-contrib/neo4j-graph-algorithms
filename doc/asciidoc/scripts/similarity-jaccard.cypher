@@ -49,7 +49,7 @@ ORDER BY similarity DESC
 MATCH (p:Person)-[:LIKES]->(cuisine)
 WITH {source:id(p), targets: collect(id(cuisine))} as userData
 WITH collect(userData) as data
-CALL algo.similarity.jaccard.stream(data, {similarityCutoff: 0.1})
+CALL algo.similarity.jaccard.stream(data, {similarityCutoff: 0.0})
 YIELD source1, source2, count1, count2, intersection, similarity
 RETURN algo.getNodeById(source1).name AS from, algo.getNodeById(source2).name AS to, intersection, similarity
 ORDER BY similarity DESC
@@ -59,7 +59,7 @@ ORDER BY similarity DESC
 MATCH (p:Person)-[:LIKES]->(cuisine)
 WITH {source:id(p), targets: collect(id(cuisine))} as userData
 WITH collect(userData) as data
-CALL algo.similarity.jaccard.stream(data, {topK: 1})
+CALL algo.similarity.jaccard.stream(data, {topK: 1, similarityCutoff: 0.0})
 YIELD source1, source2, count1, count2, intersection, similarity
 RETURN algo.getNodeById(source1).name AS from, algo.getNodeById(source2).name AS to, similarity
 ORDER BY from
