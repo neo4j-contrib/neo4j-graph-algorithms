@@ -99,10 +99,11 @@ public class JaccardProc {
         AtomicLong similarityPairs = new AtomicLong();
         Stream<SimilarityResult> stream = jaccardStreamMe(ids, (int) length, terminationFlag, concurrency, similarityCutoff, topN, topK);
 
-        if(configuration.isWriteFlag(false) && similarityCutoff > 0.0) {
-            SimilarityExporter similarityExporter = new SimilarityExporter(api,
-                    configuration.get("relationshipType", "SIMILAR"),
-                    configuration.getWriteProperty("score"));
+        String writeRelationshipType = configuration.get("writeRelationshipType", "SIMILAR");
+        String writeProperty = configuration.getWriteProperty("score");
+        boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
+        if(write) {
+            SimilarityExporter similarityExporter = new SimilarityExporter(api, writeRelationshipType, writeProperty);
 
             Stream<SimilarityResult> similarities = stream.peek(recordInHistogram(histogram, similarityPairs));
             similarityExporter.export(similarities);
@@ -114,6 +115,9 @@ public class JaccardProc {
         SimilaritySummaryResult result = new SimilaritySummaryResult(
                 length,
                 similarityPairs.get(),
+                write,
+                writeRelationshipType,
+                writeProperty,
                 histogram.getMinValue(),
                 histogram.getMaxValue(),
                 histogram.getMean(),
