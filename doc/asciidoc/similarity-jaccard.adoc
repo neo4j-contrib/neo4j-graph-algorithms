@@ -128,7 +128,7 @@ We can see that those users with no similarity have been filtered out.
 If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` users for a given user.
 We can do that by passing in the `topK` parameter
 
-.The following will return a stream of users along with the most similar user to them
+.The following will return a stream of users along with the most similar user to them i.e. k=1
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=stream-topk]
