@@ -18,14 +18,13 @@
  */
 package org.neo4j.graphalgo.impl.yens;
 
-import org.neo4j.graphalgo.SimilarityResult;
+import org.neo4j.graphalgo.similarity.SimilarityResult;
 import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.StatementApi;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.values.storable.Values;
 
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 public class SimilarityExporter extends StatementApi {
@@ -47,8 +46,8 @@ public class SimilarityExporter extends StatementApi {
 
     private void export(SimilarityResult similarityResult) {
         applyInTransaction(statement -> {
-            long node1 = similarityResult.source1;
-            long node2 = similarityResult.source2;
+            long node1 = similarityResult.item1;
+            long node2 = similarityResult.item2;
 
             try {
                 long relationshipId = statement.dataWrite().relationshipCreate(node1, relationshipTypeId, node2);

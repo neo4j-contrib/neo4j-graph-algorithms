@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.algo;
+package org.neo4j.graphalgo.algo.similarity;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.graphalgo.Similarity;
+import org.neo4j.graphalgo.similarity.Similarities;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -30,7 +30,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import static org.junit.Assert.assertEquals;
 
-public class SimilarityTest {
+public class SimilaritiesTest {
     private static final String SETUP = "create (java:Skill{name:'Java'})\n" +
             "create (neo4j:Skill{name:'Neo4j'})\n" +
             "create (nodejs:Skill{name:'NodeJS'})\n" +
@@ -62,7 +62,7 @@ public class SimilarityTest {
 
         db.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerFunction(Similarity.class);
+                .registerFunction(Similarities.class);
 
         db.execute(SETUP).close();
     }

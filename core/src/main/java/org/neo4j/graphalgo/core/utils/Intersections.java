@@ -88,4 +88,100 @@ public class Intersections {
         }
         return resIdx < intersection.length ? Arrays.copyOf(intersection, resIdx) : intersection;
     }
+
+    /*
+    public static double sumSquareDelta(double[] vector1, double[] vector2, int len) {
+        double result = 0;
+        int intersection = 0;
+        for (int i=0;i<len;i++) {
+            double delta = vector1[i] - vector2[i];
+            if (delta == 0) continue;
+            result += delta * delta;
+            intersection++;
+        }
+        return result;
+    }
+    */
+    public static double sumSquareDelta(double[] vector1, double[] vector2, int len) {
+        double result = 0;
+        for (int i=0;i<len;i++) {
+            double delta = vector1[i] - vector2[i];
+            result += delta * delta;
+        }
+        return result;
+    }
+
+    public static double[] sumSquareDeltas(double[] vector1, double[][] vector2, int len) {
+        int vectors = vector2.length;
+        double[] result = new double[vectors];
+        for (int i=0;i<len;i++) {
+            double v1 = vector1[i];
+            for (int j=0;j<vectors;j++) {
+                result[j] += (v1 - vector2[j][i])*(v1 - vector2[j][i]);
+            }
+        }
+        return result;
+    }
+
+     public static double cosineSquare(double[] vector1, double[] vector2, int len) {
+         double dotProduct = 0d;
+         double xLength = 0d;
+         double yLength = 0d;
+         for (int i = 0; i < len; i++) {
+             double weight1 = vector1[i];
+             // if (weight1 == 0d) continue;
+             double weight2 = vector2[i];
+             // if (weight2 == 0d) continue;
+
+             dotProduct += weight1 * weight2;
+             xLength += weight1 * weight1;
+             yLength += weight2 * weight2;
+         }
+         if (xLength == 0d || yLength == 0d) return 0d;
+         return dotProduct * dotProduct / xLength / yLength;
+    }
+     public static double cosine(double[] vector1, double[] vector2, int len) {
+         double dotProduct = 0d;
+         double xLength = 0d;
+         double yLength = 0d;
+         for (int i = 0; i < len; i++) {
+             double weight1 = vector1[i];
+             // if (weight1 == 0d) continue;
+             double weight2 = vector2[i];
+             // if (weight2 == 0d) continue;
+
+             dotProduct += weight1 * weight2;
+             xLength += weight1 * weight1;
+             yLength += weight2 * weight2;
+         }
+
+         return dotProduct / Math.sqrt(xLength * yLength);
+    }
+
+
+     public static double[] cosines(double[] vector1, double[][] vector2, int len) {
+         int vectors = vector2.length;
+         double[] dotProduct = new double[vectors];
+         double xLength = 0d;
+         double[] yLength = new double[vectors];
+         for (int i = 0; i < len; i++) {
+             double weight1 = vector1[i];
+             // todo does this influence simd?
+             // if (weight1 == 0d) continue;
+
+             xLength += weight1 * weight1;
+             for (int j = 0; j < vectors; j++) {
+                 double weight2 = vector2[j][i];
+                 // todo does this influence simd?
+                 // if (weight2 == 0d) continue;
+                 dotProduct[j] += weight1 * weight2;
+                 yLength[j] += weight2 * weight2;
+             }
+         }
+         xLength = Math.sqrt(xLength);
+         for (int j=0;j<vectors;j++) {
+             dotProduct[j] /= (xLength * Math.sqrt(yLength[j]));
+         }
+        return dotProduct;
+    }
 }
