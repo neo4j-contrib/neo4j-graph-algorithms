@@ -90,16 +90,18 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
 
     private NodeIterator createNodeIterator(Graph graph, int concurrency) {
 
-        if (concurrency > 1) {
+
+        return new ShuffledNodeIterator(nodeCount);
+
+   /*     if (concurrency > 1) {
             return new ShuffledNodeIterator(nodeCount);
         }
 
         return new NodeIterator() {
             @Override
             public void forEachNode(IntPredicate consumer) {
-                final PrimitiveIntIterator primitiveIntIterator = graph.nodeIterator();
-                while (primitiveIntIterator.hasNext()) {
-                    if (!consumer.test(primitiveIntIterator.next())) {
+                for (int i = 0; i < nodeCount; i++) {
+                    if (!consumer.test(i)) {
                         return;
                     }
                 }
@@ -107,9 +109,22 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
 
             @Override
             public PrimitiveIntIterator nodeIterator() {
-                return graph.nodeIterator();
+                return new PrimitiveIntIterator() {
+
+                    int offset = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return offset < nodeCount;
+                    }
+
+                    @Override
+                    public int next() {
+                        return offset++;
+                    }
+                };
             }
-        };
+        };*/
     }
 
     /**
