@@ -200,7 +200,6 @@ public class LouvainClusteringIntegrationTest {
         });
     }
 
-    @Ignore("broken due to missing asUndirected() in cyphergraph")
     @Test
     public void shouldAllowCypherGraph() {
         final String cypher = "CALL algo.louvain('MATCH (n) RETURN id(n) as id', 'MATCH (s)-->(t) RETURN id(s) as source, id(t) as target', {graph:'cypher'}) YIELD nodes, communityCount";
@@ -228,7 +227,7 @@ public class LouvainClusteringIntegrationTest {
 
         Object id[] = {0};
         DB.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
-            id[0] = row.getNode("n").getProperty("dendogram");
+            id[0] = row.getNode("n").getProperty("communities");
             return true;
         });
         return (int[]) id[0];

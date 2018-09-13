@@ -80,7 +80,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeIterator = createNodeIterator(graph, concurrency);
+        this.nodeIterator = createNodeIterator(concurrency);
 
         ki = new double[nodeCount];
         communities = new int[nodeCount];
@@ -88,12 +88,9 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         tracker.add(12 * nodeCount);
     }
 
-    private NodeIterator createNodeIterator(Graph graph, int concurrency) {
+    private NodeIterator createNodeIterator(int concurrency) {
 
-
-        return new ShuffledNodeIterator(nodeCount);
-
-   /*     if (concurrency > 1) {
+        if (concurrency > 1) {
             return new ShuffledNodeIterator(nodeCount);
         }
 
@@ -124,7 +121,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                     }
                 };
             }
-        };*/
+        };
     }
 
     /**
