@@ -61,7 +61,7 @@ public class LocalTriadDynamicsProc {
     public Stream<Result> balancedTriads(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
-            @Name(value = "probability", defaultValue = "") double probability,
+            @Name(value = "p", defaultValue = "0.5") double probability,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final HugeGraph graph;

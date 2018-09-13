@@ -40,15 +40,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 /**
-
- *
  * @author mknblch
  */
 public class LocalTriadDynamicsTest {
-
-    interface BalancedTriadTestConsumer {
-        void accept(long node, long balanced, long unbalanced);
-    }
 
     @ClassRule
     public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
@@ -97,7 +91,7 @@ public class LocalTriadDynamicsTest {
     public void testStream() throws Exception {
 
         final PagedLongLongBitSet balance = new HugeLocalTriadDynamics(graph, Pools.DEFAULT, 1, AllocationTracker.EMPTY)
-                .compute()
+                .compute(0.5)
                 .getBalance();
 
         try (Transaction transaction = DB.beginTx()) {
