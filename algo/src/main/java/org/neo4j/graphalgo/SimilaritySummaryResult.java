@@ -22,6 +22,9 @@ public class SimilaritySummaryResult {
 
     public final long nodes;
     public final long similarityPairs;
+    public final boolean write;
+    public final String writeRelationshipType;
+    public final String writeProperty;
     public final double min;
     public final double max;
     public final double mean;
@@ -36,11 +39,15 @@ public class SimilaritySummaryResult {
     public final double p100;
 
     public SimilaritySummaryResult(long nodes, long similarityPairs,
+                                   boolean write, String writeRelationshipType, String writeProperty,
                                    double min, double max, double mean, double stdDev,
                                    double p25, double p50, double p75, double p90, double p95,
                                    double p99, double p999, double p100) {
         this.nodes = nodes;
         this.similarityPairs = similarityPairs;
+        this.write = write;
+        this.writeRelationshipType = writeRelationshipType;
+        this.writeProperty = writeProperty;
         this.min = min;
         this.max = max;
         this.mean = mean;

@@ -21,7 +21,7 @@ package org.neo4j.graphalgo.impl.triangle;
 import com.carrotsearch.hppc.IntStack;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipIntersect;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.api.IntersectionConsumer;
 import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
@@ -184,7 +184,7 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
     private class HugeTask extends RecursiveTask<Long> implements IntersectionConsumer {
 
         private HugeGraph hugeGraph;
-        private HugeRelationshipIntersect hg;
+        private RelationshipIntersect hg;
         private final int start;
         private final int end;
 
@@ -194,7 +194,7 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
             this.hugeGraph = graph;
             this.start = start;
             this.end = end;
-            hg = graph.intersectionCopy();
+            hg = graph.intersection();
         }
 
         @Override

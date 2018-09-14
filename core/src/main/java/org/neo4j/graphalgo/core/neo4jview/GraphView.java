@@ -23,6 +23,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
+import org.neo4j.graphalgo.api.RelationshipIntersect;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.IdMap;
@@ -280,6 +281,11 @@ public class GraphView implements Graph {
 
     @Override
     public void canRelease(boolean canRelease) {
+    }
+
+    @Override
+    public RelationshipIntersect intersection() {
+        throw new UnsupportedOperationException("Not implemented for Graph View");
     }
 
     private static class SizedNodeIterator implements PrimitiveIntIterator {

@@ -26,22 +26,18 @@ import org.neo4j.graphdb.Direction;
  * If you want to intersect on {@link org.neo4j.graphdb.Direction#BOTH}, you have to
  * load the graph with {@link org.neo4j.graphalgo.core.GraphLoader#asUndirected(boolean)}
  * set to {@code true}.
- *
- * An instance of this is not thread-safe; Iteration/Intersection on multiple threads will
- * throw misleading {@link NullPointerException}s.
- * Instances are however safe to use concurrently with other {@link HugeRelationshipIterator}s.
  */
-public interface HugeRelationshipIntersect {
+public interface RelationshipIntersect {
 
     /**
      * @see HugeDegrees#degree(long, Direction)
      */
-    int degree(long nodeId);
+//    int degree(long nodeId);
 
     /**
      * @see HugeRelationshipIterator#forEachOutgoing(long, HugeRelationshipConsumer)
      */
-    void forEachRelationship(long nodeId, HugeRelationshipConsumer consumer);
+//    void forEachRelationship(long nodeId, HugeRelationshipConsumer consumer);
 
     void intersectAll(long nodeIdA, IntersectionConsumer consumer);
 }

@@ -7,7 +7,7 @@
     </d:tocentry>
     <d:tocentry linkend="procedures"><?dbhtml filename="procedures/index.html"?>
     </d:tocentry>
-    <d:tocentry linkend="algorithms"><?dbhtml filename="algorithms/index.html"?>
+    <d:tocentry linkend="algorithms-centrality"><?dbhtml filename="algorithms/centrality/index.html"?>
       <d:tocentry linkend="algorithms-pagerank"><?dbhtml filename="algorithms/page-rank/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-betweenness-centrality"><?dbhtml filename="algorithms/betweenness-centrality/index.html"?>
@@ -16,27 +16,33 @@
       </d:tocentry>
       <d:tocentry linkend="algorithms-harmonic-centrality"><?dbhtml filename="algorithms/harmonic-centrality/index.html"?>
       </d:tocentry>
+    </d:tocentry>
+
+    <d:tocentry linkend="algorithms-community"><?dbhtml filename="algorithms/community/index.html"?>
+      <d:tocentry linkend="algorithms-louvain"><?dbhtml filename="algorithms/louvain/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-label-propagation"><?dbhtml filename="algorithms/label-propagation/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-connected-components"><?dbhtml filename="algorithms/connected-components/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-strongly-connected-components"><?dbhtml filename="algorithms/strongly-connected-components/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-triangle-count-clustering-coefficient"><?dbhtml filename="algorithms/triangle-counting-clustering-coefficient/index.html"?>
+      </d:tocentry>
+    </d:tocentry>
+
+    <d:tocentry linkend="algorithms-path-finding"><?dbhtml filename="algorithms/pathfinding/index.html"?>
       <d:tocentry linkend="algorithms-minimum-weight-spanning-tree"><?dbhtml filename="algorithms/minimum-weight-spanning-tree/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-shortest-path"><?dbhtml filename="algorithms/shortest-path/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-single-source-shortest-path"><?dbhtml filename="algorithms/single-source-shortest-path/index.html"?>
       </d:tocentry>
+      <d:tocentry linkend="algorithm-all-pairs-shortest-path"><?dbhtml filename="algorithms/all-pairs-shortest-path/index.html"?>
+      </d:tocentry>
       <d:tocentry linkend="algorithms-a_star"><?dbhtml filename="algorithms/a_star/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-yens-k-shortest-path"><?dbhtml filename="algorithms/yen-s-k-shortest-path/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithm-all-pairs-shortest-path"><?dbhtml filename="algorithms/all-pairs-shortest-path/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithms-triangle-count-clustering-coefficient"><?dbhtml filename="algorithms/triangle-counting-clustering-coefficient/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithms-label-propagation"><?dbhtml filename="algorithms/label-propagation/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithms-louvain"><?dbhtml filename="algorithms/louvain/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithms-connected-components"><?dbhtml filename="algorithms/connected-components/index.html"?>
-      </d:tocentry>
-      <d:tocentry linkend="algorithms-strongly-connected-components"><?dbhtml filename="algorithms/strongly-connected-components/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-random-walk"><?dbhtml filename="algorithms/random-walk/index.html"?>
       </d:tocentry>

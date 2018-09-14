@@ -54,7 +54,9 @@ public interface HugeRelationshipIterator {
      * @return a copy of this iterator that is capable of intersecting two
      *         adjacency lists independent from other iterations.
      */
-    default HugeRelationshipIntersect intersectionCopy() {
+    /*
+    default RelationshipIntersect intersection() {
         throw new UnsupportedOperationException("Not implemented");
     }
+    */
 }

@@ -18,6 +18,8 @@
  */
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.core.utils.Intersections;
+
 import java.util.Objects;
 
 public class SimilarityResult implements Comparable<SimilarityResult> {
@@ -59,7 +61,7 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
     }
 
     public static SimilarityResult of(long source1, long source2, long[] targets1, long[] targets2, double similarityCutoff) {
-        long intersection = JaccardProc.intersection3(targets1,targets2);
+        long intersection = Intersections.intersection3(targets1,targets2);
         if (similarityCutoff >= 0d && intersection == 0) return null;
         int count1 = targets1.length;
         int count2 = targets2.length;
@@ -72,5 +74,9 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
     @Override
     public int compareTo(SimilarityResult o) {
         return Double.compare(o.similarity,this.similarity);
+    }
+
+    public SimilarityResult reverse() {
+        return new SimilarityResult(source2,source1,count2,count1,intersection,similarity);
     }
 }

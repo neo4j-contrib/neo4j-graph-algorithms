@@ -113,22 +113,27 @@ public class LouvainGraph implements Graph {
 
     @Override
     public void forEachNode(IntPredicate consumer) {
-        throw new IllegalStateException("not implemented");
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        throw new IllegalStateException("not implemented");
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public boolean exists(int sourceNodeId, int targetNodeId, Direction direction) {
-        throw new IllegalStateException("not implemented");
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer) {
-        throw new IllegalStateException("not implemented");
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    @Override
+    public RelationshipIntersect intersection() {
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override

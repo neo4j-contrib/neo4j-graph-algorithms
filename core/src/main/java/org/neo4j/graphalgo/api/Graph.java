@@ -34,4 +34,6 @@ public interface Graph extends IdMapping, Degrees, NodeIterator, BatchNodeIterab
     String getType();
 
     void canRelease(boolean canRelease);
+
+    RelationshipIntersect intersection();
 }
