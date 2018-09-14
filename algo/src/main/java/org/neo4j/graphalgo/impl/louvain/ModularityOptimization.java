@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.impl.louvain;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntIntScatterMap;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.api.NodeWeights;
@@ -38,6 +39,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * parallel weighted undirected modularity based community detection
@@ -64,7 +66,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
     private Graph graph;
     private ExecutorService pool;
     private NodeIterator nodeIterator;
-    private double m, m2, m22;
+    private double m2, m22;
     private int[] communities;
     private double[] ki;
     private int iterations;
@@ -78,11 +80,48 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         this.pool = pool;
         this.concurrency = concurrency;
         this.tracker = tracker;
-        this.nodeIterator = new ShuffledNodeIterator(nodeCount);
+        this.nodeIterator = createNodeIterator(concurrency);
+
         ki = new double[nodeCount];
         communities = new int[nodeCount];
         // (1x double + 1x int) * N
         tracker.add(12 * nodeCount);
+    }
+
+    private NodeIterator createNodeIterator(int concurrency) {
+
+        if (concurrency > 1) {
+            return new ShuffledNodeIterator(nodeCount);
+        }
+
+        return new NodeIterator() {
+            @Override
+            public void forEachNode(IntPredicate consumer) {
+                for (int i = 0; i < nodeCount; i++) {
+                    if (!consumer.test(i)) {
+                        return;
+                    }
+                }
+            }
+
+            @Override
+            public PrimitiveIntIterator nodeIterator() {
+                return new PrimitiveIntIterator() {
+
+                    int offset = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return offset < nodeCount;
+                    }
+
+                    @Override
+                    public int next() {
+                        return offset++;
+                    }
+                };
+            }
+        };
     }
 
     /**
@@ -144,7 +183,6 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                 return true;
             });
         }
-        m = m2 / 2;
         m22 = Math.pow(m2, 2.0);
         Arrays.setAll(communities, i -> i);
     }
