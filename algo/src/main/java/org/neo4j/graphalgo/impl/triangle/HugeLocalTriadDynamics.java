@@ -79,7 +79,7 @@ public class HugeLocalTriadDynamics extends Algorithm<HugeLocalTriadDynamics> {
 
         final long mappedA = graph.toMappedNodeId(nodeA);
         final long mappedB = graph.toMappedNodeId(nodeB);
-        final double weight = getWeight(mappedA, mappedB);
+        final double weight = graph.weightOf(mappedA, mappedB);
         if (!balance.getOrDefault(mappedA, mappedB, true)) {
             return -weight;
         }

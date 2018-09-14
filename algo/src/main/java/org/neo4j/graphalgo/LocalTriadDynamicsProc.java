@@ -44,6 +44,7 @@ import java.util.stream.Stream;
  */
 public class LocalTriadDynamicsProc {
 
+    public static final String PROBABILITY_PARAM = "probability";
     @Context
     public GraphDatabaseAPI api;
 
@@ -55,13 +56,12 @@ public class LocalTriadDynamicsProc {
 
 
     @Procedure(value = "algo.localTriadDynamics", mode = Mode.WRITE)
-    @Description("CALL algo.localTriadDynamics(label, relationship, probability" +
-            "{concurrency:4, write:true, weightProperty:'w', balancedProperty:'balanced', unbalancedProperty:'unbalanced'}) " +
+    @Description("CALL algo.localTriadDynamics(label, relationship, " +
+            "{probability:0.5 concurrency:4, write:true, weightProperty:'w'}) " +
             "YIELD loadMillis, computeMillis, writeMillis, nodeCount")
     public Stream<Result> balancedTriads(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
-            @Name(value = "p", defaultValue = "0.5") double probability,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         final HugeGraph graph;
@@ -90,9 +90,9 @@ public class LocalTriadDynamicsProc {
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
             localTriadDynamics = new HugeLocalTriadDynamics(graph, Pools.DEFAULT, configuration.getConcurrency(), AllocationTracker.create())
-                    .withProgressLogger(ProgressLogger.wrap(log, "balancedTriads"))
+                    .withProgressLogger(ProgressLogger.wrap(log, "localTriadDynamics"))
                     .withTerminationFlag(terminationFlag)
-                    .compute(probability);
+                    .compute(configuration.getNumber(PROBABILITY_PARAM, 0.5).doubleValue());
         }
 
         // write

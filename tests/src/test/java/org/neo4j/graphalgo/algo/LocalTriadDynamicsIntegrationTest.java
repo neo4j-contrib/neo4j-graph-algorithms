@@ -24,8 +24,10 @@ import org.junit.Test;
 import org.neo4j.graphalgo.LocalTriadDynamicsProc;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.utils.Pointer;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.PagedLongLongBitSet;
@@ -74,8 +76,6 @@ public class LocalTriadDynamicsIntegrationTest {
                         " (g)-[:TYPE {w:1.0}]->(b)";
 
         DB.execute(cypher);
-
-
         DB.getDependencyResolver()
                 .resolveDependency(Procedures.class)
                 .registerProcedure(LocalTriadDynamicsProc.class);
@@ -83,12 +83,14 @@ public class LocalTriadDynamicsIntegrationTest {
 
     @Test
     public void test() throws Exception {
-
-
-        DB.execute("CALL algo.localTriadDynamics('Node', 'TYPE', 0) YIELD nodeCount")
-                .accept(row -> {
-                    System.out.println(row);
-                    return true;
-                });
+        DB.execute("CALL algo.localTriadDynamics('Node', 'TYPE', {probability:0.5, weightProperty:'w'})");
+        DB.execute("MATCH (n:Node)-[r]->(m:Node) RETURN r, r.w AS w").accept(row -> {
+            Relationship r = (Relationship) row.get("r");
+            System.out.printf("(%s)-[w:%.1f]->(%s)%n",
+                    r.getStartNode().getProperty("name"),
+                    row.getNumber("w").doubleValue(),
+                    r.getEndNode().getProperty("name"));
+            return true;
+        });
     }
 }

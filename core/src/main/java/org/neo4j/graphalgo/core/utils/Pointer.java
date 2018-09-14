@@ -36,6 +36,11 @@ public class Pointer {
             v = function.apply(v);
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "boolean " + v;
+        }
     }
 
     public static class IntPointer {
@@ -48,6 +53,11 @@ public class Pointer {
         public IntPointer map(Function<Integer, Integer> function) {
             v = function.apply(v);
             return this;
+        }
+
+        @Override
+        public String toString() {
+            return "int " + v;
         }
     }
 
@@ -62,6 +72,11 @@ public class Pointer {
             v = function.apply(v);
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "long " + v;
+        }
     }
 
     public static class DoublePointer {
@@ -75,6 +90,11 @@ public class Pointer {
             v = function.apply(v);
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "double " + v;
+        }
     }
 
     public static class GenericPointer<G> {
@@ -87,6 +107,11 @@ public class Pointer {
         public GenericPointer<G> map(Function<G, G> function) {
             v = function.apply(v);
             return this;
+        }
+
+        @Override
+        public String toString() {
+            return "G " + v;
         }
     }
 

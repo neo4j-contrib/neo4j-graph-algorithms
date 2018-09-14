@@ -27,7 +27,8 @@ public class RelationExporter extends StatementApi {
                 if (null == value) {
                     continue;
                 }
-                statement.dataWrite().relationshipSetProperty(relationship.getId(), propertyId, value);
+                statement.dataWrite()
+                        .relationshipSetProperty(relationship.getId(), propertyId, value);
             }
         });
     }
