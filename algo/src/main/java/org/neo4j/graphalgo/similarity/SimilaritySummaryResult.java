@@ -16,7 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo;
+package org.neo4j.graphalgo.similarity;
+
+import org.HdrHistogram.DoubleHistogram;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SimilaritySummaryResult {
 
@@ -60,5 +64,27 @@ public class SimilaritySummaryResult {
         this.p99 = p99;
         this.p999 = p999;
         this.p100 = p100;
+    }
+
+    static SimilaritySummaryResult from(long length, AtomicLong similarityPairs, String writeRelationshipType, String writeProperty, boolean write, DoubleHistogram histogram) {
+        return new SimilaritySummaryResult(
+                length,
+                similarityPairs.get(),
+                write,
+                writeRelationshipType,
+                writeProperty,
+                histogram.getMinValue(),
+                histogram.getMaxValue(),
+                histogram.getMean(),
+                histogram.getStdDeviation(),
+                histogram.getValueAtPercentile(25D),
+                histogram.getValueAtPercentile(50D),
+                histogram.getValueAtPercentile(75D),
+                histogram.getValueAtPercentile(90D),
+                histogram.getValueAtPercentile(95D),
+                histogram.getValueAtPercentile(99D),
+                histogram.getValueAtPercentile(99.9D),
+                histogram.getValueAtPercentile(100D)
+        );
     }
 }

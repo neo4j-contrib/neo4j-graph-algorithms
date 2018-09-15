@@ -1,39 +1,42 @@
 package org.neo4j.graphalgo.impl.util;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TopKConsumer<T extends Comparable<T>> implements Consumer<T> {
+public class TopKConsumer<T> implements Consumer<T> {
     private final int topK;
     private final T[] heap;
+    private Comparator<T> comparator;
     private int count;
     private T minValue;
 
-    public TopKConsumer(int topK) {
+    public TopKConsumer(int topK, Comparator<T> comparator) {
         this.topK = topK;
-        heap = (T[]) new Comparable[topK];
+        heap = (T[]) new Object[topK];
+        this.comparator = comparator;
         count = 0;
         minValue = null;
     }
 
-    public static <T extends Comparable<T>> List<T> topK(List<T> items, int topK) {
-        TopKConsumer<T> consumer = new TopKConsumer<>(topK);
-        items.stream().forEach(consumer);
+    public static <T> List<T> topK(List<T> items, int topK, Comparator<T> comparator) {
+        TopKConsumer<T> consumer = new TopKConsumer<>(topK, comparator);
+        items.forEach(consumer);
         return consumer.list();
     }
-    public static <T extends Comparable<T>> Stream<T> topK(Stream<T> items, int topK) {
-        TopKConsumer<T> consumer = new TopKConsumer<>(topK);
+
+    public static <T> Stream<T> topK(Stream<T> items, int topK, Comparator<T> comparator) {
+        TopKConsumer<T> consumer = new TopKConsumer<T>(topK, comparator);
         items.forEach(consumer);
         return consumer.stream();
     }
 
     @Override
     public void accept(T item) {
-        if (count < topK || minValue == null || item.compareTo(minValue) < 0) {
-            int idx = Arrays.binarySearch(heap, 0, count, item);
+        if (count < topK || minValue == null || comparator.compare(item,minValue) < 0) {
+            int idx = Arrays.binarySearch(heap, 0, count, item, comparator);
             idx = (idx < 0) ? -idx : idx + 1;
             int length = topK - idx;
             if (length > 0 && idx < topK) System.arraycopy(heap,idx-1,heap,idx, length);
@@ -53,7 +56,7 @@ public class TopKConsumer<T extends Comparable<T>> implements Consumer<T> {
     }
 
     public void accept(TopKConsumer<T> other) {
-        if (minValue == null || count < topK || other.minValue != null && other.minValue.compareTo(minValue) < 0) {
+        if (minValue == null || count < topK || other.minValue != null && comparator.compare(other.minValue,minValue) < 0) {
             for (int i=0;i<other.count;i++) {
                 accept(other.heap[i]);
             }
