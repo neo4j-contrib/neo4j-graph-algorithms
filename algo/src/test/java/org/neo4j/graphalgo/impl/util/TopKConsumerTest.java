@@ -56,7 +56,7 @@ public class TopKConsumerTest {
 
     @Test
     public void testFindTopKHeap4() throws Exception {
-        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 4);
+        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 4, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM3,ITEM2,ITEM1),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -65,7 +65,7 @@ public class TopKConsumerTest {
 
     @Test
     public void testFindTopKHeap2of4() throws Exception {
-        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM4), 4);
+        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM4), 4, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM2),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -73,7 +73,7 @@ public class TopKConsumerTest {
     }
     @Test
     public void testFindTopKHeap4of3() throws Exception {
-        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM1, ITEM4, ITEM3), 3);
+        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM1, ITEM4, ITEM3), 3, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM3,ITEM2),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -81,7 +81,7 @@ public class TopKConsumerTest {
     }
     @Test
     public void testFindTopKHeap() throws Exception {
-        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 2);
+        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 2, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM3),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -89,7 +89,7 @@ public class TopKConsumerTest {
     }
     @Test
     public void testFindTopKHeapDuplicates() throws Exception {
-        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM3, ITEM3, ITEM4), 3);
+        Collection<Item> topItems = TopKConsumer.topK(asList(ITEM2, ITEM3, ITEM3, ITEM4), 3, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM3,ITEM3),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -98,7 +98,7 @@ public class TopKConsumerTest {
 
     @Test
     public void testFindTopKHeap2() throws Exception {
-        List<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 2);
+        List<Item> topItems = TopKConsumer.topK(asList(ITEM1, ITEM3, ITEM2, ITEM4), 2, Item::compareTo);
         assertEquals(asList(ITEM4,ITEM3),topItems);
         for (Item topItem : topItems) {
             System.out.println(topItem);
@@ -111,11 +111,11 @@ public class TopKConsumerTest {
         List<Item> items = createItems(COUNT);
         List<Item> topItems = null;
         for (int i = 0; i < RUNS/10; i++) {
-            topItems = TopKConsumer.topK(items, WINDOW_SIZE);
+            topItems = TopKConsumer.topK(items, WINDOW_SIZE, Item::compareTo);
         }
         long time = System.currentTimeMillis();
         for (int i = 0; i < RUNS; i++) {
-            topItems = TopKConsumer.topK(items, WINDOW_SIZE);
+            topItems = TopKConsumer.topK(items, WINDOW_SIZE, Item::compareTo);
         }
         time = System.currentTimeMillis() - time;
         System.out.println("array based time = " + time+" "+RUNS+" runs with "+COUNT+" items avg "+1.0*time/RUNS);
