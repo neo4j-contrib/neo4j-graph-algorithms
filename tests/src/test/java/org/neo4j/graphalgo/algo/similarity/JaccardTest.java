@@ -52,6 +52,17 @@ public class JaccardTest {
             "yield p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
             "RETURN *";
 
+    public static final String STORE_EMBEDDING_STATEMENT = "MATCH (p:Person)-[:LIKES]->(i:Item) \n" +
+            "WITH p, collect(distinct id(i)) as userData\n" +
+            "SET p.embedding = userData";
+
+    public static final String EMBEDDING_STATEMENT = "MATCH (p:Person) \n" +
+            "WITH {item:id(p), categories: p.embedding} as userData\n" +
+            "WITH collect(userData) as data\n" +
+            "CALL algo.similarity.jaccard(data, $config) " +
+            "yield p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
+            "RETURN *";
+
     @BeforeClass
     public static void beforeClass() throws KernelException {
         db = TestDatabaseCreator.createTestDatabase();
@@ -239,6 +250,22 @@ public class JaccardTest {
         assertEquals((double) row.get("p99"), 0.66, 0.01);
         assertEquals((double) row.get("p100"), 0.66, 0.01);
     }
+
+    @Test
+    public void simpleJaccardFromEmbeddingTest() {
+        db.execute(STORE_EMBEDDING_STATEMENT);
+
+        Map<String, Object> params = map("config", map("similarityCutoff", 0.0));
+
+        Map<String, Object> row = db.execute(EMBEDDING_STATEMENT,params).next();
+        assertEquals((double) row.get("p25"), 0.33, 0.01);
+        assertEquals((double) row.get("p50"), 0.33, 0.01);
+        assertEquals((double) row.get("p75"), 0.66, 0.01);
+        assertEquals((double) row.get("p95"), 0.66, 0.01);
+        assertEquals((double) row.get("p99"), 0.66, 0.01);
+        assertEquals((double) row.get("p100"), 0.66, 0.01);
+    }
+
 
     @Test
     public void simpleJaccardWriteTest() {
