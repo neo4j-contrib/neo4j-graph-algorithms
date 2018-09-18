@@ -54,7 +54,7 @@ public class BalancedTriadsProc {
 
     @Procedure("algo.balancedTriads.stream")
     @Description("CALL algo.balancedTriads.stream(label, relationship, {concurrency:8}) " +
-            "YIELD nodeId, balancedTriadCount, unbalancedTriadCount")
+            "YIELD nodeId, balanced, unbalanced")
     public Stream<HugeBalancedTriads.Result> balancedTriadsStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
