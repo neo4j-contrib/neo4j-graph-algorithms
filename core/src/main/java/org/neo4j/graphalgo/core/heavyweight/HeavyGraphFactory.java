@@ -24,7 +24,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.graphalgo.core.MappingIdMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -48,7 +48,7 @@ public class HeavyGraphFactory extends GraphFactory {
     }
 
     private Graph importGraph(final int batchSize) {
-        final IdMap idMap = loadIdMap();
+        final MappingIdMap idMap = loadIdMap();
 
         final Supplier<WeightMapping> relWeights = () -> newWeightMap(
                 dimensions.relWeightId(),

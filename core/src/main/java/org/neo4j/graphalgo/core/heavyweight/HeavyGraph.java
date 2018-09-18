@@ -59,17 +59,17 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate,
 
     @Override
     public long nodeCount() {
-        return nodeIdMap.size();
+        return nodeIdMap.nodeCount();
     }
 
     @Override
     public void forEachNode(IntPredicate consumer) {
-        nodeIdMap.forEach(consumer);
+        nodeIdMap.forEachNode(consumer);
     }
 
     @Override
     public PrimitiveIntIterator nodeIterator() {
-        return nodeIdMap.iterator();
+        return nodeIdMap.nodeIterator();
     }
 
     @Override
@@ -97,7 +97,7 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate,
 
     @Override
     public int toMappedNodeId(long originalNodeId) {
-        return nodeIdMap.get(originalNodeId);
+        return nodeIdMap.toMappedNodeId(originalNodeId);
     }
 
     @Override

@@ -18,53 +18,63 @@
  */
 package org.neo4j.graphalgo.core;
 
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 
 import java.util.Collection;
-import java.util.function.IntToLongFunction;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
-public final class IdMapTest extends RandomizedTest {
+public final class DirectIdMapTest {
+
+    private int size = 20;
+
+    private IntStream ids() {
+        return IntStream.range(0, size);
+    }
 
     @Test
-    public void shouldReturnSingleIteratorForLargeBatchSize() throws Exception {
-        MappingIdMap idMap = new MappingIdMap(20);
-        long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds();
+    public void basicTest() {
+        DirectIdMap idMap = new DirectIdMap(size);
+        assertEquals(size, idMap.nodeCount());
+        assertTrue(ids().allMatch(idMap::contains));
+        assertTrue(IntStream.range(-100,0).noneMatch(idMap::contains));
+        assertTrue(IntStream.range(size,100).noneMatch(idMap::contains));
+
+        assertTrue(ids().allMatch(i -> idMap.toMappedNodeId(i) == i));
+        assertTrue(ids().allMatch(i -> idMap.toOriginalNodeId(i) == i));
+
+        PrimitiveIntIterator it = idMap.nodeIterator();
+        assertTrue(ids().allMatch(i -> it.next() == i));
+    }
+
+    @Test
+    public void shouldReturnSingleIteratorForLargeBatchSize() {
+        DirectIdMap idMap = new DirectIdMap(size);
 
         Collection<PrimitiveIntIterable> iterables = idMap.batchIterables(100);
         assertEquals(1, iterables.size());
 
-        assertIterables(idMap, ids, iterables);
+        assertIterables(idMap, ids().toArray(), iterables);
     }
 
     @Test
-    public void shouldReturnMultipleIteratorsForSmallBatchSize() throws Exception {
-        MappingIdMap idMap = new MappingIdMap(20);
-        long[] ids = addRandomIds(idMap);
-        idMap.buildMappedIds();
+    public void shouldReturnMultipleIteratorsForSmallBatchSize() {
+        DirectIdMap idMap = new DirectIdMap(size);
 
-        int expectedBatches = ids.length / 3;
-        if (ids.length % 3 != 0) {
-            expectedBatches++;
-        }
+        int expectedBatches = size / 3 + (size % 3 > 0 ? 1 :0);
 
         Collection<PrimitiveIntIterable> iterables = idMap.batchIterables(3);
         assertEquals(expectedBatches, iterables.size());
 
-        assertIterables(idMap, ids, iterables);
+        assertIterables(idMap, ids().toArray(), iterables);
     }
 
     @Test
-    public void shouldFailForZeroBatchSize() throws Exception {
-        MappingIdMap idMap = new MappingIdMap(20);
-        addRandomIds(idMap);
-        idMap.buildMappedIds();
+    public void shouldFailForZeroBatchSize() {
+        DirectIdMap idMap = new DirectIdMap(0);
 
         try {
             idMap.batchIterables(0);
@@ -75,12 +85,10 @@ public final class IdMapTest extends RandomizedTest {
     }
 
     @Test
-    public void shouldFailForNegativeBatchSize() throws Exception {
-        MappingIdMap idMap = new MappingIdMap(20);
-        addRandomIds(idMap);
-        idMap.buildMappedIds();
+    public void shouldFailForNegativeBatchSize() {
+        DirectIdMap idMap = new DirectIdMap(size);
 
-        int batchSize = between(Integer.MIN_VALUE, -1);
+        int batchSize = -10;
 
         try {
             idMap.batchIterables(batchSize);
@@ -92,7 +100,7 @@ public final class IdMapTest extends RandomizedTest {
 
     private void assertIterables(
             final IdMap idMap,
-            final long[] ids,
+            final int[] ids,
             final Collection<PrimitiveIntIterable> iterables) {
         int i = 0;
         for (PrimitiveIntIterable iterable : iterables) {
@@ -104,26 +112,5 @@ public final class IdMapTest extends RandomizedTest {
                 assertEquals(id, idMap.toOriginalNodeId(next));
             }
         }
-    }
-
-    private long[] addRandomIds(final MappingIdMap idMap) {
-        LongHashSet seen = new LongHashSet();
-        return addSomeIds(idMap, i -> {
-            long id;
-            do {
-                id = between(42L, 1337L);
-            } while (!seen.add(id));
-            return id;
-        });
-    }
-
-    private long[] addSomeIds(final MappingIdMap idMap, IntToLongFunction newId) {
-        int iterations = between(10, 20);
-        long[] ids = new long[iterations];
-        for (int i = 0; i < iterations; i++) {
-            ids[i] = newId.applyAsLong(i);
-            idMap.add(ids[i]);
-        }
-        return ids;
     }
 }

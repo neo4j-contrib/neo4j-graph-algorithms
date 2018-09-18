@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.MappingIdMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.StatementAction;
@@ -37,10 +38,8 @@ import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 
 final class RelationshipImporter extends StatementAction {
@@ -53,7 +52,7 @@ final class RelationshipImporter extends StatementAction {
     private final int nodeSize;
     private final int nodeOffset;
 
-    private IdMap idMap;
+    private MappingIdMap idMap;
     private AdjacencyMatrix matrix;
 
     private WeightMapping relWeights;
@@ -66,7 +65,7 @@ final class RelationshipImporter extends StatementAction {
             ImportProgress progress,
             int batchSize,
             int nodeOffset,
-            IdMap idMap,
+            MappingIdMap idMap,
             AdjacencyMatrix matrix,
             PrimitiveIntIterable nodes,
             Supplier<WeightMapping> relWeights,

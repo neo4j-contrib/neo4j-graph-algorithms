@@ -22,7 +22,7 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.graphalgo.api.BatchNodeIterable;
 import org.neo4j.graphalgo.api.HugeBatchNodeIterable;
-import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.MappingIdMap;
 import org.neo4j.helpers.Exceptions;
 
 import java.util.*;
@@ -56,13 +56,13 @@ public final class ParallelUtil {
         final int batchSize = nodeCount / concurrency;
         int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
         if (numberOfBatches == 1) {
-            return Collections.singleton(new IdMap.IdIterable(0, nodeCount));
+            return Collections.singleton(new MappingIdMap.IdIterable(0, nodeCount));
         }
         PrimitiveIntIterable[] iterators = new PrimitiveIntIterable[numberOfBatches];
         Arrays.setAll(iterators, i -> {
             int start = i * batchSize;
             int length = Math.min(batchSize, nodeCount - start);
-            return new IdMap.IdIterable(start, length);
+            return new MappingIdMap.IdIterable(start, length);
         });
         return Arrays.asList(iterators);
     }
