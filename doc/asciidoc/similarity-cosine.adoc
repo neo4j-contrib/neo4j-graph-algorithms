@@ -1,52 +1,56 @@
-[[algorithms-similarity-jaccard]]
-= The Jaccard Similarity algorithm
+[[algorithms-similarity-cosine]]
+= The Cosine Similarity algorithm
 
 [abstract]
 --
-This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algorithms library.
+This section describes the Cosine Similarity algorithm in the Neo4j Graph Algorithms library.
 --
 
 // tag::introduction[]
-Jaccard similarity (coefficient) measures similarities between sets and the term was coined by https://en.wikipedia.org/wiki/Paul_Jaccard[Paul Jaccard^].
-It is defined as the size of the intersection divided by the size of the union of two sets.
+link:http://en.wikipedia.org/wiki/Cosine_similarity[Cosine similarity] is the cosine of the angle between two _n_-dimensional vectors in an _n_-dimensional space.
+It is the dot product of the two vectors divided by the product of the two vectors' lengths (or magnitudes).
 // end::introduction[]
 
 
-[[algorithms-similarity-jaccard-context]]
+[[algorithms-similarity-cosine-context]]
 == History and explanation
 
 // tag::explanation[]
 
-Jaccard Similarity is computed using the following formula:
+Cosine Similarity is computed using the following formula:
 
-```
-J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
-       = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
-```
+[subs = none]
+\( similarity(A, B) = \frac{A \cdot B}{\|A\| \times \|B\|} = \frac{\sum\limits_{i=1}^n A_{i} \times B_{i}}{\sqrt{\sum\limits_{i=1}^n A_{i}^2} \times \sqrt{\sum\limits_{i=1}^n B_{i}^2}} \)
+
+Values range between -1 and 1, where -1 is perfectly dissimilar and 1 is perfectly similar.
 
 The library contains both procedures and functions to calculate similarity between sets of data.
 The function is best used when calculating the similarity between small numbers of sets.
 The procedures parallelize the computation and are therefore a better bet when computing similarities on bigger datasets.
 
+Cosine similarity is only calculated over non-NULL dimensions.
+When calling the function we should provide lists that contain the overlapping items.
+The procedures expect to receive the same length lists for all items so we need to pad those lists with 0s where necessary.
+
 // end::explanation[]
 
 [[algorithms-similarity-jaccard-usecase]]
-== Use-cases - when to use the Jaccard Similarity algorithm
+== Use-cases - when to use the Cosine Similarity algorithm
 
 // tag::use-case[]
-We can use the Jaccard Similarity algorithm to work out the similarity between two things.
+We can use the Cosine Similarity algorithm to work out the similarity between two things.
 We might then use the computed similarity as part of a recommendation query.
-e.g. show me the products that were purchased by people similar to me in terms of previous products purchased
+e.g. recommend some movies to me based on the preferences of users who have rated other movies that I've seen in a similar way
 // end::use-case[]
 
 
 [[algorithms-similarity-jaccard-sample]]
-== Jaccard algorithm sample
+== Cosine algorithm sample
 
-.The following will return the Jaccard similarity of two lists of numbers
+.The following will return the Cosine similarity of two lists of numbers
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=function]
+include::scripts/similarity-cosine.cypher[tag=function]
 ----
 
 // tag::function[]
@@ -54,29 +58,26 @@ include::scripts/similarity-jaccard.cypher[tag=function]
 [opts="header",cols="1"]
 |===
 | similarity
-| 0.4
+| 0.8638935626791596
 |===
 // end::function[]
 
 // tag::function-explanation[]
-These two lists of numbers have a Jaccard similarity of 0.4.
+These two lists of numbers have a Cosine similarity of 0.863.
 We can see how this result is derived by breaking down the formula:
 
-```
-J(A,B) = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
-J(A,B) = 2 / 3 + 4 - 2
-       = 2 / 5
-       = 0.4
-```
+[subs = none]
+\( similarity(A, B) = \frac{3 \cdot 10 + 8 \cdot 8 + 7 \cdot 6 + 5 \cdot 6 + 2 \cdot 4 + 9 \cdot 5}{\sqrt{3^2 + 8^2 + 7^2 + 5^2 + 2^2 + 9^2} \times \sqrt{10^2 + 8^2 + 6^2 + 6^2 + 4^2 + 5^2}} = \frac{219}{15.2315 \times 16.6433} = 0.8639 \)
+
 // end::function-explanation[]
 
 .The following will create a sample graph:
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=create-sample-graph]
+include::scripts/similarity-cosine.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a stream of node pairs along with their intersection and Jaccard similarities
+.The following will return a stream of node pairs along with their Cosine similarities
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=stream]
@@ -84,44 +85,45 @@ include::scripts/similarity-jaccard.cypher[tag=stream]
 
 // tag::stream[]
 .Results
-[opts="header",cols="1,1,1,1"]
+[opts="header"]
 |===
-| from     | to       | intersection | similarity
-| Arya     | Karin    | 2            | 0.66
-| Zhen     | Michael  | 1            | 0.66
-| Zhen     | Praveena | 1            | 0.33
-| Michael  | Karin    | 1            | 0.25
-| Praveena | Michael  | 1            | 0.25
-| Praveena | Arya     | 1            | 0.25
-| Michael  | Arya     | 1            | 0.2
-| Praveena | Karin    | 0            | 0
-| Zhen     | Arya     | 0            | 0
-| Zhen     | Karin    | 0            | 0
+| from       | to         | similarity
+| Arya     | Karin    | 0.8893006975229283
+| Zhen     | Michael  | 0.8249630162429022
+| Praveena | Michael  | 0.5100496780395022
+| Zhen     | Praveena | 0.4061183653774261
+| Michael  | Arya     | 0.3184912471845722
+| Michael  | Karin    | 0.3085485706658717
+| Praveena | Arya     | 0.2723483386163968
+| Zhen     | Arya     | 0.0
+| Zhen     | Karin    | 0.0
+| Praveena | Karin    | 0.0
 |===
 // end::stream[]
 
-Arya and Karin and Zhen and Michael have the most similar food preferences, with two overlapping cuisines for a similarity of 0.66.
+Arya and Karin have the most similar food tastes with a score of 0.889.
+The maximum score is 1 so they are pretty close to that.
 We also have 3 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
-.The following will return a stream of node pairs that have a similarity of at least 0.1 along with their intersection and Jaccard similarities
+.The following will return a stream of node pairs that have a similarity of at least 0.1 along with their Cosine similarities
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=stream-similarity-cutoff]
+include::scripts/similarity-cosine.cypher[tag=stream-similarity-cutoff]
 ----
 
 // tag::stream-similarity-cutoff[]
 .Results
-[opts="header",cols="1,1,1,1"]
+[opts="header"]
 |===
-| from     | to       | intersection | similarity
-| Arya     | Karin    | 2            | 0.66
-| Zhen     | Michael  | 1            | 0.66
-| Zhen     | Praveena | 1            | 0.33
-| Michael  | Karin    | 1            | 0.25
-| Praveena | Michael  | 1            | 0.25
-| Praveena | Arya     | 1            | 0.25
-| Michael  | Arya     | 1            | 0.2
+| from       | to         | similarity
+| Arya     | Karin    | 0.8893006975229283
+| Zhen     | Michael  | 0.8249630162429022
+| Praveena | Michael  | 0.5100496780395022
+| Zhen     | Praveena | 0.4061183653774261
+| Michael  | Arya     | 0.3184912471845722
+| Michael  | Karin    | 0.3085485706658717
+| Praveena | Arya     | 0.2723483386163968
 |===
 // end::stream-similarity-cutoff[]
 
@@ -132,7 +134,7 @@ We can do that by passing in the `topK` parameter
 .The following will return a stream of users along with the most similar user to them i.e. k=1
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=stream-topk]
+include::scripts/similarity-cosine.cypher[tag=stream-topk]
 ----
 
 // tag::stream-topk[]
@@ -140,25 +142,26 @@ include::scripts/similarity-jaccard.cypher[tag=stream-topk]
 [opts="header",cols="1,1,1"]
 |===
 | from     | to       | similarity
-| Arya     | Karin    | 0.66
-| Karin    | Arya     | 0.66
-| Michael  | Zhen     | 0.66
-| Praveena | Zhen     | 0.33
-| Zhen     | Michael  | 0.66
+| Arya     | Karin   | 0.8893006975229283
+| Karin    | Arya    | 0.8893006975229283
+| Michael  | Zhen    | 0.8249630162429022
+| Praveena | Michael | 0.5100496780395022
+| Zhen     | Michael | 0.8249630162429022
+
 |===
 // end::stream-topk[]
 
 These results will not be symmetrical.
-For example, the person most similar to Praveena is Zhen, but the person most similar to Zhen is actually Michael.
+For example, the person most similar to Praveena is Michael, but the person most similar to Zhen is also Michael.
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name             | Type   | Default        | Optional | Description
-| data             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| data             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, weights: [weight, weight, weight]}`
 | top              | int    | 0              | yes      | The number of similar pairs to return. If `0` it will return as many as it finds.
 | topK             | int    | 0              | yes      | The number of similar values to return per node. If `0` will return as many as it finds.
-| similarityCutoff | int    | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| similarityCutoff | int    | -1             | yes      | The threshold for Cosine similarity. Values below this will not be returned.
 | degreeCutoff     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount that node will be excluded from the calculation.
 | concurrency      | int    | available CPUs | yes      | The number of concurrent threads
 |===
@@ -178,7 +181,7 @@ For example, the person most similar to Praveena is Zhen, but the person most si
 .The following will find the most similar user for each user and store a relationship between those users.
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=write-back]
+include::scripts/similarity-cosine.cypher[tag=write-back]
 ----
 
 // tag::write-back[]
@@ -186,7 +189,7 @@ include::scripts/similarity-jaccard.cypher[tag=write-back]
 [opts="header",cols="1,1,1,1,1,1,1,1,1"]
 |===
 | nodes | similarityPairs | write | writeRelationshipType | writeProperty | min  | max  | mean | p95
-| 5     | 5               | true  | SIMILAR             | score       | 0.33 | 0.66 | 0.59 | 0.66
+| 5     | 5               | TRUE  | SIMILAR            | score       | 0.5100479125976562 | 0.8892974853515625 | 0.787713623046875 | 0.8892974853515625
 |===
 // end::write-back[]
 
@@ -195,15 +198,15 @@ We might then write a query to find out what types of cuisine people similar to 
 .The following will find the most similar user to `Praveena` and return their favourite cuisine
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=query]
+include::scripts/similarity-cosine.cypher[tag=query]
 ----
 
 // tag::query[]
 .Results
 [opts="header",cols="1"]
 |===
-| cuisine
 | Indian
+| Italian
 | French
 |===
 // end::query[]
