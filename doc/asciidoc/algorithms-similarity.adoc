@@ -11,5 +11,7 @@ endif::env-docs[]
 These algorithms help calculate the similarity of nodes:
 
 * <<algorithms-similarity-jaccard, Jaccard Similarity>> (`algo.similarity.jaccard`)
+* <<algorithms-similarity-cosine, Cosine Similarity>> (`algo.similarity.cosine`)
 
 include::similarity-jaccard.adoc[leveloffset=2]
+include::similarity-cosine.adoc[leveloffset=2]
