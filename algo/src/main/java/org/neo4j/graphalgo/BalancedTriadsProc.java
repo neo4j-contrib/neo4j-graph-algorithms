@@ -68,7 +68,7 @@ public class BalancedTriadsProc {
         final HugeGraph graph = (HugeGraph) new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
-                .withoutRelationshipWeights()
+                .withRelationshipWeightsFromProperty(configuration.getWeightProperty(), 0.0)
                 .withoutNodeWeights()
                 .withSort(true)
                 .withLog(log)

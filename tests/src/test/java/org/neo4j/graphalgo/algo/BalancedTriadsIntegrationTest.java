@@ -48,6 +48,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
+import org.mockito.AdditionalMatchers;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,6 +61,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.mockito.Mockito.anyLong;
+
 
 /**
 
@@ -118,5 +121,23 @@ public class BalancedTriadsIntegrationTest {
                     return true;
                 });
 
+    }
+
+    @Test
+    public void testStream() throws Exception {
+        final BalancedTriadsConsumer mock = mock(BalancedTriadsConsumer.class);
+        DB.execute("CALL algo.balancedTriads.stream('Node', 'TYPE', {weightProperty:'w'}) YIELD nodeId, balanced, unbalanced")
+                .accept(row -> {
+                    final long nodeId = row.getNumber("nodeId").longValue();
+                    final double balanced = row.getNumber("balanced").doubleValue();
+                    final double unbalanced = row.getNumber("unbalanced").doubleValue();
+                    mock.consume(nodeId, balanced, unbalanced);
+                    return true;
+                });
+                verify(mock, times(7)).consume(anyLong(), AdditionalMatchers.eq(1.0, 3.0), AdditionalMatchers.eq(1.0, 3.0));
+    }
+
+    interface BalancedTriadsConsumer {
+        void consume(long nodeId, double balanced, double unbalanced);
     }
 }
