@@ -34,7 +34,7 @@ The procedures expect to receive the same length lists for all items so we need 
 
 // end::explanation[]
 
-[[algorithms-similarity-jaccard-usecase]]
+[[algorithms-similarity-cosine-usecase]]
 == Use-cases - when to use the Cosine Similarity algorithm
 
 // tag::use-case[]
@@ -44,7 +44,7 @@ e.g. recommend some movies to me based on the preferences of users who have rate
 // end::use-case[]
 
 
-[[algorithms-similarity-jaccard-sample]]
+[[algorithms-similarity-cosine-sample]]
 == Cosine algorithm sample
 
 .The following will return the Cosine similarity of two lists of numbers
