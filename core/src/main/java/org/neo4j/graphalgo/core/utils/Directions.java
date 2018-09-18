@@ -55,33 +55,7 @@ import org.neo4j.graphdb.Direction;
 public class Directions {
 
     public static final Direction DEFAULT_DIRECTION = Direction.OUTGOING;
-
-    public static org.neo4j.graphdb.Direction mediate(org.neo4j.storageengine.api.Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return Direction.OUTGOING;
-            case INCOMING:
-                return Direction.INCOMING;
-            case BOTH:
-                return Direction.BOTH;
-            default:
-                throw new UnsupportedOperationException();
-        }
-    }
-
-    public static org.neo4j.storageengine.api.Direction mediate(org.neo4j.graphdb.Direction direction) {
-        switch (direction) {
-            case OUTGOING:
-                return org.neo4j.storageengine.api.Direction.OUTGOING;
-            case INCOMING:
-                return org.neo4j.storageengine.api.Direction.INCOMING;
-            case BOTH:
-                return org.neo4j.storageengine.api.Direction.BOTH;
-            default:
-                throw new UnsupportedOperationException();
-        }
-    }
-
+    
     public static Direction fromString(String directionString) {
         return fromString(directionString, DEFAULT_DIRECTION);
     }
