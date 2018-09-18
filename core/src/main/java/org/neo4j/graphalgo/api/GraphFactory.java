@@ -18,13 +18,7 @@
  */
 package org.neo4j.graphalgo.api;
 
-import org.neo4j.graphalgo.core.GraphDimensions;
-import org.neo4j.graphalgo.core.HugeNullWeightMap;
-import org.neo4j.graphalgo.core.HugeWeightMap;
-import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.NodeImporter;
-import org.neo4j.graphalgo.core.NullWeightMap;
-import org.neo4j.graphalgo.core.WeightMap;
+import org.neo4j.graphalgo.core.*;
 import org.neo4j.graphalgo.core.huge.HugeIdMap;
 import org.neo4j.graphalgo.core.huge.HugeNodeImporter;
 import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
@@ -88,7 +82,7 @@ public abstract class GraphFactory {
         );
     }
 
-    protected IdMap loadIdMap() {
+    protected MappingIdMap loadIdMap() {
         final NodeImporter nodeImporter = new NodeImporter(
                 api,
                 setup.tracker,

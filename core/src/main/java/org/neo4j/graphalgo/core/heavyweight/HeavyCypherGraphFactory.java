@@ -26,7 +26,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.MappingIdMap;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.RawValues;
@@ -63,7 +63,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
     static class Nodes {
         private final long offset;
         private final long rows;
-        IdMap idMap;
+        MappingIdMap idMap;
         WeightMap nodeWeights;
         WeightMap nodeProps;
         private final Map<PropertyMapping, WeightMap> nodeProperties;
@@ -73,7 +73,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         Nodes(
                 long offset,
                 long rows,
-                IdMap idMap,
+                MappingIdMap idMap,
                 WeightMap nodeWeights,
                 WeightMap nodeProps,
                 Map<PropertyMapping, WeightMap> nodeProperties,
@@ -279,7 +279,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         return new Nodes(
                 0L,
                 total,
-                new IdMap(graphIds,nodeToGraphIds),
+                new MappingIdMap(graphIds,nodeToGraphIds),
                 null,null,
                 nodeProperties,
                 setup.nodeDefaultWeight,
@@ -305,7 +305,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
     private Relationships loadRelationships(long offset, int batchSize, Nodes nodes) {
 
-        IdMap idMap = nodes.idMap;
+        MappingIdMap idMap = nodes.idMap;
 
         int nodeCount = idMap.size();
         int capacity = batchSize == NO_BATCH ? nodeCount : batchSize;
@@ -357,7 +357,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
     private Nodes loadNodes(long offset, int batchSize) {
         int capacity = batchSize == NO_BATCH ? INITIAL_NODE_COUNT : batchSize;
-        final IdMap idMap = new IdMap(capacity);
+        final MappingIdMap idMap = new MappingIdMap(capacity);
 
         Map<PropertyMapping, WeightMap> nodeProperties = new HashMap<>();
         for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {

@@ -23,7 +23,6 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import java.util.Collection;
 import java.util.function.IntToLongFunction;
@@ -34,7 +33,7 @@ public final class IdMapTest extends RandomizedTest {
 
     @Test
     public void shouldReturnSingleIteratorForLargeBatchSize() throws Exception {
-        IdMap idMap = new IdMap(20);
+        MappingIdMap idMap = new MappingIdMap(20);
         long[] ids = addRandomIds(idMap);
         idMap.buildMappedIds();
 
@@ -46,7 +45,7 @@ public final class IdMapTest extends RandomizedTest {
 
     @Test
     public void shouldReturnMultipleIteratorsForSmallBatchSize() throws Exception {
-        IdMap idMap = new IdMap(20);
+        MappingIdMap idMap = new MappingIdMap(20);
         long[] ids = addRandomIds(idMap);
         idMap.buildMappedIds();
 
@@ -63,7 +62,7 @@ public final class IdMapTest extends RandomizedTest {
 
     @Test
     public void shouldFailForZeroBatchSize() throws Exception {
-        IdMap idMap = new IdMap(20);
+        MappingIdMap idMap = new MappingIdMap(20);
         addRandomIds(idMap);
         idMap.buildMappedIds();
 
@@ -77,7 +76,7 @@ public final class IdMapTest extends RandomizedTest {
 
     @Test
     public void shouldFailForNegativeBatchSize() throws Exception {
-        IdMap idMap = new IdMap(20);
+        MappingIdMap idMap = new MappingIdMap(20);
         addRandomIds(idMap);
         idMap.buildMappedIds();
 
@@ -107,7 +106,7 @@ public final class IdMapTest extends RandomizedTest {
         }
     }
 
-    private long[] addRandomIds(final IdMap idMap) {
+    private long[] addRandomIds(final MappingIdMap idMap) {
         LongHashSet seen = new LongHashSet();
         return addSomeIds(idMap, i -> {
             long id;
@@ -118,7 +117,7 @@ public final class IdMapTest extends RandomizedTest {
         });
     }
 
-    private long[] addSomeIds(final IdMap idMap, IntToLongFunction newId) {
+    private long[] addSomeIds(final MappingIdMap idMap, IntToLongFunction newId) {
         int iterations = between(10, 20);
         long[] ids = new long[iterations];
         for (int i = 0; i < iterations; i++) {
