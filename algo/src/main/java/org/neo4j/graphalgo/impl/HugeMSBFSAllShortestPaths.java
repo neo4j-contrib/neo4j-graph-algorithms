@@ -50,18 +50,21 @@ public class HugeMSBFSAllShortestPaths extends MSBFSASPAlgorithm<HugeMSBFSAllSho
     private final AllocationTracker tracker;
     private final int concurrency;
     private final ExecutorService executorService;
+    private final Direction direction;
     private final long nodeCount;
 
     public HugeMSBFSAllShortestPaths(
             HugeGraph graph,
             AllocationTracker tracker,
             int concurrency,
-            ExecutorService executorService) {
+            ExecutorService executorService,
+            Direction direction) {
         this.graph = graph;
         nodeCount = graph.nodeCount();
         this.tracker = tracker;
         this.concurrency = concurrency;
         this.executorService = executorService;
+        this.direction = direction;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
 
@@ -130,7 +133,7 @@ public class HugeMSBFSAllShortestPaths extends MSBFSASPAlgorithm<HugeMSBFSAllSho
             new HugeMultiSourceBFS(
                     graph,
                     graph,
-                    Direction.OUTGOING,
+                    direction,
                     (target, distance, sources) -> {
                         while (sources.hasNext()) {
                             long source = sources.next();

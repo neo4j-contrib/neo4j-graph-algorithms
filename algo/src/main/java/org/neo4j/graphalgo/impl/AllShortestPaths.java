@@ -63,14 +63,16 @@ public class AllShortestPaths extends MSBFSASPAlgorithm<AllShortestPaths> {
      */
     private AtomicInteger counter;
     private ExecutorService executorService;
+    private final Direction direction;
     private BlockingQueue<Result> resultQueue;
 
     private volatile boolean outputStreamOpen;
 
-    public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency) {
+    public AllShortestPaths(Graph graph, ExecutorService executorService, int concurrency, Direction direction) {
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
+        this.direction = direction;
         if (concurrency < 1) {
             throw new IllegalArgumentException("concurrency must be >0");
         }
@@ -168,7 +170,7 @@ public class AllShortestPaths extends MSBFSASPAlgorithm<AllShortestPaths> {
                 // scan relationships
                 graph.forEachRelationship(
                         node,
-                        Direction.OUTGOING,
+                        direction,
                         (source, target, relId, weight) -> {
                             // relax
                             final double targetDistance = weight + sourceDistance;

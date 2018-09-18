@@ -84,15 +84,23 @@ public class ShortestPathProc {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
-        final Direction direction = configuration.getDirection(Direction.BOTH);
+        Direction direction = configuration.getDirection(Direction.BOTH);
 
-        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getWeightPropertyDefaultValue(1.0))
-                .withDirection(direction)
-                .load(configuration.getGraphImpl());
+                        configuration.getWeightPropertyDefaultValue(1.0));
+
+        if(direction == Direction.BOTH) {
+            direction = Direction.OUTGOING;
+            graphLoader.asUndirected(true).withDirection(direction);
+        } else {
+            graphLoader.withDirection(direction);
+        }
+
+
+        final Graph graph = graphLoader.load(configuration.getGraphImpl());
 
         if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
             graph.release();
@@ -124,15 +132,24 @@ public class ShortestPathProc {
         final Graph graph;
         final ShortestPathDijkstra dijkstra;
 
-        final Direction direction = configuration.getDirection(Direction.BOTH);
+        Direction direction = configuration.getDirection(Direction.BOTH);
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api, Pools.DEFAULT)
+            GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                     .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withOptionalRelationshipWeightsFromProperty(
                             propertyName,
                             configuration.getWeightPropertyDefaultValue(1.0))
-                    .withDirection(direction)
-                    .load(configuration.getGraphImpl());
+                    .withDirection(direction);
+
+            if(direction == Direction.BOTH) {
+                direction = Direction.OUTGOING;
+                graphLoader.asUndirected(true).withDirection(direction);
+            } else {
+                graphLoader.withDirection(direction);
+            }
+
+
+            graph = graphLoader.load(configuration.getGraphImpl());
         }
 
         if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
@@ -180,16 +197,24 @@ public class ShortestPathProc {
             @Name(value = "propertyKeyLat", defaultValue = "latitude") String propertyKeyLat,
             @Name(value = "propertyKeyLon", defaultValue = "longitude") String propertyKeyLon,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-    	
-    		ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-    		
-    		final Direction direction = configuration.getDirection(Direction.BOTH);
-    		
-    		final Graph graph = new GraphLoader(api, Pools.DEFAULT)
-    				.init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
-    				.withOptionalRelationshipWeightsFromProperty(propertyName, configuration.getWeightPropertyDefaultValue(1.0))
-    				.withDirection(direction)
-    				.load(configuration.getGraphImpl());
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        Direction direction = configuration.getDirection(Direction.BOTH);
+
+        GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
+                .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
+                .withOptionalRelationshipWeightsFromProperty(propertyName, configuration.getWeightPropertyDefaultValue(1.0))
+                .withDirection(direction);
+
+
+        if(direction == Direction.BOTH) {
+            direction = Direction.OUTGOING;
+            graphLoader.asUndirected(true).withDirection(direction);
+        } else {
+            graphLoader.withDirection(direction);
+        }
+
+        final Graph graph = graphLoader.load(configuration.getGraphImpl());
 
             if (graph.nodeCount() == 0 || startNode == null || endNode == null) {
                 graph.release();

@@ -45,6 +45,6 @@ public final class GraphViewFactory extends GraphFactory {
                 dimensions.nodeCount(),
                 dimensions.labelId()
         ).call();
-        return new GraphView(api, dimensions, idMap, setup.relationDefaultWeight);
+        return new GraphView(api, dimensions, idMap, setup.relationDefaultWeight, setup.loadAsUndirected);
     }
 }

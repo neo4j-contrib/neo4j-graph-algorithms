@@ -28,6 +28,7 @@ import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.helper.graphbuilder.GridBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 
@@ -104,7 +105,7 @@ public class ParallelDeltaSteppingTest {
     }
 
     private static double[] compute(int threads) throws Exception {
-        return new ShortestPathDeltaStepping(graph, 2.5)
+        return new ShortestPathDeltaStepping(graph, 2.5, Direction.OUTGOING)
                 .withExecutorService(Executors.newFixedThreadPool(threads))
                 .compute(rootNodeId)
                 .getShortestPaths();

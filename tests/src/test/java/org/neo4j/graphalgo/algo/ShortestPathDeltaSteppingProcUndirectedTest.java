@@ -20,42 +20,39 @@ package org.neo4j.graphalgo.algo;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.neo4j.graphalgo.AllShortestPathsProc;
+import org.neo4j.graphalgo.ShortestPathDeltaSteppingProc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.DoubleConsumer;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.mockito.AdditionalMatchers.eq;
+import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.*;
 
 
 /**         5     5      5
- *      (1)---(2)---(3)----.
- *    5/ 2    2     2     2 \     5
- *  (0)---(7)---(8)---(9)---(10)-//->(0)
+ *      (A)---(B)---(C)----.
+ *    5/ 2    2     2     2 \
+ *  (S)---(G)---(H)---(I)---(X)
  *    3\    3     3     3   /
- *      (4)---(5)---(6)----°
+ *      (D)---(E)---(F)----°
  *
  * S->X: {S,G,H,I,X}:8, {S,D,E,F,X}:12, {S,A,B,C,X}:20
  */
 @RunWith(Parameterized.class)
-public final class AllShortestPathsProcTest {
+public final class ShortestPathDeltaSteppingProcUndirectedTest {
 
     private static GraphDatabaseAPI api;
-    private static long startNodeId;
-    private static long targetNodeId;
 
     @BeforeClass
     public static void setup() throws KernelException {
@@ -72,8 +69,6 @@ public final class AllShortestPathsProcTest {
                         "CREATE (i:Node {name:'i'})\n" +
                         "CREATE (x:Node {name:'x'})\n" +
                         "CREATE" +
-
-                        " (x)-[:TYPE {cost:5}]->(s),\n" + // creates cycle
 
                         " (s)-[:TYPE {cost:5}]->(a),\n" + // line 1
                         " (a)-[:TYPE {cost:5}]->(b),\n" +
@@ -94,20 +89,17 @@ public final class AllShortestPathsProcTest {
 
         api.getDependencyResolver()
                 .resolveDependency(Procedures.class)
-                .registerProcedure(AllShortestPathsProc.class);
+                .registerProcedure(ShortestPathDeltaSteppingProc.class);
 
         try (Transaction tx = api.beginTx()) {
             api.execute(cypher);
-
-            startNodeId = api.findNode(Label.label("Node"), "name", "s").getId();
-            targetNodeId = api.findNode(Label.label("Node"), "name", "x").getId();
             tx.success();
         }
     }
 
     @AfterClass
     public static void shutdownGraph() throws Exception {
-        api.shutdown();
+       if (api != null) api.shutdown();
     }
 
     @Parameterized.Parameters(name = "{0}")
@@ -115,7 +107,6 @@ public final class AllShortestPathsProcTest {
         return Arrays.asList(
                 new Object[]{"Heavy"},
                 new Object[]{"Light"},
-                new Object[]{"Huge"},
                 new Object[]{"Kernel"}
         );
     }
@@ -124,85 +115,48 @@ public final class AllShortestPathsProcTest {
     public String graphImpl;
 
     @Test
-    public void testMSBFSASP() throws Exception {
+    public void testOutgoingResultStream() throws Exception {
 
-        final Consumer consumer = mock(Consumer.class);
+        final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "CALL algo.allShortestPaths.stream('', {graph:'"+graphImpl+"', direction: 'OUTGOING'}) " +
-                "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
+        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0,{graph:'"+graphImpl+"', direction: 'OUTGOING'}) " +
+                "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
-            final long source = row.getNumber("sourceNodeId").longValue();
-            final long target = row.getNumber("targetNodeId").longValue();
-            final double distance = row.getNumber("distance").doubleValue();
-            assertNotEquals(Double.POSITIVE_INFINITY, distance);
-            if (source == target) {
-                assertEquals(0.0, distance, 0.1);
-            }
-            consumer.test(source, target, distance);
+            long nodeId = row.getNumber("nodeId").longValue();
+            double distance = row.getNumber("distance").doubleValue();
+
+            consumer.accept(distance);
+            System.out.printf("%d:%.1f, ",
+                    nodeId,
+                    distance);
             return true;
         });
 
-        // 4 steps from start to end max
-        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(4.0));
-
+        verify(consumer, times(11)).accept(anyDouble());
+        verify(consumer, times(10)).accept(eq(Double.POSITIVE_INFINITY, 0.1d));
     }
-
-
-
 
     @Test
-    public void testMSBFSASPIncoming() throws Exception {
+    public void testUndirectedResultStream() throws Exception {
 
-        final Consumer consumer = mock(Consumer.class);
+        final DoubleConsumer consumer = mock(DoubleConsumer.class);
 
-        final String cypher = "CALL algo.allShortestPaths.stream('', {graph:'"+graphImpl+"', direction: 'INCOMING'}) " +
-                "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
+        final String cypher = "MATCH(n:Node {name:'x'}) WITH n CALL algo.shortestPath.deltaStepping.stream(n, 'cost', 3.0,{graph:'"+graphImpl+"'}) " +
+                "YIELD nodeId, distance RETURN nodeId, distance";
 
         api.execute(cypher).accept(row -> {
-            final long source = row.getNumber("sourceNodeId").longValue();
-            final long target = row.getNumber("targetNodeId").longValue();
-            final double distance = row.getNumber("distance").doubleValue();
-            assertNotEquals(Double.POSITIVE_INFINITY, distance);
-            if (source == target) {
-                assertEquals(0.0, distance, 0.1);
-            }
-            consumer.test(source, target, distance);
+            long nodeId = row.getNumber("nodeId").longValue();
+            double distance = row.getNumber("distance").doubleValue();
+
+            consumer.accept(distance);
+            System.out.printf("%d:%.1f, ",
+                    nodeId,
+                    distance);
             return true;
         });
 
-        // 4 steps from start to end max
-        verify(consumer, times(1)).test(eq(targetNodeId), eq(startNodeId), eq(4.0));
-    }
-
-
-    @Test
-    @Ignore
-    public void testWeightedASP() throws Exception {
-
-        final Consumer consumer = mock(Consumer.class);
-
-        final String cypher = "CALL algo.allShortestPaths.stream('cost', {graph:'"+graphImpl+"', direction: 'OUTGOING'}) " +
-                "YIELD sourceNodeId, targetNodeId, distance RETURN sourceNodeId, targetNodeId, distance";
-
-        api.execute(cypher).accept(row -> {
-            final long source = row.getNumber("sourceNodeId").longValue();
-            final long target = row.getNumber("targetNodeId").longValue();
-            final double distance = row.getNumber("distance").doubleValue();
-            assertNotEquals(Double.POSITIVE_INFINITY, distance);
-            if (source == target) {
-                assertEquals(0.0, distance, 0.1);
-            }
-            assertNotEquals(Double.POSITIVE_INFINITY, distance);
-            consumer.test(source, target, distance);
-            return true;
-        });
-
-        verify(consumer, times(1)).test(eq(startNodeId), eq(targetNodeId), eq(8.0));
-
-    }
-
-    private interface Consumer {
-        void test(long source, long target, double distance);
+        verify(consumer, times(11)).accept(anyDouble());
+        verify(consumer, times(1)).accept(eq(8, 0.1d));
     }
 }

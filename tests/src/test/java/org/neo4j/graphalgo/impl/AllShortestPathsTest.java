@@ -28,8 +28,8 @@ import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -103,7 +103,7 @@ public class AllShortestPathsTest {
 
         final ResultConsumer mock = mock(ResultConsumer.class);
 
-        new AllShortestPaths(graph, Pools.DEFAULT, 4)
+        new AllShortestPaths(graph, Pools.DEFAULT, 4, Direction.OUTGOING)
                 .resultStream()
                 .peek(System.out::println)
                 .forEach(r -> {

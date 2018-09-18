@@ -34,6 +34,7 @@ import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
@@ -110,13 +111,13 @@ public class MSBFSAllShortestPathsTest {
 
     @Test
     public void testResults() throws Exception {
-        testASP(new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
+        testASP(new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING));
     }
 
     @Test
     public void testHugeResults() throws Exception {
         if (graph instanceof HugeGraph) {
-            testASP(new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
+            testASP(new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING));
         }
     }
 
