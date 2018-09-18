@@ -53,6 +53,18 @@ public class CosineTest {
             "yield p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
             "RETURN *";
 
+    public static final String STORE_EMBEDDING_STATEMENT = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
+            "WITH p, collect(coalesce(r.stars,0)) as userData\n" +
+            "SET p.embedding = userData";
+
+    public static final String EMBEDDING_STATEMENT = "MATCH (p:Person)\n" +
+            "WITH {item:id(p), weights: p.embedding} as userData\n" +
+            "WITH collect(userData) as data\n" +
+
+            "CALL algo.similarity.cosine(data, $config) " +
+            "yield p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
+            "RETURN *";
+
     @BeforeClass
     public static void beforeClass() throws KernelException {
         db = TestDatabaseCreator.createTestDatabase();
@@ -258,6 +270,22 @@ public class CosineTest {
         Map<String, Object> params = map("config", map());
 
         Map<String, Object> row = db.execute(STATEMENT,params).next();
+        assertEquals((double) row.get("p25"), 0.0, 0.01);
+        assertEquals((double) row.get("p50"), 0, 0.01);
+        assertEquals((double) row.get("p75"), 0.40, 0.01);
+        assertEquals((double) row.get("p90"), 0.40, 0.01);
+        assertEquals((double) row.get("p95"), 0.91, 0.01);
+        assertEquals((double) row.get("p99"), 0.91, 0.01);
+        assertEquals((double) row.get("p100"), 0.91, 0.01);
+    }
+
+    @Test
+    public void simpleCosineFromEmbeddingTest() {
+        db.execute(STORE_EMBEDDING_STATEMENT);
+
+        Map<String, Object> params = map("config", map());
+
+        Map<String, Object> row = db.execute(EMBEDDING_STATEMENT,params).next();
         assertEquals((double) row.get("p25"), 0.0, 0.01);
         assertEquals((double) row.get("p50"), 0, 0.01);
         assertEquals((double) row.get("p75"), 0.40, 0.01);
