@@ -12,6 +12,8 @@ These algorithms help calculate the similarity of nodes:
 
 * <<algorithms-similarity-jaccard, Jaccard Similarity>> (`algo.similarity.jaccard`)
 * <<algorithms-similarity-cosine, Cosine Similarity>> (`algo.similarity.cosine`)
+* <<algorithms-similarity-euclidean, Euclidean Distance>> (`algo.similarity.euclidean`)
 
 include::similarity-jaccard.adoc[leveloffset=2]
 include::similarity-cosine.adoc[leveloffset=2]
+include::similarity-euclidean.adoc[leveloffset=2]
