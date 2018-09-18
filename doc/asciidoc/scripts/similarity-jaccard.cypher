@@ -77,5 +77,5 @@ RETURN nodes, similarityPairs, write, writeRelationshipType, writeProperty, min,
 // tag::query[]
 MATCH (p:Person {name: "Praveena"})-[:SIMILAR]->(other),
       (other)-[:LIKES]->(cuisine)
-RETURN other, cuisine.name AS cuisine
+RETURN cuisine.name AS cuisine
 // end::query[]
