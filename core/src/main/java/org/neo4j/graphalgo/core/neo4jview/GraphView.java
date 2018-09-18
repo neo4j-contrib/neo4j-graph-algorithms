@@ -63,16 +63,18 @@ public class GraphView implements Graph {
     private final GraphDimensions dimensions;
     private final double propertyDefaultWeight;
     private final IdMap idMapping;
+    private boolean loadAsUndirected;
 
     GraphView(
             GraphDatabaseAPI db,
             GraphDimensions dimensions,
             IdMap idMapping,
-            double propertyDefaultWeight) {
+            double propertyDefaultWeight, boolean loadAsUndirected) {
         this.tx = new TransactionWrapper(db);
         this.dimensions = dimensions;
         this.propertyDefaultWeight = propertyDefaultWeight;
         this.idMapping = idMapping;
+        this.loadAsUndirected = loadAsUndirected;
     }
 
     @Override
@@ -130,7 +132,7 @@ public class GraphView implements Graph {
                     };
 
                     LoadRelationships loader = rels(transaction);
-                    if (direction == Direction.BOTH) {
+                    if (direction == Direction.BOTH || (direction == Direction.OUTGOING && loadAsUndirected) ) {
                         // can't use relationshipsBoth here, b/c we want to be consistent with the other graph impls
                         // that are iteration first over outgoing, then over incoming relationships
                         RelationshipSelectionCursor cursor = loader.relationshipsOut(nc);

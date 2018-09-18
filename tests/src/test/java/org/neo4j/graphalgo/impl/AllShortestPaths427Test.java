@@ -431,7 +431,7 @@ public class AllShortestPaths427Test {
         compare(new AllShortestPaths(
                 graph,
                 Pools.DEFAULT,
-                Pools.DEFAULT_CONCURRENCY), this.expected);
+                Pools.DEFAULT_CONCURRENCY, Direction.OUTGOING), this.expected);
     }
 
     @Test
@@ -439,7 +439,7 @@ public class AllShortestPaths427Test {
         compare(new MSBFSAllShortestPaths(
                 graph,
                 Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT), this.expectedNonWeighted);
+                Pools.DEFAULT, Direction.OUTGOING), this.expectedNonWeighted);
     }
 
     private List<Result> calculateExpected(boolean withWeights) {

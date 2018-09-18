@@ -66,17 +66,27 @@ public class AllShortestPathsProc {
                     Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+
+        Direction direction = configuration.getDirection(Direction.BOTH);
+
         AllocationTracker tracker = AllocationTracker.create();
-        Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .withOptionalLabel(configuration.getNodeLabelOrQuery())
                 .withOptionalRelationshipType(configuration.getRelationshipOrQuery())
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getWeightPropertyDefaultValue(1.0))
-                .withDirection(Direction.OUTGOING)
                 .withConcurrency(configuration.getConcurrency())
-                .withAllocationTracker(tracker)
-                .load(configuration.getGraphImpl());
+                .withAllocationTracker(tracker);
+
+        if(direction == Direction.BOTH) {
+            direction = Direction.OUTGOING;
+            graphLoader.asUndirected(true).withDirection(direction);
+        } else {
+            graphLoader.withDirection(direction);
+        }
+
+        Graph graph = graphLoader.load(configuration.getGraphImpl());
 
         if (graph.nodeCount() == 0) {
             graph.release();
@@ -93,19 +103,21 @@ public class AllShortestPathsProc {
                         hugeGraph,
                         tracker,
                         configuration.getConcurrency(),
-                        Pools.DEFAULT);
+                        Pools.DEFAULT,
+                        direction);
             } else {
                 algo = new MSBFSAllShortestPaths(
                         graph,
                         configuration.getConcurrency(),
-                        Pools.DEFAULT);
+                        Pools.DEFAULT,
+                        direction);
             }
             algo.withProgressLogger(ProgressLogger.wrap(
                     log,
                     "AllShortestPaths(MultiSource)"));
         } else {
             // weighted ASP otherwise
-            algo = new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency())
+            algo = new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency(), direction)
                     .withProgressLogger(ProgressLogger.wrap(log, "AllShortestPaths)"));
         }
 

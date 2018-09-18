@@ -69,12 +69,14 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
 
     // multiplier used to scale an double to int
     private double multiplier = 100_000d; // double type is intended
+    private Direction direction;
 
-    public ShortestPathDeltaStepping(Graph graph, double delta) {
+    public ShortestPathDeltaStepping(Graph graph, double delta, Direction direction) {
         this.graph = graph;
         this.delta = delta;
         this.iDelta = (int) (multiplier * delta);
         nodeCount = Math.toIntExact(graph.nodeCount());
+        this.direction = direction;
         distance = new AtomicIntegerArray(nodeCount);
         buckets = new Buckets(nodeCount);
         heavy = new ArrayDeque<>(1024);
@@ -137,7 +139,7 @@ public class ShortestPathDeltaStepping extends Algorithm<ShortestPathDeltaSteppi
             // for each node in bucket
             buckets.forEachInBucket(phase, node -> {
                 // relax each outgoing light edge
-                graph.forEachRelationship(node, Direction.OUTGOING, (sourceNodeId, targetNodeId, relationId, cost) -> {
+                graph.forEachRelationship(node, direction, (sourceNodeId, targetNodeId, relationId, cost) -> {
                     final int iCost = (int) (cost * multiplier + distance.get(sourceNodeId));
                     if (cost <= delta) { // determine if light or heavy edge
                         light.add(() -> relax(targetNodeId, iCost));

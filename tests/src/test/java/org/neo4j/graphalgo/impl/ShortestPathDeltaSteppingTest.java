@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -116,7 +117,7 @@ public final class ShortestPathDeltaSteppingTest {
 
     @Test
     public void testSequential() throws Exception {
-        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3, Direction.OUTGOING);
 
         final double[] sp = sssp.compute(head)
                 .getShortestPaths();
@@ -126,7 +127,7 @@ public final class ShortestPathDeltaSteppingTest {
 
     @Test
     public void testParallel() throws Exception {
-        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3)
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3, Direction.OUTGOING)
                 .withExecutorService(Executors.newFixedThreadPool(3));
 
         final double[] sp = sssp.compute(head)
@@ -137,7 +138,7 @@ public final class ShortestPathDeltaSteppingTest {
 
     @Test
     public void distanceToNodeInDifferentComponentShouldBeInfinity() throws Exception {
-        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3);
+        final ShortestPathDeltaStepping sssp = new ShortestPathDeltaStepping(graph, 3, Direction.OUTGOING);
 
         final double[] sp = sssp.compute(head).getShortestPaths();
 

@@ -48,13 +48,15 @@ public class MSBFSAllShortestPaths extends MSBFSASPAlgorithm<MSBFSAllShortestPat
     private BlockingQueue<Result> resultQueue;
     private final int concurrency;
     private final ExecutorService executorService;
+    private final Direction direction;
     private final int nodeCount;
 
-    public MSBFSAllShortestPaths(Graph graph, int concurrency, ExecutorService executorService) {
+    public MSBFSAllShortestPaths(Graph graph, int concurrency, ExecutorService executorService, Direction direction) {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.concurrency = concurrency;
         this.executorService = executorService;
+        this.direction = direction;
         this.resultQueue = new LinkedBlockingQueue<>(); // TODO limit size?
     }
 
@@ -123,7 +125,7 @@ public class MSBFSAllShortestPaths extends MSBFSASPAlgorithm<MSBFSAllShortestPat
             new MultiSourceBFS(
                     graph,
                     graph,
-                    Direction.OUTGOING,
+                    direction,
                     (target, distance, sources) -> {
                         while (sources.hasNext()) {
                             int source = sources.next();

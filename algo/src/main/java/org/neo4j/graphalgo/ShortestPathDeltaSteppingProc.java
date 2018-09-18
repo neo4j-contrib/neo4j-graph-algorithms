@@ -81,21 +81,29 @@ public class ShortestPathDeltaSteppingProc {
                     Map<String, Object> config) {
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        Direction direction = configuration.getDirection(Direction.BOTH);
 
-        final Graph graph = new GraphLoader(api, Pools.DEFAULT)
+        GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withRelationshipWeightsFromProperty(
                         propertyName,
-                        configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
-                .withDirection(Direction.OUTGOING)
-                .load(configuration.getGraphImpl());
+                        configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE));
+
+        if(direction == Direction.BOTH) {
+            direction = Direction.OUTGOING;
+            graphLoader.asUndirected(true).withDirection(direction);
+        } else {
+            graphLoader.withDirection(direction);
+        }
+
+        final Graph graph = graphLoader.load(configuration.getGraphImpl());
 
         if (graph.nodeCount() == 0 || startNode == null) {
             graph.release();
             return Stream.empty();
         }
 
-        final ShortestPathDeltaStepping algo = new ShortestPathDeltaStepping(graph, delta)
+        final ShortestPathDeltaStepping algo = new ShortestPathDeltaStepping(graph, delta, direction)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .withExecutorService(Executors.newFixedThreadPool(
@@ -118,16 +126,26 @@ public class ShortestPathDeltaSteppingProc {
                     Map<String, Object> config) {
 
         final ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        Direction direction = configuration.getDirection(Direction.BOTH);
+
         final DeltaSteppingProcResult.Builder builder = DeltaSteppingProcResult.builder();
 
         final Graph graph;
         try (ProgressTimer timer = builder.timeLoad()) {
-            graph = new GraphLoader(api, Pools.DEFAULT)
+            GraphLoader graphLoader = new GraphLoader(api, Pools.DEFAULT)
                     .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                     .withRelationshipWeightsFromProperty(
                             propertyName,
-                            configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE))
-                    .withDirection(Direction.OUTGOING)
+                            configuration.getWeightPropertyDefaultValue(Double.MAX_VALUE));
+
+            if(direction == Direction.BOTH) {
+                direction = Direction.OUTGOING;
+                graphLoader.asUndirected(true).withDirection(direction);
+            } else {
+                graphLoader.withDirection(direction);
+            }
+
+            graph = graphLoader
                     .load(configuration.getGraphImpl());
         }
 
@@ -137,7 +155,7 @@ public class ShortestPathDeltaSteppingProc {
         }
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
-        final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta)
+        final ShortestPathDeltaStepping algorithm = new ShortestPathDeltaStepping(graph, delta, direction)
                 .withProgressLogger(ProgressLogger.wrap(log, "ShortestPaths(DeltaStepping)"))
                 .withTerminationFlag(terminationFlag)
                 .withExecutorService(Pools.DEFAULT);
