@@ -100,7 +100,8 @@ public final class LabelPropagationProc {
         } else {
             graphLoader.withDirection(direction);
         }
-        HeavyGraph graph = load(graphLoader, configuration);
+
+        HeavyGraph graph = load(graphLoader, configuration, stats);
 
         if(graph.nodeCount() == 0) {
             graph.release();
@@ -143,7 +144,8 @@ public final class LabelPropagationProc {
         } else {
             graphLoader.withDirection(direction);
         }
-        HeavyGraph graph = load(graphLoader, configuration);
+        LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder();
+        HeavyGraph graph = load(graphLoader, configuration, stats);
 
 
         if(graph.nodeCount() == 0) {
@@ -151,7 +153,7 @@ public final class LabelPropagationProc {
             return Stream.empty();
         }
 
-        int[] result = compute(direction, iterations, batchSize, concurrency, graph, new LabelPropagationStats.Builder(), propertyMappings);
+        int[] result = compute(direction, iterations, batchSize, concurrency, graph, stats, propertyMappings);
 
         graph.release();
 
@@ -166,11 +168,12 @@ public final class LabelPropagationProc {
             };
     }
 
-    private HeavyGraph load(GraphLoader graphLoader, ProcedureConfiguration config) {
+    private HeavyGraph load(GraphLoader graphLoader, ProcedureConfiguration config, LabelPropagationStats.Builder stats) {
         Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
                 HeavyGraph.TYPE, HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE);
-        return (HeavyGraph) graphLoader.load(graphImpl);
-
+        try (ProgressTimer timer = stats.timeLoad()) {
+            return (HeavyGraph) graphLoader.load(graphImpl);
+        }
     }
 
     private GraphLoader graphLoader(ProcedureConfiguration config,  String partitionProperty, String weightKey, PropertyMapping... propertyMappings) {
