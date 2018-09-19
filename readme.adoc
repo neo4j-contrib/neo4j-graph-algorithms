@@ -62,6 +62,20 @@ These algorithms help find the shortest path or evaluate the availability and qu
 * <<algorithms-yens-k-shortest-path, Yen’s K-shortest paths>> (`algo.kShortestPaths`)
 * <<algorithms-random-walk, Random Walk>> (`algo.randomWalk`)
 
+=== Similarity
+
+These algorithms help calculate the similarity of nodes:
+
+* <<algorithms-similarity-jaccard, Jaccard Similarity>> (`algo.similarity.jaccard`)
+* <<algorithms-similarity-cosine, Cosine Similarity>> (`algo.similarity.cosine`)
+* <<algorithms-similarity-euclidean, Euclidean Distance>> (`algo.similarity.euclidean`)
+
+=== Preprocessing
+
+These are utility functions and procedures that transform data for use further along the data pipeline:
+
+** <<algorithms-one-hot-encoding, One Hot Encoding>> (`algo.ml.oneHotEncoding`)
+
 // end::algorithms[]
 
 These procedures work either on the whole graph, or on a subgraph filtered by label and relationship-type.

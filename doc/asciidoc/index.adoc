@@ -21,6 +21,7 @@ The guide covers the following areas:
 * <<algorithms-centrality>> -- A detailed guide to each of the centrality algorithms, including use-cases and examples.
 * <<algorithms-community>> -- A detailed guide to each of the community detection algorithms, including use-cases and examples.
 * <<algorithms-path-finding>> -- A detailed guide to each of the path finding algorithms, including use-cases and examples.
+* <<algorithms-similarity>> -- A detailed guide to each of the similarity algorithms, including use-cases and examples.
 
 [[introduction]]
 == Introduction
@@ -62,6 +63,8 @@ include::../../target/generated-documentation/documentation.csv[]
 include::algorithms-centrality.adoc[leveloffset=1]
 include::algorithms-community.adoc[leveloffset=1]
 include::algorithms-path-finding.adoc[leveloffset=1]
+include::algorithms-preprocessing.adoc[leveloffset=1]
+include::algorithms-similarity.adoc[leveloffset=1]
 
 ifndef::env-docs[]
 == Implementers section
