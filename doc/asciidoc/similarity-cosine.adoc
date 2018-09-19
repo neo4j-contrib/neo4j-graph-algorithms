@@ -80,7 +80,7 @@ include::scripts/similarity-cosine.cypher[tag=create-sample-graph]
 .The following will return a stream of node pairs along with their Cosine similarities
 [source, cypher]
 ----
-include::scripts/similarity-jaccard.cypher[tag=stream]
+include::scripts/similarity-cosine.cypher[tag=stream]
 ----
 
 // tag::stream[]
