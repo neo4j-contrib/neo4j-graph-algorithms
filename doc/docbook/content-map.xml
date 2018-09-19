@@ -7,6 +7,7 @@
     </d:tocentry>
     <d:tocentry linkend="procedures"><?dbhtml filename="procedures/index.html"?>
     </d:tocentry>
+
     <d:tocentry linkend="algorithms-centrality"><?dbhtml filename="algorithms/centrality/index.html"?>
       <d:tocentry linkend="algorithms-pagerank"><?dbhtml filename="algorithms/page-rank/index.html"?>
       </d:tocentry>
@@ -47,6 +48,21 @@
       <d:tocentry linkend="algorithms-random-walk"><?dbhtml filename="algorithms/random-walk/index.html"?>
       </d:tocentry>
     </d:tocentry>
+
+    <d:tocentry linkend="algorithms-similarity"><?dbhtml filename="algorithms/similarity/index.html"?>
+      <d:tocentry linkend="algorithms-similarity-jaccard"><?dbhtml filename="algorithms/similarity-jaccard/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-similarity-cosine"><?dbhtml filename="algorithms/similarity-cosine/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-similarity-euclidean"><?dbhtml filename="algorithms/similarity-euclidean/index.html"?>
+      </d:tocentry>
+    </d:tocentry>
+
+    <d:tocentry linkend="algorithms-preprocessing"><?dbhtml filename="algorithms/preprocessing/index.html"?>
+      <d:tocentry linkend="algorithms-one-hot-encoding"><?dbhtml filename="algorithms/one-hot-encoding/index.html"?>
+      </d:tocentry>
+    </d:tocentry>
+    
   </d:tocentry>
 </d:toc>
 <!-- vim: set ts=2 sw=2: -->
