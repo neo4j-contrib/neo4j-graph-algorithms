@@ -192,7 +192,7 @@ include::scripts/similarity-jaccard.cypher[tag=write-back]
 
 We might then write a query to find out what types of cuisine people similar to us like:
 
-.The following will find the most similar user to `Praveena` and return their favourite cuisine
+.The following will find the most similar user to Praveena and return their favorite cuisines that Praveena doesn't (yet!) like
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=query]
@@ -203,7 +203,6 @@ include::scripts/similarity-jaccard.cypher[tag=query]
 [opts="header",cols="1"]
 |===
 | cuisine
-| Indian
 | French
 |===
 // end::query[]
