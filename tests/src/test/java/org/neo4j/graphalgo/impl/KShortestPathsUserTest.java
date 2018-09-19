@@ -24,87 +24,113 @@ import org.junit.Test;
 import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.impl.yens.WeightedPath;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.config.Setting;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.DoubleConsumer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
-import static org.neo4j.kernel.configuration.Settings.BOOLEAN;
-import static org.neo4j.kernel.configuration.Settings.setting;
 
 /**
- * Graph:
- *
- *     (b)   (e)
- *   1/ 2\ 1/ 2\
- * >(a)  (d)  (g)
- *   2\ 1/ 2\ 1/
- *    (c)   (f)
- *
  * @author mknblch
  */
 public class KShortestPathsUserTest {
 
+    private static final String PATH = "/Users/mknobloch/Downloads";
 
-    private static final Setting<Boolean> udc = setting("dbms.udc.enabled", BOOLEAN, "true");
-
-
-    public static final double DELTA = 0.001;
-
-    public static final Path LOCATION = Paths.get("/Users/mknobloch/data/neo4j/airportgraph/graph.db");
-
-    public static GraphDatabaseService db;
+    @ClassRule
+    public static final ImpermanentDatabaseRule DB = new ImpermanentDatabaseRule();
 
     private static Graph graph;
 
-    private static GraphDatabaseAPI openDb(Path dbLocation) {
-        return (GraphDatabaseAPI) new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(dbLocation.toFile())
-                .setConfig(GraphDatabaseSettings.pagecache_memory, "2G")
-                .setConfig(GraphDatabaseSettings.allow_upgrade, "true")
-                .setConfig(udc, "false")
-                .newGraphDatabase();
-    }
-
     @BeforeClass
     public static void setupGraph() throws KernelException {
-        System.out.println("loading db..");
-        graph = (HeavyGraph) new GraphLoader(openDb(LOCATION))
-                .withAnyRelationshipType()
-                .withAnyLabel()
-                .withoutNodeProperties()
+
+
+        String cypher = "" +
+                "CREATE CONSTRAINT ON (a:Airport) ASSERT a.IATA IS UNIQUE; " +
+                "LOAD CSV FROM 'file://" + PATH + "/airports.txt' as airport " +
+                "MERGE (a:Airport {IATA: airport[4]}) " +
+                "set  " +
+                "a.AirportID = airport[0], " +
+                "a.Name = airport[1], " +
+                "a.City = airport[2], " +
+                "a.Country = airport[3], " +
+                "a.ICAO = airport[5], " +
+                "a.Latitude = toFloat(airport[6]), " +
+                "a.Longitude = toFloat(airport[7]), " +
+                "a.Altitude = toInteger(airport[8]), " +
+                "a.Timezone = airport[9], " +
+                "a.DST=  airport[10], " +
+                "a.TZ = airport[11], " +
+                "a.Type = airport[12], " +
+                "a.Source = airport[13] ;" +
+                "create index on :Airport(AirportID); " +
+                "LOAD CSV FROM 'file://" + PATH + "/routes.txt' as route " +
+                "MATCH (s:Airport {AirportID: route[3]}) " +
+                "MATCH (d:Airport {AirportID: route[5]}) " +
+                "CREATE (s)-[:Route {Airline:route[1],Codeshare : [6]}]->(d);";
+
+
+        for (String part : cypher.split(";")) {
+
+            System.out.println(part);
+            try (Transaction transaction = DB.beginTx()) {
+                DB.execute(part);
+                transaction.success();
+            }
+        }
+
+        loadDB();
+    }
+
+    private static void loadDB() {
+        System.out.println("loading DB..");
+        graph = (HeavyGraph) new GraphLoader(DB)
+                .withLabel("Airport")
+                .withRelationshipType("Route")
                 .withRelationshipWeightsFromProperty("distance", Double.MAX_VALUE)
-                .withDirection(Direction.BOTH)
+                .asUndirected(true)
                 .load(HeavyGraphFactory.class);
 
         System.out.println("done");
     }
 
+    /*
+    @Test
+    public void testWeights() throws Exception {
+        graph.forEachNode(node -> {
+            graph.forEachOutgoing(node, (s, t, r) -> {
+                double weight = graph.weightOf(s, t);
+                System.out.println("weight = " + weight);
+                return true;
+            });
+            return true;
+        });
+
+    }
+    */
+
     @Test
     public void test() throws Exception {
-
-        System.out.println("test");
 
         final YensKShortestPaths yens = new YensKShortestPaths(graph)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
                 .compute(
                         getNode("KRK").getId(),
-                        getNode("DFW").getId(),
-                        Direction.BOTH,
+                        getNode("CFU").getId(),
+                        Direction.OUTGOING,
                         10, Integer.MAX_VALUE);
 
         final List<WeightedPath> paths = yens.getPaths();
@@ -120,7 +146,7 @@ public class KShortestPathsUserTest {
 
     private static Node getNode(String id) {
         final Node[] node = new Node[1];
-        db.execute("MATCH (n:Airport) WHERE n.IATA = '" + id + "' RETURN n").accept(row -> {
+            DB.execute("MATCH (n:Airport) WHERE n.IATA = '" + id + "' RETURN n").accept(row -> {
             node[0] = row.getNode("n");
             return false;
         });
