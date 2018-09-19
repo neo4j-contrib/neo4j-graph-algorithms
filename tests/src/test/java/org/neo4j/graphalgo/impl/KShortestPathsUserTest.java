@@ -80,7 +80,9 @@ public class KShortestPathsUserTest {
                 "LOAD CSV FROM 'file://" + PATH + "/routes.txt' as route " +
                 "MATCH (s:Airport {AirportID: route[3]}) " +
                 "MATCH (d:Airport {AirportID: route[5]}) " +
-                "CREATE (s)-[:Route {Airline:route[1],Codeshare : [6]}]->(d);";
+                "CREATE (s)-[:Route {Airline:route[1],Codeshare : [6]}]->(d);" +
+                "MATCH (a:Airport)-[r:Route]->(b:Airport)\n" +
+                "SET r.distance=distance(point({longitude: a.Longitude, latitude : a.Latitude}),point({longitude: b.Longitude, latitude : b.Latitude}))";
 
 
         for (String part : cypher.split(";")) {
@@ -101,7 +103,7 @@ public class KShortestPathsUserTest {
                 .withLabel("Airport")
                 .withRelationshipType("Route")
                 .withRelationshipWeightsFromProperty("distance", Double.MAX_VALUE)
-                .asUndirected(true)
+                .withDirection(Direction.BOTH)
                 .load(HeavyGraphFactory.class);
 
         System.out.println("done");
@@ -131,7 +133,7 @@ public class KShortestPathsUserTest {
                         getNode("KRK").getId(),
                         getNode("CFU").getId(),
                         Direction.OUTGOING,
-                        10, Integer.MAX_VALUE);
+                        20 ,100);
 
         final List<WeightedPath> paths = yens.getPaths();
 
