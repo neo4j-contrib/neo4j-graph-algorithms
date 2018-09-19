@@ -116,7 +116,7 @@ include::scripts/similarity-jaccard.cypher[tag=stream-similarity-cutoff]
 |===
 | from     | to       | intersection | similarity
 | Arya     | Karin    | 2            | 0.66
-| Zhen     | Michael  | 1            | 0.66
+| Zhen     | Michael  | 2            | 0.66
 | Zhen     | Praveena | 1            | 0.33
 | Michael  | Karin    | 1            | 0.25
 | Praveena | Michael  | 1            | 0.25
