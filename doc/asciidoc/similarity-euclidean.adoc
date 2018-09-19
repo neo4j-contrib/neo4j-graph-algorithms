@@ -81,16 +81,16 @@ include::scripts/similarity-euclidean.cypher[tag=stream]
 [opts="header"]
 |===
 | from     | to       |similarity
-| Arya     | Karin    | 7.681145747868608  
-| Zhen     | Michael  | 7.874007874011811  
-| Zhen     | Praveena | 12.569805089976535 
-| Praveena | Michael  | 12.727922061357855 
-| Michael  | Karin    | 15.033296378372908 
-| Praveena | Karin    | 16.1245154965971   
-| Zhen     | Karin    | 16.30950643030009  
-| Praveena | Arya     | 16.76305461424021  
-| Michael  | Arya     | 17.406895185529212 
-| Zhen     | Arya     | 19.621416870348583 
+| Arya     | Karin    | 7.681145747868608
+| Zhen     | Michael  | 7.874007874011811
+| Zhen     | Praveena | 12.569805089976535
+| Praveena | Michael  | 12.727922061357855
+| Michael  | Karin    | 15.033296378372908
+| Praveena | Karin    | 16.1245154965971
+| Zhen     | Karin    | 16.30950643030009
+| Praveena | Arya     | 16.76305461424021
+| Michael  | Arya     | 17.406895185529212
+| Zhen     | Arya     | 19.621416870348583
 
 |===
 // end::stream[]
@@ -138,11 +138,11 @@ include::scripts/similarity-euclidean.cypher[tag=stream-topk]
 [opts="header",cols="1,1,1"]
 |===
 | from     | to       | similarity
-| Arya     | Karin   | 7.681145747868608  
-| Karin    | Arya    | 7.681145747868608  
-| Michael  | Zhen    | 7.874007874011811  
-| Praveena | Zhen    | 12.569805089976535 
-| Zhen     | Michael | 7.874007874011811  
+| Arya     | Karin   | 7.681145747868608
+| Karin    | Arya    | 7.681145747868608
+| Michael  | Zhen    | 7.874007874011811
+| Praveena | Zhen    | 12.569805089976535
+| Zhen     | Michael | 7.874007874011811
 
 |===
 // end::stream-topk[]
@@ -191,7 +191,7 @@ include::scripts/similarity-euclidean.cypher[tag=write-back]
 
 We might then write a query to find out what types of cuisine people similar to us like:
 
-.The following will find the most similar user to `Praveena` and return their favourite cuisine
+.The following will find the most similar user to Praveena and return their favorite cuisines that Praveena doesn't (yet!) like
 [source, cypher]
 ----
 include::scripts/similarity-euclidean.cypher[tag=query]
@@ -202,7 +202,6 @@ include::scripts/similarity-euclidean.cypher[tag=query]
 [opts="header",cols="1"]
 |===
 | cuisine
-| Indian
 | French
 |===
 // end::query[]

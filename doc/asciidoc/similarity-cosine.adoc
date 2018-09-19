@@ -195,7 +195,7 @@ include::scripts/similarity-cosine.cypher[tag=write-back]
 
 We might then write a query to find out what types of cuisine people similar to us like:
 
-.The following will find the most similar user to `Praveena` and return their favourite cuisine
+.The following will find the most similar user to Praveena and return their favourite cuisines that Praveena doesn't (yet!) like
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=query]
@@ -205,7 +205,6 @@ include::scripts/similarity-cosine.cypher[tag=query]
 .Results
 [opts="header",cols="1"]
 |===
-| Indian
 | Italian
 | French
 |===
