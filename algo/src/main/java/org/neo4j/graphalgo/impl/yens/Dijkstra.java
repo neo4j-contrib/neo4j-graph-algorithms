@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.*;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -34,23 +35,6 @@ import java.util.PriorityQueue;
  * @author mknblch
  */
 public class Dijkstra {
-
-    class T implements Comparable<T> {
-
-        public final Integer key;
-        public final double value;
-
-        T(Integer key, double value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public int compareTo(T o) {
-            return Double.compare(value, o.value);
-        }
-    }
-
 
     // initial weighted path capacity
 
@@ -65,9 +49,7 @@ public class Dijkstra {
     // node to cost map
     private final IntDoubleMap costs;
     // next node priority queue
-
-//    private final IntPriorityQueue queue;
-    private final PriorityQueue<T> queue;
+    private final PriorityQueue<Element> queue;
     // auxiliary path map
     private final IntIntMap path;
     // visited set
@@ -84,10 +66,7 @@ public class Dijkstra {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         costs = new IntDoubleScatterMap(nodeCount);
-//        queue = SharedIntPriorityQueue.min(nodeCount,
-//                costs,
-//                Double.MAX_VALUE);
-        queue = new PriorityQueue<>(nodeCount);
+        queue = new PriorityQueue<>();
         path = new IntIntScatterMap(nodeCount);
         visited = new BitSet(nodeCount);
         depth = new int[nodeCount];
@@ -174,12 +153,12 @@ public class Dijkstra {
         path.clear();
         visited.clear();
         costs.put(source, 0.0);
-        queue.add(new T(source, 0.0));
+        queue.add(new Element(source, 0.0));
         Arrays.fill(depth, 0);
         depth[source] = 1;
-        while (!queue.isEmpty() && terminationFlag.running()) {
-            T k = queue.poll();
-            int node = k.key;
+        while (queue.size() > 0 && terminationFlag.running()) {
+            final Element k = queue.poll();
+            final int node = k.key;
             final int d = depth[node];
             if (d >= maxDepth) {
                 continue;
@@ -196,15 +175,10 @@ public class Dijkstra {
                             return true;
                         }
                         final double w = graph.weightOf(s, t);
-                        final boolean updateCosts = updateCosts(s, t, w + costs);
                         if (!visited.get(t)) {
-                            depth[t] = depth[s] + 1;
-//                            if (updateCosts) {
-//                                queue.update(t);
-//                            } else {
-//                                queue.add(t, w);
-//                            }
-                            queue.add(new T(t, w));
+                            depth[t] = depth[node] + 1;
+                            queue.add(new Element(t, w));
+                            updateCosts(s, t, costs + w);
                         }
                         return terminationFlag.running();
                     });
@@ -212,17 +186,32 @@ public class Dijkstra {
         return false;
     }
 
+
     /**
      * update cost map
      */
-    private boolean updateCosts(int source, int target, double newCosts) {
+    private void updateCosts(int source, int target, double newCosts) {
         double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
         if (newCosts < oldCosts) {
             costs.put(target, newCosts);
             path.put(target, source);
-            return oldCosts < Double.MAX_VALUE;
         }
-        return false;
+    }
+
+    class Element implements Comparable<Element> {
+
+        public final Integer key;
+        public final double value;
+
+        Element(Integer key, double value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public int compareTo(Element o) {
+            return Double.compare(value, o.value);
+        }
     }
 
 }
