@@ -20,11 +20,11 @@ package org.neo4j.graphalgo.impl;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.impl.yens.WeightedPath;
@@ -38,13 +38,14 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 import java.util.List;
 import java.util.function.DoubleConsumer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 
 /**
  * @author mknblch
+ *
+ * TODO rm if verified
  */
+@Ignore
 public class KShortestPathsUserTest {
 
     private static final String PATH = "/Users/mknobloch/Downloads";
@@ -86,7 +87,6 @@ public class KShortestPathsUserTest {
 
 
         for (String part : cypher.split(";")) {
-
             System.out.println(part);
             try (Transaction transaction = DB.beginTx()) {
                 DB.execute(part);
@@ -94,35 +94,14 @@ public class KShortestPathsUserTest {
             }
         }
 
-        loadDB();
-    }
-
-    private static void loadDB() {
-        System.out.println("loading DB..");
         graph = (HeavyGraph) new GraphLoader(DB)
                 .withLabel("Airport")
                 .withRelationshipType("Route")
                 .withRelationshipWeightsFromProperty("distance", Double.MAX_VALUE)
                 .withDirection(Direction.BOTH)
                 .load(HeavyGraphFactory.class);
-
-        System.out.println("done");
     }
 
-    /*
-    @Test
-    public void testWeights() throws Exception {
-        graph.forEachNode(node -> {
-            graph.forEachOutgoing(node, (s, t, r) -> {
-                double weight = graph.weightOf(s, t);
-                System.out.println("weight = " + weight);
-                return true;
-            });
-            return true;
-        });
-
-    }
-    */
 
     @Test
     public void test() throws Exception {
@@ -133,7 +112,7 @@ public class KShortestPathsUserTest {
                         getNode("KRK").getId(),
                         getNode("CFU").getId(),
                         Direction.OUTGOING,
-                        20 ,100);
+                        20, 100);
 
         final List<WeightedPath> paths = yens.getPaths();
 
@@ -148,7 +127,7 @@ public class KShortestPathsUserTest {
 
     private static Node getNode(String id) {
         final Node[] node = new Node[1];
-            DB.execute("MATCH (n:Airport) WHERE n.IATA = '" + id + "' RETURN n").accept(row -> {
+        DB.execute("MATCH (n:Airport) WHERE n.IATA = '" + id + "' RETURN n").accept(row -> {
             node[0] = row.getNode("n");
             return false;
         });
