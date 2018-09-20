@@ -111,8 +111,8 @@ public class KShortestPathsUserTest {
                 .compute(
                         getNode("KRK").getId(),
                         getNode("CFU").getId(),
-                        Direction.OUTGOING,
-                        20, 100);
+                        Direction.BOTH,
+                        20, Integer.MAX_VALUE);
 
         final List<WeightedPath> paths = yens.getPaths();
 
