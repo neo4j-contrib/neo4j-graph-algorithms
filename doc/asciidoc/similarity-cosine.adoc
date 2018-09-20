@@ -17,10 +17,9 @@ It is the dot product of the two vectors divided by the product of the two vecto
 
 // tag::explanation[]
 
-Cosine Similarity is computed using the following formula:
+Cosine similarity is computed using the following formula:
 
-[subs = none]
-\( similarity(A, B) = \frac{A \cdot B}{\|A\| \times \|B\|} = \frac{\sum\limits_{i=1}^n A_{i} \times B_{i}}{\sqrt{\sum\limits_{i=1}^n A_{i}^2} \times \sqrt{\sum\limits_{i=1}^n B_{i}^2}} \)
+image::cosine-similarity.png[role="middle"]
 
 Values range between -1 and 1, where -1 is perfectly dissimilar and 1 is perfectly similar.
 
@@ -29,8 +28,8 @@ The function is best used when calculating the similarity between small numbers 
 The procedures parallelize the computation and are therefore a better bet when computing similarities on bigger datasets.
 
 Cosine similarity is only calculated over non-NULL dimensions.
-When calling the function we should provide lists that contain the overlapping items.
-The procedures expect to receive the same length lists for all items so we need to pad those lists with 0s where necessary.
+When calling the function, we should provide lists that contain the overlapping items.
+The procedures expect to receive the same length lists for all items, so we need to pad those lists with 0s where necessary.
 
 // end::explanation[]
 
@@ -40,14 +39,14 @@ The procedures expect to receive the same length lists for all items so we need 
 // tag::use-case[]
 We can use the Cosine Similarity algorithm to work out the similarity between two things.
 We might then use the computed similarity as part of a recommendation query.
-e.g. recommend some movies to me based on the preferences of users who have rated other movies that I've seen in a similar way
+For example, to get movie recommendations based on the preferences of users who have given similar ratings to other movies that you've seen.
 // end::use-case[]
 
 
 [[algorithms-similarity-cosine-sample]]
 == Cosine algorithm sample
 
-.The following will return the Cosine similarity of two lists of numbers
+.The following will return the cosine similarity of two lists of numbers:
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=function]
@@ -57,7 +56,7 @@ include::scripts/similarity-cosine.cypher[tag=function]
 .Results
 [opts="header",cols="1"]
 |===
-| similarity
+| `similarity`
 | 0.8638935626791596
 |===
 // end::function[]
@@ -66,8 +65,9 @@ include::scripts/similarity-cosine.cypher[tag=function]
 These two lists of numbers have a Cosine similarity of 0.863.
 We can see how this result is derived by breaking down the formula:
 
-[subs = none]
-\( similarity(A, B) = \frac{3 \cdot 10 + 8 \cdot 8 + 7 \cdot 6 + 5 \cdot 6 + 2 \cdot 4 + 9 \cdot 5}{\sqrt{3^2 + 8^2 + 7^2 + 5^2 + 2^2 + 9^2} \times \sqrt{10^2 + 8^2 + 6^2 + 6^2 + 4^2 + 5^2}} = \frac{219}{15.2315 \times 16.6433} = 0.8639 \)
+// Turn this into an image
+// [subs = none]
+// \( similarity(A, B) = \frac{3 \cdot 10 + 8 \cdot 8 + 7 \cdot 6 + 5 \cdot 6 + 2 \cdot 4 + 9 \cdot 5}{\sqrt{3^2 + 8^2 + 7^2 + 5^2 + 2^2 + 9^2} \times \sqrt{10^2 + 8^2 + 6^2 + 6^2 + 4^2 + 5^2}} = \frac{219}{15.2315 \times 16.6433} = 0.8639 \)
 
 // end::function-explanation[]
 
@@ -77,7 +77,7 @@ We can see how this result is derived by breaking down the formula:
 include::scripts/similarity-cosine.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a stream of node pairs along with their Cosine similarities
+.The following will return a stream of node pairs along with their Cosine similarities:
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=stream]
@@ -87,26 +87,26 @@ include::scripts/similarity-cosine.cypher[tag=stream]
 .Results
 [opts="header"]
 |===
-| from       | to         | similarity
-| Arya     | Karin    | 0.8893006975229283
-| Zhen     | Michael  | 0.8249630162429022
-| Praveena | Michael  | 0.5100496780395022
-| Zhen     | Praveena | 0.4061183653774261
-| Michael  | Arya     | 0.3184912471845722
-| Michael  | Karin    | 0.3085485706658717
-| Praveena | Arya     | 0.2723483386163968
-| Zhen     | Arya     | 0.0
-| Zhen     | Karin    | 0.0
-| Praveena | Karin    | 0.0
+| `from`       | `to`         | `similarity`
+| Arya         | Karin        | 0.8893006975229283
+| Zhen         | Michael      | 0.8249630162429022
+| Praveena     | Michael      | 0.5100496780395022
+| Zhen         | Praveena     | 0.4061183653774261
+| Michael      | Arya         | 0.3184912471845722
+| Michael      | Karin        | 0.3085485706658717
+| Praveena     | Arya         | 0.2723483386163968
+| Zhen         | Arya         | 0.0
+| Zhen         | Karin        | 0.0
+| Praveena     | Karin        | 0.0
 |===
 // end::stream[]
 
-Arya and Karin have the most similar food tastes with a score of 0.889.
-The maximum score is 1 so they are pretty close to that.
+Arya and Karin have the most similar food tastes, with a score of 0.889.
+The maximum score is 1, so they are pretty close to the maximum level of similarity.
 We also have 3 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
-.The following will return a stream of node pairs that have a similarity of at least 0.1 along with their Cosine similarities
+.The following will return a stream of node pairs that have a similarity of at least 0.1, along with their cosine similarities:
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=stream-similarity-cutoff]
@@ -116,22 +116,22 @@ include::scripts/similarity-cosine.cypher[tag=stream-similarity-cutoff]
 .Results
 [opts="header"]
 |===
-| from       | to         | similarity
-| Arya     | Karin    | 0.8893006975229283
-| Zhen     | Michael  | 0.8249630162429022
-| Praveena | Michael  | 0.5100496780395022
-| Zhen     | Praveena | 0.4061183653774261
-| Michael  | Arya     | 0.3184912471845722
-| Michael  | Karin    | 0.3085485706658717
-| Praveena | Arya     | 0.2723483386163968
+| `from`       | `to`         | `similarity`
+| Arya         | Karin        | 0.8893006975229283
+| Zhen         | Michael      | 0.8249630162429022
+| Praveena     | Michael      | 0.5100496780395022
+| Zhen         | Praveena     | 0.4061183653774261
+| Michael      | Arya         | 0.3184912471845722
+| Michael      | Karin        | 0.3085485706658717
+| Praveena     | Arya         | 0.2723483386163968
 |===
 // end::stream-similarity-cutoff[]
 
 We can see that those users with no similarity have been filtered out.
 If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` users for a given user.
-We can do that by passing in the `topK` parameter
+We can do that by passing in the `topK` parameter.
 
-.The following will return a stream of users along with the most similar user to them i.e. k=1
+.The following will return a stream of users along with the most similar user to them (i.e. `k=1`):
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=stream-topk]
@@ -141,7 +141,7 @@ include::scripts/similarity-cosine.cypher[tag=stream-topk]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| from     | to       | similarity
+| `from`     | `to`       | `similarity`
 | Arya     | Karin   | 0.8893006975229283
 | Karin    | Arya    | 0.8893006975229283
 | Michael  | Zhen    | 0.8249630162429022
@@ -158,27 +158,27 @@ For example, the person most similar to Praveena is Michael, but the person most
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name             | Type   | Default        | Optional | Description
-| data             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, weights: [weight, weight, weight]}`
-| top              | int    | 0              | yes      | The number of similar pairs to return. If `0` it will return as many as it finds.
-| topK             | int    | 0              | yes      | The number of similar values to return per node. If `0` will return as many as it finds.
-| similarityCutoff | int    | -1             | yes      | The threshold for Cosine similarity. Values below this will not be returned.
-| degreeCutoff     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount that node will be excluded from the calculation.
-| concurrency      | int    | available CPUs | yes      | The number of concurrent threads
+| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, weights: [weight, weight, weight]}`
+| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff` | int    | -1             | yes      | The threshold for cosine similarity. Values below this will not be returned.
+| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
 | Name         | Type | Description
-| item1      | int  | The ID of one node in the similarity pair
-| item2      | int  | The ID of other node in the similarity pair
-| count1       | int  | The size of the `targets` list of one node
-| count2       | int  | The size of the `targets` list of other node
-| intersection | int  | The number of intersecting values in the two nodes `targets` lists
-| similarity   | int  | The Jaccard similarity of the two nodes
+| `item1`      | int  | The ID of one node in the similarity pair.
+| `item2`      | int  | The ID of other node in the similarity pair.
+| `count1`       | int  | The size of the `targets` list of one node.
+| `count2`       | int  | The size of the `targets` list of other node.
+| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
+| `similarity`   | int  | The cosine similarity of the two nodes.
 |===
 
-.The following will find the most similar user for each user and store a relationship between those users.
+.The following will find the most similar user for each user, and store a relationship between those users:
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=write-back]
@@ -188,14 +188,14 @@ include::scripts/similarity-cosine.cypher[tag=write-back]
 .Results
 [opts="header",cols="1,1,1,1,1,1,1,1,1"]
 |===
-| nodes | similarityPairs | write | writeRelationshipType | writeProperty | min  | max  | mean | p95
+| `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
 | 5     | 5               | TRUE  | SIMILAR            | score       | 0.5100479125976562 | 0.8892974853515625 | 0.787713623046875 | 0.8892974853515625
 |===
 // end::write-back[]
 
-We might then write a query to find out what types of cuisine people similar to us like:
+We then could write a query to find out what types of cuisine that other people similar to us might like.
 
-.The following will find the most similar user to Praveena and return their favourite cuisines that Praveena doesn't (yet!) like
+.The following will find the most similar user to Praveena, and return their favourite cuisines that Praveena doesn't (yet!) like:
 [source, cypher]
 ----
 include::scripts/similarity-cosine.cypher[tag=query]
@@ -205,6 +205,7 @@ include::scripts/similarity-cosine.cypher[tag=query]
 .Results
 [opts="header",cols="1"]
 |===
+| `cuisine`
 | Italian
 | French
 |===
@@ -214,37 +215,36 @@ include::scripts/similarity-cosine.cypher[tag=query]
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name                   | Type    | Default        | Optional | Description
-| data                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
-| top                    | int     | 0              | yes      | The number of similar pairs to return. If `0` it will return as many as it finds.
-| topK                   | int     | 0              | yes      | The number of similar values to return per node. If `0` will return as many as it finds.
-| similarityCutoff       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
-| degreeCutoff           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount that node will be excluded from the calculation.
-| concurrency            | int     | available CPUs | yes      | The number of concurrent threads
-| write                  | boolean | false          | yes      | Indicates whether results should be stored.
-| writeRelationshipType  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
-| writeProperty          | string  | score          | yes      | The property to use when storing results.
+| `data`                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `top`                    | int     | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff`       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
+| `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
+| `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
+| `writeProperty`          | string  | score          | yes      | The property to use when storing results.
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
 | Name                  | Type    | Description
-| nodes                 | int     | The number of nodes passed in
-| similarityPairs       | int     | The number of pairs of similar nodes computed
-| write                 | boolean | Indicates whether results were stored
-| writeRelationshipType | string  | The relationship type used when storing results.
-| writeProperty         | string  | The property used when storing results.
-| min                   | double  | The minimum similarity score computed
-| max                   | double  | The maximum similarity score computed
-| mean                  | double  | The mean of similarities scores computed
-| stdDev                | double  | The standard deviation of similarities scores computed
-| p25                   | double  | The 25 percentile of similarities scores computed
-| p50                   | double  | The 50 percentile of similarities scores computed
-| p75                   | double  | The 75 percentile of similarities scores computed
-| p90                   | double  | The 90 percentile of similarities scores computed
-| p95                   | double  | The 95 percentile of similarities scores computed
-| p99                   | double  | The 99 percentile of similarities scores computed
-| p999                  | double  | The 99.9 percentile of similarities scores computed
-| p100                  | double  | The 25 percentile of similarities scores computed
-
+| `nodes`                 | int     | The number of nodes passed in.
+| `similarityPairs`       | int     | The number of pairs of similar nodes computed.
+| `write`                 | boolean | Indicates whether results were stored.
+| `writeRelationshipType` | string  | The relationship type used when storing results.
+| `writeProperty`         | string  | The property used when storing results.
+| `min`                   | double  | The minimum similarity score computed.
+| `max`                   | double  | The maximum similarity score computed.
+| `mean`                  | double  | The mean of similarities scores computed.
+| `stdDev`                | double  | The standard deviation of similarities scores computed.
+| `p25`                   | double  | The 25 percentile of similarities scores computed.
+| `p50`                   | double  | The 50 percentile of similarities scores computed.
+| `p75`                   | double  | The 75 percentile of similarities scores computed.
+| `p90`                   | double  | The 90 percentile of similarities scores computed.
+| `p95`                   | double  | The 95 percentile of similarities scores computed.
+| `p99`                   | double  | The 99 percentile of similarities scores computed.
+| `p999`                  | double  | The 99.9 percentile of similarities scores computed.
+| `p100`                  | double  | The 25 percentile of similarities scores computed.
 |===
