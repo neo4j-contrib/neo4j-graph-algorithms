@@ -7,7 +7,7 @@ This section describes the Jaccard Similarity algorithm in the Neo4j Graph Algor
 --
 
 // tag::introduction[]
-Jaccard similarity (coefficient) measures similarities between sets and the term was coined by https://en.wikipedia.org/wiki/Paul_Jaccard[Paul Jaccard^].
+Jaccard similarity (coefficient), a term coined by https://en.wikipedia.org/wiki/Paul_Jaccard[Paul Jaccard^], measures similarities between sets.
 It is defined as the size of the intersection divided by the size of the union of two sets.
 // end::introduction[]
 
@@ -17,7 +17,7 @@ It is defined as the size of the intersection divided by the size of the union o
 
 // tag::explanation[]
 
-Jaccard Similarity is computed using the following formula:
+Jaccard similarity is computed using the following formula:
 
 ```
 J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
@@ -26,7 +26,7 @@ J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
 
 The library contains both procedures and functions to calculate similarity between sets of data.
 The function is best used when calculating the similarity between small numbers of sets.
-The procedures parallelize the computation and are therefore a better bet when computing similarities on bigger datasets.
+The procedures parallelize the computation, and are therefore a better bet when computing similarities on bigger datasets.
 
 // end::explanation[]
 
@@ -36,14 +36,14 @@ The procedures parallelize the computation and are therefore a better bet when c
 // tag::use-case[]
 We can use the Jaccard Similarity algorithm to work out the similarity between two things.
 We might then use the computed similarity as part of a recommendation query.
-e.g. show me the products that were purchased by people similar to me in terms of previous products purchased
+For example, you can use the Jaccard Similarity algorithm to show the products that were purchased by similar customers, in terms of previous products purchased.
 // end::use-case[]
 
 
 [[algorithms-similarity-jaccard-sample]]
-== Jaccard algorithm sample
+== Jaccard Similarity algorithm sample
 
-.The following will return the Jaccard similarity of two lists of numbers
+.The following will return the Jaccard similarity of two lists of numbers:
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=function]
@@ -53,7 +53,7 @@ include::scripts/similarity-jaccard.cypher[tag=function]
 .Results
 [opts="header",cols="1"]
 |===
-| similarity
+| `similarity`
 | 0.4
 |===
 // end::function[]
@@ -76,7 +76,7 @@ J(A,B) = 2 / 3 + 4 - 2
 include::scripts/similarity-jaccard.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a stream of node pairs along with their intersection and Jaccard similarities
+.The following will return a stream of node pairs along with their intersection and Jaccard similarities:
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=stream]
@@ -86,7 +86,7 @@ include::scripts/similarity-jaccard.cypher[tag=stream]
 .Results
 [opts="header",cols="1,1,1,1"]
 |===
-| from     | to       | intersection | similarity
+| From     | To       | Intersection | Similarity
 | Arya     | Karin    | 2            | 0.66
 | Zhen     | Michael  | 2            | 0.66
 | Zhen     | Praveena | 1            | 0.33
@@ -100,11 +100,11 @@ include::scripts/similarity-jaccard.cypher[tag=stream]
 |===
 // end::stream[]
 
-Arya and Karin and Zhen and Michael have the most similar food preferences, with two overlapping cuisines for a similarity of 0.66.
+Arya and Karin, and Zhen and Michael have the most similar food preferences, with two overlapping cuisines for a similarity of 0.66.
 We also have 3 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
-.The following will return a stream of node pairs that have a similarity of at least 0.1 along with their intersection and Jaccard similarities
+.The following will return a stream of node pairs that have a similarity of at least 0.1, along with their intersection and Jaccard similarities:
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=stream-similarity-cutoff]
@@ -114,22 +114,22 @@ include::scripts/similarity-jaccard.cypher[tag=stream-similarity-cutoff]
 .Results
 [opts="header",cols="1,1,1,1"]
 |===
-| from     | to       | intersection | similarity
-| Arya     | Karin    | 2            | 0.66
-| Zhen     | Michael  | 2            | 0.66
-| Zhen     | Praveena | 1            | 0.33
-| Michael  | Karin    | 1            | 0.25
-| Praveena | Michael  | 1            | 0.25
-| Praveena | Arya     | 1            | 0.25
-| Michael  | Arya     | 1            | 0.2
+| `from`   | `to`     | `intersection` | `similarity`
+| Arya     | Karin    | 2              | 0.66
+| Zhen     | Michael  | 2              | 0.66
+| Zhen     | Praveena | 1              | 0.33
+| Michael  | Karin    | 1              | 0.25
+| Praveena | Michael  | 1              | 0.25
+| Praveena | Arya     | 1              | 0.25
+| Michael  | Arya     | 1              | 0.2
 |===
 // end::stream-similarity-cutoff[]
 
 We can see that those users with no similarity have been filtered out.
 If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` users for a given user.
-We can do that by passing in the `topK` parameter
+We can do that by passing in the `topK` parameter.
 
-.The following will return a stream of users along with the most similar user to them i.e. k=1
+.The following will return a stream of users along with the most similar user to them (i.e. `k=1`):
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=stream-topk]
@@ -139,7 +139,7 @@ include::scripts/similarity-jaccard.cypher[tag=stream-topk]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| from     | to       | similarity
+| `from`   | `to`     | `similarity`
 | Arya     | Karin    | 0.66
 | Karin    | Arya     | 0.66
 | Michael  | Zhen     | 0.66
@@ -154,28 +154,28 @@ For example, the person most similar to Praveena is Zhen, but the person most si
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name             | Type   | Default        | Optional | Description
-| data             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
-| top              | int    | 0              | yes      | The number of similar pairs to return. If `0` it will return as many as it finds.
-| topK             | int    | 0              | yes      | The number of similar values to return per node. If `0` will return as many as it finds.
-| similarityCutoff | int    | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
-| degreeCutoff     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount that node will be excluded from the calculation.
-| concurrency      | int    | available CPUs | yes      | The number of concurrent threads
+| Name               | Type   | Default        | Optional | Description
+| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it  will return as many as it finds.
+| `similarityCutoff` | int    | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name         | Type | Description
-| item1      | int  | The ID of one node in the similarity pair
-| item2      | int  | The ID of other node in the similarity pair
-| count1       | int  | The size of the `targets` list of one node
-| count2       | int  | The size of the `targets` list of other node
-| intersection | int  | The number of intersecting values in the two nodes `targets` lists
-| similarity   | int  | The Jaccard similarity of the two nodes
+| Name           | Type | Description
+| `item1`        | int  | The ID of one node in the similarity pair.
+| `item2`        | int  | The ID of other node in the similarity pair.
+| `count1`       | int  | The size of the `targets` list of one node.
+| `count2`       | int  | The size of the `targets` list of other node.
+| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
+| `similarity`   | int  | The Jaccard similarity of the two nodes.
 |===
 
-.The following will find the most similar user for each user and store a relationship between those users.
+.The following will find the most similar user for each user, and store a relationship between those users:
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=write-back]
@@ -185,14 +185,14 @@ include::scripts/similarity-jaccard.cypher[tag=write-back]
 .Results
 [opts="header",cols="1,1,1,1,1,1,1,1,1"]
 |===
-| nodes | similarityPairs | write | writeRelationshipType | writeProperty | min  | max  | mean | p95
-| 5     | 5               | true  | SIMILAR             | score       | 0.33 | 0.66 | 0.59 | 0.66
+| `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
+| 5       | 5                 | true    | SIMILAR                 | score           | 0.33   | 0.66   | 0.59   | 0.66
 |===
 // end::write-back[]
 
-We might then write a query to find out what types of cuisine people similar to us like:
+We then could write a query to find out what types of cuisine that other people similar to us might like.
 
-.The following will find the most similar user to Praveena and return their favorite cuisines that Praveena doesn't (yet!) like
+.The following will find the most similar user to Praveena, and return their favorite cuisines that Praveena doesn't (yet!) like:
 [source, cypher]
 ----
 include::scripts/similarity-jaccard.cypher[tag=query]
@@ -202,7 +202,7 @@ include::scripts/similarity-jaccard.cypher[tag=query]
 .Results
 [opts="header",cols="1"]
 |===
-| cuisine
+| `cuisine`
 | French
 |===
 // end::query[]
@@ -210,38 +210,37 @@ include::scripts/similarity-jaccard.cypher[tag=query]
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name                   | Type    | Default        | Optional | Description
-| data                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
-| top                    | int     | 0              | yes      | The number of similar pairs to return. If `0` it will return as many as it finds.
-| topK                   | int     | 0              | yes      | The number of similar values to return per node. If `0` will return as many as it finds.
-| similarityCutoff       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
-| degreeCutoff           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount that node will be excluded from the calculation.
-| concurrency            | int     | available CPUs | yes      | The number of concurrent threads
-| write                  | boolean | false          | yes      | Indicates whether results should be stored.
-| writeRelationshipType  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
-| writeProperty          | string  | score          | yes      | The property to use when storing results.
+| Name                     | Type    | Default        | Optional | Description
+| `data`                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `top`                    | int     | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff`       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
+| `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
+| `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
+| `writeProperty`          | string  | score          | yes      | The property to use when storing results.
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name                  | Type    | Description
-| nodes                 | int     | The number of nodes passed in
-| similarityPairs       | int     | The number of pairs of similar nodes computed
-| write                 | boolean | Indicates whether results were stored
-| writeRelationshipType | string  | The relationship type used when storing results.
-| writeProperty         | string  | The property used when storing results.
-| min                   | double  | The minimum similarity score computed
-| max                   | double  | The maximum similarity score computed
-| mean                  | double  | The mean of similarities scores computed
-| stdDev                | double  | The standard deviation of similarities scores computed
-| p25                   | double  | The 25 percentile of similarities scores computed
-| p50                   | double  | The 50 percentile of similarities scores computed
-| p75                   | double  | The 75 percentile of similarities scores computed
-| p90                   | double  | The 90 percentile of similarities scores computed
-| p95                   | double  | The 95 percentile of similarities scores computed
-| p99                   | double  | The 99 percentile of similarities scores computed
-| p999                  | double  | The 99.9 percentile of similarities scores computed
-| p100                  | double  | The 25 percentile of similarities scores computed
-
+| Name                    | Type    | Description
+| `nodes`                 | int     | The number of nodes passed in.
+| `similarityPairs`       | int     | The number of pairs of similar nodes computed.
+| `write`                 | boolean | Indicates whether results were stored.
+| `writeRelationshipType` | string  | The relationship type used when storing results.
+| `writeProperty`         | string  | The property used when storing results.
+| `min`                   | double  | The minimum similarity score computed.
+| `max`                   | double  | The maximum similarity score computed.
+| `mean`                  | double  | The mean of similarities scores computed.
+| `stdDev`                | double  | The standard deviation of similarities scores computed.
+| `p25`                   | double  | The 25 percentile of similarities scores computed.
+| `p50`                   | double  | The 50 percentile of similarities scores computed.
+| `p75`                   | double  | The 75 percentile of similarities scores computed.
+| `p90`                   | double  | The 90 percentile of similarities scores computed.
+| `p95`                   | double  | The 95 percentile of similarities scores computed.
+| `p99`                   | double  | The 99 percentile of similarities scores computed.
+| `p999`                  | double  | The 99.9 percentile of similarities scores computed.
+| `p100`                  | double  | The 25 percentile of similarities scores computed.
 |===
