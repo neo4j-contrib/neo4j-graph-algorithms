@@ -23,11 +23,11 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
+import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.PriorityQueue;
 
 /**
  * specialized dijkstra impl. for YensKShortestPath
@@ -49,7 +49,8 @@ public class Dijkstra {
     // node to cost map
     private final IntDoubleMap costs;
     // next node priority queue
-    private final PriorityQueue<Element> queue;
+
+    private final IntPriorityQueue queue;
     // auxiliary path map
     private final IntIntMap path;
     // visited set
@@ -66,7 +67,9 @@ public class Dijkstra {
         this.graph = graph;
         nodeCount = Math.toIntExact(graph.nodeCount());
         costs = new IntDoubleScatterMap(nodeCount);
-        queue = new PriorityQueue<>();
+        queue = SharedIntPriorityQueue.min(nodeCount,
+                costs,
+                Double.MAX_VALUE);
         path = new IntIntScatterMap(nodeCount);
         visited = new BitSet(nodeCount);
         depth = new int[nodeCount];
@@ -153,12 +156,11 @@ public class Dijkstra {
         path.clear();
         visited.clear();
         costs.put(source, 0.0);
-        queue.add(new Element(source, 0.0));
+        queue.add(source, 0.0);
         Arrays.fill(depth, 0);
         depth[source] = 1;
-        while (queue.size() > 0 && terminationFlag.running()) {
-            final Element k = queue.poll();
-            final int node = k.key;
+        while (!queue.isEmpty() && terminationFlag.running()) {
+            int node = queue.pop();
             final int d = depth[node];
             if (d >= maxDepth) {
                 continue;
@@ -175,10 +177,19 @@ public class Dijkstra {
                             return true;
                         }
                         final double w = graph.weightOf(s, t);
+                        final UpdateResult updateCosts = updateCosts(s, t, w + costs);
                         if (!visited.get(t)) {
-                            depth[t] = depth[node] + 1;
-                            queue.add(new Element(t, w));
-                            updateCosts(s, t, costs + w);
+                            switch (updateCosts) {
+                                case NO_PREVIOUS_COSTS:
+                                    queue.add(t, w);
+                                    break;
+                                case UPDATED_COST:
+                                    queue.update(t);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            depth[t] = depth[s] + 1;
                         }
                         return terminationFlag.running();
                     });
@@ -190,28 +201,25 @@ public class Dijkstra {
     /**
      * update cost map
      */
-    private void updateCosts(int source, int target, double newCosts) {
+    private UpdateResult updateCosts(int source, int target, double newCosts) {
         double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
+        if (oldCosts == Double.MAX_VALUE) {
+            if (!costs.containsKey(target)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                return UpdateResult.NO_PREVIOUS_COSTS;
+            }
+        }
         if (newCosts < oldCosts) {
             costs.put(target, newCosts);
             path.put(target, source);
+            return UpdateResult.UPDATED_COST;
         }
+        return UpdateResult.COST_NOT_COMPETITIVE;
     }
 
-    class Element implements Comparable<Element> {
-
-        public final Integer key;
-        public final double value;
-
-        Element(Integer key, double value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public int compareTo(Element o) {
-            return Double.compare(value, o.value);
-        }
+    private enum UpdateResult {
+        NO_PREVIOUS_COSTS, UPDATED_COST, COST_NOT_COMPETITIVE;
     }
 
 }
