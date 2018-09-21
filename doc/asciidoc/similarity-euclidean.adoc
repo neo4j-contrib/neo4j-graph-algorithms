@@ -18,7 +18,9 @@ Euclidean distance measures the straight line distance between two points in n-d
 
 Euclidean distance is computed using the following formula:
 
-// // Turn this into an image
+image::euclidean.png[role="middle"]
+
+// This is the raw information for this image:
 // [subs = none]
 // \( similarity(p_1, p_2) = \sqrt{\sum_{i~\in~\textrm{item}} (s_{p_1} - s_{p_2})^2} \)
 
