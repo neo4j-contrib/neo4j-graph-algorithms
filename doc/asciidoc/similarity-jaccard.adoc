@@ -19,10 +19,13 @@ It is defined as the size of the intersection divided by the size of the union o
 
 Jaccard similarity is computed using the following formula:
 
-```
-J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
-       = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
-```
+image::jaccard.png[role="middle"]
+
+// This is the raw information for this image:
+// ```
+// J(A,B) = ∣A ∩ B∣ / ∣(A ∪ B)∣
+//        = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
+// ```
 
 The library contains both procedures and functions to calculate similarity between sets of data.
 The function is best used when calculating the similarity between small numbers of sets.
