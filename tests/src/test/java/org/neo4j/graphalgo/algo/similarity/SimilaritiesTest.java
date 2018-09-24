@@ -82,7 +82,8 @@ public class SimilaritiesTest {
                         "p1, p2\n" +
                         "WITH  p1.name as name, xyDotProduct / (xLength * yLength) as cosineSim\n" +
                         "ORDER BY name ASC\n" +
-                        "RETURN name, toString(toInteger(cosineSim*10000)/10000.0) as cosineSim";
+                        "WITH name, toFloat(cosineSim*10000.0) AS cosineSim\n" +
+                        "RETURN name, toString(toInteger(cosineSim)/10000.0) as cosineSim";
         String bobSimilarity;
         String jimSimilarity;
         try (Transaction tx = db.beginTx()) {
@@ -112,7 +113,8 @@ public class SimilaritiesTest {
                         "p1, p2\n" +
                         "WITH  p1.name as name, xyDotProduct / (xLength * yLength) as cosineSim\n" +
                         "ORDER BY name ASC\n" +
-                        "RETURN name, toString(toInteger(cosineSim*10000)/10000.0) as cosineSim";
+                        "WITH name, toFloat(cosineSim*10000.0) AS cosineSim\n" +
+                        "RETURN name, toString(toInteger(cosineSim)/10000.0) as cosineSim";
         String bobSimilarity;
         String jimSimilarity;
         try (Transaction tx = db.beginTx()) {
