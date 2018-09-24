@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -27,6 +28,7 @@ import java.util.stream.IntStream;
 
 import static org.hamcrest.Matchers.is;
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class PagedLongStackTest extends RandomizedTest {
 
     @Rule
