@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
@@ -30,6 +31,7 @@ import java.util.function.IntToLongFunction;
 
 import static org.junit.Assert.*;
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class IdMapTest extends RandomizedTest {
 
     @Test

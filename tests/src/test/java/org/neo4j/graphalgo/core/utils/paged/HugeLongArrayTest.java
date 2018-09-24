@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class HugeLongArrayTest extends RandomizedTest {
 
     private static final int PS = 16384;
