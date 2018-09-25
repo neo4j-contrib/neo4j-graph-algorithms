@@ -34,6 +34,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -142,20 +143,20 @@ public class AllShortestPathsComparisionBenchmark {
 
     @Benchmark
     public long _01_benchmark_ASP() {
-        return new AllShortestPaths(graph, Pools.DEFAULT, 8)
+        return new AllShortestPaths(graph, Pools.DEFAULT, 8,  Direction.OUTGOING)
                 .resultStream()
                 .count();
     }
 
     @Benchmark
     public long _02_benchmark_MS_ASP() {
-        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING)
                 .resultStream().count();
     }
 
     @Benchmark
     public long _03_benchmark_Huge_MS_ASP() {
-        return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING)
                 .resultStream().count();
     }
 }
