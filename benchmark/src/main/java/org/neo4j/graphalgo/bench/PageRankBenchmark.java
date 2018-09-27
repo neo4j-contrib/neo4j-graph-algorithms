@@ -41,6 +41,7 @@ import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
 
 /**
  * @author mknobloch
@@ -108,7 +109,6 @@ public class PageRankBenchmark {
         db.shutdown();
     }
 
-    /*
     @Benchmark
     public PageRankResult run() throws Exception {
         final Graph graph = new GraphLoader(db)
@@ -116,12 +116,11 @@ public class PageRankBenchmark {
                 .load(impl.impl);
         try {
             return PageRankAlgorithm
-                    .of(graph, 0.85)
+                    .of(graph, 0.85, LongStream.empty())
                     .compute(iterations)
                     .result();
         } finally {
             graph.release();
         }
     }
-    */
 }
