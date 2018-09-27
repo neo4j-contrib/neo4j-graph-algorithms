@@ -19,7 +19,9 @@
 package org.neo4j.unsafe.impl.batchimport.cache;
 
 public abstract class ChunkedHeapFactory {
-    private static final NumberArrayFactory FACTORY = new ChunkedNumberArrayFactory(NumberArrayFactory.HEAP);
+    private static final NumberArrayFactory FACTORY = new ChunkedNumberArrayFactory((l, numberArrayFactory, iterable) -> {
+
+    }, NumberArrayFactory.HEAP);
 
     private ChunkedHeapFactory() {}
 
