@@ -39,6 +39,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     private static final int PATH_END = -1;
     public static final double NO_PATH_FOUND = -1.0;
+    public static final int UNUSED = 42;
 
     private Graph graph;
 
@@ -148,32 +149,24 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             }
 
             visited.set(node);
-            double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
+            final double costToSource = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
                     direction, (source, target, relId, weight) -> {
-                        boolean oldCostChanged = updateCosts(source, target, weight + costs);
-                        if (!visited.get(target)) {
-                            if (oldCostChanged) {
+                        double newCosts = costToSource + weight;
+                        if (newCosts < this.costs.getOrDefault(target, Double.MAX_VALUE)) {
+                            this.costs.put(target, newCosts);
+                            this.path.put(target, source);
+                            if (visited.get(target)) {
                                 queue.update(target);
                             } else {
-                                queue.add(target, 0);
+                                queue.add(target, weight);
                             }
                         }
                         return true;
                     });
             progressLogger.logProgress((double) node / (nodeCount - 1));
         }
-    }
-
-    private boolean updateCosts(int source, int target, double newCosts) {
-        double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
-        if (newCosts < oldCosts) {
-            costs.put(target, newCosts);
-            path.put(target, source);
-            return oldCosts < Double.MAX_VALUE;
-        }
-        return false;
     }
 
     @Override
