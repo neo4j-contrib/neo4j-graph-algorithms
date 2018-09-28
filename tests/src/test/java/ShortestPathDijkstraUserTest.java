@@ -18,10 +18,8 @@
  */
 package org.neo4j.graphalgo.impl;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.TestProgressLogger;
@@ -40,11 +38,13 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@Ignore("rm if verified")
 public final class ShortestPathDijkstraUserTest {
 
     private static final String PATH = "/Users/mknobloch/Downloads";
@@ -119,6 +119,11 @@ public final class ShortestPathDijkstraUserTest {
                 .compute(getNode("CFU").getId(),
                         getNode("KRK").getId());
 
+        final Iterator<IntCursor> iterator = dijkstra.getFinalPath().iterator();
+
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next().value);
+        }
         System.out.println(dijkstra.getTotalCost());
     }
 }
