@@ -41,6 +41,12 @@
             <artifactId>neo4j</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.neo4j.community</groupId>
+            <artifactId>it-test-support</artifactId>
+            <version>${neo4j.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.neo4j</groupId>
