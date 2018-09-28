@@ -29,11 +29,11 @@ import java.util.OptionalLong;
 public final class InternalReadOps {
 
     public static long getHighestPossibleNodeCount(org.neo4j.internal.kernel.api.Read read, GraphDatabaseAPI api) {
-        return read instanceof Read ? ((Read) read).nodeHighMark() : nodeCountByIdGenerator(read, api);
+        return nodeCountByIdGenerator(read, api);
     }
 
     public static long getHighestPossibleRelationshipCount(org.neo4j.internal.kernel.api.Read read, GraphDatabaseAPI api) {
-        return read instanceof Read ? ((Read) read).relationshipHighMark() : relationshipCountByIdGenerator(read, api);
+        return relationshipCountByIdGenerator(read, api);
     }
 
     private static long nodeCountByIdGenerator(org.neo4j.internal.kernel.api.Read read, GraphDatabaseAPI api) {
