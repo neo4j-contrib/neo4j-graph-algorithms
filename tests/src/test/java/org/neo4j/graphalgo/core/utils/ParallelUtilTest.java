@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Test;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntStack;
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class ParallelUtilTest extends RandomizedTest {
 
     @Test

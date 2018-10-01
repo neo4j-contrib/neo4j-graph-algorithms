@@ -94,8 +94,7 @@ public class Prim extends Algorithm<Prim> {
                 // inverting the weight calculates maximum- instead of minimum spanning tree
                 final double w = max ? -weights.weightOf(s, t) : weights.weightOf(s, t);
                 /*
-                    cost is updated once for each node. therefore no
-                    update(..) needed.
+                    cost is updated 1x for each node.
                  */
                 if (w < cost.getOrDefault(t, Double.MAX_VALUE)) {
                     cost.put(t, w);

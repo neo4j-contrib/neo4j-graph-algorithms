@@ -13,10 +13,10 @@ The One Hot Encoding function is used to convert categorical data into a numeric
 [[algorithms-one-hot-encoding-sample]]
 == One Hot Encoding sample
 
-A One Hot Encoding will return a list equal to the length of the `available values`.
-A 1 will appear in that list for each of the `selected values`, and a 0 for any unselected values.
+One hot encoding will return a list equal to the length of the `available values`.
+In the list, `selected values` are represented by `1`, and `unselected values` are represented by `0`.
 
-.The following will run the algorithm on hardcoded lists
+.The following will run the algorithm on hardcoded lists:
 [source, cypher]
 ----
 include::scripts/one-hot-encoding.cypher[tag=basic]
@@ -26,7 +26,7 @@ include::scripts/one-hot-encoding.cypher[tag=basic]
 .Results
 [opts="header",cols="1"]
 |===
-| Vector
+| `vector`
 | [0,0,1]
 |===
 // end::basic-result[]
@@ -37,7 +37,7 @@ include::scripts/one-hot-encoding.cypher[tag=basic]
 include::scripts/one-hot-encoding.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a one hot encoding for each user and the types of cuisine that they like
+.The following will return a one hot encoding for each user and the types of cuisine that they like:
 [source, cypher]
 ----
 include::scripts/one-hot-encoding.cypher[tag=one-hot-encoding-query]
@@ -59,13 +59,13 @@ include::scripts/one-hot-encoding.cypher[tag=one-hot-encoding-query]
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name              | Type    | Default        | Optional | Description
-| availableValues   | list    | null           | yes      | The available values. If null, the function will return an empty list
-| selectedValues    | list    | null           | yes      | The selected values. If null, the function will return a list of all 0's
+| `availableValues`   | list    | null           | yes      | The available values. If null, the function will return an empty list.
+| `selectedValues`    | list    | null           | yes      | The selected values. If null, the function will return a list of all 0's.
 |===
 
 .Results
 [opts="header",cols="1,6"]
 |===
 | Type | Description
-| list | One hot encoding of the selected values
+| `list` | One hot encoding of the selected values.
 |===

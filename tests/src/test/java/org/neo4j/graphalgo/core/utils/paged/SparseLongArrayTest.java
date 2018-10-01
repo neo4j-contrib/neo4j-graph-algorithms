@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Test;
 import org.neo4j.graphalgo.core.utils.PrivateLookup;
 
@@ -31,6 +32,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class SparseLongArrayTest extends RandomizedTest {
 
     private static final int PS = PageUtil.pageSizeFor(Long.BYTES);

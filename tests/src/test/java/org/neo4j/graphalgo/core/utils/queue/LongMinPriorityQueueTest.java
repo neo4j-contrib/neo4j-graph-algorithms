@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.core.utils.queue;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import org.junit.Test;
 import org.neo4j.helpers.collection.Pair;
 
@@ -32,6 +33,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.*;
 
 
+@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
 public final class LongMinPriorityQueueTest extends RandomizedTest {
 
     @Test
