@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.bench;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.PageRankResult;
 import org.neo4j.graphalgo.impl.PageRankAlgorithm;
 import org.neo4j.graphdb.Direction;
@@ -42,6 +43,7 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
 
 @Threads(1)
 @Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
@@ -85,17 +87,17 @@ public class PageRankBenchmarkLdbc {
         Pools.DEFAULT.shutdownNow();
     }
 
-    /*
     @Benchmark
     public PageRankResult run() throws Exception {
         return PageRankAlgorithm.of(
+                AllocationTracker.EMPTY,
                 grph,
                 0.85,
+                LongStream.empty(),
                 Pools.DEFAULT,
                 Pools.getNoThreadsInDefaultPool(),
                 batchSize)
                 .compute(iterations)
                 .result();
     }
-    */
 }
