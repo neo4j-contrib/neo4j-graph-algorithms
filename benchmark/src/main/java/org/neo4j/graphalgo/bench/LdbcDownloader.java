@@ -57,7 +57,7 @@ public final class LdbcDownloader {
     static {
         FILES = new HashMap<>();
         FILES.put("L01", new S3Location("http://example-data.neo4j.org.s3.amazonaws.com/files/ldbc_sf001_p006_neo4j31.tgz"));
-        FILES.put("L10", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.1-datasets/ldbc_sf010_p006.tgz"));
+        FILES.put("L10", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.4-datasets/ldbc_sf001_p006.tgz"));
     }
 
     static synchronized GraphDatabaseAPI openDb() throws IOException {
