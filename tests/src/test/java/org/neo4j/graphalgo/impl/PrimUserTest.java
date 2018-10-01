@@ -19,33 +19,26 @@
 package org.neo4j.graphalgo.impl;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pointer;
-import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 @Ignore("rm if verified")
-public final class ShortestPathDijkstraUserTest {
+public final class PrimUserTest {
 
     private static final String PATH = "/Users/mknobloch/Downloads";
 
@@ -113,17 +106,15 @@ public final class ShortestPathDijkstraUserTest {
     @Test
     public void test() throws Exception {
 
-        System.out.println("test");
+        System.out.println("== Test ==");
 
-        ShortestPathDijkstra dijkstra = new ShortestPathDijkstra(graph)
-                .compute(getNode("CFU").getId(),
-                        getNode("KRK").getId());
-
-        final Iterator<IntCursor> iterator = dijkstra.getFinalPath().iterator();
-
-        while (iterator.hasNext()) {
-            System.out.println(iterator.next().value);
-        }
-        System.out.println(dijkstra.getTotalCost());
+        new Prim(graph, graph, graph)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
+                .computeMinimumSpanningTree(3871)
+                .getSpanningTree()
+                .forEach((s, t, r) -> {
+                    System.out.println(s + " -> " + t);
+                    return true;
+                });
     }
 }
