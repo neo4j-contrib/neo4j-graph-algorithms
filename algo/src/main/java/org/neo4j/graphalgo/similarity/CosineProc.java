@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class CosineProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.cosine.stream", mode = Mode.READ)
-    @Description("CALL algo.similarity.cosine.stream([{source:id, weights:[weights]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Description("CALL algo.similarity.cosine.stream([{item:id, weights:[weights]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD item1, item2, count1, count2, intersection, similarity - computes cosine distance")
     // todo count1,count2 = could be the non-null values, intersection the values where both are non-null?
     public Stream<SimilarityResult> cosineStream(
