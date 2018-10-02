@@ -30,16 +30,23 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
     public final long count2;
     public final long intersection;
     public double similarity;
+    public final boolean bidirectional;
+    public final boolean reversed;
 
     public static SimilarityResult TOMB = new SimilarityResult(-1, -1, -1, -1, -1, -1);
 
-    public SimilarityResult(long item1, long item2, long count1, long count2, long intersection, double similarity) {
+    public SimilarityResult(long item1, long item2, long count1, long count2, long intersection, double similarity, boolean bidirectional, boolean reversed) {
         this.item1 = item1;
         this.item2 = item2;
         this.count1 = count1;
         this.count2 = count2;
         this.intersection = intersection;
         this.similarity = similarity;
+        this.bidirectional = bidirectional;
+        this.reversed = reversed;
+    }
+    public SimilarityResult(long item1, long item2, long count1, long count2, long intersection, double similarity) {
+        this(item1,item2, count1,count2,intersection,similarity, true, false);
     }
 
     @Override
@@ -70,7 +77,7 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
     }
 
     public SimilarityResult reverse() {
-        return new SimilarityResult(item2, item1,count2,count1,intersection,similarity);
+        return new SimilarityResult(item2, item1,count2,count1,intersection,similarity,bidirectional,!reversed);
     }
 
     public SimilarityResult squareRooted() {
