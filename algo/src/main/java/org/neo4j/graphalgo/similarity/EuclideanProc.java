@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class EuclideanProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.euclidean.stream", mode = Mode.READ)
-    @Description("CALL algo.similarity.euclidean.stream([{source:id, weights:[weights]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Description("CALL algo.similarity.euclidean.stream([{item:id, weights:[weights]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD item1, item2, count1, count2, intersection, similarity - computes euclidean distance")
     // todo count1,count2 = could be the non-null values, intersection the values where both are non-null?
     public Stream<SimilarityResult> euclideanStream(

@@ -29,7 +29,7 @@ import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
 public class JaccardProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.jaccard.stream", mode = Mode.READ)
-    @Description("CALL algo.similarity.jaccard.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Description("CALL algo.similarity.jaccard.stream([{item:id, categories:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD item1, item2, count1, count2, intersection, similarity - computes jaccard similarities")
     public Stream<SimilarityResult> similarityStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
@@ -45,7 +45,7 @@ public class JaccardProc extends SimilarityProc {
     }
 
     @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
-    @Description("CALL algo.similarity.jaccard([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Description("CALL algo.similarity.jaccard([{item:id, categories:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD p50, p75, p90, p99, p999, p100 - computes jaccard similarities")
     public Stream<SimilaritySummaryResult> jaccard(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
