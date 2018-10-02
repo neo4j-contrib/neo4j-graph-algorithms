@@ -149,23 +149,31 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             }
 
             visited.set(node);
-            final double costToSource = this.costs.getOrDefault(node, Double.MAX_VALUE);
+            double costs = this.costs.getOrDefault(node, Double.MAX_VALUE);
             graph.forEachRelationship(
                     node,
                     direction, (source, target, relId, weight) -> {
-                        double newCosts = costToSource + weight;
-                        if (newCosts < this.costs.getOrDefault(target, Double.MAX_VALUE)) {
-                            this.costs.put(target, newCosts);
-                            this.path.put(target, source);
-                            if (visited.get(target)) {
-                                queue.update(target);
-                            } else {
-                                queue.add(target, weight);
-                            }
-                        }
+                        updateCosts(source, target, weight + costs);
                         return true;
                     });
             progressLogger.logProgress((double) node / (nodeCount - 1));
+        }
+    }
+
+    private void updateCosts(int source, int target, double newCosts) {
+
+        if (costs.containsKey(target)) {
+            if (newCosts < costs.getOrDefault(target, Double.MAX_VALUE)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                queue.update(target);
+            }
+        } else  {
+            if (newCosts < costs.getOrDefault(target, Double.MAX_VALUE)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                queue.add(target, newCosts);
+            }
         }
     }
 
