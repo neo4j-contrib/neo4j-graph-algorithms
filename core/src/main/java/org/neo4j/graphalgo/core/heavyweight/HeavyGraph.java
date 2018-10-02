@@ -22,6 +22,8 @@ import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.IdMap;
+import org.neo4j.graphalgo.core.NullWeightMap;
+import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Collection;
@@ -113,6 +115,10 @@ public class HeavyGraph implements Graph, NodeProperties, RelationshipPredicate,
     @Override
     public double weightOf(final int sourceNodeId, final int targetNodeId) {
         return relationshipWeights.get(sourceNodeId, targetNodeId);
+    }
+
+    public boolean hasWeights() {
+        return !(relationshipWeights instanceof NullWeightMap);
     }
 
     @Override

@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.pagerank;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.impl.Algorithm;
 
 import java.util.concurrent.ExecutorService;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 public interface PageRankAlgorithm {
 
@@ -33,6 +33,27 @@ public interface PageRankAlgorithm {
     PageRankResult result();
 
     Algorithm<?> algorithm();
+
+    static PageRankAlgorithm weightedOf(
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds) {
+        return weightedOf(AllocationTracker.EMPTY, dampingFactor, sourceNodeIds, graph);
+    }
+
+    static PageRankAlgorithm weightedOf(
+            AllocationTracker tracker,
+            double dampingFactor,
+            LongStream sourceNodeIds,
+            Graph graph) {
+        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant();
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, computeStepFactory);
+        }
+
+        return new PageRank(graph, dampingFactor, sourceNodeIds, computeStepFactory);
+    }
 
     static PageRankAlgorithm of(
             Graph graph,
@@ -46,11 +67,14 @@ public interface PageRankAlgorithm {
             double dampingFactor,
             LongStream sourceNodeIds,
             Graph graph) {
+        NonWeightedPageRankVariant computeStepFactory = new NonWeightedPageRankVariant();
+
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
-            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds);
+            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, computeStepFactory);
         }
-        return new PageRank(graph, dampingFactor, sourceNodeIds);
+
+        return new PageRank(graph, dampingFactor, sourceNodeIds, computeStepFactory);
     }
 
     static PageRankAlgorithm of(
@@ -71,6 +95,7 @@ public interface PageRankAlgorithm {
             ExecutorService pool,
             int concurrency,
             int batchSize) {
+        NonWeightedPageRankVariant computeStepFactory = new NonWeightedPageRankVariant();
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
             return new HugePageRank(
@@ -80,15 +105,51 @@ public interface PageRankAlgorithm {
                     tracker,
                     huge,
                     dampingFactor,
-                    sourceNodeIds
+                    sourceNodeIds,
+                    computeStepFactory
                     );
         }
+
         return new PageRank(
                 pool,
                 concurrency,
                 batchSize,
                 graph,
                 dampingFactor,
-                sourceNodeIds);
+                sourceNodeIds,
+                computeStepFactory);
+    }
+
+    static PageRankAlgorithm weightedOf(
+            AllocationTracker tracker,
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds,
+            ExecutorService pool,
+            int concurrency,
+            int batchSize) {
+        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant();
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(
+                    pool,
+                    concurrency,
+                    batchSize,
+                    tracker,
+                    huge,
+                    dampingFactor,
+                    sourceNodeIds,
+                    computeStepFactory
+            );
+        }
+
+        return new PageRank(
+                pool,
+                concurrency,
+                batchSize,
+                graph,
+                dampingFactor,
+                sourceNodeIds,
+                computeStepFactory);
     }
 }

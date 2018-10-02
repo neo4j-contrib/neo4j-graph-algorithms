@@ -116,7 +116,7 @@ public final class LdbcDownloader {
                 IOUtils.copy(in, out);
             }
         } else {
-            throw new IOException("Invalid S3 response: " + responseCode);
+            throw new IOException("Invalid S3 response: " + responseCode + " [" + url + "]");
         }
     }
 

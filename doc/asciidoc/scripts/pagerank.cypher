@@ -46,6 +46,64 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 
 // end::write-sample-graph[]
 
+// tag::create-sample-weighted-graph[]
+
+MERGE (home:Page {name:'Home'})
+MERGE (about:Page {name:'About'})
+MERGE (product:Page {name:'Product'})
+MERGE (links:Page {name:'Links'})
+MERGE (a:Page {name:'Site A'})
+MERGE (b:Page {name:'Site B'})
+MERGE (c:Page {name:'Site C'})
+MERGE (d:Page {name:'Site D'})
+
+MERGE (home)-[:LINKS {weight: 0.2}]->(about)
+MERGE (home)-[:LINKS {weight: 0.2}]->(links)
+MERGE (home)-[:LINKS {weight: 0.6}]->(product)
+
+MERGE (about)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (product)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (a)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (b)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (c)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (d)-[:LINKS {weight: 1.0}]->(home)
+
+MERGE (links)-[:LINKS {weight: 0.8}]->(home)
+MERGE (links)-[:LINKS {weight: 0.05}]->(a)
+MERGE (links)-[:LINKS {weight: 0.05}]->(b)
+MERGE (links)-[:LINKS {weight: 0.05}]->(c)
+MERGE (links)-[:LINKS {weight: 0.05}]->(d)
+
+// end::create-sample-weighted-graph[]
+
+// tag::stream-sample-weighted-graph[]
+
+CALL algo.pageRank.stream('Page', 'LINKS', {
+  iterations:20, dampingFactor:0.85, weightProperty: "weight"
+})
+YIELD nodeId, score
+
+MATCH (node) WHERE id(node) = nodeId
+
+RETURN node.name AS page,score
+ORDER BY score DESC
+
+// end::stream-sample-weighted-graph[]
+
+// tag::write-sample-weighted-graph[]
+
+CALL algo.pageRank('Page', 'LINKS',{
+  iterations:20, dampingFactor:0.85, write: true, writeProperty:"pagerank", weightProperty: "weight"
+})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
+
+// end::write-sample-weighted-graph[]
+
 // tag::ppr-stream-sample-graph[]
 MATCH (siteA:Page {name: "Site A"})
 

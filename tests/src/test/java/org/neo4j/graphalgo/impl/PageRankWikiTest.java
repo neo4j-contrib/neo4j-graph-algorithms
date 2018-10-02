@@ -29,6 +29,8 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
+import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
+import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -40,7 +42,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
