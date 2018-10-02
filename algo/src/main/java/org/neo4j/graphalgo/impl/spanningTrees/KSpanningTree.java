@@ -29,8 +29,6 @@ import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
 
 /**
- * Sequential Single-Source minimum weight spanning tree algorithm (PRIM).
- * <p>
  * The algorithm computes the MST by traversing all nodes from a given
  * startNodeId. It aggregates all transitions into a MinPriorityQueue
  * and visits each (unvisited) connected node by following only the

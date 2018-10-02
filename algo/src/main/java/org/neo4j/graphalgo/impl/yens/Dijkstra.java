@@ -24,7 +24,6 @@ import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.queue.IntPriorityQueue;
 import org.neo4j.graphalgo.core.utils.queue.SharedIntPriorityQueue;
-import org.neo4j.graphalgo.core.utils.traverse.SimpleBitSet;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -38,18 +37,19 @@ import java.util.Optional;
 public class Dijkstra {
 
     // initial weighted path capacity
+
     public static final int INITIAL_CAPACITY = 64;
 
     private static final int PATH_END = -1;
-
     private final Graph graph;
+
     private final int nodeCount;
 
     private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
-
     // node to cost map
     private final IntDoubleMap costs;
     // next node priority queue
+
     private final IntPriorityQueue queue;
     // auxiliary path map
     private final IntIntMap path;
@@ -157,7 +157,8 @@ public class Dijkstra {
         visited.clear();
         costs.put(source, 0.0);
         queue.add(source, 0.0);
-        Arrays.fill(depth, 1);
+        Arrays.fill(depth, 0);
+        depth[source] = 1;
         while (!queue.isEmpty() && terminationFlag.running()) {
             int node = queue.pop();
             final int d = depth[node];
@@ -176,14 +177,19 @@ public class Dijkstra {
                             return true;
                         }
                         final double w = graph.weightOf(s, t);
-                        final boolean updateCosts = updateCosts(s, t, w + costs);
+                        final UpdateResult updateCosts = updateCosts(s, t, w + costs);
                         if (!visited.get(t)) {
-                            depth[t] = d + 1;
-                            if (updateCosts) {
-                                queue.update(t);
-                            } else {
-                                queue.add(t, w);
+                            switch (updateCosts) {
+                                case NO_PREVIOUS_COSTS:
+                                    queue.add(t, w);
+                                    break;
+                                case UPDATED_COST:
+                                    queue.update(t);
+                                    break;
+                                default:
+                                    break;
                             }
+                            depth[t] = depth[s] + 1;
                         }
                         return terminationFlag.running();
                     });
@@ -191,17 +197,29 @@ public class Dijkstra {
         return false;
     }
 
+
     /**
      * update cost map
      */
-    private boolean updateCosts(int source, int target, double newCosts) {
+    private UpdateResult updateCosts(int source, int target, double newCosts) {
         double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
+        if (oldCosts == Double.MAX_VALUE) {
+            if (!costs.containsKey(target)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                return UpdateResult.NO_PREVIOUS_COSTS;
+            }
+        }
         if (newCosts < oldCosts) {
             costs.put(target, newCosts);
             path.put(target, source);
-            return oldCosts < Double.MAX_VALUE;
+            return UpdateResult.UPDATED_COST;
         }
-        return false;
+        return UpdateResult.COST_NOT_COMPETITIVE;
+    }
+
+    private enum UpdateResult {
+        NO_PREVIOUS_COSTS, UPDATED_COST, COST_NOT_COMPETITIVE;
     }
 
 }
