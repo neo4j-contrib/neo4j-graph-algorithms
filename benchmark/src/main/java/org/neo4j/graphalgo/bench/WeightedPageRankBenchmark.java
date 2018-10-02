@@ -20,25 +20,13 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
+import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.annotations.Threads;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
@@ -53,7 +41,7 @@ import java.util.stream.LongStream;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class PageRankBenchmark {
+public class WeightedPageRankBenchmark {
 
     @Param({"5", "20", "100"})
     int iterations;
@@ -77,23 +65,23 @@ public class PageRankBenchmark {
                 "CREATE (nJ)\n" +
                 "CREATE (nK)\n" +
                 "CREATE\n" +
-                "  (nB)-[:TYPE]->(nC),\n" +
-                "  (nC)-[:TYPE]->(nB),\n" +
-                "  (nD)-[:TYPE]->(nA),\n" +
-                "  (nD)-[:TYPE]->(nB),\n" +
-                "  (nE)-[:TYPE]->(nB),\n" +
-                "  (nE)-[:TYPE]->(nD),\n" +
-                "  (nE)-[:TYPE]->(nF),\n" +
-                "  (nF)-[:TYPE]->(nB),\n" +
-                "  (nF)-[:TYPE]->(nE),\n" +
-                "  (nG)-[:TYPE]->(nB),\n" +
-                "  (nG)-[:TYPE]->(nE),\n" +
-                "  (nH)-[:TYPE]->(nB),\n" +
-                "  (nH)-[:TYPE]->(nE),\n" +
-                "  (nI)-[:TYPE]->(nB),\n" +
-                "  (nI)-[:TYPE]->(nE),\n" +
-                "  (nJ)-[:TYPE]->(nE),\n" +
-                "  (nK)-[:TYPE]->(nE);";
+                "  (nB)-[:TYPE {weight: 1}]->(nC),\n" +
+                "  (nC)-[:TYPE {weight: 3}]->(nB),\n" +
+                "  (nD)-[:TYPE {weight: 2}]->(nA),\n" +
+                "  (nD)-[:TYPE {weight: 5}]->(nB),\n" +
+                "  (nE)-[:TYPE {weight: 7}]->(nB),\n" +
+                "  (nE)-[:TYPE {weight: 8}]->(nD),\n" +
+                "  (nE)-[:TYPE {weight: 3}]->(nF),\n" +
+                "  (nF)-[:TYPE {weight: 12}]->(nB),\n" +
+                "  (nF)-[:TYPE {weight: 11}]->(nE),\n" +
+                "  (nG)-[:TYPE {weight: 10}]->(nB),\n" +
+                "  (nG)-[:TYPE {weight: 2}]->(nE),\n" +
+                "  (nH)-[:TYPE {weight: 5}]->(nB),\n" +
+                "  (nH)-[:TYPE {weight: 8}]->(nE),\n" +
+                "  (nI)-[:TYPE {weight: 7}]->(nB),\n" +
+                "  (nI)-[:TYPE {weight: 2}]->(nE),\n" +
+                "  (nJ)-[:TYPE {weight: 19}]->(nE),\n" +
+                "  (nK)-[:TYPE {weight: 12}]->(nE);";
         db = (GraphDatabaseAPI)
                 new TestGraphDatabaseFactory()
                         .newImpermanentDatabaseBuilder()
@@ -109,20 +97,19 @@ public class PageRankBenchmark {
         db.shutdown();
     }
 
-    /*
     @Benchmark
     public PageRankResult run() throws Exception {
         final Graph graph = new GraphLoader(db)
                 .withDirection(Direction.OUTGOING)
+                .withRelationshipWeightsFromProperty("weight", 0.0)
                 .load(impl.impl);
         try {
             return PageRankAlgorithm
-                    .of(graph, 0.85, LongStream.empty())
+                    .weightedOf(graph, 0.85, LongStream.empty())
                     .compute(iterations)
                     .result();
         } finally {
             graph.release();
         }
     }
-    */
 }

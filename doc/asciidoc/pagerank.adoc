@@ -77,7 +77,6 @@ If you see unexpected results from running the algorithm, it is worth doing some
 You can read http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm[The Google PageRank Algorithm and How It Works^] to learn more.
 // end::constraint[]
 
-
 [[algorithms-pagerank-sample]]
 == PageRank algorithm sample
 
@@ -123,6 +122,54 @@ include::scripts/pagerank.cypher[tag=write-sample-graph]
 As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
 We can also see that it's not only the number of incoming links that is important, but also the importance of the pages behind those links.
 // end::stream-sample-graph-explanation[]
+
+[[algorithms-pagerank-weighted-sample]]
+== Weighted PageRank algorithm sample
+
+This sample will explain the PageRank algorithm, using a simple graph:
+
+image::weighted_pagerank.svg[]
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/pagerank.cypher[tag=create-sample-weighted-graph]
+----
+
+.The following will run the algorithm and stream results:
+[source, cypher]
+----
+include::scripts/pagerank.cypher[tag=stream-sample-weighted-graph]
+----
+
+.The following will run the algorithm and write back results:
+[source, cypher]
+----
+include::scripts/pagerank.cypher[tag=write-sample-weighted-graph]
+----
+
+// tag::stream-sample-weighted-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name    | PageRank
+| Home    | 3.550
+| Product | 1.953
+| Links   | 0.7509
+| About   | 0.7509
+| Site A  | 0.1816
+| Site B  | 0.1816
+| Site C  | 0.1816
+| Site D  | 0.1816
+|===
+// end::stream-sample-weighted-graph-result[]
+
+// tag::stream-sample-weighted-graph-explanation[]
+As we might expect, the Home page has the highest PageRank because it has incoming links from all other pages.
+It's even more important now that the Links page links to it with a high weight.
+The Product page has now become the 2nd most important page in its own right because of the high weighted link from the Home page.
+// end::stream-sample-weighted-graph-explanation[]
+
 
 === Personalized PageRank
 
@@ -201,8 +248,9 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | iterations    | int     | 20             | yes      | How many iterations of PageRank to run
 | concurrency   | int     | available CPUs | yes      | The number of concurrent threads
 | dampingFactor | float   | 0.85           | yes      | The damping factor of the PageRank calculation
+| weightProperty | string | null           | yes      | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| defaultValue   | float  | 0.0           | yes      | The default value of the weight in case it is missing or invalid
 | write         | boolean | true           | yes      | Specify if the result should be written back as a node property
-| writeProperty | string  | 'pagerank'     | yes      | The property name written back to
 | graph         | string  | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 
@@ -237,6 +285,8 @@ YIELD node, score
 | iterations    | int    | 20             | yes      | Specify how many iterations of PageRank to run
 | concurrency   | int    | available CPUs | yes      | The number of concurrent threads
 | dampingFactor | float  | 0.85           | yes      | The damping factor of the PageRank calculation
+| weightProperty | string | null           | yes      | The property name that contains weight. If null, treats the graph as unweighted. Must be numeric.
+| defaultValue   | float  | 0.0           | yes      | The default value of the weight in case it is missing or invalid
 | graph         | string | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===
 

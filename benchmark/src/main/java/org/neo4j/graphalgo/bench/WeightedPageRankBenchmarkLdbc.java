@@ -24,7 +24,7 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
 import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
-import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.*;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.openjdk.jmh.annotations.*;
@@ -40,22 +40,23 @@ import java.util.stream.LongStream;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-public class PageRankBenchmarkLdbc {
+public class WeightedPageRankBenchmarkLdbc {
 
-    @Param({"HEAVY", "HUGE"})
-//    @Param({"HEAVY"})
+    //    @Param({"HEAVY", "HUGE"})
+    @Param({"HEAVY"})
     GraphImpl graph;
 
-    @Param({"true", "false"})
+        @Param({"true", "false"})
 //    @Param({"false"})
     boolean parallel;
 
-    @Param({"L01", "L10"})
-//    @Param({"L10"})
+    //    @Param({"L01", "L10"})
+    @Param({"L01"})
     String graphId;
+    ;
 
-//    @Param({"20"})
-    @Param({"5", "20"})
+        @Param({"5", "20"})
+//    @Param({"5"})
     int iterations;
 
     private GraphDatabaseAPI db;
@@ -65,10 +66,27 @@ public class PageRankBenchmarkLdbc {
     @Setup
     public void setup() throws KernelException, IOException {
         db = LdbcDownloader.openDb(graphId);
+
+//        Transaction tx = db.beginTx();
+//        int count = 0;
+//        for (Relationship relationship : db.getAllRelationships()) {
+//            long startNodeId = relationship.getStartNodeId();
+//            long endNodeId = relationship.getEndNodeId();
+//            relationship.setProperty("weight", startNodeId + endNodeId % 100);
+//            if(++ count % 100000 == 0) {
+//                tx.success(); tx.close();
+//                tx = db.beginTx();
+//            }
+//        }
+//
+//        tx.success();
+//        tx.close();
+
         grph = new GraphLoader(db, Pools.DEFAULT)
                 .withDirection(Direction.OUTGOING)
-                .withoutRelationshipWeights()
+                .withRelationshipWeightsFromProperty("weight", 1.0)
                 .load(graph.impl);
+
         batchSize = parallel ? 10_000 : 2_000_000_000;
     }
 
@@ -81,7 +99,7 @@ public class PageRankBenchmarkLdbc {
 
     @Benchmark
     public PageRankResult run() throws Exception {
-        return PageRankAlgorithm.of(
+        return PageRankAlgorithm.weightedOf(
                 AllocationTracker.EMPTY,
                 grph,
                 0.85,
