@@ -45,6 +45,7 @@ import java.util.Arrays;
  */
 public class Prim extends Algorithm<Prim> {
 
+    public static final int UNUSED = 42;
     private final RelationshipIterator relationshipIterator;
     private final RelationshipWeights weights;
     private final int nodeCount;
@@ -90,11 +91,16 @@ public class Prim extends Algorithm<Prim> {
                 if (visited.contains(t)) {
                     return true;
                 }
-                // invert weight to calculate maximum
+                // inverting the weight calculates maximum- instead of minimum spanning tree
                 final double w = max ? -weights.weightOf(s, t) : weights.weightOf(s, t);
                 if (w < cost.getOrDefault(t, Double.MAX_VALUE)) {
-                    cost.put(t, w);
-                    queue.add(t, -1.0);
+                    if (cost.containsKey(t)) {
+                        cost.put(t, w);
+                        queue.update(t);
+                    } else {
+                        cost.put(t, w);
+                        queue.add(t, w);
+                    }
                     spanningTree.parent[t] = s;
                 }
                 return true;
