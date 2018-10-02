@@ -31,8 +31,8 @@ import java.util.stream.Stream;
 public class OverlapProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.overlap.stream", mode = Mode.READ)
-    @Description("CALL algo.similarity.overlap.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
-            "YIELD item1, item2, count1, count2, intersection, similarity - computes jaccard similarities")
+    @Description("CALL algo.similarity.overlap.stream([{item:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+            "YIELD item1, item2, count1, count2, intersection, similarity - computes overlap similarities")
     public Stream<SimilarityResult> similarityStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -47,8 +47,8 @@ public class OverlapProc extends SimilarityProc {
     }
 
     @Procedure(name = "algo.similarity.overlap", mode = Mode.WRITE)
-    @Description("CALL algo.similarity.overlap([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
-            "YIELD p50, p75, p90, p99, p999, p100 - computes jaccard similarities")
+    @Description("CALL algo.similarity.overlap([{item:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+            "YIELD p50, p75, p90, p99, p999, p100 - computes overlap similarities")
     public Stream<SimilaritySummaryResult> overlap(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
