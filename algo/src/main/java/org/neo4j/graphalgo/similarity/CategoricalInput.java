@@ -26,4 +26,21 @@ class CategoricalInput implements  Comparable<CategoricalInput> {
         if (jaccard < similarityCutoff) return null;
         return new SimilarityResult(id, e2.id, count1, count2, intersection, jaccard);
     }
+
+    SimilarityResult overlap(double similarityCutoff, CategoricalInput e2) {
+        long intersection = Intersections.intersection3(targets, e2.targets);
+        if (similarityCutoff >= 0d && intersection == 0) return null;
+        int count1 = targets.length;
+        int count2 = e2.targets.length;
+        long denominator = Math.min(count1, count2);
+        double overlap = denominator == 0 ? 0 : (double)intersection / denominator;
+        if (overlap < similarityCutoff) return null;
+
+        if(count1 <= count2) {
+            return new SimilarityResult(id, e2.id, count1, count2, intersection, overlap, false, false);
+        } else {
+            return new SimilarityResult(e2.id, id, count2, count1, intersection, overlap, false, true);
+        }
+
+    }
 }

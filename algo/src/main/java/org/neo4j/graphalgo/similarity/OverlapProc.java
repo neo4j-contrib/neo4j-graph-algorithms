@@ -19,23 +19,25 @@
 package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Mode;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
+public class OverlapProc extends SimilarityProc {
 
-public class JaccardProc extends SimilarityProc {
-
-    @Procedure(name = "algo.similarity.jaccard.stream", mode = Mode.READ)
-    @Description("CALL algo.similarity.jaccard.stream([{item:id, categories:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Procedure(name = "algo.similarity.overlap.stream", mode = Mode.READ)
+    @Description("CALL algo.similarity.overlap.stream([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD item1, item2, count1, count2, intersection, similarity - computes jaccard similarities")
     public Stream<SimilarityResult> similarityStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        SimilarityComputer<CategoricalInput> computer = (s, t, cutoff) -> s.jaccard(cutoff, t);
+        SimilarityComputer<CategoricalInput> computer = (s, t, cutoff) -> s.overlap(cutoff, t);
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
@@ -44,14 +46,14 @@ public class JaccardProc extends SimilarityProc {
         return topN(similarityStream(inputs, computer, configuration, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
     }
 
-    @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
-    @Description("CALL algo.similarity.jaccard([{item:id, categories:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
+    @Procedure(name = "algo.similarity.overlap", mode = Mode.WRITE)
+    @Description("CALL algo.similarity.overlap([{source:id, targets:[ids]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD p50, p75, p90, p99, p999, p100 - computes jaccard similarities")
-    public Stream<SimilaritySummaryResult> jaccard(
+    public Stream<SimilaritySummaryResult> overlap(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        SimilarityComputer<CategoricalInput> computer = (s,t,cutoff) -> s.jaccard(cutoff, t);
+        SimilarityComputer<CategoricalInput> computer = (s,t,cutoff) -> s.overlap(cutoff, t);
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
@@ -61,7 +63,7 @@ public class JaccardProc extends SimilarityProc {
         Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(configuration, stream, inputs.length, write, "SIMILAR");
+        return writeAndAggregateResults(configuration, stream, inputs.length, write, "NARROWER_THAN");
     }
 
 

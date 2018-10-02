@@ -80,7 +80,7 @@ public class EuclideanProc extends SimilarityProc {
                 .map(SimilarityResult::squareRooted);
 
         boolean write = configuration.isWriteFlag(false); //  && similarityCutoff != 0.0;
-        return writeAndAggregateResults(configuration, stream, inputs.length, write);
+        return writeAndAggregateResults(configuration, stream, inputs.length, write, "SIMILAR");
     }
 
 
