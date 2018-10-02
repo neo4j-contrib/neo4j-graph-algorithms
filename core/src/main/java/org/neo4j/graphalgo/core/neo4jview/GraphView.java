@@ -181,6 +181,10 @@ public class GraphView implements Graph {
             try (NodeCursor nc = transaction.cursors().allocateNodeCursor()) {
                 transaction.dataRead().singleNode(toOriginalNodeId(nodeId), nc);
                 if (nc.next()) {
+                    if (direction == Direction.BOTH || (direction == Direction.OUTGOING && loadAsUndirected) ) {
+                        return rels(transaction).degreeOf(Direction.BOTH, nc);
+                    }
+
                     return rels(transaction).degreeOf(direction, nc);
                 }
                 return 0;

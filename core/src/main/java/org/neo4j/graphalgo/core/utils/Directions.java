@@ -55,7 +55,7 @@ import org.neo4j.graphdb.Direction;
 public class Directions {
 
     public static final Direction DEFAULT_DIRECTION = Direction.OUTGOING;
-    
+
     public static Direction fromString(String directionString) {
         return fromString(directionString, DEFAULT_DIRECTION);
     }
