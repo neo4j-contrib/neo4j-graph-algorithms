@@ -86,8 +86,13 @@ public class Prim extends Algorithm<Prim> {
                 // invert weight to calculate maximum
                 final double w = max ? -weights.weightOf(s, t) : weights.weightOf(s, t);
                 if (w < cost.getOrDefault(t, Double.MAX_VALUE)) {
-                    cost.put(t, w);
-                    queue.add(t, -1.0);
+                    if (cost.containsKey(t)) {
+                        cost.put(t, w);
+                        queue.update(t);
+                    } else {
+                        cost.put(t, w);
+                        queue.add(t, -1.0);
+                    }
                     parent[t] = s;
                 }
                 return true;

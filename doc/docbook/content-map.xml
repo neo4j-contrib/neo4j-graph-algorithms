@@ -56,13 +56,15 @@
       </d:tocentry>
       <d:tocentry linkend="algorithms-similarity-euclidean"><?dbhtml filename="algorithms/similarity-euclidean/index.html"?>
       </d:tocentry>
+      <d:tocentry linkend="algorithms-similarity-overlap"><?dbhtml filename="algorithms/similarity-overlap/index.html"?>
+      </d:tocentry>
     </d:tocentry>
 
     <d:tocentry linkend="algorithms-preprocessing"><?dbhtml filename="algorithms/preprocessing/index.html"?>
       <d:tocentry linkend="algorithms-one-hot-encoding"><?dbhtml filename="algorithms/one-hot-encoding/index.html"?>
       </d:tocentry>
     </d:tocentry>
-    
+
   </d:tocentry>
 </d:toc>
 <!-- vim: set ts=2 sw=2: -->

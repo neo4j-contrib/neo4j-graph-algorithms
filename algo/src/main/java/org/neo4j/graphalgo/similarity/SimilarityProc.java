@@ -51,7 +51,7 @@ public class SimilarityProc {
         if (topN > 10000) {
             return stream.sorted(comparator).limit(topN);
         }
-        return topK(stream,topN, comparator);
+        return topK(stream, topN, comparator);
     }
 
     private static <T> void put(BlockingQueue<T> queue, T items) {
@@ -66,8 +66,8 @@ public class SimilarityProc {
         return configuration.get("degreeCutoff", 0L);
     }
 
-    Stream<SimilaritySummaryResult> writeAndAggregateResults(ProcedureConfiguration configuration, Stream<SimilarityResult> stream, int length, boolean write) {
-        String writeRelationshipType = configuration.get("writeRelationshipType", "SIMILAR");
+    Stream<SimilaritySummaryResult> writeAndAggregateResults(ProcedureConfiguration configuration, Stream<SimilarityResult> stream, int length, boolean write, String defaultWriteProperty) {
+        String writeRelationshipType = configuration.get("writeRelationshipType", defaultWriteProperty);
         String writeProperty = configuration.getWriteProperty("score");
 
         AtomicLong similarityPairs = new AtomicLong();
@@ -77,7 +77,7 @@ public class SimilarityProc {
             similarityPairs.getAndIncrement();
         };
 
-        if(write) {
+        if (write) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api, writeRelationshipType, writeProperty);
             similarityExporter.export(stream.peek(recorder));
         } else {
@@ -114,17 +114,15 @@ public class SimilarityProc {
     private <T> Stream<SimilarityResult> similarityStream(T[] inputs, int length, double similiarityCutoff, SimilarityComputer<T> computer) {
         return IntStream.range(0, length)
                 .boxed().flatMap(sourceId -> IntStream.range(sourceId + 1, length)
-                        .mapToObj(targetId -> computer.similarity(inputs[sourceId],inputs[targetId],similiarityCutoff)).filter(Objects::nonNull));
+                        .mapToObj(targetId -> computer.similarity(inputs[sourceId], inputs[targetId], similiarityCutoff)).filter(Objects::nonNull));
     }
 
     private <T> Stream<SimilarityResult> similarityStreamTopK(T[] inputs, int length, double cutoff, int topK, SimilarityComputer<T> computer) {
         TopKConsumer<SimilarityResult>[] topKHolder = initializeTopKConsumers(length, topK);
 
-        for (int sourceId = 0;sourceId < length;sourceId++) {
-            computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, (sourceIndex, targetIndex, similarityResult) -> {
-                topKHolder[sourceIndex].accept(similarityResult);
-                topKHolder[targetIndex].accept(similarityResult.reverse());
-            }, computer);
+        SimilarityConsumer consumer = assignSimilarityPairs(topKHolder);
+        for (int sourceId = 0; sourceId < length; sourceId++) {
+            computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, consumer, computer);
         }
         return Arrays.stream(topKHolder).flatMap(TopKConsumer::stream);
     }
@@ -176,13 +174,13 @@ public class SimilarityProc {
         ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
 
         TopKConsumer<SimilarityResult>[] topKConsumers = initializeTopKConsumers(length, topK);
-        for (Runnable task : tasks) ((TopKTask)task).mergeInto(topKConsumers);
+        for (Runnable task : tasks) ((TopKTask) task).mergeInto(topKConsumers);
         return Arrays.stream(topKConsumers).flatMap(TopKConsumer::stream);
     }
 
     private <T> void computeSimilarityForSourceIndex(int sourceId, T[] inputs, int length, double cutoff, SimilarityConsumer consumer, SimilarityComputer<T> computer) {
-        for (int targetId=sourceId+1;targetId<length;targetId++) {
-            SimilarityResult similarity = computer.similarity(inputs[sourceId], inputs[targetId],cutoff);
+        for (int targetId = sourceId + 1; targetId < length; targetId++) {
+            SimilarityResult similarity = computer.similarity(inputs[sourceId], inputs[targetId], cutoff);
             if (similarity != null) {
                 consumer.accept(sourceId, targetId, similarity);
             }
@@ -195,11 +193,11 @@ public class SimilarityProc {
         for (Map<String, Object> row : data) {
             List<Number> targetIds = extractValues(row.get("categories"));
             int size = targetIds.size();
-            if ( size > degreeCutoff) {
+            if (size > degreeCutoff) {
                 long[] targets = new long[size];
-                int i=0;
+                int i = 0;
                 for (Number id : targetIds) {
-                    targets[i++]=id.longValue();
+                    targets[i++] = id.longValue();
                 }
                 Arrays.sort(targets);
                 ids[idx++] = new CategoricalInput((Long) row.get("item"), targets);
@@ -218,11 +216,11 @@ public class SimilarityProc {
             List<Number> weightList = extractValues(row.get("weights"));
 
             int size = weightList.size();
-            if ( size > degreeCutoff) {
+            if (size > degreeCutoff) {
                 double[] weights = new double[size];
-                int i=0;
+                int i = 0;
                 for (Number value : weightList) {
-                    weights[i++]=value.doubleValue();
+                    weights[i++] = value.doubleValue();
                 }
                 inputs[idx++] = new WeightedInput((Long) row.get("item"), weights);
             }
@@ -233,7 +231,7 @@ public class SimilarityProc {
     }
 
     private List<Number> extractValues(Object rawValues) {
-        if(rawValues == null) {
+        if (rawValues == null) {
             return Collections.emptyList();
         }
 
@@ -259,11 +257,22 @@ public class SimilarityProc {
     }
 
     protected int getTopN(ProcedureConfiguration configuration) {
-        return configuration.getInt("top",0);
+        return configuration.getInt("top", 0);
     }
 
     interface SimilarityComputer<T> {
         SimilarityResult similarity(T source, T target, double cutoff);
+    }
+
+    public static SimilarityConsumer assignSimilarityPairs(TopKConsumer<SimilarityResult>[] topKConsumers) {
+        return (s, t, result) -> {
+            topKConsumers[result.reversed ? t : s].accept(result);
+
+            if (result.bidirectional) {
+                SimilarityResult reverse = result.reverse();
+                topKConsumers[reverse.reversed ? t : s].accept(reverse);
+            }
+        };
     }
 
     private class TopKTask<T> implements Runnable {
@@ -273,10 +282,10 @@ public class SimilarityProc {
         private final int length;
         private final T[] ids;
         private final double similiarityCutoff;
-        private final SimilarityComputer computer;
+        private final SimilarityComputer<T> computer;
         private final TopKConsumer<SimilarityResult>[] topKConsumers;
 
-        TopKTask(int batchSize, int taskOffset, int multiplier, int length, T[] ids, double similiarityCutoff, int topK, SimilarityComputer computer) {
+        TopKTask(int batchSize, int taskOffset, int multiplier, int length, T[] ids, double similiarityCutoff, int topK, SimilarityComputer<T> computer) {
             this.batchSize = batchSize;
             this.taskOffset = taskOffset;
             this.multiplier = multiplier;
@@ -289,16 +298,17 @@ public class SimilarityProc {
 
         @Override
         public void run() {
+            SimilarityConsumer consumer = assignSimilarityPairs(topKConsumers);
             for (int offset = 0; offset < batchSize; offset++) {
                 int sourceId = taskOffset * multiplier + offset;
                 if (sourceId < length) {
-                    computeSimilarityForSourceIndex(sourceId, ids, length, similiarityCutoff, (s, t, result) -> {
-                        topKConsumers[s].accept(result);
-                        topKConsumers[t].accept(result.reverse());
-                    }, computer);
+
+                    computeSimilarityForSourceIndex(sourceId, ids, length, similiarityCutoff, consumer, computer);
                 }
             }
         }
+
+
         void mergeInto(TopKConsumer<SimilarityResult>[] target) {
             for (int i = 0; i < target.length; i++) {
                 target[i].accept(topKConsumers[i]);

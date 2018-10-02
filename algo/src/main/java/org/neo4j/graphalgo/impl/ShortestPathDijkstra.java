@@ -39,6 +39,7 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
 
     private static final int PATH_END = -1;
     public static final double NO_PATH_FOUND = -1.0;
+    public static final int UNUSED = 42;
 
     private Graph graph;
 
@@ -152,28 +153,28 @@ public class ShortestPathDijkstra extends Algorithm<ShortestPathDijkstra> {
             graph.forEachRelationship(
                     node,
                     direction, (source, target, relId, weight) -> {
-                        boolean oldCostChanged = updateCosts(source, target, weight + costs);
-                        if (!visited.get(target)) {
-                            if (oldCostChanged) {
-                                queue.update(target);
-                            } else {
-                                queue.add(target, 0);
-                            }
-                        }
+                        updateCosts(source, target, weight + costs);
                         return true;
                     });
             progressLogger.logProgress((double) node / (nodeCount - 1));
         }
     }
 
-    private boolean updateCosts(int source, int target, double newCosts) {
-        double oldCosts = costs.getOrDefault(target, Double.MAX_VALUE);
-        if (newCosts < oldCosts) {
-            costs.put(target, newCosts);
-            path.put(target, source);
-            return oldCosts < Double.MAX_VALUE;
+    private void updateCosts(int source, int target, double newCosts) {
+
+        if (costs.containsKey(target)) {
+            if (newCosts < costs.getOrDefault(target, Double.MAX_VALUE)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                queue.update(target);
+            }
+        } else  {
+            if (newCosts < costs.getOrDefault(target, Double.MAX_VALUE)) {
+                costs.put(target, newCosts);
+                path.put(target, source);
+                queue.add(target, newCosts);
+            }
         }
-        return false;
     }
 
     @Override
