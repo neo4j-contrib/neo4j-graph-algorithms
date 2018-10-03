@@ -190,6 +190,33 @@ public class SimilaritiesTest {
         assertEquals(bobSim, result.next().get("jaccardSim"));
         assertEquals(jimSim, result.next().get("jaccardSim"));
     }
+    
+    @Test
+    public void testOverlapSimilarity() throws Exception {
+        String controlQuery =
+                "MATCH (p1:Employee)-[:HAS_SKILL]->(sk)<-[:HAS_SKILL]-(p2)\n" +
+                        "WITH p1,p2,size((p1)-[:HAS_SKILL]->()) as d1, size((p2)-[:HAS_SKILL]->()) as d2, count(distinct sk) as intersection\n" +
+                        "WITH p1.name as name1, p2.name as name2, toFloat(intersection) / CASE WHEN d1 > d2 THEN d2 ELSE d1 END as overlapSim\n" +
+                        "ORDER BY name1,name2\n" +
+                        "RETURN name1,name2, toString(toInteger(overlapSim*10000)/10000.0) as overlapSim";
+        String bobSim;
+        String jimSim;
+        try (Transaction tx = db.beginTx()) {
+            Result result = db.execute(controlQuery);
+            bobSim = (String) result.next().get("overlapSim");
+            jimSim = (String) result.next().get("overlapSim");
+        }
+
+        Result result = db.execute(
+                "MATCH (p1:Employee),(p2:Employee) WHERE p1 <> p2\n" +
+                        "WITH p1, [(p1)-[:HAS_SKILL]->(sk) | id(sk)] as v1, p2, [(p2)-[:HAS_SKILL]->(sk) | id(sk)] as v2\n" +
+                        "WITH p1.name as name1, p2.name as name2, algo.similarity.overlap(v1, v2) as overlapSim ORDER BY name1,name2\n" +
+                        "RETURN name1, name2, toString(toInteger(overlapSim*10000)/10000.0) as overlapSim");
+
+        assertEquals(bobSim, result.next().get("overlapSim"));
+        assertEquals(jimSim, result.next().get("overlapSim"));
+    }
+
     @Test
     public void testEuclideanSimilarity() throws Exception {
         String controlQuery =
