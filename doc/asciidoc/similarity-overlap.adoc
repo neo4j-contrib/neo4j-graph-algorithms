@@ -36,9 +36,8 @@ The procedures parallelize the computation and are therefore a better bet when c
 == Use-cases - when to use the Overlap Similarity algorithm
 
 // tag::use-case[]
-We can use the Overlap Similarity algorithm to work out the similarity between two things.
-We might then use the computed similarity as part of a recommendation query.
-For example, you can use the Overlap Similarity algorithm to show the products that were purchased by similar customers, in terms of previous products purchased.
+We can use the Overlap Similarity algorithm to work out which things are subsets of others.
+We might then use these computed subsets to https://jbarrasa.com/2017/03/31/quickgraph5-learning-a-taxonomy-from-your-tagged-data/[learn a taxonomy from tagged data^], as described by Jesús Barrasa.
 // end::use-case[]
 
 
@@ -56,19 +55,19 @@ include::scripts/similarity-overlap.cypher[tag=function]
 [opts="header",cols="1"]
 |===
 | `similarity`
-| 0.4
+| 0.66
 |===
 // end::function[]
 
 // tag::function-explanation[]
-These two lists of numbers have a Overlap similarity of 0.4.
+These two lists of numbers have an Overlap similarity of 0.66.
 We can see how this result is derived by breaking down the formula:
 
 ```
-J(A,B) = ∣A ∩ B∣ / ∣A∣ + ∣B∣ - ∣A ∩ B|
-J(A,B) = 2 / 3 + 4 - 2
-       = 2 / 5
-       = 0.4
+O(A,B) = ∣A ∩ B∣ / min(∣A∣,∣B∣)
+O(A,B) = 2 / min(3,4)
+       = 2 / 3
+       = 0.66
 ```
 // end::function-explanation[]
 
