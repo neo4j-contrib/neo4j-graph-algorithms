@@ -1,71 +1,43 @@
 // tag::create-sample-graph[]
 
-MERGE (alice:Person{id:"Alice"})
-MERGE (michael:Person{id:"Michael"})
-MERGE (karin:Person{id:"Karin"})
-MERGE (chris:Person{id:"Chris"})
-MERGE (will:Person{id:"Will"})
-MERGE (mark:Person{id:"Mark"})
-
-MERGE (michael)-[:KNOWS]->(karin)
-MERGE (michael)-[:KNOWS]->(chris)
-MERGE (will)-[:KNOWS]->(michael)
-MERGE (mark)-[:KNOWS]->(michael)
-MERGE (mark)-[:KNOWS]->(will)
-MERGE (alice)-[:KNOWS]->(michael)
-MERGE (will)-[:KNOWS]->(chris)
-MERGE (chris)-[:KNOWS]->(karin);
+MERGE (a:Person {name:'Anna'})
+MERGE (b:Person {name:'Dolores'})
+MERGE (c:Person {name:'Matt'})
+MERGE (d:Person {name:'Larry'})
+MERGE (e:Person {name:'Stefan'})
+MERGE (f:Person {name:'Sophia'})
+MERGE (g:Person {name:'Robin'})
+MERGE (a)-[:TYPE {weight:1.0}]->(b)
+MERGE (a)-[:TYPE {weight:-1.0}]->(c)
+MERGE (a)-[:TYPE {weight:1.0}]->(d)
+MERGE (a)-[:TYPE {weight:-1.0}]->(e)
+MERGE (a)-[:TYPE {weight:1.0}]->(f)
+MERGE (a)-[:TYPE {weight:-1.0}]->(g)
+MERGE (b)-[:TYPE {weight:-1.0}]->(c)
+MERGE (c)-[:TYPE {weight:1.0}]->(d)
+MERGE (d)-[:TYPE {weight:-1.0}]->(e)
+MERGE (e)-[:TYPE {weight:1.0}]->(f)
+MERGE (f)-[:TYPE {weight:-1.0}]->(g)
+MERGE (g)-[:TYPE {weight:1.0}]->(b);
 
 // end::create-sample-graph[]
 
-// tag::stream-triads[]
+// tag::stream-sample-graph[]
 
-CALL algo.triangle.stream('Person','KNOWS')
-YIELD nodeA,nodeB,nodeC
+call algo.balancedTriads.stream('Person','TYPE',{weightProperty:'weight'})
+YIELD nodeId, balanced, unbalanced
 
-MATCH (a:Person) WHERE id(a) = nodeA
-MATCH (b:Person) WHERE id(b) = nodeB
-MATCH (c:Person) WHERE id(c) = nodeC
+MATCH (n) where id(n)=nodeId
+RETURN n.name as person,balanced,unbalanced
+ORDER BY balanced + unbalanced DESC
+LIMIT 10
 
-RETURN a.id AS nodeA, b.id AS nodeB, c.id AS nodeC
-
-// end::stream-triads[]
+// end::stream-sample-graph[]
 
 
-// tag::triangle-write-sample-graph[]
+// tag::write-sample-graph[]
 
-CALL algo.triangleCount('Person', 'KNOWS',
-  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'})
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
+CALL algo.balancedTriads('Person', 'TYPE', {weightProperty:'weight'}) 
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, balancedTriadCount, unbalancedTriadCount;
 
-// end::triangle-write-sample-graph[]
-
-// tag::triangle-stream-sample-graph[]
-
-CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4})
-YIELD nodeId, triangles, coefficient
-
-MATCH (p:Person) WHERE id(p) = nodeId
-
-RETURN p.id AS name, triangles, coefficient
-ORDER BY coefficient DESC
-
-// end::triangle-stream-sample-graph[]
-
-// tag::triangle-write-yelp[]
-
-CALL algo.triangleCount('User', 'FRIEND',
-  {concurrency:4, write:true, writeProperty:'triangles',clusteringCoefficientProperty:'coefficient'})
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient;
-
-// end::triangle-write-yelp[]
-
-// tag::cypher-loading[]
-
-CALL algo.triangleCount(
-  'MATCH (p:Person) RETURN id(p) as id',
-  'MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN id(p1) as source,id(p2) as target',
-  {concurrency:4, write:true, writeProperty:'triangle',graph:'cypher', clusteringCoefficientProperty:'coefficient'})
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
-
-// end::cypher-loading[]
+// end::write-sample-graph[]
