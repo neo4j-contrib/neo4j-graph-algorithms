@@ -7,7 +7,13 @@ This section describes the Balanced Triads algorithm in the Neo4j Graph Algorith
 --
 
 // tag::introduction[]
-<intro text>
+Balanced Triads algorithm is used to evaluate structural balance of the graph.
+
+It is based on the https://en.wikipedia.org/wiki/Balance_theory[Balance Theory] proposed by Fritz Heider in 1958.
+Unlike other algorithms where there are only positive relationships available, balance theory differentiates between positive and negative relationships.
+Certain structures between individuals and objects are perceived as balanced whereas others are not.
+In general balanced structures are preferred over imbalanced ones.
+
 // end::introduction[]
 
 
@@ -16,7 +22,15 @@ This section describes the Balanced Triads algorithm in the Neo4j Graph Algorith
 
 // tag::explanation[]
 
-all the text
+Balanced triads is an algorithm that counts the number of balanced and unbalanced triads a node is member of.
+It uses https://en.wikipedia.org/wiki/Signed_graph[Signed graph] model to differentiate between positive and negative relationships using the sign of the weight.
+
+Determining if the triad is balanced is simple math:
+
++ + + = Balanced 
+- + - = Balanced 
+- + + = Unbalanced 
+- - - = Unbalanced
 
 // end::explanation[]
 
@@ -25,152 +39,94 @@ all the text
 == Use-cases - when to use the Balance Triads algorithm
 
 // tag::use-case[]
-* one
-* two
-* threee
+* Balanced triads algorithm has been used to analyse structural balance of networks in the animal kingdom. Find this study in https://www.tau.ac.il/~geffene/PDFs/93-Anim_Behav_2013b.pdf[Structural balance in the social networks of a wild mammal].
+* Balanced triads algorithm has been used to evaluate dynamics in the process of "healing" imbalanced triads and restoring structural balance in a social network. Find more details in https://www.maths.ed.ac.uk/~antal/Mypapers/friends05.pdf[Dynamics of social balance on networks].
+* Balanced triads algorithm and balance theory allow us to better understand consumer to brand relationship and consumer behaviour as shown in the study of https://www2.bc.edu/arch-woodside/sep%2021heider%20balance%20theory.pdf[Updating Heider’s Balance Theory in Consumer Behaviour] by Woodside and Chabet.
 // end::use-case[]
 
 
 [[algorithms-balanced-triads-sample]]
 == Balanced Triads algorithm sample
 
+This sample will explain the Balanced Triads algorithm, using a simple graph:
+
+image::balanced_triads.png[]
+
 .The following will create a sample graph:
 [source, cypher]
 ----
-include::scripts/triangle-count.cypher[tag=create-sample-graph]
+include::scripts/balanced-triads.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a stream of triples, with `nodeId` for each triangle:
+.The following will count the number of balanced and unbalanced triads that a node is a member of, and return a stream with `nodeId`, `balanced` and `unbalanced`:
 [source, cypher]
 ----
-include::scripts/triangle-count.cypher[tag=stream-triples]
+include::scripts/balanced-triads.cypher[tag=stream-sample-graph]
 ----
 
-// tag::stream-triples-result[]
+.The following will count the number of balanced and unbalanced triads that a node is member of, and write it back. It will return the total balanced triads and unbalanced triads count of the given graph:
+[source, cypher]
+----
+include::scripts/balanced-triads.cypher[tag=write-sample-graph]
+----
+
+// tag::stream-sample-graph-result[]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| nodeA   | nodeB   | nodeC
-| Will    | Michael | Chris
-| Will    | Mark    | Michael
-| Michael | Karin   | Chris
+| nodeId  | balanced | unbalanced
+| Anna    | 3        | 3
+| Matt    | 1        | 1
+| Larry   | 1        | 1
+| Stefan  | 1        | 1
+| Sophia  | 1        | 1
+| Dolores | 1        | 1
 |===
-// end::stream-triples-result[]
+// end::stream-sample-graph-result[]
 
-// tag::stream-triples-explanation[]
-We can see that there are `KNOWS` triangles containing "Will, Michael, and Chris", "Will, Mark, and Michael", and "Michael, Karin, and Chris".
-This means that everybody in the triangle knows each other.
-// end::stream-triples-explanation[]
-
-.The following will count the number of triangles that a node is member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
-[source, cypher]
-----
-include::scripts/triangle-count.cypher[tag=triangle-write-sample-graph]
-----
-
-.The following will count the number of triangles that a node is member of, and return a stream with `nodeId` and `triangleCount`:
-[source, cypher]
-----
-include::scripts/triangle-count.cypher[tag=triangle-stream-sample-graph]
-----
-
-// tag::triangle-stream-sample-graph-result[]
-.Results
-[opts="header",cols="1,1,1"]
-|===
-| Name    | Triangles | Coefficient
-| Karin   | 1         | 1
-| Mark    | 1         | 1
-| Chris   | 2         | 0.6666666666666666
-| Will    | 2         | 0.6666666666666666
-| Michael | 3         | 0.3
-| Alice   | 0         | 0
-|===
-// end::triangle-stream-sample-graph-result[]
-
-// tag::triangle-stream-sample-graph-explanation[]
-We learn that Michael is part of the most triangles, but it's Karin and Mark who are the best at introducing their friends - all of the people who know them, know each other!
-// end::triangle-stream-sample-graph-explanation[]
-
+// tag::stream-sample-graph-explanation[]
+Anna is a member of six triads out of which three are balanced and three are unbalanced.
+All others are each members of one balanced and one unbalanced triad or triangle.
+// end::stream-sample-graph-explanation[]
 
 [[algorithms-balanced-triads-example]]
 == Example usage
 
-In graph theory, a https://en.wikipedia.org/wiki/Clustering_coefficient[clustering coefficient] is a measure of the degree to which nodes in a graph tend to cluster together.
-Evidence suggests that in most real-world networks, and in particular social networks, nodes tend to create tightly knit groups characterised by a relatively high density of ties; this likelihood tends to be greater than the average probability of a tie randomly established between two nodes.
-
-We check if this holds true for Yelp's social network of friends:
-
-[source, cypher]
-----
-include::scripts/triangle-count.cypher[tag=triangle-write-yelp]
-----
-
-Average clustering coefficient is 0.0523, which is really low for a social network.
-This indicates that groups of friends are not tightly knit together, but rather sparse.
-We can assume that users are not on Yelp for finding and creating friends, like Facebook for example, but rather something else, like finding good restaurant recommendations.
-
-Local triangle count and clustering coefficient of nodes can be used as features in finding influencers in social networks.
-
-
 [[algorithms-balanced-triads-syntax]]
 == Syntax
 
-.The following will return a stream of triples with `nodeId` for each triangle:
+.The following will count the number of balanced and unbalanced triads that a node is a member of, and return a stream with `nodeId`, `balanced` and 'unbalanced':
 [source, cypher]
 ----
-CALL algo.triangle.stream(label:String, relationship:String, {concurrency:4})
-YIELD nodeA, nodeB, nodeC
+CALL algo.balancedTriads.stream(label:String, relationship:String, {concurrency:4})
+YIELD nodeId, balanced, unbalanced
 ----
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
-| Name         | Type   | Default        | Optional | Description
-| label        | string | null           | yes      | The label to load from the graph. If null, load all nodes
-| relationship | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
-| concurrency  | int    | available CPUs | yes      | The number of concurrent threads
+| Name           | Type   | Default        | Optional | Description
+| label          | string | null           | yes      | The label to load from the graph. If null, load all nodes
+| relationship   | string | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| weightProperty | string | null           | no       | The property name that contains weight. If weight is positive, algorithm treats the relationship as positive. With a negative weight, relationship is treated as negative. Must be numeric.
+| concurrency    | int    | available CPUs | yes      | The number of concurrent threads
 |===
 
 .Results
 [opts="header",cols="1,1,6"]
 |===
-| Name  | Type | Description
-| nodeA | int  | The ID of node in the given triangle
-| nodeB | int  | The ID of node in the given triangle
-| nodeC | int  | The ID of node in the given triangle
+| Name       | Type | Description
+| nodeId     | int  | The ID of node
+| balanced   | int  | The number of balanced triads a node is member of
+| unbalanced | int  | The number of unbalanced a node is member of
 |===
 
-.The following will count the number of triangles that a node is a member of, and return a stream with `nodeId` and `triangleCount`:
+.The following will count the number of balanced and unbalanced triads that a node is member of, and write it back. It will return the total balanced triads and unbalanced triads count of the given graph:
 [source, cypher]
 ----
-CALL algo.triangleCount.stream(label:String, relationship:String, {concurrency:4})
-YIELD nodeId, triangles
-----
-
-.Parameters
-[opts="header",cols="1,1,1,1,4"]
-|===
-| Name         | Type   | Default        | Optional | Description
-| label        | string | null           | yes      | The label to load from the graph. If null, load all nodes
-| relationship | string | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
-| concurrency  | int    | available CPUs | yes      | The number of concurrent threads
-|===
-
-.Results
-[opts="header",cols="1,1,6"]
-|===
-| Name      | Type | Description
-| nodeId    | int  | The ID of node
-| triangles | int  | The number of triangles a node is member of
-|===
-
-.The following will count the number of triangles that a node is a member of, and write it back. It will return the total triangle count and average clustering coefficient of the given graph:
-[source, cypher]
-----
-CALL algo.triangleCount(label:String, relationship:String,
-    {concurrency:4, write:true, writeProperty:'triangles', clusteringCoefficientProperty:'coefficient'})
-YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient
+CALL algo.balancedTriads(label:String, relationship:String,
+  {concurrency:4, write:true, weightProperty:'weight', balancedProperty:'balanced', unbalancedProperty:'unbalanced'})
+YIELD loadMillis, computeMillis, writeMillis, nodeCount, balancedTriadCount, unbalancedTriadCount
 ----
 
 .Parameters
@@ -180,9 +136,11 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 | label                         | string  | null           | yes      | The label to load from the graph. If null, load all nodes
 | relationship                  | string  | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
 | concurrency                   | int     | available CPUs | yes      | The number of concurrent threads
+| weightProperty                | string  | null           | no       | The property name that contains weight. If weight is positive, algorithm treats the relationship as positive. With a negative weight, relationship is treated as negative. Must be numeric.
+| balancedProperty              | string  | 'balanced'     | yes      | The property name written back to the count of balanced triads a node is member of
+| unbalancedProperty            | string  | 'unbalanced'   | yes      | The property name written back to the count of unbalanced triads a node is member of
 | write                         | boolean | true           | yes      | Specifies if the result should be written back as a node property
-| writeProperty                 | string  | 'triangles'    | yes      | The property name the number of triangles a node is member of is written to
-| clusteringCoefficientProperty | string  | 'coefficient'  | yes      | The property name clustering coefficient of the node is written to
+
 |===
 
 .Results
@@ -193,37 +151,26 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 | loadMillis                   | int   | Milliseconds for loading data
 | evalMillis                   | int   | Milliseconds for running the algorithm
 | writeMillis                  | int   | Milliseconds for writing result data back
-| triangleCount                | int   | The number of triangles in the given graph
-| averageClusteringCoefficient | float | The average clustering coefficient of the given graph
+| balancedTriadCount           | int   | The number of balanced triads in the given graph
+| unbalancedTriadCount         | int   | The number of unbalanced triads in the given graph
 |===
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/triangle-count.cypher[tag=cypher-loading]
-----
 
 
 == Graph type support
 
-The Triangle Count algorithms support the following graph type:
+The Balanced Triads algorithm support the following graph type:
 
-* [x] undirected, unweighted
+* [x] undirected, weighted
 
 
 ifndef::env-docs[]
 == References
 
 // tag::references[]
-* a
-* b
-* c
+* [1] https://en.wikipedia.org/wiki/Balance_theory
+* [2] https://en.wikipedia.org/wiki/Signed_graph
+* [3] https://www.tau.ac.il/~geffene/PDFs/93-Anim_Behav_2013b.pdf
+* [4] https://www.maths.ed.ac.uk/~antal/Mypapers/friends05.pdf
+* [5] https://www2.bc.edu/arch-woodside/sep%2021heider%20balance%20theory.pdf
 // end::references[]
 endif::env-docs[]
