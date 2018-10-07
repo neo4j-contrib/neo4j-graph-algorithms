@@ -55,7 +55,7 @@ public abstract class RandomGraphTestCase {
     private static final String RANDOM_GRAPH_TPL =
             "FOREACH (x IN range(1, %d) | CREATE (:Label)) " +
                     "WITH 0.1 AS p " +
-                    "MATCH (n1),(n2) WITH n1,n2 LIMIT 1000 WHERE rand() < p " +
+                    "MATCH (n1),(n2) WITH n1,n2,p LIMIT 1000 WHERE rand() < p " +
                     "CREATE (n1)-[:TYPE {weight:ceil(10*rand())/10}]->(n2)";
 
     private static final String RANDOM_LABELS =
@@ -88,7 +88,7 @@ public abstract class RandomGraphTestCase {
         final GraphDatabaseService db = TestDatabaseCreator.createTestDatabase();
         for (String cypher : cyphers) {
             try (Transaction tx = db.beginTx()) {
-                db.execute(cypher).close();
+                 db.execute(cypher).close();
                 tx.success();
             } catch (Exception e) {
                 markFailure();
