@@ -15,7 +15,7 @@ def main(token, tag_name, file_name):
 
     with open(file_name, "rb") as file_name_handle:
         upload_url = "https://uploads.github.com/repos/neo4j-contrib/neo4j-graph-algorithms/releases/{release_id}/assets?name={file_name}".format(
-            release_id=release_id, file_name=file_name
+            release_id=release_id, file_name=file_name.split("/")[-1]
         )
         print(upload_url)
 
@@ -32,5 +32,5 @@ if __name__ == "__main__":
 
     token = os.getenv("GITHUB_TOKEN")
     tag_name = sys.argv[1]
-    file_name = sys.argv[2].split("/")[-1]
+    file_name = sys.argv[2]
     main(token, tag_name, file_name)
