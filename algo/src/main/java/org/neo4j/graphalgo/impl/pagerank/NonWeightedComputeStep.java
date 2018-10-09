@@ -9,6 +9,7 @@ import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
 final class NonWeightedComputeStep extends BaseComputeStep implements RelationshipConsumer  {
 
+    private final RelationshipIterator relationshipIterator;
 
     NonWeightedComputeStep(
             double dampingFactor,
@@ -17,7 +18,8 @@ final class NonWeightedComputeStep extends BaseComputeStep implements Relationsh
             Degrees degrees,
             int partitionSize,
             int startNode) {
-        super(dampingFactor, sourceNodeIds, relationshipIterator, degrees, partitionSize, startNode);
+        super(dampingFactor, sourceNodeIds, degrees, partitionSize, startNode);
+        this.relationshipIterator = relationshipIterator;
     }
 
 

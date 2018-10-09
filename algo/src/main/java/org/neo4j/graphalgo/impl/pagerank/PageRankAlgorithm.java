@@ -37,16 +37,18 @@ public interface PageRankAlgorithm {
     static PageRankAlgorithm weightedOf(
             Graph graph,
             double dampingFactor,
-            LongStream sourceNodeIds) {
-        return weightedOf(AllocationTracker.EMPTY, dampingFactor, sourceNodeIds, graph);
+            LongStream sourceNodeIds
+            ) {
+        return weightedOf(AllocationTracker.EMPTY, dampingFactor, sourceNodeIds, graph, false);
     }
 
     static PageRankAlgorithm weightedOf(
             AllocationTracker tracker,
             double dampingFactor,
             LongStream sourceNodeIds,
-            Graph graph) {
-        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant();
+            Graph graph,
+            boolean cacheWeights) {
+        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant(cacheWeights);
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
             return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, computeStepFactory);
@@ -127,8 +129,9 @@ public interface PageRankAlgorithm {
             LongStream sourceNodeIds,
             ExecutorService pool,
             int concurrency,
-            int batchSize) {
-        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant();
+            int batchSize,
+            boolean cacheWeights) {
+        WeightedPageRankVariant pageRankVariant = new WeightedPageRankVariant(cacheWeights);
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
             return new HugePageRank(
@@ -139,7 +142,7 @@ public interface PageRankAlgorithm {
                     huge,
                     dampingFactor,
                     sourceNodeIds,
-                    computeStepFactory
+                    pageRankVariant
             );
         }
 
@@ -150,6 +153,6 @@ public interface PageRankAlgorithm {
                 graph,
                 dampingFactor,
                 sourceNodeIds,
-                computeStepFactory);
+                pageRankVariant);
     }
 }

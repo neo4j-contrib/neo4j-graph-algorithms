@@ -201,6 +201,7 @@ public final class PageRankProc {
 
         PageRankAlgorithm prAlgo;
         if(weightPropertyKey != null) {
+            final boolean cacheWeights = configuration.get("cacheWeights", false);
             prAlgo = PageRankAlgorithm.weightedOf(
                     tracker,
                     graph,
@@ -208,7 +209,8 @@ public final class PageRankProc {
                     sourceNodeIds,
                     Pools.DEFAULT,
                     concurrency,
-                    batchSize);
+                    batchSize,
+                    cacheWeights);
         } else {
             prAlgo = PageRankAlgorithm.of(
                     tracker,

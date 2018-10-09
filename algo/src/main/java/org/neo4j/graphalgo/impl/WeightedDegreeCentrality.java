@@ -1,16 +1,13 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.impl.pagerank.HugeComputeStep;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -22,7 +19,9 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
     private final ExecutorService executor;
     private final int concurrency;
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
+
     private double[] degrees;
+    private double[][] weights;
 
     public WeightedDegreeCentrality(
             Graph graph,
@@ -40,14 +39,19 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.direction = direction;
         degrees = new double[nodeCount];
+        weights = new double[nodeCount][];
     }
 
-    public WeightedDegreeCentrality compute() {
+    public WeightedDegreeCentrality compute(boolean cacheWeights) {
         nodeQueue.set(0);
 
-        List<DegreeTask> tasks = new ArrayList<>();
+        List<Runnable> tasks = new ArrayList<>();
         for (int i = 0; i < concurrency; i++) {
-            tasks.add(new DegreeTask());
+            if(cacheWeights) {
+                tasks.add(new DegreeAndWeightsTask());
+            } else {
+                tasks.add(new DegreeTask());
+            }
         }
         ParallelUtil.runWithConcurrency(concurrency, tasks, executor);
 
@@ -79,6 +83,36 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
                     if(weight > 0) {
                         weightedDegree[0] += weight;
                     }
+
+                    return true;
+                });
+
+                degrees[nodeId] = weightedDegree[0];
+
+            }
+        }
+    }
+
+    private class DegreeAndWeightsTask implements Runnable {
+        @Override
+        public void run() {
+            for (; ; ) {
+                final int nodeId = nodeQueue.getAndIncrement();
+                if (nodeId >= nodeCount || !running()) {
+                    return;
+                }
+
+                weights[nodeId] = new double[graph.degree(nodeId, direction)];
+
+                int[] index = {0};
+                double[] weightedDegree = new double[1];
+                graph.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId, weight) -> {
+                    if(weight > 0) {
+                        weightedDegree[0] += weight;
+                    }
+
+                    weights[nodeId][index[0]] = weight;
+                    index[0]++;
                     return true;
                 });
 
@@ -90,6 +124,9 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
 
     public double[] degrees() {
         return degrees;
+    }
+    public double[][] weights() {
+        return weights;
     }
 
     public Stream<DegreeCentrality.Result> resultStream() {

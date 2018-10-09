@@ -2,27 +2,49 @@ package org.neo4j.graphalgo.impl.pagerank;
 
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.impl.WeightedDegreeCentrality;
-import org.neo4j.graphdb.Direction;
-
-import java.util.concurrent.ExecutorService;
 
 public class WeightedPageRankVariant implements PageRankVariant {
-    public ComputeStep createComputeStep(double dampingFactor, int[] sourceNodeIds, RelationshipIterator relationshipIterator, Degrees degrees, RelationshipWeights relationshipWeights, int partitionCount, int start, double[] aggregatedDegrees) {
-        return new WeightedComputeStep(
-                dampingFactor,
-                sourceNodeIds,
-                relationshipIterator,
-                degrees,
-                relationshipWeights,
-                partitionCount,
-                start,
-                aggregatedDegrees
-        );
+    private boolean cacheWeights;
+
+    public WeightedPageRankVariant(boolean cacheWeights) {
+        this.cacheWeights = cacheWeights;
+    }
+
+
+    public ComputeStep createComputeStep(double dampingFactor, int[] sourceNodeIds,
+                                         RelationshipIterator relationshipIterator,
+                                         WeightedRelationshipIterator weightedRelationshipIterator,
+                                         Degrees degrees,
+                                         int partitionCount, int start,
+                                         DegreeCache degreeCache) {
+        if(cacheWeights ){
+            return new WeightedWithCachedWeightsComputeStep(
+                    dampingFactor,
+                    sourceNodeIds,
+                    relationshipIterator,
+                    degrees,
+                    partitionCount,
+                    start,
+                    degreeCache
+            );
+        } else {
+            return new WeightedComputeStep(
+                    dampingFactor,
+                    sourceNodeIds,
+                    weightedRelationshipIterator,
+                    degrees,
+                    partitionCount,
+                    start,
+                    degreeCache
+            );
+        }
     }
 
     @Override
-    public HugeComputeStep createHugeComputeStep(double dampingFactor, long[] sourceNodeIds, HugeRelationshipIterator relationshipIterator, HugeDegrees degrees, HugeRelationshipWeights relationshipWeights, AllocationTracker tracker, int partitionCount, long start, double[] aggregatedDegrees) {
+    public HugeComputeStep createHugeComputeStep(double dampingFactor, long[] sourceNodeIds,
+                                                 HugeRelationshipIterator relationshipIterator, HugeDegrees degrees,
+                                                 HugeRelationshipWeights relationshipWeights, AllocationTracker tracker,
+                                                 int partitionCount, long start, DegreeCache aggregatedDegrees) {
         return new HugeWeightedComputeStep(
                 dampingFactor,
                 sourceNodeIds,
@@ -38,6 +60,6 @@ public class WeightedPageRankVariant implements PageRankVariant {
 
     @Override
     public DegreeComputer degreeComputer(Graph graph) {
-        return new WeightedDegreeComputer(graph);
+            return new WeightedDegreeComputer(graph, cacheWeights);
     }
 }
