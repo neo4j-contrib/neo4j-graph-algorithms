@@ -1,22 +1,23 @@
 package org.neo4j.graphalgo.impl.pagerank;
 
 import org.neo4j.graphalgo.api.Degrees;
+import org.neo4j.graphalgo.api.RelationshipIterator;
 import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightedRelationshipIterator;
 import org.neo4j.graphdb.Direction;
 
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
-final class WeightedComputeStep extends BaseComputeStep implements WeightedRelationshipConsumer {
+final class WeightedWithCachedWeightsComputeStep extends BaseComputeStep implements WeightedRelationshipConsumer {
     private final double[] aggregatedDegrees;
     private final WeightedRelationshipIterator relationshipIterator;
     private double sumOfWeights;
     private double delta;
 
-    WeightedComputeStep(
+    WeightedWithCachedWeightsComputeStep(
             double dampingFactor,
             int[] sourceNodeIds,
-            WeightedRelationshipIterator weightedRelationshipIterator,
+            RelationshipIterator relationshipIterator,
             Degrees degrees,
             int partitionSize,
             int startNode,
@@ -26,7 +27,7 @@ final class WeightedComputeStep extends BaseComputeStep implements WeightedRelat
                 degrees,
                 partitionSize,
                 startNode);
-        this.relationshipIterator = weightedRelationshipIterator;
+        this.relationshipIterator = new CachedWeightsRelationshipIterator(relationshipIterator, degreeCache.weights());
         this.aggregatedDegrees = degreeCache.aggregatedDegrees();
     }
 
@@ -59,5 +60,25 @@ final class WeightedComputeStep extends BaseComputeStep implements WeightedRelat
         }
 
         return true;
+    }
+
+    private class CachedWeightsRelationshipIterator implements WeightedRelationshipIterator {
+        private final RelationshipIterator delegate;
+        private final double[][] weights;
+
+        public CachedWeightsRelationshipIterator(RelationshipIterator relationshipIterator, double[][] weights) {
+            this.delegate = relationshipIterator;
+            this.weights = weights;
+        }
+
+        @Override
+        public void forEachRelationship(int nodeId, Direction direction, WeightedRelationshipConsumer consumer) {
+            final int[] index = {0};
+            delegate.forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId, relationId) -> {
+                consumer.accept(sourceNodeId, targetNodeId, -1, weights[nodeId][index[0]]);
+                index[0]++;
+                return true;
+            });
+        }
     }
 }

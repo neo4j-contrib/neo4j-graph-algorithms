@@ -23,7 +23,8 @@ public class HugeWeightedComputeStep extends HugeBaseComputeStep implements Huge
             HugeRelationshipWeights relationshipWeights,
             AllocationTracker tracker,
             int partitionSize,
-            long startNode, double[] aggregatedDegrees) {
+            long startNode,
+            DegreeCache degreeCache) {
         super(dampingFactor,
                 sourceNodeIds,
                 relationshipIterator,
@@ -32,7 +33,7 @@ public class HugeWeightedComputeStep extends HugeBaseComputeStep implements Huge
                 partitionSize,
                 startNode);
         this.relationshipWeights = relationshipWeights;
-        this.aggregatedDegrees = aggregatedDegrees;
+        this.aggregatedDegrees = degreeCache.aggregatedDegrees();
     }
 
     void singleIteration() {

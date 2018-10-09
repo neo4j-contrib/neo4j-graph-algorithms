@@ -179,6 +179,18 @@ public class PageRankProcIntegrationTest {
     }
 
     @Test
+    public void testWeightedPageRankWithCachedWeightsStream() throws Exception {
+        final Map<Long, Double> actual = new HashMap<>();
+        runQuery(
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'foo', cacheWeights: true}) YIELD node, score",
+                row -> actual.put(
+                        row.getNode("node").getId(),
+                        (Double) row.get("score")));
+
+        assertMapEquals(weightedExpected, actual);
+    }
+
+    @Test
     public void testWeightedPageRankWithAllRelationshipsEqualStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
