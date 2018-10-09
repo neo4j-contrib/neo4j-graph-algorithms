@@ -328,14 +328,15 @@ The PageRank algorithm supports the following graph types:
 
 * [x] directed, unweighted
 
-* [ ] directed, weighted
+* [x] directed, weighted
 
 * [x] undirected, unweighted
 
 ** Only with cypher projection
 
-* [ ] undirected, weighted
+* [x] undirected, weighted
 
+** Only with cypher projection
 
 ifndef::env-docs[]
 == References
