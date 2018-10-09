@@ -32,5 +32,5 @@ if __name__ == "__main__":
 
     token = os.getenv("GITHUB_TOKEN")
     tag_name = sys.argv[1]
-    file_name = sys.argv[2]
+    file_name = sys.argv[2].split("/")[-1]
     main(token, tag_name, file_name)
