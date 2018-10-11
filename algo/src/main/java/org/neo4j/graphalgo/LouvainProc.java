@@ -43,8 +43,9 @@ import java.util.stream.Stream;
  */
 public class LouvainProc {
 
-    public static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
-    public static final String DEFAULT_CLUSTER_PROPERTY = "communities";
+    public static final String INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY = "intermediateCommunitiesWriteProperty";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "community";
+    public static final String INCLUDE_INTERMEDIATE_COMMUNITIES = "includeIntermediateCommunities";
 
     @Context
     public GraphDatabaseAPI api;
@@ -93,7 +94,7 @@ public class LouvainProc {
         }
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> write(graph, louvain.getDendrogram(), configuration));
+            builder.timeWrite(() -> write(graph, louvain.getDendrogram(), louvain.getCommunityIds(), configuration));
         }
 
         return Stream.of(builder.build());
@@ -125,7 +126,7 @@ public class LouvainProc {
             return Stream.empty();
         }
 
-        return louvain.dendrogramStream();
+        return louvain.dendrogramStream(configuration.get(INCLUDE_INTERMEDIATE_COMMUNITIES, false));
     }
 
     public Graph graph(ProcedureConfiguration config) {
@@ -138,16 +139,18 @@ public class LouvainProc {
                 .load(config.getGraphImpl());
     }
 
-    private void write(Graph graph, int[][] communities, ProcedureConfiguration configuration) {
+    private void write(Graph graph, int[][] allCommunities, int[] finalCommunities, ProcedureConfiguration configuration) {
         log.debug("Writing results");
+        boolean includeIntermediateCommunities = configuration.get(INCLUDE_INTERMEDIATE_COMMUNITIES, false);
 
         new LouvainCommunityExporter(
                 api,
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
                 graph,
-                communities[0].length,
-                configuration.getWriteProperty(DEFAULT_CLUSTER_PROPERTY))
-                .export(communities);
+                allCommunities[0].length,
+                configuration.getWriteProperty(DEFAULT_CLUSTER_PROPERTY),
+                configuration.get(INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY, "communities"))
+                .export(allCommunities, finalCommunities, includeIntermediateCommunities);
     }
 }

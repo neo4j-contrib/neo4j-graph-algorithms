@@ -209,15 +209,18 @@ public class Louvain extends Algorithm<Louvain> {
                 .mapToObj(i -> new Result(i, communities[i]));
     }
 
-    public Stream<StreamingResult> dendrogramStream() {
+    public Stream<StreamingResult> dendrogramStream(boolean includeIntermediateCommunities) {
         return IntStream.range(0, rootNodeCount)
                 .mapToObj(i -> {
-                    List<Long> communities = new ArrayList<>(dendrogram.length);
-                    for (int[] community : dendrogram) {
-                        communities.add((long) community[i]);
+                    List<Long> communitiesList = null;
+                    if (includeIntermediateCommunities) {
+                        communitiesList = new ArrayList<>(dendrogram.length);
+                        for (int[] community : dendrogram) {
+                            communitiesList.add((long) community[i]);
+                        }
                     }
 
-                    return new StreamingResult(root.toOriginalNodeId(i), communities);
+                    return new StreamingResult(root.toOriginalNodeId(i), communitiesList, communities[i]);
                 });
     }
 
@@ -272,11 +275,13 @@ public class Louvain extends Algorithm<Louvain> {
     public static final class StreamingResult {
         public final long nodeId;
         public final List<Long> communities;
+        public final long community;
 
-        public StreamingResult(long nodeId, List<Long> communities) {
+        public StreamingResult(long nodeId, List<Long> communities, long community) {
 
             this.nodeId = nodeId;
             this.communities = communities;
+            this.community = community;
         }
     }
 }
