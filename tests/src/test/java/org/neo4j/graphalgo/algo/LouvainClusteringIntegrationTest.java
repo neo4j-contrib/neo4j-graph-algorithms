@@ -86,6 +86,12 @@ public class LouvainClusteringIntegrationTest {
         DB.execute(cypher);
     }
 
+    @Before
+    public void clearCommunities() {
+        String cypher  ="MATCH (n) REMOVE n.communities REMOVE n.community";
+        DB.execute(cypher);
+    }
+
     @Rule
     public ExpectedException exceptions = ExpectedException.none();
 
@@ -158,7 +164,7 @@ public class LouvainClusteringIntegrationTest {
     public void testWrite() {
         final String cypher = "CALL algo.louvain('', '', {concurrency:1})";
         final IntIntScatterMap testMap = new IntIntScatterMap();
-        DB.execute(cypher);
+        DB.execute(cypher).close();
 
         String readQuery = "MATCH (n) RETURN n.community AS community";
 
@@ -175,7 +181,7 @@ public class LouvainClusteringIntegrationTest {
     public void testWriteIncludingIntermediateCommunities() {
         final String cypher = "CALL algo.louvain('', '', {concurrency:1, includeIntermediateCommunities: true})";
         final IntIntScatterMap testMap = new IntIntScatterMap();
-        DB.execute(cypher);
+        DB.execute(cypher).close();
 
         String readQuery = "MATCH (n) RETURN n.communities AS communities";
 
@@ -191,7 +197,7 @@ public class LouvainClusteringIntegrationTest {
     @Test
     public void testWriteNoIntermediateCommunitiesByDefault() {
         final String cypher = "CALL algo.louvain('', '', {concurrency:1})";
-        DB.execute(cypher);
+        DB.execute(cypher).close();
 
         final AtomicLong testInteger = new AtomicLong(0);
         String readQuery = "MATCH (n) WHERE not(exists(n.communities)) RETURN count(*) AS count";
@@ -304,12 +310,12 @@ public class LouvainClusteringIntegrationTest {
 
     public int[] getClusterId(String nodeName) {
 
-        Object id[] = {0};
+        int id[] = {0};
         DB.execute("MATCH (n) WHERE n.name = '" + nodeName + "' RETURN n").accept(row -> {
-            id[0] = row.getNode("n").getProperty("communities");
+            id[0] = (int) row.getNode("n").getProperty("community");
             return true;
         });
-        return (int[]) id[0];
+        return id;
     }
 
 }
