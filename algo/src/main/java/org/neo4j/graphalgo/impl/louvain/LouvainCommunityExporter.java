@@ -40,6 +40,7 @@ public class LouvainCommunityExporter extends StatementApi {
     private final int concurrency;
     private final IdMapping mapping;
     private final int nodeCount;
+    private final int intermediateCommunitiesPropertyId;
     private Integer propertyId;
 
     public LouvainCommunityExporter(GraphDatabaseAPI api,
@@ -47,53 +48,86 @@ public class LouvainCommunityExporter extends StatementApi {
                                     int concurrency,
                                     IdMapping mapping,
                                     int nodeCount,
-                                    String propertyName) {
+                                    String propertyName,
+                                    String intermediateCommunitiesPropertyName) {
         super(api);
         this.pool = pool;
         this.concurrency = concurrency;
         this.mapping = mapping;
         this.nodeCount = nodeCount;
 
-            propertyId = applyInTransaction(statement -> statement.tokenWrite().propertyKeyGetOrCreateForName(propertyName));
-
+        propertyId = applyInTransaction(statement -> statement.tokenWrite().propertyKeyGetOrCreateForName(propertyName));
+        intermediateCommunitiesPropertyId = applyInTransaction(statement -> statement.tokenWrite().propertyKeyGetOrCreateForName(intermediateCommunitiesPropertyName));
     }
 
-    public void export(int[][] communities) {
+    public void export(int[][] communities, int[] finalCommunities, boolean includeIntermediateCommunities) {
         final Collection<PrimitiveIntIterable> batchIterables = ParallelUtil.batchIterables(concurrency, nodeCount);
         final ArrayList<Runnable> tasks = new ArrayList<>();
-        batchIterables.forEach(it -> tasks.add(new NodeBatchExporter(it, communities)));
+        batchIterables.forEach(it -> tasks.add(new NodeBatchExporter(it, communities, finalCommunities, includeIntermediateCommunities)));
         ParallelUtil.run(tasks, pool);
     }
 
     private class NodeBatchExporter implements Runnable {
 
         private final PrimitiveIntIterable iterable;
-        private final int[][] communities;
+        private final int[][] allCommunities;
+        private final int[] finalCommunities;
+        private final boolean includeIntermediateCommunities;
 
-        private NodeBatchExporter(PrimitiveIntIterable iterable, int[][] communities) {
+        private NodeBatchExporter(PrimitiveIntIterable iterable, int[][] allCommunities, int[] finalCommunities, boolean includeIntermediateCommunities) {
             this.iterable = iterable;
-            this.communities = communities;
+            this.allCommunities = allCommunities;
+            this.finalCommunities = finalCommunities;
+            this.includeIntermediateCommunities = includeIntermediateCommunities;
         }
 
         @Override
         public void run() {
+            if (includeIntermediateCommunities) {
+                writeEverything();
+            } else {
+                onlyWriteFinalCommunities();
+            }
+        }
+
+        private void writeEverything() {
             acceptInTransaction(statement -> {
                 final Write dataWriteOperations = statement.dataWrite();
                 for(PrimitiveIntIterator it = iterable.iterator(); it.hasNext(); ) {
                     final int id = it.next();
                     // build int array
-                    final int[] data = new int[communities.length];
+                    final int[] data = new int[allCommunities.length];
                     for (int i = 0; i < data.length; i++) {
                         try {
-                            data[i] = communities[i][id];
+                            data[i] = allCommunities[i][id];
                         } catch (Exception e) {
                             throw e; // TODO
                         }
                     }
+
                     dataWriteOperations.nodeSetProperty(
                             mapping.toOriginalNodeId(id),
                             propertyId,
+                            Values.intValue(finalCommunities[id]));
+
+                    dataWriteOperations.nodeSetProperty(
+                            mapping.toOriginalNodeId(id),
+                            intermediateCommunitiesPropertyId,
                             Values.intArray(data));
+                }
+            });
+        }
+
+        private void onlyWriteFinalCommunities() {
+            acceptInTransaction(statement -> {
+                final Write dataWriteOperations = statement.dataWrite();
+                for(PrimitiveIntIterator it = iterable.iterator(); it.hasNext(); ) {
+                    final int id = it.next();
+
+                    dataWriteOperations.nodeSetProperty(
+                            mapping.toOriginalNodeId(id),
+                            propertyId,
+                            Values.intValue(finalCommunities[id]));
                 }
             });
         }

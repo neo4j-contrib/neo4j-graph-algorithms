@@ -151,6 +151,8 @@ YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
 | write          | boolean | true           | yes      | Specifies if the result should be written back as a node property
 | writeProperty  | string  | 'community'    | yes      | The property name written back to the ID of the community that particular node belongs to
 | defaultValue   | float   | null           | yes      | The default value of the weight in case it is missing or invalid
+| includeIntermediateCommunities          | boolean | false           | yes      | Specifies whether an array of intermediate communities should be returned
+| intermediateCommunitiesWriteProperty  | string  | 'communities'    | yes      | The property name written back to the ID of the intermediate communities that particular node belongs to
 | concurrency    | int     | available CPUs | yes      | The number of concurrent threads
 | graph          | string  | 'heavy'        | yes      | Use 'heavy' when describing the subset of the graph with label and relationship-type parameter. Use 'cypher' for describing the subset with cypher node-statement and relationship-statement
 |===

@@ -137,6 +137,8 @@ public class LouvainMultiLevelTest {
             }
             System.out.println("level " + i + ": " + Arrays.toString(dendogram[i - 1]));
         }
+
         assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 2, 2, 2}, dendogram[0]);
+        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 2, 2, 2}, algorithm.getCommunityIds());
     }
 }
