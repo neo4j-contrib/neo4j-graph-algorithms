@@ -164,7 +164,7 @@ public class JaccardTest {
 
     @Test
     public void topNjaccardStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2,"similarityCutoff",-1.0)));
         assert01(results.next());
         assert02(results.next());
         assertFalse(results.hasNext());
@@ -172,7 +172,7 @@ public class JaccardTest {
 
     @Test
     public void jaccardStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1,"similarityCutoff",-1.0)));
         assertTrue(results.hasNext());
         assert01(results.next());
         assert02(results.next());
@@ -182,7 +182,7 @@ public class JaccardTest {
 
     @Test
     public void topKJaccardStreamTest() {
-        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1));
+        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1,"similarityCutoff",-1.0));
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 
         Result results = db.execute(STATEMENT_STREAM, params);
@@ -227,7 +227,7 @@ public class JaccardTest {
 
     @Test
     public void topK3jaccardStreamTest() {
-        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3));
+        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3, "similarityCutoff",-1.0));
 
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 

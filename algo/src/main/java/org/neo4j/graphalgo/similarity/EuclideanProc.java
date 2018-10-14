@@ -44,7 +44,7 @@ public class EuclideanProc extends SimilarityProc {
 
         WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration));
 
-        double similarityCutoff = getSimilarityCutoff(configuration);
+        double similarityCutoff = configuration.get("similarityCutoff", -1.0D);
         // as we don't compute the sqrt until the end
         if (similarityCutoff > 0d) similarityCutoff *= similarityCutoff;
 
@@ -69,7 +69,7 @@ public class EuclideanProc extends SimilarityProc {
 
         WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration));
 
-        double similarityCutoff = getSimilarityCutoff(configuration);
+        double similarityCutoff = configuration.get("similarityCutoff", -1.0D);
         // as we don't compute the sqrt until the end
         if (similarityCutoff > 0d) similarityCutoff *= similarityCutoff;
 

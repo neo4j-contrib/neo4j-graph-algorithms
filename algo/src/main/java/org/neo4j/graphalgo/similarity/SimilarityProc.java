@@ -88,7 +88,7 @@ public class SimilarityProc {
     }
 
     Double getSimilarityCutoff(ProcedureConfiguration configuration) {
-        return configuration.get("similarityCutoff", -1D);
+        return configuration.get("similarityCutoff", 0.1D);
     }
 
     <T> Stream<SimilarityResult> similarityStream(T[] inputs, SimilarityComputer<T> computer, ProcedureConfiguration configuration, double cutoff, int topK) {

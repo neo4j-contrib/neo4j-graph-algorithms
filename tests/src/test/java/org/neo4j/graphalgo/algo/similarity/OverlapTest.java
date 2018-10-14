@@ -174,7 +174,7 @@ public class OverlapTest {
 
     @Test
     public void overlapStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1,"similarityCutoff",-1.0)));
 
         assertTrue(results.hasNext());
         assert01(results.next());
@@ -229,7 +229,7 @@ public class OverlapTest {
 
     @Test
     public void topK3overlapStreamTest() {
-        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3));
+        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3, "similarityCutoff", -1.0));
 
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 

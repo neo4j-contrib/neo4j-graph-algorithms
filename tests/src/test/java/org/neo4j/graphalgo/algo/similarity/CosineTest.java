@@ -187,7 +187,7 @@ public class CosineTest {
 
     @Test
     public void topNcosineStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2,"similarityCutoff",-1.0)));
         assert01(results.next());
         assert02(results.next());
         assertFalse(results.hasNext());
@@ -195,7 +195,7 @@ public class CosineTest {
 
     @Test
     public void cosineStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1,"similarityCutoff",-1.0)));
         assertTrue(results.hasNext());
         assert01(results.next());
         assert02(results.next());
@@ -208,7 +208,7 @@ public class CosineTest {
 
     @Test
     public void topKCosineStreamTest() {
-        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1));
+        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1, "similarityCutoff", -1.0));
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
         Result results = db.execute(STATEMENT_STREAM, params);
         assertTrue(results.hasNext());
@@ -253,7 +253,7 @@ public class CosineTest {
 
     @Test
     public void topK3cosineStreamTest() {
-        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3));
+        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3, "similarityCutoff", -1.0));
 
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 
@@ -267,7 +267,7 @@ public class CosineTest {
 
     @Test
     public void simpleCosineTest() {
-        Map<String, Object> params = map("config", map());
+        Map<String, Object> params = map("config", map("similarityCutoff",-1.0));
 
         Map<String, Object> row = db.execute(STATEMENT,params).next();
         assertEquals((double) row.get("p25"), 0.0, 0.01);
@@ -283,7 +283,7 @@ public class CosineTest {
     public void simpleCosineFromEmbeddingTest() {
         db.execute(STORE_EMBEDDING_STATEMENT);
 
-        Map<String, Object> params = map("config", map());
+        Map<String, Object> params = map("config", map("similarityCutoff",-1.0));
 
         Map<String, Object> row = db.execute(EMBEDDING_STATEMENT,params).next();
         assertEquals((double) row.get("p25"), 0.0, 0.01);
