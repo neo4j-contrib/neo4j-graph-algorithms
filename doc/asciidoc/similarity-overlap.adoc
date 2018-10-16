@@ -8,7 +8,7 @@ This section describes the Overlap Similarity algorithm in the Neo4j Graph Algor
 
 // tag::introduction[]
 link:https://en.wikipedia.org/wiki/Overlap_coefficient[Overlap similarity] measures overlap between two sets.
-It is defined as the size of the intersection of two sets divided by the size of the smaller of the two sets
+It is defined as the size of the intersection of two sets, divided by the size of the smaller of the two sets.
 // end::introduction[]
 
 
@@ -19,16 +19,16 @@ It is defined as the size of the intersection of two sets divided by the size of
 
 Overlap similarity is computed using the following formula:
 
-image::jaccard.png[role="middle"]
+image::overlap.png[role="middle"]
 
 // This is the raw information for this image:
 // ```
-// O(A,B) = ∣A ∩ B∣ / min(∣A|,|B|)
+// O(A,B) = (∣A ∩ B∣) / (min(∣A|,|B|))
 // ```
 
 The library contains both procedures and functions to calculate similarity between sets of data.
 The function is best used when calculating the similarity between small numbers of sets.
-The procedures parallelize the computation and are therefore a better bet when computing similarities on bigger datasets.
+The procedures parallelize the computation, and are therefore a better bet when computing similarities on bigger datasets.
 
 // end::explanation[]
 
@@ -60,11 +60,11 @@ include::scripts/similarity-overlap.cypher[tag=function]
 // end::function[]
 
 // tag::function-explanation[]
-These two lists of numbers have an Overlap similarity of 0.66.
+These two lists of numbers have an overlap similarity of 0.66.
 We can see how this result is derived by breaking down the formula:
 
 ```
-O(A,B) = ∣A ∩ B∣ / min(∣A∣,∣B∣)
+O(A,B) = (∣A ∩ B∣) / (min(∣A|,|B|))
 O(A,B) = 2 / min(3,4)
        = 2 / 3
        = 0.66
@@ -77,7 +77,7 @@ O(A,B) = 2 / min(3,4)
 include::scripts/similarity-overlap.cypher[tag=create-sample-graph]
 ----
 
-.The following will return a stream of node pairs along with their intersection and Overlap similarities:
+.The following will return a stream of node pairs, along with their intersection and overlap similarities:
 [source, cypher]
 ----
 include::scripts/similarity-overlap.cypher[tag=stream]
@@ -97,11 +97,11 @@ include::scripts/similarity-overlap.cypher[tag=stream]
 |===
 // end::stream[]
 
-Fantasy and Dystopia are both clear sub genres of Science Fiction - 100% of the books that list those as genres also list Science Fiction as a genre.
-Dystopia is also a sub genre of Classics
-The others are less obvious - Dystopia probably isn't a sub genre of Fantasy, but the other two pairs could be sub genres.
+Fantasy and Dystopia are both clear subgenres of Science Fiction - 100% of the books that list those as genres also list Science Fiction as a genre.
+Dystopia is also a subgenre of Classics.
+The others are less obvious; Dystopia probably isn't a subgenre of Fantasy, but the other two pairs could be subgenres.
 
-.The following will return a stream of node pairs that have a similarity of at least 0.75, along with their intersection and Overlap similarities:
+.The following will return a stream of node pairs that have a similarity of at least 0.75, along with their intersection and overlap similarities:
 [source, cypher]
 ----
 include::scripts/similarity-overlap.cypher[tag=stream-similarity-cutoff]
@@ -123,7 +123,7 @@ We can see that those genres with lower similarity have been filtered out.
 If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` super genres for a given genre.
 We can do that by passing in the `topK` parameter.
 
-.The following will return a stream of genres along with the two most similar super genres to them (i.e. `k=2`):
+.The following will return a stream of genres, along with the two most similar super genres to them (i.e. `k=2`):
 [source, cypher]
 ----
 include::scripts/similarity-overlap.cypher[tag=stream-topk]
