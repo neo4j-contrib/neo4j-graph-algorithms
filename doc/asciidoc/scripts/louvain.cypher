@@ -22,9 +22,7 @@ MERGE (nCharles)-[:FRIEND]->(nDoug);
 CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
 
-MATCH (user:User) WHERE id(user) = nodeId
-
-RETURN user.id AS user, community
+RETURN algo.getNodeById(nodeId).id AS user, community
 ORDER BY community;
 
 // end::stream-sample-graph[]
