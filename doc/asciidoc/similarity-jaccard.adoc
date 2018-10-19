@@ -29,7 +29,7 @@ image::jaccard.png[role="middle"]
 
 The library contains both procedures and functions to calculate similarity between sets of data.
 The function is best used when calculating the similarity between small numbers of sets.
-The procedures parallelize the computation, and are therefore a better bet when computing similarities on bigger datasets.
+The procedures parallelize the computation, and are therefore more appropriate for computing similarities on bigger datasets.
 
 // end::explanation[]
 
