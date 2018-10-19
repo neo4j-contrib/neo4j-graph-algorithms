@@ -23,11 +23,7 @@ MERGE (chris)-[:KNOWS]->(karin);
 CALL algo.triangle.stream('Person','KNOWS')
 YIELD nodeA,nodeB,nodeC
 
-MATCH (a:Person) WHERE id(a) = nodeA
-MATCH (b:Person) WHERE id(b) = nodeB
-MATCH (c:Person) WHERE id(c) = nodeC
-
-RETURN a.id AS nodeA, b.id AS nodeB, c.id AS nodeC
+RETURN algo.getNodeById(nodeA).id AS nodeA, algo.getNodeById(nodeB).id AS nodeB, algo.getNodeById(nodeC).id AS nodeC
 
 // end::stream-triples[]
 
@@ -45,9 +41,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 CALL algo.triangleCount.stream('Person', 'KNOWS', {concurrency:4})
 YIELD nodeId, triangles, coefficient
 
-MATCH (p:Person) WHERE id(p) = nodeId
-
-RETURN p.id AS name, triangles, coefficient
+RETURN algo.getNodeById(nodeId).id AS name, triangles, coefficient
 ORDER BY coefficient DESC
 
 // end::triangle-stream-sample-graph[]

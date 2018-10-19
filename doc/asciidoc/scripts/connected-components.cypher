@@ -36,9 +36,7 @@ MERGE (nMark)-[:FRIEND]->(nMichael);
 CALL algo.unionFind.stream('User', 'FRIEND', {}) 
 YIELD nodeId,setId
 
-MATCH (u:User) WHERE id(u) = nodeId
-
-RETURN u.id AS user, setId
+RETURN algo.getNodeById(nodeId).id AS user, setId
 
 // end::unweighted-stream-sample-graph[]
 
@@ -54,9 +52,7 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis;
 CALL algo.unionFind.stream('User', 'FRIEND', {weightProperty:'weight', defaultValue:0.0, threshold:1.0, concurrency: 1})
 YIELD nodeId,setId
 
-MATCH (u:User) WHERE id(u) = nodeId
-
-RETURN u.id AS user, setId
+RETURN algo.getNodeById(nodeId).id AS user, setId
 
 // end::weighted-stream-sample-graph[]
 

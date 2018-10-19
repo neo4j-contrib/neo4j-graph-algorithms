@@ -31,9 +31,7 @@ MERGE (d)-[:LINKS]->(home)
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD nodeId, score
 
-MATCH (node) WHERE id(node) = nodeId
-
-RETURN node.name AS page,score
+RETURN algo.getNodeById(nodeId).name AS page,score
 ORDER BY score DESC
 
 // end::stream-sample-graph[]
@@ -88,9 +86,7 @@ CALL algo.pageRank.stream('Page', 'LINKS', {
 })
 YIELD nodeId, score
 
-MATCH (node) WHERE id(node) = nodeId
-
-RETURN node.name AS page,score
+RETURN algo.getNodeById(nodeId).name AS page,score
 ORDER BY score DESC
 
 // end::stream-sample-weighted-graph[]
@@ -110,9 +106,7 @@ MATCH (siteA:Page {name: "Site A"})
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85, sourceNodes: [siteA]})
 YIELD nodeId, score
 
-MATCH (node) WHERE id(node) = nodeId
-
-RETURN node.name AS page,score
+RETURN algo.getNodeById(nodeId).name AS page,score
 ORDER BY score DESC
 
 // end::ppr-stream-sample-graph[]

@@ -50,9 +50,8 @@ CALL algo.randomWalk.stream(id(home), 5, 1, {
 YIELD nodeIds
 
 UNWIND nodeIds AS nodeId
-MATCH (n) WHERE id(n) = nodeId
 
-RETURN n.name AS page
+RETURN algo.getNodeById(nodeId).name AS page
 
 // end::cypher-loading[]
 

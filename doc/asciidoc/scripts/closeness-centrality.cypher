@@ -22,9 +22,7 @@ MERGE (e)-[:LINK]->(d);
 CALL algo.closeness.stream('Node', 'LINK')
 YIELD nodeId, centrality
 
-MATCH (n:Node) WHERE id(n) = nodeId
-
-RETURN n.id AS node, centrality
+RETURN algo.getNodeById(nodeId).id AS node, centrality
 ORDER BY centrality DESC
 LIMIT 20;
 
