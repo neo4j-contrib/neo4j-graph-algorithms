@@ -5,7 +5,7 @@
 
     <groupId>org.neo4j</groupId>
     <artifactId>graph-algorithms-parent</artifactId>
-    <version>3.4.8.1</version>
+    <version>3.4.9.0</version>
     <packaging>pom</packaging>
     <name>Neo4j Graph Algorithms</name>
     <description>Efficient Graph Algorithms for Neo4j</description>
@@ -28,7 +28,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <neo4j.version>3.4.8</neo4j.version>
+        <neo4j.version>3.4.9</neo4j.version>
         <jmh.version>1.19</jmh.version>
         <javac.target>1.8</javac.target>
     </properties>
