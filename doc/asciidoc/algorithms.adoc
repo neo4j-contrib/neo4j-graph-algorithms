@@ -25,6 +25,8 @@ Whenever possible, we've applied these optimizations.
 
 include::pagerank.adoc[leveloffset=2]
 
+include::articlerank.adoc[leveloffset=2]
+
 include::betweenness-centrality.adoc[leveloffset=2]
 
 include::closeness-centrality.adoc[leveloffset=2]

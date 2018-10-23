@@ -48,13 +48,34 @@ public interface PageRankAlgorithm {
             LongStream sourceNodeIds,
             Graph graph,
             boolean cacheWeights) {
-        WeightedPageRankVariant computeStepFactory = new WeightedPageRankVariant(cacheWeights);
+        PageRankVariant pageRankVariant = new WeightedPageRankVariant(cacheWeights);
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
-            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, computeStepFactory);
+            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, pageRankVariant);
         }
 
-        return new PageRank(graph, dampingFactor, sourceNodeIds, computeStepFactory);
+        return new PageRank(graph, dampingFactor, sourceNodeIds, pageRankVariant);
+    }
+
+    static PageRankAlgorithm articleRankOf(
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds) {
+        return articleRankOf(AllocationTracker.EMPTY, dampingFactor, sourceNodeIds, graph);
+    }
+
+    static PageRankAlgorithm articleRankOf(
+            AllocationTracker tracker,
+            double dampingFactor,
+            LongStream sourceNodeIds,
+            Graph graph) {
+        PageRankVariant pageRankVariant = new ArticleRankVariant();
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(tracker, huge, dampingFactor, sourceNodeIds, pageRankVariant);
+        }
+
+        return new PageRank(graph, dampingFactor, sourceNodeIds, pageRankVariant);
     }
 
     static PageRankAlgorithm of(
@@ -69,7 +90,7 @@ public interface PageRankAlgorithm {
             double dampingFactor,
             LongStream sourceNodeIds,
             Graph graph) {
-        NonWeightedPageRankVariant computeStepFactory = new NonWeightedPageRankVariant();
+        PageRankVariant computeStepFactory = new NonWeightedPageRankVariant();
 
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
@@ -97,7 +118,7 @@ public interface PageRankAlgorithm {
             ExecutorService pool,
             int concurrency,
             int batchSize) {
-        NonWeightedPageRankVariant computeStepFactory = new NonWeightedPageRankVariant();
+        PageRankVariant pageRankVariant = new NonWeightedPageRankVariant();
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
             return new HugePageRank(
@@ -108,7 +129,7 @@ public interface PageRankAlgorithm {
                     huge,
                     dampingFactor,
                     sourceNodeIds,
-                    computeStepFactory
+                    pageRankVariant
                     );
         }
 
@@ -119,7 +140,7 @@ public interface PageRankAlgorithm {
                 graph,
                 dampingFactor,
                 sourceNodeIds,
-                computeStepFactory);
+                pageRankVariant);
     }
 
     static PageRankAlgorithm weightedOf(
@@ -131,7 +152,40 @@ public interface PageRankAlgorithm {
             int concurrency,
             int batchSize,
             boolean cacheWeights) {
-        WeightedPageRankVariant pageRankVariant = new WeightedPageRankVariant(cacheWeights);
+        PageRankVariant pageRankVariant = new WeightedPageRankVariant(cacheWeights);
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(
+                    pool,
+                    concurrency,
+                    batchSize,
+                    tracker,
+                    huge,
+                    dampingFactor,
+                    sourceNodeIds,
+                    pageRankVariant
+            );
+        }
+
+        return new PageRank(
+                pool,
+                concurrency,
+                batchSize,
+                graph,
+                dampingFactor,
+                sourceNodeIds,
+                pageRankVariant);
+    }
+
+    static PageRankAlgorithm articleRankOf(
+            AllocationTracker tracker,
+            Graph graph,
+            double dampingFactor,
+            LongStream sourceNodeIds,
+            ExecutorService pool,
+            int concurrency,
+            int batchSize) {
+        PageRankVariant pageRankVariant = new ArticleRankVariant();
         if (graph instanceof HugeGraph) {
             HugeGraph huge = (HugeGraph) graph;
             return new HugePageRank(

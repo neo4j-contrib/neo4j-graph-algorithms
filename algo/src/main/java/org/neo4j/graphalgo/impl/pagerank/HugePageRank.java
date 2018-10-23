@@ -204,9 +204,6 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         ExecutorService executor = ParallelUtil.canRunInParallel(this.executor)
                 ? this.executor : null;
 
-        WeightedDegreeCentrality degreeCentrality = new WeightedDegreeCentrality(graph, executor, concurrency, Direction.OUTGOING);
-        degreeCentrality.compute(false);
-
         computeSteps = createComputeSteps(
                 concurrency,
                 idMapping.nodeCount(),
