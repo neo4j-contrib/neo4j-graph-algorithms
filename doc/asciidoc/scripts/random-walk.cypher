@@ -33,9 +33,8 @@ CALL algo.randomWalk.stream(id(home), 3, 1)
 YIELD nodeIds
 
 UNWIND nodeIds AS nodeId
-MATCH (n) WHERE id(n) = nodeId
 
-RETURN n.name AS page
+RETURN algo.getNodeByid(nodeId).name AS page
 
 // end::stream-sample-graph[]
 
