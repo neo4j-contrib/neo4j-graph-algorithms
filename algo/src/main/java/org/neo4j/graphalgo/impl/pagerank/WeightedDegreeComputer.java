@@ -20,6 +20,6 @@ public class WeightedDegreeComputer implements DegreeComputer {
     public DegreeCache degree(ExecutorService executor, int concurrency) {
         WeightedDegreeCentrality degreeCentrality = new WeightedDegreeCentrality(graph, executor, concurrency, Direction.OUTGOING);
         degreeCentrality.compute(cacheWeights);
-        return new DegreeCache(degreeCentrality.degrees(), degreeCentrality.weights());
+        return new DegreeCache(degreeCentrality.degrees(), degreeCentrality.weights(), -1D);
     }
 }

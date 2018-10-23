@@ -11,6 +11,8 @@
     <d:tocentry linkend="algorithms-centrality"><?dbhtml filename="algorithms/centrality/index.html"?>
       <d:tocentry linkend="algorithms-pagerank"><?dbhtml filename="algorithms/page-rank/index.html"?>
       </d:tocentry>
+      <d:tocentry linkend="algorithms-articlerank"><?dbhtml filename="algorithms/article-rank/index.html"?>
+      </d:tocentry>
       <d:tocentry linkend="algorithms-betweenness-centrality"><?dbhtml filename="algorithms/betweenness-centrality/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-closeness-centrality"><?dbhtml filename="algorithms/closeness-centrality/index.html"?>
