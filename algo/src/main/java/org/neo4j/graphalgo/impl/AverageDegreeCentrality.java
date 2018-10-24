@@ -20,7 +20,6 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
     private final ExecutorService executor;
     private final int concurrency;
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
-    private MetricRegistry doubleRecorder;
     private final Histogram histogram;
 
     public AverageDegreeCentrality(
@@ -38,7 +37,7 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
         this.concurrency = concurrency;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.direction = direction;
-        this.doubleRecorder = new MetricRegistry();
+        MetricRegistry doubleRecorder = new MetricRegistry();
         this.histogram = doubleRecorder.histogram("stats");
     }
 
@@ -81,7 +80,6 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
     }
 
     public double average() {
-        SortedMap<String, Histogram> intervalHistogram = doubleRecorder.getHistograms();
-        return intervalHistogram.get("stats").getSnapshot().getMean();
+        return histogram.getSnapshot().getMean();
     }
 }
