@@ -1,6 +1,7 @@
 package org.neo4j.graphalgo.impl;
 
-import org.HdrHistogram.DoubleRecorder;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -8,8 +9,8 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> {
@@ -19,7 +20,8 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
     private final ExecutorService executor;
     private final int concurrency;
     private volatile AtomicInteger nodeQueue = new AtomicInteger();
-    private DoubleRecorder doubleRecorder;
+    private MetricRegistry doubleRecorder;
+    private final Histogram histogram;
 
     public AverageDegreeCentrality(
             Graph graph,
@@ -36,7 +38,8 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
         this.concurrency = concurrency;
         nodeCount = Math.toIntExact(graph.nodeCount());
         this.direction = direction;
-        this.doubleRecorder = new DoubleRecorder(5);
+        this.doubleRecorder = new MetricRegistry();
+        this.histogram = doubleRecorder.histogram("stats");
     }
 
     public AverageDegreeCentrality compute() {
@@ -72,12 +75,13 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
                 }
 
                 int degree = graph.degree(nodeId, direction);
-                doubleRecorder.recordValue(degree);
+                histogram.update(degree);
             }
         }
     }
 
     public double average() {
-        return doubleRecorder.getIntervalHistogram().getMean();
+        SortedMap<String, Histogram> intervalHistogram = doubleRecorder.getHistograms();
+        return intervalHistogram.get("stats").getSnapshot().getMean();
     }
 }
