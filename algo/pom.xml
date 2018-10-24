@@ -48,7 +48,6 @@
             <scope>provided</scope>
         </dependency>
 
-
         <dependency>
             <groupId>net.biville.florent</groupId>
             <artifactId>neo4j-sproc-compiler</artifactId>
