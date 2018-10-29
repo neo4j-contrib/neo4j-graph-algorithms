@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.algo.similarity;
 
 import org.junit.*;
+import org.neo4j.graphalgo.IsFiniteFunc;
 import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.graphalgo.similarity.CosineProc;
 import org.neo4j.graphdb.Result;
@@ -39,11 +40,12 @@ public class CosineTest {
     private static GraphDatabaseAPI db;
     private Transaction tx;
     public static final String STATEMENT_STREAM = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
-            "WITH {item:id(p), weights: collect(coalesce(r.stars,0))} as userData\n" +
+            "WITH {item:id(p), weights: collect(coalesce(r.stars,$missingValue))} as userData\n" +
             "WITH collect(userData) as data\n" +
             "call algo.similarity.cosine.stream(data,$config) " +
             "yield item1, item2, count1, count2, intersection, similarity " +
-            "RETURN * ORDER BY item1,item2";
+            "RETURN item1, item2, count1, count2, intersection, similarity " +
+            "ORDER BY item1,item2";
 
     public static final String STATEMENT = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
             "WITH {item:id(p), weights: collect(coalesce(r.stars,0))} as userData\n" +
@@ -68,7 +70,9 @@ public class CosineTest {
     @BeforeClass
     public static void beforeClass() throws KernelException {
         db = TestDatabaseCreator.createTestDatabase();
-        db.getDependencyResolver().resolveDependency(Procedures.class).registerProcedure(CosineProc.class);
+        Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
+        procedures.registerProcedure(CosineProc.class);
+        procedures.registerFunction(IsFiniteFunc.class);
         db.execute(buildDatabaseQuery()).close();
     }
 
@@ -111,8 +115,10 @@ public class CosineTest {
                 " (a)-[:LIKES {stars:1}]->(i1),\n" +
                 " (a)-[:LIKES {stars:2}]->(i2),\n" +
                 " (a)-[:LIKES {stars:5}]->(i3),\n" +
+
                 " (b)-[:LIKES {stars:1}]->(i1),\n" +
                 " (b)-[:LIKES {stars:3}]->(i2),\n" +
+
                 " (c)-[:LIKES {stars:4}]->(i3)\n";
 
         /*
@@ -148,10 +154,10 @@ public class CosineTest {
     public void cosineSingleMultiThreadComparision() {
         int size = 333;
         buildRandomDB(size);
-        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 1)));
-        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 2)));
-        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 4)));
-        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 8)));
+        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 1), "missingValue", 0));
+        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 2), "missingValue", 0));
+        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 4), "missingValue", 0));
+        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 8), "missingValue", 0));
         int count=0;
         while (result1.hasNext()) {
             Map<String, Object> row1 = result1.next();
@@ -169,10 +175,10 @@ public class CosineTest {
         int size = 333;
         buildRandomDB(size);
 
-        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 1)));
-        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 2)));
-        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 4)));
-        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 8)));
+        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 1), "missingValue", 0));
+        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 2), "missingValue", 0));
+        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 4), "missingValue", 0));
+        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 8), "missingValue", 0));
         int count=0;
         while (result1.hasNext()) {
             Map<String, Object> row1 = result1.next();
@@ -187,7 +193,7 @@ public class CosineTest {
 
     @Test
     public void topNcosineStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2), "missingValue", 0));
         assert01(results.next());
         assert02(results.next());
         assertFalse(results.hasNext());
@@ -195,7 +201,7 @@ public class CosineTest {
 
     @Test
     public void cosineStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1), "missingValue", 0));
         assertTrue(results.hasNext());
         assert01(results.next());
         assert02(results.next());
@@ -207,8 +213,23 @@ public class CosineTest {
     }
 
     @Test
+    public void cosineSkipStreamTest() {
+        Result results = db.execute(STATEMENT_STREAM,
+                map("config",map("concurrency",1, "skipValue", Double.NaN), "missingValue", Double.NaN));
+
+        assertTrue(results.hasNext());
+        assert01Skip(results.next());
+        assert02Skip(results.next());
+        assert03Skip(results.next());
+        assert12Skip(results.next());
+        assert13Skip(results.next());
+        assert23Skip(results.next());
+        assertFalse(results.hasNext());
+    }
+
+    @Test
     public void topKCosineStreamTest() {
-        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1));
+        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1), "missingValue", 0);
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
         Result results = db.execute(STATEMENT_STREAM, params);
         assertTrue(results.hasNext());
@@ -241,7 +262,7 @@ public class CosineTest {
 
     @Test
     public void topK4cosineStreamTest() {
-        Map<String, Object> params = map("config", map("topK", 4, "concurrency", 4, "similarityCutoff", -0.1));
+        Map<String, Object> params = map("config", map("topK", 4, "concurrency", 4, "similarityCutoff", -0.1), "missingValue", 0);
 
         Result results = db.execute(STATEMENT_STREAM,params);
         assertSameSource(results, 3, 0L);
@@ -253,7 +274,7 @@ public class CosineTest {
 
     @Test
     public void topK3cosineStreamTest() {
-        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3));
+        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3), "missingValue", 0);
 
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 
@@ -339,6 +360,15 @@ public class CosineTest {
     private void assert23(Map<String, Object> row) {
         assertEquals(2L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0d, row.get("similarity"));
+    }
+
+    private void assert23Skip(Map<String, Object> row) {
+        assertEquals(2L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
         assertEquals(1L, row.get("count1"));
         assertEquals(0L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
@@ -348,6 +378,15 @@ public class CosineTest {
     private void assert13(Map<String, Object> row) {
         assertEquals(1L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0d, row.get("similarity"));
+    }
+
+    private void assert13Skip(Map<String, Object> row) {
+        assertEquals(1L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
         assertEquals(2L, row.get("count1"));
         assertEquals(0L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
@@ -355,6 +394,15 @@ public class CosineTest {
     }
 
     private void assert12(Map<String, Object> row) {
+        assertEquals(1L, row.get("item1"));
+        assertEquals(2L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        // assertEquals(0L, row.get("intersection"));
+        assertEquals(0.0, row.get("similarity"));
+    }
+
+    private void assert12Skip(Map<String, Object> row) {
         assertEquals(1L, row.get("item1"));
         assertEquals(2L, row.get("item2"));
         assertEquals(2L, row.get("count1"));
@@ -367,6 +415,15 @@ public class CosineTest {
         assertEquals(0L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0d, row.get("similarity"));
+    }
+
+    private void assert03Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
         assertEquals(0L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
         assertEquals(0d, row.get("similarity"));
@@ -376,17 +433,35 @@ public class CosineTest {
         assertEquals(0L, row.get("item1"));
         assertEquals(2L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
-        assertEquals(1L, row.get("count2"));
+        assertEquals(3L, row.get("count2"));
         // assertEquals(1L, row.get("intersection"));
         assertEquals(0.91, (double)row.get("similarity"),0.01);
+    }
+
+    private void assert02Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(2L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(1L, row.get("count2"));
+        // assertEquals(1L, row.get("intersection"));
+        assertEquals(1.0, (double)row.get("similarity"),0.01);
     }
 
     private void assert01(Map<String, Object> row) {
         assertEquals(0L, row.get("item1"));
         assertEquals(1L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
-        assertEquals(2L, row.get("count2"));
+        assertEquals(3L, row.get("count2"));
         // assertEquals(2L, row.get("intersection"));
         assertEquals(0.40, (double)row.get("similarity"),0.01);
+    }
+
+    private void assert01Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(1L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(2L, row.get("count2"));
+        // assertEquals(2L, row.get("intersection"));
+        assertEquals(0.98, (double)row.get("similarity"),0.01);
     }
 }

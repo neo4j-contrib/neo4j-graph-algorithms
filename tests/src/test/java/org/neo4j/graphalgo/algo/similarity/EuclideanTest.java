@@ -39,11 +39,12 @@ public class  EuclideanTest {
     private static GraphDatabaseAPI db;
     private Transaction tx;
     public static final String STATEMENT_STREAM = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
-            "WITH {item:id(p), weights: collect(coalesce(r.stars,0))} as userData\n" +
+            "WITH {item:id(p), weights: collect(coalesce(r.stars,$missingValue))} as userData\n" +
             "WITH collect(userData) as data\n" +
             "call algo.similarity.euclidean.stream(data,$config) " +
             "yield item1, item2, count1, count2, intersection, similarity " +
-            "RETURN * ORDER BY item1,item2";
+            "RETURN item1, item2, count1, count2, intersection, similarity " +
+            "ORDER BY item1,item2";
 
     public static final String STATEMENT = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
             "WITH {item:id(p), weights: collect(coalesce(r.stars,0))} as userData\n" +
@@ -111,8 +112,10 @@ public class  EuclideanTest {
                 " (a)-[:LIKES {stars:1}]->(i1),\n" +
                 " (a)-[:LIKES {stars:2}]->(i2),\n" +
                 " (a)-[:LIKES {stars:5}]->(i3),\n" +
+
                 " (b)-[:LIKES {stars:1}]->(i1),\n" +
                 " (b)-[:LIKES {stars:3}]->(i2),\n" +
+
                 " (c)-[:LIKES {stars:4}]->(i3)\n";
         // a: 1,2,5
         // b: 1,3,0
@@ -127,10 +130,10 @@ public class  EuclideanTest {
     public void euclideanSingleMultiThreadComparision() {
         int size = 333;
         buildRandomDB(size);
-        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 1)));
-        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 2)));
-        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 4)));
-        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 8)));
+        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 1), "missingValue", 0));
+        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 2), "missingValue", 0));
+        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 4), "missingValue", 0));
+        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"concurrency", 8), "missingValue", 0));
         int count=0;
         while (result1.hasNext()) {
             Map<String, Object> row1 = result1.next();
@@ -148,10 +151,10 @@ public class  EuclideanTest {
         int size = 333;
         buildRandomDB(size);
 
-        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 1)));
-        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 2)));
-        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 4)));
-        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 8)));
+        Result result1 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 1), "missingValue", 0));
+        Result result2 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 2), "missingValue", 0));
+        Result result4 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 4), "missingValue", 0));
+        Result result8 = db.execute(STATEMENT_STREAM, map("config", map("similarityCutoff",-0.1,"topK",1,"concurrency", 8), "missingValue", 0));
         int count=0;
         while (result1.hasNext()) {
             Map<String, Object> row1 = result1.next();
@@ -166,7 +169,7 @@ public class  EuclideanTest {
 
     @Test
     public void topNeuclideanStreamTest() {
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("top",2), "missingValue", 0));
         assert02(results.next());
         assert13(results.next());
         assertFalse(results.hasNext());
@@ -187,7 +190,7 @@ public class  EuclideanTest {
         // c2 - d3: sqrt(16) = 4
         // System.out.println(db.execute(query).resultAsString());
 
-        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1)));
+        Result results = db.execute(STATEMENT_STREAM, map("config",map("concurrency",1), "missingValue", 0));
         assertTrue(results.hasNext());
         assert01(results.next());
         assert02(results.next());
@@ -199,8 +202,23 @@ public class  EuclideanTest {
     }
 
     @Test
+    public void eucideanSkipStreamTest() {
+        Result results = db.execute(STATEMENT_STREAM,
+                map("config",map("concurrency",1, "skipValue", Double.NaN), "missingValue", Double.NaN));
+
+        assertTrue(results.hasNext());
+        assert01Skip(results.next());
+        assert02Skip(results.next());
+        assert03Skip(results.next());
+        assert12Skip(results.next());
+        assert13Skip(results.next());
+        assert23Skip(results.next());
+        assertFalse(results.hasNext());
+    }
+
+    @Test
     public void topKEuclideanStreamTest() {
-        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1));
+        Map<String, Object> params = map("config", map( "concurrency", 1,"topK", 1), "missingValue", 0);
 
         Result results = db.execute(STATEMENT_STREAM, params);
         assertTrue(results.hasNext());
@@ -230,10 +248,9 @@ public class  EuclideanTest {
         }
     }
 
-
     @Test
     public void topK4euclideanStreamTest() {
-        Map<String, Object> params = map("config", map("topK", 4, "concurrency", 4, "similarityCutoff", -0.1));
+        Map<String, Object> params = map("config", map("topK", 4, "concurrency", 4, "similarityCutoff", -0.1), "missingValue", 0);
         System.out.println(db.execute(STATEMENT_STREAM,params).resultAsString());
 
         Result results = db.execute(STATEMENT_STREAM,params);
@@ -252,7 +269,7 @@ public class  EuclideanTest {
         // b1 - c2: sqrt(26) = 5.1
         // b1 - d3: sqrt(10) =  3.2
         // c2 - d3: sqrt(16) = 4
-        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3));
+        Map<String, Object> params = map("config", map("concurrency", 3, "topK", 3), "missingValue", 0);
 
         System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
 
@@ -266,7 +283,7 @@ public class  EuclideanTest {
 
     @Test
     public void simpleEuclideanTest() {
-        Map<String, Object> params = map("config", map());
+        Map<String, Object> params = map("config", map(), "missingValue", 0);
 
         Map<String, Object> row = db.execute(STATEMENT,params).next();
         assertEquals((double) row.get("p25"), 3.16, 0.01);
@@ -294,7 +311,7 @@ public class  EuclideanTest {
 
     @Test
     public void simpleEuclideanWriteTest() {
-        Map<String, Object> params = map("config", map( "write",true, "similarityCutoff", 4.0));
+        Map<String, Object> params = map("config", map( "write",true, "similarityCutoff", 4.0), "missingValue", 0);
 
         db.execute(STATEMENT,params).close();
 
@@ -355,54 +372,109 @@ public class  EuclideanTest {
     private void assert23(Map<String, Object> row) {
         assertEquals(2L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(sqrt(16), row.get("similarity"));
+    }
+
+    private void assert23Skip(Map<String, Object> row) {
+        assertEquals(2L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
         assertEquals(1L, row.get("count1"));
         assertEquals(0L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
-        assertEquals(sqrt(16), row.get("similarity"));
+        assertEquals(0.0, row.get("similarity"));
     }
 
     private void assert13(Map<String, Object> row) {
         assertEquals(1L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
-        assertEquals(2L, row.get("count1"));
-        assertEquals(0L, row.get("count2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
         assertEquals(sqrt(10), row.get("similarity"));
     }
 
+    private void assert13Skip(Map<String, Object> row) {
+        assertEquals(1L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
+        assertEquals(2L, row.get("count1"));
+        assertEquals(0L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0.0, row.get("similarity"));
+    }
+
+
     private void assert12(Map<String, Object> row) {
+        assertEquals(1L, row.get("item1"));
+        assertEquals(2L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(3L, row.get("count2"));
+        // assertEquals(0L, row.get("intersection"));
+        assertEquals(sqrt(5*5+1), row.get("similarity"));
+    }
+
+    private void assert12Skip(Map<String, Object> row) {
         assertEquals(1L, row.get("item1"));
         assertEquals(2L, row.get("item2"));
         assertEquals(2L, row.get("count1"));
         assertEquals(1L, row.get("count2"));
         // assertEquals(0L, row.get("intersection"));
-        assertEquals(sqrt(5*5+1), row.get("similarity"));
+        assertEquals(0.0, row.get("similarity"));
     }
 
     private void assert03(Map<String, Object> row) {
         assertEquals(0L, row.get("item1"));
         assertEquals(3L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
-        assertEquals(0L, row.get("count2"));
+        assertEquals(3L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
         assertEquals(sqrt(5*5+2*2+1), row.get("similarity"));
+    }
+
+    private void assert03Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(3L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(0L, row.get("count2"));
+        assertEquals(0L, row.get("intersection"));
+        assertEquals(0.0, row.get("similarity"));
     }
 
     private void assert02(Map<String, Object> row) {
         assertEquals(0L, row.get("item1"));
         assertEquals(2L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
-        assertEquals(1L, row.get("count2"));
+        assertEquals(3L, row.get("count2"));
         // assertEquals(1L, row.get("intersection"));
         assertEquals(sqrt(6), row.get("similarity"));
+    }
+
+    private void assert02Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(2L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(1L, row.get("count2"));
+        // assertEquals(1L, row.get("intersection"));
+        assertEquals(sqrt(1), row.get("similarity"));
     }
 
     private void assert01(Map<String, Object> row) {
         assertEquals(0L, row.get("item1"));
         assertEquals(1L, row.get("item2"));
         assertEquals(3L, row.get("count1"));
-        assertEquals(2L, row.get("count2"));
+        assertEquals(3L, row.get("count2"));
         // assertEquals(2L, row.get("intersection"));
         assertEquals(sqrt(5*5+1), row.get("similarity"));
+    }
+
+    private void assert01Skip(Map<String, Object> row) {
+        assertEquals(0L, row.get("item1"));
+        assertEquals(1L, row.get("item2"));
+        assertEquals(3L, row.get("count1"));
+        assertEquals(2L, row.get("count2"));
+        // assertEquals(2L, row.get("intersection"));
+        assertEquals(sqrt(1), row.get("similarity"));
     }
 }

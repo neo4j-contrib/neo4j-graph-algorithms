@@ -102,6 +102,23 @@ public class Intersections {
         return result;
     }
     */
+    public static double sumSquareDeltaSkip(double[] vector1, double[] vector2, int len, double skipValue) {
+        boolean skipNan = Double.isNaN(skipValue);
+
+        double result = 0;
+        for (int i=0;i<len;i++) {
+            double weight1 = vector1[i];
+            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
+
+            double weight2 = vector2[i];
+            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+
+            double delta = weight1 - weight2;
+            result += delta * delta;
+        }
+        return result;
+    }
+
     public static double sumSquareDelta(double[] vector1, double[] vector2, int len) {
         double result = 0;
         for (int i=0;i<len;i++) {
@@ -123,15 +140,32 @@ public class Intersections {
         return result;
     }
 
-     public static double cosineSquare(double[] vector1, double[] vector2, int len) {
+    public static double cosineSquare(double[] vector1, double[] vector2, int len) {
+        double dotProduct = 0d;
+        double xLength = 0d;
+        double yLength = 0d;
+        for (int i = 0; i < len; i++) {
+            double weight1 = vector1[i];
+            double weight2 = vector2[i];
+            dotProduct += weight1 * weight2;
+            xLength += weight1 * weight1;
+            yLength += weight2 * weight2;
+        }
+        if (xLength == 0d || yLength == 0d) return 0d;
+        return dotProduct * dotProduct / xLength / yLength;
+    }
+
+     public static double cosineSquareSkip(double[] vector1, double[] vector2, int len, double skipValue) {
+        boolean skipNan = Double.isNaN(skipValue);
+
          double dotProduct = 0d;
          double xLength = 0d;
          double yLength = 0d;
          for (int i = 0; i < len; i++) {
              double weight1 = vector1[i];
-             // if (weight1 == 0d) continue;
+             if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
              double weight2 = vector2[i];
-             // if (weight2 == 0d) continue;
+             if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
 
              dotProduct += weight1 * weight2;
              xLength += weight1 * weight1;
