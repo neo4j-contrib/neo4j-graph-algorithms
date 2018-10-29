@@ -1,5 +1,11 @@
 [
     {
+        "neo4j": "3.5.0-beta03",
+        "version": "3.5.0.1",
+        "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.5.0.1",
+        "jar": "https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/download/3.5.0.1/graph-algorithms-algo-3.5.0.1.jar"
+    },
+    {
         "neo4j": "3.5.0-beta02",
         "version": "3.5.0.1",
         "url": "http://github.com/neo4j-contrib/neo4j-graph-algorithms/releases/3.5.0.1",
