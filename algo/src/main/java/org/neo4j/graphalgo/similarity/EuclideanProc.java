@@ -37,12 +37,13 @@ public class EuclideanProc extends SimilarityProc {
     public Stream<SimilarityResult> euclideanStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
-        SimilarityComputer<WeightedInput> computer = (s,t,cutoff) -> s.sumSquareDelta(cutoff, t);
-
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        Double skipValue = configuration.get("skipValue", null);
+        SimilarityComputer<WeightedInput> computer = skipValue == null ?
+                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t) :
+                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration));
+        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end
@@ -62,12 +63,13 @@ public class EuclideanProc extends SimilarityProc {
     public Stream<SimilaritySummaryResult> euclidean(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
-        SimilarityComputer<WeightedInput> computer = (s,t,cutoff) -> s.sumSquareDelta(cutoff, t);
-
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        Double skipValue = configuration.get("skipValue", null);
+        SimilarityComputer<WeightedInput> computer = skipValue == null ?
+                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t) :
+                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration));
+        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end

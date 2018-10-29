@@ -59,21 +59,29 @@ public class CosineSimilarityBenchmark {
     }
 
     @Benchmark
+    public void cosineSquaresSkip(Blackhole bh) throws Exception {
+        for (double[] datum : data) {
+            bh.consume(Intersections.cosineSquareSkip(initial, datum,SIZE, 0));
+        }
+    }
+
+    @Benchmark
     public void cosineSquares(Blackhole bh) throws Exception {
         for (double[] datum : data) {
             bh.consume(Intersections.cosineSquare(initial, datum,SIZE));
         }
     }
-    @Benchmark
-    public void cosineSquareRoots(Blackhole bh) throws Exception {
-        for (double[] datum : data) {
-            bh.consume(Intersections.cosine(initial, datum,SIZE));
-        }
-    }
-    @Benchmark
-    public void sumSquaresMany(Blackhole bh) throws Exception {
-        bh.consume(Intersections.cosines(initial, data,SIZE));
-    }
+
+//    @Benchmark
+//    public void cosineSquareRoots(Blackhole bh) throws Exception {
+//        for (double[] datum : data) {
+//            bh.consume(Intersections.cosine(initial, datum,SIZE));
+//        }
+//    }
+//    @Benchmark
+//    public void sumSquaresMany(Blackhole bh) throws Exception {
+//        bh.consume(Intersections.cosines(initial, data,SIZE));
+//    }
 
     @Setup
     public void setup() throws IOException {

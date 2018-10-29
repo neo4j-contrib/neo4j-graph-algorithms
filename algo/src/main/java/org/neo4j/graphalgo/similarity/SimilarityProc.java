@@ -208,7 +208,7 @@ public class SimilarityProc {
         return ids;
     }
 
-    WeightedInput[] prepareWeights(List<Map<String, Object>> data, long degreeCutoff) {
+    WeightedInput[] prepareWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {
         WeightedInput[] inputs = new WeightedInput[data.size()];
         int idx = 0;
         for (Map<String, Object> row : data) {
@@ -222,7 +222,7 @@ public class SimilarityProc {
                 for (Number value : weightList) {
                     weights[i++] = value.doubleValue();
                 }
-                inputs[idx++] = new WeightedInput((Long) row.get("item"), weights);
+                inputs[idx++] = skipValue == null ? new WeightedInput((Long) row.get("item"), weights) : new WeightedInput((Long) row.get("item"), weights, skipValue);
             }
         }
         if (idx != inputs.length) inputs = Arrays.copyOf(inputs, idx);
