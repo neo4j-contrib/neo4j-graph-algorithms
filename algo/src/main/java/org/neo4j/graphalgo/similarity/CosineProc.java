@@ -39,10 +39,10 @@ public class CosineProc extends SimilarityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
+
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
                 (s,t,cutoff) -> s.cosineSquares(cutoff, t) :
                 (s,t,cutoff) -> s.cosineSquaresSkip(cutoff, t, skipValue);
-
         WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);

@@ -19,17 +19,23 @@
 package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.core.utils.Intersections;
+import org.neo4j.graphalgo.similarity.RleReader;
+import org.neo4j.graphalgo.similarity.RleTransformer;
+import org.neo4j.graphalgo.similarity.Weights;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Threads(1)
 @Fork(value = 1, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
 @Warmup(iterations = 1000)
-@Measurement(iterations = 10000, time = 2)
+@Measurement(iterations = 1000, time = 2)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -40,6 +46,9 @@ public class CosineSimilarityBenchmark {
     private static double[] initial = generate(SIZE,-42);
     private static double[][] data = data(100);
 
+    private static double[] initialRle = generateRle(SIZE,-42);
+    private static double[][] dataRle = dataRle(100);
+
     private static double[][] data(int size) {
         double[][] result = new double[size][SIZE];
         for (int i=0;i<size;i++) {
@@ -47,6 +56,15 @@ public class CosineSimilarityBenchmark {
         }
         return result;
     }
+
+    private static double[][] dataRle(int size) {
+        double[][] result = new double[size][SIZE];
+        for (int i=0;i<size;i++) {
+            result[i] = generateRle(SIZE,i);
+        }
+        return result;
+    }
+
     private static double[] generate(int size, long seed) {
         double[] result = new double[size];
         double increment = 2*Math.PI/360.0;
@@ -58,26 +76,48 @@ public class CosineSimilarityBenchmark {
         return result;
     }
 
-    @Benchmark
-    public void cosineSquaresSkip(Blackhole bh) throws Exception {
-        for (double[] datum : data) {
-            bh.consume(Intersections.cosineSquareSkip(initial, datum,SIZE, 0));
+    private static double[] generateRle(int size, long seed) {
+        List<Number> values = new ArrayList<>(size);
+        double[] result = new double[size];
+        double increment = 2*Math.PI/360.0;
+        double angle=new Random(seed).nextDouble()*10;
+        for (int i=0;i<size;i++) {
+            values.add(i, Math.sin(angle));
+            angle  += increment;
         }
-    }
 
-    @Benchmark
-    public void cosineSquares(Blackhole bh) throws Exception {
-        for (double[] datum : data) {
-            bh.consume(Intersections.cosineSquare(initial, datum,SIZE));
-        }
+        return Weights.buildRleWeights(values, 3);
     }
 
 //    @Benchmark
-//    public void cosineSquareRoots(Blackhole bh) throws Exception {
+//    public void cosineSquaresSkip(Blackhole bh) throws Exception {
 //        for (double[] datum : data) {
-//            bh.consume(Intersections.cosine(initial, datum,SIZE));
+//            bh.consume(Intersections.cosineSquareSkip(initial, datum,SIZE, 0));
 //        }
 //    }
+//
+//    @Benchmark
+//    public void cosineSquares(Blackhole bh) throws Exception {
+//        for (double[] datum : data) {
+//            bh.consume(Intersections.cosineSquare(initial, datum,SIZE));
+//        }
+//    }
+
+    @Benchmark
+    public void cosineSquaresRle(Blackhole bh) throws Exception {
+        for (double[] datum : dataRle) {
+            double[] initialVector = RleTransformer.decode(initialRle, SIZE);
+            double[] vector = RleTransformer.decode(datum, SIZE);
+            bh.consume(Intersections.cosineSquare(initialVector, vector, SIZE));
+        }
+    }
+
+    @Benchmark
+    public void cosineSquareRoots(Blackhole bh) throws Exception {
+        for (double[] datum : data) {
+            bh.consume(Intersections.cosine(initial, datum,SIZE));
+        }
+    }
 //    @Benchmark
 //    public void sumSquaresMany(Blackhole bh) throws Exception {
 //        bh.consume(Intersections.cosines(initial, data,SIZE));
