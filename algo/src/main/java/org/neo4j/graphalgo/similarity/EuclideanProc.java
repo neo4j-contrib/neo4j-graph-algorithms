@@ -40,7 +40,7 @@ public class EuclideanProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t) :
+                (s,t,cutoff) -> s.sumSquareDelta(cutoff, t) :
                 (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
         WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
@@ -66,7 +66,7 @@ public class EuclideanProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t) :
+                (s,t,cutoff) -> s.sumSquareDelta(cutoff, t) :
                 (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
         WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
