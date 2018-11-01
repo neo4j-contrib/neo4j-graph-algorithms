@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core.utils.paged;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
+import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -128,13 +129,13 @@ public final class PagedLongStackTest extends RandomizedTest {
             stack.pop();
             collector.addError(new AssertionError("pop on empty stack shouldn't succeed"));
         } catch (ArrayIndexOutOfBoundsException e) {
-            collector.checkThat(e.getMessage(), is("-1"));
+            collector.checkThat(e.getMessage(), Matchers.containsString("-1"));
         }
         try {
             stack.peek();
             collector.addError(new AssertionError("pop on empty stack shouldn't succeed"));
         } catch (ArrayIndexOutOfBoundsException e) {
-            collector.checkThat(e.getMessage(), is("-1"));
+            collector.checkThat(e.getMessage(), Matchers.containsString("-1"));
         }
     }
 }
