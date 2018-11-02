@@ -112,12 +112,12 @@ public class CosineSimilarityBenchmark {
         }
     }
 
-    @Benchmark
-    public void cosineSquareRoots(Blackhole bh) throws Exception {
-        for (double[] datum : data) {
-            bh.consume(Intersections.cosine(initial, datum,SIZE));
-        }
-    }
+//    @Benchmark
+//    public void cosineSquareRoots(Blackhole bh) throws Exception {
+//        for (double[] datum : data) {
+//            bh.consume(Intersections.cosine(initial, datum,SIZE));
+//        }
+//    }
 //    @Benchmark
 //    public void sumSquaresMany(Blackhole bh) throws Exception {
 //        bh.consume(Intersections.cosines(initial, data,SIZE));
