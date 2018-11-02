@@ -5,9 +5,11 @@ import java.util.Arrays;
 public class RleDecoder {
     private RleReader item1Reader = new RleReader(new double[0]);
     private RleReader item2Reader = new RleReader(new double[0]);
-    private double[] item1Vector = new double[0];
-    private double[] item2Vector = new double[0];
+    private double[] item1Vector;
+    private double[] item2Vector;
     private int initialSize;
+    private boolean recomputeItem1Vector = true;
+    private boolean recomputeItem2Vector = true;
 
     public RleDecoder(int initialSize) {
         this.initialSize = initialSize;
@@ -16,25 +18,42 @@ public class RleDecoder {
     }
 
     public void reset(double[] item1, double[] item2) {
-        item1Reader.reset(item1);
-        item2Reader.reset(item2);
-        Arrays.fill(item1Vector, 0);
-        Arrays.fill(item2Vector, 0);
+        if(!item1.equals(item1Reader.vector())) {
+            item1Reader.reset(item1);
+            Arrays.fill(item1Vector, 0);
+            recomputeItem1Vector = true;
+        } else {
+            recomputeItem1Vector = false;
+        }
+
+        if(!item2.equals(item2Reader.vector())) {
+            item2Reader.reset(item2);
+            Arrays.fill(item2Vector, 0);
+            recomputeItem2Vector = true;
+        } else {
+            recomputeItem2Vector = false;
+        }
     }
 
     public double[] item1() {
-        for (int i = 0; i < initialSize; i++) {
-            item1Reader.next();
-            item1Vector[i] = item1Reader.value();
+        if (recomputeItem1Vector) {
+            decode(item1Reader, item1Vector);
         }
+
         return item1Vector;
     }
 
     public double[] item2() {
-        for (int i = 0; i < initialSize; i++) {
-            item2Reader.next();
-            item2Vector[i] = item2Reader.value();
+        if (recomputeItem2Vector) {
+            decode(item2Reader, item2Vector);
         }
         return item2Vector;
+    }
+
+    private void decode(RleReader reader, double[] vector) {
+        for (int i = 0; i < initialSize; i++) {
+            reader.next();
+            vector[i] = reader.value();
+        }
     }
 }

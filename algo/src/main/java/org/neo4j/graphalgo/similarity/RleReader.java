@@ -31,6 +31,10 @@ public class RleReader {
         return value;
     }
 
+    public double[] vector () {
+        return vector;
+    }
+
     public void reset(double[] vector) {
         this.vector = vector;
         this.index = 0;
