@@ -19,15 +19,13 @@
 package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.core.utils.Intersections;
-import org.neo4j.graphalgo.similarity.RleReader;
-import org.neo4j.graphalgo.similarity.RleTransformer;
+import org.neo4j.graphalgo.similarity.RleDecoder;
 import org.neo4j.graphalgo.similarity.Weights;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -105,9 +103,11 @@ public class CosineSimilarityBenchmark {
 
     @Benchmark
     public void cosineSquaresRle(Blackhole bh) throws Exception {
+        RleDecoder rleDecoder = new RleDecoder(SIZE);
         for (double[] datum : dataRle) {
-            double[] initialVector = RleTransformer.decode(initialRle, SIZE);
-            double[] vector = RleTransformer.decode(datum, SIZE);
+            rleDecoder.reset(initialRle, datum);
+            double[] initialVector = rleDecoder.item1();
+            double[] vector = rleDecoder.item2();
             bh.consume(Intersections.cosineSquare(initialVector, vector, SIZE));
         }
     }
