@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnitQuickcheck.class)
@@ -24,10 +25,7 @@ public class RleReaderPropertyBasedTest {
         // then
         RleReader rleReader = new RleReader(vector1List.size());
         rleReader.reset(vector1Rle);
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
 
-        for (Number value : vector1List) {
-            rleReader.next();
-            assertEquals(value.doubleValue(), rleReader.value(), 0.001);
-        }
     }
 }
