@@ -21,7 +21,7 @@ public class RleReader {
 
         value = vector[index++];
 
-        if(Double.isInfinite(value)) {
+        if(value == Double.POSITIVE_INFINITY || value == Double.NEGATIVE_INFINITY) {
             count = (int) vector[index++] - 1;
             value = vector[index++];
         }
