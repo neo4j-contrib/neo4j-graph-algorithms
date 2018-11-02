@@ -21,12 +21,10 @@ public class RleReaderTest {
         double[] vector1Rle = Weights.buildRleWeights(vector1List, 3);
 
         // then
-        RleReader rleReader = new RleReader(vector1Rle);
+        RleReader rleReader = new RleReader(vector1List.size());
+        rleReader.reset(vector1Rle);
 
-        for (Number value : vector1List) {
-            rleReader.next();
-            assertEquals(value.doubleValue(), rleReader.value(), 0.001);
-        }
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
     }
 
     @Test
@@ -38,12 +36,10 @@ public class RleReaderTest {
         double[] vector1Rle = Weights.buildRleWeights(vector1List, 3);
 
         // then
-        RleReader rleReader = new RleReader(vector1Rle);
+        RleReader rleReader = new RleReader(vector1List.size());
+        rleReader.reset(vector1Rle);
 
-        for (Number value : vector1List) {
-            rleReader.next();
-            assertEquals(value.doubleValue(), rleReader.value(), 0.001);
-        }
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
     }
 
     @Test
@@ -56,13 +52,32 @@ public class RleReaderTest {
         System.out.println(Arrays.toString(vector1Rle));
 
         // then
-        RleReader rleReader = new RleReader(vector1Rle);
+        RleReader rleReader = new RleReader(vector1List.size());
+        rleReader.reset(vector1Rle);
 
-        for (Number value : vector1List) {
-            rleReader.next();
-            assertEquals(value.doubleValue(), rleReader.value(), 0.001);
-        }
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
     }
 
+    @Test
+    public void readTheSameItemMultipleTimes() throws Exception {
+        // given
+        List<Number> vector1List = asList(5.0, 5.0, 5.0, 5.0, 5.0, 4.0, 5.0);
+
+        // when
+        double[] vector1Rle = Weights.buildRleWeights(vector1List, 3);
+        System.out.println(Arrays.toString(vector1Rle));
+
+        // then
+        RleReader rleReader = new RleReader(vector1List.size());
+
+        rleReader.reset(vector1Rle);
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
+
+        rleReader.reset(vector1Rle);
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
+
+        rleReader.reset(vector1Rle);
+        assertArrayEquals(vector1List.stream().mapToDouble(Number::doubleValue).toArray(), rleReader.read(), 0.01);
+    }
 
 }

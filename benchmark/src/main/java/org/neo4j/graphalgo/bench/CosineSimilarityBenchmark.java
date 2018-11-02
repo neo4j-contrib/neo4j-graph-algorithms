@@ -94,12 +94,12 @@ public class CosineSimilarityBenchmark {
 //        }
 //    }
 //
-//    @Benchmark
-//    public void cosineSquares(Blackhole bh) throws Exception {
-//        for (double[] datum : data) {
-//            bh.consume(Intersections.cosineSquare(initial, datum,SIZE));
-//        }
-//    }
+    @Benchmark
+    public void cosineSquares(Blackhole bh) throws Exception {
+        for (double[] datum : data) {
+            bh.consume(Intersections.cosineSquare(initial, datum,SIZE));
+        }
+    }
 
     @Benchmark
     public void cosineSquaresRle(Blackhole bh) throws Exception {
