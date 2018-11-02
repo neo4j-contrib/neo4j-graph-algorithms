@@ -10,24 +10,11 @@ class RleWeightedInput implements Comparable<RleWeightedInput> {
     double[] weights;
     int count;
 
-    public RleWeightedInput(long id, double[] weights, int initialSize, double skipValue) {
+    public RleWeightedInput(long id, double[] weights, int initialSize, int nonSkipSize) {
         this.initialSize = initialSize;
-        boolean skipNan = Double.isNaN(skipValue);
         this.id = id;
         this.weights = weights;
-        for (double weight : RleTransformer.decode(weights, REPEAT_CUTOFF)) {
-            if (!(weight == skipValue || (skipNan && Double.isNaN(weight)))) this.count++;
-        }
-    }
-
-    public RleWeightedInput(long id, double[] weights, int initialSize) {
-        this.id = id;
-        this.weights = weights;
-        this.initialSize = initialSize;
-        this.count = initialSize;
-//        for (double weight : weights) {
-//            this.count++;
-//        }
+        this.count = nonSkipSize;
     }
 
     @Override

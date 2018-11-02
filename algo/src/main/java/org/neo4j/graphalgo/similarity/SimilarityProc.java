@@ -264,9 +264,10 @@ public class SimilarityProc {
                     weightsList.add(sparseWeights.getOrDefault(id, skipValue));
                 }
                 int size = weightsList.size();
+                int nonSkipSize = sparseWeights.size();
                 double[] weights = Weights.buildRleWeights(weightsList, REPEAT_CUTOFF);
 
-                inputs[idx++] = skipValue == null ? new RleWeightedInput(item, weights, size) : new RleWeightedInput(item, weights, size, skipValue);
+                inputs[idx++] = new RleWeightedInput(item, weights, size, nonSkipSize);
             }
         }
 
