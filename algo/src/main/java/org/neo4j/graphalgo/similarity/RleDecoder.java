@@ -1,16 +1,12 @@
 package org.neo4j.graphalgo.similarity;
 
-import java.util.Arrays;
-
 public class RleDecoder {
-    private RleReader item1Reader = new RleReader(new double[0]);
-    private RleReader item2Reader = new RleReader(new double[0]);
-    private double[] item1Vector;
-    private double[] item2Vector;
+    private RleReader item1Reader;
+    private RleReader item2Reader;
 
     public RleDecoder(int initialSize) {
-        item1Vector = new double[initialSize];
-        item2Vector = new double[initialSize];
+        item1Reader = new RleReader(initialSize);
+        item2Reader = new RleReader(initialSize);
     }
 
     public void reset(double[] item1, double[] item2) {
@@ -19,12 +15,10 @@ public class RleDecoder {
     }
 
     public double[] item1() {
-        item1Reader.readInto(item1Vector);
-        return item1Vector;
+        return item1Reader.read();
     }
 
     public double[] item2() {
-        item2Reader.readInto(item2Vector);
-        return item2Vector;
+        return item2Reader.read();
     }
 }

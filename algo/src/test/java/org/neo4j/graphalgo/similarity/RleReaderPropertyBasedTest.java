@@ -22,7 +22,8 @@ public class RleReaderPropertyBasedTest {
         System.out.println(Arrays.toString(vector1Rle));
 
         // then
-        RleReader rleReader = new RleReader(vector1Rle);
+        RleReader rleReader = new RleReader(vector1List.size());
+        rleReader.reset(vector1Rle);
 
         for (Number value : vector1List) {
             rleReader.next();

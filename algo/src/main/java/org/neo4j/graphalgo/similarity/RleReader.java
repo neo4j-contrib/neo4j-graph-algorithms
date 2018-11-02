@@ -1,17 +1,19 @@
 package org.neo4j.graphalgo.similarity;
 
+import java.util.Arrays;
+
 public class RleReader {
 
+    private final double[] decodedVector;
     private double[] vector;
 
     private double value;
 
     private int index = 0;
     private int count;
-    private boolean recomputeVector = true;
 
-    public RleReader(double[] vector) {
-        this.vector = vector;
+    public RleReader(int decodedVectorSize) {
+        this.decodedVector = new double[decodedVectorSize];
     }
 
     public void next() {
@@ -37,24 +39,22 @@ public class RleReader {
     }
 
     public void reset(double[] vector) {
-        if (!this.vector.equals(vector)) {
+        if (this.vector == null || !this.vector.equals(vector)) {
             this.vector = vector;
             this.index = 0;
             this.value = -1;
             this.count = -1;
-            recomputeVector = true;
-        } else {
-            recomputeVector = false;
         }
     }
 
-    public void readInto(double[] decodedVector) {
-        if (recomputeVector) {
+    public double[] read() {
+        if (index == 0) {
             for (int i = 0; i < decodedVector.length; i++) {
                 next();
                 decodedVector[i] = value();
             }
         }
+        return decodedVector;
     }
 
 }
