@@ -21,7 +21,7 @@ public class Weights {
 
         int i = 0;
         for (Number value : weightList) {
-            if (value.doubleValue() == latestValue) {
+            if (value.doubleValue() == latestValue || (Double.isNaN(latestValue) && Double.isNaN(value.doubleValue()))) {
                 counter++;
             } else {
                 if (counter > limit) {

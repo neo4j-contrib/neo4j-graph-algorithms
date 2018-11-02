@@ -18,6 +18,17 @@ public class WeightsTest {
     }
 
     @Test
+    public void nans() throws Exception {
+        Number[] values = {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+        List<Number> weightList = Arrays.asList(values);
+        double[] actuals = Weights.buildRleWeights(weightList, 3);
+        System.out.println("actuals = " + Arrays.toString(actuals));
+        assertArrayEquals(new double[]{
+                Double.POSITIVE_INFINITY, 5.0, Double.NaN}, actuals, 0.01);
+    }
+
+
+    @Test
     public void rleWithOneRepeatedValue() throws Exception {
         Number[] values = {4.0, 4.0};
         List<Number> weightList = Arrays.asList(values);
@@ -61,7 +72,7 @@ public class WeightsTest {
                 Double.POSITIVE_INFINITY, 2.0, 2.0,
                 Double.POSITIVE_INFINITY, 2.0, 4.0,
                 Double.POSITIVE_INFINITY, 2.0, 6.0,
-                7.0 }, actuals, 0.01);
+                7.0}, actuals, 0.01);
     }
 
     @Test
