@@ -16,7 +16,19 @@ public class RleReader {
         this.decodedVector = new double[decodedVectorSize];
     }
 
-    public void next() {
+    public void reset(double[] vector) {
+        if (this.vector == null || !this.vector.equals(vector)) {
+            this.vector = vector;
+            reset();
+            compute();
+        }
+    }
+
+    public double[] read() {
+        return decodedVector;
+    }
+
+    private void next() {
         if (count > 0) {
             count--;
             return;
@@ -24,37 +36,23 @@ public class RleReader {
 
         value = vector[index++];
 
-        if (value == Double.POSITIVE_INFINITY || value == Double.NEGATIVE_INFINITY) {
+        if (value == Double.POSITIVE_INFINITY) {
             count = (int) vector[index++] - 1;
             value = vector[index++];
         }
     }
 
-    public double value() {
-        return value;
+    private void reset() {
+        this.index = 0;
+        this.value = -1;
+        this.count = -1;
     }
 
-    public double[] vector() {
-        return vector;
-    }
-
-    public void reset(double[] vector) {
-        if (this.vector == null || !this.vector.equals(vector)) {
-            this.vector = vector;
-            this.index = 0;
-            this.value = -1;
-            this.count = -1;
+    private void compute() {
+        for (int i = 0; i < decodedVector.length; i++) {
+            next();
+            decodedVector[i] = value;
         }
-    }
-
-    public double[] read() {
-        if (index == 0) {
-            for (int i = 0; i < decodedVector.length; i++) {
-                next();
-                decodedVector[i] = value();
-            }
-        }
-        return decodedVector;
     }
 
 }
