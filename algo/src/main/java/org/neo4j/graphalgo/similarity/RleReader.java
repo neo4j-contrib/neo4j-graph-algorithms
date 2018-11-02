@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.similarity;
 
 public class RleReader {
 
-    private final double[] vector;
+    private double[] vector;
 
     private double value;
 
@@ -29,5 +29,12 @@ public class RleReader {
 
     public double value() {
         return value;
+    }
+
+    public void reset(double[] vector) {
+        this.vector = vector;
+        this.index = 0;
+        this.value = -1;
+        this.count = -1;
     }
 }
