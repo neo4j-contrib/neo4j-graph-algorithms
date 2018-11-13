@@ -43,7 +43,7 @@ import java.util.Collection;
 import static org.junit.Assert.assertEquals;
 
 /**
- * @author mknblc
+ * @author mknblch
  */
 @RunWith(Parameterized.class)
 public class UnionFindsTest {
