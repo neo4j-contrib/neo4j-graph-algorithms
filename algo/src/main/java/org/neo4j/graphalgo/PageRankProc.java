@@ -136,7 +136,6 @@ public final class PageRankProc {
                         final long nodeId = hugeGraph.toOriginalNodeId(i);
                         return new PageRankScore(
                                 nodeId,
-                                api.getNodeById(nodeId),
                                 scores.score(i)
                         );
                     });
@@ -147,7 +146,6 @@ public final class PageRankProc {
                     final long nodeId = graph.toOriginalNodeId(i);
                     return new PageRankScore(
                             nodeId,
-                            api.getNodeById(nodeId),
                             scores.score(i)
                     );
                 });

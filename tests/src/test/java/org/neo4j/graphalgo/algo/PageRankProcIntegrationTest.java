@@ -158,9 +158,9 @@ public class PageRankProcIntegrationTest {
     public void testPageRankStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"'}) YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"'}) YIELD nodeId, score",
                 row -> actual.put(
-                        row.getNode("node").getId(),
+                        (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
         assertMapEquals(expected, actual);
@@ -170,9 +170,9 @@ public class PageRankProcIntegrationTest {
     public void testWeightedPageRankStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'foo'}) YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'foo'}) YIELD nodeId, score",
                 row -> actual.put(
-                        row.getNode("node").getId(),
+                        (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
         assertMapEquals(weightedExpected, actual);
@@ -182,9 +182,9 @@ public class PageRankProcIntegrationTest {
     public void testWeightedPageRankWithCachedWeightsStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'foo', cacheWeights: true}) YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'foo', cacheWeights: true}) YIELD nodeId, score",
                 row -> actual.put(
-                        row.getNode("node").getId(),
+                        (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
         assertMapEquals(weightedExpected, actual);
@@ -194,9 +194,9 @@ public class PageRankProcIntegrationTest {
     public void testWeightedPageRankWithAllRelationshipsEqualStream() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'madeUp', defaultValue: 1.0}) YIELD node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {graph:'"+graphImpl+"', weightProperty: 'madeUp', defaultValue: 1.0}) YIELD nodeId, score",
                 row -> actual.put(
-                        row.getNode("node").getId(),
+                        (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
         assertMapEquals(expected, actual);
@@ -263,11 +263,9 @@ public class PageRankProcIntegrationTest {
     public void testPageRankParallelExecution() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.pageRank.stream('Label1', 'TYPE1', {batchSize:2, graph:'"+graphImpl+"'}) YIELD nodeId, node, score",
+                "CALL algo.pageRank.stream('Label1', 'TYPE1', {batchSize:2, graph:'"+graphImpl+"'}) YIELD nodeId, score",
                 row -> {
                     final long nodeId = row.getNumber("nodeId").longValue();
-                    final Node node = row.getNode("node");
-                    assertEquals(node.getId(), nodeId);
                     actual.put(nodeId, (Double) row.get("score"));
                 });
         assertMapEquals(expected, actual);

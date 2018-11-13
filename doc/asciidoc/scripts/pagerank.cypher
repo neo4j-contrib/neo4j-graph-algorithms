@@ -136,7 +136,7 @@ CALL algo.pageRank.stream(
   'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
   'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target',
   {graph:'cypher'}
-) YIELD node,score with node,score order by score desc limit 10
+) YIELD nodeId,score with algo.getNodeById(nodeId) as node, score order by score desc limit 10
 RETURN node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny}, score
 
 // end::pagerank-stream-yelp-social[]
