@@ -87,6 +87,8 @@ For more information, see https://arxiv.org/abs/0910.0165["The performance of mo
 [[algorithms-louvain-sample]]
 == Louvain algorithm sample
 
+This sample will explain the Louvain algorithm, using a simple graph:
+
 image::louvain.png[]
 
 .The following will create a sample graph:
@@ -112,12 +114,12 @@ include::scripts/louvain.cypher[tag=write-sample-graph]
 [opts="header",cols="1,1"]
 |===
 | Name    | Community
-| Alice   | 5
-| Bridget | 5
-| Michael | 5
-| Charles | 4
-| Doug    | 4
-| Mark    | 4
+| Alice   | 0
+| Bridget | 0
+| Michael | 0
+| Charles | 1
+| Doug    | 1
+| Mark    | 1
 |===
 // end::stream-sample-graph-result[]
 
@@ -128,6 +130,52 @@ Mark, Doug, and Charles are all friends with each other, as are Bridget, Alice, 
 Charles is the only one who has friends in both communities, but he has more in community 4 so he fits better in that one.
 // end::stream-sample-graph-explanation[]
 
+== Hierarchical Louvain algorithm sample
+
+This sample will explain hierarchical communities option of Louvain algorithm:
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/louvain.cypher[tag=create-hierarchical-sample-graph]
+----
+
+.The following will run the algorithm and stream results:
+[source, cypher]
+----
+include::scripts/louvain.cypher[tag=stream-hierarchical-sample-graph]
+----
+
+.The following will run the algorithm and write back results:
+[source, cypher]
+----
+include::scripts/louvain.cypher[tag=write-hierarchical-sample-graph]
+----
+
+// tag::stream-hierarchical-sample-graph-result[]
+.Results
+[opts="header",cols="1,1"]
+|===
+| Name    | Communities
+| Alice   | [0,0]
+| Bridget | [0,0]
+| Michael | [0,0]
+| Charles | [1,1]
+| Doug    | [1,1]
+| Mark    | [1,1]
+| Karin   | [2,1]
+| Amy     | [2,1]
+|===
+// end::stream-hierarchical-sample-graph-result[]
+
+// tag::stream-hierarchical-sample-graph-explanation[]
+
+Our algorithm found two hierarchical levels of communities.
+
+On the first level it found three communities with Alice, Bridget and Michael forming the first community, Charles, Doug and Mark forming the second one and Karin and Amy forming the third one.
+On the second level it found two communities. Alice, Bridget and Michael stay in the same community, but the other two communities merge into a single one. 
+
+// end::stream-hierarchical-sample-graph-explanation[]
 
 [[algorithms-louvain-syntax]]
 == Syntax
