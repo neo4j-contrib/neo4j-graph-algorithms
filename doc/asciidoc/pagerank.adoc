@@ -294,7 +294,7 @@ YIELD node, score
 [opts="header"]
 |===
 | Name  | Type  | Description
-| node  | long  | Node ID
+| nodeId  | long  | Node ID
 | score | float | PageRank weight
 |===
 

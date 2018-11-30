@@ -102,9 +102,9 @@ MERGE(p:Product {id: row.ProductID})
 SET p.name = row.ProductName, p.unitPrice = row.UnitPrice;
 
 
-CALL algo.pageRank.stream('Page', 'Link', {iterations:5}) YIELD node, score
+CALL algo.pageRank.stream('Page', 'Link', {iterations:5}) YIELD nodeId, score
 WITH * ORDER BY score DESC LIMIT 5
-RETURN node.title, score;
+RETURN algo.getNodeById(nodeId).title, score;
 
 call algo.unionFind.stream(
 'match (o:output)-[:locked]->(a) with a limit 10000000

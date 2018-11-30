@@ -18,17 +18,13 @@
  */
 package org.neo4j.graphalgo.results;
 
-import org.neo4j.graphdb.Node;
-
 public class PageRankScore {
 
     public final long nodeId;
-    @Deprecated public final Node node;
     public final Double score;
 
-    public PageRankScore(long nodeId, final Node node, final Double score) {
+    public PageRankScore(long nodeId, final Double score) {
         this.nodeId = nodeId;
-        this.node = node;
         this.score = score;
     }
 
