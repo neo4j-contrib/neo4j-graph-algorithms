@@ -1,11 +1,11 @@
 window.docMeta = (function () {
-  var version = '3.4';
+  var version = '3.5';
   var name = 'graph-algorithms';
   var href = window.location.href;
   return {
     name: name,
     version: version,
-    availableDocVersions: ["3.2", "3.3", "3.4", "3.5-preview"],
+    availableDocVersions: ["3.2", "3.3", "3.4", "3.5"],
     thisPubBaseUri: href.substring(0, href.indexOf(name) + name.length) + '/' + version,
     unversionedDocBaseUri: href.substring(0, href.indexOf(name) + name.length) + '/',
     commonDocsBaseUri: href.substring(0, href.indexOf(name) - 1)
