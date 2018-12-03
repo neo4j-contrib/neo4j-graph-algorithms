@@ -38,15 +38,18 @@ ext {
         'graphAlgoDocs' : versionParts[0].split('\\.')[0..1].join('.'),
     ]
     if (1 < versionParts.size()) { versions.graphAlgoDocs += '-preview' }
+    versions['neo4jDocs'] = versions.graphAlgoDocs
 
     docsBaseUri = "https://neo4j.com/docs"
     crossReferenceBase = [ // We have no strategy for cross references; always link to current.
-            'operations-manual' : "${docsBaseUri}/operations-manual/current",
-            'developer-manual'  : "${docsBaseUri}/developer-manual/current",
+            'cypher-manual'     : "${docsBaseUri}/cypher-manual/${versions.neo4jDocs}",
+            'driver-manual'     : "${docsBaseUri}/driver-manual/current",
+            'operations-manual' : "${docsBaseUri}/operations-manual/${versions.neo4jDocs}",
             'graph-algorithms'  : "${docsBaseUri}/graph-algorithms/${versions.graphAlgoDocs}",
-            'java-reference'    : "${docsBaseUri}/java-reference/current",
-            'rest-docs'         : "${docsBaseUri}/rest-docs/current",
-            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
+            'java-reference'    : "${docsBaseUri}/java-reference/${versions.neo4jDocs}",
+            'rest-docs'         : "${docsBaseUri}/rest-docs/${versions.neo4jDocs}",
+            'ogm-manual'        : "${docsBaseUri}/ogm-manual/${versions.neo4jDocs}",
+            'getting-started'   : "${docsBaseUri}/getting-started/${versions.neo4jDocs}",
             'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
     ]
     asciidoctorAttributes = [
@@ -164,8 +167,9 @@ html {
     outputs.dir outputDir
 
     def libraryLinks = [
-        "Operations_Manual=${crossReferenceBase['operations-manual']}",
-        "Developer_Manual=${crossReferenceBase['developer-manual']}/",
+        "Operations_Manual=${crossReferenceBase['operations-manual']}/",
+        "Cypher_Manual=${crossReferenceBase['cypher-manual']}/",
+        "Driver_Manual=${crossReferenceBase['driver-manual']}/",
         "OGM_Manual=${crossReferenceBase['ogm-manual']}/",
         "Graph_Algorithms=${crossReferenceBase['graph-algorithms']}/",
         "Java_Reference=${crossReferenceBase['java-reference']}/",
