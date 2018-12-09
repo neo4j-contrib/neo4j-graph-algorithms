@@ -67,6 +67,35 @@ public class Similarities {
         return dotProduct / (xLength * yLength);
     }
 
+    @UserFunction("algo.similarity.pearson")
+    @Description("algo.similarity.pearson([vector1], [vector2]) " +
+            "given two collection vectors, calculate pearson similarity")
+    public double pearsonSimilarity(@Name("vector1") List<Number> vector1, @Name("vector2") List<Number> vector2) {
+        if (vector1.size() != vector2.size() || vector1.size() == 0) {
+            throw new RuntimeException("Vectors must be non-empty and of the same size");
+        }
+
+        double vector1Mean = vector1.stream().mapToDouble(Number::doubleValue).average().orElse(1);
+        double vector2Mean = vector2.stream().mapToDouble(Number::doubleValue).average().orElse(1);
+
+        double dotProductMinusMean = 0d;
+        double xLength = 0d;
+        double yLength = 0d;
+        for (int i = 0; i < vector1.size(); i++) {
+            double weight1 = vector1.get(i).doubleValue();
+            double weight2 = vector2.get(i).doubleValue();
+
+            double vector1Delta = weight1 - vector1Mean;
+            double vector2Delta = weight2 - vector2Mean;
+
+            dotProductMinusMean += (vector1Delta * vector2Delta);
+            xLength += vector1Delta * vector1Delta;
+            yLength += vector2Delta * vector2Delta;
+        }
+
+        return dotProductMinusMean / (Math.sqrt(xLength * yLength));
+    }
+
     @UserFunction("algo.similarity.euclideanDistance")
     @Description("algo.similarity.euclideanDistance([vector1], [vector2]) " +
             "given two collection vectors, calculate the euclidean distance (square root of the sum of the squared differences)")

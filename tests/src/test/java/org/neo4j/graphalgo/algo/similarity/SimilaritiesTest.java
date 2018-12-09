@@ -52,7 +52,7 @@ public class SimilaritiesTest {
     // cosine similarity taken from here: https://neo4j.com/graphgist/a7c915c8-a3d6-43b9-8127-1836fecc6e2f
     // euclid distance taken from here: https://neo4j.com/blog/real-time-recommendation-engine-data-science/
     // euclid similarity taken from here: http://stats.stackexchange.com/a/158285
-
+    // pearson similarity taken from here: http://guides.neo4j.com/sandbox/recommendations
 
     private static GraphDatabaseAPI db;
 
@@ -131,6 +131,43 @@ public class SimilaritiesTest {
 
         assertEquals(bobSimilarity, result.next().get("cosineSim"));
         assertEquals(jimSimilarity, result.next().get("cosineSim"));
+    }
+
+    @Test
+    public void testPearsonSimilarityWithSomeRelationshipsNull() throws Exception {
+        String controlQuery =
+                "MATCH (p2:Role {name:'Role 1-Analytics Manager'})-[s:REQUIRES_SKILL]->(:Skill) WITH p2, avg(s.proficiency) AS p2Mean " +
+                "MATCH (p1:Employee)\n" +
+                "MATCH (sk:Skill)<-[y:REQUIRES_SKILL] -(p2)\n" +
+                "OPTIONAL MATCH (p1)-[x:HAS_SKILL]->(sk)\n" +
+                "WITH p2, p2Mean, p1, avg(coalesce(x.proficiency,0)) AS p1Mean, collect({r1: coalesce(x.proficiency, 0), r2: y.proficiency}) AS ratings " +
+                "UNWIND ratings AS r\n" +
+                        "WITH sum( (r.r1-p1Mean) * (r.r2-p2Mean) ) AS nom,\n" +
+                        "     sqrt( sum( (r.r1 - p1Mean)^2) * sum( (r.r2 - p2Mean) ^2)) AS denom,\n" +
+                        "     p1, p2 \n" +
+                        "WHERE denom > 0  " +
+                        "WITH p1.name AS name, nom/denom AS pearson ORDER BY name ASC "+
+                "RETURN name, toString(toInteger(pearson*10000)/10000.0) as pearsonSim";
+
+        String bobSimilarity;
+        String jimSimilarity;
+        try (Transaction tx = db.beginTx()) {
+            Result result = db.execute(controlQuery);
+            bobSimilarity = (String) result.next().get("pearsonSim");
+            jimSimilarity = (String) result.next().get("pearsonSim");
+        }
+
+        Result result = db.execute(
+                "MATCH (sk:Skill)<-[y:REQUIRES_SKILL]-(p2:Role {name:'Role 1-Analytics Manager'})\n" +
+                        "MATCH (p1:Employee)\n" +
+                        "OPTIONAL MATCH (p1)-[x:HAS_SKILL]->(sk)\n" +
+                        "WITH p1, COLLECT(coalesce(x.proficiency, 0.0d)) as v1, COLLECT(coalesce(y.proficiency, 0.0d)) as v2\n" +
+                        "WITH p1.name as name, algo.similarity.pearson(v1, v2) as pearsonSim ORDER BY name ASC\n" +
+                        "RETURN name, toString(toInteger(pearsonSim*10000)/10000.0) as pearsonSim");
+
+        assertEquals(bobSimilarity, result.next().get("pearsonSim"));
+        assertEquals(jimSimilarity, result.next().get("pearsonSim"));
+
     }
 
     @Test
