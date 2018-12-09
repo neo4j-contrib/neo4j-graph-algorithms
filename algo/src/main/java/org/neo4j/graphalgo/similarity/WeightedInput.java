@@ -80,4 +80,30 @@ class WeightedInput implements Comparable<WeightedInput> {
         if (similarityCutoff >= 0d && (cosineSquares == 0 || cosineSquares < similarityCutoff)) return null;
         return new SimilarityResult(id, other.id, count, other.count, intersection, cosineSquares);
     }
+
+    public SimilarityResult pearsonSquares(double similarityCutoff, WeightedInput other) {
+        int len = Math.min(weights.length, other.weights.length);
+        double pearsonSquares = Intersections.pearsonSquare(weights, other.weights, len);
+        long intersection = 0;
+        /* todo
+        for (int i = 0; i < len; i++) {
+            if (weights[i] == other.weights[i] && weights[i] != 0d) intersection++;
+        }
+        */
+        if (similarityCutoff >= 0d && (pearsonSquares == 0 || pearsonSquares < similarityCutoff)) return null;
+        return new SimilarityResult(id, other.id, count, other.count, intersection, pearsonSquares);
+    }
+
+    public SimilarityResult pearsonSquaresSkip(double similarityCutoff, WeightedInput other, Double skipValue) {
+        int len = Math.min(weights.length, other.weights.length);
+        double cosineSquares = Intersections.pearsonSquareSkip(weights, other.weights, len, skipValue);
+        long intersection = 0;
+        /* todo
+        for (int i = 0; i < len; i++) {
+            if (weights[i] == other.weights[i] && weights[i] != 0d) intersection++;
+        }
+        */
+        if (similarityCutoff >= 0d && (cosineSquares == 0 || cosineSquares < similarityCutoff)) return null;
+        return new SimilarityResult(id, other.id, count, other.count, intersection, cosineSquares);
+    }
 }

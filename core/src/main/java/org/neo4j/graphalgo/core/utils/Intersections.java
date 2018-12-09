@@ -177,6 +177,71 @@ public class Intersections {
         return dotProduct * dotProduct / xLength / yLength;
     }
 
+    public static double pearsonSquare(double[] vector1, double[] vector2, int len) {
+        double vector1Sum = 0.0;
+        double vector2Sum = 0.0;
+        for (int i = 0; i < len; i++) {
+            vector1Sum += vector1[i];
+            vector2Sum += vector2[i];
+        }
+
+        double vector1Mean = vector1Sum / len;
+        double vector2Mean = vector2Sum / len;
+
+        double dotProductMinusMean = 0d;
+        double xLength = 0d;
+        double yLength = 0d;
+        for (int i = 0; i < len; i++) {
+            double vector1Delta = vector1[i] - vector1Mean;
+            double vector2Delta = vector2[i] - vector2Mean;
+
+            dotProductMinusMean += (vector1Delta * vector2Delta);
+            xLength += vector1Delta * vector1Delta;
+            yLength += vector2Delta * vector2Delta;
+        }
+
+        return dotProductMinusMean * dotProductMinusMean / xLength * yLength;
+    }
+
+    public static double pearsonSquareSkip(double[] vector1, double[] vector2, int len, double skipValue) {
+        boolean skipNan = Double.isNaN(skipValue);
+
+        double vector1Sum = 0.0;
+        double vector2Sum = 0.0;
+        for (int i = 0; i < len; i++) {
+            double weight1 = vector1[i];
+            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1)))
+            vector1Sum += weight1;
+
+            double weight2 = vector2[i];
+            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+            vector2Sum += weight2;
+        }
+
+        double vector1Mean = vector1Sum / len;
+        double vector2Mean = vector2Sum / len;
+
+        double dotProductMinusMean = 0d;
+        double xLength = 0d;
+        double yLength = 0d;
+        for (int i = 0; i < len; i++) {
+            double weight1 = vector1[i];
+            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
+
+            double weight2 = vector2[i];
+            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+
+            double vector1Delta = weight1 - vector1Mean;
+            double vector2Delta = weight2 - vector2Mean;
+
+            dotProductMinusMean += (vector1Delta * vector2Delta);
+            xLength += vector1Delta * vector1Delta;
+            yLength += vector2Delta * vector2Delta;
+        }
+
+        return dotProductMinusMean * dotProductMinusMean / xLength * yLength;
+    }
+
     public static double cosine(double[] vector1, double[] vector2, int len) {
         double dotProduct = 0d;
         double xLength = 0d;
