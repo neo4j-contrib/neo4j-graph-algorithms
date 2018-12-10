@@ -112,7 +112,7 @@ public final class PageRankTest {
     }
 
     @AfterClass
-    public static void shutdownGraph() throws Exception {
+    public static void shutdownGraph() {
         if (db!=null) db.shutdown();
     }
 
@@ -123,7 +123,7 @@ public final class PageRankTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() {
         final Label label = Label.label("Label1");
         final Map<Long, Double> expected = new HashMap<>();
 
@@ -170,5 +170,30 @@ public final class PageRankTest {
                     1e-2
             );
         });
+    }
+
+    @Test
+    public void correctPartitionBoundariesForAllNodes() {
+        final Label label = Label.label("Label1");
+        final Graph graph;
+        if (graphImpl.isAssignableFrom(HeavyCypherGraphFactory.class)) {
+            graph = new GraphLoader(db)
+                    .withLabel("MATCH (n:Label1) RETURN id(n) as id")
+                    .withRelationshipType("MATCH (n:Label1)-[:TYPE1]->(m:Label1) RETURN id(n) as source,id(m) as target")
+                    .load(graphImpl);
+
+        } else {
+            graph = new GraphLoader(db)
+                    .withLabel(label)
+                    .withRelationshipType("TYPE1")
+                    .withDirection(Direction.OUTGOING)
+                    .load(graphImpl);
+        }
+
+        // explicitly list all source nodes to prevent the 'we got everything' optimization
+        PageRankAlgorithm algorithm = PageRankAlgorithm
+                .of(graph, 0.85, LongStream.range(0L, graph.nodeCount()), null, 1, 1)
+                .compute(40);
+        // should not throw
     }
 }
