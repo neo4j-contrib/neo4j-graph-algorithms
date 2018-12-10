@@ -95,7 +95,7 @@ public abstract class HugeBaseComputeStep implements HugeComputeStep {
             Arrays.fill(partitionRank,0);
 
             long[] partitionSourceNodeIds = LongStream.of(sourceNodeIds)
-                    .filter(sourceNodeId -> sourceNodeId >= startNode && sourceNodeId <= endNode)
+                    .filter(sourceNodeId -> sourceNodeId >= startNode && sourceNodeId < endNode)
                     .toArray();
 
             for (long sourceNodeId : partitionSourceNodeIds) {
