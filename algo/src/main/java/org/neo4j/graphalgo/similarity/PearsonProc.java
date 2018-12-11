@@ -36,14 +36,15 @@ public class PearsonProc extends SimilarityProc {
     // todo count1,count2 = could be the non-null values, intersection the values where both are non-null?
     public Stream<SimilarityResult> pearsonStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
 
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.pearsonSquares(cutoff, t) :
-                (s,t,cutoff) -> s.pearsonSquaresSkip(cutoff, t, skipValue);
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
+                (decoder, s,t,cutoff) -> s.pearsonSquares(cutoff, t) :
+                (decoder, s,t,cutoff) -> s.pearsonSquaresSkip(cutoff, t, skipValue);
+
+        WeightedInput[] inputs = preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end
@@ -52,7 +53,7 @@ public class PearsonProc extends SimilarityProc {
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
 
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, topK), topN);
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, topK), topN);
 
         return stream.map(SimilarityResult::squareRooted);
     }
@@ -66,10 +67,10 @@ public class PearsonProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.pearsonSquares(cutoff, t) :
-                (s,t,cutoff) -> s.pearsonSquaresSkip(cutoff, t, skipValue);
+                (decoder,s,t,cutoff) -> s.pearsonSquares(cutoff, t) :
+                (decoder, s,t,cutoff) -> s.pearsonSquaresSkip(cutoff, t, skipValue);
 
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
+        WeightedInput[] inputs = preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end
@@ -78,7 +79,7 @@ public class PearsonProc extends SimilarityProc {
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
 
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, topK), topN)
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, topK), topN)
                 .map(SimilarityResult::squareRooted);
 
 
