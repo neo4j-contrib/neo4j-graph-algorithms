@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongSet;
 import org.HdrHistogram.DoubleHistogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.core.ProcedureConstants;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
@@ -23,12 +24,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
 import static org.neo4j.graphalgo.similarity.RleTransformer.REPEAT_CUTOFF;
+import static org.neo4j.helpers.collection.MapUtil.map;
 
 public class SimilarityProc {
     @Context
@@ -97,43 +100,45 @@ public class SimilarityProc {
         return configuration.get("similarityCutoff", -1D);
     }
 
-    <T> Stream<SimilarityResult> similarityStream(T[] inputs, SimilarityComputer<T> computer, ProcedureConfiguration configuration, double cutoff, int topK) {
+    <T> Stream<SimilarityResult> similarityStream(T[] inputs, SimilarityComputer<T> computer, ProcedureConfiguration configuration, Supplier<RleDecoder> decoderFactory, double cutoff, int topK) {
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         int concurrency = configuration.getConcurrency();
 
         int length = inputs.length;
         if (concurrency == 1) {
             if (topK != 0) {
-                return similarityStreamTopK(inputs, length, cutoff, topK, computer);
+                return similarityStreamTopK(inputs, length, cutoff, topK, computer, decoderFactory);
             } else {
-                return similarityStream(inputs, length, cutoff, computer);
+                return similarityStream(inputs, length, cutoff, computer, decoderFactory);
             }
         } else {
             if (topK != 0) {
-                return similarityParallelStreamTopK(inputs, length, terminationFlag, concurrency, cutoff, topK, computer);
+                return similarityParallelStreamTopK(inputs, length, terminationFlag, concurrency, cutoff, topK, computer, decoderFactory);
             } else {
-                return similarityParallelStream(inputs, length, terminationFlag, concurrency, cutoff, computer);
+                return similarityParallelStream(inputs, length, terminationFlag, concurrency, cutoff, computer, decoderFactory);
             }
         }
     }
 
-    private <T> Stream<SimilarityResult> similarityStream(T[] inputs, int length, double similiarityCutoff, SimilarityComputer<T> computer) {
+    private <T> Stream<SimilarityResult> similarityStream(T[] inputs, int length, double cutoff, SimilarityComputer<T> computer, Supplier<RleDecoder> decoderFactory) {
+        RleDecoder decoder = decoderFactory.get();
         return IntStream.range(0, length)
                 .boxed().flatMap(sourceId -> IntStream.range(sourceId + 1, length)
-                        .mapToObj(targetId -> computer.similarity(inputs[sourceId], inputs[targetId], similiarityCutoff)).filter(Objects::nonNull));
+                        .mapToObj(targetId -> computer.similarity(decoder, inputs[sourceId], inputs[targetId], cutoff)).filter(Objects::nonNull));
     }
 
-    private <T> Stream<SimilarityResult> similarityStreamTopK(T[] inputs, int length, double cutoff, int topK, SimilarityComputer<T> computer) {
+    private <T> Stream<SimilarityResult> similarityStreamTopK(T[] inputs, int length, double cutoff, int topK, SimilarityComputer<T> computer, Supplier<RleDecoder> decoderFactory) {
         TopKConsumer<SimilarityResult>[] topKHolder = initializeTopKConsumers(length, topK);
+        RleDecoder decoder = decoderFactory.get();
 
         SimilarityConsumer consumer = assignSimilarityPairs(topKHolder);
         for (int sourceId = 0; sourceId < length; sourceId++) {
-            computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, consumer, computer);
+            computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, consumer, computer, decoder);
         }
         return Arrays.stream(topKHolder).flatMap(TopKConsumer::stream);
     }
 
-    private <T> Stream<SimilarityResult> similarityParallelStream(T[] inputs, int length, TerminationFlag terminationFlag, int concurrency, double cutoff, SimilarityComputer<T> computer) {
+    private <T> Stream<SimilarityResult> similarityParallelStream(T[] inputs, int length, TerminationFlag terminationFlag, int concurrency, double cutoff, SimilarityComputer<T> computer, Supplier<RleDecoder> decoderFactory) {
 
         int timeout = 100;
         int queueSize = 1000;
@@ -148,10 +153,11 @@ public class SimilarityProc {
         for (int taskId = 0; taskId < taskCount; taskId++) {
             int taskOffset = taskId;
             tasks.add(() -> {
+                RleDecoder decoder = decoderFactory.get();
                 for (int offset = 0; offset < batchSize; offset++) {
                     int sourceId = taskOffset * multiplier + offset;
                     if (sourceId < length)
-                        computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, (s, t, result) -> put(queue, result), computer);
+                        computeSimilarityForSourceIndex(sourceId, inputs, length, cutoff, (s, t, result) -> put(queue, result), computer, decoder);
                 }
             });
         }
@@ -168,14 +174,14 @@ public class SimilarityProc {
         return StreamSupport.stream(spliterator, false);
     }
 
-    private <T> Stream<SimilarityResult> similarityParallelStreamTopK(T[] inputs, int length, TerminationFlag terminationFlag, int concurrency, double cutoff, int topK, SimilarityComputer<T> computer) {
+    private <T> Stream<SimilarityResult> similarityParallelStreamTopK(T[] inputs, int length, TerminationFlag terminationFlag, int concurrency, double cutoff, int topK, SimilarityComputer<T> computer, Supplier<RleDecoder> decoderFactory) {
         int batchSize = ParallelUtil.adjustBatchSize(length, concurrency, 1);
         int taskCount = (length / batchSize) + (length % batchSize > 0 ? 1 : 0);
         Collection<TopKTask> tasks = new ArrayList<>(taskCount);
 
         int multiplier = batchSize < length ? batchSize : 1;
         for (int taskId = 0; taskId < taskCount; taskId++) {
-            tasks.add(new TopKTask(batchSize, taskId, multiplier, length, inputs, cutoff, topK, computer));
+            tasks.add(new TopKTask(batchSize, taskId, multiplier, length, inputs, cutoff, topK, computer, decoderFactory.get()));
         }
         ParallelUtil.runWithConcurrency(concurrency, tasks, terminationFlag, Pools.DEFAULT);
 
@@ -184,9 +190,9 @@ public class SimilarityProc {
         return Arrays.stream(topKConsumers).flatMap(TopKConsumer::stream);
     }
 
-    private <T> void computeSimilarityForSourceIndex(int sourceId, T[] inputs, int length, double cutoff, SimilarityConsumer consumer, SimilarityComputer<T> computer) {
+    private <T> void computeSimilarityForSourceIndex(int sourceId, T[] inputs, int length, double cutoff, SimilarityConsumer consumer, SimilarityComputer<T> computer, RleDecoder decoder) {
         for (int targetId = sourceId + 1; targetId < length; targetId++) {
-            SimilarityResult similarity = computer.similarity(inputs[sourceId], inputs[targetId], cutoff);
+            SimilarityResult similarity = computer.similarity(decoder, inputs[sourceId], inputs[targetId], cutoff);
             if (similarity != null) {
                 consumer.accept(sourceId, targetId, similarity);
             }
@@ -214,7 +220,20 @@ public class SimilarityProc {
         return ids;
     }
 
-    WeightedInput[] prepareWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {
+    WeightedInput[] prepareWeights(Object rawData, ProcedureConfiguration configuration, Double skipValue) throws Exception {
+        if (ProcedureConstants.CYPHER_QUERY.equals(configuration.getGraphName("dense"))) {
+            if (skipValue == null) {
+                throw new IllegalArgumentException("Must specify 'skipValue' when using {graph: 'cypher'}");
+            }
+
+            return prepareSparseWeights(api, (String) rawData, configuration.getParams(), getDegreeCutoff(configuration), skipValue);
+        } else {
+            List<Map<String, Object>> data = (List<Map<String, Object>>) rawData;
+            return preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
+        }
+    }
+
+    WeightedInput[] preparseDenseWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {
         WeightedInput[] inputs = new WeightedInput[data.size()];
         int idx = 0;
         for (Map<String, Object> row : data) {
@@ -224,7 +243,7 @@ public class SimilarityProc {
             int size = weightList.size();
             if (size > degreeCutoff) {
                 double[] weights = Weights.buildWeights(weightList);
-                inputs[idx++] = skipValue == null ? new WeightedInput((Long) row.get("item"), weights) : new WeightedInput((Long) row.get("item"), weights, skipValue);
+                inputs[idx++] = skipValue == null ? WeightedInput.dense((Long) row.get("item"), weights) : WeightedInput.dense((Long) row.get("item"), weights, skipValue);
             }
         }
         if (idx != inputs.length) inputs = Arrays.copyOf(inputs, idx);
@@ -232,14 +251,14 @@ public class SimilarityProc {
         return inputs;
     }
 
-    RleWeightedInput[] prepareWeights(GraphDatabaseAPI api, String rawData, Map<String, Object> params, long degreeCutoff, Double skipValue) throws Exception {
-        Result result = api.execute(rawData, params);
+    WeightedInput[] prepareSparseWeights(GraphDatabaseAPI api, String query, Map<String, Object> params, long degreeCutoff, Double skipValue) throws Exception {
+        Result result = api.execute(query, params);
 
         Map<Long, LongDoubleMap> map = new HashMap<>();
         LongSet ids = new LongHashSet();
         result.accept((Result.ResultVisitor<Exception>) resultRow -> {
             long item = resultRow.getNumber("item").longValue();
-            long id = resultRow.getNumber("id").longValue();
+            long id = resultRow.getNumber("category").longValue();
             ids.add(id);
             double weight = resultRow.getNumber("weight").doubleValue();
             map.compute(item, (key, agg) -> {
@@ -250,7 +269,7 @@ public class SimilarityProc {
             return true;
         });
 
-        RleWeightedInput[] inputs = new RleWeightedInput[map.size()];
+        WeightedInput[] inputs = new WeightedInput[map.size()];
         int idx = 0;
 
         long[] idsArray = ids.toArray();
@@ -267,7 +286,7 @@ public class SimilarityProc {
                 int nonSkipSize = sparseWeights.size();
                 double[] weights = Weights.buildRleWeights(weightsList, REPEAT_CUTOFF);
 
-                inputs[idx++] = new RleWeightedInput(item, weights, size, nonSkipSize);
+                inputs[idx++] = WeightedInput.sparse(item, weights, size, nonSkipSize);
             }
         }
 
@@ -306,8 +325,16 @@ public class SimilarityProc {
         return configuration.getInt("top", 0);
     }
 
+    protected Supplier<RleDecoder> createDecoderFactory(String graphType, int size) {
+        if(ProcedureConstants.CYPHER_QUERY.equals(graphType)) {
+            return () -> new RleDecoder(size);
+        }
+
+        return () -> null;
+    }
+
     interface SimilarityComputer<T> {
-        SimilarityResult similarity(T source, T target, double cutoff);
+        SimilarityResult similarity(RleDecoder decoder, T source, T target, double cutoff);
     }
 
     public static SimilarityConsumer assignSimilarityPairs(TopKConsumer<SimilarityResult>[] topKConsumers) {
@@ -329,9 +356,10 @@ public class SimilarityProc {
         private final T[] ids;
         private final double similiarityCutoff;
         private final SimilarityComputer<T> computer;
+        private RleDecoder decoder;
         private final TopKConsumer<SimilarityResult>[] topKConsumers;
 
-        TopKTask(int batchSize, int taskOffset, int multiplier, int length, T[] ids, double similiarityCutoff, int topK, SimilarityComputer<T> computer) {
+        TopKTask(int batchSize, int taskOffset, int multiplier, int length, T[] ids, double similiarityCutoff, int topK, SimilarityComputer<T> computer, RleDecoder decoder) {
             this.batchSize = batchSize;
             this.taskOffset = taskOffset;
             this.multiplier = multiplier;
@@ -339,6 +367,7 @@ public class SimilarityProc {
             this.ids = ids;
             this.similiarityCutoff = similiarityCutoff;
             this.computer = computer;
+            this.decoder = decoder;
             topKConsumers = initializeTopKConsumers(length, topK);
         }
 
@@ -349,7 +378,7 @@ public class SimilarityProc {
                 int sourceId = taskOffset * multiplier + offset;
                 if (sourceId < length) {
 
-                    computeSimilarityForSourceIndex(sourceId, ids, length, similiarityCutoff, consumer, computer);
+                    computeSimilarityForSourceIndex(sourceId, ids, length, similiarityCutoff, consumer, computer, decoder);
                 }
             }
         }

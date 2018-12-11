@@ -24,9 +24,9 @@ public class WeightsTest {
         double[] actuals = Weights.buildRleWeights(weightList, 3);
         System.out.println("actuals = " + Arrays.toString(actuals));
         assertArrayEquals(new double[]{
+
                 Double.POSITIVE_INFINITY, 5.0, Double.NaN}, actuals, 0.01);
     }
-
 
     @Test
     public void rleWithOneRepeatedValue() throws Exception {
