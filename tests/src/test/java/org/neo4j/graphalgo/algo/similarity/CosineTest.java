@@ -47,6 +47,10 @@ public class CosineTest {
             "RETURN item1, item2, count1, count2, intersection, similarity " +
             "ORDER BY item1,item2";
 
+    public static final String STATEMENT_CYPHER_STREAM = "call algo.similarity.cosine.stream($query,$config) " +
+            "yield item1, item2, count1, count2, intersection, similarity " +
+            "RETURN * ORDER BY item1,item2";
+
     public static final String STATEMENT = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
             "WITH {item:id(p), weights: collect(coalesce(r.stars,0))} as userData\n" +
             "WITH collect(userData) as data\n" +
@@ -224,6 +228,18 @@ public class CosineTest {
         assert12Skip(results.next());
         assert13Skip(results.next());
         assert23Skip(results.next());
+        assertFalse(results.hasNext());
+    }
+
+    @Test
+    public void cosineCypherLoadingStreamTest() {
+        String query = "MATCH (p:Person)-[r:LIKES]->(i) RETURN id(p) AS item, id(i) AS category, r.stars AS weight";
+        Result results = db.execute(STATEMENT_CYPHER_STREAM, map("config", map("concurrency", 1, "graph", "cypher", "skipValue", 0.0), "query", query));
+
+        assertTrue(results.hasNext());
+        assert01Skip(results.next());
+        assert02Skip(results.next());
+        assert12Skip(results.next());
         assertFalse(results.hasNext());
     }
 

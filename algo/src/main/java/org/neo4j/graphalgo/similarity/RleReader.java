@@ -1,7 +1,5 @@
 package org.neo4j.graphalgo.similarity;
 
-import java.util.Arrays;
-
 public class RleReader {
 
     private final double[] decodedVector;

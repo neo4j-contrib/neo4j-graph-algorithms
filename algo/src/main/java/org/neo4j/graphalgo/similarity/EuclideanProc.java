@@ -26,6 +26,7 @@ import org.neo4j.procedure.Procedure;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class EuclideanProc extends SimilarityProc {
@@ -40,10 +41,10 @@ public class EuclideanProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.sumSquareDelta(cutoff, t) :
-                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
+                (decoder, s, t, cutoff) -> s.sumSquareDelta(cutoff, t) :
+                (decoder, s, t, cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
+        WeightedInput[] inputs = preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end
@@ -52,9 +53,8 @@ public class EuclideanProc extends SimilarityProc {
         int topN = -getTopN(configuration);
         int topK = -getTopK(configuration);
 
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, topK), topN);
-
-        return stream.map(SimilarityResult::squareRooted);
+        return topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, topK), topN)
+                .map(SimilarityResult::squareRooted);
     }
 
     @Procedure(name = "algo.similarity.euclidean", mode = Mode.WRITE)
@@ -66,10 +66,10 @@ public class EuclideanProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = configuration.get("skipValue", null);
         SimilarityComputer<WeightedInput> computer = skipValue == null ?
-                (s,t,cutoff) -> s.sumSquareDelta(cutoff, t) :
-                (s,t,cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
+                (decoder, s, t, cutoff) -> s.sumSquareDelta(cutoff, t) :
+                (decoder, s, t, cutoff) -> s.sumSquareDeltaSkip(cutoff, t, skipValue);
 
-        WeightedInput[] inputs = prepareWeights(data, getDegreeCutoff(configuration), skipValue);
+        WeightedInput[] inputs = preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
         // as we don't compute the sqrt until the end
@@ -78,7 +78,8 @@ public class EuclideanProc extends SimilarityProc {
         int topN = -getTopN(configuration);
         int topK = -getTopK(configuration);
 
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, topK), topN)
+
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, topK), topN)
                 .map(SimilarityResult::squareRooted);
 
         boolean write = configuration.isWriteFlag(false); //  && similarityCutoff != 0.0;

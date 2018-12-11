@@ -5,6 +5,7 @@ public class RleTransformer {
 
     public static double[] decode(double[] rleVector, int initialSize) {
         RleReader reader = new RleReader(initialSize);
+        reader.reset(rleVector);
         return reader.read();
     }
 }

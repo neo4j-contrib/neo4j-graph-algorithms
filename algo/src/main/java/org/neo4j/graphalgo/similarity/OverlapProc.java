@@ -37,13 +37,13 @@ public class OverlapProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        SimilarityComputer<CategoricalInput> computer = (s, t, cutoff) -> s.overlap(cutoff, t);
+        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.overlap(cutoff, t);
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
-        return topN(similarityStream(inputs, computer, configuration, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
+        return topN(similarityStream(inputs, computer, configuration, () -> null, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
     }
 
     @Procedure(name = "algo.similarity.overlap", mode = Mode.WRITE)
@@ -53,14 +53,14 @@ public class OverlapProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        SimilarityComputer<CategoricalInput> computer = (s,t,cutoff) -> s.overlap(cutoff, t);
+        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.overlap(cutoff, t);
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
         double similarityCutoff = getSimilarityCutoff(configuration);
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, similarityCutoff, getTopK(configuration)), getTopN(configuration));
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
         return writeAndAggregateResults(configuration, stream, inputs.length, write, "NARROWER_THAN");
