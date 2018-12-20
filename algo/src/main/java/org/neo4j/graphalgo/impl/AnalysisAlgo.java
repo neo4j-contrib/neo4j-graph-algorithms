@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 
@@ -231,6 +230,9 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                             Node partnerLoad = loadRel.getStartNode();
                             String partnerId = (String) partnerLoad.getProperty("shipper_id");
                             String partnerCarrierId = (String) partnerLoad.getProperty("carrier_id");
+                            if(laneId == overlapLaneId && companyId.equalsIgnoreCase(partnerId)){
+                                continue;
+                            }
                             LongHashSet partnerLoadIds = partnerLoadMap.get(partnerId);
                             if (partnerLoadIds == null) {
                                 partnerLoadIds = new LongHashSet();
@@ -267,7 +269,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                         String partner = partnerCursor.key;
                         String[] writeData = data.clone();
                         int innerRow = row;
-                        if (companyId == partner) continue;
+                        //if (companyId.equalsIgnoreCase(partner)) continue;
                         writeData[innerRow++] = companyId;
                         writeData[innerRow++] = Integer.toString(laneLoads.get(laneId).size());
                         writeData[innerRow++] = Integer.toString(laneCarriers.get(laneId).size());
@@ -313,7 +315,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         initialize();
         loadLanes();
         calculateLaneOverlaps();
-        String[] header = {"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state", "shipper", "my_loads", "my_carriers","partner", "overlaps", "partner_loads", "partner_carriers"};
+        String[] header = {"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state", "shipper", "my_loads", "my_carriers","partner", "No. of lane overlaps", "partner_loads", "partner_carriers"};
         printResultsToFile(filename+"_same_side_overlap_summary.csv", sameSideOverlap,true, header);
         printResultsToFile(filename+"_circular_overlap_summary.csv", circularOverlap, true, header);
         printResultsToFile(filename+"_continuous_run_overlap_summary.csv", continuousRunOverlap, true, header);
