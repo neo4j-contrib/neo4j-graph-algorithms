@@ -48,10 +48,8 @@ public class AnalysisAlgoProc {
 //
 //        // load
 //        final GraphLoader laneGraphLoader = new GraphLoader(api, Pools.DEFAULT)
-//                .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
-//                .withOptionalNodeProperties(
-//
-//                );
+//                .init(log, 'City', 'ROUTE', configuration)
+//                .withRelationshipWeightsFromProperty('distance', 99999999.0);
 //        // use undirected traversal if direction is BOTH
 //        laneGraphLoader.asUndirected(true);
 //        graph = laneGraphLoader.load(configuration.getGraphImpl());

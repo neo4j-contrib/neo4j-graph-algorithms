@@ -16,12 +16,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 
 public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
     private final GraphDatabaseAPI dbService;
-    private static final int PATH_END = -1;
     private final Log log;
 
     private String companyId;
@@ -46,6 +46,15 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
 
     private LongObjectMap<Node> overlapLaneMap;
 
+    private ObjectObjectMap<String, String> partnerMaskedMap;
+
+    private ObjectIntMap<String> partnerCarrierCount;
+
+    private ObjectObjectMap<String, String> carrierMaskedMap;
+
+
+    private int partnerCount;
+
     public AnalysisAlgo(final String companyId, final String filename, final ProcedureConfiguration configuration, final GraphDatabaseAPI dbService, final Log log) {
         this.companyId = companyId;
         this.filename = filename;
@@ -69,6 +78,11 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         continuousRunOverlap = new LongObjectHashMap<>();
 
         overlapLaneMap = new LongObjectScatterMap<>();
+
+        partnerMaskedMap = new ObjectObjectHashMap<>();
+
+        partnerCarrierCount = new ObjectIntHashMap<>();
+        carrierMaskedMap = new ObjectObjectHashMap<>();
     }
 
     private void loadLanes(){
@@ -174,14 +188,44 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                             sameSideOverlap.put(lane.getId(), sameSideOverlaps);
                         }
                         sameSideOverlaps.add(possibleOverlapLane.getId());
-                    } else if (overlapTravelDirection > reverseTravelDirection - 60 && overlapTravelDirection < reverseTravelDirection + 60) {
+                    }
+                }
+            }
+
+            Traverser ldcRouteTraverse = routeTd.traverse(ldc);
+            for (Path routePath : ldcRouteTraverse) {
+                Relationship cocRel = routePath.lastRelationship();
+                double pathDistance = (double) cocRel.getProperty("distance");
+                if (pathDistance > laneDistance * .50) {
+                    continue;
+                }
+                Node coc = cocRel.getOtherNode(ldc);
+                Iterable<Relationship> cocLaneRels = coc.getRelationships(RelationshipType.withName(laneStartName), Direction.INCOMING);
+                for (Relationship cocLaneRel : cocLaneRels) {
+                    Node possibleOverlapLane = cocLaneRel.getStartNode();
+                    if (pathDistance + (double) possibleOverlapLane.getProperty("distance") > laneDistance * 1.5) {
+                        continue;
+                    }
+                    overlapLaneMap.put(possibleOverlapLane.getId(), possibleOverlapLane);
+                    double overlapTravelDirection;
+                    if (possibleOverlapLane.hasProperty("travel_direction")) {
+                        overlapTravelDirection = (double) possibleOverlapLane.getProperty("travel_direction");
+                    } else {
+                        overlapTravelDirection = bearing((double) possibleOverlapLane.getProperty("start_city_latitude"),
+                                (double) possibleOverlapLane.getProperty("start_city_longitude"),
+                                (double) possibleOverlapLane.getProperty("end_city_latitude"),
+                                (double) possibleOverlapLane.getProperty("end_city_longitude"
+                                ));
+                        possibleOverlapLane.setProperty("travel_direction", overlapTravelDirection);
+                    }
+                    if (overlapTravelDirection > reverseTravelDirection - 60 && overlapTravelDirection < reverseTravelDirection + 60) {
                         LongScatterSet circularOverlaps = circularOverlap.get(lane.getId());
                         if (null == circularOverlaps) {
                             circularOverlaps = new LongScatterSet();
                             circularOverlap.put(lane.getId(), circularOverlaps);
                         }
                         circularOverlaps.add(possibleOverlapLane.getId());
-                    } else if (overlapTravelDirection > reverseTravelDirection + 60 && overlapTravelDirection < reverseTravelDirection - 60) {
+                    } else {
                         LongScatterSet continuousRunOverlaps = circularOverlap.get(lane.getId());
                         if (null == continuousRunOverlaps) {
                             continuousRunOverlaps = new LongScatterSet();
@@ -191,18 +235,98 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                     }
                 }
             }
+
             endTime = System.nanoTime();
             log.info("Completed lane Calculation: " + index + " out of " + laneLoads.size() + " in " + (endTime - startTime) + " ns");
         }
     }
 
-    private void printResultsToFile(String filename, LongObjectMap<LongScatterSet> Overlap, boolean isSummary, String[] header){
+    private String getMaskedParnter(String partner){
+        if(partnerMaskedMap.containsKey(partner)){
+            return partnerMaskedMap.get(partner);
+        }
+
+        partnerCount++;
+        String maskedPartner = String.format("partner%s", Integer.toString(partnerCount));
+        partnerMaskedMap.put(partner, maskedPartner);
+
+        return maskedPartner;
+    }
+
+    private String getMaskedCarrier(String partner, String carrier){
+        if(carrierMaskedMap.containsKey(carrier)){
+            return carrierMaskedMap.get(carrier);
+        }
+
+        int carrierCount = 0;
+        if(partnerCarrierCount.containsKey(partner)){
+            carrierCount = partnerCarrierCount.get(partner);
+        }
+        carrierCount++;
+        partnerCarrierCount.put(partner, carrierCount);
+        String maskedPartner = getMaskedParnter(partner);
+        String maskedCarrier = String.format("&s|carrier%s", maskedPartner, Integer.toString(partnerCount));
+        carrierMaskedMap.put(carrier, maskedCarrier);
+
+        return maskedCarrier;
+    }
+
+    private void printMaskedPartnerFile(){
+        String maskedPartnerfilename = filename + "masked_partners.csv";
+        File maskedPartnerfile = new File(maskedPartnerfilename);
+        try {
+            FileWriter fileOutput = new FileWriter(maskedPartnerfile);
+            CSVWriter writer = new CSVWriter(fileOutput);
+            String[] header = {"partner", "masked_name"};
+            writer.writeNext(header);
+            Iterator<ObjectObjectCursor<String, String>> partnerMaskedMapIterator = partnerMaskedMap.iterator();
+            while (partnerMaskedMapIterator.hasNext()) {
+                String[] data = new String[2];
+                int row = 0;
+                data[row++] = partnerMaskedMapIterator.next().key;
+                data[row++] = partnerMaskedMapIterator.next().value;
+                writer.writeNext(data);
+            }
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.info(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void printMaskedCarrierFile(){
+        String maskedCarrierfilename = filename + "masked_carriers.csv";
+        File maskedCarrierfile = new File(maskedCarrierfilename);
+        try {
+            FileWriter fileOutput = new FileWriter(maskedCarrierfile);
+            CSVWriter writer = new CSVWriter(fileOutput);
+            String[] header = {"carrier", "masked_name"};
+            writer.writeNext(header);
+            Iterator<ObjectObjectCursor<String, String>> carrierMaskedMapIterator = carrierMaskedMap.iterator();
+            while (carrierMaskedMapIterator.hasNext()) {
+                String[] data = new String[2];
+                int row = 0;
+                data[row++] = carrierMaskedMapIterator.next().key;
+                data[row++] = carrierMaskedMapIterator.next().value;
+                writer.writeNext(data);
+            }
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.info(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void printResultsToFile(String filename, LongObjectMap<LongScatterSet> Overlap, boolean isLaneOverlapReport, boolean isSummary, String[] header){
         //results Printer
         File laneSummaryfile = new File(filename);
         try {
             FileWriter fileOutput = new FileWriter(laneSummaryfile);
             CSVWriter writer = new CSVWriter(fileOutput);
             writer.writeNext(header);
+
             for (LongObjectCursor<Node> laneCursor : laneMap) {
                 Node lane = laneCursor.value;
                 long laneId = lane.getId();
@@ -224,6 +348,31 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                         Node overlapLane = overlapLaneMap.get(overlapLaneId);
                         if (!overlapLane.hasRelationship(RelationshipType.withName(loadLaneRelName), Direction.INCOMING)) {
                             overlaps.remove(overlapLaneId);
+                            continue;
+                        }
+                        if(isLaneOverlapReport){
+                            String[] writeData = data.clone();
+                            int innerRow = row;
+                            writeData[innerRow++] = (String) overlapLane.getProperty("start_city");
+                            writeData[innerRow++] = (String) overlapLane.getProperty("start_state");
+                            writeData[innerRow++] = (String) overlapLane.getProperty("end_city");
+                            writeData[innerRow++] = (String) overlapLane.getProperty("end_state");
+                            if(overlapLane.hasRelationship(RelationshipType.withName("LANE_HAS_SHIPPER"), Direction.OUTGOING)){
+                                Iterable<Relationship> partnerOverlapRels = overlapLane.getRelationships(RelationshipType.withName("LANE_HAS_SHIPPER"), Direction.OUTGOING);
+                                ObjectHashSet<String> uniqueOverlappedPartners = new ObjectHashSet<>();
+                                for (Relationship partnerOverlapRel : partnerOverlapRels) {
+                                    Node shipperNode = partnerOverlapRel.getEndNode();
+                                    if(shipperNode.hasProperty("permalink")){
+                                        uniqueOverlappedPartners.add( (String) shipperNode.getProperty("permalink") );
+                                    }
+                                }
+                                Iterator<ObjectCursor<String>> partnerIterator = uniqueOverlappedPartners.iterator();
+                                while (partnerIterator.hasNext()){
+                                    String partnerName = String.valueOf(partnerIterator.next());
+                                    writeData[innerRow+1] = getMaskedParnter(partnerName);
+                                    writer.writeNext(writeData);
+                                }
+                            }
                             continue;
                         }
                         for (Relationship loadRel : overlapLane.getRelationships(RelationshipType.withName(loadLaneRelName), Direction.INCOMING)) {
@@ -273,7 +422,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                         writeData[innerRow++] = companyId;
                         writeData[innerRow++] = Integer.toString(laneLoads.get(laneId).size());
                         writeData[innerRow++] = Integer.toString(laneCarriers.get(laneId).size());
-                        writeData[innerRow++] = partner;
+                        writeData[innerRow++] = getMaskedParnter(partner);
                         if (isSummary) {
                             writeData[innerRow++] = Integer.toString(partnerOverlapMap.get(partner).size());
                             writeData[innerRow++] = Integer.toString(partnerLoadMap.get(partner).size());
@@ -285,7 +434,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                                     String[] completeData = writeData.clone();
                                     int completeRow = innerRow;
                                     String carrierName = partnerCarrierCursor.value;
-                                    completeData[completeRow++] = carrierName;
+                                    completeData[completeRow++] = getMaskedCarrier(partner, carrierName);
                                     completeData[completeRow++] = Integer.toString(carrierLaneMap.get(carrierName).size());
                                     completeData[completeRow++] = Integer.toString(carrierLoadMap.get(carrierName).size());
                                     writer.writeNext(completeData);
@@ -316,15 +465,21 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         loadLanes();
         calculateLaneOverlaps();
         String[] header = {"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state", "shipper", "my_loads", "my_carriers","partner", "No. of lane overlaps", "partner_loads", "partner_carriers"};
-        printResultsToFile(filename+"_same_side_overlap_summary.csv", sameSideOverlap,true, header);
-        printResultsToFile(filename+"_circular_overlap_summary.csv", circularOverlap, true, header);
-        printResultsToFile(filename+"_continuous_run_overlap_summary.csv", continuousRunOverlap, true, header);
+        printResultsToFile(filename+"_same_side_overlap_without_carriers.csv", sameSideOverlap,false,true, header);
+        printResultsToFile(filename+"_circular_overlap_without_carriers.csv", circularOverlap, false,true, header);
+        printResultsToFile(filename+"_continuous_run_overlap_without_carriers.csv", continuousRunOverlap, false, true, header);
 
         header = new String[]{"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state", "shipper" ,"my_loads", "my_carriers", "partner", "partner_carrier", "overlaps", "partner_carrier_loads"};
+        printResultsToFile(filename+"_same_side_overlap_with_carriers.csv", sameSideOverlap, false,false, header);
+        printResultsToFile(filename+"_circular_overlap_with_carriers.csv", circularOverlap, false,false, header);
+        printResultsToFile(filename+"_continuous_run_with_carriers.csv", continuousRunOverlap, false,false, header);
+        header = new String[]{"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state", "overlap_lane_start_city", "overlap_lane_start_state", "overlap_lane_end_city", "overlap_lane_end_state", "partner"};
+        printResultsToFile(filename+"_same_side_lane_overlaps.csv", sameSideOverlap, true,false, header);
+        printResultsToFile(filename+"_circular_lane_overlaps.csv", circularOverlap, true,false, header);
+        printResultsToFile(filename+"_continuous_run_lane_overlaps.csv", continuousRunOverlap, true,false, header);
 
-        printResultsToFile(filename+"_same_side_overlap.csv", sameSideOverlap, false, header);
-        printResultsToFile(filename+"_circular_overlap.csv", circularOverlap, false, header);
-        printResultsToFile(filename+"_continuous_run_overlap.csv", continuousRunOverlap, false, header);
+        printMaskedPartnerFile();
+        printMaskedCarrierFile();
         return this;
     }
 
