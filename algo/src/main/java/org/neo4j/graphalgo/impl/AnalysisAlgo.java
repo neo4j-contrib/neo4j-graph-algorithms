@@ -29,6 +29,11 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
     private String laneStartName;
     private String laneEndName;
 
+    private double deadHeadPercentage;
+    private double offRoutePercentage;
+
+    private int travelDirectionDeviation;
+
     private ResourceIterator<Node> loads;
 
     private LongLongMap loadLaneMap;
@@ -67,6 +72,9 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         this.loadLaneRelName = configuration.get("loadLaneRelName", "LOAD_LANE");
         this.laneStartName = configuration.get("laneStartName", "LANE_START_CITY");
         this.laneEndName = configuration.get("laneEndName", "LANE_END_CITY");
+        this.offRoutePercentage = configuration.get("offRoutePercentage", 1.50);
+        this.deadHeadPercentage = configuration.get("deadHeadPercentage", 0.50);
+        this.travelDirectionDeviation = configuration.get("travelDirectionDeviation", 60);
     }
 
     public void initialize(){
@@ -169,14 +177,14 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
             for (Path routePath : lpcRouteTraverse) {
                 Relationship cocRel = routePath.lastRelationship();
                 double pathDistance = (double) cocRel.getProperty("distance");
-                if (pathDistance > laneDistance * .50) {
+                if (pathDistance > laneDistance * deadHeadPercentage) {
                     continue;
                 }
                 Node coc = cocRel.getOtherNode(lpc);
                 Iterable<Relationship> cocLaneRels = coc.getRelationships(RelationshipType.withName(laneStartName), Direction.INCOMING);
                 for (Relationship cocLaneRel : cocLaneRels) {
                     Node possibleOverlapLane = cocLaneRel.getStartNode();
-                    if (pathDistance + (double) possibleOverlapLane.getProperty("distance") > laneDistance * 1.5) {
+                    if (pathDistance + (double) possibleOverlapLane.getProperty("distance") > laneDistance * offRoutePercentage) {
                         continue;
                     }
                     overlapLaneMap.put(possibleOverlapLane.getId(), possibleOverlapLane);
@@ -191,7 +199,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                                 ));
                         possibleOverlapLane.setProperty("travel_direction", overlapTravelDirection);
                     }
-                    if (overlapTravelDirection > travelDirection - 60 && overlapTravelDirection < travelDirection + 60) {
+                    if (overlapTravelDirection > travelDirection - travelDirectionDeviation && overlapTravelDirection < travelDirection + travelDirectionDeviation) {
                         LongScatterSet sameSideOverlaps = sameSideOverlap.get(lane.getId());
                         if (null == sameSideOverlaps) {
                             sameSideOverlaps = new LongScatterSet();
@@ -206,14 +214,14 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
             for (Path routePath : ldcRouteTraverse) {
                 Relationship cocRel = routePath.lastRelationship();
                 double pathDistance = (double) cocRel.getProperty("distance");
-                if (pathDistance > laneDistance * .50) {
+                if (pathDistance > laneDistance * deadHeadPercentage) {
                     continue;
                 }
                 Node coc = cocRel.getOtherNode(ldc);
                 Iterable<Relationship> cocLaneRels = coc.getRelationships(RelationshipType.withName(laneStartName), Direction.INCOMING);
                 for (Relationship cocLaneRel : cocLaneRels) {
                     Node possibleOverlapLane = cocLaneRel.getStartNode();
-                    if (pathDistance + (double) possibleOverlapLane.getProperty("distance") > laneDistance * 1.5) {
+                    if (pathDistance + (double) possibleOverlapLane.getProperty("distance") > laneDistance * offRoutePercentage) {
                         continue;
                     }
                     overlapLaneMap.put(possibleOverlapLane.getId(), possibleOverlapLane);
@@ -228,7 +236,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                                 ));
                         possibleOverlapLane.setProperty("travel_direction", overlapTravelDirection);
                     }
-                    if (overlapTravelDirection > reverseTravelDirection - 60 && overlapTravelDirection < reverseTravelDirection + 60) {
+                    if (overlapTravelDirection > reverseTravelDirection - travelDirectionDeviation && overlapTravelDirection < reverseTravelDirection + travelDirectionDeviation) {
                         LongScatterSet circularOverlaps = circularOverlap.get(lane.getId());
                         if (null == circularOverlaps) {
                             circularOverlaps = new LongScatterSet();
