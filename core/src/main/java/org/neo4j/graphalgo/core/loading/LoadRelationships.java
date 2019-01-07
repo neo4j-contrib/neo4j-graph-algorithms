@@ -35,24 +35,16 @@ public interface LoadRelationships {
 
     int degreeBoth(NodeCursor cursor);
 
+    /**
+     * See {@link NodesHelper} for the reason why we have this in addition to {@link #degreeBoth(NodeCursor)}.
+     */
+    int degreeUndirected(NodeCursor cursor);
+
     RelationshipSelectionCursor relationshipsOut(NodeCursor cursor);
 
     RelationshipSelectionCursor relationshipsIn(NodeCursor cursor);
 
     RelationshipSelectionCursor relationshipsBoth(NodeCursor cursor);
-
-    default int degreeOf(Direction direction, NodeCursor cursor) {
-        switch (direction) {
-            case OUTGOING:
-                return degreeOut(cursor);
-            case INCOMING:
-                return degreeIn(cursor);
-            case BOTH:
-                return degreeBoth(cursor);
-            default:
-                throw new IllegalArgumentException("direction " + direction);
-        }
-    }
 
     default RelationshipSelectionCursor relationshipsOf(Direction direction, NodeCursor cursor) {
         switch (direction) {
@@ -107,6 +99,11 @@ final class LoadAllRelationships implements LoadRelationships {
     }
 
     @Override
+    public int degreeUndirected(final NodeCursor cursor) {
+        return NodesHelper.countUndirected(cursor, cursors);
+    }
+
+    @Override
     public RelationshipSelectionCursor relationshipsOut(final NodeCursor cursor) {
         return RelationshipSelections.outgoingCursor(cursors, cursor, null);
     }
@@ -146,6 +143,11 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
     @Override
     public int degreeBoth(final NodeCursor cursor) {
         return Nodes.countAll(cursor, cursors, type);
+    }
+
+    @Override
+    public int degreeUndirected(final NodeCursor cursor) {
+        return NodesHelper.countUndirected(cursor, cursors, type);
     }
 
     @Override

@@ -76,12 +76,9 @@ abstract class RelationshipLoader {
             VisitRelationship visitIn,
             NodeCursor sourceNode,
             int localNodeId) {
-        final int degree = loadRelationships.degreeBoth(sourceNode);
+        final int degree = loadRelationships.degreeUndirected(sourceNode);
         if (degree > 0) {
-            // give leeway in case of nodes with a reference to themselves
-            // due to automatic skipping of identical targets, just adding one is enough to cover the
-            // self-reference case, as it is handled as two relationships that aren't counted by BOTH
-            final int[] targets = matrix.armOut(localNodeId, 1 + degree);
+            final int[] targets = matrix.armOut(localNodeId, degree);
             visitIn.prepareNextNode(localNodeId, targets);
             this.visitIn(sourceNode, visitIn);
             visitOut.prepareNextNode(visitIn);

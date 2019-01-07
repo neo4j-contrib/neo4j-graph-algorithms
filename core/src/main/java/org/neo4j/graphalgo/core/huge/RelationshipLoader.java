@@ -95,7 +95,7 @@ abstract class RelationshipLoader {
             NodeCursor sourceNode,
             long localGraphId) {
 
-        int degree = loadRelationships.degreeBoth(sourceNode);
+        int degree = loadRelationships.degreeUndirected(sourceNode);
         if (degree > 0) {
 
             visitIn.prepareNextNode(degree, localGraphId);
