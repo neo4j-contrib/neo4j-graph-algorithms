@@ -73,7 +73,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         this.laneStartName = configuration.get("laneStartName", "LANE_START_CITY");
         this.laneEndName = configuration.get("laneEndName", "LANE_END_CITY");
         this.offRoutePercentage = configuration.get("offRoutePercentage", 1.50);
-        this.deadHeadPercentage = configuration.get("deadHeadPercentage", 0.50);
+        this.deadHeadPercentage = configuration.get("2", 0.50);
         this.travelDirectionDeviation = configuration.get("travelDirectionDeviation", 60);
     }
 
@@ -130,6 +130,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
             carriers.add((String) load.getProperty("carrier_id"));
         });
         endTime = System.nanoTime();
+        loads.close();
         log.info("Completed Load Get and Lane Create " + (endTime - startTime) + " Size " + loadMap.size());
     }
 
@@ -209,7 +210,6 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                     }
                 }
             }
-
             Traverser ldcRouteTraverse = routeTd.traverse(ldc);
             for (Path routePath : ldcRouteTraverse) {
                 Relationship cocRel = routePath.lastRelationship();
@@ -253,7 +253,6 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                     }
                 }
             }
-
             endTime = System.nanoTime();
             log.info("Completed lane Calculation: " + index + " out of " + laneLoads.size() + " in " + (endTime - startTime) + " ns");
         }
@@ -347,6 +346,56 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         }
     }
 
+    private  void printLaneSummaryFile(){
+        File laneSummaryfile = new File(String.format("%s_lanes_summary.csv", filename));
+        try {
+            FileWriter fileOutput = new FileWriter(laneSummaryfile);
+            CSVWriter writer = new CSVWriter(fileOutput);
+            String[] header = {"lane_start_city", "lane_start_state", "lane_end_city", "lane_end_state",
+                    "my_loads", "my_carriers",
+                    "same_side_partners_count", "same_side_partner_overlaps_count",
+                    "same_side_partner_loads_count", "same_side_partner_carriers_count",
+                    "circular_partner_count", "circular_partner_overlaps_count",
+                    "circular_partner_loads_count", "circular_partner_carriers_count",
+                    "continuous_run_partner_count", "continuous_run_partner_overlaps_count",
+                    "continuous_run_partner_loads_count", "continuous_run_partner_carriers_count"};
+            writer.writeNext(header);
+
+            for (LongObjectCursor<Node> laneCursor : laneMap) {
+                Node lane = laneCursor.value;
+                long laneId = lane.getId();
+                String[] data = new String[header.length];
+                int row = 0;
+                data[row++] = (String) lane.getProperty("start_city");
+                data[row++] = (String) lane.getProperty("start_state");
+                data[row++] = (String) lane.getProperty("end_city");
+                data[row++] = (String) lane.getProperty("end_state");
+                data[row++] = String.valueOf(laneLoads.get(laneId).size());
+                data[row++] = String.valueOf(laneCarriers.get(laneId).size());
+                data[row++] = sameSideOverlapResult.lanePartners.containsKey(laneId) ? String.valueOf(sameSideOverlapResult.lanePartners.get(laneId).size()) : "0";
+                data[row++] = sameSideOverlapResult.laneParnterOverlaps.containsKey(laneId) ? String.valueOf(sameSideOverlapResult.laneParnterOverlaps.get(laneId).size()) : "0" ;
+                data[row++] = sameSideOverlapResult.lanePartnerLoads.containsKey(laneId) ? String.valueOf(sameSideOverlapResult.lanePartnerLoads.get(laneId).size()) : "0" ;
+                data[row++] = sameSideOverlapResult.laneCarriers.containsKey(laneId) ? String.valueOf(sameSideOverlapResult.laneCarriers.get(laneId).size()) : "0" ;
+                data[row++] = circularOverlapResult.lanePartners.containsKey(laneId) ? String.valueOf(circularOverlapResult.lanePartners.get(laneId).size()) : "0" ;
+                data[row++] = circularOverlapResult.laneParnterOverlaps.containsKey(laneId) ? String.valueOf(circularOverlapResult.laneParnterOverlaps.get(laneId).size()) : "0" ;
+                data[row++] = circularOverlapResult.lanePartnerLoads.containsKey(laneId) ? String.valueOf(circularOverlapResult.lanePartnerLoads.get(laneId).size()) : "0" ;
+                data[row++] = circularOverlapResult.laneCarriers.containsKey(laneId) ? String.valueOf(circularOverlapResult.laneCarriers.get(laneId).size()) : "0" ;
+                data[row++] = continuousRunOverlapResult.lanePartners.containsKey(laneId) ? String.valueOf(continuousRunOverlapResult.lanePartners.get(laneId).size()) : "0" ;
+                data[row++] = continuousRunOverlapResult.laneParnterOverlaps.containsKey(laneId) ? String.valueOf(continuousRunOverlapResult.laneParnterOverlaps.get(laneId).size()) : "0" ;
+                data[row++] = continuousRunOverlapResult.lanePartnerLoads.containsKey(laneId) ? String.valueOf(continuousRunOverlapResult.lanePartnerLoads.get(laneId).size()) : "0" ;
+                data[row++] = continuousRunOverlapResult.laneCarriers.containsKey(laneId) ? String.valueOf(continuousRunOverlapResult.laneCarriers.get(laneId).size()) : "0" ;
+
+                writer.writeNext(data);
+            }
+            writer.close();
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.info(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void printResultsToFile(String filename, LongObjectMap<LongScatterSet> Overlap, OverlapResult overlapResult , boolean isLaneOverlapReport, boolean isSummary, String[] header){
         //results Printer
         File laneSummaryfile = new File(filename);
@@ -399,6 +448,9 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                                     String[] writeData1 = writeData.clone();
                                     int innerRow1 = innerRow;
                                     String partnerName = partnerIterator.next().value;
+                                    if(laneId == overlapLaneId && companyId.equalsIgnoreCase(partnerName)){
+                                        continue;
+                                    }
                                     writeData1[innerRow1++] = getMaskedParnter(partnerName);
                                     writer.writeNext(writeData1);
                                 }
@@ -488,6 +540,36 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                             }
                             shipperOverlappedCarrierIds.addAll(laneCarriers.get(laneId));
                             partnersList.add(partnerId);
+
+                            // for lane Summary Report
+                            LongHashSet summaryPartnerLoadIds = overlapResult.lanePartnerLoads.get(laneId);
+                            if (summaryPartnerLoadIds == null) {
+                                summaryPartnerLoadIds = new LongHashSet();
+                                overlapResult.lanePartnerLoads.put(laneId, summaryPartnerLoadIds);
+                            }
+                            summaryPartnerLoadIds.add(partnerLoad.getId());
+
+                            LongHashSet laneParnterOverlapsIds = overlapResult.laneParnterOverlaps.get(laneId);
+                            if(laneParnterOverlapsIds == null){
+                                laneParnterOverlapsIds = new LongHashSet();
+                                overlapResult.laneParnterOverlaps.put(laneId, laneParnterOverlapsIds);
+                            }
+                            laneParnterOverlapsIds.add(overlapLaneId);
+
+                            ObjectHashSet<String> laneCarriersIds = overlapResult.laneCarriers.get(laneId);
+                            if(laneCarriersIds == null){
+                                laneCarriersIds = new ObjectHashSet<>();
+                                overlapResult.laneCarriers.put(laneId, laneCarriersIds);
+                            }
+                            laneCarriersIds.add(partnerCarrierId);
+
+                            ObjectHashSet<String> lanePartnerIds = overlapResult.lanePartners.get(laneId);
+                            if(lanePartnerIds == null){
+                                lanePartnerIds = new ObjectHashSet<>();
+                                overlapResult.lanePartners.put(laneId, lanePartnerIds);
+                            }
+                            lanePartnerIds.add(partnerId);
+
                         }
                     }
                     for (ObjectObjectCursor<String, LongHashSet> partnerCursor : partnerLoadMap) {
@@ -617,6 +699,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
         printMaskedCarrierFile();
 
         printSummaryFile();
+        printLaneSummaryFile();
         return this;
     }
 
