@@ -137,13 +137,13 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
     private void calculateLaneOverlaps(){
         long startTime;
         long endTime;
-        TraversalDescription routeTd = dbService.traversalDescription()
-                .breadthFirst()
-                .relationships(RelationshipType.withName("ROUTE"), Direction.BOTH)
-                .uniqueness(Uniqueness.RELATIONSHIP_PATH)
-                .evaluator(Evaluators.atDepth(1));
         int index = 0;
         for (LongObjectCursor<LongScatterSet> laneLoad : laneLoads) {
+            TraversalDescription routeTd = dbService.traversalDescription()
+                    .breadthFirst()
+                    .relationships(RelationshipType.withName("ROUTE"), Direction.BOTH)
+                    .uniqueness(Uniqueness.RELATIONSHIP_PATH)
+                    .evaluator(Evaluators.atDepth(1));
             index += 1;
             Long laneId = laneLoad.key;
             Node lane = laneMap.get(laneId);
@@ -212,6 +212,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
             }
             Traverser ldcRouteTraverse = routeTd.traverse(ldc);
             for (Path routePath : ldcRouteTraverse) {
+
                 Relationship cocRel = routePath.lastRelationship();
                 double pathDistance = (double) cocRel.getProperty("distance");
                 if (pathDistance > laneDistance * deadHeadPercentage) {
