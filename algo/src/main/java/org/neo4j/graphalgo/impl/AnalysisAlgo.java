@@ -245,7 +245,7 @@ public class AnalysisAlgo extends Algorithm<AnalysisAlgo> {
                         }
                         circularOverlaps.add(possibleOverlapLane.getId());
                     } else {
-                        LongScatterSet continuousRunOverlaps = circularOverlap.get(lane.getId());
+                        LongScatterSet continuousRunOverlaps = continuousRunOverlap.get(lane.getId());
                         if (null == continuousRunOverlaps) {
                             continuousRunOverlaps = new LongScatterSet();
                             continuousRunOverlap.put(lane.getId(), continuousRunOverlaps);

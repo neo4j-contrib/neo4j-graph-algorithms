@@ -14,10 +14,7 @@ import org.mapdb.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.concurrent.ConcurrentMap;
+import java.util.*;
 
 public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
     private final GraphDatabaseAPI dbService;
@@ -39,8 +36,6 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
 
     private int travelDirectionDeviation;
 
-    private ResourceIterator<Node> loads;
-
     private LongLongMap loadLaneMap;
     private LongObjectMap<Node> loadMap;
 
@@ -48,23 +43,23 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
     private LongObjectMap<ObjectHashSet<String>> laneCarriers;
     private LongObjectMap<Node> laneMap;
 
-    private HTreeMap<Long, NavigableSet<Long> > sameSideOverlap;
-    private HTreeMap<Long, NavigableSet<Long>> circularOverlap;
-    private HTreeMap<Long, NavigableSet<Long>> continuousRunOverlap;
+    private HTreeMap<Long, Set<Long>> sameSideOverlap;
+    private HTreeMap<Long, Set<Long>> circularOverlap;
+    private HTreeMap<Long, Set<Long>> continuousRunOverlap;
 
     private OverlapResultV2 sameSideOverlapResult;
     private OverlapResultV2 circularOverlapResult;
     private OverlapResultV2 continuousRunOverlapResult;
 
-    private NavigableSet<String> partnersList;
+    private Set<String> partnersList;
 
 //    private LongObjectMap<Node> overlapLaneMap;
 
-    private ConcurrentMap<String, String> partnerMaskedMap;
+    private Map<String, String> partnerMaskedMap;
 
-    private ConcurrentMap<String, Integer> partnerCarrierCount;
+    private Map<String, Integer> partnerCarrierCount;
 
-    private ConcurrentMap<String, String> carrierMaskedMap;
+    private Map<String, String> carrierMaskedMap;
 
     private DB db;
 
@@ -151,7 +146,7 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
         long startTime;
         long endTime;
         startTime = System.nanoTime();
-        loads =  dbService.findNodes(Label.label("Load"), "shipper_id", companyId);
+        ResourceIterator<Node> loads = dbService.findNodes(Label.label("Load"), "shipper_id", companyId);
         loads.stream().forEach(load -> {
             loadMap.put(load.getId(), load);
             if(!load.hasRelationship(RelationshipType.withName(loadLaneRelName), Direction.OUTGOING)){
@@ -245,12 +240,9 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
                         possibleOverlapLane.setProperty("travel_direction", overlapTravelDirection);
                     }
                     if (overlapTravelDirection > travelDirection - travelDirectionDeviation && overlapTravelDirection < travelDirection + travelDirectionDeviation) {
-                        NavigableSet<Long> sameSideOverlaps = sameSideOverlap.get(lane.getId());
-                        if (null == sameSideOverlaps) {
-                            sameSideOverlaps = db.treeSet("sameSideOverlaps", Serializer.LONG).createOrOpen();
-                            sameSideOverlap.put(lane.getId(), sameSideOverlaps);
-                        }
+                        Set<Long> sameSideOverlaps = sameSideOverlap.computeIfAbsent(laneId, k -> new HashSet<>());
                         sameSideOverlaps.add(possibleOverlapLane.getId());
+                        sameSideOverlap.put(laneId, sameSideOverlaps);
                     }
                 }
             }
@@ -281,18 +273,11 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
                         possibleOverlapLane.setProperty("travel_direction", overlapTravelDirection);
                     }
                     if (overlapTravelDirection > reverseTravelDirection - travelDirectionDeviation && overlapTravelDirection < reverseTravelDirection + travelDirectionDeviation) {
-                        NavigableSet<Long> circularOverlaps = circularOverlap.get(lane.getId());
-                        if (null == circularOverlaps) {
-                            circularOverlaps = db.treeSet("circularOverlaps", Serializer.LONG).createOrOpen();
-                            circularOverlap.put(lane.getId(), circularOverlaps);
-                        }
+                        Set<Long> circularOverlaps = circularOverlap.computeIfAbsent(lane.getId(), k -> new HashSet<>());
                         circularOverlaps.add(possibleOverlapLane.getId());
+                        circularOverlap.put();
                     } else {
-                        NavigableSet<Long> continuousRunOverlaps = circularOverlap.get(lane.getId());
-                        if (null == continuousRunOverlaps) {
-                            continuousRunOverlaps = db.treeSet("continuousRunOverlaps", Serializer.LONG).createOrOpen();
-                            continuousRunOverlap.put(lane.getId(), continuousRunOverlaps);
-                        }
+                        Set<Long> continuousRunOverlaps = continuousRunOverlap.computeIfAbsent(lane.getId(), k -> new HashSet<>());
                         continuousRunOverlaps.add(possibleOverlapLane.getId());
                     }
                 }
@@ -436,7 +421,7 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
         }
     }
 
-    private void printResultsToFile(String filename, HTreeMap<Long, NavigableSet<Long>> Overlap, OverlapResultV2 overlapResult , boolean isLaneOverlapReport, boolean isSummary, String[] header){
+    private void printResultsToFile(String filename, HTreeMap<Long, Set<Long>> Overlap, OverlapResultV2 overlapResult , boolean isLaneOverlapReport, boolean isSummary, String[] header){
         //results Printer
         File laneSummaryfile = new File(filename);
         try {
@@ -454,7 +439,7 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
                 data[row++] = (String) lane.getProperty("end_city");
                 data[row++] = (String) lane.getProperty("end_state");
                 if(Overlap.containsKey(laneId)){
-                    NavigableSet<Long> overlaps = Overlap.get(laneId);
+                    Set<Long> overlaps = Overlap.get(laneId);
                     ObjectObjectMap<String, LongHashSet> partnerLoadMap = new ObjectObjectHashMap<>();
                     ObjectObjectMap<String, LongHashSet> partnerOverlapMap = new ObjectObjectHashMap<>();
                     ObjectObjectMap<String, ObjectHashSet<String>> partnerCarrierMap = new ObjectObjectHashMap<>();
@@ -537,47 +522,23 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
 
                             //For Summary Report
 
-                            NavigableSet<Long> partnerOverlappedLoadIds = overlapResult.partnerOverlappedLoads.get(partnerId);
-                            if(partnerOverlappedLoadIds == null){
-                                partnerOverlappedLoadIds = db.treeSet(overlapResult.tag+"partnerOverlappedLoadIds", Serializer.LONG).createOrOpen();
-                                overlapResult.partnerOverlappedLoads.put(partnerId, partnerOverlappedLoadIds);
-                            }
+                            Set<Long> partnerOverlappedLoadIds = overlapResult.partnerOverlappedLoads.computeIfAbsent(partnerId, k -> new HashSet<>());
                             partnerOverlappedLoadIds.add(partnerLoad.getId());
 
-                            NavigableSet<Long> partnerOverlappedLaneIds = overlapResult.partnerOverlappedLanes.get(partnerId);
-                            if(partnerOverlappedLaneIds == null){
-                                partnerOverlappedLaneIds = db.treeSet(overlapResult.tag+"partnerOverlappedLaneIds", Serializer.LONG).createOrOpen();
-                                overlapResult.partnerOverlappedLanes.put(partnerId, partnerOverlappedLaneIds);
-                            }
+                            Set<Long> partnerOverlappedLaneIds = overlapResult.partnerOverlappedLanes.computeIfAbsent(partnerId, k -> new HashSet<>());
                             partnerOverlappedLaneIds.add(overlapLaneId);
 
-                            NavigableSet<String> partnerOverlappedCarrierIds = overlapResult.partnerOverlappedCarriers.get(partnerId);
-                            if(partnerOverlappedCarrierIds == null){
-                                partnerOverlappedCarrierIds = db.treeSet(overlapResult.tag+"partnerOverlappedCarrierIds", Serializer.STRING).createOrOpen();
-                                overlapResult.partnerOverlappedCarriers.put(partnerId, partnerOverlappedCarrierIds);
-                            }
+                            Set<String> partnerOverlappedCarrierIds = overlapResult.partnerOverlappedCarriers.computeIfAbsent(partnerId, k -> new HashSet<>());
                             partnerOverlappedCarrierIds.add(partnerCarrierId);
 
-                            NavigableSet<Long> shipperOverlappedLaneIds = overlapResult.partnerOverlappedMyLanes.get(partnerId);
-                            if(shipperOverlappedLaneIds == null){
-                                shipperOverlappedLaneIds = db.treeSet(overlapResult.tag+"shipperOverlappedLaneIds", Serializer.LONG).createOrOpen();
-                                overlapResult.partnerOverlappedMyLanes.put(partnerId, shipperOverlappedLaneIds);
-                            }
+                            Set<Long> shipperOverlappedLaneIds = overlapResult.partnerOverlappedMyLanes.computeIfAbsent(partnerId, k -> new HashSet<>());
                             shipperOverlappedLaneIds.add(laneId);
 
-                            NavigableSet<Long> shipperOverlappedLoadIds = overlapResult.partnerOverlappedMyLoads.get(partnerId);
-                            if(shipperOverlappedLoadIds == null){
-                                shipperOverlappedLoadIds = db.treeSet(overlapResult.tag+"shipperOverlappedLoadIds", Serializer.LONG).createOrOpen();
-                                overlapResult.partnerOverlappedMyLoads.put(partnerId, shipperOverlappedLoadIds);
-                            }
+                            Set<Long> shipperOverlappedLoadIds = overlapResult.partnerOverlappedMyLoads.computeIfAbsent(partnerId, k -> new HashSet<>());
                             for(LongCursor tempLoadId : laneLoads.get(laneId)){
                                 shipperOverlappedLoadIds.add(tempLoadId.value);
                             }
-                            NavigableSet<String> shipperOverlappedCarrierIds = overlapResult.partnerOverlappedMyCarriers.get(partnerId);
-                            if(shipperOverlappedCarrierIds == null){
-                                shipperOverlappedCarrierIds = db.treeSet(overlapResult.tag+"shipperOverlappedCarrierIds", Serializer.STRING).createOrOpen();
-                                overlapResult.partnerOverlappedMyCarriers.put(partnerId, shipperOverlappedCarrierIds);
-                            }
+                            Set<String> shipperOverlappedCarrierIds = overlapResult.partnerOverlappedMyCarriers.computeIfAbsent(partnerId, k -> new HashSet<>());
 
                             for(ObjectCursor<String> tempLoadId : laneCarriers.get(laneId)){
                                 shipperOverlappedCarrierIds.add(tempLoadId.value);
@@ -587,32 +548,16 @@ public class AnalysisAlgoV2 extends Algorithm<AnalysisAlgoV2> {
                             partnersList.add(partnerId);
 
                             // for lane Summary Report
-                            NavigableSet<Long> summaryPartnerLoadIds = overlapResult.lanePartnerLoads.get(laneId);
-                            if (summaryPartnerLoadIds == null) {
-                                summaryPartnerLoadIds = db.treeSet(overlapResult.tag+"summaryPartnerLoadIds", Serializer.LONG).createOrOpen();
-                                overlapResult.lanePartnerLoads.put(laneId, summaryPartnerLoadIds);
-                            }
+                            Set<Long> summaryPartnerLoadIds = overlapResult.lanePartnerLoads.computeIfAbsent(laneId, k -> new HashSet<>());
                             summaryPartnerLoadIds.add(partnerLoad.getId());
 
-                            NavigableSet<Long> laneParnterOverlapsIds = overlapResult.laneParnterOverlaps.get(laneId);
-                            if(laneParnterOverlapsIds == null){
-                                laneParnterOverlapsIds = db.treeSet(overlapResult.tag+"laneParnterOverlapsIds", Serializer.LONG).createOrOpen();
-                                overlapResult.laneParnterOverlaps.put(laneId, laneParnterOverlapsIds);
-                            }
+                            Set<Long> laneParnterOverlapsIds = overlapResult.laneParnterOverlaps.computeIfAbsent(laneId, k -> new HashSet<>());
                             laneParnterOverlapsIds.add(overlapLaneId);
 
-                            NavigableSet<String> laneCarriersIds = overlapResult.laneCarriers.get(laneId);
-                            if(laneCarriersIds == null){
-                                laneCarriersIds = db.treeSet(overlapResult.tag+"laneCarriersIds", Serializer.STRING).createOrOpen();
-                                overlapResult.laneCarriers.put(laneId, laneCarriersIds);
-                            }
+                            Set<String> laneCarriersIds = overlapResult.laneCarriers.computeIfAbsent(laneId, k -> new HashSet<>());
                             laneCarriersIds.add(partnerCarrierId);
 
-                            NavigableSet<String> lanePartnerIds = overlapResult.lanePartners.get(laneId);
-                            if(lanePartnerIds == null){
-                                lanePartnerIds = db.treeSet(overlapResult.tag+"lanePartnerIds", Serializer.STRING).createOrOpen();
-                                overlapResult.lanePartners.put(laneId, lanePartnerIds);
-                            }
+                            Set<String> lanePartnerIds = overlapResult.lanePartners.computeIfAbsent(laneId, k -> new HashSet<>());
                             lanePartnerIds.add(partnerId);
 
                         }

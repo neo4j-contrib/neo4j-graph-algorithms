@@ -59,10 +59,17 @@ public class AnalysisAlgoProcV2 {
 //            return;
 //        }
 
-        final AnalysisAlgoV2 analysisAlgo;
-        analysisAlgo = new AnalysisAlgoV2(companyId, fileName, configuration, api, log)
-                .withProgressLogger(ProgressLogger.wrap(log, "AnalysisAlgo"))
-                .withTerminationFlag(TerminationFlag.wrap(transaction))
-                .compute();
+        try {
+            final AnalysisAlgoV2 analysisAlgo;
+            analysisAlgo = new AnalysisAlgoV2(companyId, fileName, configuration, api, log)
+                    .withProgressLogger(ProgressLogger.wrap(log, "AnalysisAlgo"))
+                    .withTerminationFlag(TerminationFlag.wrap(transaction))
+                    .compute();
+        }
+        catch (Exception e){
+            log.info("Exception caught in " + e.getMessage());
+            log.error("Error",e);
+            e.printStackTrace();
+        }
     }
 }
