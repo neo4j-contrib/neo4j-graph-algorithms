@@ -175,7 +175,7 @@ public class LouvainProc {
                 Pools.DEFAULT,
                 configuration.getConcurrency(),
                 graph,
-                allCommunities[0].length,
+                finalCommunities.length,
                 configuration.getWriteProperty(DEFAULT_CLUSTER_PROPERTY),
                 configuration.get(INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY, "communities"))
                 .export(allCommunities, finalCommunities, includeIntermediateCommunities);
