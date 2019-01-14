@@ -90,14 +90,14 @@ public class PearsonSimilarityBenchmark {
     @Benchmark
     public void pearsonSquares(Blackhole bh) throws Exception {
         for (double[] datum : data) {
-            bh.consume(Intersections.pearsonSquare(initial, datum,SIZE));
+            bh.consume(Intersections.pearson(initial, datum,SIZE));
         }
     }
 
     @Benchmark
     public void pearsonSquaresSkip(Blackhole bh) throws Exception {
         for (double[] datum : data) {
-            bh.consume(Intersections.pearsonSquareSkip(initial, datum,SIZE, 0));
+            bh.consume(Intersections.pearsonSkip(initial, datum,SIZE, 0));
         }
     }
 
@@ -108,7 +108,7 @@ public class PearsonSimilarityBenchmark {
             rleDecoder.reset(initialRle, datum);
             double[] initialVector = rleDecoder.item1();
             double[] vector = rleDecoder.item2();
-            bh.consume(Intersections.pearsonSquare(initialVector, vector, SIZE));
+            bh.consume(Intersections.pearson(initialVector, vector, SIZE));
         }
     }
 

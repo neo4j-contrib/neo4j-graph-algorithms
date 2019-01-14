@@ -29,9 +29,8 @@ import static org.junit.Assert.assertEquals;
 public class PearsonSimilarityTest {
 
     @Test
-    public void identicalVectors() throws Exception {
+    public void identicalVectors() {
         Similarities similarities = new Similarities();
-
 
         List<Number> user1Ratings = Arrays.asList(5, 6, 7, 8, 9);
         List<Number> user2Ratings = Arrays.asList(4, 5, 6, 7, 8);
@@ -40,7 +39,7 @@ public class PearsonSimilarityTest {
     }
 
     @Test
-    public void oppositeVectors() throws Exception {
+    public void oppositeVectors() {
         Similarities similarities = new Similarities();
 
 

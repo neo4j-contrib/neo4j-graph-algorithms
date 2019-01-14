@@ -42,12 +42,16 @@ public class CosineProc extends SimilarityProc {
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
 
+        if(inputs.length == 0) {
+            return Stream.empty();
+        }
+
         double similarityCutoff = similarityCutoff(configuration);
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
-        return generateStream(configuration, inputs, similarityCutoff, topN, topK, computer);
+        return generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
     }
 
     @Procedure(name = "algo.similarity.cosine", mode = Mode.WRITE)
@@ -62,31 +66,34 @@ public class CosineProc extends SimilarityProc {
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
 
+        String writeRelationshipType = configuration.get("writeRelationshipType", "SIMILAR");
+        String writeProperty = configuration.getWriteProperty("score");
+        if(inputs.length == 0) {
+            return emptyStream(writeRelationshipType, writeProperty);
+        }
+
         double similarityCutoff = similarityCutoff(configuration);
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
-        Stream<SimilarityResult> stream = generateStream(configuration, inputs, similarityCutoff, topN, topK, computer);
+        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(configuration, stream, inputs.length, write, "SIMILAR");
-    }
-
-    private Stream<SimilarityResult> generateStream(ProcedureConfiguration configuration, WeightedInput[] inputs,
-                                                    double similarityCutoff, int topN, int topK,
-                                                    SimilarityComputer<WeightedInput> computer) {
-        int size = inputs[0].initialSize;
-
-        Supplier<RleDecoder> decoderFactory = createDecoderFactory(configuration.getGraphName("dense"), size);
-
-        return topN(similarityStream(inputs, computer, configuration, decoderFactory, similarityCutoff, topK), topN)
-                .map(SimilarityResult::squareRooted);
+        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
     }
 
     private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue) {
         return skipValue == null ?
                 (decoder, s, t, cutoff) -> s.cosineSquares(decoder, cutoff, t) :
                 (decoder, s, t, cutoff) -> s.cosineSquaresSkip(decoder, cutoff, t, skipValue);
+    }
+
+    Stream<SimilarityResult> generateWeightedStream(ProcedureConfiguration configuration, WeightedInput[] inputs,
+                                                    double similarityCutoff, int topN, int topK,
+                                                    SimilarityComputer<WeightedInput> computer) {
+        Supplier<RleDecoder> decoderFactory = createDecoderFactory(configuration, inputs[0]);
+        return topN(similarityStream(inputs, computer, configuration, decoderFactory, similarityCutoff, topK), topN)
+                .map(SimilarityResult::squareRooted);
     }
 
     private double similarityCutoff(ProcedureConfiguration configuration) {

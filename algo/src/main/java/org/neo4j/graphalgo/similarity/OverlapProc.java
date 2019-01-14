@@ -43,6 +43,10 @@ public class OverlapProc extends SimilarityProc {
 
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
+        if(inputs.length == 0) {
+            return Stream.empty();
+        }
+
         return topN(similarityStream(inputs, computer, configuration, () -> null, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
     }
 
@@ -59,11 +63,17 @@ public class OverlapProc extends SimilarityProc {
 
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
+        String writeRelationshipType = configuration.get("writeRelationshipType", "NARROWER_THAN");
+        String writeProperty = configuration.getWriteProperty("score");
+        if(inputs.length == 0) {
+            return emptyStream(writeRelationshipType, writeProperty);
+        }
+
         double similarityCutoff = getSimilarityCutoff(configuration);
         Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(configuration, stream, inputs.length, write, "NARROWER_THAN");
+        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
     }
 
 
