@@ -6,7 +6,17 @@
 :toclevels: 2
 :env-docs: true
 
+ifdef::backend-html5[(C) {copyright}]
+ifndef::backend-pdf[]
+
 License: link:{common-license-page-uri}[Creative Commons 4.0]
+endif::[]
+ifdef::backend-pdf[]
+(C) {copyright}
+
+License: <<license, Creative Commons 4.0>>
+endif::[]
+
 
 [abstract]
 --
