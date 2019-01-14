@@ -39,6 +39,7 @@ ext {
     ]
     if (1 < versionParts.size()) { versions.graphAlgoDocs += '-preview' }
 
+    copyrightYear = '2019'
     docsBaseUri = "https://neo4j.com/docs"
     crossReferenceBase = [ // We have no strategy for cross references; always link to current.
             'operations-manual' : "${docsBaseUri}/operations-manual/current",
@@ -55,10 +56,13 @@ ext {
             'icons'              : 'font',
             'attribute-missing'  : 'warn',
             'docs-version'       : versions.graphAlgoDocs,
+            'copyright-year'     : copyrightYear,
+            'copyright'          : "${copyrightYear} Neo4j, Inc.",
             'common-license-page-uri': "$docsBaseUri/license/",
         ],
         'docbook': [
             'imagesdir'          : 'images',
+            'docinfo1'           : '',
         ],
         'html': [
             'stylesdir'          : 'css',
