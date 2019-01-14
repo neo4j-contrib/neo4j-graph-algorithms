@@ -55,15 +55,15 @@ public class LouvainClusteringIntegrationTest {
     public static void setupGraph() throws KernelException {
 
         final String cypher =
-                "CREATE (a:Node {name:'a'})\n" +
-                        "CREATE (c:Node {name:'c'})\n" + // shuffled
-                        "CREATE (b:Node {name:'b'})\n" +
-                        "CREATE (d:Node {name:'d'})\n" +
-                        "CREATE (e:Node {name:'e'})\n" +
-                        "CREATE (g:Node {name:'g'})\n" +
-                        "CREATE (f:Node {name:'f'})\n" +
-                        "CREATE (h:Node {name:'h'})\n" +
-                        "CREATE (z:Node {name:'z'})\n" +
+                "CREATE (a:Node {name:'a', c:1})\n" +
+                        "CREATE (c:Node {name:'c', c:1})\n" + // shuffled
+                        "CREATE (b:Node {name:'b', c:1})\n" +
+                        "CREATE (d:Node {name:'d', c:1})\n" +
+                        "CREATE (e:Node {name:'e', c:1})\n" +
+                        "CREATE (g:Node {name:'g', c:1})\n" +
+                        "CREATE (f:Node {name:'f', c:1})\n" +
+                        "CREATE (h:Node {name:'h', c:1})\n" +
+                        "CREATE (z:Node {name:'z', c:1})\n" + // assign impossible community to outstanding node
 
                         "CREATE" +
 
@@ -126,8 +126,9 @@ public class LouvainClusteringIntegrationTest {
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
+            final long nodeId = (long) row.get("nodeId");
             final long community = (long) row.get("community");
-            System.out.println(community);
+            System.out.println(nodeId + ": " + community);
             testMap.addTo((int) community, 1);
             return false;
         });
@@ -135,8 +136,23 @@ public class LouvainClusteringIntegrationTest {
     }
 
     @Test
+    public void testPredefinedCommunities() {
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community:'c'}) " +
+                "YIELD nodeId, community, communities";
+        final IntIntScatterMap testMap = new IntIntScatterMap();
+        DB.execute(cypher).accept(row -> {
+            final long nodeId = (long) row.get("nodeId");
+            final long community = (long) row.get("community");
+            System.out.println(nodeId + ": " + community);
+            testMap.addTo((int) community, 1);
+            return false;
+        });
+        assertEquals(1, testMap.size());
+    }
+
+    @Test
     public void testStreamNoIntermediateCommunitiesByDefault() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community:'c'}) " +
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
