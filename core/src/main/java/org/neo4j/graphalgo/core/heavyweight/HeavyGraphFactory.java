@@ -24,7 +24,6 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.GraphSetup;
 import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.IdMap;
-import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
@@ -56,9 +55,9 @@ public class HeavyGraphFactory extends GraphFactory {
 
         Map<String, Supplier<WeightMapping>> nodePropertySuppliers = new HashMap<>();
         for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {
-            nodePropertySuppliers.put(propertyMapping.type, () -> newWeightMap(
-                    dimensions.nodePropertyKeyId(propertyMapping.type),
-                    dimensions.nodePropertyDefaultValue(propertyMapping.type)));
+            nodePropertySuppliers.put(propertyMapping.propertyName, () -> newWeightMap(
+                    dimensions.nodePropertyKeyId(propertyMapping.propertyName),
+                    dimensions.nodePropertyDefaultValue(propertyMapping.propertyName)));
         }
 
         int concurrency = setup.concurrency();

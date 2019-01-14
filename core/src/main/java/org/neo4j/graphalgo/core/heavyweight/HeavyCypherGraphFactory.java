@@ -146,7 +146,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
 
         Map<String, WeightMapping> nodePropertyMappings = new HashMap<>();
         for (Map.Entry<PropertyMapping, WeightMap> entry : nodes.nodeProperties.entrySet()) {
-            nodePropertyMappings.put(entry.getKey().type, entry.getValue());
+            nodePropertyMappings.put(entry.getKey().propertyName, entry.getValue());
         }
 
         return new HeavyGraph(
@@ -234,7 +234,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         Map<PropertyMapping, WeightMap> nodeProperties = new HashMap<>();
         for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {
             nodeProperties.put(propertyMapping,
-                    newWeightMapping(true, dimensions.nodePropertyDefaultValue(propertyMapping.type), capacity));
+                    newWeightMapping(true, dimensions.nodePropertyDefaultValue(propertyMapping.propertyName), capacity));
         }
 
         long offset = 0;
@@ -362,7 +362,7 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         Map<PropertyMapping, WeightMap> nodeProperties = new HashMap<>();
         for (PropertyMapping propertyMapping : setup.nodePropertyMappings) {
             nodeProperties.put(propertyMapping,
-                    newWeightMapping(true, dimensions.nodePropertyDefaultValue(propertyMapping.type), capacity));
+                    newWeightMapping(true, dimensions.nodePropertyDefaultValue(propertyMapping.propertyName), capacity));
         }
 
         class NodeRowVisitor implements Result.ResultVisitor<RuntimeException> {
