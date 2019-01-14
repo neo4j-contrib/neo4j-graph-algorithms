@@ -1,0 +1,237 @@
+[[algorithms-similarity-pearson]]
+= The Pearson Similarity algorithm
+
+[abstract]
+--
+This section describes the Pearson Similarity algorithm in the Neo4j Graph Algorithms library.
+--
+
+// tag::introduction[]
+link:https://en.wikipedia.org/wiki/Pearson_correlation_coefficient[Pearson similarity] is the covariance of the two _n_-dimensional vectors divided by the product of their standard deviations.
+// end::introduction[]
+
+
+[[algorithms-similarity-pearson-context]]
+== History and explanation
+
+// tag::explanation[]
+
+Pearson similarity is computed using the following formula:
+
+image::pearson-similarity.png[role="middle"]
+
+Values range between -1 and 1, where -1 is perfectly dissimilar and 1 is perfectly similar.
+
+The library contains both procedures and functions to calculate similarity between sets of data.
+The function is best used when calculating the similarity between small numbers of sets.
+The procedures parallelize the computation and are therefore more appropriate for computing similarities on bigger datasets.
+
+Pearson similarity is only calculated over non-NULL dimensions.
+When calling the function, we should provide lists that contain the overlapping items.
+The procedures expect to receive the same length lists for all items, so we need to pad those lists with 0s where necessary.
+
+// end::explanation[]
+
+[[algorithms-similarity-pearson-usecase]]
+== Use-cases - when to use the Pearson Similarity algorithm
+
+// tag::use-case[]
+We can use the Pearson Similarity algorithm to work out the similarity between two things.
+We might then use the computed similarity as part of a recommendation query.
+For example, to get movie recommendations based on the preferences of users who have given similar ratings to other movies that you've seen.
+// end::use-case[]
+
+
+[[algorithms-similarity-pearson-sample]]
+== Pearson algorithm sample
+
+.The following will return the Pearson similarity of two lists of numbers:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=function]
+----
+
+// tag::function[]
+.Results
+[opts="header",cols="1"]
+|===
+| `similarity`
+| 0.28767798089123053
+|===
+// end::function[]
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=create-sample-graph]
+----
+
+.The following will return a stream of node pairs along with their Pearson similarities:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=stream]
+----
+
+// tag::stream[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| Michael      | Karin        | 0.6494195615497209
+| Arya         | Karin        | 0.4209238458791279
+| Zhen         | Praveena     | 0.19981563984405706
+| Zhen         | Arya         | 0.1316245316231641
+| Zhen         | Michael      | 0.04611130150247471
+| Zhen         | Karin        | -0.013095468233039904
+| Michael      | Arya         | -0.16468246895724528
+| Praveena     | Arya         | -0.4940474068717357
+| Praveena     | Micheal      | -0.7132867132867132
+| Praveena     | Karin        | -0.8102849575299271
+|===
+// end::stream[]
+
+Michael and Karin have the most similar taste of movies, with a score of 0.649.
+The maximum score is 1, so they aren't very similar.
+We also have 5 pairs of users who are not similar at all.
+We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
+
+.The following will return a stream of node pairs that have a similarity of at least 0.1, along with their Pearson similarities:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=stream-similarity-cutoff]
+----
+
+// tag::stream-similarity-cutoff[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| Michael      | Karin        | 0.6494195615497209
+| Arya         | Karin        | 0.4209238458791279
+| Zhen         | Praveena     | 0.19981563984405706
+| Zhen         | Arya         | 0.1316245316231641
+| Zhen         | Michael      | 0.04611130150247471
+|===
+// end::stream-similarity-cutoff[]
+
+We can see that those users with no similarity have been filtered out.
+If we're implementing a k-Nearest Neighbors type query we might instead want to find the most similar `k` users for a given user.
+We can do that by passing in the `topK` parameter.
+
+.The following will return a stream of users along with the most similar user to them (i.e. `k=1`):
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=stream-topk]
+----
+
+// tag::stream-topk[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| `from`     | `to`       | `similarity`
+| Michael    | Karin      | 0.6494195615497209
+| Karin      | Michael    | 0.6494195615497209
+| Arya       | Karin      | 0.42092384587912796
+| Zhen       | Praveena   | 0.19981563984405706
+| Praveena   | Zhen       | 0.19981563984405706
+
+|===
+// end::stream-topk[]
+
+These results will not be symmetrical.
+For example, the person most similar to Michael is Karin, but the person most similar to Arya is also Karin.
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name             | Type   | Default        | Optional | Description
+| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, weights: [weight, weight, weight]}`
+| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff` | int    | -1             | yes      | The threshold for cosine similarity. Values below this will not be returned.
+| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| Name         | Type | Description
+| `item1`      | int  | The ID of one node in the similarity pair.
+| `item2`      | int  | The ID of other node in the similarity pair.
+| `count1`       | int  | The size of the `targets` list of one node.
+| `count2`       | int  | The size of the `targets` list of other node.
+| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
+| `similarity`   | int  | The cosine similarity of the two nodes.
+|===
+
+.The following will find the most similar user for each user, and store a relationship between those users:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=write-back]
+----
+
+// tag::write-back[]
+.Results
+[opts="header",cols="1,1,1,1,1,1,1,1,1"]
+|===
+| `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
+| 5     | 5               | TRUE  | SIMILAR            | score       | 0.1998147964477539 | 0.6494207382202148 | 0.42387866973876953 | 0.6494207382202148
+|===
+// end::write-back[]
+
+We then could write a query to find out which are the movies that other people similar to us liked.
+
+.The following will find the most similar user to Karin, and return their favourite movies that Praveena didn't (yet!) rated:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=query]
+----
+
+// tag::query[]
+.Results
+[opts="header",cols="1"]
+|===
+| `movie`
+| A Few Good Men
+| Home Alone
+|===
+// end::query[]
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name                   | Type    | Default        | Optional | Description
+| `data`                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `top`                    | int     | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff`       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
+| `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
+| `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
+| `writeProperty`          | string  | score          | yes      | The property to use when storing results.
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| Name                  | Type    | Description
+| `nodes`                 | int     | The number of nodes passed in.
+| `similarityPairs`       | int     | The number of pairs of similar nodes computed.
+| `write`                 | boolean | Indicates whether results were stored.
+| `writeRelationshipType` | string  | The relationship type used when storing results.
+| `writeProperty`         | string  | The property used when storing results.
+| `min`                   | double  | The minimum similarity score computed.
+| `max`                   | double  | The maximum similarity score computed.
+| `mean`                  | double  | The mean of similarities scores computed.
+| `stdDev`                | double  | The standard deviation of similarities scores computed.
+| `p25`                   | double  | The 25 percentile of similarities scores computed.
+| `p50`                   | double  | The 50 percentile of similarities scores computed.
+| `p75`                   | double  | The 75 percentile of similarities scores computed.
+| `p90`                   | double  | The 90 percentile of similarities scores computed.
+| `p95`                   | double  | The 95 percentile of similarities scores computed.
+| `p99`                   | double  | The 99 percentile of similarities scores computed.
+| `p999`                  | double  | The 99.9 percentile of similarities scores computed.
+| `p100`                  | double  | The 25 percentile of similarities scores computed.
+|===
