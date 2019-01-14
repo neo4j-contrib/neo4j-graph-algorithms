@@ -49,7 +49,7 @@ public class TopKConsumerTest {
             return Integer.compare(o.value,value);
         }
     }
-
+    
     private static final int RUNS = 10000;
     private static final int COUNT = 50000;
     public static final int WINDOW_SIZE = 20;

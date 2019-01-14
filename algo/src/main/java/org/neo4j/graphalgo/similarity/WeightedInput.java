@@ -48,18 +48,34 @@ class WeightedInput implements Comparable<WeightedInput> {
         return Long.compare(id, o.id);
     }
 
-    public SimilarityResult sumSquareDeltaSkip(double similarityCutoff, WeightedInput other, double skipValue) {
-        int len = Math.min(weights.length, other.weights.length);
-        double sumSquareDelta = Intersections.sumSquareDeltaSkip(weights, other.weights, len, skipValue);
+    public SimilarityResult sumSquareDeltaSkip(RleDecoder decoder, double similarityCutoff, WeightedInput other, double skipValue) {
+        double[] thisWeights = weights;
+        double[] otherWeights = other.weights;
+        if(decoder != null) {
+            decoder.reset(weights, other.weights);
+            thisWeights = decoder.item1();
+            otherWeights = decoder.item2();
+        }
+
+        int len = Math.min(thisWeights.length, otherWeights.length);
+        double sumSquareDelta = Intersections.sumSquareDeltaSkip(thisWeights, otherWeights, len, skipValue);
         long intersection = 0;
 
         if (similarityCutoff >= 0d && sumSquareDelta > similarityCutoff) return null;
         return new SimilarityResult(id, other.id, itemCount, other.itemCount, intersection, sumSquareDelta);
     }
 
-    public SimilarityResult sumSquareDelta(double similarityCutoff, WeightedInput other) {
-        int len = Math.min(weights.length, other.weights.length);
-        double sumSquareDelta = Intersections.sumSquareDelta(weights, other.weights, len);
+    public SimilarityResult sumSquareDelta(RleDecoder decoder, double similarityCutoff, WeightedInput other) {
+        double[] thisWeights = weights;
+        double[] otherWeights = other.weights;
+        if(decoder != null) {
+            decoder.reset(weights, other.weights);
+            thisWeights = decoder.item1();
+            otherWeights = decoder.item2();
+        }
+
+        int len = Math.min(thisWeights.length, otherWeights.length);
+        double sumSquareDelta = Intersections.sumSquareDelta(thisWeights, otherWeights, len);
         long intersection = 0;
 
         if (similarityCutoff >= 0d && sumSquareDelta > similarityCutoff) return null;
@@ -100,19 +116,45 @@ class WeightedInput implements Comparable<WeightedInput> {
         return new SimilarityResult(id, other.id, itemCount, other.itemCount, intersection, cosineSquares);
     }
 
-    public SimilarityResult pearsonSquares(double similarityCutoff, WeightedInput other) {
-        int len = Math.min(weights.length, other.weights.length);
-        double pearsonSquares = Intersections.pearsonSquare(weights, other.weights, len);
-        long intersection = 0;
-        if (similarityCutoff >= 0d && (pearsonSquares == 0 || pearsonSquares < similarityCutoff)) return null;
-        return new SimilarityResult(id, other.id, itemCount, other.itemCount, intersection, pearsonSquares);
+    public SimilarityResult pearson(RleDecoder decoder, double similarityCutoff, WeightedInput other) {
+        double[] thisWeights = weights;
+        double[] otherWeights = other.weights;
+        if (decoder != null) {
+            decoder.reset(weights, other.weights);
+            thisWeights = decoder.item1();
+            otherWeights = decoder.item2();
+        }
+
+        int len = Math.min(thisWeights.length, otherWeights.length);
+        double pearson = Intersections.pearson(thisWeights, otherWeights, len);
+
+        if (similarityCutoff >= 0d && (pearson == 0 || pearson < similarityCutoff)) return null;
+
+        if (Double.isNaN(pearson)) {
+            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, 0);
+        } else {
+            return new SimilarityResult(id, other.id, itemCount, other.itemCount,  0, pearson);
+        }
     }
 
-    public SimilarityResult pearsonSquaresSkip(double similarityCutoff, WeightedInput other, Double skipValue) {
-        int len = Math.min(weights.length, other.weights.length);
-        double cosineSquares = Intersections.pearsonSquareSkip(weights, other.weights, len, skipValue);
-        long intersection = 0;
-        if (similarityCutoff >= 0d && (cosineSquares == 0 || cosineSquares < similarityCutoff)) return null;
-        return new SimilarityResult(id, other.id, itemCount, other.itemCount, intersection, cosineSquares);
+    public SimilarityResult pearsonSkip(RleDecoder decoder, double similarityCutoff, WeightedInput other, Double skipValue) {
+        double[] thisWeights = weights;
+        double[] otherWeights = other.weights;
+        if (decoder != null) {
+            decoder.reset(weights, other.weights);
+            thisWeights = decoder.item1();
+            otherWeights = decoder.item2();
+        }
+
+        int len = Math.min(thisWeights.length, otherWeights.length);
+        double pearson = Intersections.pearsonSkip(thisWeights, otherWeights, len, skipValue);
+
+        if (similarityCutoff >= 0d && (pearson == 0 || pearson < similarityCutoff)) return null;
+
+        if (Double.isNaN(pearson)) {
+            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, 0);
+        } else {
+            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, pearson);
+        }
     }
 }

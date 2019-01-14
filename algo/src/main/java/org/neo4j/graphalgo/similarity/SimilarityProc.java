@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
-import static org.neo4j.graphalgo.similarity.RleTransformer.REPEAT_CUTOFF;
+import static org.neo4j.graphalgo.similarity.Weights.REPEAT_CUTOFF;
 import static org.neo4j.helpers.collection.MapUtil.map;
 
 public class SimilarityProc {
@@ -75,10 +75,7 @@ public class SimilarityProc {
         return configuration.get("degreeCutoff", 0L);
     }
 
-    Stream<SimilaritySummaryResult> writeAndAggregateResults(ProcedureConfiguration configuration, Stream<SimilarityResult> stream, int length, boolean write, String defaultWriteProperty) {
-        String writeRelationshipType = configuration.get("writeRelationshipType", defaultWriteProperty);
-        String writeProperty = configuration.getWriteProperty("score");
-
+    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, boolean write, String writeRelationshipType, String writeProperty) {
         AtomicLong similarityPairs = new AtomicLong();
         DoubleHistogram histogram = new DoubleHistogram(5);
         Consumer<SimilarityResult> recorder = result -> {
@@ -94,6 +91,11 @@ public class SimilarityProc {
         }
 
         return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, writeRelationshipType, writeProperty, write, histogram));
+    }
+
+    Stream<SimilaritySummaryResult> emptyStream(String writeRelationshipType, String writeProperty) {
+        return Stream.of(SimilaritySummaryResult.from(0, new AtomicLong(0), writeRelationshipType,
+                writeProperty, false, new DoubleHistogram(5)));
     }
 
     Double getSimilarityCutoff(ProcedureConfiguration configuration) {
@@ -226,7 +228,7 @@ public class SimilarityProc {
                 throw new IllegalArgumentException("Must specify 'skipValue' when using {graph: 'cypher'}");
             }
 
-            return prepareSparseWeights(api, (String) rawData, configuration.getParams(), getDegreeCutoff(configuration), skipValue);
+            return prepareSparseWeights(api, (String) rawData,  skipValue, configuration);
         } else {
             List<Map<String, Object>> data = (List<Map<String, Object>>) rawData;
             return preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
@@ -251,7 +253,11 @@ public class SimilarityProc {
         return inputs;
     }
 
-    WeightedInput[] prepareSparseWeights(GraphDatabaseAPI api, String query, Map<String, Object> params, long degreeCutoff, Double skipValue) throws Exception {
+    WeightedInput[] prepareSparseWeights(GraphDatabaseAPI api, String query, Double skipValue, ProcedureConfiguration configuration) throws Exception {
+        Map<String, Object> params = configuration.getParams();
+        Long degreeCutoff = getDegreeCutoff(configuration);
+        int repeatCutoff = configuration.get("sparseVectorRepeatCutoff", REPEAT_CUTOFF).intValue();
+
         Result result = api.execute(query, params);
 
         Map<Long, LongDoubleMap> map = new HashMap<>();
@@ -284,7 +290,7 @@ public class SimilarityProc {
                 }
                 int size = weightsList.size();
                 int nonSkipSize = sparseWeights.size();
-                double[] weights = Weights.buildRleWeights(weightsList, REPEAT_CUTOFF);
+                double[] weights = Weights.buildRleWeights(weightsList, repeatCutoff);
 
                 inputs[idx++] = WeightedInput.sparse(item, weights, size, nonSkipSize);
             }
@@ -317,20 +323,26 @@ public class SimilarityProc {
         return valueList;
     }
 
-    protected int getTopK(ProcedureConfiguration configuration) {
+    int getTopK(ProcedureConfiguration configuration) {
         return configuration.getInt("topK", 0);
     }
 
-    protected int getTopN(ProcedureConfiguration configuration) {
+    int getTopN(ProcedureConfiguration configuration) {
         return configuration.getInt("top", 0);
     }
 
-    protected Supplier<RleDecoder> createDecoderFactory(String graphType, int size) {
+    private Supplier<RleDecoder> createDecoderFactory(String graphType, int size) {
         if(ProcedureConstants.CYPHER_QUERY.equals(graphType)) {
             return () -> new RleDecoder(size);
         }
 
         return () -> null;
+    }
+
+
+    Supplier<RleDecoder> createDecoderFactory(ProcedureConfiguration configuration, WeightedInput input) {
+        int size = input.initialSize;
+        return createDecoderFactory(configuration.getGraphName("dense"), size);
     }
 
     interface SimilarityComputer<T> {

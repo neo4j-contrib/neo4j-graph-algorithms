@@ -18,10 +18,12 @@
  */
 package org.neo4j.graphalgo.similarity;
 
+import org.HdrHistogram.DoubleHistogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.procedure.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
@@ -34,14 +36,16 @@ public class JaccardProc extends SimilarityProc {
     public Stream<SimilarityResult> similarityStream(
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
-        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.jaccard(cutoff, t);
-
+        SimilarityComputer<CategoricalInput> computer = similarityComputer();
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
-        return topN(similarityStream(inputs, computer, configuration, () -> null, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
+        if(inputs.length == 0) {
+            return Stream.empty();
+        }
+
+        return topN(similarityStream(inputs, computer, configuration, () -> null,
+                getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
     }
 
     @Procedure(name = "algo.similarity.jaccard", mode = Mode.WRITE)
@@ -50,19 +54,25 @@ public class JaccardProc extends SimilarityProc {
     public Stream<SimilaritySummaryResult> jaccard(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-
-        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.jaccard(cutoff, t);
-
+        SimilarityComputer<CategoricalInput> computer = similarityComputer();
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
+        String writeRelationshipType = configuration.get("writeRelationshipType", "SIMILAR");
+        String writeProperty = configuration.getWriteProperty("score");
+        if(inputs.length == 0) {
+            return emptyStream(writeRelationshipType, writeProperty);
+        }
+
         double similarityCutoff = getSimilarityCutoff(configuration);
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null,
+                similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(configuration, stream, inputs.length, write, "SIMILAR");
+        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
     }
 
-
+    private SimilarityComputer<CategoricalInput> similarityComputer() {
+        return (decoder, s, t, cutoff) -> s.jaccard(cutoff, t);
+    }
 }
