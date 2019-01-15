@@ -182,20 +182,20 @@ public class Louvain extends Algorithm<Louvain> {
         // for each node in the current graph
         for (int i = 0; i < nodeCount; i++) {
             // map node nodeId to community nodeId
-            final int source = communityIds[i];
+            final int sourceCommunity = communityIds[i];
             // get transitions from current node
             graph.forEachOutgoing(i, (s, t, r) -> {
                 // mapping
-                final int target = communityIds[t];
+                final int targetCommunity = communityIds[t];
                 final double value = graph.weightOf(s, t);
-                if (source == target) {
-                    nodeWeights[source] += value;
+                if (sourceCommunity == targetCommunity) {
+                    nodeWeights[sourceCommunity] += value;
                 }
                 // add IN and OUT relation
-                computeIfAbsent(relationships, target).add(source);
-                computeIfAbsent(relationships, source).add(target);
-                relationshipWeights.addTo(RawValues.combineIntInt(source, target), value / 2); // TODO validate
-                relationshipWeights.addTo(RawValues.combineIntInt(target, source), value / 2);
+                putIfAbsent(relationships, targetCommunity).add(sourceCommunity);
+                putIfAbsent(relationships, sourceCommunity).add(targetCommunity);
+                relationshipWeights.addTo(RawValues.combineIntInt(sourceCommunity, targetCommunity), value / 2); // TODO validate
+                relationshipWeights.addTo(RawValues.combineIntInt(targetCommunity, sourceCommunity), value / 2);
                 return true;
             });
         }
@@ -299,12 +299,12 @@ public class Louvain extends Algorithm<Louvain> {
         return this;
     }
 
-    private static IntScatterSet computeIfAbsent(IntObjectMap<IntScatterSet> relationships, int n) {
-        final IntScatterSet intCursors = relationships.get(n);
+    private static IntScatterSet putIfAbsent(IntObjectMap<IntScatterSet> relationships, int community) {
+        final IntScatterSet intCursors = relationships.get(community);
         if (null == intCursors) {
-            final IntScatterSet newList = new IntScatterSet();
-            relationships.put(n, newList);
-            return newList;
+            final IntScatterSet newSet = new IntScatterSet();
+            relationships.put(community, newSet);
+            return newSet;
         }
         return intCursors;
     }

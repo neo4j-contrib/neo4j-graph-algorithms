@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
+import java.util.function.DoubleToLongFunction;
 import java.util.function.Function;
 
 /**
@@ -71,10 +72,15 @@ public class Pointer {
             this.v = v;
         }
 
-        public DoublePointer map(Function<Double, Double> function) {
+        public DoublePointer map(DoubleToDoubleFunction function) {
             v = function.apply(v);
             return this;
         }
+    }
+
+    @FunctionalInterface
+    public interface DoubleToDoubleFunction {
+        double apply(double var1);
     }
 
     public static class GenericPointer<G> {
