@@ -22,11 +22,8 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.IntObjectScatterMap;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.LongDoubleScatterMap;
-import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
-import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
@@ -103,7 +100,7 @@ public class Louvain extends Algorithm<Louvain> {
                             .compute(maxIterations);
             // rebuild graph based on the community structure
             final int[] communityIds = modularityOptimization.getCommunityIds();
-            communityCount = ModularityOptimization.normalize(communityIds);
+            communityCount = LouvainUtils.normalize(communityIds);
             // release the old algo instance
             modularityOptimization.release();
             progressLogger.log(
@@ -131,6 +128,7 @@ public class Louvain extends Algorithm<Louvain> {
         });
         // temporary graph
         int nodeCount = comCount.cardinality();
+        LouvainUtils.normalize(communities);
         Graph graph = rebuildGraph(this.root, communities, nodeCount);
         // result arrays
         dendrogram = new int[maxLevel][];
@@ -148,7 +146,7 @@ public class Louvain extends Algorithm<Louvain> {
                             .compute(maxIterations);
             // rebuild graph based on the community structure
             final int[] communityIds = modularityOptimization.getCommunityIds();
-            communityCount = ModularityOptimization.normalize(communityIds);
+            communityCount = LouvainUtils.normalize(communityIds);
             // release the old algo instance
             modularityOptimization.release();
             progressLogger.log(
