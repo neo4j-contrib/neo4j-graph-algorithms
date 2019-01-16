@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 public class LouvainProc {
 
     public static final String INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY = "intermediateCommunitiesWriteProperty";
-    public static final String DEFAULT_CLUSTER_PROPERTY = "community";
+    public static final String DEFAULT_CLUSTER_PROPERTY = "communityProperty";
     public static final String INCLUDE_INTERMEDIATE_COMMUNITIES = "includeIntermediateCommunities";
 
     private static final String CLUSTERING_IDENTIFIER = "clustering";
@@ -64,7 +64,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.louvain", mode = Mode.WRITE)
     @Description("CALL algo.louvain(label:String, relationship:String, " +
-            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4, community:'propertyOfPredefinedCommunity'}) " +
+            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4, communityProperty:'propertyOfPredefinedCommunity'}) " +
             "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
     public Stream<LouvainResult> louvain(
             @Name(value = "label", defaultValue = "") String label,
@@ -114,7 +114,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.louvain.stream")
     @Description("CALL algo.louvain.stream(label:String, relationship:String, " +
-            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4, community:'propertyOfPredefinedCommunity') " +
+            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4, communityProperty:'propertyOfPredefinedCommunity') " +
             "YIELD nodeId, community - yields a setId to each node id")
     public Stream<Louvain.StreamingResult> louvainStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -176,7 +176,7 @@ public class LouvainProc {
                 configuration.getConcurrency(),
                 graph,
                 finalCommunities.length,
-                configuration.getWriteProperty(DEFAULT_CLUSTER_PROPERTY),
+                configuration.getWriteProperty("community"),
                 configuration.get(INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY, "communities"))
                 .export(allCommunities, finalCommunities, includeIntermediateCommunities);
     }

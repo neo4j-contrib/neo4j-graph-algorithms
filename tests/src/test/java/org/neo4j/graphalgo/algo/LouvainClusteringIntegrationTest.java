@@ -137,7 +137,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testPredefinedCommunities() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community:'c'}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, communityProperty:'c'}) " +
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
@@ -152,7 +152,7 @@ public class LouvainClusteringIntegrationTest {
 
     @Test
     public void testStreamNoIntermediateCommunitiesByDefault() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community:'c'}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, communityProperty:'c'}) " +
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
