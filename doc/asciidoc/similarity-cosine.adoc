@@ -156,30 +156,6 @@ include::scripts/similarity-cosine.cypher[tag=stream-topk]
 These results will not be symmetrical.
 For example, the person most similar to Praveena is Michael, but the person most similar to Zhen is also Michael.
 
-.Parameters
-[opts="header",cols="1,1,1,1,4"]
-|===
-| Name             | Type   | Default        | Optional | Description
-| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, weights: [weight, weight, weight]}`
-| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
-| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
-| `similarityCutoff` | int    | -1             | yes      | The threshold for cosine similarity. Values below this will not be returned.
-| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
-|===
-
-.Results
-[opts="header",cols="1,1,6"]
-|===
-| Name         | Type | Description
-| `item1`      | int  | The ID of one node in the similarity pair.
-| `item2`      | int  | The ID of other node in the similarity pair.
-| `count1`       | int  | The size of the `targets` list of one node.
-| `count2`       | int  | The size of the `targets` list of other node.
-| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
-| `similarity`   | int  | The cosine similarity of the two nodes.
-|===
-
 .The following will find the most similar user for each user, and store a relationship between those users:
 [source, cypher]
 ----
@@ -213,16 +189,31 @@ include::scripts/similarity-cosine.cypher[tag=query]
 |===
 // end::query[]
 
+[[algorithms-similarity-cosine-syntax]]
+== Syntax
+
+.The following will run the algorithm and write back results:
+[source, cypher]
+----
+CALL algo.similarity.cosine(userData:List<Map>> or String, {
+    topK: 1, similarityCutoff: 0.1, write:true, writeProperty: "cosineSimilarity"
+})
+YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, max, mean, stdDev, p25, p50, p75, p90, p95, p99, p999, p100
+----
+
+
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
 | Name                   | Type    | Default        | Optional | Description
-| `data`                   | list    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `data`                   | list or string    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}` or a Cypher query.
 | `top`                    | int     | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
 | `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
-| `similarityCutoff`       | int     | -1             | yes      | The threshold for Jaccard similarity. Values below this will not be returned.
+| `similarityCutoff`       | int     | -1             | yes      | The threshold for similarity. Values below this will not be returned.
 | `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
+| `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
 | `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
 | `writeProperty`          | string  | score          | yes      | The property to use when storing results.
@@ -250,3 +241,52 @@ include::scripts/similarity-cosine.cypher[tag=query]
 | `p999`                  | double  | The 99.9 percentile of similarities scores computed.
 | `p100`                  | double  | The 25 percentile of similarities scores computed.
 |===
+
+.The following will run the algorithm and stream results:
+[source,cypher]
+----
+CALL algo.similarity.cosine.stream(userData:List<Map>> or String, {
+    degreeCutoff: 10, similarityCutoff: 0.1, concurrency:4
+})
+YIELD item1, item2, count1, count2, intersection, similarity
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name             | Type   | Default        | Optional | Description
+| `data`                   | list or string    | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}` or a Cypher query.
+| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
+| `similarityCutoff` | int    | -1             | yes      | The threshold for similarity. Values below this will not be returned.
+| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
+| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
+| `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| Name         | Type | Description
+| `item1`      | int  | The ID of one node in the similarity pair.
+| `item2`      | int  | The ID of other node in the similarity pair.
+| `count1`       | int  | The size of the `targets` list of one node.
+| `count2`       | int  | The size of the `targets` list of other node.
+| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
+| `similarity`   | int  | The cosine similarity of the two nodes.
+|===
+
+[[algorithms-similarity-cosine-cypher-projection]]
+== Cypher projection
+
+If the similarity lists are very sparse (i.e. contain a lot of 0s) they can end up taking up a lot of memory.
+For those use cases you can use Cypher statements to project the graph instead.
+
+.Set `graph:'cypher'` in the config:
+
+[source,cypher]
+----
+include::scripts/similarity-cosine.cypher[tag=cypher-projection]
+----
