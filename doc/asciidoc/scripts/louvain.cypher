@@ -97,9 +97,55 @@ ORDER BY communities;
 
 // tag::write-hierarchical-sample-graph[]
 
-CALL algo.louvain('User', 'FRIEND',
-  {write:true, includeIntermediateCommunities: true, intermediateCommunitiesWriteProperty: 'communities'})
+CALL algo.louvain('User', 'FRIEND', {
+  write:true,
+  includeIntermediateCommunities: true,
+  intermediateCommunitiesWriteProperty: 'communities'
+})
 YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis; 
 
 // end::write-hierarchical-sample-graph[]
 
+// tag::create-pre-defined-sample-graph[]
+
+MERGE (nAlice:User {id:'Alice'}) SET nAlice.community = 0
+MERGE (nBridget:User {id:'Bridget'}) SET nBridget.community = 0
+MERGE (nCharles:User {id:'Charles'}) SET nCharles.community = 1
+MERGE (nDoug:User {id:'Doug'}) SET nDoug.community = 1
+MERGE (nMark:User {id:'Mark'}) SET nMark.community = 1
+MERGE (nMichael:User {id:'Michael'}) SET nMichael.community = 0
+MERGE (nKarin:User {id:'Karin'}) SET nKarin.community = 1
+MERGE (nAmy:User {id:'Amy'})
+
+MERGE (nAlice)-[:FRIEND]->(nBridget)
+MERGE (nAlice)-[:FRIEND]->(nCharles)
+MERGE (nMark)-[:FRIEND]->(nDoug)
+MERGE (nBridget)-[:FRIEND]->(nMichael)
+MERGE (nCharles)-[:FRIEND]->(nMark)
+MERGE (nAlice)-[:FRIEND]->(nMichael)
+MERGE (nCharles)-[:FRIEND]->(nDoug)
+MERGE (nMark)-[:FRIEND]->(nKarin)
+MERGE (nKarin)-[:FRIEND]->(nAmy)
+MERGE (nAmy)-[:FRIEND]->(nDoug);
+
+// end::create-pre-defined-sample-graph[]
+
+
+// tag::stream-pre-defined-sample-graph[]
+CALL algo.louvain.stream('User', 'FRIEND', {communityProperty: 'community'})
+YIELD nodeId, communities
+
+RETURN algo.getNodeById(nodeId).id AS user, communities
+ORDER BY communities;
+// end::stream-pre-defined-sample-graph[]
+
+// tag::write-pre-defined-sample-graph[]
+
+CALL algo.louvain('User', 'FRIEND', {
+  write:true,
+  communityProperty: "community",
+  writeProperty: "newCommunity"
+})
+YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis;
+
+// end::write-pre-defined-sample-graph[]
