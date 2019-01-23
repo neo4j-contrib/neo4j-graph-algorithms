@@ -28,7 +28,7 @@ The procedures parallelize the computation and are therefore more appropriate fo
 
 Pearson similarity is only calculated over non-NULL dimensions.
 When calling the function, we should provide lists that contain the overlapping items.
-The procedures expect to receive the same length lists for all items, so we need to pad those lists with 0s where necessary.
+The procedures expect to receive the same length lists for all items, so we need to pad those lists with `algo.NaN()` where necessary.
 
 // end::explanation[]
 
