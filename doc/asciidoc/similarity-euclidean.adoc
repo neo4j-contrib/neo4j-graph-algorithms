@@ -84,24 +84,24 @@ include::scripts/similarity-euclidean.cypher[tag=stream]
 [opts="header"]
 |===
 | `from`     | `to`       | `similarity`
-| Arya     | Karin    | 7.681145747868608
-| Zhen     | Michael  | 7.874007874011811
-| Zhen     | Praveena | 12.569805089976535
-| Praveena | Michael  | 12.727922061357855
-| Michael  | Karin    | 15.033296378372908
-| Praveena | Karin    | 16.1245154965971
-| Zhen     | Karin    | 16.30950643030009
-| Praveena | Arya     | 16.76305461424021
-| Michael  | Arya     | 17.406895185529212
-| Zhen     | Arya     | 19.621416870348583
+| "Zhen"     | "Arya"     | 0.0
+| "Zhen"     | "Karin"    | 0.0
+| "Praveena" | "Karin"    | 3.0
+| "Zhen"     | "Michael"  | 3.605551275463989
+| "Praveena" | "Michael"  | 4.0
+| "Arya"     | "Karin"    | 4.358898943540674
+| "Michael"  | "Arya"     | 5.0
+| "Zhen"     | "Praveena" | 6.708203932499369
+| "Michael"  | "Karin"    | 7.0
+| "Praveena" | "Arya"     | 8.0
 
 |===
 // end::stream[]
 
-Arya and Karin have the most similar food preferences, with a euclidean distance of 7.68.
+Zhen and Arya, and Zhen and Karin have the most similar food preferences, with a euclidean distance of 0.0.
 Lower scores are better here; a score of 0 would indicate that users have exactly the same preferences.
 
-We might decide that we don't want to see users with a similarity above 17 returned in our results.
+We might decide that we don't want to see users with a similarity above 5 returned in our results.
 If so, we can filter those out by passing in the `similarityCutoff` parameter.
 
 .The following will return a stream of node pairs that have a similarity of at most 17, along with their euclidean distance:
@@ -115,14 +115,11 @@ include::scripts/similarity-euclidean.cypher[tag=stream-similarity-cutoff]
 [opts="header"]
 |===
 | `from`     | `to`       | `similarity`
-| Arya     | Karin    | 7.681145747868608
-| Zhen     | Michael  | 7.874007874011811
-| Zhen     | Praveena | 12.569805089976535
-| Praveena | Michael  | 12.727922061357855
-| Michael  | Karin    | 15.033296378372908
-| Praveena | Karin    | 16.1245154965971
-| Zhen     | Karin    | 16.30950643030009
-| Praveena | Arya     | 16.76305461424021
+| "Zhen"     | "Arya"    | 0.0
+| "Zhen"     | "Karin"   | 0.0
+| "Praveena" | "Karin"   | 3.0
+| "Zhen"     | "Michael" | 3.605551275463989
+| "Praveena" | "Michael" | 4.0
 |===
 // end::stream-similarity-cutoff[]
 
@@ -140,18 +137,18 @@ include::scripts/similarity-euclidean.cypher[tag=stream-topk]
 .Results
 [opts="header",cols="1,1,1"]
 |===
-| `from`     | `to`       | `similarity`
-| Arya     | Karin   | 7.681145747868608
-| Karin    | Arya    | 7.681145747868608
-| Michael  | Zhen    | 7.874007874011811
-| Praveena | Zhen    | 12.569805089976535
-| Zhen     | Michael | 7.874007874011811
+| `from`       | `to`         | `similarity`
+| "Arya"     | "Zhen"  | 0.0
+| "Karin"    | "Zhen"  | 0.0
+| "Michael"  | "Zhen"  | 3.605551275463989
+| "Praveena" | "Karin" | 3.0
+| "Zhen"     | "Arya"  | 0.0
 
 |===
 // end::stream-topk[]
 
 These results will not be symmetrical.
-For example, the person most similar to Praveena is Zhen, but the person most similar to Zhen is Michael.
+For example, the person most similar to Michael is Zhen, but the person most similar to Zhen is Arya.
 
 .The following will find the most similar user for each user, and store a relationship between those users:
 [source, cypher]
@@ -164,7 +161,7 @@ include::scripts/similarity-euclidean.cypher[tag=write-back]
 [opts="header"]
 |===
 | `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
-| 5      | 5                |true   | SIMILAR              | score       | 7.681121826171875 | 12.569793701171875 | 8.736004638671876 | 12.569793701171875
+| 5     | 5               | TRUE  | "SIMILAR"             | "score"       | 0.0 | 3.6055450439453125 | 1.3211090087890625 | 3.6055450439453125
 |===
 // end::write-back[]
 
@@ -181,10 +178,42 @@ include::scripts/similarity-euclidean.cypher[tag=query]
 [opts="header",cols="1"]
 |===
 | `cuisine`
-| French
+| Italian
+| Lebanese
 |===
 // end::query[]
 
+[[algorithms-similarity-euclidean-cypher-projection]]
+== Cypher projection
+
+If the similarity lists are very large they can take up a lot of memory.
+For cases where those lists contain lots of values that should be skipped, you can use the less memory intensive approach of using Cypher statements to project the graph instead.
+
+.Set `graph:'cypher'` in the config:
+
+[source,cypher]
+----
+include::scripts/similarity-euclidean.cypher[tag=cypher-projection]
+----
+
+[[algorithms-similarity-euclidean-skipping-values]]
+== Skipping values
+
+By default the `skipValue` parameter is `algo.Nan()`.
+The algorithm checks every value against the `skipValue` to determine whether that value should be considered as part of the similarity result.
+For cases where no values should be skipped, skipping can be disabled by setting `skipValue` to `null`.
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/similarity-euclidean.cypher[tag=create-sample-embedding-graph]
+----
+
+.The following will find the similarity between cuisines based on the `embedding` property:
+[source, cypher]
+----
+include::scripts/similarity-euclidean.cypher[tag=embedding-graph-stream]
+----
 
 [[algorithms-similarity-euclidean-syntax]]
 == Syntax
@@ -207,7 +236,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff`       | int     | -1             | yes      | The threshold for Euclidean distance. Values above this will not be returned.
 | `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
+| `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
@@ -248,6 +277,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff` | int    | -1             | yes      | The threshold for euclidean distance. Values above this will not be returned.
 | `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 |===

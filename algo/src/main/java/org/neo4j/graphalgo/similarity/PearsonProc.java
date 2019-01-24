@@ -38,7 +38,7 @@ public class PearsonProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") Object rawData,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-        Double skipValue = configuration.get("skipValue", null);
+        Double skipValue = readSkipValue(configuration);
 
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
@@ -62,7 +62,7 @@ public class PearsonProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") Object rawData,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-        Double skipValue = configuration.get("skipValue", null);
+        Double skipValue = readSkipValue(configuration);
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
