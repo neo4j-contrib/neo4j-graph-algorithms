@@ -77,21 +77,20 @@ include::scripts/similarity-pearson.cypher[tag=stream]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| Michael      | Karin        | 0.6494195615497209
-| Arya         | Karin        | 0.4209238458791279
-| Zhen         | Praveena     | 0.19981563984405706
-| Zhen         | Arya         | 0.1316245316231641
-| Zhen         | Michael      | 0.04611130150247471
-| Zhen         | Karin        | -0.013095468233039904
-| Michael      | Arya         | -0.16468246895724528
-| Praveena     | Arya         | -0.4940474068717357
-| Praveena     | Micheal      | -0.7132867132867132
-| Praveena     | Karin        | -0.8102849575299271
+| "Zhen"     | "Praveena" | 1.0
+| "Zhen"     | "Karin"    | 1.0
+| "Michael"  | "Karin"    | 0.9707253433941511
+| "Michael"  | "Arya"     | 0.5198613887753597
+| "Zhen"     | "Michael"  | 0.3711537444790451
+| "Zhen"     | "Arya"     | 0.0
+| "Praveena" | "Arya"     | 0.0
+| "Praveena" | "Karin"    | 0.0
+| "Praveena" | "Michael"  | -0.8910421112136306
+| "Arya"     | "Karin"    | -1.0
 |===
 // end::stream[]
 
-Michael and Karin have the most similar taste of movies, with a score of 0.649.
-The maximum score is 1, so they aren't very similar.
+Zhen and Praveena and Zhen and Karin are the most similar with a score of 1.0 - the maximum score.
 We also have 5 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
@@ -106,11 +105,14 @@ include::scripts/similarity-pearson.cypher[tag=stream-similarity-cutoff]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| Michael      | Karin        | 0.6494195615497209
-| Arya         | Karin        | 0.4209238458791279
-| Zhen         | Praveena     | 0.19981563984405706
-| Zhen         | Arya         | 0.1316245316231641
-| Zhen         | Michael      | 0.04611130150247471
+| "Zhen"     | "Praveena" | 1.0
+| "Zhen"     | "Karin"    | 1.0
+| "Michael"  | "Karin"    | 0.9707253433941511
+| "Michael"  | "Arya"     | 0.5198613887753597
+| "Zhen"     | "Michael"  | 0.3711537444790451
+| "Praveena" | "Arya"     | 0.0
+| "Zhen"     | "Arya"     | 0.0
+| "Praveena" | "Karin"    | 0.0
 |===
 // end::stream-similarity-cutoff[]
 
@@ -129,17 +131,17 @@ include::scripts/similarity-pearson.cypher[tag=stream-topk]
 [opts="header",cols="1,1,1"]
 |===
 | `from`     | `to`       | `similarity`
-| Michael    | Karin      | 0.6494195615497209
-| Karin      | Michael    | 0.6494195615497209
-| Arya       | Karin      | 0.42092384587912796
-| Zhen       | Praveena   | 0.19981563984405706
-| Praveena   | Zhen       | 0.19981563984405706
+| "Zhen"     | "Praveena" | 1.0
+| "Praveena" | "Zhen"     | 1.0
+| "Karin"    | "Zhen"     | 1.0
+| "Michael"  | "Karin"    | 0.9707253433941511
+| "Arya"     | "Michael"  | 0.5198613887753597
 
 |===
 // end::stream-topk[]
 
 These results will not be symmetrical.
-For example, the person most similar to Michael is Karin, but the person most similar to Arya is also Karin.
+For example, the person most similar to Michael is Karin, but the person most similar to Karin is Zhen.
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
@@ -176,13 +178,13 @@ include::scripts/similarity-pearson.cypher[tag=write-back]
 [opts="header",cols="1,1,1,1,1,1,1,1,1"]
 |===
 | `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
-| 5     | 5               | TRUE  | SIMILAR            | score       | 0.1998147964477539 | 0.6494207382202148 | 0.42387866973876953 | 0.6494207382202148
+| 5     | 5               | TRUE  | "SIMILAR"             | "score"       | 0.5198593139648438 | 1.0000038146972656 | 0.8981185913085937 | 1.0000038146972656
 |===
 // end::write-back[]
 
 We then could write a query to find out which are the movies that other people similar to us liked.
 
-.The following will find the most similar user to Karin, and return their favourite movies that Praveena didn't (yet!) rated:
+.The following will find the most similar user to Praveena, and return their favourite movies that Praveena didn't (yet!) rate:
 [source, cypher]
 ----
 include::scripts/similarity-pearson.cypher[tag=query]
@@ -193,11 +195,41 @@ include::scripts/similarity-pearson.cypher[tag=query]
 [opts="header",cols="1"]
 |===
 | `movie`
-| A Few Good Men
-| Home Alone
+| The Matrix
 |===
 // end::query[]
 
+[[algorithms-similarity-pearson-cypher-projection]]
+== Cypher projection
+
+If the similarity lists are very large they can take up a lot of memory.
+For cases where those lists contain lots of values that should be skipped, you can use the less memory intensive approach of using Cypher statements to project the graph instead.
+
+.Set `graph:'cypher'` in the config:
+
+[source,cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=cypher-projection]
+----
+
+[[algorithms-similarity-pearson-skipping-values]]
+== Skipping values
+
+By default the `skipValue` parameter is `algo.Nan()`.
+The algorithm checks every value against the `skipValue` to determine whether that value should be considered as part of the similarity result.
+For cases where no values should be skipped, skipping can be disabled by setting `skipValue` to `null`.
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=create-sample-embedding-graph]
+----
+
+.The following will find the similarity between movies based on the `embedding` property:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=embedding-graph-stream]
+----
 
 [[algorithms-similarity-pearson-syntax]]
 == Syntax
@@ -220,7 +252,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff`       | int     | -1             | yes      | The threshold for similarity. Values below this will not be returned.
 | `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
+| `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
@@ -270,7 +302,7 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff` | int    | -1             | yes      | The threshold for similarity. Values below this will not be returned.
 | `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation
+| `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 |===
@@ -287,15 +319,3 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `similarity`   | int  | The cosine similarity of the two nodes.
 |===
 
-[[algorithms-similarity-pearson-cypher-projection]]
-== Cypher projection
-
-If the similarity lists are very sparse (i.e. contain a lot of 0s) they can end up taking up a lot of memory.
-For those use cases you can use Cypher statements to project the graph instead.
-
-.Set `graph:'cypher'` in the config:
-
-[source,cypher]
-----
-include::scripts/similarity-pearson.cypher[tag=cypher-projection]
-----

@@ -224,15 +224,15 @@ public class SimilarityProc {
 
     WeightedInput[] prepareWeights(Object rawData, ProcedureConfiguration configuration, Double skipValue) throws Exception {
         if (ProcedureConstants.CYPHER_QUERY.equals(configuration.getGraphName("dense"))) {
-            if (skipValue == null) {
-                throw new IllegalArgumentException("Must specify 'skipValue' when using {graph: 'cypher'}");
-            }
-
             return prepareSparseWeights(api, (String) rawData,  skipValue, configuration);
         } else {
             List<Map<String, Object>> data = (List<Map<String, Object>>) rawData;
             return preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
         }
+    }
+
+    Double readSkipValue(ProcedureConfiguration configuration) {
+        return configuration.get("skipValue", Double.NaN);
     }
 
     WeightedInput[] preparseDenseWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {

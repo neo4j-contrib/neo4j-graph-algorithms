@@ -90,22 +90,23 @@ include::scripts/similarity-cosine.cypher[tag=stream]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| Arya         | Karin        | 0.8893006975229283
-| Zhen         | Michael      | 0.8249630162429022
-| Praveena     | Michael      | 0.5100496780395022
-| Zhen         | Praveena     | 0.4061183653774261
-| Michael      | Arya         | 0.3184912471845722
-| Michael      | Karin        | 0.3085485706658717
-| Praveena     | Arya         | 0.2723483386163968
-| Zhen         | Arya         | 0.0
-| Zhen         | Karin        | 0.0
-| Praveena     | Karin        | 0.0
+| "Praveena" | "Karin"    | 1.0
+| "Michael"  | "Arya"     | 0.9788908326303921
+| "Arya"     | "Karin"    | 0.9610904115204073
+| "Zhen"     | "Michael"  | 0.9542262139256075
+| "Praveena" | "Michael"  | 0.9429903335828895
+| "Zhen"     | "Praveena" | 0.9191450300180579
+| "Michael"  | "Karin"    | 0.8498063272285821
+| "Praveena" | "Arya"     | 0.7194014606174091
+| "Zhen"     | "Arya"     | 0.0
+| "Zhen"     | "Karin"    | 0.0
+
 |===
 // end::stream[]
 
-Arya and Karin have the most similar food tastes, with a score of 0.889.
-The maximum score is 1, so they are pretty close to the maximum level of similarity.
-We also have 3 pairs of users who are not similar at all.
+Praveena and Karin have the most similar food tastes, with a score of 1.0, and there are also several other pairs of users with similar tastes.
+The scores here are unusually high because our users haven't liked many of the same cuisines.
+We also have 2 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
 .The following will return a stream of node pairs that have a similarity of at least 0.1, along with their cosine similarities:
@@ -119,13 +120,14 @@ include::scripts/similarity-cosine.cypher[tag=stream-similarity-cutoff]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| Arya         | Karin        | 0.8893006975229283
-| Zhen         | Michael      | 0.8249630162429022
-| Praveena     | Michael      | 0.5100496780395022
-| Zhen         | Praveena     | 0.4061183653774261
-| Michael      | Arya         | 0.3184912471845722
-| Michael      | Karin        | 0.3085485706658717
-| Praveena     | Arya         | 0.2723483386163968
+| "Praveena" | "Karin"    | 1.0
+| "Michael"  | "Arya"     | 0.9788908326303921
+| "Arya"     | "Karin"    | 0.9610904115204073
+| "Zhen"     | "Michael"  | 0.9542262139256075
+| "Praveena" | "Michael"  | 0.9429903335828895
+| "Zhen"     | "Praveena" | 0.9191450300180579
+| "Michael"  | "Karin"    | 0.8498063272285821
+| "Praveena" | "Arya"     | 0.7194014606174091
 |===
 // end::stream-similarity-cutoff[]
 
@@ -144,17 +146,17 @@ include::scripts/similarity-cosine.cypher[tag=stream-topk]
 [opts="header",cols="1,1,1"]
 |===
 | `from`     | `to`       | `similarity`
-| Arya     | Karin   | 0.8893006975229283
-| Karin    | Arya    | 0.8893006975229283
-| Michael  | Zhen    | 0.8249630162429022
-| Praveena | Michael | 0.5100496780395022
-| Zhen     | Michael | 0.8249630162429022
+| "Arya"     | "Michael"  | 0.9788908326303921
+| "Karin"    | "Praveena" | 1.0
+| "Michael"  | "Arya"     | 0.9788908326303921
+| "Praveena" | "Karin"    | 1.0
+| "Zhen"     | "Michael"  | 0.9542262139256075
 
 |===
 // end::stream-topk[]
 
 These results will not be symmetrical.
-For example, the person most similar to Praveena is Michael, but the person most similar to Zhen is also Michael.
+For example, the person most similar to Zhen is Michael, but the person most similar to Michael is Arya.
 
 .The following will find the most similar user for each user, and store a relationship between those users:
 [source, cypher]
@@ -167,7 +169,7 @@ include::scripts/similarity-cosine.cypher[tag=write-back]
 [opts="header",cols="1,1,1,1,1,1,1,1,1"]
 |===
 | `nodes` | `similarityPairs` | `write` | `writeRelationshipType` | `writeProperty` | `min`  | `max`  | `mean` | `p95`
-| 5     | 5               | TRUE  | SIMILAR            | score       | 0.5100479125976562 | 0.8892974853515625 | 0.787713623046875 | 0.8892974853515625
+| 5     | 5               | TRUE  | "SIMILAR"             | "score"       | 0.9542236328125 | 1.0000038146972656 | 0.9824020385742187 | 1.0000038146972656
 |===
 // end::write-back[]
 
@@ -185,9 +187,41 @@ include::scripts/similarity-cosine.cypher[tag=query]
 |===
 | `cuisine`
 | Italian
-| French
+| Lebanese
 |===
 // end::query[]
+
+[[algorithms-similarity-cosine-cypher-projection]]
+== Cypher projection
+
+If the similarity lists are very large they can take up a lot of memory.
+For cases where those lists contain lots of values that should be skipped, you can use the less memory intensive approach of using Cypher statements to project the graph instead.
+
+.Set `graph:'cypher'` in the config:
+
+[source,cypher]
+----
+include::scripts/similarity-cosine.cypher[tag=cypher-projection]
+----
+
+[[algorithms-similarity-cosine-skipping-values]]
+== Skipping values
+
+By default the `skipValue` parameter is `algo.Nan()`.
+The algorithm checks every value against the `skipValue` to determine whether that value should be considered as part of the similarity result.
+For cases where no values should be skipped, skipping can be disabled by setting `skipValue` to `null`.
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/similarity-cosine.cypher[tag=create-sample-embedding-graph]
+----
+
+.The following will find the similarity between cuisines based on the `embedding` property:
+[source, cypher]
+----
+include::scripts/similarity-cosine.cypher[tag=embedding-graph-stream]
+----
 
 [[algorithms-similarity-cosine-syntax]]
 == Syntax
@@ -211,7 +245,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `topK`                   | int     | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff`       | int     | -1             | yes      | The threshold for similarity. Values below this will not be returned.
 | `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
+| `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
@@ -261,7 +295,7 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it will return as many as it finds.
 | `similarityCutoff` | int    | -1             | yes      | The threshold for similarity. Values below this will not be returned.
 | `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation.
+| `skipValue`              | double  | null           | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 |===
@@ -278,15 +312,3 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `similarity`   | int  | The cosine similarity of the two nodes.
 |===
 
-[[algorithms-similarity-cosine-cypher-projection]]
-== Cypher projection
-
-If the similarity lists are very sparse (i.e. contain a lot of 0s) they can end up taking up a lot of memory.
-For those use cases you can use Cypher statements to project the graph instead.
-
-.Set `graph:'cypher'` in the config:
-
-[source,cypher]
-----
-include::scripts/similarity-cosine.cypher[tag=cypher-projection]
-----

@@ -38,7 +38,7 @@ public class EuclideanProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") Object rawData,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-        Double skipValue = configuration.get("skipValue", null);
+        Double skipValue = readSkipValue(configuration);
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
@@ -54,6 +54,7 @@ public class EuclideanProc extends SimilarityProc {
         return generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
     }
 
+
     @Procedure(name = "algo.similarity.euclidean", mode = Mode.WRITE)
     @Description("CALL algo.similarity.euclidean([{item:id, weights:[weights]}], {similarityCutoff:-1,degreeCutoff:0}) " +
             "YIELD p50, p75, p90, p99, p999, p100 - computes euclidean similarities")
@@ -61,7 +62,7 @@ public class EuclideanProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") Object rawData,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
-        Double skipValue = configuration.get("skipValue", null);
+        Double skipValue = readSkipValue(configuration);
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);

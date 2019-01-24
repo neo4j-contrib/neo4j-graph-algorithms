@@ -38,7 +38,7 @@ MERGE (karin)-[:LIKES {score: 7}]->(italian)
 // tag::stream[]
 MATCH (p:Person), (c:Cuisine)
 OPTIONAL MATCH (p)-[likes:LIKES]->(c)
-WITH {item:id(p), weights: collect(coalesce(likes.score, 0))} as userData
+WITH {item:id(p), weights: collect(coalesce(likes.score, algo.NaN()))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.euclidean.stream(data)
 YIELD item1, item2, count1, count2, similarity
@@ -49,9 +49,9 @@ ORDER BY similarity
 // tag::stream-similarity-cutoff[]
 MATCH (p:Person), (c:Cuisine)
 OPTIONAL MATCH (p)-[likes:LIKES]->(c)
-WITH {item:id(p), weights: collect(coalesce(likes.score, 0))} as userData
+WITH {item:id(p), weights: collect(coalesce(likes.score, algo.NaN()))} as userData
 WITH collect(userData) as data
-CALL algo.similarity.euclidean.stream(data, {similarityCutoff: 17.0})
+CALL algo.similarity.euclidean.stream(data, {similarityCutoff: 4.0})
 YIELD item1, item2, count1, count2, similarity
 RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
 ORDER BY similarity
@@ -60,7 +60,7 @@ ORDER BY similarity
 // tag::stream-topk[]
 MATCH (p:Person), (c:Cuisine)
 OPTIONAL MATCH (p)-[likes:LIKES]->(c)
-WITH {item:id(p), weights: collect(coalesce(likes.score, 0))} as userData
+WITH {item:id(p), weights: collect(coalesce(likes.score, algo.NaN()))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.euclidean.stream(data, {topK:1})
 YIELD item1, item2, count1, count2, similarity
@@ -71,7 +71,7 @@ ORDER BY from
 // tag::write-back[]
 MATCH (p:Person), (c:Cuisine)
 OPTIONAL MATCH (p)-[likes:LIKES]->(c)
-WITH {item:id(p), weights: collect(coalesce(likes.score, 0))} as userData
+WITH {item:id(p), weights: collect(coalesce(likes.score, algo.NaN()))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.euclidean(data, {topK: 1, write:true})
 YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, max, mean, stdDev, p25, p50, p75, p90, p95, p99, p999, p100
@@ -89,8 +89,34 @@ RETURN cuisine.name AS cuisine
 WITH "MATCH (person:Person)-[likes:LIKES]->(c)
       RETURN id(person) AS item, id(c) AS category, likes.score AS weight" AS query
 CALL algo.similarity.euclidean(query, {
-  graph: "cypher", topK: 1, similarityCutoff: 17.0, write:true
+  graph: 'cypher', topK: 1, similarityCutoff: 4.0, write:true
 })
 YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, max, mean, stdDev, p95
 RETURN nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, max, mean, p95
 // end::cypher-projection[]
+
+
+// tag::create-sample-embedding-graph[]
+
+MERGE (french:Cuisine {name:'French'})          SET french.embedding = [0.71, 0.33, 0.81, 0.52, 0.41]
+MERGE (italian:Cuisine {name:'Italian'})        SET italian.embedding = [0.31, 0.72, 0.58, 0.67, 0.31]
+MERGE (indian:Cuisine {name:'Indian'})          SET indian.embedding = [0.43, 0.26, 0.98, 0.51, 0.76]
+MERGE (lebanese:Cuisine {name:'Lebanese'})      SET lebanese.embedding = [0.12, 0.23, 0.35, 0.31, 0.39]
+MERGE (portuguese:Cuisine {name:'Portuguese'})  SET portuguese.embedding = [0.47, 0.98, 0.81, 0.72, 0.89]
+MERGE (british:Cuisine {name:'British'})        SET british.embedding = [0.94, 0.12, 0.23, 0.4, 0.71]
+MERGE (mauritian:Cuisine {name:'Mauritian'})    SET mauritian.embedding = [0.31, 0.56, 0.98, 0.21, 0.62]
+
+// end::create-sample-embedding-graph[]
+
+// tag::embedding-graph-stream[]
+
+MATCH (c:Cuisine)
+WITH {item:id(c), weights: c.embedding} as userData
+WITH collect(userData) as data
+CALL algo.similarity.euclidean.stream(data, {skipValue: null})
+YIELD item1, item2, count1, count2, similarity
+RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+ORDER BY similarity DESC
+
+// end::embedding-graph-stream[]
+
