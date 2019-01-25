@@ -60,7 +60,7 @@ MATCH (p:Person), (m:Movie)
 OPTIONAL MATCH (p)-[rated:RATED]->(m)
 WITH {item:id(p), weights: collect(coalesce(rated.score, algo.NaN()))} as userData
 WITH collect(userData) as data
-CALL algo.similarity.pearson.stream(data, {similarityCutoff: 0.0})
+CALL algo.similarity.pearson.stream(data, {similarityCutoff: 0.1})
 YIELD item1, item2, count1, count2, similarity
 RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
 ORDER BY similarity DESC
