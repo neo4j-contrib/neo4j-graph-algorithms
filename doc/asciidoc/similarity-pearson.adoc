@@ -110,9 +110,6 @@ include::scripts/similarity-pearson.cypher[tag=stream-similarity-cutoff]
 | "Michael"  | "Karin"    | 0.9707253433941511
 | "Michael"  | "Arya"     | 0.5198613887753597
 | "Zhen"     | "Michael"  | 0.3711537444790451
-| "Praveena" | "Arya"     | 0.0
-| "Zhen"     | "Arya"     | 0.0
-| "Praveena" | "Karin"    | 0.0
 |===
 // end::stream-similarity-cutoff[]
 
