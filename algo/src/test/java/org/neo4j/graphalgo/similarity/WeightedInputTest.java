@@ -3,6 +3,7 @@ package org.neo4j.graphalgo.similarity;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
 
 public class WeightedInputTest {
 
@@ -60,6 +61,30 @@ public class WeightedInputTest {
         SimilarityResult similarityResult = input1.pearsonSkip(decoder, -1.0, input2, 0.0);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
+    }
+
+    @Test
+    public void pearsonNaNReturns0() {
+        double[] weights1 = new double[]{};
+        double[] weights2 = new double[]{};
+
+        WeightedInput input1 = new WeightedInput(1, weights1);
+        WeightedInput input2 = new WeightedInput(2, weights2);
+
+        assertEquals(0.0, input1.pearsonSkip(null, -1.0, input2, 0.0).similarity, 0.01);
+        assertEquals(0.0, input1.pearson(null, -1.0, input2).similarity, 0.01);
+    }
+
+    @Test
+    public void pearsonNaNRespectsSimilarityCutOff() {
+        double[] weights1 = new double[]{};
+        double[] weights2 = new double[]{};
+
+        WeightedInput input1 = new WeightedInput(1, weights1);
+        WeightedInput input2 = new WeightedInput(2, weights2);
+
+        assertNull(input1.pearsonSkip(null, 0.1, input2, 0.0));
+        assertNull(input1.pearson(null, 0.1, input2));
     }
 
     @Test

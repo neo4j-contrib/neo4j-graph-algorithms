@@ -25,7 +25,7 @@ class WeightedInput implements Comparable<WeightedInput> {
 
     private static int calculateCount(double[] weights, double skipValue) {
         boolean skipNan = Double.isNaN(skipValue);
-        int count =0;
+        int count = 0;
         for (double weight : weights) {
             if (!(weight == skipValue || (skipNan && Double.isNaN(weight)))) count++;
         }
@@ -51,7 +51,7 @@ class WeightedInput implements Comparable<WeightedInput> {
     public SimilarityResult sumSquareDeltaSkip(RleDecoder decoder, double similarityCutoff, WeightedInput other, double skipValue) {
         double[] thisWeights = weights;
         double[] otherWeights = other.weights;
-        if(decoder != null) {
+        if (decoder != null) {
             decoder.reset(weights, other.weights);
             thisWeights = decoder.item1();
             otherWeights = decoder.item2();
@@ -68,7 +68,7 @@ class WeightedInput implements Comparable<WeightedInput> {
     public SimilarityResult sumSquareDelta(RleDecoder decoder, double similarityCutoff, WeightedInput other) {
         double[] thisWeights = weights;
         double[] otherWeights = other.weights;
-        if(decoder != null) {
+        if (decoder != null) {
             decoder.reset(weights, other.weights);
             thisWeights = decoder.item1();
             otherWeights = decoder.item2();
@@ -85,7 +85,7 @@ class WeightedInput implements Comparable<WeightedInput> {
     public SimilarityResult cosineSquaresSkip(RleDecoder decoder, double similarityCutoff, WeightedInput other, double skipValue) {
         double[] thisWeights = weights;
         double[] otherWeights = other.weights;
-        if(decoder != null) {
+        if (decoder != null) {
             decoder.reset(weights, other.weights);
             thisWeights = decoder.item1();
             otherWeights = decoder.item2();
@@ -102,7 +102,7 @@ class WeightedInput implements Comparable<WeightedInput> {
     public SimilarityResult cosineSquares(RleDecoder decoder, double similarityCutoff, WeightedInput other) {
         double[] thisWeights = weights;
         double[] otherWeights = other.weights;
-        if(decoder != null) {
+        if (decoder != null) {
             decoder.reset(weights, other.weights);
             thisWeights = decoder.item1();
             otherWeights = decoder.item2();
@@ -127,14 +127,11 @@ class WeightedInput implements Comparable<WeightedInput> {
 
         int len = Math.min(thisWeights.length, otherWeights.length);
         double pearson = Intersections.pearson(thisWeights, otherWeights, len);
+        pearson = Double.isNaN(pearson) ? 0 : pearson;
 
         if (similarityCutoff >= 0d && (pearson == 0 || pearson < similarityCutoff)) return null;
 
-        if (Double.isNaN(pearson)) {
-            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, 0);
-        } else {
-            return new SimilarityResult(id, other.id, itemCount, other.itemCount,  0, pearson);
-        }
+        return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, pearson);
     }
 
     public SimilarityResult pearsonSkip(RleDecoder decoder, double similarityCutoff, WeightedInput other, Double skipValue) {
@@ -148,13 +145,10 @@ class WeightedInput implements Comparable<WeightedInput> {
 
         int len = Math.min(thisWeights.length, otherWeights.length);
         double pearson = Intersections.pearsonSkip(thisWeights, otherWeights, len, skipValue);
+        pearson = Double.isNaN(pearson) ? 0 : pearson;
 
         if (similarityCutoff >= 0d && (pearson == 0 || pearson < similarityCutoff)) return null;
 
-        if (Double.isNaN(pearson)) {
-            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, 0);
-        } else {
-            return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, pearson);
-        }
+        return new SimilarityResult(id, other.id, itemCount, other.itemCount, 0, pearson);
     }
 }
