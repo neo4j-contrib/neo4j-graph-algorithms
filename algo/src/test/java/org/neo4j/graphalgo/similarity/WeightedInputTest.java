@@ -6,20 +6,6 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 
 public class WeightedInputTest {
-
-    @Test
-    public void blah() {
-        double[] weights1 = new double[]{3, 0, 9, 0, 5};
-        double[] weights2 = new double[]{1, 2, 3, 4, 4, 4, 4, 5, 6};
-
-        WeightedInput input1 = new WeightedInput(1, weights1);
-        WeightedInput input2 = new WeightedInput(2, weights2);
-
-        SimilarityResult similarityResult = input1.pearson(null, -1.0, input2);
-
-        assertEquals(1.0, similarityResult.similarity, 0.01);
-    }
-
     @Test
     public void pearsonNoCompression() {
         double[] weights1 = new double[]{1, 2, 3, 4, 4, 4, 4, 5, 6};
