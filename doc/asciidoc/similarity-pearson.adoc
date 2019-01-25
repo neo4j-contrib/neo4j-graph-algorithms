@@ -77,20 +77,21 @@ include::scripts/similarity-pearson.cypher[tag=stream]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| "Zhen"     | "Praveena" | 1.0
-| "Zhen"     | "Karin"    | 1.0
-| "Michael"  | "Karin"    | 0.9707253433941511
-| "Michael"  | "Arya"     | 0.5198613887753597
-| "Zhen"     | "Michael"  | 0.3711537444790451
-| "Zhen"     | "Arya"     | 0.0
-| "Praveena" | "Arya"     | 0.0
-| "Praveena" | "Karin"    | 0.0
-| "Praveena" | "Michael"  | -0.8910421112136306
-| "Arya"     | "Karin"    | -1.0
+| "Arya"     | "Zhen"     | 1.0
+| "Arya"     | "Praveena" | 1.0
+| "Arya"     | "Karin"    | 0.9773555548504417
+| "Zhen"     | "Praveena" | 0.9561828874675149
+| "Karin"    | "Zhen"     | 0.0
+| "Karin"    | "Praveena" | 0.0
+| "Praveena" | "Michael"  | -0.7857142857142859
+| "Zhen"     | "Michael"  | -0.8660254037844386
+| "Arya"     | "Michael"  | -1.0
+| "Karin"    | "Michael"  | -1.0
+
 |===
 // end::stream[]
 
-Zhen and Praveena and Zhen and Karin are the most similar with a score of 1.0 - the maximum score.
+Zhen and Arya, and Praveena and Arya are the most similar with a score of 1.0 - the maximum score.
 We also have 5 pairs of users who are not similar at all.
 We'd probably want to filter those out, which we can do by passing in the `similarityCutoff` parameter.
 
@@ -105,11 +106,10 @@ include::scripts/similarity-pearson.cypher[tag=stream-similarity-cutoff]
 [opts="header"]
 |===
 | `from`       | `to`         | `similarity`
-| "Zhen"     | "Praveena" | 1.0
-| "Zhen"     | "Karin"    | 1.0
-| "Michael"  | "Karin"    | 0.9707253433941511
-| "Michael"  | "Arya"     | 0.5198613887753597
-| "Zhen"     | "Michael"  | 0.3711537444790451
+| "Arya" | "Zhen"     | 1.0
+| "Arya" | "Praveena" | 1.0
+| "Arya" | "Karin"    | 0.9773555548504417
+| "Zhen" | "Praveena" | 0.9561828874675149
 |===
 // end::stream-similarity-cutoff[]
 
@@ -128,17 +128,16 @@ include::scripts/similarity-pearson.cypher[tag=stream-topk]
 [opts="header",cols="1,1,1"]
 |===
 | `from`     | `to`       | `similarity`
-| "Zhen"     | "Praveena" | 1.0
-| "Praveena" | "Zhen"     | 1.0
-| "Karin"    | "Zhen"     | 1.0
-| "Michael"  | "Karin"    | 0.9707253433941511
-| "Arya"     | "Michael"  | 0.5198613887753597
+| "Arya"     | "Zhen" | 1.0
+| "Zhen"     | "Arya" | 1.0
+| "Praveena" | "Arya" | 1.0
+| "Karin"    | "Arya" | 0.9773555548504417
 
 |===
 // end::stream-topk[]
 
 These results will not be symmetrical.
-For example, the person most similar to Michael is Karin, but the person most similar to Karin is Zhen.
+For example, the person most similar to Karin is Arya, but the person most similar to Arya is Zhen.
 
 .Parameters
 [opts="header",cols="1,1,1,1,4"]

@@ -10,6 +10,7 @@ MERGE (matrix:Movie {name:'The Matrix'})
 MERGE (good_men:Movie {name:'A Few Good Men'})
 MERGE (top_gun:Movie {name:'Top Gun'})
 MERGE (jerry:Movie {name:'Jerry Maguire'})
+MERGE (gruffalo:Movie {name:'The Gruffalo'})
 
 MERGE (zhen:Person {name: "Zhen"})
 MERGE (praveena:Person {name: "Praveena"})
@@ -17,30 +18,30 @@ MERGE (michael:Person {name: "Michael"})
 MERGE (arya:Person {name: "Arya"})
 MERGE (karin:Person {name: "Karin"})
 
-MERGE (praveena)-[:RATED {score: 9}]->(good_men)
-MERGE (praveena)-[:RATED {score: 5}]->(jerry)
-MERGE (praveena)-[:RATED {score: 3}]->(home_alone)
+MERGE (zhen)-[:RATED {score: 1}]->(home_alone)
+MERGE (zhen)-[:RATED {score: 2}]->(good_men)
+MERGE (zhen)-[:RATED {score: 3}]->(matrix)
+MERGE (zhen)-[:RATED {score: 6}]->(jerry)
 
-MERGE (zhen)-[:RATED {score: 3}]->(home_alone)
-MERGE (zhen)-[:RATED {score: 5}]->(good_men)
-MERGE (zhen)-[:RATED {score: 9}]->(matrix)
-
-MERGE (michael)-[:RATED {score: 8}]->(home_alone)
-MERGE (michael)-[:RATED {score: 3}]->(matrix)
-MERGE (michael)-[:RATED {score: 9}]->(good_men)
-
-MERGE (arya)-[:RATED {score: 3}]->(top_gun)
-MERGE (arya)-[:RATED {score: 10}]->(matrix)
-MERGE (arya)-[:RATED {score: 1}]->(jerry)
-
-MERGE (karin)-[:RATED {score: 9}]->(top_gun)
-MERGE (karin)-[:RATED {score: 7}]->(matrix)
-MERGE (karin)-[:RATED {score: 2}]->(home_alone)
+MERGE (praveena)-[:RATED {score: 6}]->(home_alone)
+MERGE (praveena)-[:RATED {score: 7}]->(good_men)
+MERGE (praveena)-[:RATED {score: 8}]->(matrix)
+MERGE (praveena)-[:RATED {score: 9}]->(jerry)
 
 MERGE (michael)-[:RATED {score: 7}]->(home_alone)
 MERGE (michael)-[:RATED {score: 9}]->(good_men)
 MERGE (michael)-[:RATED {score: 3}]->(jerry)
 MERGE (michael)-[:RATED {score: 4}]->(top_gun)
+
+MERGE (arya)-[:RATED {score: 8}]->(top_gun)
+MERGE (arya)-[:RATED {score: 1}]->(matrix)
+MERGE (arya)-[:RATED {score: 10}]->(jerry)
+MERGE (arya)-[:RATED {score: 10}]->(gruffalo)
+
+MERGE (karin)-[:RATED {score: 9}]->(top_gun)
+MERGE (karin)-[:RATED {score: 7}]->(matrix)
+MERGE (karin)-[:RATED {score: 7}]->(home_alone)
+MERGE (karin)-[:RATED {score: 9}]->(gruffalo)
 
 // end::create-sample-graph[]
 
@@ -96,8 +97,8 @@ RETURN movie.name AS movie
 
 
 // tag::cypher-projection[]
-WITH "MATCH (person:Person)-[likes:LIKES]->(c)
-      RETURN id(person) AS item, id(c) AS category, likes.score AS weight" AS query
+WITH "MATCH (person:Person)-[rated:RATED]->(c)
+      RETURN id(person) AS item, id(c) AS category, rated.score AS weight" AS query
 CALL algo.similarity.pearson(query, {
   graph: 'cypher', topK: 1, similarityCutoff: 0.1, write:true
 })
