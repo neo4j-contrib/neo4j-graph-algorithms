@@ -53,7 +53,7 @@ public final class ParallelUtil {
         if (concurrency <= 0) {
             throw new IllegalArgumentException("concurrency must be > 0");
         }
-        final int batchSize = nodeCount / concurrency;
+        final int batchSize = Math.max(1, nodeCount / concurrency);
         int numberOfBatches = ParallelUtil.threadSize(batchSize, nodeCount);
         if (numberOfBatches == 1) {
             return Collections.singleton(new IdMap.IdIterable(0, nodeCount));
