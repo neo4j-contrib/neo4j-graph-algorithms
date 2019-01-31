@@ -56,6 +56,8 @@
       </d:tocentry>
       <d:tocentry linkend="algorithms-similarity-cosine"><?dbhtml filename="algorithms/similarity-cosine/index.html"?>
       </d:tocentry>
+      <d:tocentry linkend="algorithms-similarity-pearson"><?dbhtml filename="algorithms/similarity-pearson/index.html"?>
+      </d:tocentry>
       <d:tocentry linkend="algorithms-similarity-euclidean"><?dbhtml filename="algorithms/similarity-euclidean/index.html"?>
       </d:tocentry>
       <d:tocentry linkend="algorithms-similarity-overlap"><?dbhtml filename="algorithms/similarity-overlap/index.html"?>
