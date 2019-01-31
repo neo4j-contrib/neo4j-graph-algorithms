@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.similarity;
 
+import org.neo4j.graphalgo.core.utils.Intersections;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
@@ -75,25 +76,17 @@ public class Similarities {
             throw new RuntimeException("Vectors must be non-empty and of the same size");
         }
 
-        double vector1Mean = vector1.stream().mapToDouble(Number::doubleValue).average().orElse(1);
-        double vector2Mean = vector2.stream().mapToDouble(Number::doubleValue).average().orElse(1);
+        int len = Math.min(vector1.size(), vector2.size());
 
-        double dotProductMinusMean = 0d;
-        double xLength = 0d;
-        double yLength = 0d;
-        for (int i = 0; i < vector1.size(); i++) {
-            double weight1 = vector1.get(i).doubleValue();
-            double weight2 = vector2.get(i).doubleValue();
+        double[] weights1 = new double[len];
+        double[] weights2 = new double[len];
 
-            double vector1Delta = weight1 - vector1Mean;
-            double vector2Delta = weight2 - vector2Mean;
-
-            dotProductMinusMean += (vector1Delta * vector2Delta);
-            xLength += vector1Delta * vector1Delta;
-            yLength += vector2Delta * vector2Delta;
+        for (int i = 0; i < len; i++) {
+            weights1[i] = vector1.get(i).doubleValue();
+            weights2[i] = vector2.get(i).doubleValue();
         }
 
-        return dotProductMinusMean / (Math.sqrt(xLength * yLength));
+        return Intersections.pearson(weights1, weights2, len);
     }
 
     @UserFunction("algo.similarity.euclideanDistance")
