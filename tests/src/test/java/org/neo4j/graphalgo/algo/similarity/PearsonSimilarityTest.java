@@ -48,5 +48,4 @@ public class PearsonSimilarityTest {
         double similarity = similarities.pearsonSimilarity(user1Ratings, user2Ratings);
         assertEquals(-1.0, similarity, 0.01);
     }
-
 }

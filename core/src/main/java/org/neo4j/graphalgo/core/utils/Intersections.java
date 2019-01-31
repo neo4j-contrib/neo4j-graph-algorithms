@@ -109,10 +109,10 @@ public class Intersections {
         double result = 0;
         for (int i = 0; i < len; i++) {
             double weight1 = vector1[i];
-            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
+            if (shouldSkip(weight1, skipValue, skipNan)) continue;
 
             double weight2 = vector2[i];
-            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+            if (shouldSkip(weight2, skipValue, skipNan)) continue;
 
             double delta = weight1 - weight2;
             result += delta * delta;
@@ -164,9 +164,9 @@ public class Intersections {
         double yLength = 0d;
         for (int i = 0; i < len; i++) {
             double weight1 = vector1[i];
-            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
+            if (shouldSkip(weight1, skipValue, skipNan)) continue;
             double weight2 = vector2[i];
-            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+            if (shouldSkip(weight2, skipValue, skipNan)) continue;
 
             dotProduct += weight1 * weight2;
             xLength += weight1 * weight1;
@@ -207,32 +207,36 @@ public class Intersections {
         boolean skipNan = Double.isNaN(skipValue);
 
         double vector1Sum = 0.0;
+        int vector1Count = 0;
         double vector2Sum = 0.0;
-        int count =0;
+        int vector2Count = 0;
         for (int i = 0; i < len; i++) {
             double weight1 = vector1[i];
             double weight2 = vector2[i];
 
-            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
-            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+            if(!shouldSkip(weight1, skipValue, skipNan)) {
+                vector1Sum += weight1;
+                vector1Count++;
+            }
 
-            vector1Sum += weight1;
-            vector2Sum += weight2;
-            count++;
+            if (!shouldSkip(weight2, skipValue, skipNan)) {
+                vector2Sum += weight2;
+                vector2Count++;
+            }
         }
 
-        double vector1Mean = vector1Sum / count;
-        double vector2Mean = vector2Sum / count;
+        double vector1Mean = vector1Sum / vector1Count;
+        double vector2Mean = vector2Sum / vector2Count;
 
         double dotProductMinusMean = 0d;
         double xLength = 0d;
         double yLength = 0d;
         for (int i = 0; i < len; i++) {
             double weight1 = vector1[i];
-            if (weight1 == skipValue || (skipNan && Double.isNaN(weight1))) continue;
+            if (shouldSkip(weight1, skipValue, skipNan)) continue;
 
             double weight2 = vector2[i];
-            if (weight2 == skipValue || (skipNan && Double.isNaN(weight2))) continue;
+            if (shouldSkip(weight2, skipValue, skipNan)) continue;
 
             double vector1Delta = weight1 - vector1Mean;
             double vector2Delta = weight2 - vector2Mean;
@@ -243,6 +247,10 @@ public class Intersections {
         }
 
         return dotProductMinusMean / Math.sqrt(xLength * yLength);
+    }
+
+    private static boolean shouldSkip(double weight, double skipValue, boolean skipNan) {
+        return weight == skipValue || (skipNan && Double.isNaN(weight));
     }
 
     public static double cosine(double[] vector1, double[] vector2, int len) {

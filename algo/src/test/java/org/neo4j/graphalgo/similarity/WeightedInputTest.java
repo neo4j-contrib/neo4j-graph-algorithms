@@ -87,6 +87,19 @@ public class WeightedInputTest {
     }
 
     @Test
+    public void pearsonWithNonOverlappingValues() {
+        double[] weights1 = new double[]{1,          2,3, Double.NaN, 4};   // ave = 10/4 = 2.5
+        double[] weights2 = new double[]{Double.NaN, 2,3, 1,          4};  // ave = 10/4 = 2.5
+
+        WeightedInput input1 = new WeightedInput(1, weights1);
+        WeightedInput input2 = new WeightedInput(2, weights2);
+
+        SimilarityResult similarityResult = input1.pearsonSkip(null, -1.0, input2, Double.NaN);
+
+        assertEquals(1.0, similarityResult.similarity, 0.01);
+    }
+
+    @Test
     public void cosineNoCompression() {
         double[] weights1 = new double[]{1, 2, 3, 4, 4, 4, 4, 5, 6};
         double[] weights2 = new double[]{1, 2, 3, 4, 4, 4, 4, 5, 6};
