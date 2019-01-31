@@ -140,5 +140,7 @@ public class LouvainMultiLevelTest {
 
         assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 2, 2, 2}, dendogram[0]);
         assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 2, 2, 2}, algorithm.getCommunityIds());
+        assertEquals(0.53, algorithm.getFinalModularity(), 0.01);
+        assertArrayEquals(new double[]{0.53}, algorithm.getModularities(), 0.01);
     }
 }

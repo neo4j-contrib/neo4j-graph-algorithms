@@ -102,7 +102,10 @@ public class LouvainProc {
             } else {
                 louvain.compute(configuration.getIterations(10), configuration.get("innerIterations", 10));
             }
-            builder.withIterations(louvain.getLevel()).withCommunityCount(louvain.getCommunityCount());
+            builder.withIterations(louvain.getLevel())
+                    .withCommunityCount(louvain.getCommunityCount())
+                    .withModularities(louvain.getModularities())
+                    .withFinalModularity(louvain.getFinalModularity());
         }
 
         if (configuration.isWriteFlag()) {

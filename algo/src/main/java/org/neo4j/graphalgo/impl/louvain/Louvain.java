@@ -60,6 +60,7 @@ public class Louvain extends Algorithm<Louvain> {
     private ProgressLogger progressLogger;
     private TerminationFlag terminationFlag;
     private int[] communities;
+    private double[] modularities;
     private int[][] dendrogram;
     private double[] nodeWeights;
     private Graph root;
@@ -86,6 +87,7 @@ public class Louvain extends Algorithm<Louvain> {
         Graph graph = this.root;
         // result arrays
         dendrogram = new int[maxLevel][];
+        modularities = new double[maxLevel];
         int nodeCount = rootNodeCount;
         for (level = 0; level < maxLevel; level++) {
             // start modularity optimization
@@ -112,6 +114,7 @@ public class Louvain extends Algorithm<Louvain> {
             }
             nodeCount = communityCount;
             dendrogram[level] = rebuildCommunityStructure(communityIds);
+            modularities[level] = modularityOptimization.getModularity();
             graph = rebuildGraph(graph, communityIds, communityCount);
         }
         dendrogram = Arrays.copyOf(dendrogram, level);
@@ -132,6 +135,7 @@ public class Louvain extends Algorithm<Louvain> {
         Graph graph = rebuildGraph(this.root, communities, nodeCount);
         // result arrays
         dendrogram = new int[maxLevel][];
+        modularities = new double[maxLevel];
 
         for (level = 0; level < maxLevel; level++) {
             // start modularity optimization
@@ -158,6 +162,7 @@ public class Louvain extends Algorithm<Louvain> {
             }
             nodeCount = communityCount;
             dendrogram[level] = rebuildCommunityStructure(communityIds);
+            modularities[level] = modularityOptimization.getModularity();
             graph = rebuildGraph(graph, communityIds, communityCount);
         }
         dendrogram = Arrays.copyOf(dendrogram, level);
@@ -230,6 +235,14 @@ public class Louvain extends Algorithm<Louvain> {
 
     public int[][] getDendrogram() {
         return dendrogram;
+    }
+
+    public double[] getModularities() {
+        return Arrays.copyOfRange(modularities, 0, level);
+    }
+
+    public double getFinalModularity() {
+        return modularities[level-1];
     }
 
     /**

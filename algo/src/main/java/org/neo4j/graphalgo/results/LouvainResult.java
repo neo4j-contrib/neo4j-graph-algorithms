@@ -18,6 +18,9 @@
  */
 package org.neo4j.graphalgo.results;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author mknblch
  */
@@ -29,14 +32,23 @@ public class LouvainResult {
     public final long nodes;
     public final long iterations;
     public final long communityCount;
+    public final List<Double> modularities;
+    public final double modularity;
 
-    private LouvainResult(long loadMillis, long computeMillis, long writeMillis, long nodes, long iterations, long communityCount) {
+    private LouvainResult(long loadMillis, long computeMillis, long writeMillis, long nodes, long iterations,
+                          long communityCount, double[] modularities, double modularity) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.writeMillis = writeMillis;
         this.nodes = nodes;
         this.iterations = iterations;
         this.communityCount = communityCount;
+
+        this.modularities = new ArrayList<>(modularities.length);
+        for (double mod : modularities) this.modularities.add(mod);
+
+
+        this.modularity = modularity;
     }
 
     public static Builder builder() {
@@ -48,6 +60,8 @@ public class LouvainResult {
         private long nodes = 0;
         private long communityCount = 0;
         private long iterations = 1;
+        private double[] modularities = new double[]{};
+        private double modularity = -1.0;
 
         public Builder withIterations(long iterations) {
             this.iterations = iterations;
@@ -64,8 +78,19 @@ public class LouvainResult {
             return this;
         }
 
+        public Builder withModularities(double[] modularities) {
+            this.modularities = modularities;
+            return this;
+        }
+
+        public Builder withFinalModularity(double modularity) {
+            this.modularity = modularity;
+            return this;
+        }
+
         public LouvainResult build() {
-            return new LouvainResult(loadDuration, evalDuration, writeDuration, nodes, iterations, communityCount);
+            return new LouvainResult(loadDuration, evalDuration, writeDuration, nodes, iterations, communityCount,
+                    modularities, modularity);
         }
     }
 }
