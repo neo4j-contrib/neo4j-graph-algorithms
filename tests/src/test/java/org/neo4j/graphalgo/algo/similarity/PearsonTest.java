@@ -450,7 +450,7 @@ public class PearsonTest {
         assertEquals(4L, row.get("count1"));
         assertEquals(3L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
-        assertEquals(0.94, (Double) row.get("similarity"), 0.01);
+        assertEquals(0.77, (Double) row.get("similarity"), 0.01);
     }
 
     private void assert13(Map<String, Object> row) {
@@ -468,7 +468,7 @@ public class PearsonTest {
         assertEquals(4L, row.get("count1"));
         assertEquals(3L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
-        assertEquals(0.65, (Double) row.get("similarity"), 0.01);
+        assertEquals(0.56, (Double) row.get("similarity"), 0.01);
     }
 
     private void assert12(Map<String, Object> row) {
@@ -504,7 +504,7 @@ public class PearsonTest {
         assertEquals(4L, row.get("count1"));
         assertEquals(3L, row.get("count2"));
         assertEquals(0L, row.get("intersection"));
-        assertEquals(0.65, (Double) row.get("similarity"), 0.01);
+        assertEquals(0.56, (Double) row.get("similarity"), 0.01);
     }
 
     private void assert02(Map<String, Object> row) {
