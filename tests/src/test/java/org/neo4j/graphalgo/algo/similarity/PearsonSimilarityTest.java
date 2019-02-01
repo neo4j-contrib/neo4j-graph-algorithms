@@ -20,11 +20,18 @@ package org.neo4j.graphalgo.algo.similarity;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.similarity.Similarities;
+import org.neo4j.graphalgo.similarity.SimilarityVectorAggregator;
+import org.neo4j.graphdb.Node;
+import org.neo4j.helpers.collection.MapUtil;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PearsonSimilarityTest {
 
@@ -34,7 +41,7 @@ public class PearsonSimilarityTest {
 
         List<Number> user1Ratings = Arrays.asList(5, 6, 7, 8, 9);
         List<Number> user2Ratings = Arrays.asList(4, 5, 6, 7, 8);
-        double similarity = similarities.pearsonSimilarity(user1Ratings, user2Ratings);
+        double similarity = similarities.pearsonSimilarity(user1Ratings, user2Ratings, Collections.EMPTY_MAP);
         assertEquals(1.0, similarity, 0.01);
     }
 
@@ -42,10 +49,105 @@ public class PearsonSimilarityTest {
     public void oppositeVectors() {
         Similarities similarities = new Similarities();
 
-
         List<Number> user1Ratings = Arrays.asList(9, 8, 7, 6, 5);
         List<Number> user2Ratings = Arrays.asList(4, 5, 6, 7, 8);
-        double similarity = similarities.pearsonSimilarity(user1Ratings, user2Ratings);
+        double similarity = similarities.pearsonSimilarity(user1Ratings, user2Ratings, Collections.EMPTY_MAP);
         assertEquals(-1.0, similarity, 0.01);
     }
+
+    @Test
+    public void identicalMaps() {
+        Similarities similarities = new Similarities();
+
+        SimilarityVectorAggregator aggregator = new SimilarityVectorAggregator();
+        Node node = mock(Node.class);
+        when(node.getId()).thenReturn(1L, 2L, 3L);
+
+        aggregator.next(node, 3.0);
+        aggregator.next(node, 2.0);
+        aggregator.next(node, 1.0);
+
+        List<Map<String, Object>> vectorMap = aggregator.result();
+
+        double similarity = similarities.pearsonSimilarity(vectorMap, vectorMap, MapUtil.map("vectorType", "maps"));
+        assertEquals(1.0, similarity, 0.01);
+    }
+
+    @Test
+    public void oppositeMaps() {
+        Similarities similarities = new Similarities();
+
+        SimilarityVectorAggregator aggregator1 = new SimilarityVectorAggregator();
+        Node node1 = mock(Node.class);
+        when(node1.getId()).thenReturn(1L, 2L, 3L);
+        aggregator1.next(node1, 1.0);
+        aggregator1.next(node1, 2.0);
+        aggregator1.next(node1, 3.0);
+        List<Map<String, Object>> v1Map = aggregator1.result();
+
+        SimilarityVectorAggregator aggregator2 = new SimilarityVectorAggregator();
+        Node node2 = mock(Node.class);
+        when(node2.getId()).thenReturn(1L, 2L, 3L);
+        aggregator2.next(node2, 3.0);
+        aggregator2.next(node2, 2.0);
+        aggregator2.next(node2, 1.0);
+        List<Map<String, Object>> v2Map = aggregator2.result();
+
+        double similarity = similarities.pearsonSimilarity(v1Map, v2Map, MapUtil.map("vectorType", "maps"));
+        assertEquals(-1.0, similarity, 0.01);
+    }
+
+    @Test
+    public void someItemsDifferentMap() {
+        Similarities similarities = new Similarities();
+
+        SimilarityVectorAggregator aggregator1 = new SimilarityVectorAggregator();
+        Node node1 = mock(Node.class);
+        when(node1.getId()).thenReturn(1L, 2L, 3L, 5L);
+        aggregator1.next(node1, 1.0);
+        aggregator1.next(node1, 2.0);
+        aggregator1.next(node1, 3.0);
+        aggregator1.next(node1, 4.0);
+        List<Map<String, Object>> v1Map = aggregator1.result();
+
+        SimilarityVectorAggregator aggregator2 = new SimilarityVectorAggregator();
+        Node node2 = mock(Node.class);
+        when(node2.getId()).thenReturn(2L, 3L, 4L, 5L);
+        aggregator2.next(node2, 2.0);
+        aggregator2.next(node2, 3.0);
+        aggregator2.next(node2, 1.0);
+        aggregator2.next(node2, 4.0);
+        List<Map<String, Object>> v2Map = aggregator2.result();
+
+
+        double similarity = similarities.pearsonSimilarity(v1Map, v2Map, MapUtil.map("vectorType", "maps"));
+        assertEquals(1.0, similarity, 0.01);
+    }
+
+    @Test
+    public void noOverlapMap() {
+        Similarities similarities = new Similarities();
+
+        SimilarityVectorAggregator aggregator1 = new SimilarityVectorAggregator();
+        Node node1 = mock(Node.class);
+        when(node1.getId()).thenReturn(1L, 2L, 3L, 5L);
+        aggregator1.next(node1, 1.0);
+        aggregator1.next(node1, 2.0);
+        aggregator1.next(node1, 3.0);
+        aggregator1.next(node1, 4.0);
+        List<Map<String, Object>> v1Map = aggregator1.result();
+
+        SimilarityVectorAggregator aggregator2 = new SimilarityVectorAggregator();
+        Node node2 = mock(Node.class);
+        when(node2.getId()).thenReturn(6L, 7L, 8L, 9L);
+        aggregator2.next(node2, 2.0);
+        aggregator2.next(node2, 3.0);
+        aggregator2.next(node2, 1.0);
+        aggregator2.next(node2, 4.0);
+        List<Map<String, Object>> v2Map = aggregator2.result();
+
+        double similarity = similarities.pearsonSimilarity(v1Map, v2Map, MapUtil.map("vectorType", "maps"));
+        assertEquals(0.0, similarity, 0.01);
+    }
+
 }

@@ -200,7 +200,8 @@ public class Intersections {
             yLength += vector2Delta * vector2Delta;
         }
 
-        return dotProductMinusMean / Math.sqrt(xLength * yLength);
+        double result = dotProductMinusMean / Math.sqrt(xLength * yLength);
+        return Double.isNaN(result) ? 0 : result;
     }
 
     public static double pearsonSkip(double[] vector1, double[] vector2, int len, double skipValue) {
@@ -246,7 +247,8 @@ public class Intersections {
             yLength += vector2Delta * vector2Delta;
         }
 
-        return dotProductMinusMean / Math.sqrt(xLength * yLength);
+        double result = dotProductMinusMean / Math.sqrt(xLength * yLength);
+        return Double.isNaN(result) ? 0 : result;
     }
 
     private static boolean shouldSkip(double weight, double skipValue, boolean skipNan) {
