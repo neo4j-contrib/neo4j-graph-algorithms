@@ -18,7 +18,7 @@ MERGE (michael:Person {name: "Michael"})
 MERGE (arya:Person {name: "Arya"})
 MERGE (karin:Person {name: "Karin"})
 
-MERGE (zhen)-[:RATED {score: 1}]->(home_alone)
+MERGE (zhen)-[:RATED {score: 2}]->(home_alone)
 MERGE (zhen)-[:RATED {score: 2}]->(good_men)
 MERGE (zhen)-[:RATED {score: 3}]->(matrix)
 MERGE (zhen)-[:RATED {score: 6}]->(jerry)
