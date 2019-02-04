@@ -45,6 +45,28 @@ MERGE (karin)-[:RATED {score: 9}]->(gruffalo)
 
 // end::create-sample-graph[]
 
+// tag::function-cypher[]
+MATCH (p1:Person {name: 'Arya'})-[rated:RATED]->(movie)
+WITH p1, algo.similarity.asVector(movie, rated.score) AS p1Vector
+MATCH (p2:Person {name: 'Karin'})-[rated:RATED]->(movie)
+WITH p1, p2, p1Vector, algo.similarity.asVector(movie, rated.score) AS p2Vector
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.pearson(p1Vector, p2Vector, {vectorType: "maps"}) AS similarity
+// end::function-cypher[]
+
+// tag::function-cypher-all[]
+MATCH (p1:Person {name: 'Arya'})-[rated:RATED]->(movie)
+WITH p1, algo.similarity.asVector(movie, rated.score) AS p1Vector
+MATCH (p2:Person)-[rated:RATED]->(movie) WHERE p2 <> p1
+WITH p1, p2, p1Vector, algo.similarity.asVector(movie, rated.score) AS p2Vector
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.pearson(p1Vector, p2Vector, {vectorType: "maps"}) AS similarity
+ORDER BY similarity DESC
+// end::function-cypher-all[]
+
+
 // tag::stream[]
 MATCH (p:Person), (m:Movie)
 OPTIONAL MATCH (p)-[rated:RATED]->(m)

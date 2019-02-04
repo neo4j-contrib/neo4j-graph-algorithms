@@ -43,6 +43,23 @@ MERGE (karin)-[:LIKES {score: 10}]->(portuguese)
 
 // end::create-sample-graph[]
 
+// tag::function-cypher[]
+MATCH (p1:Person {name: 'Michael'})-[likes1:LIKES]->(cuisine)
+MATCH (p2:Person {name: "Arya"})-[likes2:LIKES]->(cuisine)
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.cosine(collect(likes1.score), collect(likes2.score)) AS similarity
+// end::function-cypher[]
+
+// tag::function-cypher-all[]
+MATCH (p1:Person {name: 'Michael'})-[likes1:LIKES]->(cuisine)
+MATCH (p2:Person)-[likes2:LIKES]->(cuisine) WHERE p2 <> p1
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.cosine(collect(likes1.score), collect(likes2.score)) AS similarity
+ORDER BY similarity DESC
+// end::function-cypher-all[]
+
 // tag::stream[]
 MATCH (p:Person), (c:Cuisine)
 OPTIONAL MATCH (p)-[likes:LIKES]->(c)
