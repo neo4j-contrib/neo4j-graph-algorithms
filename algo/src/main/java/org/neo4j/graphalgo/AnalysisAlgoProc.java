@@ -37,7 +37,7 @@ public class AnalysisAlgoProc {
             "")
     public void analysis_algo(
             @Name("companyId") String companyId,
-            @Name("fileName") String fileName,
+            @Name("directory") String directory,
             @Name(value = "config", defaultValue = "{}")
                     Map<String, Object> config) {
 
@@ -60,9 +60,14 @@ public class AnalysisAlgoProc {
 //        }
 
         final AnalysisAlgo analysisAlgo;
-        analysisAlgo = new AnalysisAlgo(companyId, fileName, configuration, api, log)
+        try {
+            analysisAlgo = new AnalysisAlgo(companyId, directory, configuration, api, log)
                     .withProgressLogger(ProgressLogger.wrap(log, "AnalysisAlgo"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
+        }
+        catch (Exception ex){
+            log.error("Exception Occured", ex);
+        }
     }
 }

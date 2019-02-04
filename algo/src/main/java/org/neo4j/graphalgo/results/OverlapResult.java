@@ -1,6 +1,11 @@
 package org.neo4j.graphalgo.results;
 
 import com.carrotsearch.hppc.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OverlapResult {
     public ObjectObjectMap<String, LongHashSet> partnerOverlappedLoads;
@@ -13,6 +18,7 @@ public class OverlapResult {
     public LongObjectMap<ObjectHashSet<String>> laneCarriers;
     public LongObjectMap<LongHashSet> lanePartnerLoads;
     public LongObjectMap<LongHashSet> laneParnterOverlaps;
+    public Map<String, JSONArray> partnerLanesJson;
 
     public OverlapResult(){
         partnerOverlappedLoads = new ObjectObjectHashMap<>();
@@ -25,5 +31,6 @@ public class OverlapResult {
         laneCarriers = new LongObjectHashMap<>();
         laneParnterOverlaps = new LongObjectHashMap<>();
         lanePartnerLoads = new LongObjectHashMap<>();
+        partnerLanesJson = new HashMap<>();
     }
 }
