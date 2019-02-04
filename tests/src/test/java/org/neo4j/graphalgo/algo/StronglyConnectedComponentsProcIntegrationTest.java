@@ -104,8 +104,6 @@ public class StronglyConnectedComponentsProcIntegrationTest {
                     System.out.println(row.getNumber("computeMillis").longValue());
                     System.out.println(row.getNumber("writeMillis").longValue());
                     System.out.println(row.getNumber("setCount").longValue());
-                    System.out.println(row.getNumber("maxSetSize").longValue());
-                    System.out.println(row.getNumber("minSetSize").longValue());
 
                     assertNotEquals(-1L, row.getNumber("computeMillis").longValue());
                     assertNotEquals(-1L, row.getNumber("writeMillis").longValue());

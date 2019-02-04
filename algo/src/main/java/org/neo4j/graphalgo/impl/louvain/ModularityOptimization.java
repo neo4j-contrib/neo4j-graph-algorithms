@@ -29,6 +29,7 @@ import org.neo4j.graphalgo.core.sources.ShuffledNodeIterator;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pointer;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphdb.Direction;
@@ -170,6 +171,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
      * @return
      */
     public ModularityOptimization compute(int maxIterations) {
+        final TerminationFlag terminationFlag = getTerminationFlag();
         // init helper values & initial community structure
         init();
         // create an array of tasks for parallel exec
@@ -180,7 +182,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         // (2x double + 1x int) * N * threads
         tracker.add(20 * nodeCount * concurrency);
         // as long as maxIterations is not reached
-        for (iterations = 0; iterations < maxIterations; iterations++) {
+        for (iterations = 0; iterations < maxIterations && terminationFlag.running(); iterations++) {
             // reset node counter (for logging)
             counter.set(0);
             // run all tasks
@@ -267,6 +269,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
 
         final double[] sTot, sIn;
         final int[] localCommunities;
+        private final TerminationFlag terminationFlag;
         double bestGain, bestWeight, q = MINIMUM_MODULARITY;
         int bestCommunity;
         boolean improvement = false;
@@ -276,6 +279,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
          * and initializes its helper arrays
          */
         Task() {
+            terminationFlag = getTerminationFlag();
             sTot = new double[nodeCount];
             System.arraycopy(ki, 0, sTot, 0, nodeCount); // ki -> sTot
             localCommunities = new int[nodeCount];
@@ -307,7 +311,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                         counter.getAndIncrement(),
                         denominator,
                         () -> String.format("round %d", iterations + 1));
-                return true;
+                return terminationFlag.running();
             });
             this.q = calcModularity();
         }
@@ -379,29 +383,6 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                     double currentWeight = communityWeights.get(localCommunities[s]);
                     communityWeights.put(localCommunities[s], currentWeight - graph.weightOf(s, t));
                 }
-                return true;
-            });
-        }
-
-
-        /**
-         * apply consumer to each connected community one time
-         *
-         * @param node     node nodeId
-         * @param consumer community nodeId consumer
-         */
-        private void forEachConnectedCommunity(int node, IntConsumer consumer) {
-            final BitSet visited = new BitSet(nodeCount);
-            graph.forEachRelationship(node, D, (s, t, r) -> {
-                final int c = localCommunities[t];
-                if (c == NONE) {
-                    return true;
-                }
-                if (visited.get(c)) {
-                    return true;
-                }
-                visited.set(c);
-                consumer.accept(c);
                 return true;
             });
         }

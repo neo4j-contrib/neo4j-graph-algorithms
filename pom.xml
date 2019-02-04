@@ -104,7 +104,7 @@
             <dependency>
                 <groupId>net.biville.florent</groupId>
                 <artifactId>neo4j-sproc-compiler</artifactId>
-                <version>1.2</version>
+                <version>1.2.1</version>
                 <scope>provided</scope>
                 <optional>true</optional>
             </dependency>

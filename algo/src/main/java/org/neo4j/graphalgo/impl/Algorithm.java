@@ -27,9 +27,9 @@ import org.neo4j.logging.Log;
  */
 public abstract class Algorithm<ME extends Algorithm<ME>> implements TerminationFlag {
 
-    private ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
+    protected ProgressLogger progressLogger = ProgressLogger.NULL_LOGGER;
 
-    private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
+    protected TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
 
     public abstract ME me();
 

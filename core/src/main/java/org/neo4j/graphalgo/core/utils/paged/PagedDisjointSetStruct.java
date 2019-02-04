@@ -44,6 +44,10 @@ public final class PagedDisjointSetStruct {
         return this;
     }
 
+    public long capacity() {
+        return capacity;
+    }
+
     public boolean connected(long p, long q) {
         return find(p) == find(q);
     }

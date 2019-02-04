@@ -64,7 +64,7 @@ public class Louvain extends Algorithm<Louvain> {
     private int[][] dendrogram;
     private double[] nodeWeights;
     private Graph root;
-    private int communityCount = 0;
+    private int communityCount;
 
     public Louvain(Graph graph,
                    ExecutorService pool,
@@ -137,7 +137,7 @@ public class Louvain extends Algorithm<Louvain> {
         dendrogram = new int[maxLevel][];
         modularities = new double[maxLevel];
 
-        for (level = 0; level < maxLevel; level++) {
+        for (level = 0; level < maxLevel && terminationFlag.running(); level++) {
             // start modularity optimization
             final ModularityOptimization modularityOptimization =
                     new ModularityOptimization(graph,
@@ -213,9 +213,7 @@ public class Louvain extends Algorithm<Louvain> {
         // rebuild community array
         assert rootNodeCount == communities.length;
         final int[] ints = new int[rootNodeCount];
-        Arrays.setAll(ints, i -> {
-            return communityIds[communities[i]];
-        });
+        Arrays.setAll(ints, i -> communityIds[communities[i]]);
         communities = ints;
         return communities;
     }

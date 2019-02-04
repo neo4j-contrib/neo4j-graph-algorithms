@@ -31,6 +31,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.impl.louvain.*;
@@ -148,6 +149,7 @@ public class LouvainWeightedGraphTest {
         final Louvain louvain =
                 new Louvain(graph,Pools.DEFAULT, 1, AllocationTracker.EMPTY)
                 .withProgressLogger(TestProgressLogger.INSTANCE)
+                        .withTerminationFlag(TerminationFlag.RUNNING_TRUE)
                 .compute(10, 10);
 
         final int[][] dendogram = louvain.getDendrogram();
