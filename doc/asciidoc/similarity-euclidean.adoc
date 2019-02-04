@@ -73,6 +73,39 @@ These two lists of numbers have a euclidean distance of 8.42.
 include::scripts/similarity-euclidean.cypher[tag=create-sample-graph]
 ----
 
+.The following will return the Euclidean distance of Zhen and Praveena:
+[source, cypher]
+----
+include::scripts/similarity-euclidean.cypher[tag=function-cypher]
+----
+
+// tag::function-cypher[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| "Zhen" | "Praveena" | 6.708203932499369
+
+|===
+// end::function-cypher[]
+
+.The following will return the Euclidean distance  of Zhen and the other people that have a cuisine in common:
+[source, cypher]
+----
+include::scripts/similarity-euclidean.cypher[tag=function-cypher-all]
+----
+
+// tag::function-cypher--all[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| "Zhen" | "Praveena" | 6.708203932499369
+| "Zhen" | "Michael"  | 3.605551275463989
+
+|===
+// end::function-cypher-all[]
+
 .The following will return a stream of node pairs, along with their intersection and euclidean similarities:
 [source, cypher]
 ----

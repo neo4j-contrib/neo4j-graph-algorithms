@@ -35,6 +35,28 @@ MERGE (karin)-[:LIKES]->(italian)
 
 // end::create-sample-graph[]
 
+
+// tag::function-cypher[]
+MATCH (p1:Person {name: 'Karin'})-[:LIKES]->(cuisine1)
+WITH p1, collect(id(cuisine1)) AS p1Cuisine
+MATCH (p2:Person {name: "Arya"})-[:LIKES]->(cuisine2)
+WITH p1, p1Cuisine, p2, collect(id(cuisine2)) AS p2Cuisine
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.jaccard(p1Cuisine, p2Cuisine) AS similarity
+// end::function-cypher[]
+
+// tag::function-cypher-all[]
+MATCH (p1:Person {name: 'Karin'})-[:LIKES]->(cuisine1)
+WITH p1, collect(id(cuisine1)) AS p1Cuisine
+MATCH (p2:Person)-[:LIKES]->(cuisine2) WHERE p1 <> p2
+WITH p1, p1Cuisine, p2, collect(id(cuisine2)) AS p2Cuisine
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.jaccard(p1Cuisine, p2Cuisine) AS similarity
+ORDER BY similarity DESC
+// end::function-cypher-all[]
+
 // tag::stream[]
 MATCH (p:Person)-[:LIKES]->(cuisine)
 WITH {item:id(p), categories: collect(id(cuisine))} as userData

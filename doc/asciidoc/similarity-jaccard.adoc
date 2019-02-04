@@ -79,6 +79,41 @@ J(A,B) = 2 / 3 + 4 - 2
 include::scripts/similarity-jaccard.cypher[tag=create-sample-graph]
 ----
 
+.The following will return the Jaccard similarity of Karin and Arya:
+[source, cypher]
+----
+include::scripts/similarity-jaccard.cypher[tag=function-cypher]
+----
+
+// tag::function-cypher[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| "Karin" | "Arya" | 0.66
+
+|===
+// end::function-cypher[]
+
+.The following will return the Jaccard similarity of Karin and the other people that have a cuisine in common:
+[source, cypher]
+----
+include::scripts/similarity-jaccard.cypher[tag=function-cypher-all]
+----
+
+// tag::function-cypher--all[]
+.Results
+[opts="header"]
+|===
+| `from`       | `to`         | `similarity`
+| "Karin" | "Arya"     | 0.66
+| "Karin" | "Michael"  | 0.25
+| "Karin" | "Praveena" | 0.0
+| "Karin" | "Zhen"     | 0.0
+
+|===
+// end::function-cypher-all[]
+
 .The following will return a stream of node pairs along with their intersection and Jaccard similarities:
 [source, cypher]
 ----

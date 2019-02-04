@@ -9,6 +9,8 @@ MERGE (italian:Cuisine {name:'Italian'})
 MERGE (indian:Cuisine {name:'Indian'})
 MERGE (lebanese:Cuisine {name:'Lebanese'})
 MERGE (portuguese:Cuisine {name:'Portuguese'})
+MERGE (british:Cuisine {name:'British'})
+MERGE (mauritian:Cuisine {name:'Mauritian'})
 
 MERGE (zhen:Person {name: "Zhen"})
 MERGE (praveena:Person {name: "Praveena"})
@@ -18,22 +20,45 @@ MERGE (karin:Person {name: "Karin"})
 
 MERGE (praveena)-[:LIKES {score: 9}]->(indian)
 MERGE (praveena)-[:LIKES {score: 7}]->(portuguese)
+MERGE (praveena)-[:LIKES {score: 8}]->(british)
+MERGE (praveena)-[:LIKES {score: 1}]->(mauritian)
 
 MERGE (zhen)-[:LIKES {score: 10}]->(french)
 MERGE (zhen)-[:LIKES {score: 6}]->(indian)
+MERGE (zhen)-[:LIKES {score: 2}]->(british)
 
 MERGE (michael)-[:LIKES {score: 8}]->(french)
 MERGE (michael)-[:LIKES {score: 7}]->(italian)
 MERGE (michael)-[:LIKES {score: 9}]->(indian)
+MERGE (michael)-[:LIKES {score: 3}]->(portuguese)
 
 MERGE (arya)-[:LIKES {score: 10}]->(lebanese)
 MERGE (arya)-[:LIKES {score: 10}]->(italian)
 MERGE (arya)-[:LIKES {score: 7}]->(portuguese)
+MERGE (arya)-[:LIKES {score: 9}]->(mauritian)
 
 MERGE (karin)-[:LIKES {score: 9}]->(lebanese)
 MERGE (karin)-[:LIKES {score: 7}]->(italian)
+MERGE (karin)-[:LIKES {score: 10}]->(portuguese)
 
 // end::create-sample-graph[]
+
+// tag::function-cypher[]
+MATCH (p1:Person {name: 'Zhen'})-[likes1:LIKES]->(cuisine)
+MATCH (p2:Person {name: "Praveena"})-[likes2:LIKES]->(cuisine)
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.euclideanDistance(collect(likes1.score), collect(likes2.score)) AS similarity
+// end::function-cypher[]
+
+// tag::function-cypher-all[]
+MATCH (p1:Person {name: 'Zhen'})-[likes1:LIKES]->(cuisine)
+MATCH (p2:Person)-[likes2:LIKES]->(cuisine) WHERE p2 <> p1
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.euclideanDistance(collect(likes1.score), collect(likes2.score)) AS similarity
+ORDER BY similarity DESC
+// end::function-cypher-all[]
 
 // tag::stream[]
 MATCH (p:Person), (c:Cuisine)
