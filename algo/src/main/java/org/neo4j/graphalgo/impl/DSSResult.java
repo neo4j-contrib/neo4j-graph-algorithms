@@ -27,9 +27,12 @@ import org.neo4j.graphalgo.api.NodeIterator;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 public final class DSSResult {
+
+    public final boolean isHuge;
     public final DisjointSetStruct struct;
     public final PagedDisjointSetStruct hugeStruct;
 
@@ -45,6 +48,19 @@ public final class DSSResult {
         assert (struct != null && hugeStruct == null) || (struct == null && hugeStruct != null);
         this.struct = struct;
         this.hugeStruct = hugeStruct;
+        isHuge = hugeStruct != null;
+    }
+
+    public int[] getCommunities() {
+
+        if (isHuge) {
+            return new int[0]; // not supported
+        }
+
+        final int size = struct.capacity();
+        final int[] communities = new int[size];
+        Arrays.parallelSetAll(communities, struct::findNoOpt);
+        return communities;
     }
 
     public int getSetCount() {

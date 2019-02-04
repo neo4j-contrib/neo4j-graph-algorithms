@@ -26,7 +26,7 @@ import org.neo4j.graphalgo.core.utils.ProgressTimer;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.MSColoring;
-import org.neo4j.graphalgo.results.UnionFindResult;
+import org.neo4j.graphalgo.impl.UnionFindProcExec;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -54,7 +54,7 @@ public class MSColoringProc {
     @Description("CALL algo.unionFind.mscoloring(label:String, relationship:String, " +
             "{property:'weight', threshold:0.42, defaultValue:1.0, write: true, partitionProperty:'partition', concurrency:4}) " +
             "YIELD nodes, setCount, loadMillis, computeMillis, writeMillis")
-    public Stream<UnionFindResult> unionFind(
+    public Stream<UnionFindProcExec.UnionFindResult> unionFind(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -63,7 +63,7 @@ public class MSColoringProc {
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
 
-        UnionFindResult.Builder builder = UnionFindResult.builder();
+        final UnionFindProcExec.Builder builder = new UnionFindProcExec.Builder();
 
         // loading
         final Graph graph;
@@ -73,7 +73,7 @@ public class MSColoringProc {
 
         if (graph.nodeCount() == 0) {
             graph.release();
-            return Stream.of(builder.build());
+            return Stream.of(UnionFindProcExec.UnionFindResult.EMPTY);
         }
 
         // evaluation
@@ -88,7 +88,7 @@ public class MSColoringProc {
                     write(graph, struct, configuration));
         }
 
-        return Stream.of(builder.build());
+        return Stream.of(builder.build(graph.nodeCount(), n -> (long) struct.get((int) n)));
     }
 
     @Procedure(value = "algo.unionFind.mscoloring.stream")

@@ -28,7 +28,6 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static junit.framework.TestCase.assertNull;
@@ -98,18 +97,19 @@ public class LouvainClusteringIntegrationTest {
     @Test
     public void test() {
         final String cypher = "CALL algo.louvain('', '', {concurrency:1}) " +
-                "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis";
+                "YIELD nodes, communityCount, loadMillis, computeMillis, writeMillis, postProcessingMillis, p99";
 
         DB.execute(cypher).accept(row -> {
             final long nodes = row.getNumber("nodes").longValue();
             final long communityCount = row.getNumber("communityCount").longValue();
-            final long iterations = row.getNumber("iterations").longValue();
             final long loadMillis = row.getNumber("loadMillis").longValue();
             final long computeMillis = row.getNumber("computeMillis").longValue();
             final long writeMillis = row.getNumber("writeMillis").longValue();
+            System.out.println("postProcessingMillis = " + row.getNumber("postProcessingMillis"));
             System.out.println("nodes = " + nodes);
             System.out.println("communityCount = " + communityCount);
-            System.out.println("iterations = " + iterations);
+            System.out.println("p99 = " + row.get("p99"));
+
             assertEquals("invalid node count",9, nodes);
             assertEquals("wrong community count", 3, communityCount);
             assertTrue("invalid loadTime", loadMillis >= 0);
@@ -333,5 +333,4 @@ public class LouvainClusteringIntegrationTest {
         });
         return id;
     }
-
 }

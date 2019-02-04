@@ -62,67 +62,6 @@ public interface SCCAlgorithm {
         }
     }
 
-    class Result {
-
-        public final Long loadMillis;
-        public final Long computeMillis;
-        public final Long writeMillis;
-        public final Long setCount;
-        public final Long minSetSize;
-        public final Long maxSetSize;
-
-        public Result(Long loadMillis,
-                         Long computeMillis,
-                         Long writeMillis,
-                         Long setCount,
-                         Long minSetSize,
-                         Long maxSetSize) {
-            this.loadMillis = loadMillis;
-            this.computeMillis = computeMillis;
-            this.writeMillis = writeMillis;
-            this.setCount = setCount;
-            this.minSetSize = minSetSize;
-            this.maxSetSize = maxSetSize;
-        }
-
-        public static Result.Builder builder() {
-            return new Result.Builder();
-        }
-
-        public static final class Builder extends AbstractResultBuilder<Result> {
-
-            private long setCount;
-            private long minSetSize;
-            private long maxSetSize;
-
-            public Result.Builder withSetCount(long setCount) {
-                this.setCount = setCount;
-                return this;
-            }
-
-            public Result.Builder withMinSetSize(long minSetSize) {
-                this.minSetSize = minSetSize;
-                return this;
-            }
-
-            public Result.Builder withMaxSetSize(long maxSetSize) {
-                this.maxSetSize = maxSetSize;
-                return this;
-            }
-
-            @Override
-            public Result build() {
-                return new Result(loadDuration,
-                        evalDuration,
-                        writeDuration,
-                        setCount,
-                        minSetSize,
-                        maxSetSize);
-            }
-        }
-
-    }
-
     static SCCAlgorithm iterativeTarjan(Graph graph, AllocationTracker tracker) {
         if (graph instanceof HugeGraph) {
             return new HugeSCCIterativeTarjan((HugeGraph) graph, tracker);

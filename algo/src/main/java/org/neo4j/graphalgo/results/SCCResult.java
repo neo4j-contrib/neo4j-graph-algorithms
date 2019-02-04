@@ -18,28 +18,57 @@
  */
 package org.neo4j.graphalgo.results;
 
+import com.carrotsearch.hppc.LongLongMap;
+import org.HdrHistogram.Histogram;
+
 /**
  * @author mknblch
  */
 public class SCCResult {
 
-    public final Long loadMillis;
-    public final Long computeMillis;
-    public final Long writeMillis;
-    public final Long setCount;
-    public final Long minSetSize;
-    public final Long maxSetSize;
+    public static SCCResult EMPTY = new SCCResult(
+            0, 0, 0, 0,0, 0, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0
+    );
 
-    public SCCResult(Long loadMillis,
-                     Long computeMillis,
-                     Long writeMillis,
-                     Long setCount,
-                     Long minSetSize,
-                     Long maxSetSize) {
+    public final long loadMillis;
+    public final long computeMillis;
+    public final long postProcessingMillis;
+    public final long writeMillis;
+    public final long nodes;
+    public final long communityCount;
+    public final long setCount;
+    public final long p100;
+    public final long p99;
+    public final long p95;
+    public final long p90;
+    public final long p75;
+    public final long p50;
+    public final long p25;
+    public final long p10;
+    public final long p05;
+    public final long p01;
+    public final long iterations;
+    public final long minSetSize;
+    public final long maxSetSize;
+
+    public SCCResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p05, long p01, long iterations, long minSetSize, long maxSetSize) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
+        this.postProcessingMillis = postProcessingMillis;
         this.writeMillis = writeMillis;
-        this.setCount = setCount;
+        this.nodes = nodes;
+        this.setCount = this.communityCount = communityCount;
+        this.p100 = p100;
+        this.p99 = p99;
+        this.p95 = p95;
+        this.p90 = p90;
+        this.p75 = p75;
+        this.p50 = p50;
+        this.p25 = p25;
+        this.p10 = p10;
+        this.p05 = p05;
+        this.p01 = p01;
+        this.iterations = iterations;
         this.minSetSize = minSetSize;
         this.maxSetSize = maxSetSize;
     }
@@ -48,35 +77,32 @@ public class SCCResult {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractResultBuilder<SCCResult> {
-
-        private long setCount;
-        private long minSetSize;
-        private long maxSetSize;
-
-        public Builder withSetCount(long setCount) {
-            this.setCount = setCount;
-            return this;
-        }
-
-        public Builder withMinSetSize(long minSetSize) {
-            this.minSetSize = minSetSize;
-            return this;
-        }
-
-        public Builder withMaxSetSize(long maxSetSize) {
-            this.maxSetSize = maxSetSize;
-            return this;
-        }
+    public static final class Builder extends AbstractCommunityResultBuilder<SCCResult> {
+        private int iterations = -1;
 
         @Override
-        public SCCResult build() {
-            return new SCCResult(loadDuration,
-                    evalDuration,
-                    writeDuration,
-                    setCount,
-                    minSetSize,
-                    maxSetSize);
+        protected SCCResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram) {
+            return new SCCResult(
+                    loadMillis,
+                    computeMillis,
+                    writeMillis,
+                    postProcessingMillis,
+                    nodeCount,
+                    communityCount,
+                    communityHistogram.getValueAtPercentile(100),
+                    communityHistogram.getValueAtPercentile(99),
+                    communityHistogram.getValueAtPercentile(95),
+                    communityHistogram.getValueAtPercentile(90),
+                    communityHistogram.getValueAtPercentile(75),
+                    communityHistogram.getValueAtPercentile(50),
+                    communityHistogram.getValueAtPercentile(25),
+                    communityHistogram.getValueAtPercentile(10),
+                    communityHistogram.getValueAtPercentile(5),
+                    communityHistogram.getValueAtPercentile(1),
+                    iterations,
+                    communityHistogram.getMinNonZeroValue(),
+                    communityHistogram.getMaxValue()
+            );
         }
     }
 

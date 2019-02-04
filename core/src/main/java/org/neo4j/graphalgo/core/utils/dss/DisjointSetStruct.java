@@ -122,11 +122,11 @@ public final class DisjointSetStruct {
     }
 
     /**
-     * element count
+     * element (node) count
      *
      * @return the element count
      */
-    public int count() {
+    public int capacity() {
         return parent.length;
     }
 
@@ -234,11 +234,11 @@ public final class DisjointSetStruct {
     public String toString() {
         final StringBuilder builder = new StringBuilder();
         builder.append("\n");
-        for (int i = 0; i < count(); i++) {
+        for (int i = 0; i < capacity(); i++) {
             builder.append(String.format(" %d ", i));
         }
         builder.append("\n");
-        for (int i = 0; i < count(); i++) {
+        for (int i = 0; i < capacity(); i++) {
             builder.append(String.format("[%d]", find(i)));
         }
         return builder.toString();
@@ -282,7 +282,7 @@ public final class DisjointSetStruct {
 
         private NodeSetIterator(DisjointSetStruct struct) {
             this.struct = struct;
-            this.length = struct.count();
+            this.length = struct.capacity();
         }
 
         @Override
@@ -311,8 +311,8 @@ public final class DisjointSetStruct {
 
         private ConcurrentNodeSetIterator(DisjointSetStruct struct, int startOffset, int length) {
             this.struct = struct;
-            this.length = length + offset > struct.count()
-                    ? struct.count() - offset
+            this.length = length + offset > struct.capacity()
+                    ? struct.capacity() - offset
                     : length;
             this.offset = startOffset;
         }
