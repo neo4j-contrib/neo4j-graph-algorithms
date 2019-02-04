@@ -264,7 +264,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `p95`                   | double  | The 95 percentile of similarities scores computed.
 | `p99`                   | double  | The 99 percentile of similarities scores computed.
 | `p999`                  | double  | The 99.9 percentile of similarities scores computed.
-| `p100`                  | double  | The 25 percentile of similarities scores computed.
+| `p100`                  | double  | The 100 percentile of similarities scores computed.
 |===
 
 
