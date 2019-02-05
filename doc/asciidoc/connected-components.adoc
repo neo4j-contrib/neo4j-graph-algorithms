@@ -191,11 +191,27 @@ YIELD nodes, setCount, loadMillis, computeMillis, writeMillis
 [opts="header",cols="1,1,6"]
 |===
 | Name          | Type | Description
-| nodes         | int  | The number of nodes considered
-| setCount      | int  | The number of partitions found
 | loadMillis    | int  | Milliseconds for loading data
 | computeMillis | int  | Milliseconds for running the algorithm
 | writeMillis   | int  | Milliseconds for writing result data back
+| postProcessingMillis    | int  | Milliseconds for computing percentiles and community count
+
+| nodes | int | The number of nodes considered
+| communityCount | int  | The number of communities found
+
+| p1                   | double  | The 1 percentile of community size.
+| p5                   | double  | The 5 percentile of community size.
+| p10                   | double  | The 10 percentile of community size.
+| p25                   | double  | The 25 percentile of community size.
+| p50                   | double  | The 50 percentile of community size.
+| p75                   | double  | The 75 percentile of community size.
+| p90                   | double  | The 90 percentile of community size.
+| p95                   | double  | The 95 percentile of community size.
+| p99                   | double  | The 99 percentile of community size.
+| p100                  | double  | The 100 percentile of community size.
+
+| write | boolean | Specifies if the result was written back as a node property
+| partitionProperty | string | The property name written back to
 |===
 
 

@@ -123,6 +123,10 @@ public class StronglyConnectedComponentsProc {
 
         final int[] connectedComponents = tarjan.getConnectedComponents();
         if (configuration.isWriteFlag()) {
+            builder.withWrite(true);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+            builder.withPartitionProperty(partitionProperty);
+
             builder.timeWrite(() -> {
                 graph.release();
                 tarjan.release();
@@ -131,7 +135,7 @@ public class StronglyConnectedComponentsProc {
                         .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                         .build()
                         .write(
-                                configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                                partitionProperty,
                                 connectedComponents,
                                 Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                         );
@@ -174,13 +178,17 @@ public class StronglyConnectedComponentsProc {
         builder.timeEval(tarjan::compute);
 
         if (configuration.isWriteFlag()) {
+            builder.withWrite(true);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+            builder.withPartitionProperty(partitionProperty);
+
             builder.timeWrite(() -> Exporter
                     .of(api, graph)
                     .withLog(log)
                     .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                     .build()
                     .write(
-                            configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                            partitionProperty,
                             tarjan.getConnectedComponents(),
                             Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                     ));
@@ -252,7 +260,11 @@ public class StronglyConnectedComponentsProc {
         builder.timeEval(tarjan::compute);
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> write(configuration, graph, terminationFlag, tarjan));
+            builder.withWrite(true);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+            builder.withPartitionProperty(partitionProperty);
+
+            builder.timeWrite(() -> write(configuration, graph, terminationFlag, tarjan, partitionProperty));
         }
 
         if (graph instanceof HugeGraph) {
@@ -264,7 +276,7 @@ public class StronglyConnectedComponentsProc {
         return Stream.of(builder.build(graph.nodeCount(), l -> (long) connectedComponents[((int) l)]));
     }
 
-    private void write(ProcedureConfiguration configuration, Graph graph, TerminationFlag terminationFlag, SCCAlgorithm tarjan) {
+    private void write(ProcedureConfiguration configuration, Graph graph, TerminationFlag terminationFlag, SCCAlgorithm tarjan, String partitionProperty) {
 
         if (graph instanceof HugeGraph) {
             final HugeLongArray connectedComponents = tarjan.getConnectedComponents();
@@ -275,7 +287,7 @@ public class StronglyConnectedComponentsProc {
                     .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                     .build()
                     .write(
-                            configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                            partitionProperty,
                             connectedComponents,
                             HugeLongArray.Translator.INSTANCE
                     );
@@ -288,7 +300,7 @@ public class StronglyConnectedComponentsProc {
                 .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
                 .build()
                 .write(
-                        configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
+                        partitionProperty,
                         connectedComponents,
                         Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
                 );
@@ -368,16 +380,22 @@ public class StronglyConnectedComponentsProc {
         if (configuration.isWriteFlag()) {
             graph.release();
             multistep.release();
-            builder.timeWrite(() -> Exporter
-                    .of(api, graph)
-                    .withLog(log)
-                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
-                    .build()
-                    .write(
-                            configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER),
-                            connectedComponents,
-                            Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
-                    ));
+            builder.timeWrite(() -> {
+                builder.withWrite(true);
+                String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+                builder.withPartitionProperty(partitionProperty);
+
+                Exporter
+                        .of(api, graph)
+                        .withLog(log)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .build()
+                        .write(
+                                partitionProperty,
+                                connectedComponents,
+                                Translators.OPTIONAL_INT_ARRAY_TRANSLATOR
+                        );
+            });
         }
 
         return Stream.of(builder.build(graph.nodeCount(), l -> (long) connectedComponents[((int) l)]));
