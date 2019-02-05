@@ -95,8 +95,7 @@ public class ClusteringCoefficientIntegrationTest {
 
     @Test
     public void testTriangleCountWriteCypher() throws Exception {
-        final String cypher = "CALL algo.triangleCount('Node', '', {concurrency:4, write:true, clusterCoefficientProperty:'c'}) " +
-                "YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageClusteringCoefficient";
+        final String cypher = "CALL algo.triangleCount('Node', '', {concurrency:4, write:true, clusterCoefficientProperty:'c'})";
         api.execute(cypher).accept(row -> {
             final long loadMillis = row.getNumber("loadMillis").longValue();
             final long computeMillis = row.getNumber("computeMillis").longValue();
@@ -104,6 +103,8 @@ public class ClusteringCoefficientIntegrationTest {
             final long nodeCount = row.getNumber("nodeCount").longValue();
             final long triangles = row.getNumber("triangleCount").longValue();
             final double coefficient = row.getNumber("averageClusteringCoefficient").doubleValue();
+            final long p100 = row.getNumber("p100").longValue();
+
             assertNotEquals(-1, loadMillis);
             assertNotEquals(-1, computeMillis);
             assertNotEquals(-1, writeMillis);
@@ -111,6 +112,7 @@ public class ClusteringCoefficientIntegrationTest {
             assertEquals(3, triangles);
             assertEquals(0.851, coefficient, 0.1);
             assertEquals(9, nodeCount);
+            assertEquals(1, p100);
             return true;
         });
 

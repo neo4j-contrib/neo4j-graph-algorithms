@@ -2,12 +2,9 @@ package org.neo4j.graphalgo.results;
 
 import com.carrotsearch.hppc.LongLongMap;
 import com.carrotsearch.hppc.LongLongScatterMap;
-import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.HdrHistogram.Histogram;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.LongFunction;
 import java.util.function.LongToIntFunction;
@@ -20,6 +17,7 @@ public abstract class AbstractCommunityResultBuilder<T> {
     protected long loadDuration = -1;
     protected long evalDuration = -1;
     protected long writeDuration = -1;
+    protected boolean write = false;
 
     public AbstractCommunityResultBuilder<T> withLoadDuration(long loadDuration) {
         this.loadDuration = loadDuration;
@@ -35,6 +33,11 @@ public abstract class AbstractCommunityResultBuilder<T> {
 
     public AbstractCommunityResultBuilder<T> withWriteDuration(long writeDuration) {
         this.writeDuration = writeDuration;
+        return this;
+    }
+
+    public AbstractCommunityResultBuilder<T> withWrite(boolean write) {
+        this.write = write;
         return this;
     }
 
@@ -101,12 +104,53 @@ public abstract class AbstractCommunityResultBuilder<T> {
         }
     }
 
-    public T buildII(long nodes, IntFunction<Integer> fun) {
-        return build(nodes, value -> (long) fun.apply((int) value));
+    public T buildII(long nodeCount, IntFunction<Integer> fun) {
+        final ProgressTimer timer = ProgressTimer.start();
+        final Histogram histogram = new Histogram(2);
+        for (int nodeId = 0; nodeId < nodeCount; nodeId++) {
+            final long size = fun.apply(nodeId);
+            histogram.recordValue(size);
+        }
+
+        timer.stop();
+
+        final LongLongMap communitySizeMap = new LongLongScatterMap();
+        return build(loadDuration,
+                evalDuration,
+                writeDuration,
+                timer.getDuration(),
+                nodeCount,
+                communitySizeMap.size(),
+                communitySizeMap,
+                histogram,
+                write
+        );
+
+
     }
 
-    public T buildLI(long nodes, LongToIntFunction fun) {
-        return build(nodes, value -> (long) fun.applyAsInt(value));
+    public T buildLI(long nodeCount, LongToIntFunction fun) {
+
+        final Histogram histogram = new Histogram(2);
+        final ProgressTimer timer = ProgressTimer.start();
+        for (int nodeId = 0; nodeId < nodeCount; nodeId++) {
+            final long size = fun.applyAsInt(nodeId);
+            histogram.recordValue(size);
+        }
+
+        timer.stop();
+
+        final LongLongMap communitySizeMap = new LongLongScatterMap();
+        return build(loadDuration,
+                evalDuration,
+                writeDuration,
+                timer.getDuration(),
+                nodeCount,
+                communitySizeMap.size(),
+                communitySizeMap,
+                histogram,
+                write
+        );
     }
 
     /**
@@ -116,11 +160,9 @@ public abstract class AbstractCommunityResultBuilder<T> {
 
         final LongLongMap communitySizeMap = new LongLongScatterMap();
         final ProgressTimer timer = ProgressTimer.start();
-        for (int i = 0; i < nodeCount; i++) {
-            // map to community id
-            final long cId = fun.apply(i);
-            // aggregate community size
-            communitySizeMap.addTo(cId, 1);
+        for (int nodeId = 0; nodeId < nodeCount; nodeId++) {
+            final long communityId = fun.apply(nodeId);
+            communitySizeMap.addTo(communityId, 1);
         }
 
         Histogram histogram = CommunityHistogram.buildFrom(communitySizeMap);
@@ -134,7 +176,8 @@ public abstract class AbstractCommunityResultBuilder<T> {
                 nodeCount,
                 communitySizeMap.size(),
                 communitySizeMap,
-                histogram
+                histogram,
+                write
         );
     }
 
@@ -146,6 +189,7 @@ public abstract class AbstractCommunityResultBuilder<T> {
             long nodeCount,
             long communityCount,
             LongLongMap communitySizeMap,
-            Histogram communityHistogram);
+            Histogram communityHistogram,
+            boolean write);
 
 }

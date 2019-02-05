@@ -27,31 +27,34 @@ import org.HdrHistogram.Histogram;
 public class SCCResult {
 
     public static SCCResult EMPTY = new SCCResult(
-            0, 0, 0, 0,0, 0, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0
-    );
+            0, 0, 0, 0,0, 0, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0,
+            false, null);
 
     public final long loadMillis;
     public final long computeMillis;
-    public final long postProcessingMillis;
     public final long writeMillis;
+    public final long postProcessingMillis;
     public final long nodes;
     public final long communityCount;
     public final long setCount;
-    public final long p100;
-    public final long p99;
-    public final long p95;
-    public final long p90;
-    public final long p75;
-    public final long p50;
-    public final long p25;
-    public final long p10;
-    public final long p05;
-    public final long p01;
-    public final long iterations;
     public final long minSetSize;
     public final long maxSetSize;
+    public final long p1;
+    public final long p5;
+    public final long p10;
+    public final long p25;
+    public final long p50;
+    public final long p75;
+    public final long p90;
+    public final long p95;
+    public final long p99;
+    public final long p100;
+    public final boolean write;
+    public final String partitionProperty;
 
-    public SCCResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p05, long p01, long iterations, long minSetSize, long maxSetSize) {
+    public SCCResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount,
+                     long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1,
+                     long minSetSize, long maxSetSize, boolean write, String partitionProperty) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.postProcessingMillis = postProcessingMillis;
@@ -66,11 +69,12 @@ public class SCCResult {
         this.p50 = p50;
         this.p25 = p25;
         this.p10 = p10;
-        this.p05 = p05;
-        this.p01 = p01;
-        this.iterations = iterations;
+        this.p5 = p5;
+        this.p1 = p1;
         this.minSetSize = minSetSize;
         this.maxSetSize = maxSetSize;
+        this.write = write;
+        this.partitionProperty = partitionProperty;
     }
 
     public static Builder builder() {
@@ -78,10 +82,10 @@ public class SCCResult {
     }
 
     public static final class Builder extends AbstractCommunityResultBuilder<SCCResult> {
-        private int iterations = -1;
+        private String partitionProperty;
 
         @Override
-        protected SCCResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram) {
+        protected SCCResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
             return new SCCResult(
                     loadMillis,
                     computeMillis,
@@ -99,10 +103,16 @@ public class SCCResult {
                     communityHistogram.getValueAtPercentile(10),
                     communityHistogram.getValueAtPercentile(5),
                     communityHistogram.getValueAtPercentile(1),
-                    iterations,
                     communityHistogram.getMinNonZeroValue(),
-                    communityHistogram.getMaxValue()
+                    communityHistogram.getMaxValue(),
+                    write,
+                    partitionProperty
             );
+        }
+
+        public Builder withPartitionProperty(String partitionProperty) {
+            this.partitionProperty = partitionProperty;
+            return this;
         }
     }
 

@@ -110,6 +110,7 @@ public final class LabelPropagationProc {
 
         final int[] labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
+            stats.withWrite(true);
             write(concurrency, partitionProperty, graph, labels, stats);
         }
 
@@ -218,7 +219,6 @@ public final class LabelPropagationProc {
             HeavyGraph graph,
             int[] labels,
             LabelPropagationStats.Builder stats) {
-        stats.write(true);
         try (ProgressTimer timer = stats.timeWrite()) {
             Exporter.of(dbAPI, graph)
                     .withLog(log)

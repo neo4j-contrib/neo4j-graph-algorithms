@@ -3,9 +3,6 @@ package org.neo4j.graphalgo.results;
 import com.carrotsearch.hppc.LongLongMap;
 import org.HdrHistogram.Histogram;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author mknblch
  */
@@ -17,20 +14,20 @@ public class DefaultCommunityResult {
 
     public final long loadMillis;
     public final long computeMillis;
-    public final long postProcessingMillis;
     public final long writeMillis;
+    public final long postProcessingMillis;
     public final long nodes;
     public final long communityCount;
-    public final long p100;
-    public final long p99;
-    public final long p95;
-    public final long p90;
-    public final long p75;
-    public final long p50;
-    public final long p25;
+    public final long p1;
+    public final long p5;
     public final long p10;
-    public final long p05;
-    public final long p01;
+    public final long p25;
+    public final long p50;
+    public final long p75;
+    public final long p90;
+    public final long p95;
+    public final long p99;
+    public final long p100;
 
     public DefaultCommunityResult(long loadMillis,
                                   long computeMillis,
@@ -46,8 +43,8 @@ public class DefaultCommunityResult {
                                   long p50,
                                   long p25,
                                   long p10,
-                                  long p05,
-                                  long p01) {
+                                  long p5,
+                                  long p1) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.postProcessingMillis = postProcessingMillis;
@@ -62,14 +59,14 @@ public class DefaultCommunityResult {
         this.p50 = p50;
         this.p25 = p25;
         this.p10 = p10;
-        this.p05 = p05;
-        this.p01 = p01;
+        this.p5 = p5;
+        this.p1 = p1;
     }
 
     public static class DefaultCommunityResultBuilder extends AbstractCommunityResultBuilder<DefaultCommunityResult> {
 
         @Override
-        protected DefaultCommunityResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram) {
+        protected DefaultCommunityResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
             return new DefaultCommunityResult(
                     loadMillis,
                     evalDuration,

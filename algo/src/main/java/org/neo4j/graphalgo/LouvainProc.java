@@ -105,7 +105,18 @@ public class LouvainProc {
         }
 
         if (configuration.isWriteFlag()) {
-            builder.timeWrite(() -> write(graph, louvain.getDendrogram(), louvain.getCommunityIds(), configuration));
+            builder.timeWrite(() -> {
+                String writeProperty = configuration.getWriteProperty("community");
+                boolean includeIntermediateCommunities = configuration.get(INCLUDE_INTERMEDIATE_COMMUNITIES, false);
+                String intermediateCommunitiesWriteProperty = configuration.get(INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY, "communities");
+
+                builder.withWrite(true);
+                builder.withWriteProperty(writeProperty);
+                builder.withIntermediateCommunities(includeIntermediateCommunities);
+                builder.withIntermediateCommunitiesWriteProperty(intermediateCommunitiesWriteProperty);
+
+                write(graph, louvain.getDendrogram(), louvain.getCommunityIds(), configuration, writeProperty, includeIntermediateCommunities, intermediateCommunitiesWriteProperty);
+            });
         }
 
         builder.withIterations(louvain.getLevel());
@@ -170,9 +181,8 @@ public class LouvainProc {
                 .load(config.getGraphImpl());
     }
 
-    private void write(Graph graph, int[][] allCommunities, int[] finalCommunities, ProcedureConfiguration configuration) {
+    private void write(Graph graph, int[][] allCommunities, int[] finalCommunities, ProcedureConfiguration configuration, String writeProperty, boolean includeIntermediateCommunities, String intermediateCommunitiesPropertyName) {
         log.debug("Writing results");
-        boolean includeIntermediateCommunities = configuration.get(INCLUDE_INTERMEDIATE_COMMUNITIES, false);
 
         new LouvainCommunityExporter(
                 api,
@@ -180,8 +190,8 @@ public class LouvainProc {
                 configuration.getConcurrency(),
                 graph,
                 finalCommunities.length,
-                configuration.getWriteProperty("community"),
-                configuration.get(INTERMEDIATE_COMMUNITIES_WRITE_PROPERTY, "communities"))
+                writeProperty,
+                intermediateCommunitiesPropertyName)
                 .export(allCommunities, finalCommunities, includeIntermediateCommunities);
     }
 
@@ -205,29 +215,37 @@ public class LouvainProc {
                 -1,
                 -1,
                 0,
-                new double[] {}, -1);
+                new double[] {}, -1, false, null, false, null);
 
         public final long loadMillis;
         public final long computeMillis;
-        public final long postProcessingMillis;
         public final long writeMillis;
+        public final long postProcessingMillis;
         public final long nodes;
         public final long communityCount;
-        public final long p100;
-        public final long p99;
-        public final long p95;
-        public final long p90;
-        public final long p75;
-        public final long p50;
-        public final long p25;
-        public final long p10;
-        public final long p05;
-        public final long p01;
         public final long iterations;
         public final List<Double> modularities;
         public final double modularity;
+        public final long p1;
+        public final long p5;
+        public final long p10;
+        public final long p25;
+        public final long p50;
+        public final long p75;
+        public final long p90;
+        public final long p95;
+        public final long p99;
+        public final long p100;
+        public final boolean write;
+        public final String writeProperty;
+        public final boolean includeIntermediateCommunities;
+        public final String intermediateCommunitiesWriteProperty;
 
-        public LouvainResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p05, long p01, long iterations, double[] modularities, double finalModularity) {
+        public LouvainResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes,
+                             long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1,
+                             long iterations, double[] modularities, double finalModularity,
+                             boolean write, String writeProperty,
+                             boolean includeIntermediateCommunities, String intermediateCommunitiesWriteProperty) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.postProcessingMillis = postProcessingMillis;
@@ -242,12 +260,16 @@ public class LouvainProc {
             this.p50 = p50;
             this.p25 = p25;
             this.p10 = p10;
-            this.p05 = p05;
-            this.p01 = p01;
+            this.p5 = p5;
+            this.p1 = p1;
             this.iterations = iterations;
             this.modularities = new ArrayList<>(modularities.length);
+            this.write = write;
+            this.includeIntermediateCommunities = includeIntermediateCommunities;
             for (double mod : modularities) this.modularities.add(mod);
             this.modularity = finalModularity;
+            this.writeProperty = writeProperty;
+            this.intermediateCommunitiesWriteProperty = intermediateCommunitiesWriteProperty;
         }
     }
 
@@ -256,6 +278,14 @@ public class LouvainProc {
         private long iterations = -1;
         private double[] modularities = new double[] {};
         private double finalModularity = -1;
+        private String writeProperty;
+        private String intermediateCommunitiesWriteProperty;
+        private boolean includeIntermediateCommunities;
+
+        public Builder withWriteProperty(String writeProperty) {
+            this.writeProperty = writeProperty;
+            return this;
+        }
 
         public Builder withIterations(long iterations) {
             this.iterations = iterations;
@@ -263,7 +293,7 @@ public class LouvainProc {
         }
 
         @Override
-        protected LouvainResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram) {
+        protected LouvainResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
             return new LouvainResult(
                     loadMillis,
                     computeMillis,
@@ -281,7 +311,8 @@ public class LouvainProc {
                     communityHistogram.getValueAtPercentile(10),
                     communityHistogram.getValueAtPercentile(5),
                     communityHistogram.getValueAtPercentile(1),
-                    iterations, modularities, finalModularity
+                    iterations, modularities, finalModularity,
+                    write, writeProperty, includeIntermediateCommunities, intermediateCommunitiesWriteProperty
             );
         }
 
@@ -293,6 +324,16 @@ public class LouvainProc {
         public Builder withFinalModularity(double finalModularity) {
             this.finalModularity = finalModularity;
             return null;
+        }
+
+        public Builder withIntermediateCommunitiesWriteProperty(String intermediateCommunitiesWriteProperty) {
+            this.intermediateCommunitiesWriteProperty = intermediateCommunitiesWriteProperty;
+            return null;
+        }
+
+        public Builder withIntermediateCommunities(boolean includeIntermediateCommunities) {
+            this.includeIntermediateCommunities = includeIntermediateCommunities;
+            return this;
         }
     }
 
