@@ -11,8 +11,10 @@ endif::env-docs[]
 These algorithms help determine the closeness of a pair of nodes.
 We would then use the computed scores as part of a link prediction solution:
 
-* <<algorithms-linkprediction-adamic-adar, Adamic Adar Similarity>> (`algo.linkprediction.adamicAdar`)
-* <<algorithms-linkprediction-resource-allocation, Resource Allocation Similarity>> (`algo.linkprediction.resourceAllocation`)
+* <<algorithms-linkprediction-adamic-adar, Adamic Adar>> (`algo.linkprediction.adamicAdar`)
+* <<algorithms-linkprediction-common-neighbors, Common Neighbors>> (`algo.linkprediction.commonNeighbors`)
+* <<algorithms-linkprediction-resource-allocation, Resource Allocation>> (`algo.linkprediction.resourceAllocation`)
 
 include::linkprediction-adamic-adar.adoc[leveloffset=2]
+include::linkprediction-common-neighbors.adoc[leveloffset=2]
 include::linkprediction-resource-allocation.adoc[leveloffset=2]
