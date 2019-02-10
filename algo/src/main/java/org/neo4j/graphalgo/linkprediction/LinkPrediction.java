@@ -71,6 +71,24 @@ public class LinkPrediction {
         return neighbors.stream().mapToDouble(nb -> 1.0 / degree(relationshipType, direction, nb)).sum();
     }
 
+    @UserFunction("algo.linkprediction.commonNeighbors")
+    @Description("algo.linkprediction.commonNeighbors(node1:Node, node2:Node, {relationshipQuery:'relationshipName', direction:'BOTH'}) " +
+            "given two nodes, returns the number of common neighbors")
+    public double commonNeighbors(@Name("node1") Node node1, @Name("node2") Node node2,
+                                               @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+        if (node1 == null || node2 == null) {
+            throw new RuntimeException("Nodes must not be null");
+        }
+
+        ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
+        RelationshipType relationshipType = configuration.getRelationship();
+        Direction direction = configuration.getDirection(Direction.BOTH);
+
+        Set<Node> neighbors = findPotentialNeighbors(node1, relationshipType, direction);
+        neighbors.removeIf(node -> noCommonNeighbors(node, relationshipType, direction, node2));
+        return neighbors.size();
+    }
+
     private Set<Node> findPotentialNeighbors(@Name("node1") Node node1, RelationshipType relationshipType, Direction direction) {
         Set<Node> neighbors = new HashSet<>();
 

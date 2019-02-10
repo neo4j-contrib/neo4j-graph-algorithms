@@ -78,6 +78,7 @@ These algorithms help calculate the similarity of nodes:
 These algorithms can be used as part of Link Prediction solution:
 
 * <<algorithms-linkprediction-adamic-adar, Adamic Adar>> (`algo.linkprediction.adamicAdar`)
+* <<algorithms-linkprediction-common-neighbors, Common Neighbors>> (`algo.linkprediction.commonNeighbors`)
 * <<algorithms-linkprediction-adamic-adar, Resource Allocation>> (`algo.linkprediction.resourceAllocation`)
 
 === Preprocessing
