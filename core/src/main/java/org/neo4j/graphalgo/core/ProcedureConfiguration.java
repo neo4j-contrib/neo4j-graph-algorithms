@@ -32,6 +32,7 @@ import org.neo4j.graphalgo.core.utils.Directions;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.RelationshipType;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -274,6 +275,10 @@ public class ProcedureConfiguration {
 
     public Direction getDirection(Direction defaultDirection) {
         return Directions.fromString(getDirectionName(defaultDirection.name()));
+    }
+
+    public RelationshipType getRelationship() {
+        return getRelationshipOrQuery() == null ? null : RelationshipType.withName(getRelationshipOrQuery());
     }
 
     public String getGraphName(String defaultValue) {
