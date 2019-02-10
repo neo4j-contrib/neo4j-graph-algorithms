@@ -73,6 +73,13 @@ These algorithms help calculate the similarity of nodes:
 * <<algorithms-similarity-euclidean, Euclidean Distance>> (`algo.similarity.euclidean`)
 * <<algorithms-similarity-overlap, Overlap Similarity>> (`algo.similarity.overlap`)
 
+=== Link Prediction
+
+These algorithms can be used as part of Link Prediction solution:
+
+* <<algorithms-linkprediction-adamic-adar, Adamic Adar>> (`algo.linkprediction.adamicAdar`)
+* <<algorithms-linkprediction-adamic-adar, Resource Allocation>> (`algo.linkprediction.resourceAllocation`)
+
 === Preprocessing
 
 These are utility functions and procedures that transform data for use further along the data pipeline:

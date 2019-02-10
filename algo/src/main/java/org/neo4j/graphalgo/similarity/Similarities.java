@@ -178,4 +178,5 @@ public class Similarities {
         long denominator = Math.min(vector1.size(), vector2.size());
         return denominator == 0 ? 0 : (double) intersection / denominator;
     }
+
 }

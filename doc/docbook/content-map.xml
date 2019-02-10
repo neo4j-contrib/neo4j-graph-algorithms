@@ -64,6 +64,13 @@
       </d:tocentry>
     </d:tocentry>
 
+    <d:tocentry linkend="algorithms-linkprediction"><?dbhtml filename="algorithms/linkprediction/index.html"?>
+      <d:tocentry linkend="algorithms-linkprediction-adamic-adar"><?dbhtml filename="algorithms/linkprediction-adamic-adar/index.html"?>
+      </d:tocentry>
+      <d:tocentry linkend="algorithms-linkprediction-resource-allocation"><?dbhtml filename="algorithms/linkprediction-resource-allocation/index.html"?>
+      </d:tocentry>
+    </d:tocentry>
+
     <d:tocentry linkend="algorithms-preprocessing"><?dbhtml filename="algorithms/preprocessing/index.html"?>
       <d:tocentry linkend="algorithms-one-hot-encoding"><?dbhtml filename="algorithms/one-hot-encoding/index.html"?>
       </d:tocentry>
