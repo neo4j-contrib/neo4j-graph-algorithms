@@ -89,6 +89,7 @@ public final class LabelPropagationProc {
 
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder()
                 .iterations(iterations)
+                .partitionProperty(partitionProperty)
                 .weightProperty(weightProperty);
 
         GraphLoader graphLoader = graphLoader(configuration, partitionProperty, weightProperty, createPropertyMappings(partitionProperty, weightProperty));
@@ -110,7 +111,6 @@ public final class LabelPropagationProc {
         final int[] labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
         if (configuration.isWriteFlag(DEFAULT_WRITE) && partitionProperty != null) {
             stats.withWrite(true);
-            stats.partitionProperty(partitionProperty);
             write(concurrency, partitionProperty, graph, labels, stats);
         }
 
