@@ -273,6 +273,7 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
+| `writeBatchSize`            | int     | 10000 | yes      | The batch size to use when storing results.
 | `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
 | `writeProperty`          | string  | score          | yes      | The property to use when storing results.
 |===

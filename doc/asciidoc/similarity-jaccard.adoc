@@ -256,6 +256,7 @@ include::scripts/similarity-jaccard.cypher[tag=query]
 | `degreeCutoff`           | int     | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
 | `concurrency`            | int     | available CPUs | yes      | The number of concurrent threads.
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
+| `writeBatchSize`            | int     | 10000 | yes      | The batch size to use when storing results.
 | `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
 | `writeProperty`          | string  | score          | yes      | The property to use when storing results.
 |===

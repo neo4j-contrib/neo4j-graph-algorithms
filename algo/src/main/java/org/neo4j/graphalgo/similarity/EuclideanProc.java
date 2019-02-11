@@ -80,7 +80,7 @@ public class EuclideanProc extends SimilarityProc {
         Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
 
         boolean write = configuration.isWriteFlag(false); //  && similarityCutoff != 0.0;
-        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
+        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty );
     }
 
     Stream<SimilarityResult> generateWeightedStream(ProcedureConfiguration configuration, WeightedInput[] inputs,
