@@ -20,6 +20,8 @@ buildscript {
         classpath 'net.sf.docbook:docbook-xsl:1.79.1:ns-resources@zip'
         classpath fileTree(dir: "${rootProject.projectDir}/lib", include: '*.jar')
         classpath files(catalogDir)
+        classpath "org.dom4j:dom4j:2.1.1"
+        classpath "jaxen:jaxen:1.1.6"
     }
 }
 
@@ -158,6 +160,32 @@ task makeToc(type: XsltTask, dependsOn: docbook) {
     ])
 }
 
+task sitemap() {
+    ext.contentMapXml = file("${projectDir}/docbook/content-map.xml")
+    def siteMapDir = "$buildDir/sitemap/$versions.graphAlgoDocs"
+    outputs.dir siteMapDir
+
+    doLast {
+        def siteMap = org.dom4j.DocumentHelper.createDocument()
+        def urlset = siteMap.addElement("urlset", "http://www.sitemaps.org/schemas/sitemap/0.9")
+        def contentMap = new org.dom4j.io.SAXReader().read(contentMapXml)
+        contentMap.selectNodes('//processing-instruction("dbhtml")')
+            .collect { pi ->
+              pi.getText()                    // filename="installation/index.html"
+              .replaceAll("filename=|\"", "") // installation/index.html
+        }.each { filename ->
+               def url = "${docsBaseUri}/graph-algorithms/current" + "/" + filename
+               urlset.addElement("url").addElement("loc").addText(url)
+        }
+        mkdir(siteMapDir)
+        new org.dom4j.io.XMLWriter(
+            new FileOutputStream(file("$siteMapDir/sitemap.xml")),
+            org.dom4j.io.OutputFormat.createPrettyPrint()
+        ).write(siteMap)
+    }
+}
+
+
 html {
     dependsOn docbook
     ext.sourceDir = docbook.outputDir
@@ -262,13 +290,14 @@ task asciidoctorHtml {
     }
 }
 
-task packageHtml(type: Tar, dependsOn: html) {
-    description 'Package HTML for distribution.'
+task packageHtml(type: Tar, dependsOn: [html, sitemap]) {
+    description 'Package HTML for distribution, including sitemap.'
     baseName 'graph-algorithms'
     extension 'tar.gz'
     version versions.graphAlgoDocs
     compression = Compression.GZIP
     from { html }
+    from { sitemap }
     into "$baseName/$version"
     destinationDir file(distDir)
 }
