@@ -24,9 +24,9 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class SimilarityResult implements Comparable<SimilarityResult> {
+    public final long item1;
     public final long item2;
     public final long count1;
-    public final long item1;
     public final long count2;
     public final long intersection;
     public double similarity;
@@ -59,13 +59,14 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
                 count1 == that.count1 &&
                 count2 == that.count2 &&
                 intersection == that.intersection &&
-                Double.compare(that.similarity, similarity) == 0;
+                Double.compare(that.similarity, similarity) == 0 &&
+                bidirectional == that.bidirectional &&
+                reversed == that.reversed;
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(item1, item2, count1, count2, intersection, similarity);
+        return Objects.hash(item1, item2, count1, count2, intersection, similarity, bidirectional, reversed);
     }
 
     /**

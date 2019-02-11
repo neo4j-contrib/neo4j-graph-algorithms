@@ -73,7 +73,7 @@ public class OverlapProc extends SimilarityProc {
         Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
+        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty);
     }
 
 

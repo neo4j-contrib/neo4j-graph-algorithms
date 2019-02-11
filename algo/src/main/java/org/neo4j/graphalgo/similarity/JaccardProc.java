@@ -18,12 +18,10 @@
  */
 package org.neo4j.graphalgo.similarity;
 
-import org.HdrHistogram.DoubleHistogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.procedure.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
@@ -69,7 +67,7 @@ public class JaccardProc extends SimilarityProc {
                 similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, write, writeRelationshipType, writeProperty);
+        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty );
     }
 
     private SimilarityComputer<CategoricalInput> similarityComputer() {

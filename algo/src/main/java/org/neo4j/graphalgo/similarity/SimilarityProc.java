@@ -12,7 +12,6 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.util.TopKConsumer;
-import org.neo4j.graphalgo.impl.yens.SimilarityExporter;
 import org.neo4j.graphdb.Result;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -75,7 +74,12 @@ public class SimilarityProc {
         return configuration.get("degreeCutoff", 0L);
     }
 
-    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, boolean write, String writeRelationshipType, String writeProperty) {
+    Long getWriteBatchSize(ProcedureConfiguration configuration) {
+        return configuration.get("writeBatchSize", 10000L);
+    }
+
+    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, ProcedureConfiguration configuration, boolean write, String writeRelationshipType, String writeProperty) {
+        long writeBatchSize = getWriteBatchSize(configuration);
         AtomicLong similarityPairs = new AtomicLong();
         DoubleHistogram histogram = new DoubleHistogram(5);
         Consumer<SimilarityResult> recorder = result -> {
@@ -85,7 +89,7 @@ public class SimilarityProc {
 
         if (write) {
             SimilarityExporter similarityExporter = new SimilarityExporter(api, writeRelationshipType, writeProperty);
-            similarityExporter.export(stream.peek(recorder));
+            similarityExporter.export(stream.peek(recorder), writeBatchSize);
         } else {
             stream.forEach(recorder);
         }
