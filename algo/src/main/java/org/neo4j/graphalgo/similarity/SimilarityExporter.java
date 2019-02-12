@@ -1,3 +1,4 @@
+package org.neo4j.graphalgo.similarity;
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
  *
@@ -16,7 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.StatementApi;
@@ -26,6 +26,7 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.internal.kernel.api.exceptions.explicitindex.AutoIndexingKernelException;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Log;
 import org.neo4j.values.storable.Values;
 
 import java.util.ArrayList;
@@ -33,21 +34,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class SimilarityExporter extends StatementApi {
-
-    private final int propertyId;
+public abstract class SimilarityExporter extends StatementApi {
+    final Log log;
+    final int propertyId;
     private final int relationshipTypeId;
 
-    public SimilarityExporter(GraphDatabaseAPI api,
-                              String relationshipType,
-                              String propertyName) {
+    SimilarityExporter(GraphDatabaseAPI api, Log log, String propertyName, String relationshipType) {
         super(api);
+        this.log = log;
         propertyId = getOrCreatePropertyId(propertyName);
-        relationshipTypeId = getOrCreateRelationshipId(relationshipType);
+        relationshipTypeId = getOrCreateRelationshipTypeId(relationshipType);
     }
 
-    public void export(Stream<SimilarityResult> similarityPairs, long batchSize) {
-        writeSequential(similarityPairs, batchSize);
+    private int getOrCreateRelationshipTypeId(String relationshipType) {
+        return applyInTransaction(stmt -> stmt
+                .tokenWrite()
+                .relationshipTypeGetOrCreateForName(relationshipType));
+    }
+
+    private int getOrCreatePropertyId(String propertyName) {
+        return applyInTransaction(stmt -> stmt
+                .tokenWrite()
+                .propertyKeyGetOrCreateForName(propertyName));
+    }
+
+    private void createRelationship(SimilarityResult similarityResult, KernelTransaction statement) throws EntityNotFoundException, InvalidTransactionTypeKernelException, AutoIndexingKernelException {
+        long node1 = similarityResult.item1;
+        long node2 = similarityResult.item2;
+        long relationshipId = statement.dataWrite().relationshipCreate(node1, relationshipTypeId, node2);
+
+        statement.dataWrite().relationshipSetProperty(
+                relationshipId, propertyId, Values.doubleValue(similarityResult.similarity));
     }
 
     private void export(SimilarityResult similarityResult) {
@@ -76,36 +93,25 @@ public class SimilarityExporter extends StatementApi {
 
     }
 
-    private void createRelationship(SimilarityResult similarityResult, KernelTransaction statement) throws EntityNotFoundException, InvalidTransactionTypeKernelException, AutoIndexingKernelException {
-        long node1 = similarityResult.item1;
-        long node2 = similarityResult.item2;
-        long relationshipId = statement.dataWrite().relationshipCreate(node1, relationshipTypeId, node2);
-
-        statement.dataWrite().relationshipSetProperty(
-                relationshipId, propertyId, Values.doubleValue(similarityResult.similarity));
-    }
-
-    private int getOrCreateRelationshipId(String relationshipType) {
-        return applyInTransaction(stmt -> stmt
-                .tokenWrite()
-                .relationshipTypeGetOrCreateForName(relationshipType));
-    }
-
-    private int getOrCreatePropertyId(String propertyName) {
-        return applyInTransaction(stmt -> stmt
-                .tokenWrite()
-                .propertyKeyGetOrCreateForName(propertyName));
-    }
-
-    private void writeSequential(Stream<SimilarityResult> similarityPairs, long batchSize) {
+    int writeSequential(Stream<SimilarityResult> similarityPairs, long batchSize) {
+        int[] counter = {0};
         if (batchSize == 1) {
-            similarityPairs.forEach(this::export);
+            similarityPairs.forEach(similarityResult -> {
+                export(similarityResult);
+                counter[0]++;
+            });
         } else {
             Iterator<SimilarityResult> iterator = similarityPairs.iterator();
             do {
-                export(take(iterator, Math.toIntExact(batchSize)));
+                List<SimilarityResult> batch = take(iterator, Math.toIntExact(batchSize));
+                export(batch);
+                if (batch.size() > 0) {
+                    counter[0]++;
+                }
             } while (iterator.hasNext());
         }
+
+        return counter[0];
     }
 
     private static List<SimilarityResult> take(Iterator<SimilarityResult> iterator, int batchSize) {
@@ -116,5 +122,5 @@ public class SimilarityExporter extends StatementApi {
         return result;
     }
 
-
+    abstract int export(Stream<SimilarityResult> similarityPairs, long batchSize);
 }

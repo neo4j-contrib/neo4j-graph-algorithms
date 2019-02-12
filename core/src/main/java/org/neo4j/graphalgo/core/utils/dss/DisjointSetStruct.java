@@ -121,6 +121,12 @@ public final class DisjointSetStruct {
                                 find(mappedId)));
     }
 
+
+    public Stream<InternalResult> internalResultStream(IdMapping idMapping) {
+
+        return IntStream.range(IdMapping.START_NODE_ID, (int) idMapping.nodeCount())
+                .mapToObj(mappedId -> new InternalResult(mappedId, find(mappedId)));
+    }
     /**
      * element (node) count
      *
@@ -349,6 +355,29 @@ public final class DisjointSetStruct {
 
         public Result(long nodeId, long setId) {
             this.nodeId = nodeId;
+            this.setId = setId;
+        }
+    }
+
+    public static class InternalResult {
+
+        /**
+         * the mapped node id
+         */
+        public final int internalNodeId;
+
+        /**
+         * set id
+         */
+        public final long setId;
+
+        public InternalResult(int internalNodeId, int setId) {
+            this.internalNodeId = internalNodeId;
+            this.setId = (long) setId;
+        }
+
+        public InternalResult(int internalNodeId, long setId) {
+            this.internalNodeId = internalNodeId;
             this.setId = setId;
         }
     }

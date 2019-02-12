@@ -269,7 +269,7 @@ public class JaccardTest {
 
     @Test
     public void simpleJaccardWriteTest() {
-        Map<String, Object> params = map("config", map( "write",true, "similarityCutoff", 0.1));
+        Map<String, Object> params = map("config", map( "write",true, "similarityCutoff", 0.1, "writeParallel", true));
 
         db.execute(STATEMENT,params).close();
 

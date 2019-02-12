@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SimilaritySummaryResult {
 
+    public final long writeMillis;
     public final long nodes;
     public final long similarityPairs;
     public final boolean write;
@@ -46,7 +47,7 @@ public class SimilaritySummaryResult {
                                    boolean write, String writeRelationshipType, String writeProperty,
                                    double min, double max, double mean, double stdDev,
                                    double p25, double p50, double p75, double p90, double p95,
-                                   double p99, double p999, double p100) {
+                                   double p99, double p999, double p100, long writeMillis) {
         this.nodes = nodes;
         this.similarityPairs = similarityPairs;
         this.write = write;
@@ -64,9 +65,10 @@ public class SimilaritySummaryResult {
         this.p99 = p99;
         this.p999 = p999;
         this.p100 = p100;
+        this.writeMillis = writeMillis;
     }
 
-    static SimilaritySummaryResult from(long length, AtomicLong similarityPairs, String writeRelationshipType, String writeProperty, boolean write, DoubleHistogram histogram) {
+    static SimilaritySummaryResult from(long length, AtomicLong similarityPairs, String writeRelationshipType, String writeProperty, boolean write, DoubleHistogram histogram, long writeMillis) {
         return new SimilaritySummaryResult(
                 length,
                 similarityPairs.get(),
@@ -84,7 +86,8 @@ public class SimilaritySummaryResult {
                 histogram.getValueAtPercentile(95D),
                 histogram.getValueAtPercentile(99D),
                 histogram.getValueAtPercentile(99.9D),
-                histogram.getValueAtPercentile(100D)
+                histogram.getValueAtPercentile(100D),
+                writeMillis
         );
     }
 }

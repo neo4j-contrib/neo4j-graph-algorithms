@@ -25,16 +25,13 @@ import com.carrotsearch.hppc.LongSet;
 import org.HdrHistogram.DoubleHistogram;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.ProcedureConstants;
-import org.neo4j.graphalgo.core.utils.ParallelUtil;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
-import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.impl.util.TopKConsumer;
 import org.neo4j.graphdb.Result;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Context;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -48,7 +45,6 @@ import java.util.stream.StreamSupport;
 
 import static org.neo4j.graphalgo.impl.util.TopKConsumer.topK;
 import static org.neo4j.graphalgo.similarity.Weights.REPEAT_CUTOFF;
-import static org.neo4j.helpers.collection.MapUtil.map;
 
 public class SimilarityProc {
     @Context
@@ -96,7 +92,76 @@ public class SimilarityProc {
         return configuration.get("writeBatchSize", 10000L);
     }
 
-    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, ProcedureConfiguration configuration, boolean write, String writeRelationshipType, String writeProperty) {
+
+    public class SimilarityResultBuilder {
+        protected long writeDuration = -1;
+        protected boolean write = false;
+        private int nodes;
+        private String writeRelationshipType;
+        private String writeProperty;
+        private AtomicLong similarityPairs;
+        private DoubleHistogram histogram;
+
+
+        public SimilarityResultBuilder withWriteDuration(long writeDuration) {
+            this.writeDuration = writeDuration;
+            return this;
+        }
+
+        public SimilarityResultBuilder withWrite(boolean write) {
+            this.write = write;
+            return this;
+        }
+
+        /**
+         * returns an AutoClosable which measures the time
+         * until it gets closed. Saves the duration as writeMillis
+         *
+         * @return
+         */
+        public ProgressTimer timeWrite() {
+            return ProgressTimer.start(this::withWriteDuration);
+        }
+
+        public SimilaritySummaryResult build() {
+            return SimilaritySummaryResult.from(nodes, similarityPairs, writeRelationshipType, writeProperty, write, histogram, writeDuration);
+        }
+
+        public SimilarityResultBuilder nodes(int nodes) {
+            this.nodes = nodes;
+            return this;
+        }
+
+        public SimilarityResultBuilder write(boolean write) {
+            this.write = write;
+            return this;
+        }
+
+        public SimilarityResultBuilder writeRelationshipType(String writeRelationshipType) {
+            this.writeRelationshipType = writeRelationshipType;
+            return this;
+        }
+
+        public SimilarityResultBuilder writeProperty(String writeProperty) {
+            this.writeProperty = writeProperty;
+            return this;
+        }
+
+        public SimilarityResultBuilder similarityPairs(AtomicLong similarityPairs) {
+            this.similarityPairs = similarityPairs;
+            return this;
+        }
+
+        public SimilarityResultBuilder histogram(DoubleHistogram histogram) {
+            this.histogram = histogram;
+            return this;
+        }
+    }
+
+    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, ProcedureConfiguration configuration, boolean write, String writeRelationshipType, String writeProperty, boolean writeParallel) {
+        SimilarityResultBuilder builder = new SimilarityResultBuilder();
+        builder.nodes(length).write(write).writeRelationshipType(writeRelationshipType).writeProperty(writeProperty);
+
         long writeBatchSize = getWriteBatchSize(configuration);
         AtomicLong similarityPairs = new AtomicLong();
         DoubleHistogram histogram = new DoubleHistogram(5);
@@ -106,18 +171,32 @@ public class SimilarityProc {
         };
 
         if (write) {
-            SimilarityExporter similarityExporter = new SimilarityExporter(api, writeRelationshipType, writeProperty);
-            similarityExporter.export(stream.peek(recorder), writeBatchSize);
+            if (writeParallel) {
+                try (ProgressTimer timer = builder.timeWrite()) {
+                    ParallelSimilarityExporter parallelSimilarityExporter = new ParallelSimilarityExporter(api, log, writeRelationshipType, writeProperty, length);
+                    parallelSimilarityExporter.export(stream.peek(recorder), writeBatchSize);
+                }
+
+            } else {
+                try (ProgressTimer timer = builder.timeWrite()) {
+                    SequentialSimilarityExporter similarityExporter = new SequentialSimilarityExporter(api, log, writeRelationshipType, writeProperty, length);
+                    similarityExporter.export(stream.peek(recorder), writeBatchSize);
+                }
+            }
+
         } else {
             stream.forEach(recorder);
         }
 
-        return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, writeRelationshipType, writeProperty, write, histogram));
+        builder.similarityPairs(similarityPairs).histogram(histogram);
+        return Stream.of(builder.build());
+
+//        return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, writeRelationshipType, writeProperty, write, histogram));
     }
 
     Stream<SimilaritySummaryResult> emptyStream(String writeRelationshipType, String writeProperty) {
         return Stream.of(SimilaritySummaryResult.from(0, new AtomicLong(0), writeRelationshipType,
-                writeProperty, false, new DoubleHistogram(5)));
+                writeProperty, false, new DoubleHistogram(5), -1));
     }
 
     Double getSimilarityCutoff(ProcedureConfiguration configuration) {
@@ -246,7 +325,7 @@ public class SimilarityProc {
 
     WeightedInput[] prepareWeights(Object rawData, ProcedureConfiguration configuration, Double skipValue) throws Exception {
         if (ProcedureConstants.CYPHER_QUERY.equals(configuration.getGraphName("dense"))) {
-            return prepareSparseWeights(api, (String) rawData,  skipValue, configuration);
+            return prepareSparseWeights(api, (String) rawData, skipValue, configuration);
         } else {
             List<Map<String, Object>> data = (List<Map<String, Object>>) rawData;
             return preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
@@ -354,7 +433,7 @@ public class SimilarityProc {
     }
 
     private Supplier<RleDecoder> createDecoderFactory(String graphType, int size) {
-        if(ProcedureConstants.CYPHER_QUERY.equals(graphType)) {
+        if (ProcedureConstants.CYPHER_QUERY.equals(graphType)) {
             return () -> new RleDecoder(size);
         }
 
