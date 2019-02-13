@@ -136,4 +136,19 @@ public class ResourceAllocationSimilarityIntegrationTest {
         }
     }
 
+    @Test
+    public void bothNodesTheSame() throws Exception {
+        String controlQuery =
+                "MATCH (p1:Person {name: 'Praveena'})\n" +
+                        "MATCH (p2:Person {name: 'Praveena'})\n" +
+                        "RETURN algo.linkprediction.resourceAllocation(p1, p2) AS score, " +
+                        "       0.0 AS cypherScore";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = db.execute(controlQuery);
+            Map<String, Object> node = result.next();
+            assertEquals((Double) node.get("cypherScore"), (double) node.get("score"), 0.01);
+        }
+    }
+
 }
