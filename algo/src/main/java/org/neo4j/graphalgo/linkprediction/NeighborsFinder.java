@@ -12,11 +12,11 @@ import java.util.Set;
 
 import static org.neo4j.graphdb.Direction.*;
 
-public class CommonNeighborsFinder {
+public class NeighborsFinder {
 
     private GraphDatabaseAPI api;
 
-    public CommonNeighborsFinder(GraphDatabaseAPI api) {
+    public NeighborsFinder(GraphDatabaseAPI api) {
         this.api = api;
     }
 
@@ -25,8 +25,28 @@ public class CommonNeighborsFinder {
             return Collections.emptySet();
         }
 
-        Set<Node> neighbors = findPotentialNeighbors(node1, relationshipType, direction);
+        Set<Node> neighbors = findNeighbors(node1, relationshipType, direction);
         neighbors.removeIf(node -> noCommonNeighbors(node, relationshipType, flipDirection(direction), node2));
+        return neighbors;
+    }
+
+    public Set<Node> findNeighbors(Node node1, Node node2, RelationshipType relationshipType, Direction direction) {
+        Set<Node> node1Neighbors = findNeighbors(node1, relationshipType, direction);
+        Set<Node> node2Neighbors = findNeighbors(node2, relationshipType, direction);
+        node1Neighbors.addAll(node2Neighbors);
+        return node1Neighbors;
+    }
+
+    public Set<Node> findNeighbors(Node node, RelationshipType relationshipType, Direction direction) {
+        Set<Node> neighbors = new HashSet<>();
+
+        for (Relationship rel : loadRelationships(node, relationshipType, direction)) {
+            Node endNode = rel.getOtherNode(node);
+
+            if (!endNode.equals(node)) {
+                neighbors.add(endNode);
+            }
+        }
         return neighbors;
     }
 
@@ -39,19 +59,6 @@ public class CommonNeighborsFinder {
             default:
                 return BOTH;
         }
-    }
-
-    private Set<Node> findPotentialNeighbors(Node node, RelationshipType relationshipType, Direction direction) {
-        Set<Node> neighbors = new HashSet<>();
-
-        for (Relationship rel : loadRelationships(node, relationshipType, direction)) {
-            Node endNode = rel.getOtherNode(node);
-
-            if (!endNode.equals(node)) {
-                neighbors.add(endNode);
-            }
-        }
-        return neighbors;
     }
 
     private boolean noCommonNeighbors(Node node, RelationshipType relationshipType, Direction direction, Node node2) {
