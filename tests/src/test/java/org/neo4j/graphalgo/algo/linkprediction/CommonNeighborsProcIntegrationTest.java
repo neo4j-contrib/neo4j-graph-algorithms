@@ -43,16 +43,18 @@ public class CommonNeighborsProcIntegrationTest {
             "CREATE (karin:Person {name: 'Karin'})\n" +
             "CREATE (jennifer:Person {name: 'Jennifer'})\n" +
             "CREATE (elaine:Person {name: 'Elaine'})\n" +
+            "CREATE (will:Person {name: 'Will'})\n" +
 
             "MERGE (jennifer)-[:FRIENDS]-(ryan)\n" +
             "MERGE (jennifer)-[:FRIENDS]-(karin)\n" +
             "MERGE (elaine)-[:FRIENDS]-(ryan)\n" +
             "MERGE (elaine)-[:FRIENDS]-(karin)\n" +
+            "MERGE (elaine)-[:FRIENDS]-(jennifer)\n" +
 
             "MERGE (mark)-[:FRIENDS]-(michael)\n" +
-            "MERGE (mark)-[:WORKS_WITH]->(michael)\n" +
+            "MERGE (mark)-[:WORKS_WITH]-(michael)\n" +
 
-            "MERGE (praveena)-[:FRIENDS]->(michael)";
+            "MERGE (praveena)-[:FRIENDS]-(michael)";
 
     private static GraphDatabaseService db;
 
@@ -124,7 +126,7 @@ public class CommonNeighborsProcIntegrationTest {
     @Test
     public void noNeighbors() throws Exception {
         String controlQuery =
-                "MATCH (p1:Person {name: 'Jennifer'})\n" +
+                "MATCH (p1:Person {name: 'Will'})\n" +
                         "MATCH (p2:Person {name: 'Ryan'})\n" +
                         "RETURN algo.linkprediction.commonNeighbors(p1, p2) AS score, " +
                         "       0.0 AS cypherScore";
@@ -135,5 +137,36 @@ public class CommonNeighborsProcIntegrationTest {
             assertEquals((Double) node.get("cypherScore"), (double) node.get("score"), 0.01);
         }
     }
+
+    @Test
+    public void excludeDirectRelationshipsBetweenNodes() throws Exception {
+        String controlQuery =
+                "MATCH (p1:Person {name: 'Praveena'})\n" +
+                        "MATCH (p2:Person {name: 'Michael'})\n" +
+                        "RETURN algo.linkprediction.commonNeighbors(p1, p2) AS score, " +
+                        "       0.0 AS cypherScore";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = db.execute(controlQuery);
+            Map<String, Object> node = result.next();
+            assertEquals((Double) node.get("cypherScore"), (double) node.get("score"), 0.01);
+        }
+    }
+
+    @Test
+    public void bothNodesTheSame() throws Exception {
+        String controlQuery =
+                "MATCH (p1:Person {name: 'Praveena'})\n" +
+                        "MATCH (p2:Person {name: 'Praveena'})\n" +
+                        "RETURN algo.linkprediction.commonNeighbors(p1, p2) AS score, " +
+                        "       0.0 AS cypherScore";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = db.execute(controlQuery);
+            Map<String, Object> node = result.next();
+            assertEquals((Double) node.get("cypherScore"), (double) node.get("score"), 0.01);
+        }
+    }
+
 
 }
