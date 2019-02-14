@@ -119,6 +119,17 @@ public class LinkPrediction {
         return neighborsFinder.findNeighbors(node1, node2, relationshipType, direction).size();
     }
 
+    @UserFunction("algo.linkprediction.sameCommunity")
+    @Description("algo.linkprediction.sameCommunity(node1:Node, node2:Node, communityProperty: String) " +
+            "given two nodes, indicates if they have the same community")
+    public double sameCommunity(@Name("node1") Node node1, @Name("node2") Node node2,
+                                 @Name(value = "communityProperty", defaultValue = "community") String communityProperty) {
+        if(!node1.hasProperty(communityProperty) || !node2.hasProperty(communityProperty)) {
+            return 0.0;        }
+
+        return node1.getProperty(communityProperty).equals(node2.getProperty(communityProperty)) ? 1.0 : 0.0;
+    }
+
     private int degree(Node node, RelationshipType relationshipType, Direction direction) {
         return relationshipType == null ? node.getDegree(direction) : node.getDegree(relationshipType, direction);
     }
