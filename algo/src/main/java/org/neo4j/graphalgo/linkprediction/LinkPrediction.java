@@ -51,7 +51,7 @@ public class LinkPrediction {
         Direction direction = configuration.getDirection(Direction.BOTH);
 
         Set<Node> neighbors = new NeighborsFinder(api).findCommonNeighbors(node1, node2, relationshipType, direction);
-        return neighbors.stream().mapToDouble(nb -> 1.0 / Math.log(degree(relationshipType, direction, nb))).sum();
+        return neighbors.stream().mapToDouble(nb -> 1.0 / Math.log(degree(nb, relationshipType, direction))).sum();
     }
 
     @UserFunction("algo.linkprediction.resourceAllocation")
@@ -70,7 +70,7 @@ public class LinkPrediction {
         Direction direction = configuration.getDirection(Direction.BOTH);
 
         Set<Node> neighbors = new NeighborsFinder(api).findCommonNeighbors(node1, node2, relationshipType, direction);
-        return neighbors.stream().mapToDouble(nb -> 1.0 / degree(relationshipType, direction, nb)).sum();
+        return neighbors.stream().mapToDouble(nb -> 1.0 / degree(nb, relationshipType, direction)).sum();
     }
 
     @UserFunction("algo.linkprediction.commonNeighbors")
@@ -103,7 +103,7 @@ public class LinkPrediction {
         RelationshipType relationshipType = configuration.getRelationship();
         Direction direction = configuration.getDirection(Direction.BOTH);
 
-        return getDegree(node1, relationshipType, direction) * getDegree(node2, relationshipType, direction);
+        return degree(node1, relationshipType, direction) * degree(node2, relationshipType, direction);
     }
 
     @UserFunction("algo.linkprediction.totalNeighbors")
@@ -116,19 +116,10 @@ public class LinkPrediction {
         Direction direction = configuration.getDirection(Direction.BOTH);
 
         NeighborsFinder neighborsFinder = new NeighborsFinder(api);
-
-        Set<Node> neighbors = neighborsFinder.findNeighbors(node1, relationshipType, direction);
-        neighbors.addAll(neighborsFinder.findNeighbors(node2, relationshipType, direction));
-
-        return neighbors.size();
+        return neighborsFinder.findNeighbors(node1, node2, relationshipType, direction).size();
     }
 
-    private int getDegree(Node node, RelationshipType relationshipType, Direction direction) {
-        return relationshipType == null ? node.getDegree(direction) : node.getDegree(relationshipType, direction);
-    }
-
-
-    private int degree(RelationshipType relationshipType, Direction direction, Node node) {
+    private int degree(Node node, RelationshipType relationshipType, Direction direction) {
         return relationshipType == null ? node.getDegree(direction) : node.getDegree(relationshipType, direction);
     }
 
