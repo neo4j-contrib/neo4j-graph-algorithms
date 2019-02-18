@@ -88,7 +88,7 @@ public class LouvainProc {
             return Stream.of(LouvainResult.EMPTY);
         }
 
-        final Louvain louvain = new Louvain(graph, Pools.DEFAULT, configuration.getConcurrency(), AllocationTracker.create())
+        final Louvain louvain = new Louvain(graph, Pools.DEFAULT, 1, AllocationTracker.create())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
