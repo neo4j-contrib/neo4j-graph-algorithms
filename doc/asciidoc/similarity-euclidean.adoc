@@ -219,8 +219,7 @@ include::scripts/similarity-euclidean.cypher[tag=query]
 [[algorithms-similarity-euclidean-cypher-projection]]
 == Cypher projection
 
-If the similarity lists are very large they can take up a lot of memory.
-For cases where those lists contain lots of values that should be skipped, you can use the less memory intensive approach of using Cypher statements to project the graph instead.
+include::cypher-projection.adoc[tag=similarity-explanation]
 
 .Set `graph:'cypher'` in the config:
 
@@ -327,16 +326,3 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
 | `similarity`   | int  | The euclidean distance between the two nodes.
 |===
-
-[[algorithms-similarity-euclidean-projection]]
-== Cypher projection
-
-If the similarity lists are very sparse (i.e. contain a lot of 0s) they can end up taking up a lot of memory.
-For those use cases you can use Cypher statements to project the graph instead.
-
-.Set `graph:'cypher'` in the config:
-
-[source,cypher]
-----
-include::scripts/similarity-euclidean.cypher[tag=cypher-projection]
-----

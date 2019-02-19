@@ -254,6 +254,15 @@ CALL algo.<name>(
   {graph: "cypher"})
 ----
 
+* The first query `MATCH (n) RETURN id(n) AS id` returns node ids.
+The Cypher loader expects the query to return an `id` field.
+
+* The second query `MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target` returns pairs of node ids that have a relationship between them in our projected graph.
+The Cypher loader expects the query to return `source` and `target` fields.
+We can also return an optional `weight` field.
+
+Note that in both queries we use the `id` function to return the node id.
+
 // end::cypher-projection[]
 
 

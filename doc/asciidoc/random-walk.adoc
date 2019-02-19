@@ -107,6 +107,16 @@ include::scripts/random-walk.cypher[tag=stream-sample-graph]
 // end::stream-sample-graph-explanation[]
 
 
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+[source, cypher]
+----
+include::scripts/random-walk.cypher[tag=cypher-loading]
+----
+
+
 [[algorithms-random-walk-syntax]]
 == Syntax
 
@@ -145,17 +155,6 @@ YIELD nodes, path
 | nodeIds  | list of long  | List of Node ID forming a path
 | path | Path | Optional Path (with virtual relationships)
 |===
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe a subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-You must ensure that `graph:'cypher'` is set in the config:
-
-[source, cypher]
-----
-include::scripts/random-walk.cypher[tag=cypher-loading]
-----
 
 
 == Graph type support
