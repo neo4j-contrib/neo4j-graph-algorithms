@@ -161,6 +161,31 @@ We can now move on to next step of analysis and run centralities on only the big
 We will write back the results to the node, and use centralities with Cypher loading, or set a new label for the biggest component.
 
 
+== Huge graph projection
+
+include::huge-projection.adoc[tag=explanation]
+
+.Set `graph:'huge'` in the config:
+
+[source, cypher]
+----
+include::scripts/connected-components.cypher[tag=huge-projection]
+----
+
+
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source, cypher]
+----
+include::scripts/connected-components.cypher[tag=cypher-loading]
+----
+
+
+
 [[algorithms-connected-components-syntax]]
 == Syntax
 
@@ -243,31 +268,6 @@ YIELD nodeId, setId - yields a setId to each node id
 | nodeId | int  | Node ID
 | setId  | int  | Partition ID
 |===
-
-
-== Huge graph projection
-
-If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-
-.Set `graph:'huge'` in the config:
-
-[source, cypher]
-----
-include::scripts/connected-components.cypher[tag=huge-projection]
-----
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/connected-components.cypher[tag=cypher-loading]
-----
 
 
 == Implementations

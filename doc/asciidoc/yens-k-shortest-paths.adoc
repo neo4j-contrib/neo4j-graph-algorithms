@@ -58,6 +58,27 @@ include::scripts/yens-k-shortest-paths.cypher[tag=create-sample-graph]
 include::scripts/yens-k-shortest-paths.cypher[tag=stream-sample-graph]
 ----
 
+// tag::stream[]
+.Results
+[opts="header"]
+|===
+| `places`                    | `costs`                    | `totalCost`
+| ["A", "B", "D", "E", "F"] | [50.0, 40.0, 30.0, 40.0] | 160.0
+| ["A", "C", "D", "E", "F"] | [50.0, 40.0, 30.0, 40.0] | 160.0
+| ["A", "B", "D", "F"]      | [50.0, 40.0, 80.0]       | 170.0
+|===
+// end::stream[]
+
+This procedure doesn't return paths by default, but we can have it return those by passing in the config `path: true`.
+
+.The following will run the algorithm and stream results, including paths:
+[source, cypher]
+----
+include::scripts/yens-k-shortest-paths.cypher[tag=stream-sample-with-path-graph]
+----
+
+image::yens-path.svg[]
+
 .The following will run the algorithm and write back results:
 [source, cypher]
 ----
@@ -80,6 +101,18 @@ image::yens_result.png[]
 The quickest route takes us from A to B, via D and E and is saved as `PATH_0`.
 Second quickest path is saved as `PATH_1` and third one is saved as`PATH_2`
 // end::write-sample-graph-explanation[]
+
+
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source, cypher]
+----
+include::scripts/yens-k-shortest-paths.cypher[tag=cypher-loading]
+----
 
 
 [[algorithms-yens-k-shortest-path-syntax]]
@@ -135,18 +168,6 @@ The Shortest Path algorithms support the following graph types:
 * [x] undirected, weighted
 ** direction: 'BOTH', weightProperty: 'cost'
 
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/yens-k-shortest-paths.cypher[tag=cypher-loading]
-----
 
 
 == Implementations

@@ -241,8 +241,7 @@ include::scripts/similarity-pearson.cypher[tag=query]
 [[algorithms-similarity-pearson-cypher-projection]]
 == Cypher projection
 
-If the similarity lists are very large they can take up a lot of memory.
-For cases where those lists contain lots of values that should be skipped, you can use the less memory intensive approach of using Cypher statements to project the graph instead.
+include::cypher-projection.adoc[tag=similarity-explanation]
 
 .Set `graph:'cypher'` in the config:
 

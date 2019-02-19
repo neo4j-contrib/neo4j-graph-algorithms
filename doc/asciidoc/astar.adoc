@@ -69,6 +69,17 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 // end::stream-sample-graph-result[]
 
 
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source, cypher]
+----
+include::scripts/astar.cypher[tag=cypher-loading]
+----
+
 [[algorithms-a_star-syntax]]
 == Syntax
 
@@ -102,19 +113,6 @@ YIELD nodeId, cost
 | nodeId | int  | Node ID
 | cost   | int  | The cost it takes to get from start node to specific node
 |===
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/astar.cypher[tag=cypher-loading]
-----
 
 
 == Graph type support

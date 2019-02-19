@@ -132,6 +132,30 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 ....
 
 
+== Huge graph projection
+
+include::huge-projection.adoc[tag=explanation]
+
+.Set `graph:'huge'` in the config:
+
+[source, cypher]
+----
+include::scripts/closeness-centrality.cypher[tag=huge-projection]
+----
+
+
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source, cypher]
+----
+include::scripts/closeness-centrality.cypher[tag=cypher-loading]
+----
+
+
 [[algorithms-closeness-centrality-syntax]]
 == Syntax
 
@@ -190,32 +214,6 @@ YIELD nodeId, centrality
 | node       | long  | Node ID
 | centrality | float | Closeness centrality weight
 |===
-
-
-== Huge graph projection
-
-If our projected graph contains more than 2 billion nodes or relationships, we need to use huge graph projection, as the default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships.
-
-.Set `graph:'huge'` in the config:
-
-[source, cypher]
-----
-include::scripts/closeness-centrality.cypher[tag=huge-projection]
-----
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/closeness-centrality.cypher[tag=cypher-loading]
-----
-
 
 == Graph type support
 

@@ -115,8 +115,7 @@ include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
 
 == Cypher projection
 
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
+include::cypher-projection.adoc[tag=explanation]
 
 .Set `graph:'cypher'` in the config:
 

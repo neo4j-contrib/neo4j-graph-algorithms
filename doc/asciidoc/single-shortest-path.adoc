@@ -86,6 +86,18 @@ The above table shows the cost of going from A to each of the other nodes, inclu
 // end::delta-stream-sample-graph-explanation[]
 
 
+== Cypher projection
+
+include::cypher-projection.adoc[tag=explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source, cypher]
+----
+include::scripts/single-shortest-path.cypher[tag=cypher-loading]
+----
+
+
 [[algorithms-single-source-shortest-path-syntax]]
 == Syntax
 
@@ -166,19 +178,6 @@ The shortest path algorithms support the following graph types:
 ** direction: 'BOTH', weightProperty: null
 * [x] undirected, weighted
 ** direction: 'BOTH', weightProperty: 'cost'
-
-
-== Cypher projection
-
-If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
-This can also be used to run algorithms on a virtual graph.
-
-.Set `graph:'cypher'` in the config:
-
-[source, cypher]
-----
-include::scripts/single-shortest-path.cypher[tag=cypher-loading]
-----
 
 
 == Implementations

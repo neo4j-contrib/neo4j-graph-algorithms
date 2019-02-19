@@ -25,11 +25,19 @@ MERGE (e)-[:ROAD {cost:40}]->(f);
 MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.kShortestPaths.stream(start, end, 3, 'cost' ,{})
 
-YIELD index, nodeIds, path, costs
+YIELD index, nodeIds, costs
 RETURN [node in algo.getNodesById(nodeIds) | node.name] AS places,
        costs,
        reduce(acc = 0.0, cost in costs | acc + cost) AS totalCost
 // end::stream-sample-graph[]
+
+// tag::stream-sample-with-path-graph[]
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.kShortestPaths.stream(start, end, 3, 'cost', {path: true})
+YIELD path
+RETURN path
+LIMIT 1
+// end::stream-sample-with-path-graph[]
 
 // tag::write-sample-graph[]
 
