@@ -13,8 +13,14 @@ We would then use the computed scores as part of a link prediction solution:
 
 * <<algorithms-linkprediction-adamic-adar, Adamic Adar>> (`algo.linkprediction.adamicAdar`)
 * <<algorithms-linkprediction-common-neighbors, Common Neighbors>> (`algo.linkprediction.commonNeighbors`)
+* <<algorithms-linkprediction-preferential-attachment, Preferential Attachment>> (`algo.linkprediction.preferentialAttachment`)
 * <<algorithms-linkprediction-resource-allocation, Resource Allocation>> (`algo.linkprediction.resourceAllocation`)
+* <<algorithms-linkprediction-same-community, Same Community>> (`algo.linkprediction.sameCommunity`)
+* <<algorithms-linkprediction-total-neighbors, Total Neighbors>> (`algo.linkprediction.totalNeighbors`)
 
 include::linkprediction-adamic-adar.adoc[leveloffset=2]
 include::linkprediction-common-neighbors.adoc[leveloffset=2]
+include::linkprediction-preferential-attachment.adoc[leveloffset=2]
 include::linkprediction-resource-allocation.adoc[leveloffset=2]
+include::linkprediction-same-community.adoc[leveloffset=2]
+include::linkprediction-total-neighbors.adoc[leveloffset=2]

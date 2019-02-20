@@ -39,7 +39,7 @@ The library contains a function to calculate closeness between two nodes.
 include::scripts/linkprediction-resource-allocation.cypher[tag=create-sample-graph]
 ----
 
-.The following will return the Resource Allocaiton score for Michael and Karin:
+.The following will return the Resource Allocation score for Michael and Karin:
 [source, cypher]
 ----
 include::scripts/linkprediction-resource-allocation.cypher[tag=all-rels]
@@ -57,7 +57,7 @@ include::scripts/linkprediction-resource-allocation.cypher[tag=all-rels]
 
 We can also compute the score of a pair of nodes based on a specific relationship type.
 
-.The following will return the Resource Allocaiton score for Michael and Karin based only on the `FRIENDS` relationships:
+.The following will return the Resource Allocation score for Michael and Karin based only on the `FRIENDS` relationships:
 [source, cypher]
 ----
 include::scripts/linkprediction-resource-allocation.cypher[tag=only-friends]
