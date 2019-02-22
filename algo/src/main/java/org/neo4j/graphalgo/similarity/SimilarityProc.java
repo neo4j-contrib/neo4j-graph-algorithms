@@ -30,6 +30,9 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.impl.util.TopKConsumer;
+import org.neo4j.graphalgo.similarity.recorder.NonRecordingSimilarityRecorder;
+import org.neo4j.graphalgo.similarity.recorder.RecordingSimilarityRecorder;
+import org.neo4j.graphalgo.similarity.recorder.SimilarityRecorder;
 import org.neo4j.graphdb.Result;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -88,6 +91,16 @@ public class SimilarityProc {
         }
     }
 
+    static SimilarityRecorder<WeightedInput> similarityRecorder(SimilarityComputer<WeightedInput> computer, ProcedureConfiguration configuration) {
+        boolean showComputations = configuration.get("showComputations", false);
+        return showComputations ? new RecordingSimilarityRecorder<>(computer) : new NonRecordingSimilarityRecorder<>(computer);
+    }
+
+    static SimilarityRecorder<CategoricalInput> categoricalSimilarityRecorder(SimilarityComputer<CategoricalInput> computer, ProcedureConfiguration configuration) {
+        boolean showComputations = configuration.get("showComputations", false);
+        return showComputations ? new RecordingSimilarityRecorder<>(computer) : new NonRecordingSimilarityRecorder<>(computer);
+    }
+
     Long getDegreeCutoff(ProcedureConfiguration configuration) {
         return configuration.get("degreeCutoff", 0L);
     }
@@ -112,11 +125,30 @@ public class SimilarityProc {
             stream.forEach(recorder);
         }
 
-        return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, writeRelationshipType, writeProperty, write, histogram));
+        return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, -1, writeRelationshipType, writeProperty, write, histogram));
+    }
+
+    Stream<SimilaritySummaryResult> writeAndAggregateResults(Stream<SimilarityResult> stream, int length, ProcedureConfiguration configuration, boolean write, String writeRelationshipType, String writeProperty, Computations computations) {
+        long writeBatchSize = getWriteBatchSize(configuration);
+        AtomicLong similarityPairs = new AtomicLong();
+        DoubleHistogram histogram = new DoubleHistogram(5);
+        Consumer<SimilarityResult> recorder = result -> {
+            result.record(histogram);
+            similarityPairs.getAndIncrement();
+        };
+
+        if (write) {
+            SimilarityExporter similarityExporter = new SimilarityExporter(api, writeRelationshipType, writeProperty);
+            similarityExporter.export(stream.peek(recorder), writeBatchSize);
+        } else {
+            stream.forEach(recorder);
+        }
+
+        return Stream.of(SimilaritySummaryResult.from(length, similarityPairs, computations.count(), writeRelationshipType, writeProperty, write, histogram));
     }
 
     Stream<SimilaritySummaryResult> emptyStream(String writeRelationshipType, String writeProperty) {
-        return Stream.of(SimilaritySummaryResult.from(0, new AtomicLong(0), writeRelationshipType,
+        return Stream.of(SimilaritySummaryResult.from(0, new AtomicLong(0), -1, writeRelationshipType,
                 writeProperty, false, new DoubleHistogram(5)));
     }
 
@@ -365,10 +397,6 @@ public class SimilarityProc {
     Supplier<RleDecoder> createDecoderFactory(ProcedureConfiguration configuration, WeightedInput input) {
         int size = input.initialSize;
         return createDecoderFactory(configuration.getGraphName("dense"), size);
-    }
-
-    interface SimilarityComputer<T> {
-        SimilarityResult similarity(RleDecoder decoder, T source, T target, double cutoff);
     }
 
     public static SimilarityConsumer assignSimilarityPairs(TopKConsumer<SimilarityResult>[] topKConsumers) {

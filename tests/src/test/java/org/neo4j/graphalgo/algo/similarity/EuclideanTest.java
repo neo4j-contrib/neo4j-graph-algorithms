@@ -56,7 +56,7 @@ public class EuclideanTest {
             "WITH collect(userData) AS data\n" +
 
             "CALL algo.similarity.euclidean(data, $config) " +
-            "YIELD p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs " +
+            "YIELD p25, p50, p75, p90, p95, p99, p999, p100, nodes, similarityPairs, computations " +
             "RETURN *";
 
     public static final String STORE_EMBEDDING_STATEMENT = "MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i)\n" +
@@ -403,6 +403,29 @@ public class EuclideanTest {
         assertEquals((double) row.get("score"), 4.0, 0.01);
 
         assertFalse(result.hasNext());
+    }
+
+    @Test
+    public void dontComputeComputationsByDefault() {
+        Map<String, Object> params = map("config", map(
+                "write", true,
+                "similarityCutoff", 0.1));
+
+        Result writeResult = db.execute(STATEMENT, params);
+        Map<String, Object> writeRow = writeResult.next();
+        assertEquals(-1L, (long) writeRow.get("computations"));
+    }
+
+    @Test
+    public void numberOfComputations() {
+        Map<String, Object> params = map("config", map(
+                "write", true,
+                "showComputations", true,
+                "similarityCutoff", 0.1));
+
+        Result writeResult = db.execute(STATEMENT, params);
+        Map<String, Object> writeRow = writeResult.next();
+        assertEquals(6L, (long) writeRow.get("computations"));
     }
 
     private void assert23(Map<String, Object> row) {

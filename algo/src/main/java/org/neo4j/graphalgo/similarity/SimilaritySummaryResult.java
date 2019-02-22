@@ -26,6 +26,7 @@ public class SimilaritySummaryResult {
 
     public final long nodes;
     public final long similarityPairs;
+    public final long computations;
     public final boolean write;
     public final String writeRelationshipType;
     public final String writeProperty;
@@ -43,12 +44,13 @@ public class SimilaritySummaryResult {
     public final double p100;
 
     public SimilaritySummaryResult(long nodes, long similarityPairs,
-                                   boolean write, String writeRelationshipType, String writeProperty,
+                                   long computations, boolean write, String writeRelationshipType, String writeProperty,
                                    double min, double max, double mean, double stdDev,
                                    double p25, double p50, double p75, double p90, double p95,
                                    double p99, double p999, double p100) {
         this.nodes = nodes;
         this.similarityPairs = similarityPairs;
+        this.computations = computations;
         this.write = write;
         this.writeRelationshipType = writeRelationshipType;
         this.writeProperty = writeProperty;
@@ -66,10 +68,11 @@ public class SimilaritySummaryResult {
         this.p100 = p100;
     }
 
-    static SimilaritySummaryResult from(long length, AtomicLong similarityPairs, String writeRelationshipType, String writeProperty, boolean write, DoubleHistogram histogram) {
+    static SimilaritySummaryResult from(long length, AtomicLong similarityPairs, long computations, String writeRelationshipType, String writeProperty, boolean write, DoubleHistogram histogram) {
         return new SimilaritySummaryResult(
                 length,
                 similarityPairs.get(),
+                computations,
                 write,
                 writeRelationshipType,
                 writeProperty,

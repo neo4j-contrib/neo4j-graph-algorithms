@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.similarity.recorder.SimilarityRecorder;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
@@ -75,11 +76,14 @@ public class CosineProc extends SimilarityProc {
         double similarityCutoff = similarityCutoff(configuration);
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
+
         SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
-        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
+        SimilarityRecorder<WeightedInput> recorder = similarityRecorder(computer, configuration);
+
+        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, recorder);
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty);
+        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty, recorder);
     }
 
     private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue) {
