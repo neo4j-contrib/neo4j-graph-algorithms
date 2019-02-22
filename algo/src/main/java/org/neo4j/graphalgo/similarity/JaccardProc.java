@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
+import org.neo4j.graphalgo.similarity.recorder.SimilarityRecorder;
 import org.neo4j.procedure.*;
 
 import java.util.*;
@@ -52,7 +53,6 @@ public class JaccardProc extends SimilarityProc {
     public Stream<SimilaritySummaryResult> jaccard(
             @Name(value = "data", defaultValue = "null") List<Map<String, Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        SimilarityComputer<CategoricalInput> computer = similarityComputer();
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         CategoricalInput[] inputs = prepareCategories(data, getDegreeCutoff(configuration));
 
@@ -62,12 +62,15 @@ public class JaccardProc extends SimilarityProc {
             return emptyStream(writeRelationshipType, writeProperty);
         }
 
+        SimilarityComputer<CategoricalInput> computer = similarityComputer();
+        SimilarityRecorder<CategoricalInput> recorder = categoricalSimilarityRecorder(computer, configuration);
+
         double similarityCutoff = getSimilarityCutoff(configuration);
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, computer, configuration, () -> null,
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, recorder, configuration, () -> null,
                 similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty );
+        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty, recorder);
     }
 
     private SimilarityComputer<CategoricalInput> similarityComputer() {

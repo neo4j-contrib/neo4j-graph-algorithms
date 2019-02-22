@@ -20,6 +20,8 @@ package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.utils.Intersections;
 
+import java.util.Arrays;
+
 class CategoricalInput implements  Comparable<CategoricalInput> {
     long id;
     long[] targets;
@@ -60,5 +62,13 @@ class CategoricalInput implements  Comparable<CategoricalInput> {
             return new SimilarityResult(e2.id, id, count2, count1, intersection, overlap, false, true);
         }
 
+    }
+
+    @Override
+    public String toString() {
+        return "CategoricalInput{" +
+                "id=" + id +
+                ", targets=" + Arrays.toString(targets) +
+                '}';
     }
 }
