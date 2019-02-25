@@ -51,7 +51,7 @@ ext {
             'graph-algorithms'  : "${docsBaseUri}/graph-algorithms/${versions.graphAlgoDocs}",
             'java-reference'    : "${docsBaseUri}/java-reference/${versions.neo4jDocs}",
             'rest-docs'         : "${docsBaseUri}/rest-docs/${versions.neo4jDocs}",
-            'ogm-manual'        : "${docsBaseUri}/ogm-manual/${versions.neo4jDocs}",
+            'ogm-manual'        : "${docsBaseUri}/ogm-manual/current",
             'getting-started'   : "${docsBaseUri}/getting-started/${versions.neo4jDocs}",
             'kerberos-add-on'   : "${docsBaseUri}/add-on/kerberos/current"
     ]
