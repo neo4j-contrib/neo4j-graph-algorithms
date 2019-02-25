@@ -9,8 +9,13 @@ This section describes the Same Community algorithm in the Neo4j Graph Algorithm
 // tag::introduction[]
 Same Community is a way of determining whether two nodes belong to the same community.
 These communities could be computed by using one of the <<algorithms-community>>.
-
 // end::introduction[]
+
+This section includes:
+
+* <<algorithms-linkprediction-same-community-context, History and explanation>>
+* <<algorithms-linkprediction-same-community-sample, Same Community algorithm sample>>
+* <<algorithms-linkprediction-same-community-syntax, Syntax>>
 
 
 [[algorithms-linkprediction-same-community-context]]
@@ -93,6 +98,7 @@ include::scripts/linkprediction-same-community.cypher[tag=same-community-specifi
 | `score`
 | 1.0
 |===
+
 
 [[algorithms-linkprediction-same-community-syntax]]
 == Syntax

@@ -11,6 +11,12 @@ Total Neighbors computes the closeness of nodes, based on the number of unique n
 It is based on the idea that the more connected a node is, the more likely it is to receive new links.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-linkprediction-total-neighbors-context, History and explanation>>
+* <<algorithms-linkprediction-total-neighbors-sample, Total Neighbors algorithm sample>>
+* <<algorithms-linkprediction-total-neighbors-syntax, Syntax>>
+
 
 [[algorithms-linkprediction-total-neighbors-context]]
 == History and explanation

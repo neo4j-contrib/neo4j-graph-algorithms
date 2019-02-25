@@ -10,6 +10,12 @@ This section describes the Common Neighbors algorithm in the Neo4j Graph Algorit
 Common neighbors captures the idea that two strangers who have a friend in common are more likely to be introduced than those who don't have any friends in common.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-linkprediction-common-neighbors-context, History and explanation>>
+* <<algorithms-linkprediction-common-neighbors-sample, Common Neighbors algorithm sample>>
+* <<algorithms-linkprediction-common-neighbors-syntax, Syntax>>
+
 
 [[algorithms-linkprediction-common-neighbors-context]]
 == History and explanation

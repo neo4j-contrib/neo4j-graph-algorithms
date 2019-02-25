@@ -11,6 +11,16 @@ The A* (pronounced “A-star”) algorithm improves on the classic Dijkstra algo
 It is based upon the observation that some searches are informed, and that by being informed we can make better choices over which paths to take through the graph.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-a_star-context, History and explanation>>
+* <<algorithms-a_star-usecase, Use-cases - when to use the A* algorithm>>
+* <<algorithms-a_star-sample, A* algorithm sample>>
+* <<algorithms-a_star-cp, Cypher projection>>
+* <<algorithms-a_star-syntax, Syntax>>
+* <<algorithms-a_star-support, Graph type support>>
+* <<algorithms-a_star-imp, Implementations>>
+
 
 [[algorithms-a_star-context]]
 == History and explanation
@@ -69,6 +79,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 // end::stream-sample-graph-result[]
 
 
+[[algorithms-a_star-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -79,6 +90,7 @@ include::cypher-projection.adoc[tag=explanation]
 ----
 include::scripts/astar.cypher[tag=cypher-loading]
 ----
+
 
 [[algorithms-a_star-syntax]]
 == Syntax
@@ -115,6 +127,7 @@ YIELD nodeId, cost
 |===
 
 
+[[algorithms-a_star-support]]
 == Graph type support
 
 The Shortest Path algorithms support the following graph types:
@@ -129,6 +142,7 @@ The Shortest Path algorithms support the following graph types:
 ** direction: 'BOTH', weightProperty: 'cost'
 
 
+[[algorithms-a_star-imp]]
 == Implementations
 
 `algo.shortestPath.astar.stream()`

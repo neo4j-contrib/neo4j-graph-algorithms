@@ -10,6 +10,17 @@ This section describes the Yen's K-shortest paths algorithm in the Neo4j Graph A
 Yen's K-shortest paths algorithm computes single-source K-shortest loopless paths for a graph with non-negative relationship weights.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-yens-k-shortest-path-context, History and explanation>>
+* <<algorithms-yens-k-shortest-path-usecase, Use-cases - when to use the Yen's K-shortest paths algorithm>>
+* <<algorithms-yens-k-shortest-path-limitations, Constraints - when not to use the Yen's K-shortest paths algorithm>>
+* <<algorithms-yens-k-shortest-path-sample, Yen's K-shortest paths algorithm sample>>
+* <<algorithms-yens-k-shortest-path-cp, Cypher projection>>
+* <<algorithms-yens-k-shortest-path-syntax, Syntax>>
+* <<algorithms-yens-k-shortest-path-support, Graph type support>>
+* <<algorithms-yens-k-shortest-path-imp, Implementations>>
+
 
 [[algorithms-yens-k-shortest-path-context]]
 == History and explanation
@@ -103,6 +114,7 @@ Second quickest path is saved as `PATH_1` and third one is saved as`PATH_2`
 // end::write-sample-graph-explanation[]
 
 
+[[algorithms-yens-k-shortest-path-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -155,6 +167,7 @@ YIELD resultCount, loadMillis, evalMillis, writeMillis
 |===
 
 
+[[algorithms-yens-k-shortest-path-support]]
 == Graph type support
 
 The Shortest Path algorithms support the following graph types:
@@ -169,7 +182,7 @@ The Shortest Path algorithms support the following graph types:
 ** direction: 'BOTH', weightProperty: 'cost'
 
 
-
+[[algorithms-yens-k-shortest-path-imp]]
 == Implementations
 
 `algo.kShortestPaths`

@@ -11,6 +11,16 @@ Triangle counting is a community detection graph algorithm that is used to deter
 A triangle is a set of three nodes, where each node has a relationship to all other nodes.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-triangle-count-clustering-coefficient-context, History and explanation>>
+* <<algorithms-triangle-count-clustering-coefficient-usecase, Use-cases - when to use the Triangle Counting / Clustering Coefficient algorithm>>
+* <<algorithms-triangle-count-clustering-coefficient-sample, Triangle Counting / Clustering Coefficient algorithm sample>>
+* <<algorithms-triangle-count-clustering-coefficient-example, Example usage>>
+* <<algorithms-triangle-count-clustering-coefficient-cp, Cypher projection>>
+* <<algorithms-triangle-count-clustering-coefficient-syntax, Syntax>>
+* <<algorithms-triangle-count-clustering-coefficient-support, Graph type support>>
+
 
 [[algorithms-triangle-count-clustering-coefficient-context]]
 == History and explanation
@@ -131,6 +141,7 @@ We can assume that users are not on Yelp for finding and creating friends, like 
 Local triangle count and clustering coefficient of nodes can be used as features in finding influencers in social networks.
 
 
+[[algorithms-triangle-count-clustering-coefficient-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -246,6 +257,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, triangleCount, averageC
 |===
 
 
+[[algorithms-triangle-count-clustering-coefficient-support]]
 == Graph type support
 
 The Triangle Count algorithms support the following graph type:

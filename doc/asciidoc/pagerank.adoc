@@ -12,6 +12,20 @@ PageRank is an algorithm that measures the *transitive* influence or connectivit
 It can be computed by either iteratively distributing one node's rank (originally based on degree) over its neighbours or by randomly traversing the graph and counting the frequency of hitting each node during these walks.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-pagerank-context, History and explanation>>
+* <<algorithms-pagerank-usecase, Use-cases - when to use the PageRank algorithm>>
+* <<algorithms-pagerank-limitations, Constraints - when not to use the PageRank algorithm>>
+* <<algorithms-pagerank-sample, PageRank algorithm sample>>
+* <<algorithms-pagerank-weighted-sample, Weighted PageRank algorithm sample>>
+** <<algorithms-pagerank-personalized, Personalized PageRank>>
+* <<algorithms-pagerank-example, Example usage>>
+* <<algorithms-pagerank-hgp, Huge graph projection>>
+* <<algorithms-pagerank-cp, Cypher projection>>
+* <<algorithms-pagerank-syntax, Syntax>>
+* <<algorithms-pagerank-support, Graph type support>>
+
 
 [[algorithms-pagerank-context]]
 == History and explanation
@@ -173,6 +187,7 @@ The Product page has now become the 2nd most important page in its own right bec
 // end::stream-sample-weighted-graph-explanation[]
 
 
+[[algorithms-pagerank-personalized]]
 === Personalized PageRank
 
 Personalized PageRank is a variation of PageRank which is biased towards a set of `sourceNodes`.
@@ -229,6 +244,7 @@ include::scripts/pagerank.cypher[tag=pagerank-stream-yelp-social]
 ----
 
 
+[[algorithms-pagerank-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -241,6 +257,7 @@ include::scripts/pagerank.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-pagerank-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -251,7 +268,6 @@ include::cypher-projection.adoc[tag=explanation]
 ----
 include::scripts/pagerank.cypher[tag=cypher-loading]
 ----
-
 
 
 [[algorithms-pagerank-syntax]]
@@ -325,6 +341,7 @@ YIELD node, score
 |===
 
 
+[[algorithms-pagerank-support]]
 == Graph type support
 
 The PageRank algorithm supports the following graph types:

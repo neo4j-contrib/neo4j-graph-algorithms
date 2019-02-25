@@ -10,6 +10,15 @@ This section describes the Euclidean Distance algorithm in the Neo4j Graph Algor
 Euclidean distance measures the straight line distance between two points in n-dimensional space.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-similarity-euclidean-context, History and explanation>>
+* <<algorithms-similarity-euclidean-usecase, Use-cases - when to use the Euclidean Distance algorithm>>
+* <<algorithms-similarity-euclidean-sample, Euclidean Distance algorithm sample>>
+* <<algorithms-similarity-euclidean-cypher-projection, Cypher projection>>
+* <<algorithms-similarity-euclidean-skipping-values, Skipping values>>
+* <<algorithms-similarity-euclidean-syntax, Syntax>>
+
 
 [[algorithms-similarity-euclidean-context]]
 == History and explanation
@@ -33,6 +42,7 @@ When calling the function, we should provide lists that contain the overlapping 
 The procedures expect to receive the same length lists for all items, so we need to pad those lists with `algo.NaN()` where necessary.
 
 // end::explanation[]
+
 
 [[algorithms-similarity-euclidean-usecase]]
 == Use-cases - when to use the Euclidean Distance algorithm
@@ -216,6 +226,7 @@ include::scripts/similarity-euclidean.cypher[tag=query]
 |===
 // end::query[]
 
+
 [[algorithms-similarity-euclidean-cypher-projection]]
 == Cypher projection
 
@@ -227,6 +238,7 @@ include::cypher-projection.adoc[tag=similarity-explanation]
 ----
 include::scripts/similarity-euclidean.cypher[tag=cypher-projection]
 ----
+
 
 [[algorithms-similarity-euclidean-skipping-values]]
 == Skipping values
@@ -246,6 +258,7 @@ include::scripts/similarity-euclidean.cypher[tag=create-sample-embedding-graph]
 ----
 include::scripts/similarity-euclidean.cypher[tag=embedding-graph-stream]
 ----
+
 
 [[algorithms-similarity-euclidean-syntax]]
 == Syntax

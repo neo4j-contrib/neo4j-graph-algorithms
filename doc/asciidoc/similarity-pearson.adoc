@@ -10,6 +10,15 @@ This section describes the Pearson Similarity algorithm in the Neo4j Graph Algor
 link:https://en.wikipedia.org/wiki/Pearson_correlation_coefficient[Pearson similarity] is the covariance of the two _n_-dimensional vectors divided by the product of their standard deviations.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-similarity-pearson-context, History and explanation>>
+* <<algorithms-similarity-pearson-usecase, Use-cases - when to use the Pearson Similarity algorithm>>
+* <<algorithms-similarity-pearson-sample, Pearson Similarity algorithm sample>>
+* <<algorithms-similarity-pearson-cypher-projection, Cypher projection>>
+* <<algorithms-similarity-pearson-skipping-values, Skipping values>>
+* <<algorithms-similarity-pearson-syntax, Syntax>>
+
 
 [[algorithms-similarity-pearson-context]]
 == History and explanation
@@ -43,7 +52,7 @@ For example, to get movie recommendations based on the preferences of users who 
 
 
 [[algorithms-similarity-pearson-sample]]
-== Pearson algorithm sample
+== Pearson Similarity algorithm sample
 
 .The following will return the Pearson similarity of two lists of numbers:
 [source, cypher]
@@ -238,6 +247,7 @@ include::scripts/similarity-pearson.cypher[tag=query]
 |===
 // end::query[]
 
+
 [[algorithms-similarity-pearson-cypher-projection]]
 == Cypher projection
 
@@ -249,6 +259,7 @@ include::cypher-projection.adoc[tag=similarity-explanation]
 ----
 include::scripts/similarity-pearson.cypher[tag=cypher-projection]
 ----
+
 
 [[algorithms-similarity-pearson-skipping-values]]
 == Skipping values
@@ -268,6 +279,7 @@ include::scripts/similarity-pearson.cypher[tag=create-sample-embedding-graph]
 ----
 include::scripts/similarity-pearson.cypher[tag=embedding-graph-stream]
 ----
+
 
 [[algorithms-similarity-pearson-syntax]]
 == Syntax
@@ -357,4 +369,3 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
 | `similarity`   | int  | The cosine similarity of the two nodes.
 |===
-

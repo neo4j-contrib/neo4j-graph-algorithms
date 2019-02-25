@@ -14,6 +14,16 @@ It’s similar to how a drunk person traverses a city.
 
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-random-walk-context, History and explanation>>
+* <<algorithms-random-walk-usecase, Use-cases - when to use the Random Walk algorithm>>
+* <<algorithms-random-walk-limitations, Constraints - when not to use the Random Walk algorithm>>
+* <<algorithms-random-walk-sample, Random Walk algorithm sample>>
+* <<algorithms-random-walk-cp, Cypher projection>>
+* <<algorithms-random-walk-syntax, Syntax>>
+* <<algorithms-random-walk-support, Graph type support>>
+
 
 [[algorithms-random-walk-context]]
 == History and explanation
@@ -26,7 +36,6 @@ Study of random walks date back even further to the https://en.wikipedia.org/wik
 It's only in the last couple of decades, however, that researchers have studied them with respect to networks.
 
 // end::explanation[]
-
 
 
 [[algorithms-random-walk-usecase]]
@@ -107,6 +116,7 @@ include::scripts/random-walk.cypher[tag=stream-sample-graph]
 // end::stream-sample-graph-explanation[]
 
 
+[[algorithms-random-walk-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -157,6 +167,7 @@ YIELD nodes, path
 |===
 
 
+[[algorithms-random-walk-support]]
 == Graph type support
 
 The Random Walk algorithm supports the following graph types:

@@ -10,6 +10,12 @@ This section describes the Adamic Adar algorithm in the Neo4j Graph Algorithms l
 link:https://en.wikipedia.org/wiki/Adamic/Adar_index[Adamic Adar] is a measure used to compute the closeness of nodes based on their shared neighbors.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-linkprediction-adamic-adar-context, History and explanation>>
+* <<algorithms-linkprediction-adamic-adar-sample, Adamic Adar algorithm sample>>
+* <<algorithms-linkprediction-adamic-adar-syntax, Syntax>>
+
 
 [[algorithms-linkprediction-adamic-adar-context]]
 == History and explanation

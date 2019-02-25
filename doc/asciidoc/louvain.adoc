@@ -14,6 +14,19 @@ The Louvain algorithm is one of the fastest modularity-based algorithms, and wor
 It also reveals a hierarchy of communities at different scales, which can be useful for understanding the global functioning of a network.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-louvain-context, History and explanation>>
+* <<algorithms-louvain-usecase, Use-cases - when to use the Louvain algorithm>>
+* <<algorithms-louvain-limitations, Constraints - when not to use the Louvain algorithm>>
+* <<algorithms-louvain-sample, Louvain algorithm sample>>
+* <<algorithms-louvain-hierarchical, Hierarchical Louvain algorithm sample>>
+* <<algorithms-louvain-pre-defined, Pre-defined communities>>
+* <<algorithms-louvain-hgp, Huge graph projection>>
+* <<algorithms-louvain-cp, Cypher projection>>
+* <<algorithms-louvain-syntax, Syntax>>
+* <<algorithms-louvain-support, Graph type support>>
+
 
 [[algorithms-louvain-context]]
 == History and explanation
@@ -224,6 +237,7 @@ In this example the pre-defined communities are read from the `community` proper
 // end::stream-pre-defined-sample-graph-result[]
 
 
+[[algorithms-louvain-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -236,6 +250,7 @@ include::scripts/louvain.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-louvain-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -341,6 +356,7 @@ YIELD nodeId, community - yields a community to each node id
 |===
 
 
+[[algorithms-louvain-support]]
 == Graph type support
 
 The Louvain algorithm supports the following graph types:
