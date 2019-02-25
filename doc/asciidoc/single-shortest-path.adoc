@@ -10,6 +10,18 @@ This section describes the Single Source Shortest Path algorithm in the Neo4j Gr
 The Single Source Shortest Path (SSSP) algorithm calculates the shortest (weighted) path from a node to all other nodes in the graph.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-single-source-shortest-path-context, History and explanation>>
+* <<algorithms-single-source-shortest-path-usecase, Use-cases - when to use the Single Source Shortest Path algorithm>>
+* <<algorithms-single-source-shortest-path-limitations, Constraints - when not to use the Single Source Shortest Path algorithm>>
+* <<algorithms-single-source-shortest-path-sample, Single Source Shortest Path algorithm sample>>
+** <<algorithms-single-source-shortest-path-delta, Delta stepping algorithm>>
+* <<algorithms-single-source-shortest-path-cp, Cypher projection>>
+* <<algorithms-single-source-shortest-path-syntax, Syntax>>
+* <<algorithms-single-source-shortest-path-support, Graph type support>>
+* <<algorithms-single-source-shortest-path-imp, Implementations>>
+
 
 [[algorithms-single-source-shortest-path-context]]
 == History and explanation
@@ -51,6 +63,7 @@ include::scripts/single-shortest-path.cypher[tag=create-sample-graph]
 ----
 
 
+[[algorithms-single-source-shortest-path-delta]]
 === Delta stepping algorithm
 
 .The following will run the algorithm and stream results:
@@ -86,6 +99,7 @@ The above table shows the cost of going from A to each of the other nodes, inclu
 // end::delta-stream-sample-graph-explanation[]
 
 
+[[algorithms-single-source-shortest-path-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -166,6 +180,7 @@ YIELD nodeId, cost
 |===
 
 
+[[algorithms-single-source-shortest-path-support]]
 == Graph type support
 
 The shortest path algorithms support the following graph types:
@@ -180,6 +195,7 @@ The shortest path algorithms support the following graph types:
 ** direction: 'BOTH', weightProperty: 'cost'
 
 
+[[algorithms-single-source-shortest-path-imp]]
 == Implementations
 
 `algo.shortestPath.deltaStepping`

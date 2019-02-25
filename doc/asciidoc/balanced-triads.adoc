@@ -13,8 +13,15 @@ It is based on the https://en.wikipedia.org/wiki/Balance_theory[Balance Theory] 
 Unlike other algorithms where there are only positive relationships available, balance theory differentiates between positive and negative relationships.
 Certain structures between individuals and objects are perceived as balanced whereas others are not.
 In general balanced structures are preferred over imbalanced ones.
-
 // end::introduction[]
+
+This section includes:
+
+* <<algorithms-balanced-triads-context, History and explanation>>
+* <<algorithms-balanced-triads-usecase, Use-cases - when to use the Balance Triads algorithm>>
+* <<algorithms-balanced-triads-sample, Balanced Triads algorithm sample>>
+* <<algorithms-balanced-triads-syntax, Syntax>>
+* <<algorithms-balanced-triads-support, Graph type support>>
 
 
 [[algorithms-balanced-triads-context]]
@@ -27,9 +34,9 @@ It uses https://en.wikipedia.org/wiki/Signed_graph[Signed graph] model to differ
 
 Determining if the triad is balanced is simple math:
 
-+ + + = Balanced 
-- + - = Balanced 
-- + + = Unbalanced 
++ + + = Balanced
+- + - = Balanced
+- + + = Unbalanced
 - - - = Unbalanced
 
 // end::explanation[]
@@ -89,8 +96,6 @@ Anna is a member of six triads out of which three are balanced and three are unb
 All others are each members of one balanced and one unbalanced triad or triangle.
 // end::stream-sample-graph-explanation[]
 
-[[algorithms-balanced-triads-example]]
-== Example usage
 
 [[algorithms-balanced-triads-syntax]]
 == Syntax
@@ -173,6 +178,7 @@ YIELD loadMillis, computeMillis, writeMillis, nodeCount, balancedTriadCount, unb
 |===
 
 
+[[algorithms-balanced-triads-support]]
 == Graph type support
 
 The Balanced Triads algorithm support the following graph type:

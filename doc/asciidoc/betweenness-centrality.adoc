@@ -20,6 +20,19 @@ If Alice is removed, all connections in the graph would be cut off.
 This makes Alice important, because she ensures that no nodes are isolated.
 // end::introduction-end[]
 
+This section includes:
+
+* <<algorithms-betweenness-centrality-context, History and explanation>>
+* <<algorithms-betweenness-centrality-usecase, Use-cases - when to use the Betweenness Centrality algorithm>>
+* <<algorithms-betweenness-centrality-limitations, Constraints - when not to use the Betweenness Centrality algorithm>>
+* <<algorithms-betweenness-centrality-sample, Betweenness Centrality algorithm sample>>
+* <<algorithms-betweenness-centrality-approx, Approximation of Betweenness Centrality>>
+** <<algorithms-betweenness-centrality-ra_brandes, RA-Brandes algorithm>>
+* <<algorithms-betweenness-centrality-syntax, Syntax>>
+* <<algorithms-betweenness-centrality-cp, Cypher projection>>
+* <<algorithms-betweenness-centrality-support, Graph type support>>
+* <<algorithms-betweenness-centrality-imp, Implementations>>
+
 
 [[algorithms-betweenness-centrality-context]]
 == History and explanation
@@ -113,6 +126,7 @@ The others don't have any influence, because all the shortest paths between pair
 include::betweenness-centrality-ra-brandes.adoc[leveloffset=3]
 
 
+[[algorithms-betweenness-centrality-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -125,6 +139,7 @@ include::scripts/betweenness-centrality.cypher[tag=cypher-loading]
 ----
 
 
+[[algorithms-betweenness-centrality-support]]
 == Graph type support
 
 The Betweenness Centrality algorithm supports the following graph types:
@@ -143,6 +158,7 @@ The Betweenness Centrality algorithm supports the following graph types:
 * [ ] undirected, weighted
 
 
+[[algorithms-betweenness-centrality-imp]]
 == Implementations
 
 `algo.betweenness()`

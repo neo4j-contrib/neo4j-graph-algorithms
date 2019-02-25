@@ -11,6 +11,16 @@ Harmonic centrality (also known as valued centrality) is a variant of closeness 
 As with many of the centrality algorithms, it originates from the field of social network analysis.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-harmonic-centrality-context, History and explanation>>
+* <<algorithms-harmonic-centrality-usecase, Use-cases - when to use the Harmonic Centrality algorithm>>
+* <<algorithms-harmonic-centrality-sample, Harmonic Centrality algorithm sample>>
+* <<algorithms-harmonic-centrality-hgp, Huge graph projection>>
+* <<algorithms-harmonic-centrality-cp, Cypher projection>>
+* <<algorithms-harmonic-centrality-syntax, Syntax>>
+* <<algorithms-harmonic-centrality-support, Graph type support>>
+
 
 [[algorithms-harmonic-centrality-context]]
 == History and explanation
@@ -104,6 +114,7 @@ sum |1.5    2    1.5    1     1
 Instead of calculating the farness, we sum the inverse of each cell and multiply by `1/(n-1)`.
 
 
+[[algorithms-harmonic-centrality-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -116,6 +127,7 @@ include::scripts/harmonic-centrality.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-harmonic-centrality-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -126,7 +138,6 @@ include::cypher-projection.adoc[tag=explanation]
 ----
 include::scripts/harmonic-centrality.cypher[tag=cypher-loading]
 ----
-
 
 
 [[algorithms-harmonic-centrality-syntax]]
@@ -188,7 +199,7 @@ YIELD nodeId, centrality
 |===
 
 
-
+[[algorithms-harmonic-centrality-support]]
 == Graph type support
 
 The Harmonic Centrality algorithm supports the following graph types:

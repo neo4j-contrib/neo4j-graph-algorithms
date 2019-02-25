@@ -10,6 +10,15 @@ This section describes the ArticleRank algorithm in the Neo4j Graph Algorithms l
 ArticleRank is a variant of the <<algorithms-pagerank, PageRank algorithm>>, which measures the *transitive* influence or connectivity of nodes.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-articlerank-context, History and explanation>>
+* <<algorithms-articlerank-sample, ArticleRank algorithm sample>>
+* <<algorithms-articlerank-hgp, Huge graph projection>>
+* <<algorithms-articlerank-cp, Cypher projection>>
+* <<algorithms-articlerank-syntax, Syntax>>
+* <<algorithms-articlerank-support, Graph type support>>
+
 
 [[algorithms-articlerank-context]]
 == History and explanation
@@ -84,6 +93,7 @@ Papers 5 and 6 are not cited by any other papers, so their score doesn't increas
 // end::stream-sample-graph-explanation[]
 
 
+[[algorithms-articlerank-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -96,6 +106,7 @@ include::scripts/articlerank.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-articlerank-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -106,6 +117,7 @@ include::cypher-projection.adoc[tag=explanation]
 ----
 include::scripts/articlerank.cypher[tag=cypher-loading]
 ----
+
 
 [[algorithms-articlerank-syntax]]
 == Syntax
@@ -177,6 +189,8 @@ YIELD node, score
 | score | float | PageRank weight
 |===
 
+
+[[algorithms-articlerank-support]]
 == Graph type support
 
 The ArticleRank algorithm supports the following graph types:

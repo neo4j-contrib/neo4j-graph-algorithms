@@ -12,6 +12,19 @@ It differs from the Strongly Connected Components algorithm (SCC) because it onl
 As with SCC, `UnionFind` is often used early in an analysis to understand a graph's structure.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-connected-components-context, History and explanation>>
+* <<algorithms-connected-components-usecase, Use-cases - when to use the Connected Components algorithm>>
+* <<algorithms-connected-components-sample, Connected Components algorithm sample>>
+** <<algorithms-connected-components-sample-unweighted, Unweighted version>>
+** <<algorithms-connected-components-sample-weighted, Weighted version>>
+* <<algorithms-connected-components-example, Example usage>>
+* <<algorithms-connected-components-hgp, Huge graph projection>>
+* <<algorithms-connected-components-cp, Cypher projection>>
+* <<algorithms-connected-components-syntax, Syntax>>
+* <<algorithms-connected-components-imp, Implementations>>
+
 
 [[algorithms-connected-components-context]]
 == History and explanation
@@ -56,6 +69,7 @@ include::scripts/connected-components.cypher[tag=create-sample-graph]
 ----
 
 
+[[algorithms-connected-components-sample-unweighted]]
 === Unweighted version
 
 .The following will run the algorithm and stream results:
@@ -96,6 +110,7 @@ include::scripts/connected-components.cypher[tag=check-results-sample-graph]
 ----
 
 
+[[algorithms-connected-components-sample-weighted]]
 === Weighted version
 
 If you define the property that holds the weight (`weightProperty`) and the threshold, it means the nodes are only connected, if the threshold on the weight of the relationship is high enough, otherwise the relationship is thrown away.
@@ -161,6 +176,7 @@ We can now move on to next step of analysis and run centralities on only the big
 We will write back the results to the node, and use centralities with Cypher loading, or set a new label for the biggest component.
 
 
+[[algorithms-connected-components-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -173,6 +189,7 @@ include::scripts/connected-components.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-connected-components-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -183,7 +200,6 @@ include::cypher-projection.adoc[tag=explanation]
 ----
 include::scripts/connected-components.cypher[tag=cypher-loading]
 ----
-
 
 
 [[algorithms-connected-components-syntax]]
@@ -270,6 +286,7 @@ YIELD nodeId, setId - yields a setId to each node id
 |===
 
 
+[[algorithms-connected-components-imp]]
 == Implementations
 
 `algo.unionFind`

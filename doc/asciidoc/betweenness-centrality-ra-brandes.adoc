@@ -1,3 +1,4 @@
+[[algorithms-betweenness-centrality-approx]]
 = Approximation of Betweenness Centrality
 
 // tag::introduction[]
@@ -5,6 +6,8 @@ As mentioned above, calculating the exact betweenness centrality on large graphs
 Therefore, you might choose to use an approximation algorithm that will run much quicker, and still provide useful information.
 // end::introduction[]
 
+
+[[algorithms-betweenness-centrality-ra_brandes]]
 == RA-Brandes algorithm
 
 // tag::explanation[]
@@ -55,8 +58,8 @@ Alice is still the main broker in the network, and Charles is a minor broker, al
 The others don’t have any influence, because all the shortest paths between pairs of people go via Alice or Charles.
 // end::stream-rabrandes-graph-explanation[]
 
-= Example usage
 
+[[algorithms-betweenness-centrality-syntax]]
 = Syntax
 
 .The following will run the Brandes algorithm and write back results:

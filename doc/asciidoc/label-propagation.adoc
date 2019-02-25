@@ -14,6 +14,17 @@ One interesting feature of LPA is that nodes can be assigned preliminary labels 
 This means that it can be used as semi-supervised way of finding communities where we hand-pick some initial communities.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-label-propagation-context, History and explanation>>
+* <<algorithms-label-propagation-usecase, Use-cases - when to use the Label Propagation algorithm>>
+* <<algorithms-label-propagation-limitations, Constraints - when not to use the Label Propagation algorithm>>
+* <<algorithms-label-propagation-sample, Label Propagation algorithm sample>>
+** <<algorithms-label-propagation-sample-seed_label, Using seed labels>>
+* <<algorithms-label-propagation-cp, Cypher projection>>
+* <<algorithms-label-propagation-syntax, Syntax>>
+* <<algorithms-label-propagation-support, Graph type support>>
+
 
 [[algorithms-label-propagation-context]]
 == History and explanation
@@ -109,6 +120,7 @@ Only Charles doesn't strongly fit into either side, but ends up with Doug and Ma
 // end::stream-sample-graph-explanation[]
 
 
+[[algorithms-label-propagation-sample-seed_label]]
 === Using seed labels
 
 At the beginning of the algorithm, every node is initialized with unique label (called as identifier) and the labels propagate through the network.
@@ -128,6 +140,7 @@ include::scripts/label-propagation.cypher[tag=write-existing-label-sample-graph]
 ----
 
 
+[[algorithms-label-propagation-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -228,6 +241,7 @@ YIELD nodeId, label
 |===
 
 
+[[algorithms-label-propagation-support]]
 == Graph type support
 
 The Label Propagation algorithm supports the following graph types:

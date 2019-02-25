@@ -11,6 +11,16 @@ The Strongly Connected Components (SCC) algorithm finds sets of connected nodes 
 It is often used early in a graph analysis process to help us get an idea of how our graph is structured.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-strongly-connected-components-context, History and explanation>>
+* <<algorithms-strongly-connected-components-usecase, Use-cases - when to use the Strongly Connected Components algorithm>>
+* <<algorithms-strongly-connected-components-sample, Strongly Connected Components algorithm sample>>
+* <<algorithms-strongly-connected-components-hgp, Huge graph projection>>
+* <<algorithms-strongly-connected-components-cp, Cypher projection>>
+* <<algorithms-strongly-connected-components-syntax, Syntax>>
+* <<algorithms-strongly-connected-components-imp, Implementations>>
+
 
 [[algorithms-strongly-connected-components-context]]
 == History and explanation
@@ -86,6 +96,7 @@ include::scripts/strongly-connected-components.cypher[tag=get-largest-component]
 ----
 
 
+[[algorithms-strongly-connected-components-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -98,6 +109,7 @@ include::scripts/strongly-connected-components.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-strongly-connected-components-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -187,6 +199,7 @@ YIELD nodeId, partition
 |===
 
 
+[[algorithms-strongly-connected-components-imp]]
 == Implementations
 
 `algo.scc`

@@ -11,6 +11,15 @@ link:http://en.wikipedia.org/wiki/Cosine_similarity[Cosine similarity] is the co
 It is the dot product of the two vectors divided by the product of the two vectors' lengths (or magnitudes).
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-similarity-cosine-context, History and explanation>>
+* <<algorithms-similarity-cosine-usecase, Use-cases - when to use the Cosine Similarity algorithm>>
+* <<algorithms-similarity-cosine-sample, Cosine Similarity algorithm sample>>
+* <<algorithms-similarity-cosine-cypher-projection, Cypher projection>>
+* <<algorithms-similarity-cosine-skipping-values, Skipping values>>
+* <<algorithms-similarity-cosine-syntax, Syntax>>
+
 
 [[algorithms-similarity-cosine-context]]
 == History and explanation
@@ -226,6 +235,7 @@ include::scripts/similarity-cosine.cypher[tag=query]
 |===
 // end::query[]
 
+
 [[algorithms-similarity-cosine-cypher-projection]]
 == Cypher projection
 
@@ -256,6 +266,7 @@ include::scripts/similarity-cosine.cypher[tag=create-sample-embedding-graph]
 ----
 include::scripts/similarity-cosine.cypher[tag=embedding-graph-stream]
 ----
+
 
 [[algorithms-similarity-cosine-syntax]]
 == Syntax
@@ -346,4 +357,3 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
 | `similarity`   | int  | The cosine similarity of the two nodes.
 |===
-

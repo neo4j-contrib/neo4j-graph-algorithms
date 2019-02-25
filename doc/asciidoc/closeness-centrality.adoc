@@ -13,6 +13,17 @@ The closeness centrality of a node measures its average farness (inverse distanc
 Nodes with a high closeness score have the shortest distances to all other nodes.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-closeness-centrality-context, History and explanation>>
+* <<algorithms-closeness-centrality-usecase, Use-cases - when to use the Closeness Centrality algorithm>>
+* <<algorithms-closeness-centrality-limitations, Constraints - when not to use the Closeness Centrality algorithm>>
+* <<algorithms-closeness-centrality-sample, Closeness Centrality algorithm sample>>
+* <<algorithms-closeness-centrality-hgp, Huge graph projection>>
+* <<algorithms-closeness-centrality-cp, Cypher projection>>
+* <<algorithms-closeness-centrality-syntax, Syntax>>
+* <<algorithms-closeness-centrality-support, Graph type support>>
+
 
 [[algorithms-closeness-centrality-context]]
 == History and explanation
@@ -132,6 +143,7 @@ k/S| 0.4  0.57  0.67  0.57   0.4     // normalized closeness centrality
 ....
 
 
+[[algorithms-closeness-centrality-hgp]]
 == Huge graph projection
 
 include::huge-projection.adoc[tag=explanation]
@@ -144,6 +156,7 @@ include::scripts/closeness-centrality.cypher[tag=huge-projection]
 ----
 
 
+[[algorithms-closeness-centrality-cp]]
 == Cypher projection
 
 include::cypher-projection.adoc[tag=explanation]
@@ -215,6 +228,8 @@ YIELD nodeId, centrality
 | centrality | float | Closeness centrality weight
 |===
 
+
+[[algorithms-closeness-centrality-support]]
 == Graph type support
 
 The Closeness Centrality algorithm supports the following graph types:

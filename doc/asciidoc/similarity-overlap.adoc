@@ -11,6 +11,12 @@ link:https://en.wikipedia.org/wiki/Overlap_coefficient[Overlap similarity] measu
 It is defined as the size of the intersection of two sets, divided by the size of the smaller of the two sets.
 // end::introduction[]
 
+This section includes:
+
+* <<algorithms-similarity-overlap-context, History and explanation>>
+* <<algorithms-similarity-overlap-usecase, Use-cases - when to use the Overlap Similarity algorithm>>
+* <<algorithms-similarity-overlap-sample, Overlap Similarity algorithm sample>>
+
 
 [[algorithms-similarity-overlap-context]]
 == History and explanation
