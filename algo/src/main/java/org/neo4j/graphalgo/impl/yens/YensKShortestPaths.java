@@ -129,7 +129,8 @@ public class YensKShortestPaths extends Algorithm<YensKShortestPaths> {
                     }
                 });
                 // Calculate the spur path from the spur node to the goal node.
-                final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal, maxDepth);
+                int spurPathMaxDepth = maxDepth - rootPath.size() + 1; // + 1 is for dropped tail of root path
+                final Optional<WeightedPath> spurPathOpt = dijkstra.compute(spurNode, goal, spurPathMaxDepth);
                 // no path found, continue
                 if (!spurPathOpt.isPresent()) {
                     continue;
