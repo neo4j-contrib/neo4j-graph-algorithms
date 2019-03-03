@@ -52,6 +52,8 @@ public class LouvainProc {
     public static final String INCLUDE_INTERMEDIATE_COMMUNITIES = "includeIntermediateCommunities";
 
     private static final String CLUSTERING_IDENTIFIER = "clustering";
+    public static final String INNER_ITERATIONS = "innerIterations";
+    public static final String COMMUNITY_SELECTION = "communitySelection";
 
     @Context
     public GraphDatabaseAPI api;
@@ -64,7 +66,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.louvain", mode = Mode.WRITE)
     @Description("CALL algo.louvain(label:String, relationship:String, " +
-            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4, communityProperty:'propertyOfPredefinedCommunity'}) " +
+            "{weightProperty:'weight', defaultValue:1.0, write: true, writeProperty:'community', concurrency:4, community:'propertyOfPredefinedCommunity', innerIterations:10, communitySelection:'classic'}) " +
             "YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis")
     public Stream<LouvainResult> louvain(
             @Name(value = "label", defaultValue = "") String label,
@@ -74,7 +76,6 @@ public class LouvainProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config)
                 .overrideNodeLabelOrQuery(label)
                 .overrideRelationshipTypeOrQuery(relationship);
-
 
         final Builder builder = new Builder();
 
@@ -93,14 +94,16 @@ public class LouvainProc {
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
         // evaluation
-        int iterations = configuration.getIterations(10);
+        final int iterations = configuration.getIterations(10);
         try (ProgressTimer timer = builder.timeEval()) {
+            final boolean randomNeighbor = configuration.get(COMMUNITY_SELECTION, "classic").equalsIgnoreCase("random");
+            final int maxIterations = configuration.getNumber(INNER_ITERATIONS, 10L).intValue();
             if (configuration.getString(DEFAULT_CLUSTER_PROPERTY).isPresent()) {
                 // use predefined clustering
                 final WeightMapping communityMap = ((NodeProperties) graph).nodeProperties(CLUSTERING_IDENTIFIER);
-                louvain.compute(communityMap, iterations, configuration.get("innerIterations", 10));
+                louvain.compute(communityMap, iterations, maxIterations,randomNeighbor);
             } else {
-                louvain.compute(iterations, configuration.get("innerIterations", 10));
+                louvain.compute(iterations, maxIterations, randomNeighbor);
             }
         }
 
@@ -129,7 +132,7 @@ public class LouvainProc {
 
     @Procedure(value = "algo.louvain.stream")
     @Description("CALL algo.louvain.stream(label:String, relationship:String, " +
-            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4, communityProperty:'propertyOfPredefinedCommunity') " +
+            "{weightProperty:'propertyName', defaultValue:1.0, concurrency:4, community:'propertyOfPredefinedCommunity', innerIterations:10, communitySelection:'classic') " +
             "YIELD nodeId, community - yields a setId to each node id")
     public Stream<Louvain.StreamingResult> louvainStream(
             @Name(value = "label", defaultValue = "") String label,
@@ -147,12 +150,13 @@ public class LouvainProc {
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
+        final boolean randomNeighbor = configuration.get(COMMUNITY_SELECTION, "classic").equalsIgnoreCase("random");
         if (configuration.getString(DEFAULT_CLUSTER_PROPERTY).isPresent()) {
             // use predefined clustering
             final WeightMapping communityMap = ((NodeProperties) graph).nodeProperties(CLUSTERING_IDENTIFIER);
-            louvain.compute(communityMap, configuration.getIterations(10), configuration.get("innerIterations", 10));
+            louvain.compute(communityMap, configuration.getIterations(10), configuration.getNumber(INNER_ITERATIONS, 10L).intValue(), randomNeighbor);
         } else {
-            louvain.compute(configuration.getIterations(10), configuration.get("innerIterations", 10));
+            louvain.compute(configuration.getIterations(10), configuration.getNumber(INNER_ITERATIONS, 10L).intValue(), randomNeighbor);
         }
 
         if (graph.nodeCount() == 0) {
@@ -215,7 +219,13 @@ public class LouvainProc {
                 -1,
                 -1,
                 0,
-                new double[] {}, -1, false, null, false, null);
+                new double[]{},
+                -1,
+                false,
+                null,
+                false,
+                null,
+                false);
 
         public final long loadMillis;
         public final long computeMillis;
@@ -240,12 +250,13 @@ public class LouvainProc {
         public final String writeProperty;
         public final boolean includeIntermediateCommunities;
         public final String intermediateCommunitiesWriteProperty;
+        public final boolean randomNeighbor;
 
         public LouvainResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes,
                              long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1,
                              long iterations, double[] modularities, double finalModularity,
                              boolean write, String writeProperty,
-                             boolean includeIntermediateCommunities, String intermediateCommunitiesWriteProperty) {
+                             boolean includeIntermediateCommunities, String intermediateCommunitiesWriteProperty, boolean randomNeighbor) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.postProcessingMillis = postProcessingMillis;
@@ -270,6 +281,7 @@ public class LouvainProc {
             this.modularity = finalModularity;
             this.writeProperty = writeProperty;
             this.intermediateCommunitiesWriteProperty = intermediateCommunitiesWriteProperty;
+            this.randomNeighbor = randomNeighbor;
         }
     }
 
@@ -281,6 +293,7 @@ public class LouvainProc {
         private String writeProperty;
         private String intermediateCommunitiesWriteProperty;
         private boolean includeIntermediateCommunities;
+        private boolean randomNeighbor = false;
 
         public Builder withWriteProperty(String writeProperty) {
             this.writeProperty = writeProperty;
@@ -289,6 +302,11 @@ public class LouvainProc {
 
         public Builder withIterations(long iterations) {
             this.iterations = iterations;
+            return this;
+        }
+
+        public Builder randomNeighbor(boolean randomNeighbor) {
+            this.randomNeighbor = randomNeighbor;
             return this;
         }
 
@@ -311,9 +329,14 @@ public class LouvainProc {
                     communityHistogram.getValueAtPercentile(10),
                     communityHistogram.getValueAtPercentile(5),
                     communityHistogram.getValueAtPercentile(1),
-                    iterations, modularities, finalModularity,
-                    write, writeProperty, includeIntermediateCommunities, intermediateCommunitiesWriteProperty
-            );
+                    iterations,
+                    modularities,
+                    finalModularity,
+                    write,
+                    writeProperty,
+                    includeIntermediateCommunities,
+                    intermediateCommunitiesWriteProperty,
+                    randomNeighbor);
         }
 
         public Builder withModularities(double[] modularities) {

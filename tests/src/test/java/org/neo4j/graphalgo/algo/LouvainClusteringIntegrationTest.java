@@ -118,11 +118,59 @@ public class LouvainClusteringIntegrationTest {
             return false;
         });
     }
+    @Test
+    public void testInnerIterations() {
+        final String cypher = "CALL algo.louvain('', '', {concurrency:1, innerIterations:100}) " +
+                "YIELD nodes, communityCount, loadMillis, computeMillis, writeMillis, postProcessingMillis, p99";
+
+        DB.execute(cypher).accept(row -> {
+            final long nodes = row.getNumber("nodes").longValue();
+            final long communityCount = row.getNumber("communityCount").longValue();
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            System.out.println("postProcessingMillis = " + row.getNumber("postProcessingMillis"));
+            System.out.println("nodes = " + nodes);
+            System.out.println("communityCount = " + communityCount);
+            System.out.println("p99 = " + row.get("p99"));
+
+            assertEquals("invalid node count",9, nodes);
+            assertEquals("wrong community count", 3, communityCount);
+            assertTrue("invalid loadTime", loadMillis >= 0);
+            assertTrue("invalid writeTime", writeMillis >= 0);
+            assertTrue("invalid computeTime", computeMillis >= 0);
+            return false;
+        });
+    }
+
+    @Test
+    public void testRandomNeighbor() {
+        final String cypher = "CALL algo.louvain('', '', {concurrency:1, randomNeighbor:true}) " +
+                "YIELD nodes, communityCount, loadMillis, computeMillis, writeMillis, postProcessingMillis, p99";
+
+        DB.execute(cypher).accept(row -> {
+            final long nodes = row.getNumber("nodes").longValue();
+            final long communityCount = row.getNumber("communityCount").longValue();
+            final long loadMillis = row.getNumber("loadMillis").longValue();
+            final long computeMillis = row.getNumber("computeMillis").longValue();
+            final long writeMillis = row.getNumber("writeMillis").longValue();
+            System.out.println("postProcessingMillis = " + row.getNumber("postProcessingMillis"));
+            System.out.println("nodes = " + nodes);
+            System.out.println("communityCount = " + communityCount);
+            System.out.println("p99 = " + row.get("p99"));
+
+            assertEquals("invalid node count",9, nodes);
+            assertTrue("invalid loadTime", loadMillis >= 0);
+            assertTrue("invalid writeTime", writeMillis >= 0);
+            assertTrue("invalid computeTime", computeMillis >= 0);
+            return false;
+        });
+    }
 
 
     @Test
     public void testStream() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, innerIterations:10, randomNeighbor:false}) " +
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {

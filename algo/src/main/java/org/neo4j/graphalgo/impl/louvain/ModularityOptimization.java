@@ -19,8 +19,6 @@
 package org.neo4j.graphalgo.impl.louvain;
 
 import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.BitSet;
-import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.NodeIterator;
@@ -37,7 +35,6 @@ import org.neo4j.graphdb.Direction;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
@@ -71,8 +68,10 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
     private int iterations;
     private double q = MINIMUM_MODULARITY;
     private AtomicInteger counter = new AtomicInteger(0);
+    private boolean rnl = false;
+    private Random random;
 
-    ModularityOptimization(Graph graph, NodeWeights nodeWeights, ExecutorService pool, int concurrency, AllocationTracker tracker) {
+    ModularityOptimization(Graph graph, NodeWeights nodeWeights, ExecutorService pool, int concurrency, AllocationTracker tracker, long rndSeed) {
         this.graph = graph;
         this.nodeWeights = nodeWeights;
         nodeCount = Math.toIntExact(graph.nodeCount());
@@ -80,11 +79,17 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         this.concurrency = concurrency;
         this.tracker = tracker;
         this.nodeIterator = createNodeIterator(concurrency);
+        this.random = new Random(rndSeed);
 
         ki = new double[nodeCount];
         communities = new int[nodeCount];
         // (1x double + 1x int) * N
         tracker.add(12 * nodeCount);
+    }
+
+    public ModularityOptimization withRandomNeighborOptimization(boolean rnl) {
+        this.rnl = rnl;
+        return this;
     }
 
     private NodeIterator createNodeIterator(int concurrency) {
@@ -360,14 +365,20 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             bestGain = .0;
             bestWeight = w;
 
-            for (int i = 0; i < communityCount[0]; i++) {
-                int community = communitiesInOrder[i];
-                double wic = communityWeights.get(community);
-                final double g = wic / m2 - sTot[community] * ki[node] / m22;
-                if (g > bestGain) {
-                    bestGain = g;
-                    bestCommunity = community;
-                    bestWeight = wic;
+            if (degree > 0) {
+                if (rnl) {
+                    bestCommunity = communitiesInOrder[(int) (random.nextDouble() * communitiesInOrder.length)];
+                } else {
+                    for (int i = 0; i < communityCount[0]; i++) {
+                        int community = communitiesInOrder[i];
+                        double wic = communityWeights.get(community);
+                        final double g = wic / m2 - sTot[community] * ki[node] / m22;
+                        if (g > bestGain) {
+                            bestGain = g;
+                            bestCommunity = community;
+                            bestWeight = wic;
+                        }
+                    }
                 }
             }
 

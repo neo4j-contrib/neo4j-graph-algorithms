@@ -32,13 +32,7 @@ import org.neo4j.test.rule.ImpermanentDatabaseRule;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Graph:
  *
- * (a)-(b)---(e)-(f)
- *  | X |     | X |   (z)
- * (c)-(d)   (g)-(h)
- *
- * @author mknblch
  */
 public class LouvainClusteringPreDefinedCommunitiesIntegrationTest {
 
@@ -64,7 +58,7 @@ public class LouvainClusteringPreDefinedCommunitiesIntegrationTest {
 
     @Test
     public void testStream() {
-        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community: 'community'}) " +
+        final String cypher = "CALL algo.louvain.stream('', '', {concurrency:1, community: 'community', randomNeighbor:false}) " +
                 "YIELD nodeId, community, communities";
         final IntIntScatterMap testMap = new IntIntScatterMap();
         DB.execute(cypher).accept(row -> {
