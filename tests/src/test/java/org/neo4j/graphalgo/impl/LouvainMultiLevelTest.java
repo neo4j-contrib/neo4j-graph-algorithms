@@ -145,4 +145,21 @@ public class LouvainMultiLevelTest {
         assertEquals(0.53, algorithm.getFinalModularity(), 0.01);
         assertArrayEquals(new double[]{0.53}, algorithm.getModularities(), 0.01);
     }
+
+    @Test
+    public void testComplexRNL() throws Exception {
+        setup(COMPLEX_CYPHER);
+        final Louvain algorithm = new Louvain(graph, Pools.DEFAULT, 1, AllocationTracker.EMPTY)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
+                .withTerminationFlag(TerminationFlag.RUNNING_TRUE)
+                .compute(10, 10, true);
+        final int[][] dendogram = algorithm.getDendrogram();
+        for (int i = 1; i <= dendogram.length; i++) {
+            if (null == dendogram[i - 1]) {
+                break;
+            }
+            System.out.println("level " + i + ": " + Arrays.toString(dendogram[i - 1]));
+        }
+
+    }
 }

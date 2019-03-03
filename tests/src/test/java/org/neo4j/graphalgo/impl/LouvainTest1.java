@@ -146,6 +146,23 @@ public class LouvainTest1 {
         assertCommunities(algorithm);
     }
 
+    @Test
+    public void testRandomNeighborLouvain() throws Exception {
+        setup(unidirectional);
+        final Louvain algorithm = new Louvain(graph, Pools.DEFAULT, 1, AllocationTracker.EMPTY)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
+                .withTerminationFlag(TerminationFlag.RUNNING_TRUE)
+                .compute(10, 10, true);
+        final int[][] dendogram = algorithm.getDendrogram();
+        for (int i = 1; i <= dendogram.length; i++) {
+            if (null == dendogram[i - 1]) {
+                break;
+            }
+            System.out.println("level " + i + ": " + Arrays.toString(dendogram[i - 1]));
+        }
+        assertCommunities(algorithm);
+    }
+
     public void assertCommunities(Louvain louvain) {
         assertUnion(new String[]{"a", "b", "c"}, louvain.getCommunityIds());
         assertDisjoint(new String[]{"a", "d"}, louvain.getCommunityIds());

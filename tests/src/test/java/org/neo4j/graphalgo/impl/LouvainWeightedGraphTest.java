@@ -166,6 +166,27 @@ public class LouvainWeightedGraphTest {
         assertTrue("Maximum iterations > " + MAX_ITERATIONS,louvain.getLevel() < MAX_ITERATIONS);
     }
 
+    @Test
+    public void testWeightedRandomNeighborLouvain() throws Exception {
+        setup(unidirectional);
+        final Louvain louvain =
+                new Louvain(graph,Pools.DEFAULT, 1, AllocationTracker.EMPTY)
+                .withProgressLogger(TestProgressLogger.INSTANCE)
+                        .withTerminationFlag(TerminationFlag.RUNNING_TRUE)
+                .compute(10, 10, true);
+
+        final int[][] dendogram = louvain.getDendrogram();
+        for (int i = 0; i < dendogram.length; i++) {
+            if (null == dendogram[i]) {
+                break;
+            }
+            System.out.println("level " + i + ": " + Arrays.toString(dendogram[i]));
+        }
+        printCommunities(louvain);
+        System.out.println("louvain.getRuns() = " + louvain.getLevel());
+        System.out.println("louvain.getCommunityCount() = " + louvain.getCommunityCount());
+    }
+
     public void assertCommunities(Louvain louvain) {
         assertUnion(new String[]{"a", "c", "d"}, louvain.getCommunityIds());
         assertUnion(new String[]{"f", "g", "h"}, louvain.getCommunityIds());
