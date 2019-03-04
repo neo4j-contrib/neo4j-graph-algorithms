@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.impl.util;
 
 import org.junit.Assume;
 import org.junit.Test;
+import org.neo4j.graphalgo.similarity.TopKConsumer;
 
 import java.util.ArrayList;
 import java.util.Collection;

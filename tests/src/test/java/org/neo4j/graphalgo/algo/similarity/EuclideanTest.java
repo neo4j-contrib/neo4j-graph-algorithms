@@ -27,6 +27,7 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static java.lang.Math.sqrt;
@@ -208,6 +209,19 @@ public class EuclideanTest {
     }
 
     @Test
+    public void euclideanSourceTargetIdsStreamTest() {
+        Map<String, Object> config = map(
+                "concurrency", 1,
+                "sourceIds", Collections.singletonList(0L),
+                "targetIds", Collections.singletonList(1L)
+        );
+        Result results = db.execute(STATEMENT_STREAM, map("config", config, "missingValue", 0));
+        assertTrue(results.hasNext());
+        assert01(results.next());
+        assertFalse(results.hasNext());
+    }
+
+    @Test
     public void euclideanCypherStreamTest() {
         // System.out.println(db.execute("MATCH (i:Item) WITH i ORDER BY id(i) MATCH (p:Person) OPTIONAL MATCH (p)-[r:LIKES]->(i) RETURN p,r,i").resultAsString());
         // a: 1,2,5
@@ -262,6 +276,22 @@ public class EuclideanTest {
         assert13(results.next());
         assert02(flip(results.next()));
         assert13(flip(results.next()));
+        assertFalse(results.hasNext());
+    }
+
+    @Test
+    public void topKEuclideanSourceTargetIdStreamTest() {
+        Map<String, Object> config = map(
+                "concurrency", 1,
+                "topK", 1,
+                "sourceIds", Collections.singletonList(0L)
+
+        );
+        Map<String, Object> params = map("config", config, "missingValue", 0);
+
+        Result results = db.execute(STATEMENT_STREAM, params);
+        assertTrue(results.hasNext());
+        assert02(results.next());
         assertFalse(results.hasNext());
     }
 

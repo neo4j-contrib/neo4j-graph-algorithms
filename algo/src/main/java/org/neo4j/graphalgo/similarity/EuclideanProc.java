@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static org.neo4j.graphalgo.similarity.SimilarityInput.indexesFor;
+
 public class EuclideanProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.euclidean.stream", mode = Mode.READ)
@@ -40,7 +42,6 @@ public class EuclideanProc extends SimilarityProc {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = readSkipValue(configuration);
-        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
 
@@ -48,11 +49,16 @@ public class EuclideanProc extends SimilarityProc {
             return Stream.empty();
         }
 
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = indexesFor(inputIds, configuration, "targetIds");
+        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue, sourceIndexIds, targetIndexIds);
+
         double similarityCutoff = similarityCutoff(configuration);
         int topN = -getTopN(configuration);
         int topK = -getTopK(configuration);
 
-        return generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
+        return generateWeightedStream(configuration, inputs, sourceIndexIds, targetIndexIds, similarityCutoff, topN, topK, computer);
     }
 
 
@@ -73,24 +79,28 @@ public class EuclideanProc extends SimilarityProc {
             return emptyStream(writeRelationshipType, writeProperty);
         }
 
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = indexesFor(inputIds, configuration, "targetIds");
+        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue, sourceIndexIds, targetIndexIds);
+
+
         double similarityCutoff = similarityCutoff(configuration);
         int topN = -getTopN(configuration);
         int topK = -getTopK(configuration);
 
-        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
         SimilarityRecorder<WeightedInput> recorder = similarityRecorder(computer, configuration);
-
-        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, recorder);
+        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, sourceIndexIds, targetIndexIds, similarityCutoff, topN, topK, recorder);
 
         boolean write = configuration.isWriteFlag(false); //  && similarityCutoff != 0.0;
-        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty, recorder);
+        return writeAndAggregateResults(stream, inputs.length, sourceIndexIds.length, targetIndexIds.length, configuration, write, writeRelationshipType, writeProperty, recorder);
     }
 
     Stream<SimilarityResult> generateWeightedStream(ProcedureConfiguration configuration, WeightedInput[] inputs,
-                                                    double similarityCutoff, int topN, int topK,
+                                                    int[] sourceIndexIds, int[] targetIndexIds, double similarityCutoff, int topN, int topK,
                                                     SimilarityComputer<WeightedInput> computer) {
         Supplier<RleDecoder> decoderFactory = createDecoderFactory(configuration, inputs[0]);
-        return topN(similarityStream(inputs, computer, configuration, decoderFactory, similarityCutoff, topK), topN)
+        return topN(similarityStream(inputs, sourceIndexIds, targetIndexIds, computer, configuration, decoderFactory, similarityCutoff, topK), topN)
                 .map(SimilarityResult::squareRooted);
     }
 
@@ -101,10 +111,12 @@ public class EuclideanProc extends SimilarityProc {
         return similarityCutoff;
     }
 
-    private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue) {
+    private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue, int[] sourceIndexIds, int[] targetIndexIds) {
+        boolean bidirectional = sourceIndexIds.length == 0 && targetIndexIds.length == 0;
+
         return skipValue == null ?
-                (decoder, s, t, cutoff) -> s.sumSquareDelta(decoder, cutoff, t) :
-                (decoder, s, t, cutoff) -> s.sumSquareDeltaSkip(decoder, cutoff, t, skipValue);
+                (decoder, s, t, cutoff) -> s.sumSquareDelta(decoder, cutoff, t, bidirectional) :
+                (decoder, s, t, cutoff) -> s.sumSquareDeltaSkip(decoder, cutoff, t, skipValue, bidirectional);
     }
 
 

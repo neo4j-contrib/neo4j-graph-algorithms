@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static org.neo4j.graphalgo.similarity.SimilarityInput.indexesFor;
+
 public class OverlapProc extends SimilarityProc {
 
     @Procedure(name = "algo.similarity.overlap.stream", mode = Mode.READ)
@@ -38,7 +40,6 @@ public class OverlapProc extends SimilarityProc {
             @Name(value = "data", defaultValue = "null") List<Map<String,Object>> data,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
-        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.overlap(cutoff, t);
 
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
 
@@ -48,7 +49,13 @@ public class OverlapProc extends SimilarityProc {
             return Stream.empty();
         }
 
-        return topN(similarityStream(inputs, computer, configuration, () -> null, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = indexesFor(inputIds, configuration, "targetIds");
+
+        SimilarityComputer<CategoricalInput> computer = similarityComputer(sourceIndexIds, targetIndexIds);
+
+        return topN(similarityStream(inputs, sourceIndexIds, targetIndexIds, computer, configuration, () -> null, getSimilarityCutoff(configuration), getTopK(configuration)), getTopN(configuration));
     }
 
     @Procedure(name = "algo.similarity.overlap", mode = Mode.WRITE)
@@ -69,15 +76,24 @@ public class OverlapProc extends SimilarityProc {
             return emptyStream(writeRelationshipType, writeProperty);
         }
 
-        SimilarityComputer<CategoricalInput> computer = (decoder, s, t, cutoff) -> s.overlap(cutoff, t);
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = indexesFor(inputIds, configuration, "targetIds");
+
+        SimilarityComputer<CategoricalInput> computer = similarityComputer(sourceIndexIds, targetIndexIds);
         SimilarityRecorder<CategoricalInput> recorder = categoricalSimilarityRecorder(computer, configuration);
 
         double similarityCutoff = getSimilarityCutoff(configuration);
-        Stream<SimilarityResult> stream = topN(similarityStream(inputs, recorder, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
+        Stream<SimilarityResult> stream = topN(similarityStream(inputs, sourceIndexIds, targetIndexIds, recorder, configuration, () -> null, similarityCutoff, getTopK(configuration)), getTopN(configuration));
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty, recorder);
+        return writeAndAggregateResults(stream, inputs.length, sourceIndexIds.length, targetIndexIds.length, configuration, write, writeRelationshipType, writeProperty, recorder);
     }
 
-
+    private SimilarityComputer<CategoricalInput> similarityComputer(int[] sourceIndexIds, int[] targetIndexIds) {
+        if(sourceIndexIds.length > 0 || targetIndexIds.length > 0 ) {
+            return (decoder, s, t, cutoff) -> s.overlap(cutoff, t, false);
+        }
+        return (decoder, s, t, cutoff) -> s.overlap(cutoff, t);
+    }
 }
