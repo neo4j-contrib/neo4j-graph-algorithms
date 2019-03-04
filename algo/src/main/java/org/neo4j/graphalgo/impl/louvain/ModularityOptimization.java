@@ -68,7 +68,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
     private int iterations;
     private double q = MINIMUM_MODULARITY;
     private AtomicInteger counter = new AtomicInteger(0);
-    private boolean rnl = false;
+    private boolean randomNeighborSelection = false;
     private Random random;
 
     ModularityOptimization(Graph graph, NodeWeights nodeWeights, ExecutorService pool, int concurrency, AllocationTracker tracker, long rndSeed) {
@@ -87,8 +87,8 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         tracker.add(12 * nodeCount);
     }
 
-    public ModularityOptimization withRandomNeighborOptimization(boolean rnl) {
-        this.rnl = rnl;
+    public ModularityOptimization withRandomNeighborOptimization(boolean randomNeighborSelection) {
+        this.randomNeighborSelection = randomNeighborSelection;
         return this;
     }
 
@@ -366,7 +366,7 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
             bestWeight = w;
 
             if (degree > 0) {
-                if (rnl) {
+                if (randomNeighborSelection) {
                     bestCommunity = communitiesInOrder[(int) (random.nextDouble() * communitiesInOrder.length)];
                 } else {
                     for (int i = 0; i < communityCount[0]; i++) {
