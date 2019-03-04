@@ -20,7 +20,9 @@ package org.neo4j.graphalgo.impl.msbfs;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.api.HugeGraph;
+import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
+import org.neo4j.graphalgo.api.HugeWeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeDirectIdMapping;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
@@ -241,13 +243,21 @@ public final class HugeMultiSourceBFSTest {
         final int nodeCount = 8192;
         final int sourceCount = 1024;
 
-        HugeRelationshipIterator iter = (nodeId, direction, consumer) -> {
-            for (long i = 0; i < nodeCount; i++) {
-                if (i != nodeId) {
-                    consumer.accept(nodeId, i);
+        HugeRelationshipIterator iter = new HugeRelationshipIterator() {
+            @Override
+            public void forEachRelationship(long nodeId, Direction direction, HugeRelationshipConsumer consumer) {
+                for (long i = 0; i < nodeCount; i++) {
+                    if (i != nodeId) {
+                        consumer.accept(nodeId, i);
+                    }
                 }
             }
-        };
+
+            @Override
+            public void forEachRelationship(long nodeId, Direction direction, HugeWeightedRelationshipConsumer consumer) {
+
+            }
+        } ;
 
         final long[] sources = new long[sourceCount];
         Arrays.setAll(sources, i -> i);

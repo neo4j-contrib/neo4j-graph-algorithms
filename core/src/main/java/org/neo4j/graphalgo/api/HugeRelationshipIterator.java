@@ -30,6 +30,11 @@ public interface HugeRelationshipIterator {
             Direction direction,
             HugeRelationshipConsumer consumer);
 
+    void forEachRelationship(
+            long nodeId,
+            Direction direction,
+            HugeWeightedRelationshipConsumer consumer);
+
     default void forEachIncoming(
             long nodeId,
             HugeRelationshipConsumer consumer) {

@@ -19,7 +19,7 @@
 package org.neo4j.graphalgo.impl.pagerank;
 
 import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.impl.WeightedDegreeCentrality;
+import org.neo4j.graphalgo.impl.degree.WeightedDegreeCentrality;
 import org.neo4j.graphdb.Direction;
 
 import java.util.concurrent.ExecutorService;

@@ -28,7 +28,6 @@ import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphalgo.impl.WeightedDegreeCentrality;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 
@@ -269,19 +268,19 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         while (parts.hasNext()) {
             Partition partition = parts.next();
-            int partitionCount = partition.nodeCount;
+            int partitionSize = partition.nodeCount;
             long start = partition.startNode;
             int i = 1;
             while (parts.hasNext()
                     && i < partitionsPerThread
-                    && partition.fits(partitionCount)) {
+                    && partition.fits(partitionSize)) {
                 partition = parts.next();
-                partitionCount += partition.nodeCount;
+                partitionSize += partition.nodeCount;
                 ++i;
             }
 
             starts.add(start);
-            lengths.add(partitionCount);
+            lengths.add(partitionSize);
 
             computeSteps.add(pageRankVariant.createHugeComputeStep(dampingFactor,
                     sourceNodeIds,
@@ -289,7 +288,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     degrees,
                     relationshipWeights,
                     tracker,
-                    partitionCount,
+                    partitionSize,
                     start,
                     degreeCache));
         }

@@ -20,12 +20,7 @@ package org.neo4j.graphalgo.core.huge;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterable;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.api.HugeRelationshipConsumer;
-import org.neo4j.graphalgo.api.RelationshipIntersect;
-import org.neo4j.graphalgo.api.HugeWeightMapping;
-import org.neo4j.graphalgo.api.RelationshipConsumer;
-import org.neo4j.graphalgo.api.WeightedRelationshipConsumer;
+import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
@@ -141,6 +136,14 @@ public class HugeGraphImpl implements HugeGraph {
     @Override
     public void forEachRelationship(long nodeId, Direction direction, HugeRelationshipConsumer consumer) {
         runForEach(nodeId, direction, consumer, /* reuseCursor */ true);
+    }
+
+    @Override
+    public void forEachRelationship(long nodeId, Direction direction, HugeWeightedRelationshipConsumer consumer) {
+        forEachRelationship(nodeId, direction, (sourceNodeId, targetNodeId) ->
+                consumer.accept(sourceNodeId, targetNodeId, direction == Direction.INCOMING ?
+                        weightOf(targetNodeId, sourceNodeId) :
+                        weightOf(sourceNodeId, targetNodeId)));
     }
 
     @Override
