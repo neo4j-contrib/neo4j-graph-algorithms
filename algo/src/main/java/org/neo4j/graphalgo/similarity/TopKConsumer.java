@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl.util;
+package org.neo4j.graphalgo.similarity;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -49,6 +49,28 @@ public class TopKConsumer<T> implements Consumer<T> {
         TopKConsumer<T> consumer = new TopKConsumer<T>(topK, comparator);
         items.forEach(consumer);
         return consumer.stream();
+    }
+
+    static TopKConsumer<SimilarityResult>[] initializeTopKConsumers(int length, int topK) {
+        Comparator<SimilarityResult> comparator = topK > 0 ? SimilarityResult.DESCENDING : SimilarityResult.ASCENDING;
+        topK = Math.abs(topK);
+
+        TopKConsumer<SimilarityResult>[] results = new TopKConsumer[length];
+        for (int i = 0; i < results.length; i++) results[i] = new TopKConsumer<>(topK, comparator);
+        return results;
+    }
+
+    static SimilarityConsumer assignSimilarityPairs(TopKConsumer<SimilarityResult>[] topKConsumers) {
+        return (s, t, result) -> {
+
+            int selectedIndex = result.reversed ? t : s;
+            topKConsumers[selectedIndex].accept(result);
+
+            if (result.bidirectional) {
+                SimilarityResult reverse = result.reverse();
+                topKConsumers[reverse.reversed ? t : s].accept(reverse);
+            }
+        };
     }
 
     @Override

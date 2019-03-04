@@ -29,6 +29,7 @@ import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static java.util.Collections.singletonMap;
@@ -254,6 +255,23 @@ public class PearsonTest {
     }
 
     @Test
+    public void pearsonStreamSourceTargetIdsTest() {
+        Map<String, Object> config = map(
+                "concurrency", 1,
+                "sourceIds", Collections.singletonList(0L),
+                "targetIds", Collections.singletonList(1L)
+        );
+        Map<String, Object> params = map("config", config, "missingValue", 0);
+
+        System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
+
+        Result results = db.execute(STATEMENT_STREAM, params);
+        assertTrue(results.hasNext());
+        assert01(results.next());
+        assertFalse(results.hasNext());
+    }
+
+    @Test
     public void pearsonSkipStreamTest() {
         Map<String, Object> params = map("config", map("concurrency", 1, "skipValue", Double.NaN), "missingValue", Double.NaN);
 
@@ -302,6 +320,24 @@ public class PearsonTest {
         assert01(flip(results.next()));
         assert23(results.next());
         assert23(flip(results.next()));
+        assertFalse(results.hasNext());
+    }
+
+    @Test
+    public void topKPearsonSourceTargetIdStreamTest() {
+        Map<String, Object> config = map(
+                "concurrency", 1,
+                "topK", 1,
+                "sourceIds", Collections.singletonList(0L)
+
+        );
+        Map<String, Object> params = map("config", config, "missingValue", 0);
+
+        System.out.println(db.execute(STATEMENT_STREAM, params).resultAsString());
+
+        Result results = db.execute(STATEMENT_STREAM, params);
+        assertTrue(results.hasNext());
+        assert01(results.next());
         assertFalse(results.hasNext());
     }
 

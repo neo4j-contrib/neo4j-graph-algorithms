@@ -41,9 +41,14 @@ public class PearsonProc extends SimilarityProc {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(config);
         Double skipValue = readSkipValue(configuration);
 
-        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
+
+
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = SimilarityInput.indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = SimilarityInput.indexesFor(inputIds, configuration, "targetIds");
+        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue, sourceIndexIds, targetIndexIds);
 
         if(inputs.length == 0) {
             return Stream.empty();
@@ -53,7 +58,7 @@ public class PearsonProc extends SimilarityProc {
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
 
-        return generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, computer);
+        return generateWeightedStream(configuration, inputs, sourceIndexIds, targetIndexIds, similarityCutoff, topN, topK, computer);
     }
 
     @Procedure(name = "algo.similarity.pearson", mode = Mode.WRITE)
@@ -67,6 +72,10 @@ public class PearsonProc extends SimilarityProc {
 
         WeightedInput[] inputs = prepareWeights(rawData, configuration, skipValue);
 
+        long[] inputIds = SimilarityInput.extractInputIds(inputs);
+        int[] sourceIndexIds = SimilarityInput.indexesFor(inputIds, configuration, "sourceIds");
+        int[] targetIndexIds = SimilarityInput.indexesFor(inputIds, configuration, "targetIds");
+
         String writeRelationshipType = configuration.get("writeRelationshipType", "SIMILAR");
         String writeProperty = configuration.getWriteProperty("score");
         if(inputs.length == 0) {
@@ -77,19 +86,21 @@ public class PearsonProc extends SimilarityProc {
         int topN = getTopN(configuration);
         int topK = getTopK(configuration);
 
-        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue);
+        SimilarityComputer<WeightedInput> computer = similarityComputer(skipValue, sourceIndexIds, targetIndexIds);
         SimilarityRecorder<WeightedInput> recorder = similarityRecorder(computer, configuration);
 
-        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, similarityCutoff, topN, topK, recorder);
+        Stream<SimilarityResult> stream = generateWeightedStream(configuration, inputs, sourceIndexIds, targetIndexIds, similarityCutoff, topN, topK, recorder);
 
         boolean write = configuration.isWriteFlag(false) && similarityCutoff > 0.0;
-        return writeAndAggregateResults(stream, inputs.length, configuration, write, writeRelationshipType, writeProperty, recorder);
+        return writeAndAggregateResults(stream, inputs.length, sourceIndexIds.length, targetIndexIds.length, configuration, write, writeRelationshipType, writeProperty, recorder);
     }
 
-    private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue) {
+    private SimilarityComputer<WeightedInput> similarityComputer(Double skipValue, int[] sourceIndexIds, int[] targetIndexIds) {
+        boolean bidirectional = sourceIndexIds.length == 0 && targetIndexIds.length == 0;
+
         return skipValue == null ?
-                (decoder, s, t, cutoff) -> s.pearson(decoder, cutoff, t) :
-                (decoder, s, t, cutoff) -> s.pearsonSkip(decoder, cutoff, t, skipValue);
+                (decoder, s, t, cutoff) -> s.pearson(decoder, cutoff, t, bidirectional) :
+                (decoder, s, t, cutoff) -> s.pearsonSkip(decoder, cutoff, t, skipValue, bidirectional);
     }
 
     private double similarityCutoff(ProcedureConfiguration configuration) {
@@ -97,10 +108,10 @@ public class PearsonProc extends SimilarityProc {
     }
 
     Stream<SimilarityResult> generateWeightedStream(ProcedureConfiguration configuration, WeightedInput[] inputs,
-                                                    double similarityCutoff, int topN, int topK,
+                                                    int[] sourceIndexIds, int[] targetIndexIds, double similarityCutoff, int topN, int topK,
                                                     SimilarityComputer<WeightedInput> computer) {
         Supplier<RleDecoder> decoderFactory = createDecoderFactory(configuration, inputs[0]);
-        return topN(similarityStream(inputs, computer, configuration, decoderFactory, similarityCutoff, topK), topN);
+        return topN(similarityStream(inputs, sourceIndexIds, targetIndexIds, computer, configuration, decoderFactory, similarityCutoff, topK), topN);
     }
 
 

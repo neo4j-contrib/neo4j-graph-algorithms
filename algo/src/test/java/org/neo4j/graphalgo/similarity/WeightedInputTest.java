@@ -32,7 +32,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.pearson(null, -1.0, input2);
+        SimilarityResult similarityResult = input1.pearson(null, -1.0, input2, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -47,7 +47,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.pearson(decoder, -1.0, input2);
+        SimilarityResult similarityResult = input1.pearson(decoder, -1.0, input2, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -60,7 +60,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.pearsonSkip(null, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.pearsonSkip(null, -1.0, input2, 0.0, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -75,7 +75,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.pearsonSkip(decoder, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.pearsonSkip(decoder, -1.0, input2, 0.0, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -88,8 +88,8 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        assertEquals(0.0, input1.pearsonSkip(null, -1.0, input2, 0.0).similarity, 0.01);
-        assertEquals(0.0, input1.pearson(null, -1.0, input2).similarity, 0.01);
+        assertEquals(0.0, input1.pearsonSkip(null, -1.0, input2, 0.0, true).similarity, 0.01);
+        assertEquals(0.0, input1.pearson(null, -1.0, input2, true).similarity, 0.01);
     }
 
     @Test
@@ -100,8 +100,8 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        assertNull(input1.pearsonSkip(null, 0.1, input2, 0.0));
-        assertNull(input1.pearson(null, 0.1, input2));
+        assertNull(input1.pearsonSkip(null, 0.1, input2, 0.0, true));
+        assertNull(input1.pearson(null, 0.1, input2, true));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.pearsonSkip(null, -1.0, input2, Double.NaN);
+        SimilarityResult similarityResult = input1.pearsonSkip(null, -1.0, input2, Double.NaN, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -125,7 +125,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.cosineSquares(null, -1.0, input2);
+        SimilarityResult similarityResult = input1.cosineSquares(null, -1.0, input2, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -140,7 +140,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.cosineSquares(decoder, -1.0, input2);
+        SimilarityResult similarityResult = input1.cosineSquares(decoder, -1.0, input2, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -153,7 +153,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.cosineSquaresSkip(null, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.cosineSquaresSkip(null, -1.0, input2, 0.0, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -168,7 +168,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.cosineSquaresSkip(decoder, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.cosineSquaresSkip(decoder, -1.0, input2, 0.0, true);
 
         assertEquals(1.0, similarityResult.similarity, 0.01);
     }
@@ -181,7 +181,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.sumSquareDelta(null, -1.0, input2);
+        SimilarityResult similarityResult = input1.sumSquareDelta(null, -1.0, input2, true);
 
         assertEquals(0.0, similarityResult.similarity, 0.01);
     }
@@ -196,7 +196,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.sumSquareDelta(decoder, -1.0, input2);
+        SimilarityResult similarityResult = input1.sumSquareDelta(decoder, -1.0, input2, true);
 
         assertEquals(0.0, similarityResult.similarity, 0.01);
     }
@@ -209,7 +209,7 @@ public class WeightedInputTest {
         WeightedInput input1 = new WeightedInput(1, weights1);
         WeightedInput input2 = new WeightedInput(2, weights2);
 
-        SimilarityResult similarityResult = input1.sumSquareDeltaSkip(null, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.sumSquareDeltaSkip(null, -1.0, input2, 0.0, true);
 
         assertEquals(0.0, similarityResult.similarity, 0.01);
     }
@@ -224,7 +224,7 @@ public class WeightedInputTest {
 
         RleDecoder decoder = new RleDecoder(weights1.length);
 
-        SimilarityResult similarityResult = input1.sumSquareDeltaSkip(decoder, -1.0, input2, 0.0);
+        SimilarityResult similarityResult = input1.sumSquareDeltaSkip(decoder, -1.0, input2, 0.0, true);
 
         assertEquals(0.0, similarityResult.similarity, 0.01);
     }

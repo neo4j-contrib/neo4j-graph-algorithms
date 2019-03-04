@@ -94,4 +94,18 @@ public class SimilarityResult implements Comparable<SimilarityResult> {
     }
     static Comparator<SimilarityResult> ASCENDING = (o1, o2) -> -o1.compareTo(o2);
     static Comparator<SimilarityResult> DESCENDING = SimilarityResult::compareTo;
+
+    @Override
+    public String toString() {
+        return "SimilarityResult{" +
+                "item1=" + item1 +
+                ", item2=" + item2 +
+                ", count1=" + count1 +
+                ", count2=" + count2 +
+                ", intersection=" + intersection +
+                ", similarity=" + similarity +
+                ", bidirectional=" + bidirectional +
+                ", reversed=" + reversed +
+                '}';
+    }
 }
