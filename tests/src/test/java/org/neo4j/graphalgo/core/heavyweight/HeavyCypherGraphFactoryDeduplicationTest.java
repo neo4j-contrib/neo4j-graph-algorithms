@@ -22,25 +22,24 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.graphalgo.PropertyMapping;
-import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.TestDatabaseCreator;
+import org.neo4j.graphalgo.core.DuplicateRelationshipsStrategy;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
-import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
-public class HeavyCypherGraphFactoryTest {
+public class HeavyCypherGraphFactoryDeduplicationTest {
 
     private static GraphDatabaseService db;
 
     private static int id1;
     private static int id2;
-    private static int id3;
 
     @BeforeClass
     public static void setUp() {
@@ -48,12 +47,13 @@ public class HeavyCypherGraphFactoryTest {
         db = TestDatabaseCreator.createTestDatabase();
 
         db.execute(
-                "CREATE (n1 {partition: 6})-[:REL  {prop:1}]->(n2 {foo: 4})-[:REL {prop:2}]->(n3) " +
-                   "CREATE (n1)-[:REL {prop:3}]->(n3) " +
-                   "RETURN id(n1) AS id1, id(n2) AS id2, id(n3) AS id3").accept(row -> {
+                "MERGE (n1 {id: 1}) " + "" +
+                   "MERGE (n2 {id: 2}) " +
+                   "CREATE (n1)-[:REL {weight: 4}]->(n2) " +
+                   "CREATE (n2)-[:REL {weight: 10}]->(n1) " +
+                   "RETURN id(n1) AS id1, id(n2) AS id2").accept(row -> {
             id1 = row.getNumber("id1").intValue();
             id2 = row.getNumber("id2").intValue();
-            id3 = row.getNumber("id3").intValue();
             return true;
         });
     }
@@ -66,36 +66,17 @@ public class HeavyCypherGraphFactoryTest {
 
     @Test
     public void testLoadCypher() throws Exception {
-        String nodes = "MATCH (n) RETURN id(n) as id, n.partition AS partition, n.foo AS foo";
-        String rels = "MATCH (n)-[r]->(m) WHERE type(r) = {rel} RETURN id(n) as source, id(m) as target, r.prop as weight";
+        String nodes = "MATCH (n) RETURN id(n) as id";
+        String rels = "MATCH (n)-[r]-(m) RETURN id(n) as source, id(m) as target, r.weight as weight";
 
         final HeavyGraph graph = (HeavyGraph) new GraphLoader((GraphDatabaseAPI) db)
-                .withParams(MapUtil.map("rel","REL"))
-                .withRelationshipWeightsFromProperty("prop", 0)
                 .withLabel(nodes)
                 .withRelationshipType(rels)
-                .withOptionalNodeProperties(
-                        PropertyMapping.of("partition", "partition", 0.0),
-                        PropertyMapping.of("foo", "foo", 5.0)
-                )
+                .withDuplicateRelationshipsStrategy(DuplicateRelationshipsStrategy.SKIP)
                 .load(HeavyCypherGraphFactory.class);
 
-        assertEquals(3, graph.nodeCount());
-        assertEquals(2, graph.degree(graph.toMappedNodeId(id1), Direction.OUTGOING));
+        assertEquals(2, graph.nodeCount());
+        assertEquals(1, graph.degree(graph.toMappedNodeId(id1), Direction.OUTGOING));
         assertEquals(1, graph.degree(graph.toMappedNodeId(id2), Direction.OUTGOING));
-        assertEquals(0, graph.degree(graph.toMappedNodeId(id3), Direction.OUTGOING));
-        AtomicInteger total = new AtomicInteger();
-        graph.forEachNode(n -> {
-            graph.forEachRelationship(n, Direction.OUTGOING, (s, t, r, w) -> {
-                total.addAndGet((int) w);
-                return true;
-            });
-            return true;
-        });
-        assertEquals(6, total.get());
-
-        assertEquals(6.0D, graph.nodeProperties("partition").get(0L), 0.01);
-        assertEquals(5.0D, graph.nodeProperties("foo").get(0L), 0.01);
-        assertEquals(4.0D, graph.nodeProperties("foo").get(1L), 0.01);
     }
 }

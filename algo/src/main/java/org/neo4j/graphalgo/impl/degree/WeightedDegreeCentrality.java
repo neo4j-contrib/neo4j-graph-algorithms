@@ -16,11 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.impl;
+package org.neo4j.graphalgo.impl.degree;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphalgo.impl.pagerank.DegreeCentralityAlgorithm;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
+import org.neo4j.graphalgo.impl.results.PrimitiveDoubleArrayResult;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -30,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality> {
+public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality> implements DegreeCentralityAlgorithm {
     private final int nodeCount;
     private Direction direction;
     private Graph graph;
@@ -63,10 +67,13 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
     public WeightedDegreeCentrality compute(boolean cacheWeights) {
         nodeQueue.set(0);
 
-        List<Runnable> tasks = new ArrayList<>();
-        for (int i = 0; i < concurrency; i++) {
+        int batchSize = ParallelUtil.adjustBatchSize(nodeCount, concurrency);
+        int taskCount = ParallelUtil.threadSize(batchSize, nodeCount);
+        final ArrayList<Runnable> tasks = new ArrayList<>(taskCount);
+
+        for (int i = 0; i < taskCount; i++) {
             if(cacheWeights) {
-                tasks.add(new DegreeAndWeightsTask());
+                tasks.add(new CacheDegreeTask());
             } else {
                 tasks.add(new DegreeTask());
             }
@@ -85,6 +92,21 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
     public WeightedDegreeCentrality release() {
         graph = null;
         return null;
+    }
+
+    @Override
+    public CentralityResult result() {
+        return new PrimitiveDoubleArrayResult(degrees);
+    }
+
+    @Override
+    public void compute() {
+        compute(false);
+    }
+
+    @Override
+    public Algorithm<?> algorithm() {
+        return this;
     }
 
     private class DegreeTask implements Runnable {
@@ -111,7 +133,7 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
         }
     }
 
-    private class DegreeAndWeightsTask implements Runnable {
+    private class CacheDegreeTask implements Runnable {
         @Override
         public void run() {
             for (; ; ) {

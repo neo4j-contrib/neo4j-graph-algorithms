@@ -571,16 +571,6 @@ public class GraphLoader {
                 .withBatchSize(config.getBatchSize())
                 .withDuplicateRelationshipsStrategy(config.getDuplicateRelationshipsStrategy())
                 .withParams(config.getParams());
-
-        /*
-        Relationship Loading Strategy
-        duplicateRelationships
-            null    do nothing
-            skip    keep the 1st one you see
-            sum     keep the 1st one and then accumulate any weights
-            min     keep the minimum weight
-            max     keep the maximum weight
-         */
     }
 
     /**
@@ -597,4 +587,7 @@ public class GraphLoader {
         return this;
     }
 
+    public GraphLoader direction(Direction direction) {
+        return direction == Direction.BOTH ? asUndirected(true).withDirection(direction) : withDirection(direction);
+    }
 }

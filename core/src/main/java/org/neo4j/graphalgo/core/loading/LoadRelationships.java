@@ -19,12 +19,17 @@
 package org.neo4j.graphalgo.core.loading;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.helpers.collection.Pair;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
+import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
+import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.helpers.Nodes;
 import org.neo4j.internal.kernel.api.helpers.RelationshipSelectionCursor;
 import org.neo4j.internal.kernel.api.helpers.RelationshipSelections;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public interface LoadRelationships {
@@ -95,8 +100,24 @@ final class LoadAllRelationships implements LoadRelationships {
 
     @Override
     public int degreeBoth(final NodeCursor cursor) {
-        return Nodes.countAll(cursor, cursors);
+//        return Nodes.countAll(cursor, cursors);
+        return countAll(cursor, cursors);
     }
+
+    private static int countAll(NodeCursor nodeCursor, CursorFactory cursors) {
+        Set<Pair<Long, Long>> sourceTargetPairs = new HashSet<>();
+
+        try (RelationshipTraversalCursor traversal = cursors.allocateRelationshipTraversalCursor()) {
+            nodeCursor.allRelationships(traversal);
+            while (traversal.next()) {
+                long low = Math.min(traversal.sourceNodeReference(), traversal.targetNodeReference());
+                long high = Math.max(traversal.sourceNodeReference(), traversal.targetNodeReference());
+                sourceTargetPairs.add(Pair.of(low, high));
+            }
+            return sourceTargetPairs.size();
+        }
+    }
+
 
     @Override
     public int degreeUndirected(final NodeCursor cursor) {
@@ -142,7 +163,24 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
 
     @Override
     public int degreeBoth(final NodeCursor cursor) {
-        return Nodes.countAll(cursor, cursors, type);
+        return countAll(cursor, cursors, type);
+    }
+
+    public static int countAll( NodeCursor nodeCursor, CursorFactory cursors, int type )
+    {
+        Set<Pair<Long, Long>> sourceTargetPairs = new HashSet<>();
+
+        try (RelationshipTraversalCursor traversal = cursors.allocateRelationshipTraversalCursor()) {
+            nodeCursor.allRelationships(traversal);
+            while (traversal.next()) {
+                if (traversal.type() == type) {
+                    long low = Math.min(traversal.sourceNodeReference(), traversal.targetNodeReference());
+                    long high = Math.max(traversal.sourceNodeReference(), traversal.targetNodeReference());
+                    sourceTargetPairs.add(Pair.of(low, high));
+                }
+            }
+            return sourceTargetPairs.size();
+        }
     }
 
     @Override

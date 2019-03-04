@@ -108,6 +108,13 @@ public final class ParallelUtil {
         return Math.max(minBatchSize, targetBatchSize);
     }
 
+    public static int adjustBatchSize(
+            int nodeCount,
+            int concurrency) {
+        return adjustBatchSize(nodeCount, concurrency, DEFAULT_BATCH_SIZE);
+    }
+
+
     public static long adjustBatchSize(
             long nodeCount,
             int concurrency,

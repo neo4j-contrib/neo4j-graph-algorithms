@@ -19,12 +19,14 @@
 package org.neo4j.graphalgo.core;
 
 import com.carrotsearch.hppc.IntArrayList;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
 import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -40,27 +42,16 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author mknblch
  */
-@RunWith(Parameterized.class)
-public class GraphLoaderTest {
+public class GraphLoaderCypherTest {
 
     @Rule
     public ImpermanentDatabaseRule db = new ImpermanentDatabaseRule();
 
     private Class<? extends GraphFactory> graphImpl;
 
-    @Parameterized.Parameters(name = "{1}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
-        );
-    }
-
-    @SuppressWarnings("unused")
-    public GraphLoaderTest(
-            Class<? extends GraphFactory> graphImpl,
-            String nameIgnoredOnlyForTestName) {
-        this.graphImpl = graphImpl;
+    @Before
+    public void setup() {
+        this.graphImpl = HeavyCypherGraphFactory.class;
     }
 
     @Test
@@ -74,8 +65,8 @@ public class GraphLoaderTest {
                 " (b)-[:REL]->(c)," +
                 " (b)-[:REL]->(d)");
         GraphLoader graphLoader = new GraphLoader(db, Pools.DEFAULT);
-        Graph graph = graphLoader.withAnyLabel()
-                .withAnyRelationshipType()
+        Graph graph = graphLoader.withLabel("MATCH (n) RETURN id(n) AS id")
+                .withRelationshipType("MATCH (a)--(b) RETURN id(a) AS source, id(b) AS target")
                 .direction(Direction.BOTH)
                 .load(graphImpl);
 
@@ -97,8 +88,8 @@ public class GraphLoaderTest {
                 " (b)-[:REL]->(c)," +
                 " (b)-[:REL]->(d)");
         GraphLoader graphLoader = new GraphLoader(db, Pools.DEFAULT);
-        Graph graph = graphLoader.withAnyLabel()
-                .withAnyRelationshipType()
+        Graph graph = graphLoader.withLabel("MATCH (n) RETURN id(n) AS id")
+                .withRelationshipType("MATCH (a)-->(b) RETURN id(a) AS source, id(b) AS target")
                 .direction(Direction.OUTGOING)
                 .load(graphImpl);
 
@@ -120,101 +111,19 @@ public class GraphLoaderTest {
                 " (b)-[:REL]->(c)," +
                 " (b)-[:REL]->(d)");
         GraphLoader graphLoader = new GraphLoader(db, Pools.DEFAULT);
-        Graph graph = graphLoader.withAnyLabel()
-                .withAnyRelationshipType()
+        Graph graph = graphLoader.withLabel("MATCH (n) RETURN id(n) AS id")
+                .withRelationshipType("MATCH (a)<--(b) RETURN id(a) AS source, id(b) AS target")
                 .direction(Direction.INCOMING)
                 .load(graphImpl);
 
         assertEquals(4L, graph.nodeCount());
-        checkIncomingRelationships(graph, 0, 0);
-        checkIncomingRelationships(graph, 1, 0, 1);
-        checkIncomingRelationships(graph, 2, 1);
-        checkIncomingRelationships(graph, 3, 1);
-    }
-
-    @Test
-    public void testLargerGraphWithDeletions() {
-        db.execute("FOREACH (x IN range(1, 4098) | CREATE (:Node {index:x}))");
-        db.execute("MATCH (n) WHERE n.index IN [1, 2, 3] DELETE n");
-        new GraphLoader(db, Pools.DEFAULT)
-                .withLabel("Node")
-                .withAnyRelationshipType()
-                .load(graphImpl);
-    }
-
-    @Test
-    public void testUndirectedNodeWithSelfReference() {
-        runUndirectedNodeWithSelfReference("" +
-                "CREATE (a:Node),(b:Node) " +
-                "CREATE" +
-                " (a)-[:REL]->(a)," +
-                " (a)-[:REL]->(b)"
-        );
-    }
-
-    @Test
-    public void testUndirectedNodeWithSelfReference2() {
-        runUndirectedNodeWithSelfReference("" +
-                "CREATE (a:Node),(b:Node) " +
-                "CREATE" +
-                " (a)-[:REL]->(b)," +
-                " (a)-[:REL]->(a)"
-        );
-    }
-
-    private void runUndirectedNodeWithSelfReference(String cypher) {
-        db.execute(cypher);
-        final Graph graph = new GraphLoader(db)
-                .withAnyLabel()
-                .withAnyRelationshipType()
-                .asUndirected(true)
-                .load(graphImpl);
-
-        assertEquals(2L, graph.nodeCount());
-        checkRelationships(graph, 0, 0, 1);
-        checkRelationships(graph, 1, 0);
-    }
-
-    @Test
-    public void testUndirectedNodesWithMultipleSelfReferences() {
-        runUndirectedNodesWithMultipleSelfReferences("" +
-                "CREATE (a:Node),(b:Node),(c:Node),(d:Node) " +
-                "CREATE" +
-                " (a)-[:REL]->(a)," +
-                " (b)-[:REL]->(b)," +
-                " (a)-[:REL]->(b)," +
-                " (b)-[:REL]->(c)," +
-                " (b)-[:REL]->(d)"
-        );
-    }
-
-    @Test
-    public void testUndirectedNodesWithMultipleSelfReferences2() {
-        runUndirectedNodesWithMultipleSelfReferences("" +
-                "CREATE (a:Node),(b:Node),(c:Node),(d:Node) " +
-                "CREATE" +
-                " (a)-[:REL]->(b)," +
-                " (a)-[:REL]->(a)," +
-                " (b)-[:REL]->(c)," +
-                " (b)-[:REL]->(d)," +
-                " (b)-[:REL]->(b)"
-        );
-    }
-
-    private void runUndirectedNodesWithMultipleSelfReferences(String cypher) {
-        db.execute(cypher);
-        final Graph graph = new GraphLoader(db)
-                .withAnyLabel()
-                .withAnyRelationshipType()
-                .asUndirected(true)
-                .load(graphImpl);
-
-        assertEquals(4L, graph.nodeCount());
-        checkRelationships(graph, 0, 0, 1);
-        checkRelationships(graph, 1, 0, 1, 2, 3);
+        checkRelationships(graph, 0, 0);
+        checkRelationships(graph, 1, 0, 1);
         checkRelationships(graph, 2, 1);
         checkRelationships(graph, 3, 1);
     }
+
+
 
     private void checkRelationships(Graph graph, int node, int... expected) {
         IntArrayList idList = new IntArrayList();
