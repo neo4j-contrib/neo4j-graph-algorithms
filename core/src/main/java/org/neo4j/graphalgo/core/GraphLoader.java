@@ -77,7 +77,9 @@ public class GraphLoader {
     private double nodePropDefault = 0.0;
     private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
     private int concurrency = Pools.DEFAULT_CONCURRENCY;
-    private boolean accumulateWeights;
+
+    private DuplicateRelationshipsStrategy duplicateRelationshipsStrategy;
+
     private Log log = NullLog.getInstance();
     private long logMillis = -1;
     private AllocationTracker tracker = AllocationTracker.EMPTY;
@@ -491,29 +493,7 @@ public class GraphLoader {
 
     private GraphFactory invokeConstructor(MethodHandle constructor) {
 
-        final GraphSetup setup = new GraphSetup(
-                label,
-                null,
-                relation,
-                direction,
-                relWeightProp,
-                relWeightDefault,
-                nodeWeightProp,
-                nodeWeightDefault,
-                nodeProp,
-                nodePropDefault,
-                params,
-                executorService,
-                concurrency,
-                batchSize,
-                accumulateWeights,
-                log,
-                logMillis,
-                sort,
-                loadAsUndirected,
-                tracker,
-                name,
-                nodePropertyMappings);
+        final GraphSetup setup = toSetup();
 
         try {
             return (GraphFactory) constructor.invoke(api, setup);
@@ -522,6 +502,32 @@ public class GraphLoader {
                     throwable.getMessage(),
                     throwable);
         }
+    }
+
+    public  GraphSetup toSetup() {
+        return new GraphSetup(
+                    label,
+                    null,
+                    relation,
+                    direction,
+                    relWeightProp,
+                    relWeightDefault,
+                    nodeWeightProp,
+                    nodeWeightDefault,
+                    nodeProp,
+                    nodePropDefault,
+                    params,
+                    executorService,
+                    concurrency,
+                    batchSize,
+                    duplicateRelationshipsStrategy,
+                    log,
+                    logMillis,
+                    sort,
+                    loadAsUndirected,
+                    tracker,
+                    name,
+                    nodePropertyMappings);
     }
 
     /**
@@ -557,26 +563,38 @@ public class GraphLoader {
         return this;
     }
 
-    /**
-     * @param accumulateWeights true if relationship-weights should be accumulated in the loader
-     * @return itself to enable fluent interface
-     */
-    public GraphLoader withAccumulateWeights(boolean accumulateWeights) {
-        this.accumulateWeights = accumulateWeights;
-        return this;
-    }
-
     public GraphLoader init(Log log, String label, String relationship, ProcedureConfiguration config) {
         return withLog(log)
                 .withName(config.getGraphName(null))
                 .withOptionalLabel(label).withOptionalRelationshipType(relationship)
                 .withConcurrency(config.getConcurrency())
                 .withBatchSize(config.getBatchSize())
+                .withDuplicateRelationshipsStrategy(config.getDuplicateRelationshipsStrategy())
                 .withParams(config.getParams());
+
+        /*
+        Relationship Loading Strategy
+        duplicateRelationships
+            null    do nothing
+            skip    keep the 1st one you see
+            sum     keep the 1st one and then accumulate any weights
+            min     keep the minimum weight
+            max     keep the maximum weight
+         */
+    }
+
+    /**
+     * @param duplicateRelationshipsStrategy strategy for handling duplicate relationships
+     * @return itself to enable fluent interface
+     */
+    public GraphLoader withDuplicateRelationshipsStrategy(DuplicateRelationshipsStrategy duplicateRelationshipsStrategy) {
+        this.duplicateRelationshipsStrategy = duplicateRelationshipsStrategy;
+        return this;
     }
 
     public GraphLoader withOptionalNodeProperties(PropertyMapping... nodePropertyMappings) {
         this.nodePropertyMappings = nodePropertyMappings;
         return this;
     }
+
 }
