@@ -410,4 +410,9 @@ public class ProcedureConfiguration {
     public Map<String, Object> getParams() {
         return (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
     }
+
+    public DuplicateRelationshipsStrategy getDuplicateRelationshipsStrategy() {
+        String strategy = get("duplicateRelationships", null);
+        return strategy != null ? DuplicateRelationshipsStrategy.valueOf(strategy.toUpperCase()) : DuplicateRelationshipsStrategy.NONE;
+    }
 }

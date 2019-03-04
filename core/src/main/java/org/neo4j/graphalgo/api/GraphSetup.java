@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphalgo.PropertyMapping;
+import org.neo4j.graphalgo.core.DuplicateRelationshipsStrategy;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
@@ -77,13 +78,13 @@ public class GraphSetup {
      */
     public final int batchSize;
 
-    public final boolean accumulateWeights;
     // tells whether the underlying array should be sorted during import
     public final boolean sort;
     // in/out adjacencies are allowed to be merged into an undirected view of the graph
     public final boolean loadAsUndirected;
 
     public final PropertyMapping[] nodePropertyMappings;
+    public final DuplicateRelationshipsStrategy duplicateRelationshipsStrategy;
 
     /**
      * main ctor
@@ -102,7 +103,7 @@ public class GraphSetup {
      * @param nodeDefaultPropertyValue   the default node value if property is not given.
      * @param executor                   the executor. null means single threaded evaluation
      * @param batchSize                  batch size for parallel loading
-     * @param accumulateWeights          true if relationship-weights should be summed within the loader
+     * @param duplicateRelationshipsStrategy     strategy for handling relationship duplicates
      * @param sort                       true if relationships should stored in sorted ascending order
      */
     public GraphSetup(
@@ -120,7 +121,7 @@ public class GraphSetup {
             ExecutorService executor,
             int concurrency,
             int batchSize,
-            boolean accumulateWeights,
+            DuplicateRelationshipsStrategy duplicateRelationshipsStrategy,
             Log log,
             long logMillis,
             boolean sort,
@@ -144,7 +145,7 @@ public class GraphSetup {
         this.executor = executor;
         this.concurrency = concurrency;
         this.batchSize = batchSize;
-        this.accumulateWeights = accumulateWeights;
+        this.duplicateRelationshipsStrategy = duplicateRelationshipsStrategy;
         this.log = log;
         this.logMillis = logMillis;
         this.sort = sort;
@@ -192,7 +193,7 @@ public class GraphSetup {
                 executor,
                 Pools.DEFAULT_CONCURRENCY,
                 -1,
-                false,
+                DuplicateRelationshipsStrategy.NONE,
                 NullLog.getInstance(),
                 -1L,
                 false,

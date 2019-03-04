@@ -30,14 +30,13 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.graphalgo.TestDatabaseCreator;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
-public class HeavyCypherGraphParallelFactoryTest {
+public class HeavyCypherGraphSequentialFactoryTest {
 
     private static final int COUNT = 10000;
     private static GraphDatabaseService db;
@@ -57,7 +56,7 @@ public class HeavyCypherGraphParallelFactoryTest {
 
 
     @Test
-    public void testLoadNoneParallelCypher() throws Exception {
+    public void uniqueRelationships() throws Exception {
         String nodeStatement = "MATCH (n) RETURN id(n) as id";
         String relStatement = "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight";
 
@@ -65,43 +64,29 @@ public class HeavyCypherGraphParallelFactoryTest {
     }
 
     @Test
-    public void testLoadNodesParallelCypher() throws Exception {
-        String nodeStatement = "MATCH (n) WITH n SKIP {skip} LIMIT {limit} RETURN id(n) as id";
-        String relStatement = "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight";
-
-        loadAndTestGraph(nodeStatement, relStatement, false);
-    }
-
-    @Test
-    public void testLoadRelationshipsParallelCypher() throws Exception {
-        String nodeStatement = "MATCH (n) RETURN id(n) as id";
-        String relStatement = "MATCH (n)-[r:REL]->(m)  WITH * SKIP {skip} LIMIT {limit} RETURN id(n) as source, id(m) as target, r.prop as weight";
-
-        loadAndTestGraph(nodeStatement, relStatement, false);
-    }
-
-    @Test
-    public void testLoadRelationshipsParallelAccumulateWeightCypher() throws Exception {
+    public void accumulateWeightCypher() throws Exception {
         String nodeStatement = "MATCH (n) RETURN id(n) as id";
         String relStatement =
-                "MATCH (n)-[r:REL]->(m) WITH * SKIP {skip} LIMIT {limit} RETURN id(n) as source, id(m) as target, r.prop/2.0 as weight " +
+                "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop/2.0 as weight " +
                 "UNION ALL "+
-                "MATCH (n)-[r:REL]->(m) WITH * SKIP {skip} LIMIT {limit} RETURN id(n) as source, id(m) as target, r.prop/2.0 as weight ";
+                "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop/2.0 as weight ";
 
         loadAndTestGraph(nodeStatement, relStatement, true);
     }
 
     @Test
-    public void testLoadCypherBothParallel() throws Exception {
-        String nodeStatement = "MATCH (n) WITH n SKIP {skip} LIMIT {limit} RETURN id(n) as id";
-        String relStatement = "MATCH (n)-[r:REL]->(m) WITH * SKIP {skip} LIMIT {limit} RETURN id(n) as source, id(m) as target, r.prop as weight";
+    public void countEachRelationshipOnce() throws Exception {
+        String nodeStatement = "MATCH (n) RETURN id(n) as id";
+        String relStatement =
+                "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight " +
+                "UNION ALL "+
+                "MATCH (n)-[r:REL]->(m) RETURN id(n) as source, id(m) as target, r.prop as weight ";
 
         loadAndTestGraph(nodeStatement, relStatement, false);
     }
 
     private void loadAndTestGraph(String nodeStatement, String relStatement, boolean accumulateWeights) {
         final Graph graph = new GraphLoader((GraphDatabaseAPI) db)
-                .withExecutorService(Pools.DEFAULT)
                 .withBatchSize(1000)
                 .withDuplicateRelationshipsStrategy(accumulateWeights ? DuplicateRelationshipsStrategy.SUM : DuplicateRelationshipsStrategy.NONE)
                 .withRelationshipWeightsFromProperty("prop",0d)
