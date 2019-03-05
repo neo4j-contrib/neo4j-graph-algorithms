@@ -31,10 +31,17 @@ import static java.util.Collections.singletonMap;
 
 public class ListProc {
 
-    private static final String QUERY = "CALL dbms.procedures() " +
+    private static final String QUERY =
+            " CALL dbms.procedures() " +
             " YIELD name, signature, description " +
             " WHERE name starts with 'algo.' AND name <> 'algo.list' AND ($name IS NULL OR name CONTAINS $name) " +
-            " RETURN name, signature, description ORDER BY name";
+            " RETURN name, signature, description, 'procedure' AS type " +
+            " ORDER BY name UNION " +
+            " CALL dbms.functions() " +
+            " YIELD name, signature, description " +
+            " WHERE name starts with 'algo.' AND ($name IS NULL OR name CONTAINS $name) " +
+            " RETURN name, signature, description, 'function' AS type " +
+            " ORDER BY name";
 
     @Context
     public GraphDatabaseService db;
@@ -49,11 +56,13 @@ public class ListProc {
         public String name;
         public String description;
         public String signature;
+        public String type;
 
         public ListResult(Map<String, Object> row) {
             this.name = (String) row.get("name");
             this.description = (String) row.get("description");
             this.signature = (String) row.get("signature");
+            this.type = (String) row.get("type");
         }
     }
 }
