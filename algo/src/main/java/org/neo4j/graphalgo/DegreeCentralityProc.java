@@ -64,8 +64,8 @@ public final class DegreeCentralityProc {
     @Procedure(value = "algo.degree", mode = Mode.WRITE)
     @Description("CALL algo.degree(label:String, relationship:String, " +
             "{ weightProperty: null, write: true, writeProperty:'degree', concurrency:4}) " +
-            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
-            " - calculates page rank and potentially writes back")
+            "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, writeProperty" +
+            " - calculates degree centrality and potentially writes back")
     public Stream<DegreeCentralityScore.Stats> degree(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
@@ -103,7 +103,7 @@ public final class DegreeCentralityProc {
     @Procedure(value = "algo.degree.stream", mode = Mode.READ)
     @Description("CALL algo.degree.stream(label:String, relationship:String, " +
             "{weightProperty: null, concurrency:4}) " +
-            "YIELD node, score - calculates page rank and streams results")
+            "YIELD node, score - calculates degree centrality and streams results")
     public Stream<DegreeCentralityScore> degreeStream(
             @Name(value = "label", defaultValue = "") String label,
             @Name(value = "relationship", defaultValue = "") String relationship,
