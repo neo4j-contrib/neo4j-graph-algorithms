@@ -27,12 +27,12 @@ public interface PageRankVariant {
                                   RelationshipIterator relationshipIterator,
                                   WeightedRelationshipIterator weightedRelationshipIterator, Degrees degrees,
                                   int partitionCount, int start,
-                                  DegreeCache degreeCache);
+                                  DegreeCache degreeCache, long nodeCount);
 
     HugeComputeStep createHugeComputeStep(double dampingFactor, long[] sourceNodeIds,
                                           HugeRelationshipIterator relationshipIterator, HugeDegrees degrees,
                                           HugeRelationshipWeights relationshipWeights, AllocationTracker tracker,
-                                          int partitionCount, long start, DegreeCache aggregatedDegrees);
+                                          int partitionCount, long start, DegreeCache aggregatedDegrees, long nodeCount);
 
     DegreeComputer degreeComputer(Graph graph);
 

@@ -24,11 +24,10 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.pagerank.DegreeCentralityAlgorithm;
 import org.neo4j.graphalgo.impl.results.CentralityResult;
-import org.neo4j.graphalgo.impl.results.PrimitiveDoubleArrayResult;
+import org.neo4j.graphalgo.impl.results.DoubleArrayResult;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -96,7 +95,7 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
 
     @Override
     public CentralityResult result() {
-        return new PrimitiveDoubleArrayResult(degrees);
+        return new DoubleArrayResult(degrees);
     }
 
     @Override

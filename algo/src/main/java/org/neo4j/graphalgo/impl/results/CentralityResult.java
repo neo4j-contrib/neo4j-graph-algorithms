@@ -27,4 +27,10 @@ public interface CentralityResult {
     double score(long nodeId);
 
     void export(String propertyName, Exporter exporter);
+
+    double computeMax();
+
+    double computeL2Norm();
+
+    double computeL1Norm();
 }

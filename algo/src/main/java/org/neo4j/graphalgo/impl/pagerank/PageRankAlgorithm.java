@@ -22,15 +22,27 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
 
 import java.util.concurrent.ExecutorService;
 import java.util.stream.LongStream;
 
 public interface PageRankAlgorithm {
 
+
+    static PageRankAlgorithm eigenvectorCentralityOf(Graph graph, LongStream sourceNodeIds) {
+        PageRankVariant pageRankVariant = new EigenvectorCentralityVariant();
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(AllocationTracker.EMPTY, huge, 1.0, sourceNodeIds, pageRankVariant);
+        }
+
+        return new PageRank(graph, 1.0, sourceNodeIds, pageRankVariant);
+    }
+
     PageRankAlgorithm compute(int iterations);
 
-    PageRankResult result();
+    CentralityResult result();
 
     Algorithm<?> algorithm();
 
@@ -209,4 +221,37 @@ public interface PageRankAlgorithm {
                 sourceNodeIds,
                 pageRankVariant);
     }
+
+    static PageRankAlgorithm eigenvectorCentralityOf(AllocationTracker tracker,
+                                                     Graph graph,
+                                                     LongStream sourceNodeIds,
+                                                     ExecutorService pool,
+                                                     int concurrency,
+                                                     int batchSize) {
+        PageRankVariant variant = new EigenvectorCentralityVariant();
+        if (graph instanceof HugeGraph) {
+            HugeGraph huge = (HugeGraph) graph;
+            return new HugePageRank(
+                    pool,
+                    concurrency,
+                    batchSize,
+                    tracker,
+                    huge,
+                    1.0,
+                    sourceNodeIds,
+                    variant
+            );
+        } else {
+
+            return new PageRank(pool,
+                    concurrency,
+                    batchSize,
+                    graph,
+                    1.0,
+                    sourceNodeIds,
+                    variant);
+        }
+    }
+
+
 }

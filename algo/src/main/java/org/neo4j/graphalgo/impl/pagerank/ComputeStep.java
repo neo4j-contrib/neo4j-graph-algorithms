@@ -28,4 +28,8 @@ public interface ComputeStep extends Runnable {
     void setStarts(int[] startArray, int[] lengthArray);
 
     void prepareNextIteration(int[][] score);
+
+    void prepareNormalizeDeltas(double l2Norm);
+
+    double[] deltas();
 }

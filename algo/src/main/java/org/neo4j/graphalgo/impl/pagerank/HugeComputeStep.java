@@ -28,4 +28,8 @@ public interface HugeComputeStep extends Runnable {
     int[][] nextScores();
 
     void setStarts(long[] startArray, int[] lengthArray);
+
+    double[] deltas();
+
+    void prepareNormalizeDeltas(double l2Norm);
 }

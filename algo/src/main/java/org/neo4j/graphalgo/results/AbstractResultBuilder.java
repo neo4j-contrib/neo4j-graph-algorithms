@@ -20,9 +20,6 @@ package org.neo4j.graphalgo.results;
 
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 
-/**
- * @author mknblch
- */
 public abstract class AbstractResultBuilder<R> {
 
     protected long loadDuration = -1;
