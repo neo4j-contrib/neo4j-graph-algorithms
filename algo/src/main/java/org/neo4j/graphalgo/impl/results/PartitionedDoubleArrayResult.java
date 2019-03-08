@@ -31,7 +31,6 @@ public final class PartitionedDoubleArrayResult implements CentralityResult, Pro
         export(propertyName, exporter);
     }
 
-
     @Override
     public double computeMax() {
         return NormalizationComputations.max(partitions);
