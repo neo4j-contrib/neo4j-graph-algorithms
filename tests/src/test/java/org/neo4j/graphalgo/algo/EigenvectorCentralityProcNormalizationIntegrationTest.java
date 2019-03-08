@@ -189,8 +189,6 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
                         (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
-        System.out.println("actual = " + actual);
-
         assertMapEquals(l2NormExpected, actual);
     }
 
@@ -207,7 +205,24 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
                         (Long)row.get("nodeId"),
                         (Double) row.get("score")));
 
-        System.out.println("actual = " + actual);
+        assertMapEquals(l1NormExpected, actual);
+    }
+
+    @Test
+    public void l1NormWrite() throws Exception {
+        final Map<Long, Double> actual = new HashMap<>();
+        runQuery(
+                "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {direction: 'BOTH', normalization: 'l1Norm', writeProperty: 'eigen'}) ",
+                row -> {});
+
+        runQuery(
+                "MATCH (c:Character) " +
+                       "RETURN id(c) AS nodeId, c.eigen AS score " +
+                       "ORDER BY score DESC " +
+                       "LIMIT 10",
+                row -> actual.put(
+                        (Long)row.get("nodeId"),
+                        (Double) row.get("score")));
 
         assertMapEquals(l1NormExpected, actual);
     }
