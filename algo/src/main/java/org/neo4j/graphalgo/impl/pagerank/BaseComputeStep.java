@@ -27,6 +27,7 @@ public abstract class BaseComputeStep implements ComputeStep {
     private static final int S_INIT = 0;
     private static final int S_CALC = 1;
     private static final int S_SYNC = 2;
+    private static final int S_NORM = 3;
 
     private int state;
 
@@ -38,14 +39,15 @@ public abstract class BaseComputeStep implements ComputeStep {
     private final double alpha;
     private final double dampingFactor;
 
-    private double[] pageRank;
+    double[] pageRank;
     double[] deltas;
     int[][] nextScores;
     private int[][] prevScores;
 
-    private final int partitionSize;
+    final int partitionSize;
     final int startNode;
     final int endNode;
+    double l2Norm;
 
     BaseComputeStep(
             double dampingFactor,
@@ -75,6 +77,9 @@ public abstract class BaseComputeStep implements ComputeStep {
             state = S_SYNC;
         } else if (state == S_SYNC) {
             synchronizeScores(combineScores());
+            state = S_NORM;
+        } else if(state == S_NORM) {
+            normalizeDeltas();
             state = S_CALC;
         } else if (state == S_INIT) {
             initialize();
@@ -82,14 +87,17 @@ public abstract class BaseComputeStep implements ComputeStep {
         }
     }
 
+    void normalizeDeltas() {}
+
     private void initialize() {
         this.nextScores = new int[starts.length][];
         Arrays.setAll(nextScores, i -> new int[lengths[i]]);
 
         double[] partitionRank = new double[partitionSize];
 
+        double initialValue = initialValue();
         if(sourceNodeIds.length == 0) {
-            Arrays.fill(partitionRank, alpha);
+            Arrays.fill(partitionRank, initialValue);
         } else {
             Arrays.fill(partitionRank,0);
 
@@ -98,7 +106,7 @@ public abstract class BaseComputeStep implements ComputeStep {
                     .toArray();
 
             for (int sourceNodeId : partitionSourceNodeIds) {
-                partitionRank[sourceNodeId - this.startNode] = alpha;
+                partitionRank[sourceNodeId - this.startNode] = initialValue;
             }
         }
 
@@ -107,7 +115,16 @@ public abstract class BaseComputeStep implements ComputeStep {
         this.deltas = Arrays.copyOf(partitionRank, partitionSize);
     }
 
+    double initialValue() {
+        return alpha;
+    }
+
     abstract void singleIteration();
+
+    @Override
+    public void prepareNormalizeDeltas(double l2Norm) {
+        this.l2Norm = l2Norm;
+    }
 
     public void prepareNextIteration(int[][] prevScores) {
         this.prevScores = prevScores;
@@ -131,7 +148,7 @@ public abstract class BaseComputeStep implements ComputeStep {
         return allScores;
     }
 
-    private void synchronizeScores(int[] allScores) {
+    void synchronizeScores(int[] allScores) {
         double dampingFactor = this.dampingFactor;
         double[] pageRank = this.pageRank;
 
@@ -150,6 +167,12 @@ public abstract class BaseComputeStep implements ComputeStep {
     public int[][] nextScores() {
         return nextScores;
     }
+
+    @Override
+    public double[] deltas() {
+        return deltas;
+    }
+
 
     @Override
     public double[] pageRank() {

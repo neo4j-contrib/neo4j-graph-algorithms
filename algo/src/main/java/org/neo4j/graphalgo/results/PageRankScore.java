@@ -55,7 +55,7 @@ public class PageRankScore {
             this.writeProperty = writeProperty;
         }
 
-        public static final class Builder extends AbstractResultBuilder<Stats> {
+        public static final class Builder extends AbstractWriteBuilder<Stats> {
             private long nodes;
             private long iterations;
             private double dampingFactor;
@@ -77,11 +77,13 @@ public class PageRankScore {
                 return this;
             }
 
+            @Override
             public Builder withWrite(boolean write) {
                 this.write = write;
                 return this;
             }
 
+            @Override
             public Builder withProperty(String writeProperty) {
                 this.writeProperty = writeProperty;
                 return this;

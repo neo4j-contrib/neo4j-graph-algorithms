@@ -18,12 +18,12 @@
  */
 package org.neo4j.graphalgo.results;
 
-public class DegreeCentralityScore {
+public class CentralityScore {
 
     public final long nodeId;
     public final Double score;
 
-    public DegreeCentralityScore(long nodeId, final Double score) {
+    public CentralityScore(long nodeId, final Double score) {
         this.nodeId = nodeId;
         this.score = score;
     }
@@ -50,7 +50,7 @@ public class DegreeCentralityScore {
             this.writeProperty = writeProperty;
         }
 
-        public static final class Builder extends AbstractResultBuilder<Stats> {
+        public static final class Builder extends AbstractWriteBuilder<Stats> {
             private long nodes;
             private boolean write;
             private String writeProperty;
@@ -71,8 +71,8 @@ public class DegreeCentralityScore {
                 return this;
             }
 
-            public DegreeCentralityScore.Stats build() {
-                return new DegreeCentralityScore.Stats(
+            public CentralityScore.Stats build() {
+                return new CentralityScore.Stats(
                         nodes,
                         loadDuration,
                         evalDuration,

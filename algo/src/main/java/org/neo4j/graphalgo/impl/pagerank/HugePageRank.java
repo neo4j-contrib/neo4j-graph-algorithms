@@ -24,14 +24,15 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.api.*;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.write.Exporter;
-import org.neo4j.graphalgo.core.write.PropertyTranslator;
-import org.neo4j.graphalgo.core.write.Translators;
 import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
+import org.neo4j.graphalgo.impl.results.DoubleArrayResult;
+import org.neo4j.graphalgo.impl.results.PartitionedDoubleArrayResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -174,7 +175,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     }
 
     @Override
-    public PageRankResult result() {
+    public CentralityResult result() {
         return computeSteps.getPageRank();
     }
 
@@ -290,7 +291,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                     tracker,
                     partitionSize,
                     start,
-                    degreeCache));
+                    degreeCache, nodeCount));
         }
 
         long[] startArray = starts.toArray();
@@ -477,7 +478,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             }
         }
 
-        PageRankResult getPageRank() {
+        CentralityResult getPageRank() {
             HugeComputeStep firstStep = steps.get(0);
             if (steps.size() > 1) {
                 double[][] results = new double[steps.size()][];
@@ -500,11 +501,37 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
                 getProgressLogger().logProgress(++op, operations, tracker);
-                synchronizeScores();
+
                 // sync scores
+                synchronizeScores();
+                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                getProgressLogger().logProgress(++op, operations, tracker);
+
+                // normalize deltas
+                normalizeDeltas();
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
                 getProgressLogger().logProgress(++op, operations, tracker);
             }
+        }
+
+        private void normalizeDeltas() {
+            double l2Norm = computeNorm();
+
+            for (HugeComputeStep step : steps) {
+                step.prepareNormalizeDeltas(l2Norm);
+            }
+        }
+
+        private double computeNorm() {
+            double l2Norm = 0.0;
+            for (HugeComputeStep step : steps) {
+                double[] deltas = step.deltas();
+                l2Norm += Arrays.stream(deltas).parallel().map(score -> score * score).sum();
+            }
+
+            l2Norm = Math.sqrt(l2Norm);
+            l2Norm = l2Norm < 0 ? 1: l2Norm;
+            return l2Norm;
         }
 
         private void synchronizeScores() {
@@ -537,63 +564,4 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         }
     }
 
-    private static final class PartitionedDoubleArrayResult implements PageRankResult, PropertyTranslator.OfDouble<double[][]> {
-        private final double[][] partitions;
-        private final long[] starts;
-
-        private PartitionedDoubleArrayResult(
-                double[][] partitions,
-                long[] starts) {
-            this.partitions = partitions;
-            this.starts = starts;
-        }
-
-        @Override
-        public void export(final String propertyName, final Exporter exporter) {
-            exporter.write(propertyName, partitions, this);
-        }
-
-        @Override
-        public double toDouble(final double[][] data, final long nodeId) {
-            int idx = binaryLookup(nodeId, starts);
-            return data[idx][(int) (nodeId - starts[idx])];
-        }
-
-        @Override
-        public double score(final long nodeId) {
-            return toDouble(partitions, nodeId);
-        }
-
-        @Override
-        public double score(final int nodeId) {
-            return score((long) nodeId);
-        }
-    }
-
-    private static final class DoubleArrayResult implements PageRankResult {
-        private final double[] result;
-
-        private DoubleArrayResult(double[] result) {
-            this.result = result;
-        }
-
-        @Override
-        public void export(
-                final String propertyName, final Exporter exporter) {
-            exporter.write(
-                    propertyName,
-                    result,
-                    Translators.DOUBLE_ARRAY_TRANSLATOR);
-        }
-
-        @Override
-        public final double score(final long nodeId) {
-            return result[(int) nodeId];
-        }
-
-        @Override
-        public double score(final int nodeId) {
-            return result[nodeId];
-        }
-    }
 }
