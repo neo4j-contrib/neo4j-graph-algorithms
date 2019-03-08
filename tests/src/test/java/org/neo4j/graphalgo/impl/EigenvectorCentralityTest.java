@@ -136,12 +136,12 @@ public final class EigenvectorCentralityTest {
         final Map<Long, Double> expected = new HashMap<>();
 
         try (Transaction tx = db.beginTx()) {
-            expected.put(db.findNode(label, "name", "a").getId(), 2.2569099999999995);
-            expected.put(db.findNode(label, "name", "b").getId(), 38.549220000000005);
-            expected.put(db.findNode(label, "name", "c").getId(), 37.33797);
-            expected.put(db.findNode(label, "name", "d").getId(), 2.2569099999999995);
-            expected.put(db.findNode(label, "name", "e").getId(), 2.2569099999999995);
-            expected.put(db.findNode(label, "name", "f").getId(), 2.2569099999999995);
+            expected.put(db.findNode(label, "name", "a").getId(), 1.762540000000000);
+            expected.put(db.findNode(label, "name", "b").getId(), 31.156790000000008);
+            expected.put(db.findNode(label, "name", "c").getId(), 28.694439999999993);
+            expected.put(db.findNode(label, "name", "d").getId(), 1.7625400000000004);
+            expected.put(db.findNode(label, "name", "e").getId(), 1.7625400000000004);
+            expected.put(db.findNode(label, "name", "f").getId(), 1.7625400000000004);
             expected.put(db.findNode(label, "name", "g").getId(), 0.1);
             expected.put(db.findNode(label, "name", "h").getId(), 0.1);
             expected.put(db.findNode(label, "name", "i").getId(), 0.1);
@@ -167,6 +167,8 @@ public final class EigenvectorCentralityTest {
                 .eigenvectorCentralityOf(graph, LongStream.empty())
                 .compute(40)
                 .result();
+
+
 
         IntStream.range(0, expected.size()).forEach(i -> {
             final long nodeId = graph.toOriginalNodeId(i);
