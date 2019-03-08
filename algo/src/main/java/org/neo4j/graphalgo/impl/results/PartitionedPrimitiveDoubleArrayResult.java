@@ -1,7 +1,10 @@
 package org.neo4j.graphalgo.impl.results;
 
+import org.neo4j.graphalgo.CentralityUtils;
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
+
+import java.util.function.Function;
 
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
@@ -28,9 +31,14 @@ public final class PartitionedPrimitiveDoubleArrayResult implements CentralityRe
     }
 
     @Override
+    public void export(String propertyName, Exporter exporter, Function<Double, Double> normalizationFunction) {
+        CentralityUtils.normalizeArray(partitions, normalizationFunction);
+        export(propertyName, exporter);
+    }
+
+    @Override
     public double computeMax() {
         return NormalizationComputations.max(partitions);
-
     }
 
     @Override

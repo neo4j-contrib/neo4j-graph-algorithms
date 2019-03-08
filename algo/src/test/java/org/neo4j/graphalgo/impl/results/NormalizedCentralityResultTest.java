@@ -2,10 +2,10 @@ package org.neo4j.graphalgo.impl.results;
 
 import org.junit.Test;
 import org.neo4j.graphalgo.Normalization;
+import org.neo4j.graphalgo.core.write.Exporter;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class NormalizedCentralityResultTest {
     @Test

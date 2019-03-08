@@ -15,6 +15,7 @@ import org.neo4j.graphalgo.results.PageRankScore;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -62,5 +63,13 @@ public class CentralityUtils {
                             scores.score(i)
                     );
                 });
+    }
+
+    public static void normalizeArray(double[][] partitions, Function<Double, Double> normalizationFunction) {
+        for (double[] partition : partitions) {
+            for (int j = 0; j < partition.length; j++) {
+                partition[j] = normalizationFunction.apply(partition[j]);
+            }
+        }
     }
 }

@@ -14,8 +14,8 @@ public  class NormalizedCentralityResult implements CentralityResult {
     }
 
     @Override
-    public void export(String propertyName, Exporter exporter) {
-        result.export(propertyName, exporter);
+    public void export(String propertyName, Exporter exporter, Function<Double, Double> normalizationFunction) {
+        result.export(propertyName, exporter, normalizationFunction);
     }
 
     @Override
@@ -26,6 +26,11 @@ public  class NormalizedCentralityResult implements CentralityResult {
     @Override
     public double score(long nodeId) {
         return normalizationFunction.apply(result.score(nodeId));
+    }
+
+    @Override
+    public void export(String propertyName, Exporter exporter) {
+        export(propertyName, exporter, normalizationFunction);
     }
 
     @Override
