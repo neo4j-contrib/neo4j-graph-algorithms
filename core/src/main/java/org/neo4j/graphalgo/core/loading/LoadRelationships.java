@@ -104,7 +104,7 @@ final class LoadAllRelationships implements LoadRelationships {
         return countAll(cursor, cursors);
     }
 
-    private static int countAll(NodeCursor nodeCursor, CursorFactory cursors) {
+    private int countAll(NodeCursor nodeCursor, CursorFactory cursors) {
         Set<Pair<Long, Long>> sourceTargetPairs = new HashSet<>();
 
         try (RelationshipTraversalCursor traversal = cursors.allocateRelationshipTraversalCursor()) {
@@ -166,7 +166,7 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
         return countAll(cursor, cursors, type);
     }
 
-    public static int countAll( NodeCursor nodeCursor, CursorFactory cursors, int type )
+    public int countAll( NodeCursor nodeCursor, CursorFactory cursors, int type )
     {
         Set<Pair<Long, Long>> sourceTargetPairs = new HashSet<>();
 
