@@ -230,20 +230,18 @@ public class EigenvectorCentralityProcIntegrationTest {
     @Test
     public void testParallelExecution() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
-        String query = "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {batchSize:2, concurrency:8, graph:'" + graphImpl + "', direction: 'BOTH'}) " +
-                "YIELD nodeId, score " +
-                "RETURN nodeId, score " +
-                "ORDER BY score DESC " +
-                "LIMIT 10";
-
-        try (Result result = db.execute(query)) {
-            System.out.println(result.resultAsString());
-        }
-
-        runQuery(query, row -> {
+        runQuery(
+                "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {batchSize:2, concurrency:8, graph:'"+graphImpl+"', direction: 'BOTH'}) " +
+                        "YIELD nodeId, score " +
+                        "RETURN nodeId, score " +
+                        "ORDER BY score DESC " +
+                        "LIMIT 10",
+                row -> {
                     final long nodeId = row.getNumber("nodeId").longValue();
                     actual.put(nodeId, (Double) row.get("score"));
                 });
+
+        System.out.println(actual);
         assertMapEquals(expected, actual);
     }
 
