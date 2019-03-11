@@ -692,6 +692,7 @@ public final class ParallelUtil {
         // generally assumes that tasks.size is notably larger than concurrency
         try {
             //noinspection StatementWithEmptyBody - add first concurrency tasks
+            System.out.println("[ParallelUtil#runWithConcurrency] submit tasks");
             while (concurrency-- > 0
                     && terminationFlag.running()
                     && completionService.trySubmit(ts));
@@ -701,7 +702,7 @@ public final class ParallelUtil {
             }
 
 
-            System.out.println("[ParallelUtil#runWithConcurrency] submit tasks");
+            System.out.println("[ParallelUtil#runWithConcurrency] submit more tasks");
             // submit all remaining tasks
             int tries = 0;
             while (ts.hasNext()) {
@@ -718,6 +719,7 @@ public final class ParallelUtil {
                 }
                 if (!completionService.trySubmit(ts) && !completionService.hasTasks()) {
                     if (++tries >= maxWaitRetries) {
+                        System.out.println("[ParallelUtil#runWithConcurrency] exceeded max wait retriesS");
                         break;
                     }
                     LockSupport.parkNanos(waitNanos);
