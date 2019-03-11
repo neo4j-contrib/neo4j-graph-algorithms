@@ -379,7 +379,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             for (ComputeStep step : steps) {
                 double[] deltas = step.deltas();
                 System.out.println("[norm computation] iteration:" + iteration + ", deltas:" + Arrays.toString(deltas));
-                l2Norm += Arrays.stream(deltas).parallel().map(score -> score * score).sum();
+                l2Norm += Arrays.stream(deltas).map(score -> score * score).sum();
             }
 
             l2Norm = Math.sqrt(l2Norm);
