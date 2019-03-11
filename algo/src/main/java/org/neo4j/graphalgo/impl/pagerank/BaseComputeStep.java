@@ -48,6 +48,7 @@ public abstract class BaseComputeStep implements ComputeStep {
     final int startNode;
     final int endNode;
     double l2Norm;
+    int iteration;
 
     BaseComputeStep(
             double dampingFactor,
@@ -128,6 +129,7 @@ public abstract class BaseComputeStep implements ComputeStep {
     public void prepareNormalizeDeltas(double l2Norm, int iteration) {
 //        System.out.println("l2Norm = " + l2Norm + ", iteration = " + iteration);
         this.l2Norm = l2Norm;
+        this.iteration = iteration;
     }
 
     public void prepareNextIteration(int[][] prevScores) {
