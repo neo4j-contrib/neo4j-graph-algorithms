@@ -87,7 +87,10 @@ public abstract class BaseComputeStep implements ComputeStep {
         }
     }
 
-    void normalizeDeltas() {}
+    void normalizeDeltas() {
+        String name = String.format("[%s,%d,%d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize);
+        System.out.println(name + "\nnothing to normalize");
+    }
 
     private void initialize() {
         this.nextScores = new int[starts.length][];

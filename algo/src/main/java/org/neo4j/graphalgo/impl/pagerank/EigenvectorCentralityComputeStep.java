@@ -99,7 +99,8 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
         for (int i = 0; i < deltas.length; i++) {
             deltas[i] = deltas[i] / l2Norm;
         }
-        System.out.println("norm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
+        String name = String.format("[%s,%d,%d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize);
+        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
 }
