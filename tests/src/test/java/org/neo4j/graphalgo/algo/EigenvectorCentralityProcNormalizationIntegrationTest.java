@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.EigenvectorCentralityProc;
+import org.neo4j.graphalgo.GetNodeFunc;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Result;
@@ -61,6 +62,7 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         db = (GraphDatabaseAPI)new TestGraphDatabaseFactory()
                 .newImpermanentDatabaseBuilder(new File(UUID.randomUUID().toString()))
                 .setConfig(GraphDatabaseSettings.load_csv_file_url_root,file.getParent())
+                .setConfig(GraphDatabaseSettings.procedure_unrestricted,"algo.*")
                 .newGraphDatabase();
 
         try (Transaction tx = db.beginTx()) {
@@ -85,10 +87,15 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
         procedures.registerProcedure(EigenvectorCentralityProc.class);
         procedures.registerProcedure(PageRankProc.class);
+        procedures.registerFunction(GetNodeFunc.class);
 
 
         try (Transaction tx = db.beginTx()) {
             final Label label = Label.label("Character");
+
+//            {101=78.10220999999999, 55=78.80483999999998, 4=80.34709000000002, 92=81.07154, 44=84.45361, 17=91.85616000000002, 115=92.17236999999997, 16=93.7166, 93=97.05329000000002, 75=125.72923999999999}
+
+
             expected.put(db.findNode(label, "name", "Ned").getId(), 111.68570401574802);
             expected.put(db.findNode(label, "name", "Robert").getId(), 88.09448401574804);
             expected.put(db.findNode(label, "name", "Cersei").getId(), 		84.59226401574804);
@@ -144,18 +151,42 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         }
     }
 
+    public static <K, V extends Comparable<V>> Map<K, V>
+    sortByValues(final Map<K, V> map) {
+        Comparator<K> valueComparator =
+                new Comparator<K>() {
+                    public int compare(K k1, K k2) {
+                        int compare =
+                                map.get(k1).compareTo(map.get(k2));
+                        if (compare == 0)
+                            return 1;
+                        else
+                            return compare;
+                    }
+                };
+
+        Map<K, V> sortedByValues =
+                new TreeMap<K, V>(valueComparator);
+        sortedByValues.putAll(map);
+        return sortedByValues;
+    }
+
     @Test
     public void noNormalizing() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
                 "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {direction: 'BOTH'}) " +
                         "YIELD nodeId, score " +
-                        "RETURN nodeId, score " +
+                        "RETURN nodeId, score, algo.getNodeById(nodeId).name AS name " +
                         "ORDER BY score DESC " +
                         "LIMIT 10",
-                row -> actual.put(
+                row -> {
+                    System.out.println("row = " + row.get("name") + "-> " + row.get("score"));
+                    actual.put(
                         (Long)row.get("nodeId"),
-                        (Double) row.get("score")));
+                        (Double) row.get("score"));});
+
+        System.out.println(sortByValues(actual));
 
         assertMapEquals(expected, actual);
     }
@@ -182,12 +213,16 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         runQuery(
                 "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {direction: 'BOTH', normalization: 'l2Norm'}) " +
                         "YIELD nodeId, score " +
-                        "RETURN nodeId, score " +
+                        "RETURN nodeId, score, algo.getNodeById(nodeId).name AS name " +
                         "ORDER BY score DESC " +
                         "LIMIT 10",
-                row -> actual.put(
+                row -> {
+                    System.out.println("row = " + row.get("name") + "-> " + row.get("score"));
+                    actual.put(
                         (Long)row.get("nodeId"),
-                        (Double) row.get("score")));
+                        (Double) row.get("score"));});
+
+        System.out.println(actual);
 
         assertMapEquals(l2NormExpected, actual);
     }

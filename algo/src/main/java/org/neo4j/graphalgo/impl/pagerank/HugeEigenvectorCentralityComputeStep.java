@@ -29,8 +29,8 @@ import java.util.Arrays;
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
 final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep implements HugeRelationshipConsumer {
-    private final long nodeCount;
     private int srcRankDelta;
+    private final double initialValue;
 
     HugeEigenvectorCentralityComputeStep(
             double dampingFactor,
@@ -48,12 +48,13 @@ final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep imp
                 tracker,
                 partitionSize,
                 startNode);
-        this.nodeCount = nodeCount;
+        initialValue = 1.0 / nodeCount;
+        System.out.println("initialValue = " + initialValue);
     }
 
     @Override
     protected double initialValue() {
-        return 1.0 / nodeCount;
+        return initialValue;
     }
 
     void singleIteration() {

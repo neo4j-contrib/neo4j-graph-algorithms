@@ -31,7 +31,7 @@ import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 final class EigenvectorCentralityComputeStep extends BaseComputeStep implements RelationshipConsumer   {
 
     private final RelationshipIterator relationshipIterator;
-    private final long nodeCount;
+    private double initialValue;
 
     EigenvectorCentralityComputeStep(
             double dampingFactor, int[] sourceNodeIds,
@@ -42,7 +42,8 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
             long nodeCount) {
         super(dampingFactor, sourceNodeIds, degrees, partitionSize, startNode);
         this.relationshipIterator = relationshipIterator;
-        this.nodeCount = nodeCount;
+        this.initialValue = 1.0 / nodeCount;
+        System.out.println("initialValue = " + initialValue);
     }
 
     private int srcRankDelta;
@@ -75,7 +76,7 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
 
     @Override
     protected double initialValue() {
-        return 1.0 / nodeCount;
+        return initialValue;
     }
 
     @Override
