@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
+ * <p>
  * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
+ * <p>
  * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
 
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
-final class EigenvectorCentralityComputeStep extends BaseComputeStep implements RelationshipConsumer   {
+final class EigenvectorCentralityComputeStep extends BaseComputeStep implements RelationshipConsumer {
 
     private final RelationshipIterator relationshipIterator;
     private double initialValue;
@@ -80,6 +80,8 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
 
     @Override
     void synchronizeScores(int[] allScores) {
+        double[] before = deltas.clone();
+
         double[] pageRank = this.pageRank;
 
         int length = allScores.length;
@@ -91,16 +93,19 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
             deltas[i] = delta;
             allScores[i] = 0;
         }
+
+        String name = String.format("[%s,%d,%d, %d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
+        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
     @Override
     void normalizeDeltas() {
-        double[] before = deltas.clone();
+//        double[] before = deltas.clone();
         for (int i = 0; i < deltas.length; i++) {
             deltas[i] = deltas[i] / l2Norm;
         }
-        String name = String.format("[%s,%d,%d, %d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
-        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
+//        String name = String.format("[%s,%d,%d, %d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
+//        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
 }
