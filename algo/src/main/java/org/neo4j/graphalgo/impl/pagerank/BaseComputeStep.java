@@ -73,7 +73,7 @@ public abstract class BaseComputeStep implements ComputeStep {
 
     @Override
     public void run() {
-        String name = String.format("[%s,%d,%d]\nrun with current state: %s", this.getClass().getSimpleName(), this.startNode, this.partitionSize,state);
+        String name = String.format("[%s,%d,%d,%d,run]\nrun with current state: %s", this.getClass().getSimpleName(), this.startNode, this.partitionSize,this.iteration, state);
         System.out.println(name);
         if (state == S_CALC) {
             singleIteration();
@@ -90,10 +90,7 @@ public abstract class BaseComputeStep implements ComputeStep {
         }
     }
 
-    void normalizeDeltas() {
-        String name = String.format("[%s,%d,%d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize);
-        System.out.println(name + "\nnothing to normalize");
-    }
+    void normalizeDeltas() {}
 
     private void initialize() {
         this.nextScores = new int[starts.length][];

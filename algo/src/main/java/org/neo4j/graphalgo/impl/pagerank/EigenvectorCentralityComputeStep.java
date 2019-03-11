@@ -94,8 +94,8 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
             allScores[i] = 0;
         }
 
-        String name = String.format("[%s,%d,%d, %d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
-        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
+        String name = String.format("[%s,%d,%d, %d, synchronizeScores]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
+        System.out.println(name + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
     @Override

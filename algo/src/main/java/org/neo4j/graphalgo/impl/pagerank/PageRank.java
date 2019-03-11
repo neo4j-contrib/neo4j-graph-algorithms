@@ -384,7 +384,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
             l2Norm = Math.sqrt(l2Norm);
 
-            System.out.println("[computation] l2Norm = " + l2Norm + ", iteration = " + iteration);
+            System.out.println("[norm computation] iteration:" + iteration  + ", l2Norm: " + l2Norm );
 
             l2Norm = l2Norm <= 0 ? 1 : l2Norm;
             return l2Norm;
