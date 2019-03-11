@@ -221,7 +221,6 @@ public class EigenvectorCentralityProcIntegrationTest {
         runQuery(
                 "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {batchSize:3, concurrency:8, write:true, graph:'"+graphImpl+"', direction: 'BOTH'}) YIELD writeMillis, write, writeProperty, iterations",
                 row -> {
-                    System.out.println("iterations: " + row.get("iterations"));
                     assertTrue(
                         "write time not set",
                         row.getNumber("writeMillis").intValue() >= 0);});

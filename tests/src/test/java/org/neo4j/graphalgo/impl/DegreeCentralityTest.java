@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.impl;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -405,6 +406,7 @@ public final class DegreeCentralityTest {
     }
 
     @Test
+    @Ignore
     public void totalCentrality() throws Exception {
         final Label label = Label.label("Label1");
         final Map<Long, Double> expected = new HashMap<>();
