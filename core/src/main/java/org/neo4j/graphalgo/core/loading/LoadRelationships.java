@@ -100,8 +100,8 @@ final class LoadAllRelationships implements LoadRelationships {
 
     @Override
     public int degreeBoth(final NodeCursor cursor) {
-        return Nodes.countAll(cursor, cursors);
-//        return countAll(cursor, cursors);
+//        return Nodes.countAll(cursor, cursors);
+        return countAll(cursor, cursors);
     }
 
     private int countAll(NodeCursor nodeCursor, CursorFactory cursors) {
@@ -163,8 +163,8 @@ final class LoadRelationshipsOfSingleType implements LoadRelationships {
 
     @Override
     public int degreeBoth(final NodeCursor cursor) {
-        return Nodes.countAll(cursor, cursors, type);
-//        return countAll(cursor, cursors, type);
+//        return Nodes.countAll(cursor, cursors, type);
+        return countAll(cursor, cursors, type);
     }
 
     public int countAll( NodeCursor nodeCursor, CursorFactory cursors, int type )

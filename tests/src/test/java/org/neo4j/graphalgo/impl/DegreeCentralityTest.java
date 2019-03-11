@@ -406,7 +406,6 @@ public final class DegreeCentralityTest {
     }
 
     @Test
-    @Ignore
     public void totalCentrality() throws Exception {
         final Label label = Label.label("Label1");
         final Map<Long, Double> expected = new HashMap<>();
