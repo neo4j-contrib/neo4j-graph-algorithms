@@ -43,7 +43,6 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
         super(dampingFactor, sourceNodeIds, degrees, partitionSize, startNode);
         this.relationshipIterator = relationshipIterator;
         this.initialValue = 1.0 / nodeCount;
-        System.out.println("startNode:" + startNode + "," + partitionSize);
     }
 
     private int srcRankDelta;
@@ -96,9 +95,11 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
 
     @Override
     void normalizeDeltas() {
+        double[] before = deltas.clone();
         for (int i = 0; i < deltas.length; i++) {
             deltas[i] = deltas[i] / l2Norm;
         }
+        System.out.println("norm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
 }
