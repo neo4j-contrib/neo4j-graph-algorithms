@@ -122,8 +122,8 @@ public abstract class BaseComputeStep implements ComputeStep {
     abstract void singleIteration();
 
     @Override
-    public void prepareNormalizeDeltas(double l2Norm) {
-        System.out.println("l2Norm = " + l2Norm);
+    public void prepareNormalizeDeltas(double l2Norm, int iteration) {
+//        System.out.println("l2Norm = " + l2Norm + ", iteration = " + iteration);
         this.l2Norm = l2Norm;
     }
 

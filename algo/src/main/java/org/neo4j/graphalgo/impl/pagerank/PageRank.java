@@ -351,7 +351,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private void run(int iterations) {
             // initialize data structures
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
-            for (int i = 0; i < iterations && running(); i++) {
+            for (int iteration = 0; iteration < iterations && running(); iteration++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
 
@@ -360,20 +360,20 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
 
                 // normalize deltas
-                normalizeDeltas();
+                normalizeDeltas(iteration);
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             }
         }
 
-        private void normalizeDeltas() {
-            double l2Norm = computeNorm();
+        private void normalizeDeltas(int iteration) {
+            double l2Norm = computeNorm(iteration);
 
             for (ComputeStep step : steps) {
-                step.prepareNormalizeDeltas(l2Norm);
+                step.prepareNormalizeDeltas(l2Norm, iteration);
             }
         }
 
-        private double computeNorm() {
+        private double computeNorm(int iteration) {
             double l2Norm = 0.0;
             for (ComputeStep step : steps) {
                 double[] deltas = step.deltas();
@@ -381,6 +381,9 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             }
 
             l2Norm = Math.sqrt(l2Norm);
+
+            System.out.println("[computation] l2Norm = " + l2Norm + ", iteration = " + iteration);
+
             l2Norm = l2Norm < 0 ? 1: l2Norm;
             return l2Norm;
         }
