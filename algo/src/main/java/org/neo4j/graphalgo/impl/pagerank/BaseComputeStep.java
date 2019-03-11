@@ -123,6 +123,7 @@ public abstract class BaseComputeStep implements ComputeStep {
 
     @Override
     public void prepareNormalizeDeltas(double l2Norm) {
+        System.out.println("l2Norm = " + l2Norm);
         this.l2Norm = l2Norm;
     }
 
