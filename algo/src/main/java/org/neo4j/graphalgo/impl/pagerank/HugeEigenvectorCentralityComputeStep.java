@@ -49,7 +49,6 @@ final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep imp
                 partitionSize,
                 startNode);
         initialValue = 1.0 / nodeCount;
-        System.out.println("initialValue = " + initialValue);
     }
 
     @Override
