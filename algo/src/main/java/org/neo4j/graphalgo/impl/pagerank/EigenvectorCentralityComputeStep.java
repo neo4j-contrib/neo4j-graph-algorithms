@@ -43,6 +43,7 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
         super(dampingFactor, sourceNodeIds, degrees, partitionSize, startNode);
         this.relationshipIterator = relationshipIterator;
         this.initialValue = 1.0 / nodeCount;
+        System.out.println("startNode:" + startNode + "," + partitionSize);
     }
 
     private int srcRankDelta;
