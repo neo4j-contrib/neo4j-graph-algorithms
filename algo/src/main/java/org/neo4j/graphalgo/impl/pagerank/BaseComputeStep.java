@@ -73,6 +73,8 @@ public abstract class BaseComputeStep implements ComputeStep {
 
     @Override
     public void run() {
+        String name = String.format("[%s,%d,%d]\nrun with current state: %s", this.getClass().getSimpleName(), this.startNode, this.partitionSize,state);
+        System.out.println(name);
         if (state == S_CALC) {
             singleIteration();
             state = S_SYNC;
