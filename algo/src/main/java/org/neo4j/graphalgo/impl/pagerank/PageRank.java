@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2017 "Neo4j, Inc." <http://neo4j.com>
- *
+ * <p>
  * This file is part of Neo4j Graph Algorithms <http://github.com/neo4j-contrib/neo4j-graph-algorithms>.
- *
+ * <p>
  * Neo4j Graph Algorithms is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -94,8 +94,8 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
      * {@link #PageRank(ExecutorService, int, int, IdMapping, NodeIterator, RelationshipIterator, Degrees, double)}
      */
     PageRank(Graph graph,
-            double dampingFactor,
-            LongStream sourceNodeIds,
+             double dampingFactor,
+             LongStream sourceNodeIds,
              PageRankVariant pageRankVariant) {
         this(
                 null,
@@ -105,7 +105,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 dampingFactor,
                 sourceNodeIds,
                 pageRankVariant
-                );
+        );
     }
 
     /**
@@ -375,8 +375,10 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private double computeNorm(int iteration) {
             double l2Norm = 0.0;
+            System.out.println("[norm computation] iteration:" + iteration);
             for (ComputeStep step : steps) {
                 double[] deltas = step.deltas();
+                System.out.println("[norm computation] iteration:" + iteration + ", deltas:" + Arrays.toString(deltas));
                 l2Norm += Arrays.stream(deltas).parallel().map(score -> score * score).sum();
             }
 
@@ -384,7 +386,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
             System.out.println("[computation] l2Norm = " + l2Norm + ", iteration = " + iteration);
 
-            l2Norm = l2Norm < 0 ? 1: l2Norm;
+            l2Norm = l2Norm < 0 ? 1 : l2Norm;
             return l2Norm;
         }
 
