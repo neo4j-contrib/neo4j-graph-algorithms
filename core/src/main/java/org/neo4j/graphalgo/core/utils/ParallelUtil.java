@@ -671,6 +671,7 @@ public final class ParallelUtil {
             int maxWaitRetries,
             TerminationFlag terminationFlag,
             ExecutorService executor) {
+        System.out.println("[ParallelUtil#runWithConcurrency] running with " + tasks.size() + " tasks" + ", and concurrency of " + concurrency);
         if (!canRunInParallel(executor)
                 || tasks.size() == 1
                 || concurrency <= 1) {
@@ -691,6 +692,7 @@ public final class ParallelUtil {
         // generally assumes that tasks.size is notably larger than concurrency
         try {
             //noinspection StatementWithEmptyBody - add first concurrency tasks
+            System.out.println("[ParallelUtil#runWithConcurrency] submit tasks");
             while (concurrency-- > 0
                     && terminationFlag.running()
                     && completionService.trySubmit(ts));
@@ -700,6 +702,7 @@ public final class ParallelUtil {
             }
 
 
+            System.out.println("[ParallelUtil#runWithConcurrency] submit more tasks");
             // submit all remaining tasks
             int tries = 0;
             while (ts.hasNext()) {
@@ -716,15 +719,18 @@ public final class ParallelUtil {
                 }
                 if (!completionService.trySubmit(ts) && !completionService.hasTasks()) {
                     if (++tries >= maxWaitRetries) {
+                        System.out.println("[ParallelUtil#runWithConcurrency] exceeded max wait retriesS");
                         break;
                     }
                     LockSupport.parkNanos(waitNanos);
                 }
             }
 
+            System.out.println("[ParallelUtil#runWithConcurrency] wait for tasks");
             // wait for all tasks to finish
             while (completionService.hasTasks() && terminationFlag.running()) {
                 try {
+                    System.out.println("[ParallelUtil#runWithConcurrency] waiting for next task");
                     completionService.awaitNext();
                 } catch (ExecutionException e) {
                     error = Exceptions.chain(error, e.getCause());
@@ -736,6 +742,7 @@ public final class ParallelUtil {
         } finally {
             finishRunWithConcurrency(completionService, error);
         }
+        System.out.println("[ParallelUtil#runWithConcurrency] finished running with " + tasks.size() + " tasks");
     }
 
     private static void finishRunWithConcurrency(
@@ -912,6 +919,7 @@ public final class ParallelUtil {
                 executor.execute(future);
                 return true;
             }
+            System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task " + task);
             return false;
         }
 
@@ -930,7 +938,13 @@ public final class ParallelUtil {
 
         private boolean canSubmit() {
             int activeCount = pool.getActiveCount();
-            return pool == null || activeCount < availableConcurrency;
+            boolean canSubmit = pool == null || activeCount < availableConcurrency;
+
+            if(!canSubmit) {
+                System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
+            }
+
+            return canSubmit;
         }
 
         private void stopFutures(Collection<Future<Void>> futures) {

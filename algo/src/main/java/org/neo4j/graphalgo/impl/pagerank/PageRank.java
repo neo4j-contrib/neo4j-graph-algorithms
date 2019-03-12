@@ -350,18 +350,26 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private void run(int iterations) {
             // initialize data structures
+            System.out.println("[pre iterations] init data structures");
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             for (int iteration = 0; iteration < iterations && running(); iteration++) {
+                System.out.println("-------");
+                System.out.println("[iteration started] iteration:" + iteration);
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
 
                 // sync scores
+                System.out.println("[sync scores] iteration:" + iteration + ", steps:" + steps.size());
                 synchronizeScores();
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
 
                 // normalize deltas
+                System.out.println("[norm computation] iteration:" + iteration + ", steps:" + steps.size());
                 normalizeDeltas(iteration);
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+
+                System.out.println("[iteration finished] iteration:" + iteration);
+                System.out.println("-------");
             }
         }
 
@@ -377,10 +385,13 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             double l2Norm = 0.0;
             for (ComputeStep step : steps) {
                 double[] deltas = step.deltas();
+                System.out.println("[norm computation] iteration:" + iteration + ", deltas:" + Arrays.toString(deltas));
                 l2Norm += Arrays.stream(deltas).map(score -> score * score).sum();
             }
 
             l2Norm = Math.sqrt(l2Norm);
+
+            System.out.println("[norm computation] iteration:" + iteration  + ", l2Norm: " + l2Norm );
 
             l2Norm = l2Norm <= 0 ? 1 : l2Norm;
             return l2Norm;

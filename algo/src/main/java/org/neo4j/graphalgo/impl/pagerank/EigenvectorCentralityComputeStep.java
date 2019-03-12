@@ -93,13 +93,19 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
             deltas[i] = delta;
             allScores[i] = 0;
         }
+
+        String name = String.format("[%s,%d,%d, %d, synchronizeScores]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
+        System.out.println(name + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
     @Override
     void normalizeDeltas() {
+//        double[] before = deltas.clone();
         for (int i = 0; i < deltas.length; i++) {
             deltas[i] = deltas[i] / l2Norm;
         }
+//        String name = String.format("[%s,%d,%d, %d]", this.getClass().getSimpleName(), this.startNode, this.partitionSize, this.iteration);
+//        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
 }
