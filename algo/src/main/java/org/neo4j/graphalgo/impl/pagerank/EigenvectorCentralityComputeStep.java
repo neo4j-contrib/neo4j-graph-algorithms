@@ -100,4 +100,11 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
         }
     }
 
+    @Override
+    public String toString() {
+        return "EigenvectorCentralityComputeStep{" +
+                "partitionSize=" + partitionSize +
+                ", startNode=" + startNode +
+                '}';
+    }
 }

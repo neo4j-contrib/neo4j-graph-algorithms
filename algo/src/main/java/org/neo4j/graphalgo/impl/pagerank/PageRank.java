@@ -31,6 +31,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 
@@ -353,15 +354,15 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             for (int i = 0; i < iterations && running(); i++) {
                 // calculate scores
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // sync scores
                 synchronizeScores();
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // normalize deltas
                 normalizeDeltas();
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
             }
         }
 

@@ -219,10 +219,12 @@ public class EigenvectorCentralityProcIntegrationTest {
     @Test
     public void testParallelWriteBack() throws Exception {
         runQuery(
-                "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {batchSize:3, write:true, graph:'"+graphImpl+"', direction: 'BOTH'}) YIELD writeMillis, write, writeProperty",
-                row -> assertTrue(
-                        "write time not set",
-                        row.getNumber("writeMillis").intValue() >= 0));
+                "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {batchSize:3, concurrency:2, write:true, graph:'"+graphImpl+"', direction: 'BOTH'}) YIELD writeMillis, write, writeProperty, iterations",
+                row -> {
+                    assertTrue(
+                            "write time not set",
+                            row.getNumber("writeMillis").intValue() >= 0);
+                });
 
         assertResult("eigenvector", expected);
     }

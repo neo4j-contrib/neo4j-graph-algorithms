@@ -42,6 +42,7 @@ public class Pools {
             DEFAULT_CONCURRENCY = definedProcessors;
         } else {
             DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
+//            DEFAULT_CONCURRENCY = 2;
         }
     }
 

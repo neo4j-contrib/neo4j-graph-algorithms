@@ -705,7 +705,9 @@ public final class ParallelUtil {
             while (ts.hasNext()) {
                 if (completionService.hasTasks()) {
                     try {
+                        System.out.println("[ParallelUtil#runWithConcurrency] waiting for task to finish... " + executor);
                         completionService.awaitNext();
+                        System.out.println("[ParallelUtil#runWithConcurrency] task finished... " + executor);
                     } catch (ExecutionException e) {
                         error = Exceptions.chain(error, e.getCause());
                     } catch (CancellationException ignore) {
@@ -882,6 +884,7 @@ public final class ParallelUtil {
             if (executor instanceof ThreadPoolExecutor) {
                 pool = (ThreadPoolExecutor) executor;
                 availableConcurrency = pool.getCorePoolSize();
+//                availableConcurrency = 2;
                 int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
                 completionQueue = new ArrayBlockingQueue<>(capacity);
             } else {
