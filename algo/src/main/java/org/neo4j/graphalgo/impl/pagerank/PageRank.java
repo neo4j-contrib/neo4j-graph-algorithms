@@ -351,48 +351,37 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private void run(int iterations) {
             // initialize data structures
-            System.out.println("[pre iterations] init data structures");
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             for (int iteration = 0; iteration < iterations && running(); iteration++) {
-                System.out.println("-------");
-                System.out.println("[iteration started] iteration:" + iteration);
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // sync scores
-                System.out.println("[sync scores] iteration:" + iteration + ", steps:" + steps.size());
                 synchronizeScores();
                 ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // normalize deltas
-                System.out.println("[norm computation] iteration:" + iteration + ", steps:" + steps.size());
                 normalizeDeltas(iteration);
                 ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
-
-                System.out.println("[iteration finished] iteration:" + iteration);
-                System.out.println("-------");
             }
         }
 
         private void normalizeDeltas(int iteration) {
-            double l2Norm = computeNorm(iteration);
+            double l2Norm = computeNorm();
 
             for (ComputeStep step : steps) {
                 step.prepareNormalizeDeltas(l2Norm, iteration);
             }
         }
 
-        private double computeNorm(int iteration) {
+        private double computeNorm() {
             double l2Norm = 0.0;
             for (ComputeStep step : steps) {
                 double[] deltas = step.deltas();
-                System.out.println("[norm computation] iteration:" + iteration + ", deltas:" + Arrays.toString(deltas));
                 l2Norm += Arrays.stream(deltas).map(score -> score * score).sum();
             }
 
             l2Norm = Math.sqrt(l2Norm);
-
-            System.out.println("[norm computation] iteration:" + iteration  + ", l2Norm: " + l2Norm );
 
             l2Norm = l2Norm <= 0 ? 1 : l2Norm;
             return l2Norm;

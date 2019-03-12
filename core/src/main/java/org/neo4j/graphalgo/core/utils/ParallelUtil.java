@@ -671,7 +671,6 @@ public final class ParallelUtil {
             int maxWaitRetries,
             TerminationFlag terminationFlag,
             ExecutorService executor) {
-        System.out.println("[ParallelUtil#runWithConcurrency] running with " + tasks.size() + " tasks" + ", and concurrency of " + concurrency);
         if (!canRunInParallel(executor)
                 || tasks.size() == 1
                 || concurrency <= 1) {
@@ -692,7 +691,6 @@ public final class ParallelUtil {
         // generally assumes that tasks.size is notably larger than concurrency
         try {
             //noinspection StatementWithEmptyBody - add first concurrency tasks
-            System.out.println("[ParallelUtil#runWithConcurrency] submit tasks");
             while (concurrency-- > 0
                     && terminationFlag.running()
                     && completionService.trySubmit(ts));
@@ -701,15 +699,12 @@ public final class ParallelUtil {
                 return;
             }
 
-            System.out.println("[ParallelUtil#runWithConcurrency] submit more tasks");
             // submit all remaining tasks
             int tries = 0;
             while (ts.hasNext()) {
                 if (completionService.hasTasks()) {
                     try {
-                        System.out.println("[ParallelUtil#runWithConcurrency] waiting for task to finish... " + executor);
                         completionService.awaitNext();
-                        System.out.println("[ParallelUtil#runWithConcurrency] task finished... " + executor);
                     } catch (ExecutionException e) {
                         error = Exceptions.chain(error, e.getCause());
                     } catch (CancellationException ignore) {
@@ -720,18 +715,15 @@ public final class ParallelUtil {
                 }
                 if (!completionService.trySubmit(ts) && !completionService.hasTasks()) {
                     if (++tries >= maxWaitRetries) {
-                        System.out.println("[ParallelUtil#runWithConcurrency] exceeded max wait retries");
                         break;
                     }
                     LockSupport.parkNanos(waitNanos);
                 }
             }
 
-            System.out.println("[ParallelUtil#runWithConcurrency] wait for tasks");
             // wait for all tasks to finish
             while (completionService.hasTasks() && terminationFlag.running()) {
                 try {
-                    System.out.println("[ParallelUtil#runWithConcurrency] waiting for next task");
                     completionService.awaitNext();
                 } catch (ExecutionException e) {
                     error = Exceptions.chain(error, e.getCause());
@@ -743,7 +735,6 @@ public final class ParallelUtil {
         } finally {
             finishRunWithConcurrency(completionService, error);
         }
-        System.out.println("[ParallelUtil#runWithConcurrency] finished running with " + tasks.size() + " tasks");
     }
 
     private static void finishRunWithConcurrency(
@@ -890,9 +881,7 @@ public final class ParallelUtil {
             if (executor instanceof ThreadPoolExecutor) {
                 pool = (ThreadPoolExecutor) executor;
                 availableConcurrency = pool.getCorePoolSize();
-//                availableConcurrency = 2;
                 int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
-                System.out.println("[ParallelUtil#runWithConcurrency] capacity = " + capacity + " [target:" + targetConcurrency + ",available:" + availableConcurrency + "]");
                 completionQueue = new ArrayBlockingQueue<>(capacity);
             } else {
                 pool = null;
@@ -939,17 +928,7 @@ public final class ParallelUtil {
         }
 
         private boolean canSubmit() {
-            int activeCount = 0;
-            boolean canSubmit = pool == null || (activeCount = pool.getActiveCount()) < availableConcurrency;
-
-            if(!canSubmit) {
-                System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
-//                throw new RuntimeException();
-            } else {
-                System.out.println("[ParallelUtil#runWithConcurrency] submitted task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
-            }
-
-            return canSubmit;
+            return pool == null || pool.getActiveCount() < availableConcurrency;
         }
 
         private void stopFutures(Collection<Future<Void>> futures) {
@@ -1001,7 +980,6 @@ public final class ParallelUtil {
 
         void pushBack(T element) {
             if (pushedElement != null) {
-                System.out.println("[ParallelUtil#runWithConcurrency] unable to reschedule task");
                 throw new IllegalArgumentException("Cannot push back twice");
             }
             pushedElement = element;
