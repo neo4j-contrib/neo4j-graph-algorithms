@@ -701,7 +701,6 @@ public final class ParallelUtil {
                 return;
             }
 
-
             System.out.println("[ParallelUtil#runWithConcurrency] submit more tasks");
             // submit all remaining tasks
             int tries = 0;
@@ -719,7 +718,7 @@ public final class ParallelUtil {
                 }
                 if (!completionService.trySubmit(ts) && !completionService.hasTasks()) {
                     if (++tries >= maxWaitRetries) {
-                        System.out.println("[ParallelUtil#runWithConcurrency] exceeded max wait retriesS");
+                        System.out.println("[ParallelUtil#runWithConcurrency] exceeded max wait retries");
                         break;
                     }
                     LockSupport.parkNanos(waitNanos);
@@ -890,6 +889,7 @@ public final class ParallelUtil {
                 pool = (ThreadPoolExecutor) executor;
                 availableConcurrency = pool.getCorePoolSize();
                 int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
+                System.out.println("[ParallelUtil#runWithConcurrency] capacity = " + capacity + " [target:" + targetConcurrency + ",available:" + availableConcurrency + "]");
                 completionQueue = new ArrayBlockingQueue<>(capacity);
             } else {
                 pool = null;
@@ -937,11 +937,13 @@ public final class ParallelUtil {
         }
 
         private boolean canSubmit() {
-            int activeCount = pool.getActiveCount();
-            boolean canSubmit = pool == null || activeCount < availableConcurrency;
+            int activeCount = 0;
+            boolean canSubmit = pool == null || (activeCount = pool.getActiveCount()) < availableConcurrency;
 
             if(!canSubmit) {
                 System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
+            } else {
+                System.out.println("[ParallelUtil#runWithConcurrency] submitted task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
             }
 
             return canSubmit;
@@ -996,6 +998,7 @@ public final class ParallelUtil {
 
         void pushBack(T element) {
             if (pushedElement != null) {
+                System.out.println("[ParallelUtil#runWithConcurrency] unable to reschedule task");
                 throw new IllegalArgumentException("Cannot push back twice");
             }
             pushedElement = element;
