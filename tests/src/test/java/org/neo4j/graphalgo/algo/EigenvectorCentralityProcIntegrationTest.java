@@ -219,7 +219,7 @@ public class EigenvectorCentralityProcIntegrationTest {
     @Test
     public void testParallelWriteBack() throws Exception {
         runQuery(
-                "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {batchSize:3, concurrency:8, write:true, graph:'"+graphImpl+"', direction: 'BOTH'}) YIELD writeMillis, write, writeProperty, iterations",
+                "CALL algo.eigenvector('Character', 'INTERACTS_SEASON1', {batchSize:3, concurrency:2, write:true, graph:'"+graphImpl+"', direction: 'BOTH'}) YIELD writeMillis, write, writeProperty, iterations",
                 row -> {
                     assertTrue(
                         "write time not set",
@@ -232,7 +232,7 @@ public class EigenvectorCentralityProcIntegrationTest {
     public void testParallelExecution() throws Exception {
         final Map<Long, Double> actual = new HashMap<>();
         runQuery(
-                "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {batchSize:2, concurrency:8, graph:'"+graphImpl+"', direction: 'BOTH'}) " +
+                "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {batchSize:2, concurrency:2, graph:'"+graphImpl+"', direction: 'BOTH'}) " +
                         "YIELD nodeId, score " +
                         "RETURN nodeId, score " +
                         "ORDER BY score DESC " +
