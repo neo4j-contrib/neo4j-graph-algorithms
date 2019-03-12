@@ -937,10 +937,11 @@ public final class ParallelUtil {
         }
 
         private boolean canSubmit() {
-            boolean canSubmit = pool == null || pool.getActiveCount() < availableConcurrency;
+            int activeCount = pool.getActiveCount();
+            boolean canSubmit = pool == null || activeCount < availableConcurrency;
 
             if(!canSubmit) {
-                System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + pool.getActiveCount() + ", availableConcurrency:" + availableConcurrency);
+                System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
             }
 
             return canSubmit;
