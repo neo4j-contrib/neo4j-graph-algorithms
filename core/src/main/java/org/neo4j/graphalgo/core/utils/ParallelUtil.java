@@ -707,7 +707,9 @@ public final class ParallelUtil {
             while (ts.hasNext()) {
                 if (completionService.hasTasks()) {
                     try {
+                        System.out.println("[ParallelUtil#runWithConcurrency] waiting for task to finish... " + executor);
                         completionService.awaitNext();
+                        System.out.println("[ParallelUtil#runWithConcurrency] task finished... " + executor);
                     } catch (ExecutionException e) {
                         error = Exceptions.chain(error, e.getCause());
                     } catch (CancellationException ignore) {
@@ -888,6 +890,7 @@ public final class ParallelUtil {
             if (executor instanceof ThreadPoolExecutor) {
                 pool = (ThreadPoolExecutor) executor;
                 availableConcurrency = pool.getCorePoolSize();
+//                availableConcurrency = 2;
                 int capacity = Math.max(targetConcurrency, availableConcurrency) + 1;
                 System.out.println("[ParallelUtil#runWithConcurrency] capacity = " + capacity + " [target:" + targetConcurrency + ",available:" + availableConcurrency + "]");
                 completionQueue = new ArrayBlockingQueue<>(capacity);
@@ -919,7 +922,6 @@ public final class ParallelUtil {
                 executor.execute(future);
                 return true;
             }
-            System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task " + task);
             return false;
         }
 
@@ -942,6 +944,7 @@ public final class ParallelUtil {
 
             if(!canSubmit) {
                 System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
+//                throw new RuntimeException();
             } else {
                 System.out.println("[ParallelUtil#runWithConcurrency] submitted task and pool:" + pool + ", activeCount:" + activeCount + ", availableConcurrency:" + availableConcurrency);
             }

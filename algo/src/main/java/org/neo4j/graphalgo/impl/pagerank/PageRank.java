@@ -31,6 +31,7 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 
@@ -356,17 +357,17 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 System.out.println("-------");
                 System.out.println("[iteration started] iteration:" + iteration);
                 // calculate scores
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // sync scores
                 System.out.println("[sync scores] iteration:" + iteration + ", steps:" + steps.size());
                 synchronizeScores();
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 // normalize deltas
                 System.out.println("[norm computation] iteration:" + iteration + ", steps:" + steps.size());
                 normalizeDeltas(iteration);
-                ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+                ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
                 System.out.println("[iteration finished] iteration:" + iteration);
                 System.out.println("-------");

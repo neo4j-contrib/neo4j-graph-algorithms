@@ -108,4 +108,11 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
 //        System.out.println(name + "\nnorm: " + l2Norm + "\nbefore: " + Arrays.toString(before) + "\nafter: " + Arrays.toString(deltas));
     }
 
+    @Override
+    public String toString() {
+        return "EigenvectorCentralityComputeStep{" +
+                "partitionSize=" + partitionSize +
+                ", startNode=" + startNode +
+                '}';
+    }
 }
