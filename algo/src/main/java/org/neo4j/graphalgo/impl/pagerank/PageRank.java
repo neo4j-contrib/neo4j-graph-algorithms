@@ -350,8 +350,11 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private void run(int iterations) {
             // initialize data structures
+            System.out.println("[pre iterations] init data structures");
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
             for (int iteration = 0; iteration < iterations && running(); iteration++) {
+                System.out.println("-------");
+                System.out.println("[iteration started] iteration:" + iteration);
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
 
@@ -364,6 +367,9 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
                 System.out.println("[norm computation] iteration:" + iteration + ", steps:" + steps.size());
                 normalizeDeltas(iteration);
                 ParallelUtil.runWithConcurrency(concurrency, steps, pool);
+
+                System.out.println("[iteration finished] iteration:" + iteration);
+                System.out.println("-------");
             }
         }
 

@@ -671,7 +671,7 @@ public final class ParallelUtil {
             int maxWaitRetries,
             TerminationFlag terminationFlag,
             ExecutorService executor) {
-        System.out.println("[ParallelUtil#runWithConcurrency] running with " + tasks.size() + " tasks");
+        System.out.println("[ParallelUtil#runWithConcurrency] running with " + tasks.size() + " tasks" + ", and concurrency of " + concurrency);
         if (!canRunInParallel(executor)
                 || tasks.size() == 1
                 || concurrency <= 1) {
@@ -730,6 +730,7 @@ public final class ParallelUtil {
             // wait for all tasks to finish
             while (completionService.hasTasks() && terminationFlag.running()) {
                 try {
+                    System.out.println("[ParallelUtil#runWithConcurrency] waiting for next task");
                     completionService.awaitNext();
                 } catch (ExecutionException e) {
                     error = Exceptions.chain(error, e.getCause());
@@ -918,6 +919,7 @@ public final class ParallelUtil {
                 executor.execute(future);
                 return true;
             }
+            System.out.println("[ParallelUtil#runWithConcurrency] unable to submit task " + task);
             return false;
         }
 
