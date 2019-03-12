@@ -352,7 +352,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private void run(int iterations) {
             // initialize data structures
             ParallelUtil.runWithConcurrency(concurrency, steps, pool);
-            for (int i = 0; i < iterations && running(); i++) {
+            for (int iteration = 0; iteration < iterations && running(); iteration++) {
                 // calculate scores
                 ParallelUtil.runWithConcurrency(concurrency, steps, 3, 1, TimeUnit.SECONDS, pool);
 
@@ -382,7 +382,8 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             }
 
             l2Norm = Math.sqrt(l2Norm);
-            l2Norm = l2Norm < 0 ? 1: l2Norm;
+
+            l2Norm = l2Norm <= 0 ? 1 : l2Norm;
             return l2Norm;
         }
 

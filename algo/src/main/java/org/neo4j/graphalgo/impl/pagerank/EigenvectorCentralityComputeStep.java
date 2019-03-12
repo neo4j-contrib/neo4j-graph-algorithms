@@ -99,12 +99,4 @@ final class EigenvectorCentralityComputeStep extends BaseComputeStep implements 
             deltas[i] = deltas[i] / l2Norm;
         }
     }
-
-    @Override
-    public String toString() {
-        return "EigenvectorCentralityComputeStep{" +
-                "partitionSize=" + partitionSize +
-                ", startNode=" + startNode +
-                '}';
-    }
 }
