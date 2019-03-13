@@ -130,15 +130,32 @@ public class UnionFindProcIntegrationTest {
 
     @Test
     public void testUnionFindWriteBack() throws Exception {
-        db.execute("CALL algo.unionFind('', 'TYPE', {write:true,graph:'"+graphImpl+"'}) YIELD setCount, communityCount, writeMillis, nodes")
+        db.execute("CALL algo.unionFind('', 'TYPE', {write:true,graph:'"+graphImpl+"'}) YIELD setCount, communityCount, writeMillis, nodes, partitionProperty, writeProperty")
                 .accept((Result.ResultVisitor<Exception>) row -> {
                     assertNotEquals(-1L, row.getNumber("writeMillis"));
                     assertNotEquals(-1L, row.getNumber("nodes"));
                     assertEquals(3L, row.getNumber("communityCount"));
                     assertEquals(3L, row.getNumber("setCount"));
+                    assertEquals("partition", row.getString("partitionProperty"));
+                    assertEquals("partition", row.getString("writeProperty"));
                     return false;
                 });
     }
+
+    @Test
+    public void testUnionFindWriteBackExplicitWriteProperty() throws Exception {
+        db.execute("CALL algo.unionFind('', 'TYPE', {write:true,graph:'"+graphImpl+"', writeProperty:'unionFind'}) YIELD setCount, communityCount, writeMillis, nodes, partitionProperty, writeProperty")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    assertNotEquals(-1L, row.getNumber("nodes"));
+                    assertEquals(3L, row.getNumber("communityCount"));
+                    assertEquals(3L, row.getNumber("setCount"));
+                    assertEquals("unionFind", row.getString("partitionProperty"));
+                    assertEquals("unionFind", row.getString("writeProperty"));
+                    return false;
+                });
+    }
+
 
     @Test
     public void testUnionFindStream() throws Exception {

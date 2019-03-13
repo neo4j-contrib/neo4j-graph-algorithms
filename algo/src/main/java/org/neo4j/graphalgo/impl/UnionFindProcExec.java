@@ -45,7 +45,8 @@ import java.util.stream.Stream;
 public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>> {
 
     private static final String CONFIG_THRESHOLD = "threshold";
-    private static final String CONFIG_CLUSTER_PROPERTY = "partitionProperty";
+    private static final String CONFIG_CLUSTER_PROPERTY = "writeProperty";
+    private static final String CONFIG_OLD_CLUSTER_PROPERTY = "partitionProperty";
     private static final String DEFAULT_CLUSTER_PROPERTY = "partition";
 
 
@@ -86,9 +87,9 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
         graph.release();
 
         if (configuration.isWriteFlag()) {
-            String writeProperty = configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY);
+            String writeProperty = configuration.get(CONFIG_CLUSTER_PROPERTY, CONFIG_OLD_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY);
             builder.withWrite(true);
-            builder.withPartitionProperty(writeProperty);
+            builder.withPartitionProperty(writeProperty).withWriteProperty(writeProperty);
 
             uf.write(builder::timeWrite, graph, dssResult, configuration, writeProperty);
         }
@@ -119,7 +120,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                 -1,
                 -1,
                 -1,
-                false, null);
+                false, null, null);
 
         public final long loadMillis;
         public final long computeMillis;
@@ -140,9 +141,12 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
         public final long p100;
         public final boolean write;
         public final String partitionProperty;
+        public final String writeProperty;
 
 
-        public UnionFindResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1, boolean write, String partitionProperty) {
+        public UnionFindResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount,
+                               long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1, boolean write,
+                               String partitionProperty, String writeProperty) {
             this.loadMillis = loadMillis;
             this.computeMillis = computeMillis;
             this.writeMillis = writeMillis;
@@ -161,11 +165,13 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
             this.p1 = p1;
             this.write = write;
             this.partitionProperty = partitionProperty;
+            this.writeProperty = writeProperty;
         }
     }
 
     public static class Builder extends AbstractCommunityResultBuilder<UnionFindResult> {
         private String partitionProperty;
+        private String writeProperty;
 
         @Override
         protected UnionFindResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
@@ -187,13 +193,20 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                     communityHistogram.getValueAtPercentile(5),
                     communityHistogram.getValueAtPercentile(1),
                     write,
-                    partitionProperty
+                    partitionProperty,
+                    writeProperty
             );
         }
 
         public Builder withPartitionProperty(String partitionProperty) {
             this.partitionProperty = partitionProperty;
-            return null;
+            return this;
+        }
+
+
+        public Builder withWriteProperty(String writeProperty) {
+            this.writeProperty = writeProperty;
+            return this;
         }
     }
 
