@@ -159,7 +159,7 @@ include::scripts/label-propagation.cypher[tag=cypher-loading]
 .The following will run the algorithm and write back results:
 [source, cypher]
 ----
-CALL algo.labelPropagation(label:String, relationship:String, direction:String, {iterations:1,
+CALL algo.labelPropagation(label:String, relationship:String, {iterations:1,
     weightProperty:'weight', writeProperty:'partition', write:true, concurrency:4})
 YIELD nodes, iterations, didConverge, loadMillis, computeMillis, writeMillis, write, weightProperty, writeProperty
 ----
