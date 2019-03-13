@@ -51,7 +51,8 @@ import java.util.stream.Stream;
  */
 public class StronglyConnectedComponentsProc {
 
-    public static final String CONFIG_WRITE_PROPERTY = "partitionProperty";
+    public static final String CONFIG_WRITE_PROPERTY = "writeProperty";
+    public static final String CONFIG_OLD_WRITE_PROPERTY = "partitionProperty";
     public static final String CONFIG_CLUSTER = "partition";
 
     @Context
@@ -124,7 +125,7 @@ public class StronglyConnectedComponentsProc {
         final int[] connectedComponents = tarjan.getConnectedComponents();
         if (configuration.isWriteFlag()) {
             builder.withWrite(true);
-            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_OLD_WRITE_PROPERTY, CONFIG_CLUSTER);
             builder.withPartitionProperty(partitionProperty);
 
             builder.timeWrite(() -> {
@@ -179,7 +180,7 @@ public class StronglyConnectedComponentsProc {
 
         if (configuration.isWriteFlag()) {
             builder.withWrite(true);
-            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_OLD_WRITE_PROPERTY, CONFIG_CLUSTER);
             builder.withPartitionProperty(partitionProperty);
 
             builder.timeWrite(() -> Exporter
@@ -261,8 +262,8 @@ public class StronglyConnectedComponentsProc {
 
         if (configuration.isWriteFlag()) {
             builder.withWrite(true);
-            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
-            builder.withPartitionProperty(partitionProperty);
+            String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_OLD_WRITE_PROPERTY, CONFIG_CLUSTER);
+            builder.withPartitionProperty(partitionProperty).withWriteProperty(partitionProperty);
 
             builder.timeWrite(() -> write(configuration, graph, terminationFlag, tarjan, partitionProperty));
         }
@@ -382,7 +383,7 @@ public class StronglyConnectedComponentsProc {
             multistep.release();
             builder.timeWrite(() -> {
                 builder.withWrite(true);
-                String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_CLUSTER);
+                String partitionProperty = configuration.get(CONFIG_WRITE_PROPERTY, CONFIG_OLD_WRITE_PROPERTY, CONFIG_CLUSTER);
                 builder.withPartitionProperty(partitionProperty);
 
                 Exporter

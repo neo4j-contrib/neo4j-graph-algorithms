@@ -28,7 +28,7 @@ public class SCCResult {
 
     public static SCCResult EMPTY = new SCCResult(
             0, 0, 0, 0,0, 0, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0,
-            false, null);
+            false, null, null);
 
     public final long loadMillis;
     public final long computeMillis;
@@ -51,10 +51,11 @@ public class SCCResult {
     public final long p100;
     public final boolean write;
     public final String partitionProperty;
+    public final String writeProperty;
 
     public SCCResult(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes, long communityCount,
                      long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1,
-                     long minSetSize, long maxSetSize, boolean write, String partitionProperty) {
+                     long minSetSize, long maxSetSize, boolean write, String partitionProperty, String writeProperty) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.postProcessingMillis = postProcessingMillis;
@@ -75,6 +76,7 @@ public class SCCResult {
         this.maxSetSize = maxSetSize;
         this.write = write;
         this.partitionProperty = partitionProperty;
+        this.writeProperty = writeProperty;
     }
 
     public static Builder builder() {
@@ -83,6 +85,7 @@ public class SCCResult {
 
     public static final class Builder extends AbstractCommunityResultBuilder<SCCResult> {
         private String partitionProperty;
+        private String writeProperty;
 
         @Override
         protected SCCResult build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
@@ -106,12 +109,17 @@ public class SCCResult {
                     communityHistogram.getMinNonZeroValue(),
                     communityHistogram.getMaxValue(),
                     write,
-                    partitionProperty
+                    partitionProperty, writeProperty
             );
         }
 
         public Builder withPartitionProperty(String partitionProperty) {
             this.partitionProperty = partitionProperty;
+            return this;
+        }
+
+        public Builder withWriteProperty(String writeProperty) {
+            this.writeProperty = writeProperty;
             return this;
         }
     }

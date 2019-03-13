@@ -44,7 +44,7 @@ public class LabelPropagationStats {
             false,
             false,
             "<empty>",
-            "<empty>");
+            "<empty>", "<empty>");
 
     public final long loadMillis;
     public final long computeMillis;
@@ -70,10 +70,11 @@ public class LabelPropagationStats {
     public final String weightProperty;
     public final boolean write;
     public final String partitionProperty;
+    public final String writeProperty;
 
     public LabelPropagationStats(long loadMillis, long computeMillis, long postProcessingMillis, long writeMillis, long nodes,
                                  long communityCount, long p100, long p99, long p95, long p90, long p75, long p50, long p25, long p10, long p5, long p1, long iterations, boolean write, boolean didConverge,
-                                 String weightProperty, String partitionProperty) {
+                                 String weightProperty, String partitionProperty, String writeProperty) {
         this.loadMillis = loadMillis;
         this.computeMillis = computeMillis;
         this.postProcessingMillis = postProcessingMillis;
@@ -95,6 +96,7 @@ public class LabelPropagationStats {
         this.didConverge = didConverge;
         this.weightProperty = weightProperty;
         this.partitionProperty = partitionProperty;
+        this.writeProperty = writeProperty;
     }
 
 
@@ -104,6 +106,7 @@ public class LabelPropagationStats {
         private boolean didConverge = false;
         private String weightProperty;
         private String partitionProperty;
+        private String writeProperty;
 
         public Builder iterations(final long iterations) {
             this.iterations = iterations;
@@ -124,6 +127,11 @@ public class LabelPropagationStats {
             this.partitionProperty = partitionProperty;
             return this;
         }
+        public Builder writeProperty(final String writeProperty) {
+            this.writeProperty = writeProperty;
+            return this;
+        }
+
 
         @Override
         protected LabelPropagationStats build(long loadMillis, long computeMillis, long writeMillis, long postProcessingMillis, long nodeCount, long communityCount, LongLongMap communitySizeMap, Histogram communityHistogram, boolean write) {
@@ -148,7 +156,8 @@ public class LabelPropagationStats {
                     write,
                     didConverge,
                     weightProperty,
-                    partitionProperty
+                    partitionProperty,
+                    writeProperty
             );
         }
 
