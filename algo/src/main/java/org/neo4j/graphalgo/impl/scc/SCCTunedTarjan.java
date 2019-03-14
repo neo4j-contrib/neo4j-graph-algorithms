@@ -30,7 +30,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Sequential strongly connected components algorithm (TunedTarjan).
+ * Sequential, recursive strongly connected components algorithm (TunedTarjan).
  * <p>
  * as specified in: https://pdfs.semanticscholar.org/61db/6892a92d1d5bdc83e52cc18041613cf895fa.pdf
  */
@@ -54,6 +54,7 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> implements SCCAlgo
         open = new IntStack();
     }
 
+    // compute scc
     public SCCTunedTarjan compute() {
         final ProgressLogger progressLogger = getProgressLogger();
         Arrays.fill(connectedComponents, -1);
@@ -73,24 +74,44 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> implements SCCAlgo
         return this;
     }
 
+    /**
+     * get nodeId-component id mapping
+     * @return
+     */
     public int[] getConnectedComponents() {
         return connectedComponents;
     }
 
+    /**
+     * get result stream with original nodeId to component id mapping
+     * @return
+     */
     public Stream<SCCAlgorithm.StreamResult> resultStream() {
         return IntStream.range(0, nodeCount)
                 .filter(i -> connectedComponents[i] != -1)
                 .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents[i]));
     }
 
+    /**
+     * number of components
+     * @return
+     */
     public long getSetCount() {
         return setCount;
     }
 
+    /**
+     * minimum number of components of all sets
+     * @return
+     */
     public long getMinSetSize() {
         return minSetSize;
     }
 
+    /**
+     * maximum number of component of all sets
+     * @return
+     */
     public long getMaxSetSize() {
         return maxSetSize;
     }
@@ -136,6 +157,10 @@ public class SCCTunedTarjan extends Algorithm<SCCTunedTarjan> implements SCCAlgo
         return this;
     }
 
+    /**
+     * release inner data structures
+     * @return
+     */
     @Override
     public SCCTunedTarjan release() {
         graph = null;

@@ -21,6 +21,9 @@ package org.neo4j.graphalgo.impl.spanningTrees;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 
+/**
+ * group of nodes that form a spanning tree
+ */
 public class SpanningTree {
 
     public final int head;

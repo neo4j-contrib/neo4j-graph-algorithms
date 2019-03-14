@@ -45,7 +45,6 @@ import java.util.Arrays;
  */
 public class Prim extends Algorithm<Prim> {
 
-    public static final int UNUSED = 42;
     private final RelationshipIterator relationshipIterator;
     private final RelationshipWeights weights;
     private final int nodeCount;

@@ -41,7 +41,9 @@ import java.util.stream.StreamSupport;
 
 /**
  * TriangleCount counts the number of triangles in the Graph as well
- * as the number of triangles that passes through a node
+ * as the number of triangles that passes through a node. Instead of
+ * emitting the nodeId and the number of triangles the node is part of,
+ * this impl. streams the actual nodeIds of each triangle once.
  *
  * @author mknblch
  */
@@ -73,6 +75,10 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         return this;
     }
 
+    /**
+     * release inner data structures
+     * @return
+     */
     @Override
     public TriangleStream release() {
         visitedNodes = null;
@@ -83,6 +89,11 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         return this;
     }
 
+    /**
+     * return result stream of triangle triples
+     * consisting of its 3 nodeIds
+     * @return
+     */
     public Stream<Result> resultStream() {
         submitTasks();
         final TerminationFlag flag = getTerminationFlag();
@@ -201,6 +212,9 @@ public class TriangleStream extends Algorithm<TriangleStream> {
         }
     }
 
+    /**
+     * result type
+     */
     public static class Result {
 
         public final long nodeA;

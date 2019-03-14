@@ -29,7 +29,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
- * array based container for node chains
+ * array based path of nodes & a weight
  *
  * @author mknblch
  */
@@ -52,6 +52,7 @@ public class WeightedPath {
         this.offset = offset;
     }
 
+    // append a node to the path
     public void append(int nodeId) {
         nodes = ArrayUtil.grow(nodes, offset + 1);
         nodes[offset++] = nodeId;

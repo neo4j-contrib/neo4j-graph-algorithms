@@ -34,7 +34,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Normalized Closeness Centrality
+ * Normalized Closeness Centrality.
+ *
+ * Utilizes the MSBFS for counting the farness between nodes.
+ * See MSBFS documentation.
+ *
+ *
  *
  * @author mknblch
  */
@@ -61,18 +66,21 @@ public class MSClosenessCentrality extends MSBFSCCAlgorithm<MSClosenessCentralit
     }
 
     @Override
-    public MSClosenessCentrality compute() {
+    public MSClosenessCentrality compute(Direction direction) {
 
         final ProgressLogger progressLogger = getProgressLogger();
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
+            // number of source node IDs
             int len = sourceNodeIds.size();
+            // sum of distances
             farness.addAndGet(nodeId, len * depth);
+            // count component size too
             while (sourceNodeIds.hasNext()) {
                 component.incrementAndGet(sourceNodeIds.next());
             }
             progressLogger.logProgress((double) nodeId / (nodeCount - 1));
         };
-        new MultiSourceBFS(graph, graph, Direction.OUTGOING, consumer)
+        new MultiSourceBFS(graph, graph, direction, consumer)
                 .run(concurrency, executorService);
         return this;
     }

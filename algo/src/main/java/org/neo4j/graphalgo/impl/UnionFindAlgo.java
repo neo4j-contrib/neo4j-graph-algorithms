@@ -27,6 +27,13 @@ import org.neo4j.graphalgo.core.utils.paged.PagedDisjointSetStruct;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
+/**
+ * this class is basically a helper to instantiate different
+ * versions of the same algorithm. There are multiple impls.
+ * of union find due to performance optimizations.
+ * Some benchmarks exist to measure the difference between
+ * forkjoin & queue approaches and huge/heavy
+ */
 public enum UnionFindAlgo {
 
     QUEUE {

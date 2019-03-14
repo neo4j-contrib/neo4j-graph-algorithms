@@ -183,7 +183,8 @@ public final class DisjointSetStruct {
 
     /**
      * join set of p (Sp) with set of q (Sq) so that {@link DisjointSetStruct#connected(int, int)}
-     * for any pair of (Spi, Sqj) evaluates to true
+     * for any pair of (Spi, Sqj) evaluates to true. Some optimizations exists
+     * which automatically balance the tree, the "weighted union rule" is used here.
      *
      * @param p an item of Sp
      * @param q an item of Sq
@@ -208,6 +209,10 @@ public final class DisjointSetStruct {
         }
     }
 
+    /**
+     * evaluate number of sets
+     * @return
+     */
     public int getSetCount() {
         final IntSet set = new IntScatterSet();
         forEach((nodeId, setId) -> {
@@ -330,6 +335,9 @@ public final class DisjointSetStruct {
         }
     }
 
+    /**
+     * union find result type
+     */
     public static class Result {
 
         /**
@@ -353,6 +361,9 @@ public final class DisjointSetStruct {
         }
     }
 
+    /**
+     * concurrent property translator for export
+     */
     public final static class Translator implements PropertyTranslator.OfInt<DisjointSetStruct> {
 
         public static final PropertyTranslator<DisjointSetStruct> INSTANCE = new Translator();

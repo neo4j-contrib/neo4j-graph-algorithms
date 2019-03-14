@@ -68,7 +68,7 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
     }
 
     @Override
-    public HugeMSClosenessCentrality compute() {
+    public HugeMSClosenessCentrality compute(Direction direction) {
 
         final ProgressLogger progressLogger = getProgressLogger();
 
@@ -84,7 +84,7 @@ public class HugeMSClosenessCentrality extends MSBFSCCAlgorithm<HugeMSClosenessC
         new HugeMultiSourceBFS(
                 graph,
                 graph,
-                Direction.OUTGOING,
+                direction,
                 consumer,
                 tracker)
                 .run(concurrency, executorService);

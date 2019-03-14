@@ -33,7 +33,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Harmonic Centrality Algorithm
+ * Harmonic Centrality Algorithm.
+ *
+ * Harmonic centrality (also known as valued centrality) is a variant of closeness centrality,
+ * that was invented to solve the problem the original formula had when dealing with unconnected graphs.
  *
  * @author mknblch
  */
@@ -53,6 +56,10 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
         inverseFarness = new AtomicDoubleArray(nodeCount);
     }
 
+    /**
+     * compute centrality using MSBFS
+     * @return
+     */
     public HarmonicCentrality compute() {
         final ProgressLogger progressLogger = getProgressLogger();
         final BfsConsumer consumer = (nodeId, depth, sourceNodeIds) -> {
@@ -64,6 +71,10 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
         return this;
     }
 
+    /**
+     * result stream of nodeId to closeness value
+     * @return
+     */
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId -> new Result(
@@ -71,6 +82,11 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
                         inverseFarness.get(nodeId) / (double) (nodeCount - 1)));
     }
 
+    /**
+     * export results
+     * @param propertyName
+     * @param exporter
+     */
     public void export(final String propertyName, final Exporter exporter) {
         exporter.write(
                 propertyName,
@@ -84,19 +100,14 @@ public class HarmonicCentrality extends Algorithm<HarmonicCentrality> implements
         return this;
     }
 
+    /**
+     * release inner data structures
+     * @return
+     */
     @Override
     public HarmonicCentrality release() {
         graph = null;
         executorService = null;
         return this;
     }
-
-    public final double[] exportToArray() {
-        return resultStream()
-                .limit(Integer.MAX_VALUE)
-                .mapToDouble(r -> r.centrality)
-                .toArray();
-    }
-
-
 }

@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * non recursive sequential strongly connected components algorithm.
  * <p>
- * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
+ * taken from: http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
 public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> implements SCCAlgorithm {
 
@@ -57,9 +57,10 @@ public class SCCIterativeTarjan extends Algorithm<SCCIterativeTarjan> implements
     private int[] connectedComponents;
     private IntStack stack;
     private IntStack boundaries;
+    // the stack is used to keep track of pairs of {node, action}
     private IntStack todo;
+    // number of strongly connected components
     private int setCount;
-
     private int minSetSize;
     private int maxSetSize;
 

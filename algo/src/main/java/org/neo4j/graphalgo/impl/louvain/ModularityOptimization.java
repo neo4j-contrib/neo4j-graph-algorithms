@@ -92,6 +92,15 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
         return this;
     }
 
+    /**
+     * create a nodeiterator based on concurrency setting.
+     * Concurrency 1 (single threaded) results in an ordered
+     * nodeIterator while higher concurrency settings create
+     * shuffled iterators
+     *
+     * @param concurrency
+     * @return
+     */
     private NodeIterator createNodeIterator(int concurrency) {
 
         if (concurrency > 1) {
@@ -396,24 +405,6 @@ public class ModularityOptimization extends Algorithm<ModularityOptimization> {
                 }
                 return true;
             });
-        }
-
-        /**
-         * sum weights from node into community c
-         *
-         * @param node node nodeId
-         * @param c    community nodeId
-         * @return sum of weights from node into community c
-         */
-        private double weightIntoCom(int node, int c) {
-            double[] p = new double[1];
-            graph.forEachRelationship(node, D, (s, t, r) -> {
-                if (localCommunities[t] == c) {
-                    p[0] += graph.weightOf(s, t);
-                }
-                return true;
-            });
-            return p[0];
         }
 
         private double calcModularity() {

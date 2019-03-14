@@ -29,28 +29,64 @@ import org.neo4j.graphalgo.results.SCCResult;
 import java.util.stream.Stream;
 
 /**
+ * unified iface for all scc algorithms regardless of which graph
+ * and impl is used.
+ *
  * @author mknblch
  */
 public interface SCCAlgorithm {
 
+    /**
+     * compute scc's
+     * @return
+     */
     SCCAlgorithm compute();
 
+    /**
+     * get number of components
+     * @return
+     */
     long getSetCount();
 
+    /**
+     * get minimum set size of all components
+     * @return
+     */
     long getMinSetSize();
 
+    /**
+     * get maximum set size of all components
+     * @return
+     */
     long getMaxSetSize();
 
+    /**
+     * return stream of original nodeId to component id mapping
+     * @return
+     */
     Stream<SCCAlgorithm.StreamResult>  resultStream();
 
     SCCAlgorithm withProgressLogger(ProgressLogger wrap);
 
     SCCAlgorithm withTerminationFlag(TerminationFlag wrap);
 
+    /**
+     * release inner data structures
+     * @return
+     */
     SCCAlgorithm release();
 
+    /**
+     * get nodeId to component id mapping
+     * either as int[] or hugeLong array
+     * @param <V>
+     * @return
+     */
     <V> V getConnectedComponents();
 
+    /**
+     * stream result type
+     */
     class StreamResult {
 
         public final long nodeId;
@@ -62,6 +98,14 @@ public interface SCCAlgorithm {
         }
     }
 
+    /**
+     * returns a initialized SCC algorithm based on which
+     * type of graph (huge, heavy) has been supplied.
+     *
+     * @param graph
+     * @param tracker
+     * @return
+     */
     static SCCAlgorithm iterativeTarjan(Graph graph, AllocationTracker tracker) {
         if (graph instanceof HugeGraph) {
             return new HugeSCCIterativeTarjan((HugeGraph) graph, tracker);

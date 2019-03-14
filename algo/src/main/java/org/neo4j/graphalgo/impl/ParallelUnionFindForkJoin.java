@@ -28,17 +28,13 @@ import java.util.concurrent.RecursiveTask;
 import java.util.function.Function;
 
 /**
- * parallel UnionFind using common ForkJoin-Pool only.
+ * parallel UnionFind using common ForkJoin-Pool.
  * <p>
  * Implementation based on the idea that DisjointSetStruct can be built using
  * just a partition of the nodes which then can be merged pairwise.
  * <p>
- * The UnionFindTask extracts a nodePartition if its input-set is too big and
- * calculates its result while lending the rest-nodeSet to another FJ-Task.
- * <p>
- * Note: The splitting method might be sub-optimal since the resulting work-tree is
- * very unbalanced so each thread needs to wait for its predecessor to complete
- * before merging his set into the parent set.
+ * The UnionFindTask splits a partition if its size is too big or calculates
+ * its connected components otherwise.
  *
  * @author mknblch
  */
@@ -83,6 +79,11 @@ public class ParallelUnionFindForkJoin extends GraphUnionFindAlgo<Graph, Disjoin
                 .invoke(new ThresholdUFTask(0, threshold));
     }
 
+    /**
+     * basic union find task, takes a node from its partition
+     * and invokes the union method on every connected node.
+     * resumes until no more nodes are left.
+     */
     private class UnionFindTask extends RecursiveTask<DisjointSetStruct> {
 
         protected final int offset;
@@ -95,6 +96,7 @@ public class ParallelUnionFindForkJoin extends GraphUnionFindAlgo<Graph, Disjoin
 
         @Override
         protected DisjointSetStruct compute() {
+            // split nodes
             if (nodeCount - end >= batchSize && running()) {
                 final UnionFindTask process = new UnionFindTask(end);
                 process.fork();
@@ -122,6 +124,13 @@ public class ParallelUnionFindForkJoin extends GraphUnionFindAlgo<Graph, Disjoin
         }
     }
 
+    /**
+     * the threshold uf task works most like
+     * the normal UF Task with a precondition
+     * for joining 2 nodes into a set.
+     * the condition is just a comparision of the
+     * weight of the relationship and a static threshold
+     */
     private class ThresholdUFTask extends UnionFindTask {
 
         private final double threshold;

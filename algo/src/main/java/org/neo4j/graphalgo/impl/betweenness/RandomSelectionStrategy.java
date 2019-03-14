@@ -26,6 +26,8 @@ import java.security.SecureRandom;
 import java.util.function.IntConsumer;
 
 /**
+ * Filters nodes randomly based on a given probability
+ *
  * @author mknblch
  */
 public class RandomSelectionStrategy implements RABrandesBetweennessCentrality.SelectionStrategy {

@@ -35,7 +35,9 @@ import java.util.stream.Stream;
 
 /**
  * TriangleCount counts the number of triangles in the Graph as well
- * as the number of triangles that passes through a node
+ * as the number of triangles that passes through a node.
+ *
+ * Experimental implementation with a queue based parallelization approach
  *
  * @author mknblch
  */

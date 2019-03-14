@@ -34,9 +34,8 @@ import org.neo4j.graphalgo.results.AbstractResultBuilder;
  * and visits each (unvisited) connected node by following only the
  * cheapest transition and adding it to a specialized form of {@link UndirectedTree}.
  * <p>
- * The algorithm also computes the minimum, maximum and sum of all
- * weights in the MST.
- *
+ * After calculating the MST the algorithm cuts the tree at its k weakest
+ * relationships to form k spanning trees
  * @author mknblch
  */
 public class KSpanningTree extends Algorithm<KSpanningTree> {
@@ -55,6 +54,14 @@ public class KSpanningTree extends Algorithm<KSpanningTree> {
         nodeCount = Math.toIntExact(idMapping.nodeCount());
     }
 
+
+    /**
+     * compute the spanning tree
+     * @param startNode the start node
+     * @param k
+     * @param max
+     * @return
+     */
     public KSpanningTree compute(int startNode, int k, boolean max) {
 
         final ProgressLogger logger = getProgressLogger();
