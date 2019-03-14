@@ -28,8 +28,10 @@ import java.util.Arrays;
 import java.util.BitSet;
 
 /**
- * Sequential strongly connected components algorithm (Tarjan).
- * <p>
+ * Sequential, recursive strongly connected components algorithm (Tarjan).
+ *
+ * https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
+ *
  * Builds sets of node-Ids which represent a strongly connected component
  * within the graph. Also calculates minimum and maximum setSize as well
  * as the overall count of distinct sets.
@@ -57,11 +59,19 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
         Arrays.setAll(communities, i -> i);
     }
 
+    /**
+     * compute scc
+     * @return
+     */
     public SCCTarjan compute() {
         graph.forEachNode(this::test);
         return this;
     }
 
+    /**
+     * return nodeId to component-id mapping
+     * @return
+     */
     public int[] getConnectedComponents() {
         return communities;
     }
@@ -81,6 +91,9 @@ public class SCCTarjan extends Algorithm<SCCTarjan> {
         return this;
     }
 
+    /**
+     * reset algorithm state
+     */
     public void reset() {
         Arrays.fill(indices, -1);
         Arrays.fill(lowLink, -1);

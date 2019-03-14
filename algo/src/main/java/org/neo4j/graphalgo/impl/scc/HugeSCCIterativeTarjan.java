@@ -30,9 +30,9 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
- * non recursive sequential strongly connected components algorithm.
- * <p>
- * as specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
+ * huge iterative (non recursive) sequential strongly connected components algorithm.
+ *
+ * specified in:  http://code.activestate.com/recipes/578507-strongly-connected-components-of-a-directed-graph/
  */
 public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> implements SCCAlgorithm {
 
@@ -57,7 +57,7 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
     private HugeLongArray connectedComponents;
     private PagedLongStack stack;
     private PagedLongStack boundaries;
-    private PagedLongStack todo;
+    private PagedLongStack todo; // stores pairs of (node-Id, TODO-Id)
     private int setCount;
 
     private int minSetSize;
@@ -74,6 +74,10 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
         todo = new PagedLongStack(nodeCount, tracker);
     }
 
+    /**
+     * compute scc
+     * @return
+     */
     public HugeSCCIterativeTarjan compute() {
         setCount = 0;
         minSetSize = Integer.MAX_VALUE;
@@ -92,6 +96,10 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
         return this;
     }
 
+    /**
+     * release inner data structures
+     * @return
+     */
     @Override
     public HugeSCCIterativeTarjan release() {
         graph = null;
@@ -104,24 +112,44 @@ public class HugeSCCIterativeTarjan extends Algorithm<HugeSCCIterativeTarjan> im
         return this;
     }
 
+    /**
+     * get nodeId to component id mapping
+     * @return
+     */
     public HugeLongArray getConnectedComponents() {
         return connectedComponents;
     }
 
+    /**
+     * get stream of original nodeId to component id pairs
+     * @return
+     */
     public Stream<SCCAlgorithm.StreamResult> resultStream() {
         return LongStream.range(0, nodeCount)
                 .filter(i -> connectedComponents.get(i) != -1)
                 .mapToObj(i -> new SCCAlgorithm.StreamResult(graph.toOriginalNodeId(i), connectedComponents.get(i)));
     }
 
+    /**
+     * number of connected components in the graph
+     * @return
+     */
     public long getSetCount() {
         return setCount;
     }
 
+    /**
+     * minimum set size
+     * @return
+     */
     public long getMinSetSize() {
         return minSetSize;
     }
 
+    /**
+     * maximum component size
+     * @return
+     */
     public long getMaxSetSize() {
         return maxSetSize;
     }

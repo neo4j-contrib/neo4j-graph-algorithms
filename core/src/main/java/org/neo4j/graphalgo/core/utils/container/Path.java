@@ -23,6 +23,8 @@ import org.apache.lucene.util.ArrayUtil;
 import java.util.function.IntPredicate;
 
 /**
+ * a list of nodes
+ *
  * @author mknblch
  */
 public class Path {

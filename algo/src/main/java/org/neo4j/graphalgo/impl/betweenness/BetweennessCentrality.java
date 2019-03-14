@@ -33,6 +33,8 @@ import java.util.stream.Stream;
  * Implements Betweenness Centrality for unweighted graphs
  * as specified in <a href="http://www.algo.uni-konstanz.de/publications/b-fabc-01.pdf">this paper</a>
  *
+ * TODO: deprecated due to ParallelBC ?
+ *
  * @author mknblch
  */
 public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
@@ -79,6 +81,10 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         return this;
     }
 
+    /**
+     * get (inner)nodeId to centrality mapping.
+     * @return
+     */
     public double[] getCentrality() {
         return centrality;
     }
@@ -97,6 +103,11 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         }
     }
 
+    /**
+     * returns a stream of bc-results
+     * (nodeid to bc-value pairs)
+     * @return
+     */
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
@@ -105,6 +116,15 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                                 centrality[nodeId]));
     }
 
+    /**
+     * start evaluation from startNode.
+     *
+     * This does not calculate the BC for startNode but adds a little bit
+     * to all nodes which are reachable from the startNode
+     *
+     * @param startNode the node
+     * @return
+     */
     private boolean compute(int startNode) {
         clearPaths();
         stack.clear();
@@ -115,6 +135,7 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         sigma[startNode] = 1;
         distance[startNode] = 0;
         queue.addLast(startNode);
+        // bfs on the whole graph
         while (!queue.isEmpty() && running()) {
             int node = queue.removeFirst();
             stack.push(node);
@@ -130,19 +151,24 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
                 return true;
             });
         }
+        // for each pivot node
         while (!stack.isEmpty() && running()) {
             final int node = stack.pop();
+            // check if a path exists
             if (null == paths[node]) {
                 continue;
             }
+            // update delta
             paths[node].forEach(v -> {
                 delta[v] += (double) sigma[v] / (double) sigma[node] * (delta[node] + 1.0);
                 return true;
             });
+            // aggregate centrality
             if (node != startNode) {
                 centrality[node] += (delta[node] / divisor);
             }
         }
+        // log done for current node
         getProgressLogger().logProgress((double) startNode / (nodeCount - 1));
         return true;
     }
@@ -160,6 +186,10 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         paths[path].append(nodeId);
     }
 
+    /**
+     * clear all paths to reuse them in
+     * the next round
+     */
     private void clearPaths() {
         for (Path path : paths) {
             if (null == path) {
@@ -169,11 +199,18 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
         }
     }
 
+    /**
+     * self reference
+     */
     @Override
     public BetweennessCentrality me() {
         return this;
     }
 
+    /**
+     * release internal structures
+     * @return
+     */
     @Override
     public BetweennessCentrality release() {
         graph = null;
@@ -206,7 +243,9 @@ public class BetweennessCentrality extends Algorithm<BetweennessCentrality> {
      */
     public static final class Result {
 
+        // original node id
         public final long nodeId;
+        // centrality value
         public final double centrality;
 
         public Result(long nodeId, double centrality) {

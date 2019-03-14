@@ -32,7 +32,11 @@ import java.util.stream.Stream;
 /**
  * Implements Brandes Betweenness Centrality with
  * additional restriction on the maximum allowed
- * depth
+ * depth. Implementation behaves like {@link ParallelBetweennessCentrality}
+ * with another depth queue which is handled
+ * like the node-queue. It contains the number of steps
+ * the process took to reach the node. if it exceeds
+ * a given limit the dfs stops
  *
  * @author mknblch
  */
@@ -67,6 +71,12 @@ public class MaxDepthBetweennessCentrality extends Algorithm<MaxDepthBetweenness
         delta = new double[nodeCount];
     }
 
+    /**
+     * set traversal direction. If the graph is loaded as undirected
+     * OUTGOING must be used.
+     * @param direction
+     * @return
+     */
     public MaxDepthBetweennessCentrality withDirection(Direction direction) {
         this.direction = direction;
         this.divisor = direction == Direction.BOTH ? 2.0 : 1.0;
@@ -84,6 +94,10 @@ public class MaxDepthBetweennessCentrality extends Algorithm<MaxDepthBetweenness
         return this;
     }
 
+    /**
+     * return (inner)nodeId to bc value mapping
+     * @return
+     */
     public double[] getCentrality() {
         return centrality;
     }
@@ -102,6 +116,10 @@ public class MaxDepthBetweennessCentrality extends Algorithm<MaxDepthBetweenness
         }
     }
 
+    /**
+     * result stream of pairs of original node-id to bc-value
+     * @return
+     */
     public Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(nodeId ->
@@ -110,6 +128,15 @@ public class MaxDepthBetweennessCentrality extends Algorithm<MaxDepthBetweenness
                                 centrality[nodeId]));
     }
 
+    /**
+     * start computation at startNode.
+     *
+     * This does not calculate the BC for startNode only but adds a little bit
+     * to all nodes which are reachable from the startNode within maxDepth
+     *
+     * @param startNode
+     * @return
+     */
     private boolean compute(int startNode) {
         clearPaths();
         stack.clear();

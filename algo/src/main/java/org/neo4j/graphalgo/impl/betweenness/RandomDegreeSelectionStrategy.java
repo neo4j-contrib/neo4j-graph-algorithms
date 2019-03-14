@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Note: Experimental
  * @author mknblch
  */
 public class RandomDegreeSelectionStrategy implements RABrandesBetweennessCentrality.SelectionStrategy {

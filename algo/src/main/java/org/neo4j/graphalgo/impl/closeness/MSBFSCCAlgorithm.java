@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.impl.closeness;
 
 import org.neo4j.graphalgo.core.write.Exporter;
 import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphdb.Direction;
 
 import java.util.function.LongToIntFunction;
 import java.util.stream.Stream;
@@ -28,7 +29,11 @@ public abstract class MSBFSCCAlgorithm<ME extends MSBFSCCAlgorithm<ME>> extends 
 
     public abstract Stream<MSClosenessCentrality.Result> resultStream();
 
-    public abstract ME compute();
+    public ME compute() {
+        return compute(Direction.OUTGOING);
+    }
+
+    public abstract ME compute(Direction direction);
 
     public abstract <V> V getCentrality();
 

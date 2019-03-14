@@ -29,12 +29,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 /**
+ *
  * @author mknblch
  */
 public interface HarmonicCentralityAlgorithm {
 
+    /**
+     * compute centrality
+     */
     HarmonicCentralityAlgorithm compute();
 
+    /**
+     * return result stream with nodeId-closeness value
+     * @return
+     */
     Stream<Result> resultStream();
 
     HarmonicCentralityAlgorithm withProgressLogger(ProgressLogger wrap);

@@ -34,6 +34,25 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * Balanced triads algorithm.
+ *
+ * The algorithm calculates the number of balanced and unbalanced triads
+ * of a node. A triangle or triad is balanced if the product of the weights
+ * of their relations is positive, or unbalanced if negative:
+ *
+ *
+ * positive:                negative:
+ *
+ *        (b)                   (b)
+ *      +/  \+                -/   \-
+ *    (a)---(c)              (a)---(c)
+ *        -                      -
+ *
+ * see: https://en.wikipedia.org/wiki/Balance_theory
+ *
+ * The algorithm should run on a complete graph where each node
+ * is connected to each of its possible neighbors by either a
+ * relation with positive or negative weight.
  *
  * @author mknblch
  */
@@ -50,7 +69,6 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
     private final PagedAtomicIntegerArray unbalancedTriangles;
     private final int concurrency;
     private final long nodeCount;
-    private final AllocationTracker tracker;
     private final LongAdder balancedTriangleCount;
     private final LongAdder unbalancedTriangleCount;
     private final AtomicLong queue;
@@ -59,7 +77,6 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
 
     public HugeBalancedTriads(HugeGraph graph, ExecutorService executorService, int concurrency, AllocationTracker tracker) {
         this.graph = graph;
-        this.tracker = tracker;
         this.executorService = executorService;
         this.concurrency = concurrency;
         nodeCount = graph.nodeCount();
@@ -76,6 +93,10 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
         return this;
     }
 
+    /**
+     * release inner data structs
+     * @return
+     */
     @Override
     public HugeBalancedTriads release() {
         executorService = null;
@@ -87,6 +108,10 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
         return this;
     }
 
+    /**
+     * compute number of balanced and unbalanced triangles
+     * @return
+     */
     public HugeBalancedTriads compute() {
         visitedNodes.set(0);
         queue.set(0);
@@ -99,6 +124,11 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
         return this;
     }
 
+    /**
+     * get result stream of original node id to number of balanced
+     * and unbalanced triangles
+     * @return
+     */
     public Stream<Result> stream() {
         return IntStream.range(0, Math.toIntExact(nodeCount))
                 .mapToObj(i -> new Result(
@@ -107,22 +137,39 @@ public class HugeBalancedTriads extends Algorithm<HugeBalancedTriads> {
                         unbalancedTriangles.get(i)));
     }
 
+    /**
+     * @return array of nodeId to number of balanced triangles mapping
+     */
     public PagedAtomicIntegerArray getBalancedTriangles() {
         return balancedTriangles;
     }
 
+    /**
+     * @return array of nodeId to number of UNbalanced triangles mapping
+     */
     public PagedAtomicIntegerArray getUnbalancedTriangles() {
         return unbalancedTriangles;
     }
 
+    /**
+     * get number of balanced triads
+     * @return
+     */
     public long getBalancedTriangleCount() {
         return balancedTriangleCount.longValue();
     }
 
+    /**
+     * get number of unbalanced triads
+     * @return
+     */
     public long getUnbalancedTriangleCount() {
         return unbalancedTriangleCount.longValue();
     }
 
+    /**
+     * result triple for original nodeId, number of balanced and unbalanced triangles
+     */
     public static class Result {
 
         public final long nodeId;

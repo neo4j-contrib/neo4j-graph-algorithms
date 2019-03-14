@@ -34,7 +34,10 @@ import java.util.Collections;
 import java.util.function.IntPredicate;
 
 /**
- * virtual graph used by Louvain
+ * virtual graph used by Louvain. This graph representation
+ * does not aggregate degrees like heavy and huge do when using
+ * undirected direction. The degree is just the sum of
+ * incoming and outgoing degrees.
  *
  * @author mknblch
  */

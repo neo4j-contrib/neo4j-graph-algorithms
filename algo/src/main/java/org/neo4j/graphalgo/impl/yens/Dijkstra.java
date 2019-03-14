@@ -37,19 +37,14 @@ import java.util.Optional;
 public class Dijkstra {
 
     // initial weighted path capacity
-
     public static final int INITIAL_CAPACITY = 64;
-
     private static final int PATH_END = -1;
     private final Graph graph;
-
     private final int nodeCount;
-
     private TerminationFlag terminationFlag = TerminationFlag.RUNNING_TRUE;
     // node to cost map
     private final IntDoubleMap costs;
     // next node priority queue
-
     private final IntPriorityQueue queue;
     // auxiliary path map
     private final IntIntMap path;
@@ -61,7 +56,6 @@ public class Dijkstra {
     private Direction direction = Direction.BOTH;
     // iteration depth
     private int[] depth;
-
 
     public Dijkstra(Graph graph) {
         this.graph = graph;

@@ -32,6 +32,9 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
 /**
+ *
+ * ForkJoin approach to make triangle count concurrent
+ *
  * @author mknblch
  */
 public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, TriangleCountForkJoin> {
@@ -49,11 +52,20 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
         coefficients = new AtomicDoubleArray(nodeCount);
     }
 
+    /**
+     * return coefficient of a (inner)nodeId
+     * @param node
+     * @return
+     */
     @Override
     double coefficient(final int node) {
         return coefficients.get(node);
     }
 
+    /**
+     * get number of triangle is the graph
+     * @return
+     */
     @Override
     public long getTriangleCount() {
         return triangleCount;
@@ -72,11 +84,19 @@ public class TriangleCountForkJoin extends TriangleCountBase<AtomicDoubleArray, 
         averageClusteringCoefficient = pool.invoke(coefficientTask);
     }
 
+    /**
+     * get average clustering coefficient
+     * @return
+     */
     @Override
     public double getAverageClusteringCoefficient() {
         return averageClusteringCoefficient / nodeCount;
     }
 
+    /**
+     * get nodeId to clustering coefficient mapping
+     * @return
+     */
     @Override
     public AtomicDoubleArray getClusteringCoefficients() {
         return coefficients;

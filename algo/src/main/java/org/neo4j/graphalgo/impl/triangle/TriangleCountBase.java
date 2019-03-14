@@ -31,6 +31,11 @@ import java.util.stream.Stream;
  * TriangleCount counts the number of triangles in the Graph as well
  * as the number of triangles that passes through a node
  *
+ * https://epubs.siam.org/doi/pdf/10.1137/1.9781611973198.1
+ * http://www.cse.cuhk.edu.hk/~jcheng/papers/triangle_kdd11.pdf
+ * https://i11www.iti.kit.edu/extra/publications/sw-fclt-05_t.pdf
+ * http://www.math.cmu.edu/~ctsourak/tsourICDM08.pdf
+ *
  * @author mknblch
  */
 public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Coeff, Self>> extends Algorithm<Self> {
@@ -50,6 +55,10 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
         visitedNodes = new AtomicInteger();
     }
 
+    /**
+     * get stream of original nodeId to number of triangles of which the node is part of
+     * @return stream of node-triangle pairs
+     */
     public final Stream<Result> resultStream() {
         return IntStream.range(0, nodeCount)
                 .mapToObj(i -> new Result(
@@ -58,16 +67,35 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
                         coefficient(i)));
     }
 
+    /**
+     * get number of triangles in the graph
+     * @return
+     */
     public abstract long getTriangleCount();
 
+    /**
+     * get array of nodeId to number of triangles mapping
+     * @return
+     */
     public final AtomicIntegerArray getTriangles() {
         return triangles;
     }
 
+    /**
+     * get coefficient for node
+     * @return
+     */
     abstract double coefficient(int node);
 
+    /**
+     * return nodeId to clustering coefficient mapping
+     */
     public abstract Coeff getClusteringCoefficients();
 
+    /**
+     * get average clustering coefficient
+     * @return
+     */
     abstract double getAverageClusteringCoefficient();
 
     @SuppressWarnings("unchecked")
@@ -83,6 +111,10 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
         return me();
     }
 
+    /**
+     * compute triangles
+     * @return
+     */
     public final Self compute() {
         visitedNodes.set(0);
         runCompute();
@@ -91,6 +123,12 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
 
     abstract void runCompute();
 
+    /**
+     * store a single triangle
+     * @param u
+     * @param v
+     * @param w
+     */
     final void exportTriangle(int u, int v, int w) {
         triangles.incrementAndGet(u);
         triangles.incrementAndGet(v);
@@ -100,14 +138,26 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
 
     abstract void onTriangle();
 
+    /**
+     * progress logging
+     */
     final void nodeVisited() {
         getProgressLogger().logProgress(visitedNodes.incrementAndGet(), nodeCount);
     }
 
+    /**
+     * calculate coefficient for nodeId in given direction
+     */
     final double calculateCoefficient(int nodeId, Direction direction) {
         return calculateCoefficient(triangles.get(nodeId), graph.degree(nodeId, direction));
     }
 
+    /**
+     * calculate coefficient based using number of triangles and its degree
+     * @param triangles
+     * @param degree
+     * @return
+     */
     private double calculateCoefficient(int triangles, int degree) {
         if (triangles == 0) {
             return 0.0;
@@ -115,6 +165,9 @@ public abstract class TriangleCountBase<Coeff, Self extends TriangleCountBase<Co
         return ((double) (triangles << 1)) / (degree * (degree - 1));
     }
 
+    /**
+     * result triple containing original node id, number of triangles and its coefficient
+     */
     public static class Result {
 
         public final long nodeId;

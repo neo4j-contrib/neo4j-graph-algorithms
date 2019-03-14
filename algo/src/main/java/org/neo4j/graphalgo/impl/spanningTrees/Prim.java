@@ -59,6 +59,12 @@ public class Prim extends Algorithm<Prim> {
         return this;
     }
 
+    /**
+     * callculate min or max spanning trees
+     * @param startNode the start node
+     * @param max true to calc max spanning tree, false to calc min spanning tree
+     * @return
+     */
     private SpanningTree prim(int startNode, boolean max) {
         final int[] parent = new int[nodeCount];
         final IntDoubleMap cost = new IntDoubleScatterMap(nodeCount);

@@ -37,7 +37,10 @@ import java.util.stream.Stream;
 
 /**
  * TriangleCount counts the number of triangles in the Graph as well
- * as the number of triangles that passes through a node
+ * as the number of triangles that passes through a node.
+ *
+ * This impl uses another approach where all the triangles can be calculated
+ * using set intersection methods of the graph itself.
  *
  * @author mknblch
  */

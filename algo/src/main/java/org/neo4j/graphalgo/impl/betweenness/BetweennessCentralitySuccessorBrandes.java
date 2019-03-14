@@ -41,6 +41,7 @@ import java.util.stream.Stream;
  * <p>
  * taken from: http://cass-mt.pnnl.gov/docs/pubs/georgiatechlbnlpnnlfastbc-mtaap2009.pdf
  *
+ * TODO: unstable (deadlocks) & deprecated (only used in tests) ?
  * @author mknblch
  */
 public class BetweennessCentralitySuccessorBrandes extends Algorithm<BetweennessCentralitySuccessorBrandes> {
