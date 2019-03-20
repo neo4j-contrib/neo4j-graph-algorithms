@@ -277,7 +277,7 @@ include::scripts/pagerank.cypher[tag=cypher-loading]
 [source, cypher]
 ----
 CALL algo.pageRank(label:String, relationship:String,
-    {iterations:20, dampingFactor:0.85, write: true, writeProperty:'pagerank', concurrency:4})
+    {direction:'OUTGOING', iterations:20, dampingFactor:0.85, write: true, writeProperty:'pagerank', concurrency:4})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 ----
 
@@ -287,6 +287,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 | Name          | Type    | Default        | Optional | Description
 | label         | string  | null           | yes      | The label to load from the graph. If null, load all nodes
 | relationship  | string  | null           | yes      | The relationship-type to load from the graph. If null, load all relationships
+| direction     | string  | 'OUTGOING'     | yes      | The relationship-direction to use in the algorithm
 | iterations    | int     | 20             | yes      | How many iterations of PageRank to run
 | concurrency   | int     | available CPUs | yes      | The number of concurrent threads
 | dampingFactor | float   | 0.85           | yes      | The damping factor of the PageRank calculation
@@ -314,7 +315,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 [source, cypher]
 ----
 CALL algo.pageRank.stream(label:String, relationship:String,
-    {iterations:20, dampingFactor:0.85, concurrency:4})
+    {direction:'OUTGOING', iterations:20, dampingFactor:0.85, concurrency:4})
 YIELD node, score
 ----
 
@@ -324,6 +325,7 @@ YIELD node, score
 | Name          | Type   | Default        | Optional | Description
 | label         | string | null           | yes      | The label to load from the graph. If null, load all nodes
 | relationship  | string | null           | yes      | The relationship-type to load from the graph. If null, load all nodes
+| direction     | string | 'OUTGOING'     | yes      | The relationship-direction to use in the algorithm
 | iterations    | int    | 20             | yes      | Specify how many iterations of PageRank to run
 | concurrency   | int    | available CPUs | yes      | The number of concurrent threads
 | dampingFactor | float  | 0.85           | yes      | The damping factor of the PageRank calculation
@@ -346,17 +348,14 @@ YIELD node, score
 
 The PageRank algorithm supports the following graph types:
 
-* [x] directed, unweighted
-
+* [x] directed, unweighted:
+** direction: 'INCOMING' or 'OUTGOING', weightProperty: null
 * [x] directed, weighted
-
+** direction: 'INCOMING' or 'OUTGOING', weightProperty : 'weight'
 * [x] undirected, unweighted
-
-** Only with cypher projection
-
+** direction: 'BOTH', weightProperty: null
 * [x] undirected, weighted
-
-** Only with cypher projection
+** direction: 'BOTH', weightProperty: 'weight'
 
 ifndef::env-docs[]
 == References
