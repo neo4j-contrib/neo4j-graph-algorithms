@@ -19,6 +19,7 @@ The following centrality algorithms determine the importance of distinct nodes i
 * <<algorithms-closeness-centrality, Closeness Centrality>> (`algo.closeness`)
 * <<algorithms-harmonic-centrality, Harmonic Centrality>> (`algo.closeness.harmonic`)
 * <<algorithms-eigenvector, Eigenvector Centrality>> (`algo.eigenvector`)
+* <<algorithms-degree-centrality, Degree Centrality>> (`algo.degree`)
 
 include::pagerank.adoc[leveloffset=2]
 
@@ -31,3 +32,5 @@ include::closeness-centrality.adoc[leveloffset=2]
 include::harmonic-centrality.adoc[leveloffset=2]
 
 include::eigenvector-centrality.adoc[leveloffset=2]
+
+include::degree-centrality.adoc[leveloffset=2]
