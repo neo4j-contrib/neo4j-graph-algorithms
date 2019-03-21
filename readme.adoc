@@ -38,6 +38,7 @@ These algorithms determine the importance of distinct nodes in a network:
 * <<algorithms-betweenness-centrality, Betweenness Centrality>> (`algo.betweenness`)
 * <<algorithms-closeness-centrality, Closeness Centrality>> (`algo.closeness`)
 * <<algorithms-harmonic-centrality, Harmonic Centrality>> (`algo.closeness.harmonic`)
+* <<algorithms-eigenvector, Eigenvector Centrality>> (`algo.eigenvector`)
 
 
 === Community detection

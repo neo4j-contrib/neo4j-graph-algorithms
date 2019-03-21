@@ -28,7 +28,7 @@ MERGE (d)-[:LINKS]->(home)
 
 // tag::stream-sample-graph[]
 
-CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
+CALL algo.eigenvector.stream('Page', 'LINKS', {})
 YIELD nodeId, score
 
 RETURN algo.getNodeById(nodeId).name AS page,score
@@ -38,11 +38,22 @@ ORDER BY score DESC
 
 // tag::write-sample-graph[]
 
-CALL algo.pageRank('Page', 'LINKS',
-  {iterations:20, dampingFactor:0.85, write: true,writeProperty:"pagerank"})
+CALL algo.eigenvector('Page', 'LINKS', {write: true, writeProperty:"eigenvector"})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 
 // end::write-sample-graph[]
+
+// tag::stream-sample-graph-max-norm[]
+
+CALL algo.eigenvector.stream('Page', 'LINKS', {normalization: "max"})
+YIELD nodeId, score
+
+RETURN algo.getNodeById(nodeId).name AS page,score
+ORDER BY score DESC
+
+// end::stream-sample-graph-max-norm[]
+
+
 
 // tag::create-sample-weighted-graph[]
 
@@ -81,7 +92,7 @@ MERGE (links)-[:LINKS {weight: 0.05}]->(d)
 
 // tag::stream-sample-weighted-graph[]
 
-CALL algo.pageRank.stream('Page', 'LINKS', {
+CALL algo.eigenvector.stream('Page', 'LINKS', {
   iterations:20, dampingFactor:0.85, weightProperty: "weight"
 })
 YIELD nodeId, score
@@ -93,8 +104,8 @@ ORDER BY score DESC
 
 // tag::write-sample-weighted-graph[]
 
-CALL algo.pageRank('Page', 'LINKS',{
-  iterations:20, dampingFactor:0.85, write: true, writeProperty:"pagerank", weightProperty: "weight"
+CALL algo.eigenvector('Page', 'LINKS',{
+  iterations:20, dampingFactor:0.85, write: true, writeProperty:"eigenvector", weightProperty: "weight"
 })
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 
@@ -103,7 +114,7 @@ YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, 
 // tag::ppr-stream-sample-graph[]
 MATCH (siteA:Page {name: "Site A"})
 
-CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85, sourceNodes: [siteA]})
+CALL algo.eigenvector.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85, sourceNodes: [siteA]})
 YIELD nodeId, score
 
 RETURN algo.getNodeById(nodeId).name AS page,score
@@ -114,15 +125,15 @@ ORDER BY score DESC
 // tag::ppr-write-sample-graph[]
 
 MATCH (siteA:Page {name: "Site A"})
-CALL algo.pageRank('Page', 'LINKS',
-{iterations:20, dampingFactor:0.85, sourceNodes: [siteA], write: true, writeProperty:"ppr"})
+CALL algo.eigenvector('Page', 'LINKS',
+  {iterations:20, dampingFactor:0.85, sourceNodes: [siteA], write: true, writeProperty:"ppr"})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
 RETURN *
 // end::ppr-write-sample-graph[]
 
 // tag::cypher-loading[]
 
-CALL algo.pageRank(
+CALL algo.eigenvector(
   'MATCH (p:Page) RETURN id(p) as id',
   'MATCH (p1:Page)-[:LINKS]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
   {graph:'cypher', iterations:5, write: true}
@@ -130,21 +141,10 @@ CALL algo.pageRank(
 
 // end::cypher-loading[]
 
-// tag::pagerank-stream-yelp-social[]
-
-CALL algo.pageRank.stream(
-  'MATCH (u:User) WHERE exists( (u)-[:FRIENDS]-() ) RETURN id(u) as id',
-  'MATCH (u1:User)-[:FRIENDS]-(u2:User) RETURN id(u1) as source, id(u2) as target',
-  {graph:'cypher'}
-) YIELD nodeId,score with algo.getNodeById(nodeId) as node, score order by score desc limit 10
-RETURN node {.name, .review_count, .average_stars,.useful,.yelping_since,.funny}, score
-
-// end::pagerank-stream-yelp-social[]
 
 // tag::huge-projection[]
 
-CALL algo.pageRank('Page','LINKS',
-  {graph:'huge'})
+CALL algo.eigenvector('Page','LINKS', {graph:'huge'})
 YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, writeProperty;
 
 // end::huge-projection[]
