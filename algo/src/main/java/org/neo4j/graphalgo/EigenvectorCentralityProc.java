@@ -59,7 +59,7 @@ public final class EigenvectorCentralityProc {
 
     @Procedure(value = "algo.eigenvector", mode = Mode.WRITE)
     @Description("CALL algo.eigenvector(label:String, relationship:String, " +
-            "{weightProperty: null, write: true, writeProperty:'articlerank', concurrency:4}) " +
+            "{weightProperty: null, write: true, writeProperty:'eigenvector', concurrency:4}) " +
             "YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty" +
             " - calculates eigenvector centrality and potentially writes back")
     public Stream<PageRankScore.Stats> write(
