@@ -23,7 +23,7 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
-import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -80,7 +80,7 @@ public class PageRankBenchmarkLdbc {
     }
 
     @Benchmark
-    public PageRankResult run() throws Exception {
+    public CentralityResult run() throws Exception {
         return PageRankAlgorithm.of(
                 AllocationTracker.EMPTY,
                 grph,
