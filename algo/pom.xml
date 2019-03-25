@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.neo4j</groupId>
         <artifactId>graph-algorithms-parent</artifactId>
-        <version>3.4.12.5</version>
+        <version>3.4.12.6</version>
     </parent>
 
     <artifactId>graph-algorithms-algo</artifactId>
