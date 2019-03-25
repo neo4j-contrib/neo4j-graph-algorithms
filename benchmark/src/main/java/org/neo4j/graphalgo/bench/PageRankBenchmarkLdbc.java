@@ -35,7 +35,7 @@ import java.util.stream.LongStream;
 
 @Threads(1)
 @Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
-@Warmup(iterations = 5)
+@Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)

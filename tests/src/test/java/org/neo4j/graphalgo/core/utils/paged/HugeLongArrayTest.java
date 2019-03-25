@@ -289,6 +289,54 @@ public final class HugeLongArrayTest extends RandomizedTest {
     }
 
     @Test
+    public void shouldHavePartialCursorForMultiplePages() {
+        int size = between(100_000, 200_000);
+        int start = between(10_000, 50_000);
+        int end = between(start + 2 * PS, size);
+        testPartialMultiCursor(size, start, end);
+    }
+
+    @Test
+    public void shouldHavePartialCursorForMultiplePagesWithFullPageSized() {
+        testPartialMultiCursor(PS, 0, 0);
+        testPartialMultiCursor(PS, 0, PS);
+        testPartialMultiCursor(PS, PS, PS);
+
+        testPartialMultiCursor(2 * PS, 0, 0);
+        testPartialMultiCursor(2 * PS, 0, PS);
+        testPartialMultiCursor(2 * PS, 0, 2 * PS);
+        testPartialMultiCursor(2 * PS, PS, PS);
+        testPartialMultiCursor(2 * PS, PS, 2 * PS);
+        testPartialMultiCursor(2 * PS, 2 * PS, 2 * PS);
+
+        testPartialMultiCursor(3 * PS, 0, 0);
+        testPartialMultiCursor(3 * PS, 0, PS);
+        testPartialMultiCursor(3 * PS, 0, 2 * PS);
+        testPartialMultiCursor(3 * PS, 0, 3 * PS);
+        testPartialMultiCursor(3 * PS, PS, PS);
+        testPartialMultiCursor(3 * PS, PS, 2 * PS);
+        testPartialMultiCursor(3 * PS, PS, 3 * PS);
+        testPartialMultiCursor(3 * PS, 2 * PS, 2 * PS);
+        testPartialMultiCursor(3 * PS, 2 * PS, 3 * PS);
+        testPartialMultiCursor(3 * PS, 3 * PS, 3 * PS);
+    }
+
+    private void testPartialMultiCursor(int size, int start, int end) {
+        HugeLongArray array = HugeLongArray.newPagedArray(size, AllocationTracker.EMPTY);
+        array.setAll(i -> 42L + i);
+        HugeLongArray.Cursor cursor = array.newCursor();
+        array.cursor(cursor, start, end);
+
+        long expected = start + 42L;
+        while (cursor.next()) {
+            for (int i = cursor.offset; i < cursor.limit; i++, expected++) {
+                assertEquals(expected, cursor.array[i]);
+            }
+        }
+        assertEquals(expected, end + 42L);
+    }
+
+    @Test
     public void shouldHaveCursor() {
         int size = between(100_000, 200_000);
         testArray(size, array -> {

@@ -53,8 +53,8 @@ import java.util.function.Consumer;
  */
 @Threads(1)
 @Fork(1)
-@Warmup(iterations = 1)
-@Measurement(iterations = 1)
+@Warmup(iterations = 1, time = 1)
+@Measurement(iterations = 1, time = 1)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.SECONDS)

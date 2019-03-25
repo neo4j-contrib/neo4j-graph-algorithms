@@ -22,7 +22,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.closeness.MSClosenessCentrality;
 import org.neo4j.graphalgo.impl.DangalchevClosenessCentrality;

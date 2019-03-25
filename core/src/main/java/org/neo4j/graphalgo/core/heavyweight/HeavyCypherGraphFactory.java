@@ -51,7 +51,6 @@ public class HeavyCypherGraphFactory extends GraphFactory {
         this.relationshipLoader = new CypherRelationshipLoader(api, setup);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public Graph build() {
         Nodes nodes = nodeLoader.load();
         Relationships relationships = relationshipLoader.load(nodes);

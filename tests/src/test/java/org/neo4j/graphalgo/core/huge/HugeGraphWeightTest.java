@@ -22,6 +22,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 import org.neo4j.graphalgo.core.utils.paged.PageUtil;

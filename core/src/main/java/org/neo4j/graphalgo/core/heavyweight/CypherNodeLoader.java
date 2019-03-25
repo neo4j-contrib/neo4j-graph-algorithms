@@ -107,7 +107,7 @@ class CypherNodeLoader {
 
         NodeRowVisitor visitor = new NodeRowVisitor(idMap, nodeProperties);
         api.execute(setup.startLabel, CypherLoadingUtils.params(setup.params,offset, batchSize)).accept(visitor);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(setup.tracker);
         return new Nodes(
                 offset,
                 visitor.rows(),
