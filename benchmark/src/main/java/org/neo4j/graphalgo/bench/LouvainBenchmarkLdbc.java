@@ -37,8 +37,8 @@ import java.util.function.Consumer;
  */
 @Threads(1)
 @Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g", "-XX:+UseG1GC"})
-@Warmup(iterations = 1)
-@Measurement(iterations = 1)
+@Warmup(iterations = 1, time = 1)
+@Measurement(iterations = 1, time = 1)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.SECONDS)

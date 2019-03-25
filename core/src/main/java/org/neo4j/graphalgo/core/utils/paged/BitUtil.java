@@ -40,13 +40,13 @@ public final class BitUtil {
      * returns the previous highest power of two, or the current value if it's already a power of two or zero
      */
     public static long previousPowerOfTwo(long v) {
-        v |= (v >>  1);
-        v |= (v >>  2);
-        v |= (v >>  4);
-        v |= (v >>  8);
-        v |= (v >> 16);
-        v |= (v >> 32);
-        return v - (v >>> 1);
+        v |= (v >>  1L);
+        v |= (v >>  2L);
+        v |= (v >>  4L);
+        v |= (v >>  8L);
+        v |= (v >> 16L);
+        v |= (v >> 32L);
+        return v - (v >>> 1L);
     }
 
     public static int nearbyPowerOfTwo(int x) {
@@ -80,12 +80,12 @@ public final class BitUtil {
      */
     public static long nextHighestPowerOfTwo(long v) {
         v--;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        v |= v >> 32;
+        v |= v >> 1L;
+        v |= v >> 2L;
+        v |= v >> 4L;
+        v |= v >> 8L;
+        v |= v >> 16L;
+        v |= v >> 32L;
         v++;
         return v;
     }

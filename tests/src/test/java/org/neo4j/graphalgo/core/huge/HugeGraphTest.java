@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.neo4j.graphalgo.SimpleGraphSetup;
 import org.neo4j.graphalgo.SimpleGraphTestCase;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 
 /**
  * @author mknobloch

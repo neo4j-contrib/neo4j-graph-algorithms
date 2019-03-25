@@ -18,21 +18,22 @@
  */
 package org.neo4j.graphalgo.core.huge;
 
+import org.neo4j.graphalgo.core.huge.loader.MutableIntValue;
 import org.neo4j.graphalgo.core.utils.paged.MemoryUsage;
 
 import static org.neo4j.graphalgo.core.utils.paged.PageUtil.indexInPage;
 import static org.neo4j.graphalgo.core.utils.paged.PageUtil.pageIndex;
 
-final class HugeAdjacencyList {
+public final class HugeAdjacencyList {
 
-    static final int PAGE_SHIFT = 18;
-    static final int PAGE_SIZE = 262144; // 1 << PAGE_SHIFT
-    static final long PAGE_MASK = 262143L; // PAGE_SIZE - 1
+    public static final int PAGE_SHIFT = 18;
+    public static final int PAGE_SIZE = 262144; // 1 << PAGE_SHIFT
+    public static final long PAGE_MASK = 262143L; // PAGE_SIZE - 1
 
     private final long allocatedMemory;
     private byte[][] pages;
 
-    HugeAdjacencyList(byte[][] pages) {
+    public HugeAdjacencyList(byte[][] pages) {
         this.pages = pages;
         this.allocatedMemory = memoryOfPages(pages);
     }
@@ -69,7 +70,7 @@ final class HugeAdjacencyList {
         return reuse.init(offset);
     }
 
-    public static final class Cursor extends AdjacencyCompression.IntValue {
+    public static final class Cursor extends MutableIntValue {
 
         // TODO: free
         private byte[][] pages;

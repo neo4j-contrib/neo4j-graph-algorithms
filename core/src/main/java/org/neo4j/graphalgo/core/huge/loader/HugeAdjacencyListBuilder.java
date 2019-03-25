@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core.huge;
+package org.neo4j.graphalgo.core.huge.loader;
 
+import org.neo4j.graphalgo.core.huge.HugeAdjacencyList;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.PageUtil;
 

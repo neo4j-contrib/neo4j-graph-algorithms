@@ -16,31 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core;
+package org.neo4j.graphalgo.core.huge.loader;
 
-import org.neo4j.graphalgo.api.HugeWeightMapping;
-
-/**
- * WeightMapping implementation which always returns
- * a given default weight upon invocation
- *
- * @author mknblch
- */
-public class HugeNullWeightMap implements HugeWeightMapping {
-
-    private final double defaultValue;
-
-    public HugeNullWeightMap(double defaultValue) {
-        this.defaultValue = defaultValue;
-    }
-
-    @Override
-    public double weight(final long source, final long target) {
-        return defaultValue;
-    }
-
-    @Override
-    public long release() {
-        return 0L;
-    }
+public abstract class MutableIntValue {
+    public int value;
 }

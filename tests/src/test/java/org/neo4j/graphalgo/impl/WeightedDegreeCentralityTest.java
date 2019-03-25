@@ -29,7 +29,7 @@ import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.degree.WeightedDegreeCentrality;
 import org.neo4j.graphdb.Direction;
@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public final class WeightedDegreeCentralityTest {

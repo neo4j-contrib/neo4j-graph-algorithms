@@ -16,40 +16,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core.huge;
+package org.neo4j.graphalgo.core.huge.loader;
 
-import org.neo4j.graphalgo.core.BaseNodeImporter;
+import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphalgo.core.utils.paged.HugeLongArrayBuilder;
+import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public final class HugeNodeImporter extends BaseNodeImporter<HugeIdMap> {
+import java.util.concurrent.ExecutorService;
+
+
+final class ScanningNodesImporter extends ScanningRecordsImporter<NodeRecord, HugeIdMap> {
+
+    private final ImportProgress progress;
     private final AllocationTracker tracker;
-    private final long allNodesCount;
 
-    public HugeNodeImporter(
+    private HugeLongArrayBuilder idMapBuilder;
+
+    ScanningNodesImporter(
             GraphDatabaseAPI api,
-            AllocationTracker tracker,
+            GraphDimensions dimensions,
             ImportProgress progress,
-            long nodeCount,
-            long allNodesCount,
-            int labelId) {
-        super(api, progress, nodeCount, labelId);
+            AllocationTracker tracker,
+            ExecutorService threadPool,
+            int concurrency) {
+        super(NodeStoreScanner.NODE_ACCESS, "Node", api, dimensions, threadPool, concurrency);
+        this.progress = progress;
         this.tracker = tracker;
-        this.allNodesCount = allNodesCount;
     }
 
     @Override
-    protected HugeIdMap newNodeMap(final long nodeCount) {
-        return new HugeIdMap(nodeCount, allNodesCount, tracker);
+    ImportingThreadPool.CreateScanner creator(
+            long nodeCount,
+            ImportSizing sizing,
+            AbstractStorePageCacheScanner<NodeRecord> scanner) {
+        idMapBuilder = HugeLongArrayBuilder.of(nodeCount, tracker);
+        return NodesScanner.of(api, scanner, dimensions.labelId(), progress, idMapBuilder);
     }
 
     @Override
-    protected void addNodeId(final HugeIdMap map, final long nodeId) {
-        map.add(nodeId);
+    HugeIdMap build() {
+        return HugeIdMapBuilder.build(idMapBuilder, dimensions.allNodesCount(), tracker);
     }
 
-    @Override
-    protected void finish(final HugeIdMap map) {
-    }
 }

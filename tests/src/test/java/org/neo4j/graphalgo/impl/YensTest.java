@@ -26,7 +26,7 @@ import org.neo4j.graphalgo.TestProgressLogger;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.RawValues;
 import org.neo4j.graphalgo.impl.yens.Dijkstra;
 import org.neo4j.graphalgo.impl.yens.WeightedPath;

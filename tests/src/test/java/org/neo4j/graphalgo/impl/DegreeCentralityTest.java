@@ -20,7 +20,6 @@ package org.neo4j.graphalgo.impl;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,7 +30,7 @@ import org.neo4j.graphalgo.core.DuplicateRelationshipsStrategy;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.impl.degree.DegreeCentrality;
@@ -59,11 +58,6 @@ public final class DegreeCentralityTest {
                 new Object[]{HugeGraphFactory.class, "HugeGraphFactory"},
                 new Object[]{GraphViewFactory.class, "GraphViewFactory"}
         );
-
-//        return Arrays.asList(
-//                new Object[]{HeavyGraphFactory.class, "HeavyGraphFactory"},
-//                new Object[]{HugeGraphFactory.class, "HugeGraphFactory"}
-//        );
     }
 
     private static final String DB_CYPHER = "" +

@@ -60,8 +60,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Threads(1)
 @Fork(value = 1, jvmArgs = {"-Xms4G", "-Xmx4G"})
-@Warmup(iterations = 5)
-@Measurement(iterations = 5)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 5, time = 1)
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)

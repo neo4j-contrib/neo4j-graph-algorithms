@@ -16,23 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.core.huge;
+package org.neo4j.graphalgo.core.huge.loader;
 
 final class VarLongEncoding {
 
-    static int encodeVLongs(long[] values, int limit, byte[] out) {
-        return encodeVLongs(values, limit, out, 0);
+    static int encodeVLongs(long[] values, int limit, byte[] out, int into) {
+        return encodeVLongs(values, 0, limit, out, into);
     }
 
-    static int encodeVLongs(long[] values, int limit, byte[] out, int into) {
-        for (int i = 0; i < limit; ++i) {
+    static int encodeVLongs(long[] values, int offset, int end, byte[] out, int into) {
+        for (int i = offset; i < end; ++i) {
             into = encodeVLong(out, values[i], into);
         }
         return into;
     }
 
     //@formatter:off
-    static int encodeVLong(final byte[] buffer, final long val, int output) {
+    private static int encodeVLong(final byte[] buffer, final long val, int output) {
         if (val < 128L) {
             buffer[    output] = (byte) (val       | 128L);
             return 1 + output;

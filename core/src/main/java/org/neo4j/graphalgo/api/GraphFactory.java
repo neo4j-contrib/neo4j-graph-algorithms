@@ -19,18 +19,13 @@
 package org.neo4j.graphalgo.api;
 
 import org.neo4j.graphalgo.core.GraphDimensions;
-import org.neo4j.graphalgo.core.HugeNullWeightMap;
-import org.neo4j.graphalgo.core.HugeWeightMap;
 import org.neo4j.graphalgo.core.IdMap;
 import org.neo4j.graphalgo.core.NodeImporter;
 import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.WeightMap;
-import org.neo4j.graphalgo.core.huge.HugeIdMap;
-import org.neo4j.graphalgo.core.huge.HugeNodeImporter;
 import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -96,30 +91,10 @@ public abstract class GraphFactory {
         return nodeImporter.call();
     }
 
-    protected HugeIdMap loadHugeIdMap(AllocationTracker tracker) {
-        final HugeNodeImporter nodeImporter = new HugeNodeImporter(
-                api,
-                tracker,
-                progress,
-                dimensions.hugeNodeCount(),
-                dimensions.allNodesCount(),
-                dimensions.labelId());
-        return nodeImporter.call();
-    }
-
     protected WeightMapping newWeightMap(int propertyId, double defaultValue) {
         return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
                 ? new NullWeightMap(defaultValue)
                 : new WeightMap(dimensions.nodeCount(), defaultValue, propertyId);
-    }
-
-    protected HugeWeightMapping hugeWeightMapping(
-            AllocationTracker tracker,
-            int propertyId,
-            double defaultValue) {
-        return propertyId == StatementConstants.NO_SUCH_PROPERTY_KEY
-                    ? new HugeNullWeightMap(defaultValue)
-                    : new HugeWeightMap(dimensions.hugeNodeCount(), defaultValue, tracker);
     }
 
     private static ProgressLogger progressLogger(Log log, long time) {

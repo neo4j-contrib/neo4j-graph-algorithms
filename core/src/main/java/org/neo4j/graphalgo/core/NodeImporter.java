@@ -48,6 +48,6 @@ public final class NodeImporter extends BaseNodeImporter<IdMap> {
 
     @Override
     protected void finish(final IdMap map) {
-        map.buildMappedIds();
+        map.buildMappedIds(tracker);
     }
 }

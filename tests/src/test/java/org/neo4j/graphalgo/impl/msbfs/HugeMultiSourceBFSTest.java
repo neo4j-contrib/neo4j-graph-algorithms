@@ -25,7 +25,7 @@ import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.api.HugeWeightedRelationshipConsumer;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.huge.HugeDirectIdMapping;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
@@ -323,6 +323,9 @@ public final class HugeMultiSourceBFSTest {
                         .setRelationship("BAR");
 
                 build.accept(graphBuilder);
+                tx.success();
+            }
+            try (Transaction tx = db.beginTx()) {
                 HugeGraph graph = (HugeGraph) new GraphLoader(db).load(HugeGraphFactory.class);
                 block.accept(graph);
                 tx.success();

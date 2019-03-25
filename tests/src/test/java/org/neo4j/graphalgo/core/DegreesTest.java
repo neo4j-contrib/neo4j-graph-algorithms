@@ -18,7 +18,6 @@
  */
 package org.neo4j.graphalgo.core;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -27,7 +26,7 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
+import org.neo4j.graphalgo.core.huge.loader.HugeGraphFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
@@ -123,7 +122,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testUnidirectionalOutgoing() throws Exception {
+    public void testUnidirectionalOutgoing() {
         setup(unidirectional, Direction.OUTGOING);
         assertEquals(2, graph.degree(nodeId("a"), Direction.OUTGOING));
         assertEquals(1, graph.degree(nodeId("b"), Direction.OUTGOING));
@@ -131,7 +130,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testUnidirectionalIncoming() throws Exception {
+    public void testUnidirectionalIncoming() {
         setup(unidirectional, Direction.INCOMING);
         assertEquals(0, graph.degree(nodeId("a"), Direction.INCOMING));
         assertEquals(1, graph.degree(nodeId("b"), Direction.INCOMING));
@@ -139,7 +138,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testUnidirectionalUndirected() throws Exception {
+    public void testUnidirectionalUndirected() {
 
         setup(unidirectional, Direction.BOTH);
         assertEquals(2, graph.degree(nodeId("a"), Direction.BOTH));
@@ -148,7 +147,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testBidirectionalOutgoing() throws Exception {
+    public void testBidirectionalOutgoing() {
         setup(bidirectional, Direction.OUTGOING);
         assertEquals(2, graph.degree(nodeId("a"), Direction.OUTGOING));
         assertEquals(2, graph.degree(nodeId("b"), Direction.OUTGOING));
@@ -156,7 +155,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testBidirectionalIncoming() throws Exception {
+    public void testBidirectionalIncoming() {
         setup(bidirectional, Direction.INCOMING);
         assertEquals(2, graph.degree(nodeId("a"), Direction.INCOMING));
         assertEquals(2, graph.degree(nodeId("b"), Direction.INCOMING));
@@ -164,7 +163,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testBidirectionalBoth() throws Exception {
+    public void testBidirectionalBoth() {
 
         setup(bidirectional, Direction.BOTH);
         assertEquals(4, graph.degree(nodeId("a"), Direction.BOTH));
@@ -173,7 +172,7 @@ public class DegreesTest {
     }
 
     @Test
-    public void testBidirectionalUndirected() throws Exception {
+    public void testBidirectionalUndirected() {
 
         setup(bidirectional, null);
         assertEquals(2, graph.degree(nodeId("a"), Direction.OUTGOING));

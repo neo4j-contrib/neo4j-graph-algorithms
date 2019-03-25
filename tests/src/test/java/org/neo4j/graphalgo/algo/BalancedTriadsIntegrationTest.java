@@ -21,47 +21,18 @@ package org.neo4j.graphalgo.algo;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.mockito.AdditionalMatchers;
 import org.neo4j.graphalgo.BalancedTriadsProc;
-import org.neo4j.graphalgo.ClosenessCentralityProc;
-import org.neo4j.graphalgo.api.Graph;
-import org.neo4j.graphalgo.api.GraphFactory;
 import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.core.GraphLoader;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraphFactory;
-import org.neo4j.graphalgo.core.huge.HugeGraphFactory;
-import org.neo4j.graphalgo.core.utils.AtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphalgo.core.utils.ProgressTimer;
-import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphalgo.core.utils.paged.PagedAtomicDoubleArray;
-import org.neo4j.graphalgo.core.utils.paged.PagedAtomicIntegerArray;
-import org.neo4j.graphalgo.helper.graphbuilder.DefaultBuilder;
-import org.neo4j.graphalgo.helper.graphbuilder.GraphBuilder;
-import org.neo4j.graphalgo.impl.triangle.HugeBalancedTriads;
-import org.neo4j.graphalgo.impl.triangle.TriangleCountAlgorithm;
-import org.neo4j.graphalgo.impl.triangle.TriangleCountForkJoin;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
-import org.mockito.AdditionalMatchers;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
-import static org.mockito.Mockito.anyLong;
 
 
 /**

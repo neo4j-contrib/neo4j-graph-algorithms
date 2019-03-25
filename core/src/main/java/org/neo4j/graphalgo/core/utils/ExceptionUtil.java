@@ -24,14 +24,14 @@ import org.neo4j.kernel.api.exceptions.Status;
 
 public final class ExceptionUtil {
 
-    /**
-     * @deprecated look at usage sites and replace with the proper replacements
-     *             according to https://goo.gl/Ivn2kc
-     */
-    @Deprecated
-    public static void throwUnchecked(final Throwable exception) {
-        Exceptions.throwIfUnchecked(exception);
-        throw new RuntimeException(exception);
+    public static RuntimeException asUnchecked(final Throwable exception) {
+        if (exception instanceof RuntimeException) {
+            return (RuntimeException) exception;
+        }
+        if (exception instanceof Error) {
+            throw (Error) exception;
+        }
+        return new RuntimeException(exception);
     }
 
     public static <T> T throwKernelException(KernelException e) {
