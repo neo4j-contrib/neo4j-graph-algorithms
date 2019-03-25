@@ -105,7 +105,7 @@ public class RelationshipRowVisitorTest {
         IdMap idMap = new IdMap(2);
         idMap.add(0);
         idMap.add(1);
-        idMap.buildMappedIds();
+        idMap.buildMappedIds(AllocationTracker.EMPTY);
         return idMap;
     }
 }
