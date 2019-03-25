@@ -26,13 +26,11 @@ import org.neo4j.graphalgo.core.WeightMap;
 import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.logging.NullLog;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;

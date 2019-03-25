@@ -18,7 +18,7 @@
  */
 package org.neo4j.graphalgo.bench;
 
-import org.neo4j.graphalgo.LouvainProc;
+import org.neo4j.graphalgo.InfoMapProc;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.helper.ldbc.LdbcDownloader;
 import org.neo4j.graphdb.Result;
@@ -36,28 +36,24 @@ import java.util.function.Consumer;
  * @author mknobloch
  */
 @Threads(1)
-@Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx4g", "-XX:+UseG1GC"})
-@Warmup(iterations = 1, time = 1)
-@Measurement(iterations = 1, time = 1)
+@Fork(value = 1, jvmArgs = {"-Xms4g", "-Xmx8g", "-XX:+UseG1GC"})
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Timeout(time = 2, timeUnit = TimeUnit.HOURS)
-public class LouvainBenchmarkLdbc {
+public class InfoMapBenchmarkLdbc {
 
     private GraphDatabaseAPI db;
     private Transaction tx;
 
-
-    @Param({"4", "8"})
-    int threads;
-
     @Setup
     public void setup() throws KernelException, IOException {
-        db = LdbcDownloader.openDb();
+        db = LdbcDownloader.openDb("Yelp");
 
         Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
-        procedures.registerProcedure(LouvainProc.class);
+        procedures.registerProcedure(InfoMapProc.class);
     }
 
     @Setup(Level.Invocation)
@@ -78,27 +74,20 @@ public class LouvainBenchmarkLdbc {
     }
 
     @Benchmark
-    public Object _01_louvainParallel() {
-        return runQuery(
-                db,
-                "CALL algo.louvain(null, null, {maxIterations:1, concurrency:" + threads + "}) "
-                        + "YIELD loadMillis, computeMillis, writeMillis, nodes, communityCount, iterations"
-                , r -> {
-                    long load = r.getNumber("loadMillis").longValue();
-                    long compute = r.getNumber("computeMillis").longValue();
-                    long write = r.getNumber("writeMillis").longValue();
-                    long count = r.getNumber("communityCount").longValue();
-                    long iter = r.getNumber("iterations").longValue();
-                    long nodes = r.getNumber("nodes").longValue();
-
-                    System.out.println("communities = " + count);
-                    System.out.println("iter = " + iter);
-                    System.out.println("nodes = " + nodes);
-                    System.out.println("load = " + load);
-                    System.out.println("compute = " + compute);
-                    System.out.println("write = " + write);
-
-                }
+    public Object _01_infoMap() {
+        return runQuery(db,
+                "CALL algo.infoMap('MATCH (c:Category) RETURN id(c) AS id',\n" +
+                        "  'MATCH (c1:Category)<-[:IN_CATEGORY]-()-[:IN_CATEGORY]->(c2:Category)\n" +
+                        "   WHERE id(c1) < id(c2)\n" +
+                        "   RETURN id(c1) AS source, id(c2) AS target, count(*) AS w', " +
+                        " {graph: 'cypher', iterations:15, writeProperty:'c', threshold:0.01, tau:0.3, weightProperty:'w', concurrency:4})",
+                r -> System.out.printf("communities: %d | iterations %d | nodes %d | load %d ms | compute %d ms | write %d ms | ",
+                        r.getNumber("communityCount").longValue(),
+                        r.getNumber("iterations").longValue(),
+                        r.getNumber("nodeCount").longValue(),
+                        r.getNumber("loadMillis").longValue(),
+                        r.getNumber("computeMillis").longValue(),
+                        r.getNumber("writeMillis").longValue())
         );
     }
 

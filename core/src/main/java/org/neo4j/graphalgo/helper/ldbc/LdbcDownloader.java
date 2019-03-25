@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.graphalgo.bench;
+package org.neo4j.graphalgo.helper.ldbc;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -43,6 +43,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import static org.neo4j.kernel.configuration.Settings.BOOLEAN;
@@ -58,15 +60,14 @@ public final class LdbcDownloader {
     static {
         FILES = new HashMap<>();
 
-        FILES.put("L01", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.4-datasets/ldbc_sf001_p006.tgz"));
-        FILES.put("L10", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.4-datasets/ldbc_sf010_p006.tgz"));
+        FILES.put("L01", new S3Location("http://example-data.neo4j.org.s3.amazonaws.com/files/ldbc_sf001_p006_neo4j31.tgz"));
+        FILES.put("L10", new S3Location("http://benchmarking-datasets.neo4j.org.s3.amazonaws.com/3.4-datasets/ldbc_sf001_p006.tgz"));
         FILES.put("Yelp", new S3Location("https://www.dropbox.com/s/srinq7sg5unt4vp/yelp.photo.db.tgz?dl=1"));
     }
 
-    static synchronized GraphDatabaseAPI openDb() throws IOException {
+    public static synchronized GraphDatabaseAPI openDb() throws IOException {
         return openDb("L01");
     }
-
 
     public static synchronized GraphDatabaseAPI openDb(String graphId) throws IOException {
         String pageCacheSize = "2G";
@@ -204,12 +205,19 @@ public final class LdbcDownloader {
         }
     }
 
+
+    private static final Pattern REPLACE_SUFFIX = Pattern.compile("\\.tgz(?:.+)?", Pattern.CASE_INSENSITIVE);
+
     private static Path unGzip(Path inputFile, S3Location location) throws IOException {
         String fileName = inputFile.getFileName().toString();
+        Matcher matcher = REPLACE_SUFFIX.matcher(fileName);
+        String targetFileName = matcher.replaceAll(".tar");
+
+        System.out.println("fileName = " + targetFileName);
         assert fileName.endsWith(".tgz");
         Path targetFile = inputFile
                 .getParent()
-                .resolve(fileName.replaceFirst("\\.tgz$", ".tar"));
+                .resolve(targetFileName);
 
         try (InputStream in = Files.newInputStream(inputFile);
              GZIPInputStream gzipIn = new GZIPInputStream(in);

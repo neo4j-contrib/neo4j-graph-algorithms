@@ -19,8 +19,8 @@
 package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.BetweennessCentralityProc;
-import org.neo4j.graphalgo.LouvainProc;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.helper.ldbc.LdbcDownloader;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
