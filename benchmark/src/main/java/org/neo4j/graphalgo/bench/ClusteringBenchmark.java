@@ -31,6 +31,7 @@ import org.neo4j.graphalgo.impl.infomap.InfoMap;
 import org.neo4j.graphalgo.impl.louvain.Louvain;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
 import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.openjdk.jmh.annotations.*;
@@ -63,7 +64,7 @@ public class ClusteringBenchmark {
     @Param({"1", "4", "8"})
     private int concurrency;
 
-    private PageRankResult pageRankResult;
+    private CentralityResult pageRankResult;
 
 
     @Setup
