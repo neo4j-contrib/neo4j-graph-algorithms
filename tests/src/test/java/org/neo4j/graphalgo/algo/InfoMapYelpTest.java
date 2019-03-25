@@ -19,7 +19,6 @@
 package org.neo4j.graphalgo.algo;
 
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphalgo.InfoMapProc;
 import org.neo4j.graphalgo.api.Graph;
@@ -34,7 +33,6 @@ import java.io.IOException;
 /**
  * @author mknblch
  */
-@Ignore
 public class InfoMapYelpTest {
 
     private static GraphDatabaseService db;
