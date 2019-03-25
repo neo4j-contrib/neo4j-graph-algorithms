@@ -34,7 +34,7 @@ MERGE (paper6)-[:CITES]->(paper4)
 
 CALL algo.articleRank.stream('Paper', 'CITES', {iterations:20, dampingFactor:0.85})
 YIELD nodeId, score
-RETURN algo.getNodeById(nodeId).name AS page,score
+RETURN algo.asNode(nodeId).name AS page,score
 ORDER BY score DESC
 
 // end::stream-sample-graph[]

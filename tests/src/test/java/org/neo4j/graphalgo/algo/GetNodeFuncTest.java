@@ -68,7 +68,7 @@ public class GetNodeFuncTest {
         Node savedNode = (Node) DB.execute(createNodeQuery).next().get("node");
 
         Map<String, Object> params = MapUtil.map("nodeId", savedNode.getId());
-        Map<String, Object> row = DB.execute("RETURN algo.getNodeById($nodeId) AS node", params).next();
+        Map<String, Object> row = DB.execute("RETURN algo.asNode($nodeId) AS node", params).next();
 
         Node node = (Node) row.get("node");
         assertEquals(savedNode, node);
@@ -77,7 +77,7 @@ public class GetNodeFuncTest {
     @Test
     public void lookupNonExistentNode() throws Exception {
         Map<String, Object> row = DB.execute(
-                "RETURN algo.getNodeById(3) AS node").next();
+                "RETURN algo.asNode(3) AS node").next();
 
         assertNull(row.get("node"));
     }
@@ -90,7 +90,7 @@ public class GetNodeFuncTest {
         Node savedNode2 = (Node) savedRow.get("p2");
 
         Map<String, Object> params = MapUtil.map("nodeIds", Arrays.asList(savedNode1.getId(), savedNode2.getId()));
-        Map<String, Object> row = DB.execute("RETURN algo.getNodesById($nodeIds) AS nodes", params).next();
+        Map<String, Object> row = DB.execute("RETURN algo.asNodes($nodeIds) AS nodes", params).next();
 
         List<Node> nodes = (List<Node>) row.get("nodes");
         assertEquals(Arrays.asList(savedNode1, savedNode2), nodes);

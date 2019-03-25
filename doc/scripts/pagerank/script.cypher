@@ -13,7 +13,7 @@ MERGE (p1)-[:LINKS]->(p2)
 // tag::algorithm[]
 CALL algo.pageRank.stream('Page', 'LINKS', {iterations:20, dampingFactor:0.85})
 YIELD nodeId, score
-RETURN algo.getNodeById(nodeId).name,score
+RETURN algo.asNode(nodeId).name,score
 ORDER BY score DESC
 // end::algorithm[]
 

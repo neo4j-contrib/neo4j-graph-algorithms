@@ -25,7 +25,7 @@ MERGE (nMichael)-[:FOLLOW]->(nBridget);
 CALL algo.scc.stream('User','FOLLOW')
 YIELD nodeId, partition
 
-RETURN algo.getNodeById(nodeId).id AS name, partition
+RETURN algo.asNode(nodeId).id AS name, partition
 
 // end::stream-sample-graph[]
 
