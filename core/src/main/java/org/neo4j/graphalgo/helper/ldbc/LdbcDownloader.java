@@ -43,8 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import static org.neo4j.kernel.configuration.Settings.BOOLEAN;
@@ -204,19 +202,12 @@ public final class LdbcDownloader {
         }
     }
 
-
-    private static final Pattern REPLACE_SUFFIX = Pattern.compile("\\.tgz(?:.+)?", Pattern.CASE_INSENSITIVE);
-
     private static Path unGzip(Path inputFile, S3Location location) throws IOException {
         String fileName = inputFile.getFileName().toString();
-        Matcher matcher = REPLACE_SUFFIX.matcher(fileName);
-        String targetFileName = matcher.replaceAll(".tar");
-
-        System.out.println("fileName = " + targetFileName);
         assert fileName.endsWith(".tgz");
         Path targetFile = inputFile
                 .getParent()
-                .resolve(targetFileName);
+                .resolve(fileName.replaceFirst("\\.tgz$", ".tar"));
 
         try (InputStream in = Files.newInputStream(inputFile);
              GZIPInputStream gzipIn = new GZIPInputStream(in);
@@ -241,7 +232,7 @@ public final class LdbcDownloader {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            this.fileName = Paths.get(url.getFile()).getFileName().toString();
+            this.fileName = Paths.get(url.getPath()).getFileName().toString();
         }
     }
 }
