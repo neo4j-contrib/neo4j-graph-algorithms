@@ -209,7 +209,7 @@ public final class LdbcDownloader {
         assert fileName.endsWith(".tgz");
         Path targetFile = inputFile
                 .getParent()
-                .resolve(fileName.replace(".tgz", ".tar"));
+                .resolve(fileName.replaceFirst("\\.tgz$", ".tar"));
 
         try (InputStream in = Files.newInputStream(inputFile);
              GZIPInputStream gzipIn = new GZIPInputStream(in);
@@ -234,7 +234,7 @@ public final class LdbcDownloader {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            this.fileName = Paths.get(url.getFile()).getFileName().toString();
+            this.fileName = Paths.get(url.getPath()).getFileName().toString();
         }
     }
 }
