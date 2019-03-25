@@ -101,7 +101,7 @@ public class LabelPropagationProcLoadPredefinedPartitionsTest {
     public void shouldUseDefaultValues() {
         String query = "CALL algo.labelPropagation.stream(null, null, {batchSize:$batchSize,concurrency:$concurrency}) " +
                 "YIELD nodeId, label " +
-                "RETURN algo.getNodeById(nodeId) AS id, label " +
+                "RETURN algo.asNode(nodeId) AS id, label " +
                 "ORDER BY id";
 
         Result result = DB.execute(query, parParams());

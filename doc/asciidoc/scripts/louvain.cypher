@@ -22,7 +22,7 @@ MERGE (nCharles)-[:FRIEND]->(nDoug);
 CALL algo.louvain.stream('User', 'FRIEND', {})
 YIELD nodeId, community
 
-RETURN algo.getNodeById(nodeId).id AS user, community
+RETURN algo.asNode(nodeId).id AS user, community
 ORDER BY community;
 
 // end::stream-sample-graph[]
@@ -90,7 +90,7 @@ MERGE (nAmy)-[:FRIEND]->(nDoug);
 CALL algo.louvain.stream('User', 'FRIEND', {includeIntermediateCommunities: true})
 YIELD nodeId, communities
 
-RETURN algo.getNodeById(nodeId).id AS user, communities
+RETURN algo.asNode(nodeId).id AS user, communities
 ORDER BY communities;
 
 // end::stream-hierarchical-sample-graph[]
@@ -135,7 +135,7 @@ MERGE (nAmy)-[:FRIEND]->(nDoug);
 CALL algo.louvain.stream('User', 'FRIEND', {communityProperty: 'community'})
 YIELD nodeId, communities
 
-RETURN algo.getNodeById(nodeId).id AS user, communities
+RETURN algo.asNode(nodeId).id AS user, communities
 ORDER BY communities;
 // end::stream-pre-defined-sample-graph[]
 
