@@ -30,12 +30,10 @@ import org.neo4j.graphalgo.core.huge.HugeNodeImporter;
 import org.neo4j.graphalgo.core.utils.ApproximatedImportProgress;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
-import org.neo4j.graphalgo.core.utils.ProgressLoggerAdapter;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
-import org.neo4j.logging.NullLog;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +60,7 @@ public abstract class GraphFactory {
         this.api = api;
         this.setup = setup;
         this.log = setup.log;
-        this.progressLogger = progressLogger(log, setup.logMillis, TimeUnit.MILLISECONDS);
+        this.progressLogger = progressLogger(log, setup.logMillis);
         dimensions = new GraphDimensions(api, setup).call();
         progress = importProgress(progressLogger, dimensions, setup);
     }
@@ -124,14 +122,7 @@ public abstract class GraphFactory {
                     : new HugeWeightMap(dimensions.hugeNodeCount(), defaultValue, tracker);
     }
 
-    private static ProgressLogger progressLogger(Log log, long time, TimeUnit unit) {
-        if (log == NullLog.getInstance()) {
-            return ProgressLogger.NULL_LOGGER;
-        }
-        ProgressLoggerAdapter logger = new ProgressLoggerAdapter(log, TASK_LOADING);
-        if (time > 0) {
-            logger.withLogIntervalMillis((int) Math.min(unit.toMillis(time), Integer.MAX_VALUE));
-        }
-        return logger;
+    private static ProgressLogger progressLogger(Log log, long time) {
+        return ProgressLogger.wrap(log, TASK_LOADING, time, TimeUnit.MILLISECONDS);
     }
 }

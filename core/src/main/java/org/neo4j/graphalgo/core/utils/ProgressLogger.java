@@ -21,6 +21,7 @@ package org.neo4j.graphalgo.core.utils;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -33,6 +34,17 @@ public interface ProgressLogger {
 
     static ProgressLogger wrap(Log log, String task) {
         return new ProgressLoggerAdapter(log, task);
+    }
+
+    static ProgressLogger wrap(Log log, String task, long time, TimeUnit unit) {
+        if (log == null || log == NullLog.getInstance() || task == null) {
+            return ProgressLogger.NULL_LOGGER;
+        }
+        ProgressLoggerAdapter logger = new ProgressLoggerAdapter(log, task);
+        if (time > 0L) {
+            logger.withLogIntervalMillis((int) Math.min(unit.toMillis(time), (long) Integer.MAX_VALUE));
+        }
+        return logger;
     }
 
     void logProgress(double percentDone, Supplier<String> msg);
