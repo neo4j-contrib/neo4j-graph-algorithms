@@ -150,7 +150,7 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         runQuery(
                 "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {direction: 'BOTH'}) " +
                         "YIELD nodeId, score " +
-                        "RETURN nodeId, score " +
+                        "RETURN nodeId, score, algo.asNode(nodeId).name AS name " +
                         "ORDER BY score DESC " +
                         "LIMIT 10",
                 row -> actual.put(
@@ -182,7 +182,8 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         runQuery(
                 "CALL algo.eigenvector.stream('Character', 'INTERACTS_SEASON1', {direction: 'BOTH', normalization: 'l2Norm'}) " +
                         "YIELD nodeId, score " +
-                        "RETURN nodeId, score " +
+
+                        "RETURN nodeId, score, algo.asNode(nodeId).name AS name " +
                         "ORDER BY score DESC " +
                         "LIMIT 10",
                 row -> actual.put(

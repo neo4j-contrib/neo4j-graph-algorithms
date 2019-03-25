@@ -42,7 +42,7 @@ WITH {item:id(genre), categories: collect(id(book))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.overlap.stream(data)
 YIELD item1, item2, count1, count2, intersection, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to,
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to,
        count1, count2, intersection, similarity
 ORDER BY similarity DESC
 // end::stream[]
@@ -53,7 +53,7 @@ WITH {item:id(genre), categories: collect(id(book))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.overlap.stream(data, {similarityCutoff: 0.75})
 YIELD item1, item2, count1, count2, intersection, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to,
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to,
        count1, count2, intersection, similarity
 ORDER BY similarity DESC
 // end::stream-similarity-cutoff[]
@@ -64,7 +64,7 @@ WITH {item:id(genre), categories: collect(id(book))} as userData
 WITH collect(userData) as data
 CALL algo.similarity.overlap.stream(data, {topK: 2})
 YIELD item1, item2, count1, count2, intersection, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to,
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to,
        count1, count2, intersection, similarity
 ORDER BY from
 // end::stream-topk[]

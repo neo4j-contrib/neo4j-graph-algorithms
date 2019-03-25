@@ -41,7 +41,7 @@ MERGE (nMichael)-[:FOLLOWS {score: 1.5}]->(nDoug)
 // tag::stream-sample-graph-followers[]
 CALL algo.degree.stream("User", "FOLLOWS", {direction: "incoming"})
 YIELD nodeId, score
-RETURN algo.getNodeById(nodeId).id AS name, score AS followers
+RETURN algo.asNode(nodeId).id AS name, score AS followers
 ORDER BY followers DESC
 // end::stream-sample-graph-followers[]
 
@@ -52,7 +52,7 @@ CALL algo.degree("User", "FOLLOWS", {direction: "incoming", writeProperty: "foll
 // tag::stream-sample-graph-following[]
 CALL algo.degree.stream("User", "FOLLOWS", {direction: "outgoing"})
 YIELD nodeId, score
-RETURN algo.getNodeById(nodeId).id AS name, score AS following
+RETURN algo.asNode(nodeId).id AS name, score AS following
 ORDER BY following DESC
 // end::stream-sample-graph-following[]
 
@@ -65,7 +65,7 @@ CALL algo.degree("User", "FOLLOWS", {direction: "outgoing", writeProperty: "foll
 // tag::stream-sample-weighted-graph-followers[]
 CALL algo.degree.stream("User", "FOLLOWS", {direction: "incoming", weightProperty: "score"})
 YIELD nodeId, score
-RETURN algo.getNodeById(nodeId).id AS name, score AS weightedFollowers
+RETURN algo.asNode(nodeId).id AS name, score AS weightedFollowers
 ORDER BY followers DESC
 // end::stream-sample-weighted-graph-followers[]
 

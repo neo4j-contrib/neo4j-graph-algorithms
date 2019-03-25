@@ -56,13 +56,13 @@ public class UtilityProc {
             boolean cumulativeWeights = config.get("cumulativeWeights", true);
             if (cumulativeWeights) {
                 if (nodeIds.size() != weights.size()) {
-                    throw new RuntimeException(message(weights.size(), nodeIds.size(), "number of 'nodeIds'"));
+                    throw new RuntimeException(message(weights.size(), nodeIds.size(), "size of 'nodeIds'"));
                 }
 
                 return Stream.of(new PathResult(WalkPath.toPath((GraphDatabaseAPI) db, nodes, IntStream.range(0, weights.size() - 1).mapToDouble(index -> weights.get(index + 1) - weights.get(index)).toArray())));
             } else {
                 if (nodeIds.size() - 1 != weights.size()) {
-                    throw new RuntimeException(message(weights.size(), nodeIds.size() - 1, "number of 'nodeIds'-1"));
+                    throw new RuntimeException(message(weights.size(), nodeIds.size() - 1, "size of 'nodeIds'-1"));
                 }
                 return Stream.of(new PathResult(WalkPath.toPath((GraphDatabaseAPI) db, nodes, weights.stream().mapToDouble(d -> d).toArray())));
             }

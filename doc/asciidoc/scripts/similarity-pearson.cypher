@@ -74,7 +74,7 @@ WITH {item:id(p), weights: collect(coalesce(rated.score, algo.NaN()))} as userDa
 WITH collect(userData) as data
 CALL algo.similarity.pearson.stream(data)
 YIELD item1, item2, count1, count2, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to, similarity
 ORDER BY similarity DESC
 // end::stream[]
 
@@ -85,7 +85,7 @@ WITH {item:id(p), weights: collect(coalesce(rated.score, algo.NaN()))} as userDa
 WITH collect(userData) as data
 CALL algo.similarity.pearson.stream(data, {similarityCutoff: 0.1})
 YIELD item1, item2, count1, count2, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to, similarity
 ORDER BY similarity DESC
 // end::stream-similarity-cutoff[]
 
@@ -96,7 +96,7 @@ WITH {item:id(p), weights: collect(coalesce(rated.score, algo.NaN()))} as userDa
 WITH collect(userData) as data
 CALL algo.similarity.pearson.stream(data, {topK:1, similarityCutoff: 0.0})
 YIELD item1, item2, count1, count2, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to, similarity
 ORDER BY similarity DESC
 // end::stream-topk[]
 
@@ -145,7 +145,7 @@ WITH {item:id(m), weights: m.embedding} as userData
 WITH collect(userData) as data
 CALL algo.similarity.pearson.stream(data, {skipValue: null})
 YIELD item1, item2, count1, count2, similarity
-RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to, similarity
 ORDER BY similarity DESC
 
 // end::embedding-graph-stream[]
