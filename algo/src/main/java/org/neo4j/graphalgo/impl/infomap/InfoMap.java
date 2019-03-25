@@ -28,6 +28,7 @@ import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
 import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
+import org.neo4j.graphalgo.impl.results.CentralityResult;
 import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
@@ -89,7 +90,7 @@ public class InfoMap extends Algorithm<InfoMap> {
      */
     public static InfoMap weighted(Graph graph, int prIterations, RelationshipWeights weights, double threshold, double tau, ForkJoinPool pool, int concurrency, ProgressLogger logger, TerminationFlag terminationFlag) {
 
-        final PageRankResult pageRankResult;
+        final CentralityResult pageRankResult;
         // use parallel PR if concurrency is >1
         if (concurrency > 1) {
             pageRankResult = PageRankAlgorithm.weightedOf(AllocationTracker.create(), graph, 1. - tau, LongStream.empty(), pool, concurrency, PAGE_RANK_BATCH_SIZE, PAGE_RANK_CACHE_WEIGHTS)
@@ -121,7 +122,7 @@ public class InfoMap extends Algorithm<InfoMap> {
      * create an unweighted InfoMap algo instance
      */
     public static InfoMap unweighted(Graph graph, int prIterations, double threshold, double tau, ForkJoinPool pool, int concurrency, ProgressLogger logger, TerminationFlag terminationFlag) {
-        final PageRankResult pageRankResult;
+        final CentralityResult  pageRankResult;
 
         // use parallel PR if concurrency is >1
         if (concurrency > 1) {
