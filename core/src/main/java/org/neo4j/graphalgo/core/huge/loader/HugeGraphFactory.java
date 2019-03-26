@@ -73,21 +73,28 @@ public final class HugeGraphFactory extends GraphFactory {
         GraphDimensions dimensions = this.dimensions;
         int concurrency = setup.concurrency();
         AllocationTracker tracker = setup.tracker;
-        HugeIdMap mapping = loadHugeIdMap(tracker, concurrency);
-        HugeGraph graph = loadRelationships(dimensions, tracker, mapping, concurrency);
+        IdsAndProperties mappingAndProperties = loadHugeIdMap(tracker, concurrency);
+        HugeGraph graph = loadRelationships(dimensions, tracker, mappingAndProperties, concurrency);
         progressLogger.logDone(tracker);
         return graph;
     }
 
-    private HugeIdMap loadHugeIdMap(AllocationTracker tracker, int concurrency) {
-        return new ScanningNodesImporter(api, dimensions, progress, tracker, threadPool, concurrency)
+    private IdsAndProperties loadHugeIdMap(AllocationTracker tracker, int concurrency) {
+        return new ScanningNodesImporter(
+                api,
+                dimensions,
+                progress,
+                tracker,
+                threadPool,
+                concurrency,
+                setup.nodePropertyMappings)
                 .call(setup.log);
     }
 
     private HugeGraph loadRelationships(
             GraphDimensions dimensions,
             AllocationTracker tracker,
-            HugeIdMap mapping,
+            IdsAndProperties idsAndProperties,
             int concurrency) {
         HugeAdjacencyBuilder outAdjacency = null;
         HugeAdjacencyBuilder inAdjacency = null;
@@ -108,12 +115,18 @@ public final class HugeGraphFactory extends GraphFactory {
                 : new HugeWeightMapBuilder(tracker, weightProperty, setup.relationDefaultWeight);
 
         new ScanningRelationshipsImporter(
-                setup, api, dimensions, progress, tracker, mapping, weightsBuilder,
+                setup, api, dimensions, progress, tracker, idsAndProperties.hugeIdMap, weightsBuilder,
                 LOAD_DEGREES, outAdjacency, inAdjacency, threadPool, concurrency)
                 .call(setup.log);
 
         HugeWeightMapping weights = weightsBuilder.build();
-        return HugeAdjacencyBuilder.apply(tracker, mapping, weights, inAdjacency, outAdjacency);
+        return HugeAdjacencyBuilder.apply(
+                tracker,
+                idsAndProperties.hugeIdMap,
+                weights,
+                idsAndProperties.properties,
+                inAdjacency,
+                outAdjacency);
     }
 
 }

@@ -24,8 +24,8 @@ import org.HdrHistogram.Histogram;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
 
 import java.util.function.IntFunction;
-import java.util.function.LongFunction;
 import java.util.function.LongToIntFunction;
+import java.util.function.LongUnaryOperator;
 
 /**
  * @author mknblch
@@ -174,13 +174,13 @@ public abstract class AbstractCommunityResultBuilder<T> {
     /**
      * build result
      */
-    public T build(long nodeCount, LongFunction<Long> fun) {
+    public T build(long nodeCount, LongUnaryOperator fun) {
 
         final LongLongMap communitySizeMap = new LongLongScatterMap();
         final ProgressTimer timer = ProgressTimer.start();
-        for (int nodeId = 0; nodeId < nodeCount; nodeId++) {
-            final long communityId = fun.apply(nodeId);
-            communitySizeMap.addTo(communityId, 1);
+        for (long nodeId = 0L; nodeId < nodeCount; nodeId++) {
+            final long communityId = fun.applyAsLong(nodeId);
+            communitySizeMap.addTo(communityId, 1L);
         }
 
         Histogram histogram = CommunityHistogram.buildFrom(communitySizeMap);

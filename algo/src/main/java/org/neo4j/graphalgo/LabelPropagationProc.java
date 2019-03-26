@@ -18,11 +18,13 @@
  */
 package org.neo4j.graphalgo;
 
+import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
+import org.neo4j.graphalgo.api.NodeProperties;
+import org.neo4j.graphalgo.api.WeightMapping;
 import org.neo4j.graphalgo.core.GraphLoader;
+import org.neo4j.graphalgo.core.NullWeightMap;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.heavyweight.HeavyCypherGraphFactory;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphalgo.core.utils.ProgressTimer;
@@ -115,14 +117,14 @@ public final class LabelPropagationProc {
             graphLoader.withDirection(direction);
         }
 
-        HeavyGraph graph = load(graphLoader, configuration, stats);
+        Graph graph = load(graphLoader, configuration, stats);
 
         if(graph.nodeCount() == 0) {
             graph.release();
             return Stream.of(LabelPropagationStats.EMPTY);
         }
 
-        final int[] labels = compute(direction, iterations, batchSize, concurrency, graph, stats);
+        final int[] labels = compute(configuration, direction, iterations, batchSize, concurrency, graph, stats);
         if (configuration.isWriteFlag(DEFAULT_WRITE) && writeProperty != null) {
             stats.withWrite(true);
             write(concurrency, writeProperty, graph, labels, stats);
@@ -160,17 +162,14 @@ public final class LabelPropagationProc {
             graphLoader.withDirection(direction);
         }
         LabelPropagationStats.Builder stats = new LabelPropagationStats.Builder();
-        HeavyGraph graph = load(graphLoader, configuration, stats);
+        Graph graph = load(graphLoader, configuration, stats);
 
-
-        if(graph.nodeCount() == 0) {
+        if(graph.nodeCount() == 0L) {
             graph.release();
             return Stream.empty();
         }
 
-        int[] result = compute(direction, iterations, batchSize, concurrency, graph, stats, propertyMappings);
-
-        graph.release();
+        int[] result = compute(configuration, direction, iterations, batchSize, concurrency, graph, stats, propertyMappings);
 
         return IntStream.range(0, result.length)
                 .mapToObj(i -> new LabelPropagation.StreamResult(graph.toOriginalNodeId(i), result[i]));
@@ -183,11 +182,10 @@ public final class LabelPropagationProc {
             };
     }
 
-    private HeavyGraph load(GraphLoader graphLoader, ProcedureConfiguration config, LabelPropagationStats.Builder stats) {
-        Class<? extends GraphFactory> graphImpl = config.getGraphImpl(
-                HeavyGraph.TYPE, HeavyGraph.TYPE, HeavyCypherGraphFactory.TYPE);
-        try (ProgressTimer timer = stats.timeLoad()) {
-            return (HeavyGraph) graphLoader.load(graphImpl);
+    private Graph load(GraphLoader graphLoader, ProcedureConfiguration config, LabelPropagationStats.Builder stats) {
+        Class<? extends GraphFactory> graphImpl = config.getGraphImpl();
+        try (ProgressTimer ignored = stats.timeLoad()) {
+            return graphLoader.load(graphImpl);
         }
     }
 
@@ -201,17 +199,54 @@ public final class LabelPropagationProc {
     }
 
     private int[] compute(
+            ProcedureConfiguration configuration,
             Direction direction,
             int iterations,
             int batchSize,
             int concurrency,
-            HeavyGraph graph,
+            Graph graph,
+            LabelPropagationStats.Builder stats,
+            PropertyMapping... propertyMappings) {
+        NodeProperties nodeProperties;
+        if (graph instanceof NodeProperties) {
+            nodeProperties = (NodeProperties) graph;
+        } else {
+            log.info("The loaded graph does not support node properties, label propagation will have to fall " +
+                    "back to use default weights and properties for nodes.");
+            WeightMapping weightMap = new NullWeightMap(configuration.getWeightPropertyDefaultValue(1d));
+            nodeProperties = new NodeProperties() {
+                @Override
+                public WeightMapping nodeProperties(final String type) {
+                    return weightMap;
+                }
+
+                @Override
+                public Set<String> availableNodeProperties() {
+                    return Collections.emptySet();
+                }
+            };
+        }
+
+        try {
+            return compute(direction, iterations, batchSize, concurrency, graph, nodeProperties, stats, propertyMappings);
+        } finally {
+            graph.release();
+        }
+    }
+
+    private int[] compute(
+            Direction direction,
+            int iterations,
+            int batchSize,
+            int concurrency,
+            Graph graph,
+            NodeProperties nodeProperties,
             LabelPropagationStats.Builder stats,
             PropertyMapping... propertyMappings) {
         try (ProgressTimer timer = stats.timeEval()) {
             ExecutorService pool = batchSize > 0 ? Pools.DEFAULT : null;
             batchSize = Math.max(1, batchSize);
-            final LabelPropagation labelPropagation = new LabelPropagation(graph, batchSize, concurrency, pool);
+            final LabelPropagation labelPropagation = new LabelPropagation(graph, nodeProperties, batchSize, concurrency, pool);
             labelPropagation
                     .withProgressLogger(ProgressLogger.wrap(log, "LabelPropagation"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
@@ -230,10 +265,10 @@ public final class LabelPropagationProc {
     private void write(
             int concurrency,
             String partitionKey,
-            HeavyGraph graph,
+            Graph graph,
             int[] labels,
             LabelPropagationStats.Builder stats) {
-        try (ProgressTimer timer = stats.timeWrite()) {
+        try (ProgressTimer ignored = stats.timeWrite()) {
             Exporter.of(dbAPI, graph)
                     .withLog(log)
                     .parallel(Pools.DEFAULT, concurrency, TerminationFlag.wrap(transaction))

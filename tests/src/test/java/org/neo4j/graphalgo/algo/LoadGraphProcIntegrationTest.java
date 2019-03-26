@@ -28,10 +28,7 @@ import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.LabelPropagationProc;
 import org.neo4j.graphalgo.LoadGraphProc;
 import org.neo4j.graphalgo.PageRankProc;
-import org.neo4j.graphalgo.api.HugeGraph;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.loading.LoadGraphFactory;
-import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
@@ -142,17 +139,10 @@ public class LoadGraphProcIntegrationTest {
         String query = "CALL algo.labelPropagation(null,null,null,{graph:$name,write:false})";
         try {
             runQuery(query, singletonMap("name", "foo"), row -> {
-                assertEquals(HeavyGraph.TYPE, graph);
                 assertEquals(12, row.getNumber("nodes").intValue());
             });
         } catch (QueryExecutionException qee) {
-            switch (graph) {
-                case GraphView.TYPE :
-                case HugeGraph.TYPE :
-                    assertEquals(true, qee.getMessage().contains("The graph algorithm only supports these graph types"));
-                    break;
-                default: fail("Error using wrong graph type:" + qee.getMessage());
-            }
+            fail("Error using wrong graph type:" + qee.getMessage());
         }
     }
 

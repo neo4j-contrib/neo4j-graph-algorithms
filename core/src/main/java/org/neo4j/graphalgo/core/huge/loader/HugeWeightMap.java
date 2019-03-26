@@ -56,9 +56,14 @@ abstract class HugeWeightMap {
 
         @Override
         public double weight(final long source, final long target) {
-            int localIndex = (int) source;
-            return get(localIndex, target, defaultValue);
+            return weight(source, target, defaultValue);
         }
+
+         @Override
+         public double weight(final long source, final long target, final double defaultValue) {
+             int localIndex = (int) source;
+             return get(localIndex, target, defaultValue);
+         }
 
         double get(int localIndex, long target, double defaultValue) {
             TrackingLongDoubleHashMap map = data[localIndex];
@@ -119,6 +124,11 @@ abstract class HugeWeightMap {
 
         @Override
         public double weight(final long source, final long target) {
+            return weight(source, target, defaultValue);
+        }
+
+        @Override
+        public double weight(final long source, final long target, final double defaultValue) {
             int pageIndex = (int) (source >>> pageShift);
             Page page = pages[pageIndex];
             if (page != null) {

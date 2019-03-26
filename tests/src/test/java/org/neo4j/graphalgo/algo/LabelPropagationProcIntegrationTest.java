@@ -25,9 +25,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.LabelPropagationProc;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.helpers.Exceptions;
 import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
@@ -62,11 +60,13 @@ public class LabelPropagationProcIntegrationTest {
             "CREATE (b)-[:X]->(:B {id: 10, weight: 1.0, partition: 1}) " +
             "CREATE (b)-[:X]->(:B {id: 11, weight: 8.0, partition: 2})";
 
-    @Parameterized.Parameters(name = "parallel={0}")
+    @Parameterized.Parameters(name = "parallel={0}, graph={1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{false},
-                new Object[]{true}
+                new Object[]{false, "heavy"},
+                new Object[]{true, "heavy"},
+                new Object[]{false, "huge"},
+                new Object[]{true, "huge"}
         );
     }
 
@@ -77,9 +77,11 @@ public class LabelPropagationProcIntegrationTest {
     public ExpectedException exceptions = ExpectedException.none();
 
     private final boolean parallel;
+    private final String graphImpl;
 
-    public LabelPropagationProcIntegrationTest(boolean parallel) {
+    public LabelPropagationProcIntegrationTest(boolean parallel, String graphImpl) {
         this.parallel = parallel;
+        this.graphImpl = graphImpl;
     }
 
     @Before
@@ -115,19 +117,6 @@ public class LabelPropagationProcIntegrationTest {
     }
 
     @Test
-    public void explicitWritePropertyWithConfigAs3rdParameter() {
-        String query = "CALL algo.labelPropagation(null, null, {writeProperty: 'lpa'})";
-
-        runQuery(query, row -> {
-            assertEquals(1, row.getNumber("iterations").intValue());
-            assertEquals("weight", row.getString("weightProperty"));
-            assertEquals("partition", row.getString("partitionProperty"));
-            assertEquals("lpa", row.getString("writeProperty"));
-            assertTrue(row.getBoolean("write"));
-        });
-    }
-
-    @Test
     public void shouldTakeParametersFromConfig() {
         String query = "CALL algo.labelPropagation(null, null, null, {iterations:5,write:false,weightProperty:'score',partitionProperty:'key'})";
 
@@ -142,7 +131,7 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldRunLabelPropagation() {
-        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {batchSize:$batchSize,concurrency:$concurrency})";
+        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {batchSize:$batchSize,concurrency:$concurrency,graph:$graph})";
         String check = "MATCH (n) WHERE n.id IN [0,1] RETURN n.partition AS partition";
 
         runQuery(query, parParams(), row -> {
@@ -165,7 +154,7 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldFallbackToNodeIdsForNonExistingPartitionKey() {
-        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty:'foobar',batchSize:$batchSize,concurrency:$concurrency})";
+        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {partitionProperty:'foobar',batchSize:$batchSize,concurrency:$concurrency,graph:$graph})";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.foobar as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.foobar as partition";
 
@@ -179,7 +168,7 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldFilterByLabel() {
-        String query = "CALL algo.labelPropagation('A', 'X', 'OUTGOING', {batchSize:$batchSize,concurrency:$concurrency})";
+        String query = "CALL algo.labelPropagation('A', 'X', 'OUTGOING', {batchSize:$batchSize,concurrency:$concurrency,graph:$graph})";
         String checkA = "MATCH (n) WHERE n.id = 0 RETURN n.partition as partition";
         String checkB = "MATCH (n) WHERE n.id = 1 RETURN n.partition as partition";
 
@@ -192,7 +181,7 @@ public class LabelPropagationProcIntegrationTest {
 
     @Test
     public void shouldPropagateIncoming() {
-        String query = "CALL algo.labelPropagation('A', 'X', 'INCOMING', {batchSize:$batchSize,concurrency:$concurrency})";
+        String query = "CALL algo.labelPropagation('A', 'X', 'INCOMING', {batchSize:$batchSize,concurrency:$concurrency,graph:$graph})";
         String check = "MATCH (n:A) WHERE n.id <> 0 RETURN n.partition as partition";
 
         runQuery(query, parParams());
@@ -201,33 +190,9 @@ public class LabelPropagationProcIntegrationTest {
     }
 
     @Test
-    public void shouldAllowHeavyGraph() {
-        String query = "CALL algo.labelPropagation(null, 'X', 'OUTGOING', {graph:'heavy',batchSize:$batchSize,concurrency:$concurrency})";
-        runQuery(query, parParams(), row -> assertEquals(12, row.getNumber("nodes").intValue()));
-    }
-
-    @Test
     public void shouldAllowCypherGraph() {
         String query = "CALL algo.labelPropagation('MATCH (n) RETURN id(n) as id, n.weight as weight, n.partition as value', 'MATCH (s)-[r:X]->(t) RETURN id(s) as source, id(t) as target, r.weight as weight', 'OUTGOING', {graph:'cypher',batchSize:$batchSize,concurrency:$concurrency})";
         runQuery(query, parParams(), row -> assertEquals(12, row.getNumber("nodes").intValue()));
-    }
-
-    @Test
-    public void shouldNotAllowLightOrHugeOrKernelGraph() throws Throwable {
-        String query = "CALL algo.labelPropagation(null, null, null, {graph:$graph})";
-        Map<String, Object> params = parParams();
-
-        exceptions.expect(IllegalArgumentException.class);
-        exceptions.expectMessage("The graph algorithm only supports these graph types; [heavy, cypher]");
-
-        for (final String graph : Arrays.asList("light", "huge", "kernel")) {
-            params.put("graph", graph);
-            try {
-                runQuery(query, params);
-            } catch (QueryExecutionException qee) {
-                throw Exceptions.rootCause(qee);
-            }
-        }
     }
 
     @Test
@@ -270,6 +235,6 @@ public class LabelPropagationProcIntegrationTest {
     }
 
     private Map<String, Object> parParams() {
-        return MapUtil.map("batchSize", parallel ? 1 : 100, "concurrency", parallel ? 1 : 8);
+        return MapUtil.map("batchSize", parallel ? 1 : 100, "concurrency", parallel ? 8: 1, "graph", graphImpl);
     }
 }

@@ -18,32 +18,21 @@
  */
 package org.neo4j.graphalgo.api;
 
-import org.neo4j.graphalgo.core.utils.RawValues;
-
 /**
- * @author mknobloch
+ * Getter interface for node properties for huge graphs.
  */
-public interface WeightMapping {
+public interface HugeNodeProperties extends NodeProperties {
 
     /**
-     * returns the weight for ID if set or the load-time specified default weight otherwise
+     * return the property mapping for a type
+     *
+     * @param type       the node property type
+     * @return the mapping associated with that type
      */
-    double get(long id);
+    HugeWeightMapping hugeNodeProperties(String type);
 
-    /**
-     * returns the weight for ID if set or the given default weight otherwise
-     */
-    double get(long id, double defaultValue);
-
-    default double get(int source, int target) {
-        return get(RawValues.combineIntInt(source, target));
-    }
-
-    default double get(int id) {
-        return get(RawValues.combineIntInt(id, -1));
-    }
-
-    default double get(int id, double defaultValue) {
-        return get(RawValues.combineIntInt(id, -1), defaultValue);
+    @Override
+    default WeightMapping nodeProperties(String type) {
+        return hugeNodeProperties(type);
     }
 }

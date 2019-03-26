@@ -20,67 +20,49 @@ package org.neo4j.graphalgo.core.huge.loader;
 
 import org.neo4j.graphalgo.api.HugeWeightMapping;
 
-/**
- * WeightMapping implementation which always returns
- * a given default weight upon invocation
- *
- * @author mknblch
- */
-class HugeNullWeightMap implements HugeWeightMapping {
+final class HugeNodePropertyMap implements HugeWeightMapping {
 
+    private PagedPropertyMap properties;
     private final double defaultValue;
+    private final int propertyId;
 
-    HugeNullWeightMap(double defaultValue) {
+    HugeNodePropertyMap(PagedPropertyMap properties, double defaultValue, int propertyId) {
+        this.properties = properties;
         this.defaultValue = defaultValue;
+        this.propertyId = propertyId;
     }
 
     @Override
     public double weight(final long source, final long target) {
-        return defaultValue;
+        assert target == -1L;
+        return properties.getOrDefault(source, defaultValue);
     }
 
     @Override
     public double weight(final long source, final long target, final double defaultValue) {
+        assert target == -1L;
+        return properties.getOrDefault(source, defaultValue);
+    }
+
+    public double defaultValue() {
         return defaultValue;
     }
 
-    @Override
-    public double nodeWeight(final long nodeId) {
-        return defaultValue;
-    }
-
-    @Override
-    public double nodeWeight(final long nodeId, final double defaultValue) {
-        return defaultValue;
-    }
-
-    @Override
-    public double get(final long id) {
-        return defaultValue;
-    }
-
-    @Override
-    public double get(final long id, final double defaultValue) {
-        return defaultValue;
-    }
-
-    @Override
-    public double get(final int source, final int target) {
-        return defaultValue;
-    }
-
-    @Override
-    public double get(final int id) {
-        return defaultValue;
-    }
-
-    @Override
-    public double get(final int id, final double defaultValue) {
-        return defaultValue;
+    public void put(long nodeId, double value) {
+        properties.put(nodeId, value);
     }
 
     @Override
     public long release() {
+        if (properties != null) {
+            long freed = properties.release();
+            properties = null;
+            return freed;
+        }
         return 0L;
+    }
+
+    public int propertyId() {
+        return propertyId;
     }
 }

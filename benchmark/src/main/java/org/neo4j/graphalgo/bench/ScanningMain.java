@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.neo4j.function.Predicates;
 import org.neo4j.graphalgo.core.huge.loader.AbstractStorePageCacheScanner;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphalgo.helper.ldbc.LdbcDownloader;
 import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
