@@ -26,15 +26,14 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import org.neo4j.collection.primitive.PrimitiveIntIterable;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.graphalgo.PropertyMapping;
+import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.api.NodeProperties;
 import org.neo4j.graphalgo.api.RelationshipConsumer;
 import org.neo4j.graphalgo.api.WeightMapping;
-import org.neo4j.graphalgo.core.heavyweight.HeavyGraph;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.ProgressLogger;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +49,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
     private final WeightMapping nodeProperties;
     private final WeightMapping nodeWeights;
 
-    private HeavyGraph graph;
+    private Graph graph;
     private final int batchSize;
     private final int concurrency;
     private final ExecutorService executor;
@@ -69,9 +68,10 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
             this.label = label;
         }
     }
-    
+
     public LabelPropagation(
-            HeavyGraph graph,
+            Graph graph,
+            NodeProperties nodeProperties,
             int batchSize,
             int concurrency,
             ExecutorService executor) {
@@ -81,8 +81,8 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         this.concurrency = concurrency;
         this.executor = executor;
 
-        this.nodeProperties = this.graph.nodeProperties(PARTITION_TYPE);
-        this.nodeWeights = this.graph.nodeProperties(WEIGHT_TYPE);
+        this.nodeProperties = nodeProperties.nodeProperties(PARTITION_TYPE);
+        this.nodeWeights = nodeProperties.nodeProperties(WEIGHT_TYPE);
     }
 
     public LabelPropagation compute(
@@ -189,7 +189,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
     private static final class InitStep implements Runnable {
 
-        private final HeavyGraph graph;
+        private final Graph graph;
         private final int[] existingLabels;
         private final Direction direction;
         private final boolean randomizeOrder;
@@ -198,7 +198,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private final WeightMapping nodeProperties;
 
         private InitStep(
-                HeavyGraph graph,
+                Graph graph,
                 int[] existingLabels,
                 Direction direction,
                 boolean randomizeOrder,
@@ -241,7 +241,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
 
     private static final class ComputeStep implements Runnable, RelationshipConsumer {
 
-        private final HeavyGraph graph;
+        private final Graph graph;
         private final int[] existingLabels;
         private final Direction direction;
         private final ProgressLogger progressLogger;
@@ -254,7 +254,7 @@ public final class LabelPropagation extends Algorithm<LabelPropagation> {
         private long iteration = 0L;
 
         private ComputeStep(
-                HeavyGraph graph,
+                Graph graph,
                 int[] existingLabels,
                 Direction direction,
                 boolean randomizeOrder,

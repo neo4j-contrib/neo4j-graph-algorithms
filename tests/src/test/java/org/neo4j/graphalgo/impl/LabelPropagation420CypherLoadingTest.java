@@ -147,6 +147,7 @@ public final class LabelPropagation420CypherLoadingTest
     private void testClustering(int batchSize) throws Exception {
         final LabelPropagation lp = new LabelPropagation(
                 graph,
+                graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
                 Pools.DEFAULT);

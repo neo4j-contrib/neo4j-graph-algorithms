@@ -57,11 +57,13 @@ public class LabelPropagationProcLoadPredefinedPartitionsTest {
             "CREATE (f:F {id: 5, partition: 29})\n" +
             "CREATE (g:G {id: 6, partition: 29}) ";
 
-    @Parameterized.Parameters(name = "parallel={0}")
+    @Parameterized.Parameters(name = "parallel={0}, graph={1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{false},
-                new Object[]{true}
+                new Object[]{false, "heavy"},
+                new Object[]{true, "heavy"},
+                new Object[]{false, "huge"},
+                new Object[]{true, "huge"}
         );
     }
 
@@ -71,9 +73,11 @@ public class LabelPropagationProcLoadPredefinedPartitionsTest {
     public ExpectedException exceptions = ExpectedException.none();
 
     private final boolean parallel;
+    private final String graphImpl;
 
-    public LabelPropagationProcLoadPredefinedPartitionsTest(boolean parallel) {
+    public LabelPropagationProcLoadPredefinedPartitionsTest(boolean parallel, String graphImpl) {
         this.parallel = parallel;
+        this.graphImpl = graphImpl;
     }
 
     @Before
@@ -99,7 +103,7 @@ public class LabelPropagationProcLoadPredefinedPartitionsTest {
 
     @Test
     public void shouldUseDefaultValues() {
-        String query = "CALL algo.labelPropagation.stream(null, null, {batchSize:$batchSize,concurrency:$concurrency}) " +
+        String query = "CALL algo.labelPropagation.stream(null, null, {batchSize:$batchSize,concurrency:$concurrency,graph:$graph}) " +
                 "YIELD nodeId, label " +
                 "RETURN algo.asNode(nodeId) AS id, label " +
                 "ORDER BY id";
@@ -112,6 +116,6 @@ public class LabelPropagationProcLoadPredefinedPartitionsTest {
     }
 
     private Map<String, Object> parParams() {
-        return MapUtil.map("batchSize", parallel ? 5 : 1, "concurrency", parallel ? 8 : 1);
+        return MapUtil.map("batchSize", parallel ? 5 : 1, "concurrency", parallel ? 8 : 1, "graph", graphImpl);
     }
 }

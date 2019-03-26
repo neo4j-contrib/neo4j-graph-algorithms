@@ -58,9 +58,4 @@ public class NullWeightMap implements WeightMapping {
     public double get(final int id, final double defaultValue) {
         return defaultValue;
     }
-
-    @Override
-    public int size() {
-        return 0;
-    }
 }

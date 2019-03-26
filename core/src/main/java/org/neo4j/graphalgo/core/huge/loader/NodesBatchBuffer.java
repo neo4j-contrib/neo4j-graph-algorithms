@@ -34,14 +34,17 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
     private final int label;
     private final RecordCursor<DynamicRecord> labelCursor;
 
-    // node ids, consecutive
     private int length;
+    // node ids, consecutive
     private final long[] buffer;
+    // property ids, consecutive
+    private final long[] properties;
 
-    NodesBatchBuffer(final Nodes store, final int label, int capacity) {
+    NodesBatchBuffer(final Nodes store, final int label, int capacity, boolean readProperty) {
         this.label = label;
         this.labelCursor = label != Read.ANY_LABEL ? store.newLabelCursor() : null;
         this.buffer = new long[capacity];
+        this.properties = readProperty ? new long[capacity] : null;
     }
 
     boolean scan(AbstractStorePageCacheScanner<NodeRecord>.Cursor cursor) {
@@ -54,6 +57,9 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
         if (hasCorrectLabel(record)) {
             int len = length++;
             buffer[len] = record.getId();
+            if (properties != null) {
+                properties[len] = record.getNextProp();
+            }
         }
     }
 
@@ -85,6 +91,10 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
 
     long[] batch() {
         return buffer;
+    }
+
+    long[] properties() {
+        return properties;
     }
 
     @Override

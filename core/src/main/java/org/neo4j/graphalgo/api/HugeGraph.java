@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  *
  * @author mknblch
  */
-public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator, HugeBatchNodeIterable, HugeRelationshipIterator, HugeRelationshipWeights, HugeRelationshipPredicate, HugeRelationshipAccess, Graph {
+public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator, HugeBatchNodeIterable, HugeRelationshipIterator, HugeRelationshipWeights, HugeRelationshipPredicate, HugeRelationshipAccess, HugeNodeProperties, Graph {
 
     String TYPE = "huge";
 
@@ -88,7 +88,6 @@ public interface HugeGraph extends HugeIdMapping, HugeDegrees, HugeNodeIterator,
             int targetNodeId) {
         return weightOf((long) sourceNodeId, (long) targetNodeId);
     }
-
 
     final class LongToIntIterator implements PrimitiveIntIterator {
         private final PrimitiveLongIterator iter;

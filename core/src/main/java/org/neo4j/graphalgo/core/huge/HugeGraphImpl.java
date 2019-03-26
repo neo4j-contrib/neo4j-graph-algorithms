@@ -35,6 +35,8 @@ import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.LongPredicate;
 
 /**
@@ -85,6 +87,7 @@ public class HugeGraphImpl implements HugeGraph {
     private final AllocationTracker tracker;
 
     private HugeWeightMapping weights;
+    private Map<String, HugeWeightMapping> nodeProperties;
     private HugeAdjacencyList inAdjacency;
     private HugeAdjacencyList outAdjacency;
     private HugeAdjacencyOffsets inOffsets;
@@ -98,6 +101,7 @@ public class HugeGraphImpl implements HugeGraph {
             final AllocationTracker tracker,
             final HugeIdMap idMapping,
             final HugeWeightMapping weights,
+            final Map<String, HugeWeightMapping> nodeProperties,
             final HugeAdjacencyList inAdjacency,
             final HugeAdjacencyList outAdjacency,
             final HugeAdjacencyOffsets inOffsets,
@@ -105,6 +109,7 @@ public class HugeGraphImpl implements HugeGraph {
         this.idMapping = idMapping;
         this.tracker = tracker;
         this.weights = weights;
+        this.nodeProperties = nodeProperties;
         this.inAdjacency = inAdjacency;
         this.outAdjacency = outAdjacency;
         this.inOffsets = inOffsets;
@@ -137,6 +142,16 @@ public class HugeGraphImpl implements HugeGraph {
     @Override
     public double weightOf(final long sourceNodeId, final long targetNodeId) {
         return weights.weight(sourceNodeId, targetNodeId);
+    }
+
+    @Override
+    public HugeWeightMapping hugeNodeProperties(final String type) {
+        return nodeProperties.get(type);
+    }
+
+    @Override
+    public Set<String> availableNodeProperties() {
+        return nodeProperties.keySet();
     }
 
     @Override
@@ -277,6 +292,7 @@ public class HugeGraphImpl implements HugeGraph {
                 tracker,
                 idMapping,
                 weights,
+                nodeProperties,
                 inAdjacency,
                 outAdjacency,
                 inOffsets,
@@ -412,6 +428,9 @@ public class HugeGraphImpl implements HugeGraph {
         }
         if (weights != null) {
             tracker.remove(weights.release());
+        }
+        for (final HugeWeightMapping nodeMapping : nodeProperties.values()) {
+            tracker.remove(nodeMapping.release());
         }
         empty = null;
         inCache = null;

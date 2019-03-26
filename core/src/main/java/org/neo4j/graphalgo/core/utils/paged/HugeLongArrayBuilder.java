@@ -18,7 +18,11 @@ public final class HugeLongArrayBuilder {
         this.array = array;
         this.numberOfNodes = numberOfNodes;
         this.allocationIndex = new AtomicLong();
-        this.adders = ThreadLocal.withInitial(() -> new BulkAdder(array, array.newCursor()));
+        this.adders = ThreadLocal.withInitial(this::newBulkAdder);
+    }
+
+    private BulkAdder newBulkAdder() {
+        return new BulkAdder(array, array.newCursor());
     }
 
     public BulkAdder allocate(final long nodes) {
@@ -51,7 +55,7 @@ public final class HugeLongArrayBuilder {
         public long[] buffer;
         public int offset;
         public int length;
-
+        public long start;
         private final HugeLongArray array;
         private final HugeLongArray.Cursor cursor;
 
@@ -64,6 +68,7 @@ public final class HugeLongArrayBuilder {
 
         private void reset(long start, long end) {
             array.cursor(this.cursor, start, end);
+            this.start = start;
             buffer = null;
             offset = 0;
             length = 0;

@@ -290,9 +290,7 @@ public class ProcedureConfiguration {
     }
 
     /**
-     * return the Graph-Implementation Factory class
-     *
-     * @return
+     * @return the Graph-Implementation Factory class
      */
     public Class<? extends GraphFactory> getGraphImpl(String defaultGraphImpl) {
         final String graphImpl = getGraphName(defaultGraphImpl);

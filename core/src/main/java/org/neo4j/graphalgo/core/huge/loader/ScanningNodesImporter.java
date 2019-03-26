@@ -18,21 +18,29 @@
  */
 package org.neo4j.graphalgo.core.huge.loader;
 
+import org.neo4j.graphalgo.PropertyMapping;
+import org.neo4j.graphalgo.api.HugeWeightMapping;
 import org.neo4j.graphalgo.core.GraphDimensions;
 import org.neo4j.graphalgo.core.utils.ImportProgress;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArrayBuilder;
+import org.neo4j.kernel.api.StatementConstants;
 import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 
-final class ScanningNodesImporter extends ScanningRecordsImporter<NodeRecord, HugeIdMap> {
+final class ScanningNodesImporter extends ScanningRecordsImporter<NodeRecord, IdsAndProperties> {
 
     private final ImportProgress progress;
     private final AllocationTracker tracker;
+    private final PropertyMapping[] propertyMappings;
 
+    private Map<String, HugeNodePropertiesBuilder> builders;
     private HugeLongArrayBuilder idMapBuilder;
 
     ScanningNodesImporter(
@@ -41,10 +49,12 @@ final class ScanningNodesImporter extends ScanningRecordsImporter<NodeRecord, Hu
             ImportProgress progress,
             AllocationTracker tracker,
             ExecutorService threadPool,
-            int concurrency) {
+            int concurrency,
+            PropertyMapping[] propertyMappings) {
         super(NodeStoreScanner.NODE_ACCESS, "Node", api, dimensions, threadPool, concurrency);
         this.progress = progress;
         this.tracker = tracker;
+        this.propertyMappings = propertyMappings;
     }
 
     @Override
@@ -53,12 +63,45 @@ final class ScanningNodesImporter extends ScanningRecordsImporter<NodeRecord, Hu
             ImportSizing sizing,
             AbstractStorePageCacheScanner<NodeRecord> scanner) {
         idMapBuilder = HugeLongArrayBuilder.of(nodeCount, tracker);
-        return NodesScanner.of(api, scanner, dimensions.labelId(), progress, idMapBuilder);
+        builders = propertyBuilders(nodeCount);
+        return NodesScanner.of(
+                api,
+                scanner,
+                dimensions.labelId(),
+                progress,
+                idMapBuilder,
+                builders.values());
     }
 
     @Override
-    HugeIdMap build() {
-        return HugeIdMapBuilder.build(idMapBuilder, dimensions.allNodesCount(), tracker);
+    IdsAndProperties build() {
+        HugeIdMap hugeIdMap = HugeIdMapBuilder.build(idMapBuilder, dimensions.allNodesCount(), tracker);
+        Map<String, HugeWeightMapping> nodeProperties = new HashMap<>();
+        for (PropertyMapping propertyMapping : propertyMappings) {
+            HugeNodePropertiesBuilder builder = builders.get(propertyMapping.propertyName);
+            HugeWeightMapping props = builder != null ? builder.build() : new HugeNullWeightMap(propertyMapping.defaultValue);
+            nodeProperties.put(propertyMapping.propertyName, props);
+        }
+        return new IdsAndProperties(hugeIdMap, Collections.unmodifiableMap(nodeProperties));
     }
 
+    private Map<String, HugeNodePropertiesBuilder> propertyBuilders(long nodeCount) {
+        if (propertyMappings == null || propertyMappings.length == 0) {
+            return Collections.emptyMap();
+        }
+        Map<String, HugeNodePropertiesBuilder> builders = new HashMap<>();
+        for (int i = 0; i < propertyMappings.length; i++) {
+            PropertyMapping propertyMapping = propertyMappings[i];
+            int propertyId = dimensions.nodePropertyKeyId(i);
+            if (propertyId != StatementConstants.NO_SUCH_PROPERTY_KEY) {
+                HugeNodePropertiesBuilder builder = HugeNodePropertiesBuilder.of(
+                        nodeCount,
+                        tracker,
+                        propertyMapping.defaultValue,
+                        propertyId);
+                builders.put(propertyMapping.propertyName, builder);
+            }
+        }
+        return builders;
+    }
 }

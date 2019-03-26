@@ -88,7 +88,6 @@ public final class WeightMap implements WeightMapping {
         return propertyId;
     }
 
-    @Override
     public int size() {
         return weights.size();
     }

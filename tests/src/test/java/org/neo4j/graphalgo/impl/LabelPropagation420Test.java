@@ -144,6 +144,7 @@ public final class LabelPropagation420Test {
     private void testClustering(int batchSize) throws Exception {
         final LabelPropagation lp = new LabelPropagation(
                 graph,
+                graph,
                 batchSize,
                 Pools.DEFAULT_CONCURRENCY,
                 Pools.DEFAULT);

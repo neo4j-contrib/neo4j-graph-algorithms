@@ -27,6 +27,7 @@ import org.neo4j.graphalgo.core.huge.HugeAdjacencyOffsets;
 import org.neo4j.graphalgo.core.huge.HugeGraphImpl;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.neo4j.graphalgo.core.huge.loader.AdjacencyCompression.writeDegree;
@@ -117,6 +118,7 @@ class HugeAdjacencyBuilder {
             final AllocationTracker tracker,
             final HugeIdMap idMapping,
             final HugeWeightMapping weights,
+            final Map<String, HugeWeightMapping> nodeProperties,
             final HugeAdjacencyBuilder inAdjacency,
             final HugeAdjacencyBuilder outAdjacency) {
 
@@ -134,7 +136,7 @@ class HugeAdjacencyBuilder {
         }
 
         return new HugeGraphImpl(
-                tracker, idMapping, weights,
+                tracker, idMapping, weights, nodeProperties,
                 inAdjacencyList, outAdjacencyList, inOffsets, outOffsets
         );
     }

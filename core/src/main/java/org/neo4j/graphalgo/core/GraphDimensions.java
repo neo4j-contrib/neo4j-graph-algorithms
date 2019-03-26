@@ -104,6 +104,13 @@ public final class GraphDimensions extends StatementFunction<GraphDimensions> {
         return -1;
     }
 
+    public int nodePropertyKeyId(int mappingIndex) {
+        if (mappingIndex < 0 || mappingIndex >= nodePropIds.length) {
+            return TokenRead.NO_TOKEN;
+        }
+        return nodePropIds[mappingIndex];
+    }
+
     public double nodePropertyDefaultValue(String type) {
         PropertyMapping[] mappings = setup.nodePropertyMappings;
 
