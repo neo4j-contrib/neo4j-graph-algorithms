@@ -195,32 +195,39 @@ public final class ParallelUtil {
      * Executes read operations in parallel, based on the given batch size
      * and executor.
      */
-    public static <T extends Runnable> void readParallel(
+    public static <T extends Runnable> List<T> readParallel(
             int concurrency,
             int batchSize,
             HugeBatchNodeIterable idMapping,
-            HugeParallelGraphImporter<T> importer,
-            ExecutorService executor) {
+            ExecutorService executor,
+            HugeParallelGraphImporter<T> importer) {
 
         Collection<PrimitiveLongIterable> iterators =
                 idMapping.hugeBatchIterables(batchSize);
 
         int threads = iterators.size();
 
+        final List<T> tasks = new ArrayList<>(threads);
         if (!canRunInParallel(executor) || threads == 1) {
-            long nodeOffset = 0;
+            long nodeOffset = 0L;
             for (PrimitiveLongIterable iterator : iterators) {
                 final T task = importer.newImporter(nodeOffset, iterator);
+                tasks.add(task);
                 task.run();
                 nodeOffset += batchSize;
             }
         } else {
             AtomicLong nodeOffset = new AtomicLong();
-            Collection<T> tasks = LazyMappingCollection.of(
+            Collection<T> importers = LazyMappingCollection.of(
                     iterators,
-                    it -> importer.newImporter(nodeOffset.getAndAdd(batchSize), it));
-            runWithConcurrency(concurrency, tasks, executor);
+                    it -> {
+                        T task = importer.newImporter(nodeOffset.getAndAdd(batchSize), it);
+                        tasks.add(task);
+                        return task;
+                    });
+            runWithConcurrency(concurrency, importers, executor);
         }
+        return tasks;
     }
 
     public static Collection<Runnable> tasks(
