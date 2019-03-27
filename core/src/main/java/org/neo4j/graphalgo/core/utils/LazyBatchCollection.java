@@ -72,7 +72,6 @@ public final class LazyBatchCollection<T> extends AbstractCollection<T> {
             return batches.iterator();
         }
         if (saveResults) {
-            //noinspection unchecked
             batches = new ArrayList<>(numberOfBatches);
         }
         return new AbstractIterator<T>() {

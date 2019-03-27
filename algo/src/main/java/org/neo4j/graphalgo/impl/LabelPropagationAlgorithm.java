@@ -18,10 +18,6 @@
  */
 package org.neo4j.graphalgo.impl;
 
-import org.neo4j.collection.primitive.PrimitiveIntIterable;
-import org.neo4j.collection.primitive.PrimitiveIntIterator;
-import org.neo4j.collection.primitive.PrimitiveLongIterable;
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphalgo.core.utils.paged.HugeLongArray;
 import org.neo4j.graphalgo.core.write.PropertyTranslator;
 import org.neo4j.graphdb.Direction;
@@ -51,13 +47,21 @@ public abstract class LabelPropagationAlgorithm<Self extends LabelPropagationAlg
     }
 
     public final Self compute(Direction direction, long maxIterations) {
-        return compute(direction, maxIterations, true);
+        return compute(direction, maxIterations, DefaultRandom.INSTANCE);
+    }
+
+    public final Self compute(Direction direction, long maxIterations, long randomSeed) {
+        return compute(direction, maxIterations, new Random(randomSeed));
+    }
+
+    public final Self compute(Direction direction, long maxIterations, Random random) {
+        return compute(direction, maxIterations, new ProvidedRandom(random));
     }
 
     abstract Self compute(
             Direction direction,
             long maxIterations,
-            boolean randomizeOrder);
+            RandomProvider random);
 
     public abstract long ranIterations();
 
@@ -68,6 +72,8 @@ public abstract class LabelPropagationAlgorithm<Self extends LabelPropagationAlg
     public interface Labels {
         long labelFor(long nodeId);
 
+        void setLabelFor(long nodeId, long label);
+
         long size();
     }
 
@@ -75,15 +81,20 @@ public abstract class LabelPropagationAlgorithm<Self extends LabelPropagationAlg
             Labels::labelFor;
 
     static final class LabelArray implements Labels {
-        final int[] labels;
+        final long[] labels;
 
-        LabelArray(final int[] labels) {
+        LabelArray(final long[] labels) {
             this.labels = labels;
         }
 
         @Override
         public long labelFor(final long nodeId) {
-            return (long) labels[Math.toIntExact(nodeId)];
+            return labels[Math.toIntExact(nodeId)];
+        }
+
+        @Override
+        public void setLabelFor(final long nodeId, final long label) {
+            labels[Math.toIntExact(nodeId)] = label;
         }
 
         @Override
@@ -105,120 +116,51 @@ public abstract class LabelPropagationAlgorithm<Self extends LabelPropagationAlg
         }
 
         @Override
+        public void setLabelFor(final long nodeId, final long label) {
+            labels.set(nodeId, label);
+        }
+
+        @Override
         public long size() {
             return labels.size();
         }
     }
 
-    static final class RandomlySwitchingIntIterable implements PrimitiveIntIterable {
-        private final PrimitiveIntIterable delegate;
-        private final Random random;
+    interface RandomProvider {
+        Random randomForNewIteration();
 
-        static PrimitiveIntIterable of(
-                boolean randomize,
-                PrimitiveIntIterable delegate) {
-            return randomize
-                    ? new RandomlySwitchingIntIterable(delegate, ThreadLocalRandom.current())
-                    : delegate;
-        }
+        boolean isRandom();
+    }
 
-        private RandomlySwitchingIntIterable(PrimitiveIntIterable delegate, Random random) {
-            this.delegate = delegate;
-            this.random = random;
-        }
+    private enum DefaultRandom implements RandomProvider {
+        INSTANCE {
+            @Override
+            public Random randomForNewIteration() {
+                return ThreadLocalRandom.current();
+            }
 
-        @Override
-        public PrimitiveIntIterator iterator() {
-            return new RandomlySwitchingIntIterator(delegate.iterator(), random);
+            @Override
+            public boolean isRandom() {
+                return true;
+            }
         }
     }
 
-    static final class RandomlySwitchingIntIterator implements PrimitiveIntIterator {
-        private final PrimitiveIntIterator delegate;
+    private static final class ProvidedRandom implements RandomProvider {
         private final Random random;
-        private boolean hasSkipped;
-        private int skipped;
 
-        private RandomlySwitchingIntIterator(PrimitiveIntIterator delegate, Random random) {
-            this.delegate = delegate;
+        private ProvidedRandom(final Random random) {
             this.random = random;
         }
 
         @Override
-        public boolean hasNext() {
-            return hasSkipped || delegate.hasNext();
+        public Random randomForNewIteration() {
+            return random;
         }
 
         @Override
-        public int next() {
-            if (hasSkipped) {
-                int elem = skipped;
-                hasSkipped = false;
-                return elem;
-            }
-            int next = delegate.next();
-            if (delegate.hasNext() && random.nextBoolean()) {
-                skipped = next;
-                hasSkipped = true;
-                return delegate.next();
-            }
-            return next;
-        }
-    }
-
-    static final class RandomlySwitchingLongIterable implements PrimitiveLongIterable {
-        private final PrimitiveLongIterable delegate;
-        private final Random random;
-
-        static PrimitiveLongIterable of(
-                boolean randomize,
-                PrimitiveLongIterable delegate) {
-            return randomize
-                    ? new RandomlySwitchingLongIterable(delegate, ThreadLocalRandom.current())
-                    : delegate;
-        }
-
-        private RandomlySwitchingLongIterable(PrimitiveLongIterable delegate, Random random) {
-            this.delegate = delegate;
-            this.random = random;
-        }
-
-        @Override
-        public PrimitiveLongIterator iterator() {
-            return new RandomlySwitchingLongIterator(delegate.iterator(), random);
-        }
-    }
-
-    static final class RandomlySwitchingLongIterator implements PrimitiveLongIterator {
-        private final PrimitiveLongIterator delegate;
-        private final Random random;
-        private boolean hasSkipped;
-        private long skipped;
-
-        private RandomlySwitchingLongIterator(PrimitiveLongIterator delegate, Random random) {
-            this.delegate = delegate;
-            this.random = random;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return hasSkipped || delegate.hasNext();
-        }
-
-        @Override
-        public long next() {
-            if (hasSkipped) {
-                long elem = skipped;
-                hasSkipped = false;
-                return elem;
-            }
-            long next = delegate.next();
-            if (delegate.hasNext() && random.nextBoolean()) {
-                skipped = next;
-                hasSkipped = true;
-                return delegate.next();
-            }
-            return next;
+        public boolean isRandom() {
+            return true;
         }
     }
 }
