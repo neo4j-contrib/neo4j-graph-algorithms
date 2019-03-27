@@ -107,12 +107,12 @@ public final class HugeIdMap implements HugeIdMapping, HugeNodeIterator, HugeBat
         }
     }
 
-    private static final class IdIterator implements PrimitiveLongIterator {
+    public static final class IdIterator implements PrimitiveLongIterator {
 
         private long current;
         private long limit; // exclusive upper bound
 
-        private IdIterator(long length) {
+        public IdIterator(long length) {
             this.current = 0;
             this.limit = length;
         }
