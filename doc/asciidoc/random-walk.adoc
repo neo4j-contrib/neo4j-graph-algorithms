@@ -119,7 +119,7 @@ include::scripts/random-walk.cypher[tag=stream-sample-graph]
 [[algorithms-random-walk-cp]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=explanation]
 
 [source, cypher]
 ----

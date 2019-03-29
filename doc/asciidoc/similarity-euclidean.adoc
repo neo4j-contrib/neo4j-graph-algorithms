@@ -230,7 +230,7 @@ include::scripts/similarity-euclidean.cypher[tag=query]
 [[algorithms-similarity-euclidean-cypher-projection]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=similarity-explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=similarity-explanation]
 
 .Set `graph:'cypher'` in the config:
 

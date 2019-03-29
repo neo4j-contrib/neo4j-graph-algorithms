@@ -1,5 +1,7 @@
 [[algorithms-community]]
+// tag::header[]
 = Community detection algorithms
+// end::header[]
 
 ifdef::env-docs[]
 [abstract]
@@ -11,6 +13,7 @@ endif::env-docs[]
 // todo introduction to graph algorithms, also say something about pregel & parallelization
 // todo sensible ordering
 
+// tag::summary[]
 The following community detection algorithms evaluate how a group is clustered or partitioned, as well as its tendency to strengthen or break apart:
 
 * <<algorithms-louvain, Louvain>> (`algo.louvain`)
@@ -19,6 +22,7 @@ The following community detection algorithms evaluate how a group is clustered o
 * <<algorithms-strongly-connected-components, Strongly Connected Components>> (`algo.scc`)
 * <<algorithms-triangle-count-clustering-coefficient, Triangle Counting / Clustering Coefficient>> (`algo.triangleCount`)
 * <<algorithms-balanced-triads, Balanced Triads>> (`algo.balancedTriads`)
+// end::summary[]
 
 include::louvain.adoc[leveloffset=2]
 

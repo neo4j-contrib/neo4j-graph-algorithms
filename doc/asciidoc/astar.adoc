@@ -82,7 +82,7 @@ include::scripts/astar.cypher[tag=stream-sample-graph]
 [[algorithms-a_star-cp]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=explanation]
 
 .Set `graph:'cypher'` in the config:
 

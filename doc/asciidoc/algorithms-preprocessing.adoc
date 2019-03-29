@@ -1,5 +1,7 @@
 [[algorithms-preprocessing]]
+// tag::header[]
 = Preprocessing functions and procedures
+// end::header[]
 
 ifdef::env-docs[]
 [abstract]
@@ -9,8 +11,11 @@ This chapter provides an explanation and example for preprocessing functions and
 endif::env-docs[]
 
 //Edit this (and abstract above) when there is more than one sub-topic
+
+// tag::summary[]
 The following feature and procedure can be used as part of the data preparation process:
 
 * <<algorithms-one-hot-encoding, One Hot Encoding>> (`algo.ml.oneHotEncoding`)
+// end::summary[]
 
 include::one-hot-encoding.adoc[leveloffset=2]

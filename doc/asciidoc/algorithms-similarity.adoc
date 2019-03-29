@@ -1,5 +1,7 @@
 [[algorithms-similarity]]
+// tag::header[]
 = Similarity algorithms
+// end::header[]
 
 ifdef::env-docs[]
 [abstract]
@@ -8,6 +10,7 @@ This chapter provides explanations and examples for each of the similarity algor
 --
 endif::env-docs[]
 
+// tag::summary[]
 These algorithms help calculate the similarity of nodes:
 
 * <<algorithms-similarity-jaccard, Jaccard Similarity>> (`algo.similarity.jaccard`)
@@ -15,6 +18,7 @@ These algorithms help calculate the similarity of nodes:
 * <<algorithms-similarity-pearson, Pearson Similarity>> (`algo.similarity.pearson`)
 * <<algorithms-similarity-euclidean, Euclidean Distance>> (`algo.similarity.euclidean`)
 * <<algorithms-similarity-overlap, Overlap Similarity>> (`algo.similarity.overlap`)
+// end::summary[]
 
 include::similarity-jaccard.adoc[leveloffset=2]
 include::similarity-cosine.adoc[leveloffset=2]

@@ -1,0 +1,197 @@
+// tag::overview[]
+[[cypher-projection]]
+= Cypher projection
+
+ifdef::env-docs[]
+[abstract]
+--
+This chapter explains Cypher projection in the Neo4j Graph Algorithms library.
+--
+endif::env-docs[]
+
+If the label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
+Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type, and use `graph:'cypher'` in the config.
+
+Relationships described in the relationship-statement will only be projected if both source and target nodes are described in the node-statement, otherwise they will be ignored.
+
+Cypher projection enables us to be more expressive in describing our subgraph that we want to analyse, but might take longer to project the graph with more complex cypher queries.
+
+The general call syntax is:
+
+[source,cypher]
+----
+CALL algo.<name>(
+  'MATCH (n) RETURN id(n) AS id',
+  "MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target",
+  {graph: "cypher"})
+----
+
+* The first query `MATCH (n) RETURN id(n) AS id` returns node ids.
+The Cypher loader expects the query to return an `id` field.
+
+* The second query `MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target` returns pairs of node ids that have a relationship between them in our projected graph.
+The Cypher loader expects the query to return `source` and `target` fields.
+
+Note that in both queries we use the `id` function to return the node id.
+
+
+[[cypher-projection-weights]]
+== Weights
+
+We can also return a property value or weight (according to our config) in addition to the ids from these statements.
+We do this by returning an optional `weight` field.
+
+.The following will run the algortihm over a graph based on Cypher projections for nodes and relationships, using the `score` property of each relationship as weight:
+[source,cypher]
+----
+CALL algo.<name>(
+  'MATCH (n) RETURN id(n) AS id',
+  "MATCH (n)-[r]->(m) RETURN id(n) AS source, id(m) AS target, r.score AS weight",
+  {graph: "cypher"})
+----
+
+
+[[cypher-projection-basic-usage]]
+== Example Usage
+
+We could use Cypher projections to run the PageRank algorithm on *DBpedia*, as shown in the following examples.
+
+
+.The following will run the PageRank algorithm over a graph based on Cypher projections for nodes and relationships:
+[source,cypher]
+----
+CALL algo.pageRank(
+  'MATCH (p:Page) RETURN id(p) as id',
+  'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', iterations:5, write: true});
+----
+
+Cypher projection can also be used to project a virtual (non-stored) graph.
+Here is an example of how to project an undirected graph of people who visited the same web page and run the Louvain community detection algorithm on it, using the number of common visited web pages between pairs of people as relationship weight:
+
+.The following will run the Louvain algortihm over a graph based on Cypher projections for nodes and relationships:
+[source,cypher]
+----
+CALL algo.louvain(
+  'MATCH (p:Person) RETURN id(p) as id',
+  'MATCH (p1:Person)-[:VISIT]->(:Page)<-[:VISIT]-(p2:Person)
+   RETURN id(p1) as source, id(p2) as target, count(*) as weight',
+  {graph:'cypher', iterations:5, write: true});
+----
+
+
+[[cypher-projection-relationship-deduplication]]
+== Relationship deduplication
+
+By default, the Cypher projection loader assumes that the relationship projection only contains one relationship between a pair of nodes.
+If we return more than one relationship we can pass the `duplicateRelationships` key in the config to decide what should happen with duplicates.
+
+`duplicateRelationships` supports the following options:
+
+* `null` - assumes that relationships returned are unique. _(Default)_
+* `skip` - keeps the first relationship (and associated weight) encountered.
+* `sum` - sums the associated weights of relationships encountered.
+* `min` - keeps the minimum weight of relationships encountered.
+* `max` - keeps the maximum weight of relationships encountered.
+
+If we know that there are no duplicates in our relationship query, we should leave this parameter unset.
+The other options will slow down relationship loading as they need to check for the existence of existing relationships.
+
+.The following runs shortest path over a graph based on Cypher projections, picking the `ROAD` relationship with minimum cost:
+[source,cypher]
+----
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost', {
+  nodeQuery:'MATCH(n:Loc) RETURN id(n) as id',
+  relationshipQuery:'MATCH(n:Loc)-[r:ROAD]->(m:Loc) RETURN id(n) as source, id(m) as target, r.cost as weight',
+  {graph:'cypher', duplicateRelationships: 'min'})
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost
+----
+
+.The following runs shortest path over a graph based on Cypher projections, picking the `ROAD` relationship with maximum cost:
+[source,cypher]
+----
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost', {
+  nodeQuery:'MATCH(n:Loc) RETURN id(n) as id',
+  relationshipQuery:'MATCH(n:Loc)-[r:ROAD]->(m:Loc) RETURN id(n) as source, id(m) as target, r.cost as weight',
+  {graph:'cypher', duplicateRelationships: 'max'})
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost
+----
+
+
+.The following runs shortest path over a graph based on Cypher projections, summing the weights of `ROAD` relationships:
+[source,cypher]
+----
+MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
+CALL algo.shortestPath(start, end, 'cost', {
+  nodeQuery:'MATCH(n:Loc) RETURN id(n) as id',
+  relationshipQuery:'MATCH(n:Loc)-[r:ROAD]->(m:Loc) RETURN id(n) as source, id(m) as target, r.cost as weight',
+  {graph:'cypher', duplicateRelationships: 'max'})
+YIELD writeMillis,loadMillis,nodeCount, totalCost
+RETURN writeMillis,loadMillis,nodeCount,totalCost
+----
+
+
+[[cypher-projection-parallel-loading]]
+== Parallel loading
+
+By default, Cypher projection queries are run on a single thread.
+
+We can parallelize loading by including `SKIP` clause and `$skip` parameter, as well as `LIMIT` clause and `$limit` parameter in our projection queries.
+Parallelization of the queries is based on the `batchSize` key in the config, which has a default value of 10,000.
+
+[NOTE]
+====
+If the parameters are not named `$skip` and `$limit`, they will be ignored, and the sequential loading approach will be used.
+====
+
+.The following runs PageRank over a graph based on Cypher projections, with nodes loaded in parallel:
+[source,cypher]
+----
+CALL algo.pageRank(
+  'MATCH (p:Page) WITH p SKIP $skip LIMIT $limit RETURN id(p) as id',
+  'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', iterations:5, write: true});
+----
+
+.The following runs PageRank over a graph based on Cypher projections, with relationships loaded in parallel:
+[source,cypher]
+----
+CALL algo.pageRank(
+  'MATCH (p:Page) RETURN id(p) as id',
+  'MATCH (p1:Page)-[:Link]->(p2:Page) WITH * SKIP $skip LIMIT $limit RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', iterations:5, write: true});
+----
+
+.The following runs PageRank over a graph based on Cypher projections, with nodes and relationships loaded in parallel:
+[source,cypher]
+----
+CALL algo.pageRank(
+  'MATCH (p:Page) WITH p SKIP $skip LIMIT $limit RETURN id(p) as id',
+  'MATCH (p1:Page)-[:Link]->(p2:Page) WITH * SKIP $skip LIMIT $limit RETURN id(p1) as source, id(p2) as target',
+  {graph:'cypher', iterations:5, write: true});
+----
+
+// end::overview[]
+
+
+
+// tag::explanation[]
+If label and relationship-type are not selective enough to describe your subgraph to run the algorithm on, you can use Cypher statements to load or project subsets of your graph.
+This can also be used to run algorithms on a virtual graph.
+You can learn more in the <<cypher-projection>> section of the manual.
+// end::explanation[]
+
+// tag::similarity-explanation[]
+If the similarity lists are very large they can take up a lot of memory.
+For cases where those lists contain lots of values that should be skipped, you can use the less memory-intensive approach of using Cypher statements to project the graph instead.
+
+The Cypher loader expects to receive 3 fields:
+
+* `item` - should contain node ids, which we can return using the `id` function.
+* `category` - should contain node ids, which we can return using the `id` function.
+* `weight` - should contain a double value.
+// end::similarity-explanation[]

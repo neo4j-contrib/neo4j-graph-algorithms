@@ -1,5 +1,7 @@
 [[algorithms-centrality]]
+// tag::header[]
 = Centrality algorithms
+// end::header[]
 
 ifdef::env-docs[]
 [abstract]
@@ -11,6 +13,7 @@ endif::env-docs[]
 // todo introduction to graph algorithms, also say something about pregel & parallelization
 // todo sensible ordering
 
+// tag::summary[]
 The following centrality algorithms determine the importance of distinct nodes in a network:
 
 * <<algorithms-pagerank, PageRank>> (`algo.pageRank`)
@@ -20,6 +23,7 @@ The following centrality algorithms determine the importance of distinct nodes i
 * <<algorithms-harmonic-centrality, Harmonic Centrality>> (`algo.closeness.harmonic`)
 * <<algorithms-eigenvector, Eigenvector Centrality>> (`algo.eigenvector`)
 * <<algorithms-degree-centrality, Degree Centrality>> (`algo.degree`)
+// end::summary[]
 
 include::pagerank.adoc[leveloffset=2]
 
