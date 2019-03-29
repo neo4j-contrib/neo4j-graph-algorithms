@@ -59,7 +59,7 @@ public abstract class GraphFactory {
         this.api = api;
         this.setup = setup;
         this.log = setup.log;
-        this.progressLogger = progressLogger(log, setup.logMillis, TimeUnit.MILLISECONDS);
+        this.progressLogger = progressLogger(log, setup.logMillis);
         dimensions = new GraphDimensions(api, setup).call();
         progress = importProgress(progressLogger, dimensions, setup);
     }
