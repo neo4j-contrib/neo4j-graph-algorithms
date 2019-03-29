@@ -1,5 +1,7 @@
 [[algorithms-path-finding]]
+// tag::header[]
 = Path finding algorithms
+// end::header[]
 
 ifdef::env-docs[]
 [abstract]
@@ -11,6 +13,7 @@ endif::env-docs[]
 // todo introduction to graph algorithms, also say something about pregel & parallelization
 // todo sensible ordering
 
+// tag::summary[]
 The following path finding algorithms help find the shortest path or evaluate the availability and quality of routes:
 
 * <<algorithms-minimum-weight-spanning-tree, Minimum Weight Spanning Tree>> (`algo.mst`)
@@ -20,6 +23,7 @@ The following path finding algorithms help find the shortest path or evaluate th
 * <<algorithms-a_star, A*>> (`algo.shortestPath.astar`)
 * <<algorithms-yens-k-shortest-path, Yen’s K-shortest paths>> (`algo.kShortestPaths`)
 * <<algorithms-random-walk, Random Walk>> (`algo.randomWalk`)
+// end::summary[]
 
 include::minimum-weight-spanning-tree.adoc[leveloffset=2]
 

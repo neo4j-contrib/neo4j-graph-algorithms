@@ -4,19 +4,17 @@ image:https://travis-ci.org/neo4j-contrib/neo4j-graph-algorithms.svg?branch=3.3[
 
 // tag::readme[]
 
+// tag::algorithms-intro[]
 This library provides efficiently implemented, parallel versions of common graph algorithms for Neo4j 3.x, exposed as Cypher procedures.
 
 ifndef::env-docs[]
-You can find the documentation here: https://neo4j.com/docs/graph-algorithms/current/
+You can find documentation at *https://neo4j.com/docs/graph-algorithms/current/[neo4j.com/docs/graph-algorithms^]*
 endif::env-docs[]
-
-Releases are available here: https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases
 
 
 [[introduction-algorithms]]
 == Algorithms
 
-// tag::algorithms[]
 Graph algorithms are used to compute metrics for graphs, nodes, or relationships.
 
 They can provide insights on relevant entities in the graph (centralities, ranking), or inherent structures like communities (community-detection, graph-partitioning, clustering).
@@ -27,103 +25,116 @@ Due to the exponential growth of possible paths with increasing distance, many o
 
 Fortunately, optimized algorithms exist that utilize certain structures of the graph, memoize already explored parts, and parallelize operations.
 Whenever possible, we've applied these optimizations.
+// end::algorithms-intro[]
 
+ifndef::env-docs[]
+The library supports the following algorithms:
+endif::env-docs[]
 
 === Centralities
 
 These algorithms determine the importance of distinct nodes in a network:
 
-* <<algorithms-pagerank, PageRank>> (`algo.pageRank`)
-* <<algorithms-articlerank, ArticleRank>> (`algo.articleRank`)
-* <<algorithms-betweenness-centrality, Betweenness Centrality>> (`algo.betweenness`)
-* <<algorithms-closeness-centrality, Closeness Centrality>> (`algo.closeness`)
-* <<algorithms-harmonic-centrality, Harmonic Centrality>> (`algo.closeness.harmonic`)
-* <<algorithms-eigenvector, Eigenvector Centrality>> (`algo.eigenvector`)
-* <<algorithms-degree-centrality, Degree Centrality>> (`algo.degree`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/page-rank/[PageRank^] (`algo.pageRank`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/article-rank/[ArticleRank^] (`algo.articleRank`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/betweenness-centrality/[Betweenness Centrality^] (`algo.betweenness`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/closeness-centrality/[Closeness Centrality^] (`algo.closeness`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/harmonic-centrality/[Harmonic Centrality^] (`algo.closeness.harmonic`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/eigenvector-centrality/[Eigenvector Centrality^] (`algo.eigenvector`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/degree-centrality/[Degree Centrality^] (`algo.degree`)
 
 
 === Community detection
 
 These algorithms evaluate how a group is clustered or partitioned, as well as its tendency to strengthen or break apart:
 
-* <<algorithms-louvain, Louvain>> (`algo.louvain`)
-* <<algorithms-label-propagation, Label Propagation>> (`algo.labelPropagation`)
-* <<algorithms-connected-components, Connected Components>> (`algo.unionFind`)
-* <<algorithms-strongly-connected-components, Strongly Connected Components>> (`algo.scc`)
-* <<algorithms-triangle-count-clustering-coefficient, Triangle Counting / Clustering Coefficient>> (`algo.triangleCount`)
-* <<algorithms-balanced-triads, Balanced Triads>> (`algo.balancedTriads`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/louvain/[Louvain^] (`algo.louvain`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/label-propagation/[Label Propagation^] (`algo.labelPropagation`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/connected-components/[Connected Components^] (`algo.unionFind`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/strongly-connected-components/[Strongly Connected Components^] (`algo.scc`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/triangle-counting-clustering-coefficient/[Triangle Counting / Clustering Coefficient^] (`algo.triangleCount`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/balanced-triads/[Balanced Triads^] (`algo.balancedTriads`)
 
 
 === Path finding
 
 These algorithms help find the shortest path or evaluate the availability and quality of routes:
 
-* <<algorithms-minimum-weight-spanning-tree, Minimum Weight Spanning Tree>> (`algo.mst`)
-* <<algorithms-shortest-path, Shortest Path>> (`algo.shortestPath`)
-* <<algorithms-single-source-shortest-path, Single Source Shortest Path>> (`algo.shortestPath`)
-* <<algorithm-all-pairs-shortest-path, All Pairs Shortest Path>> (`algo.allShortestPaths`)
-* <<algorithms-a_star, A*>> (`algo.shortestPath.astar`)
-* <<algorithms-yens-k-shortest-path, Yen’s K-shortest paths>> (`algo.kShortestPaths`)
-* <<algorithms-random-walk, Random Walk>> (`algo.randomWalk`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/minimum-weight-spanning-tree/[Minimum Weight Spanning Tree^] (`algo.mst`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/shortest-path/[Shortest Path^] (`algo.shortestPath`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/single-source-shortest-path/[Single Source Shortest Path^] (`algo.shortestPath.deltastepping`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/all-pairs-shortest-path/[All Pairs Shortest Path^] (`algo.allShortestPaths`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/a_star/[A*^] (`algo.shortestPath.astar`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/yen-s-k-shortest-path/[Yen’s K-shortest paths^] (`algo.kShortestPaths`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/random-walk/[Random Walk^] (`algo.randomWalk`)
 
 === Similarity
 
 These algorithms help calculate the similarity of nodes:
 
-* <<algorithms-similarity-jaccard, Jaccard Similarity>> (`algo.similarity.jaccard`)
-* <<algorithms-similarity-cosine, Cosine Similarity>> (`algo.similarity.cosine`)
-* <<algorithms-similarity-pearson, Pearson Similarity>> (`algo.similarity.pearson`)
-* <<algorithms-similarity-euclidean, Euclidean Distance>> (`algo.similarity.euclidean`)
-* <<algorithms-similarity-overlap, Overlap Similarity>> (`algo.similarity.overlap`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-jaccard/[Jaccard Similarity^] (`algo.similarity.jaccard`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-cosine/[Cosine Similarity^] (`algo.similarity.cosine`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-pearson/[Pearson Similarity^] (`algo.similarity.pearson`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-euclidean/[Euclidean Distance^] (`algo.similarity.euclidean`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-overlap/[Overlap Similarity^] (`algo.similarity.overlap`)
 
 === Link Prediction
 
 These algorithms can be used as part of Link Prediction solution:
 
-* <<algorithms-linkprediction-adamic-adar, Adamic Adar>> (`algo.linkprediction.adamicAdar`)
-* <<algorithms-linkprediction-common-neighbors, Common Neighbors>> (`algo.linkprediction.commonNeighbors`)
-* <<algorithms-linkprediction-preferential-attachment, Preferential Attachment>> (`algo.linkprediction.preferentialAttachment`)
-* <<algorithms-linkprediction-resource-allocation, Resource Allocation>> (`algo.linkprediction.resourceAllocation`)
-* <<algorithms-linkprediction-same-community, Same Community>> (`algo.linkprediction.sameCommunity`)
-* <<algorithms-linkprediction-total-neighbors, Total Neighbors>> (`algo.linkprediction.totalNeighbors`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-adamic-adar/[Adamic Adar^] (`algo.linkprediction.adamicAdar`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-common-neighbors/[Common Neighbors^] (`algo.linkprediction.commonNeighbors`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-preferential-attachment/[Preferential Attachment^] (`algo.linkprediction.preferentialAttachment`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-resource-allocation/[Resource Allocation^] (`algo.linkprediction.resourceAllocation`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-same-community/[Same Community^] (`algo.linkprediction.sameCommunity`)
+* https://neo4j.com/docs/graph-algorithms/current/algorithms/linkprediction-total-neighbors/[Total Neighbors^] (`algo.linkprediction.totalNeighbors`)
 
 === Preprocessing
 
 These are utility functions and procedures that transform data for use further along the data pipeline:
 
-** <<algorithms-one-hot-encoding, One Hot Encoding>> (`algo.ml.oneHotEncoding`)
+** https://neo4j.com/docs/graph-algorithms/current/algorithms/one-hot-encoding/[One Hot Encoding^] (`algo.ml.oneHotEncoding`)
 
-// end::algorithms[]
-
-These procedures work either on the whole graph, or on a subgraph filtered by label and relationship-type.
-You can also use link:#cypher-projection[filtering and projection using Cypher queries].
-
-
-ifndef::env-docs[]
-== Feedback
-
-*We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case.
-Also please note things that are missing from the installation instructions or documentation.
-
-Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the http://neo4j.com/developer/slack[neo4j-users Slack group] and ask in the `#neo4j-graph-algorithm` channel.
-endif::env-docs[]
-
+// tag::installation[]
 
 == Installation
 
-Download `graph-algorithms-algo-[version].jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] and copy it into your `$NEO4J_HOME/plugins` directory.
+=== Neo4j Desktop
 
-Because the algorithms use the lower level Kernel API to read from, and to write to Neo4j, for security purposes you will also have to enable them in the configuration:
+If we are using the https://neo4j.com/docs/operations-manual/current/installation/neo4j-desktop/index.html[Neo4j Desktop^], the library can be installed from the 'Plugins' tab of a database.
+
+image::neo4j-desktop.jpg[width=500]
+
+The installer will download a copy of the graph algorithms library and place it in the 'plugins' directory of the database.
+It will also add the following entry to the settings file:
+
+----
+dbms.security.procedures.unrestricted=algo.*
+----
+
+=== Neo4j Server
+
+If we are using a standalone Neo4j Server, the library will need to be installed and configured manually.
+
+. Download `graph-algorithms-algo-[version].jar` from https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[the matching release] and copy it into the `$NEO4J_HOME/plugins` directory.
+We can work out which release to download by referring to the https://github.com/neo4j-contrib/neo4j-graph-algorithms/blob/master/versions.json[versions file^].
+
 
 . Add the following to your `$NEO4J_HOME/conf/neo4j.conf` file:
 +
 ----
 dbms.security.procedures.unrestricted=algo.*
 ----
+We need to give the library unrestricted access because the algorithms use the lower level Kernel API to read from, and to write to Neo4j.
+
 +
 . Restart Neo4j
-. To see a list of all the algorithms, run the following query:
-+
+
+
+=== Verifying installation
+
+Once we've installed the library, to see a list of all the algorithms, run the following query:
+
 ----
 CALL algo.list()
 ----
@@ -132,27 +143,12 @@ ifndef::env-docs[]
 You can also see the full list in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[documentation^].
 endif::env-docs[]
 
-////
-== Introduction
+// end::installation[]
 
-Graph theory is the study of graphs, which are mathematical structures used to model pairwise relations between nodes.
-A graph is made up of nodes (vertices) which are connected by relationships (edges).
-A graph may be _undirected_, meaning that there is no distinction between the two nodes associated with each relationship, or its relationships may be _directed_ from one node to another.
-Relationships are what graph is all about: two nodes are joined by a relationship when they are related in a specified way.
-
-We are tied to our friends.
-Cities are connected by roads and airline routes.
-Flora and fauna are bound together in a food web.
-Countries are involved in trading relationships.
-The World Wide Web is a virtual network of information.
-
-* _Note that Neo4j stores directed relationships, we can treat them as though they are undirected when we are doing the analysis_
-////
-
-
-== Usage
 
 // tag::usage[]
+== Usage
+
 These algorithms are exposed as Neo4j procedures.
 They can be called directly from Cypher in your Neo4j Browser, from cypher-shell, or from your client code.
 
@@ -165,164 +161,16 @@ For example, node-ids and computed values.
 For large graphs, the streaming procedure might return millions, or even billions of results.
 In this case it may be more convenient to store the results of the algorithm, and then use them with later queries.
 
-We can project the graph we want to run algorithms on with either label and relationship-type projection, or cypher projection.
-
-[ditaa]
-----
-+----------+label/rel type projection +-----------+
-|  Neo4j   +------------------------->| Projected |  Execute algorithm
-| stored   |    cypher projection     |   graph   |<-------------------
-|  graph   +------------------------->|           |
-+----------+                          +-----------+
-
-----
-
-The projected graph model is separate from Neo4j's stored graph model to enable fast caching for the topology of the graph, containing only relevant nodes, relationships and weights.
-The projected graph model does not support multiple relationships between a single pair of nodes.
-During projection, only one relationship between a pair of nodes per direction (in, out) is allowed in the directed case, but two relationships are allowed for BOTH the undirected cases.
-
 // end::usage[]
 
-
-=== Label and relationship-type projection
-
-// tag::label-relationship-type-projection[]
-We can project the subgraph we want to run the algorithm on by using the label parameter to describe nodes, and relationship-type to describe relationships.
-
-The general call syntax is:
-
-[source,cypher]
-----
-CALL algo.<name>('NodeLabel', "RelationshipType", {config})
-----
-
-// end::label-relationship-type-projection[]
-
-For example, PageRank on DBpedia (11M nodes, 116M relationships):
-
-[source,cypher]
-----
-CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
-// YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
-
-CALL algo.pageRank.stream('Page','Link',{iterations:5, dampingFactor:0.85})
-YIELD node, score
-RETURN node.title, score
-ORDER BY score DESC LIMIT 10;
-----
-
-
-==== Huge graph projection
-
-// tag::huge-graph-projection[]
-The default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships, so if our project graph is bigger than this we need to use a huge graph projection.
-This can be enabled by setting `graph:'huge'` in the config.
-
-The general call syntax is:
-
-[source,cypher]
-----
-CALL algo.<name>('NodeLabel', "RelationshipType", {graph: "huge"})
-----
-
-// end::huge-graph-projection[]
-
-For example, PageRank on DBpedia:
-
-[source,cypher]
-----
-CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, writeProperty:'pagerank',graph:'huge'});
-YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, writeProperty
-----
-
-
-[[cypher-projection]]
-=== Cypher projection
-
-// tag::cypher-projection[]
-If label and relationship-type projection is not selective enough to describe our subgraph to run the algorithm on, we can use Cypher statements to project subsets of our graph.
-Use a node-statement instead of the label parameter and a relationship-statement instead of the relationship-type, and use `graph:'cypher'` in the config.
-
-Relationships described in the relationship-statement will only be projected if both source and target nodes are described in the node-statement.
-Relationships that don't have both source and target nodes described in the node-statement will be ignored.
-
-We can also return a property value or weight (according to our config) in addition to the ids from these statements.
-
-Cypher projection enables us to be more expressive in describing our subgraph that we want to analyse, but might take longer to project the graph with more complex cypher queries.
-
-The general call syntax is:
-
-[source,cypher]
-----
-CALL algo.<name>(
-  'MATCH (n) RETURN id(n) AS id',
-  "MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target",
-  {graph: "cypher"})
-----
-
-* The first query `MATCH (n) RETURN id(n) AS id` returns node ids.
-The Cypher loader expects the query to return an `id` field.
-
-* The second query `MATCH (n)-->(m) RETURN id(n) AS source, id(m) AS target` returns pairs of node ids that have a relationship between them in our projected graph.
-The Cypher loader expects the query to return `source` and `target` fields.
-We can also return an optional `weight` field.
-
-Note that in both queries we use the `id` function to return the node id.
-
-// end::cypher-projection[]
-
-
-For example, PageRank on DBpedia:
-
-[source,cypher]
-----
-CALL algo.pageRank(
-'MATCH (p:Page) RETURN id(p) as id',
-'MATCH (p1:Page)-[:Link]->(p2:Page) RETURN id(p1) as source, id(p2) as target',
-{graph:'cypher', iterations:5, write: true});
-----
-
-Cypher projection can also be used to project a virtual (non-stored) graph.
-Here is an example of how to project an undirected graph of people who visited the same web page and run the Louvain community detection algorithm on it, using the number of common visited web pages between pairs of people as relationship weight:
-
-[source,cypher]
-----
-CALL algo.louvain(
-'MATCH (p:Person) RETURN id(p) as id',
-'MATCH (p1:Person)-[:Visit]->(:Page)<-[:Visit]-(p2:Person)
-RETURN id(p1) as source, id(p2) as target, count(*) as weight',
-{graph:'cypher', iterations:5, write: true});
-----
-
 ifndef::env-docs[]
-The detailed call syntax and all parameters and possible return values for each algorithm are listed in the http://neo4j-contrib.github.io/neo4j-graph-algorithms[project's documentation]
+== Feedback
+
+*We'd love your feedback*, so please try out these algorithms and let us know how well they work for your use-case.
+Also please note things that are missing from the installation instructions or documentation.
+
+Please raise https://github.com/neo4j-contrib/neo4j-graph-algorithms/issues[GitHub issues] for anything you encounter or join the https://community.neo4j.com/[Neo4j Community forum^] and ask in the https://community.neo4j.com/c/neo4j-graph-platform/graph-algorithms[Graph Algorithms Category^]
 endif::env-docs[]
-
-
-== Graph loading
-
-As it can take some time to load large graphs into the algorithm data structures, you can pre-load graphs and then later refer to them by name for several graph algorithms.
-After usage they can be removed from memory to free resources used:
-
-[source,cypher]
-----
-// Load graph
-CALL algo.graph.load('my-graph','Label','REL_TYPE',{graph:'heavy',..other config...})
-  YIELD name, graph, direction, undirected, sorted, nodes, loadMillis, alreadyLoaded,
-        nodeWeight, relationshipWeight, nodeProperty, loadNodes, loadRelationships;
-
-// Info on loaded graph
-CALL algo.graph.info('my-graph')
-  YIELD name, type, exists, removed, nodes;
-
-// Use graph
-CALL algo.pageRank(null,null,{graph:'my-graph',...})
-
-
-// Remove graph
-CALL algo.graph.remove('my-graph')
-  YIELD name, type, exists, removed, nodes;
-----
 
 
 == Building locally

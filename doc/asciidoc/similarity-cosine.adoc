@@ -239,7 +239,7 @@ include::scripts/similarity-cosine.cypher[tag=query]
 [[algorithms-similarity-cosine-cypher-projection]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=similarity-explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=similarity-explanation]
 
 .Set `graph:'cypher'` in the config:
 

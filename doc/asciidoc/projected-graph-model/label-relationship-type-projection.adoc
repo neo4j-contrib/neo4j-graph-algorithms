@@ -1,0 +1,76 @@
+[[label-relationship-type-projection]]
+// tag::header[]
+= Label and relationship-type projection
+// end::header[]
+
+ifdef::env-docs[]
+[abstract]
+--
+This chapter explains label and relationship-type projection in the Neo4j Graph Algorithms library.
+--
+endif::env-docs[]
+
+We can project the subgraph we want to run the algorithm on by using the label parameter to describe nodes, and relationship-type to describe relationships.
+
+The general call syntax is:
+
+.The following will run the algorithm for the label `NodeLabel` and relationship type `RelationshipType`
+[source,cypher]
+----
+CALL algo.<name>('NodeLabel', "RelationshipType", {config})
+----
+
+For example, running the PageRank algorithm on DBpedia, which contains 11 million nodes and 116 million relationships:
+
+.The following will run the write version of the algorithm, storing results in the `pagerank` property:
+[source,cypher]
+----
+CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, write: true, writeProperty:'pagerank'});
+----
+
+.The following will run the streaming version of the algorithm:
+[source,cypher]
+----
+CALL algo.pageRank.stream('Page','Link',{iterations:5, dampingFactor:0.85})
+YIELD nodeId, score
+RETURN algo.getNodeById(nodeId).title, score
+ORDER BY score DESC LIMIT 10;
+----
+
+If we want to project a subgraph that includes all nodes and relationships in the underlying Neo4j graph, we can achieve this by passing `null` values for the label and relationship type:
+
+.The following will run the algorithm over all nodes and relationships:
+[source,cypher]
+----
+CALL algo.<name>(null, null)
+----
+
+
+[[huge-projection]]
+== Huge graph projection
+
+The default label and relationship-type projection has a limitation of 2 billion nodes and 2 billion relationships, so if our project graph is bigger than this we need to use a huge graph projection.
+This can be enabled by setting `graph:'huge'` in the config.
+
+The general call syntax is:
+
+[source,cypher]
+----
+CALL algo.<name>('NodeLabel', "RelationshipType", {graph: "huge"})
+----
+
+For example, running the PageRank algorithm on DBpedia:
+
+.The following will run the write version of the algorithm, storing results in the `pagerank` property:
+[source,cypher]
+----
+CALL algo.pageRank('Page','Link',{iterations:5, dampingFactor:0.85, writeProperty:'pagerank',graph:'huge'});
+----
+
+If we want to project a subgraph that includes all nodes and relationships in the underlying Neo4j graph, we can achieve this by passing `null` values for the label and relationship type:
+
+.The following will run the algorithm over all nodes and relationships:
+[source,cypher]
+----
+CALL algo.<name>(null, null, {graph: 'huge'})
+----

@@ -102,7 +102,7 @@ The above table shows the cost of going from A to each of the other nodes, inclu
 [[algorithms-single-source-shortest-path-cp]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=explanation]
 
 .Set `graph:'cypher'` in the config:
 

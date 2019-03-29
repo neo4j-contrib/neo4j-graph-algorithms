@@ -134,7 +134,7 @@ include::scripts/eigenvector-centrality.cypher[tag=huge-projection]
 [[algorithms-eigenvector-cp]]
 == Cypher projection
 
-include::cypher-projection.adoc[tag=explanation]
+include::projected-graph-model/cypher-projection.adoc[tag=explanation]
 
 .Set `graph:'cypher'` in the config:
 
