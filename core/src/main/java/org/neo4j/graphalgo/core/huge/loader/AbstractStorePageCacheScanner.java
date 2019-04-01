@@ -20,6 +20,7 @@ package org.neo4j.graphalgo.core.huge.loader;
 
 import org.neo4j.graphalgo.core.utils.paged.PaddedAtomicLong;
 import org.neo4j.graphdb.DependencyResolver;
+import org.neo4j.graphdb.DependencyResolver.SelectionStrategy;
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
@@ -32,7 +33,6 @@ import org.neo4j.kernel.impl.store.format.RecordFormats;
 import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
 import org.neo4j.kernel.impl.store.record.RecordLoad;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.StorageStatement.RecordReads;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,11 +50,6 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
          * Return the store to use.
          */
         RecordStore<Record> store(NeoStores neoStores);
-
-        /**
-         * Return the store read to use.
-         */
-        RecordReads<Record> reads(NeoStores neoStores);
 
         /**
          * Return the record format to use.
@@ -295,7 +290,6 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
     // how to read the record
     private final RecordFormat<Record> recordFormat;
     private final RecordStore<Record> store;
-    private final RecordReads<Record> reads;
     private final PagedFile pagedFile;
 
     AbstractStorePageCacheScanner(
@@ -305,7 +299,7 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
 
         DependencyResolver resolver = api.getDependencyResolver();
         NeoStores neoStores = resolver
-                .resolveDependency(RecordStorageEngine.class)
+                .resolveDependency(RecordStorageEngine.class, SelectionStrategy.ONLY)
                 .testAccessNeoStores();
 
         RecordStore<Record> store = access.store(neoStores);
@@ -314,7 +308,7 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
         int pageSize = recordsPerPage * recordSize;
 
         PagedFile pagedFile = null;
-        PageCache pageCache = resolver.resolveDependency(PageCache.class);
+        PageCache pageCache = resolver.resolveDependency(PageCache.class, SelectionStrategy.ONLY);
         String storeFileName = access.storeFileName();
         try {
             for (PagedFile pf : pageCache.listExistingMappings()) {
@@ -337,7 +331,6 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
         this.pageSize = pageSize;
         this.recordFormat = access.recordFormat(neoStores.getRecordFormats());
         this.store = store;
-        this.reads = access.reads(neoStores);
         this.pagedFile = pagedFile;
     }
 
@@ -356,7 +349,7 @@ public class AbstractStorePageCacheScanner<Record extends AbstractBaseRecord> {
                     pageCursor = pagedFile.io(next, PagedFile.PF_READ_AHEAD | PagedFile.PF_SHARED_READ_LOCK);
                 } else {
                     long recordId = next * (long) recordSize;
-                    pageCursor = reads.openPageCursorForReading(recordId);
+                    pageCursor = store.openPageCursorForReading(recordId);
                 }
             } catch (IOException e) {
                 throw new UnderlyingStorageException(e);

@@ -18,15 +18,14 @@
  */
 package org.neo4j.graphalgo.core.huge.loader;
 
+import org.neo4j.io.layout.DatabaseFile;
 import org.neo4j.kernel.impl.store.NeoStores;
 import org.neo4j.kernel.impl.store.NodeStore;
 import org.neo4j.kernel.impl.store.RecordStore;
-import org.neo4j.kernel.impl.store.StoreFile;
 import org.neo4j.kernel.impl.store.format.RecordFormat;
 import org.neo4j.kernel.impl.store.format.RecordFormats;
 import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.storageengine.api.StorageStatement;
 
 public final class NodeStoreScanner extends AbstractStorePageCacheScanner<NodeRecord> {
 
@@ -37,18 +36,13 @@ public final class NodeStoreScanner extends AbstractStorePageCacheScanner<NodeRe
         }
 
         @Override
-        public StorageStatement.RecordReads<NodeRecord> reads(final NeoStores neoStores) {
-            return neoStores.getNodeStore();
-        }
-
-        @Override
         public RecordFormat<NodeRecord> recordFormat(final RecordFormats formats) {
             return formats.node();
         }
 
         @Override
         public String storeFileName() {
-            return StoreFile.NODE_STORE.storeFileName();
+            return DatabaseFile.NODE_STORE.getName();
         }
 
         @Override

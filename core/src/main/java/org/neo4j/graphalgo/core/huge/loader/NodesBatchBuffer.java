@@ -20,19 +20,15 @@ package org.neo4j.graphalgo.core.huge.loader;
 
 import org.neo4j.graphalgo.core.huge.loader.AbstractStorePageCacheScanner.RecordConsumer;
 import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.kernel.impl.store.DynamicNodeLabels;
-import org.neo4j.kernel.impl.store.InlineNodeLabels;
 import org.neo4j.kernel.impl.store.NodeLabelsField;
-import org.neo4j.kernel.impl.store.RecordCursor;
-import org.neo4j.kernel.impl.store.record.DynamicRecord;
+import org.neo4j.kernel.impl.store.NodeStore;
 import org.neo4j.kernel.impl.store.record.NodeRecord;
-import org.neo4j.storageengine.api.StorageStatement.Nodes;
 
 
-final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseable {
+final class NodesBatchBuffer implements RecordConsumer<NodeRecord> {
 
     private final int label;
-    private final RecordCursor<DynamicRecord> labelCursor;
+    private final NodeStore nodeStore;
 
     private int length;
     // node ids, consecutive
@@ -40,9 +36,9 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
     // property ids, consecutive
     private final long[] properties;
 
-    NodesBatchBuffer(final Nodes store, final int label, int capacity, boolean readProperty) {
+    NodesBatchBuffer(final NodeStore store, final int label, int capacity, boolean readProperty) {
         this.label = label;
-        this.labelCursor = label != Read.ANY_LABEL ? store.newLabelCursor() : null;
+        this.nodeStore = store;
         this.buffer = new long[capacity];
         this.properties = readProperty ? new long[capacity] : null;
     }
@@ -68,14 +64,7 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
         if (label == Read.ANY_LABEL) {
             return true;
         }
-        long labelField = record.getLabelField();
-
-        final long[] labels;
-        if (NodeLabelsField.fieldPointsToDynamicRecordOfLabels(labelField)) {
-            labels = DynamicNodeLabels.get(record, labelCursor);
-        } else {
-            labels = InlineNodeLabels.get(record);
-        }
+        final long[] labels = NodeLabelsField.get(record, nodeStore);
         long label = (long) this.label;
         for (long l : labels) {
             if (l == label) {
@@ -95,12 +84,5 @@ final class NodesBatchBuffer implements RecordConsumer<NodeRecord>, AutoCloseabl
 
     long[] properties() {
         return properties;
-    }
-
-    @Override
-    public void close() {
-        if (labelCursor != null) {
-            labelCursor.close();
-        }
     }
 }
