@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.graphalgo.EigenvectorCentralityProc;
+import org.neo4j.graphalgo.GetNodeFunc;
 import org.neo4j.graphalgo.PageRankProc;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Result;
@@ -61,7 +62,9 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         db = (GraphDatabaseAPI)new TestGraphDatabaseFactory()
                 .newImpermanentDatabaseBuilder(new File(UUID.randomUUID().toString()))
                 .setConfig(GraphDatabaseSettings.load_csv_file_url_root,file.getParent())
+                .setConfig(GraphDatabaseSettings.procedure_unrestricted,"algo.*")
                 .newGraphDatabase();
+
 
         try (Transaction tx = db.beginTx()) {
             db.execute("CREATE CONSTRAINT ON (c:Character)\n" +
@@ -85,6 +88,8 @@ public class EigenvectorCentralityProcNormalizationIntegrationTest {
         Procedures procedures = db.getDependencyResolver().resolveDependency(Procedures.class);
         procedures.registerProcedure(EigenvectorCentralityProc.class);
         procedures.registerProcedure(PageRankProc.class);
+        procedures.registerFunction(GetNodeFunc.class);
+
 
 
         try (Transaction tx = db.beginTx()) {
