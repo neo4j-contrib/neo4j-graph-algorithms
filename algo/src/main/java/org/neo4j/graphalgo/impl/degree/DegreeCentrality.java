@@ -40,7 +40,6 @@ public class DegreeCentrality extends Algorithm<DegreeCentrality> implements Deg
     private Graph graph;
     private final ExecutorService executor;
     private final int concurrency;
-    private volatile AtomicInteger nodeQueue = new AtomicInteger();
 
     private double[] degrees;
 
@@ -70,12 +69,15 @@ public class DegreeCentrality extends Algorithm<DegreeCentrality> implements Deg
         this.starts = new long[taskCount];
         this.partitions = new double[taskCount][batchSize];
 
+        long startNode = 0L;
         for (int i = 0; i < taskCount; i++) {
+            starts[i] = startNode;
             if(weighted) {
                 tasks.add(new WeightedDegreeTask(starts[i], partitions[i]));
             } else {
                 tasks.add(new DegreeTask(starts[i], partitions[i]));
             }
+            startNode += batchSize;
         }
         ParallelUtil.runWithConcurrency(concurrency, tasks, executor);
     }
