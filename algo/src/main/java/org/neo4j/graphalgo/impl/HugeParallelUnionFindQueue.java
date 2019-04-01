@@ -31,6 +31,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.neo4j.graphalgo.core.utils.ParallelUtil.awaitTermination;
+import static org.neo4j.graphalgo.impl.ParallelUnionFindQueue.mergeTask;
 
 /**
  * parallel UnionFind using ExecutorService only.
@@ -48,10 +52,10 @@ import java.util.concurrent.Future;
 public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, PagedDisjointSetStruct, HugeParallelUnionFindQueue> {
 
     private final ExecutorService executor;
+    private final AllocationTracker tracker;
     private final long nodeCount;
     private final long batchSize;
     private final int stepSize;
-    private final AllocationTracker tracker;
 
     /**
      * initialize parallel UF
@@ -64,14 +68,13 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Pa
             AllocationTracker tracker) {
         super(graph);
         this.executor = executor;
-        nodeCount = graph.nodeCount();
         this.tracker = tracker;
+        this.nodeCount = graph.nodeCount();
         this.batchSize = ParallelUtil.adjustBatchSize(
                 nodeCount,
                 concurrency,
                 minBatchSize,
                 Integer.MAX_VALUE);
-
         long targetSteps = ParallelUtil.threadSize(batchSize, nodeCount);
         if (targetSteps > Integer.MAX_VALUE) {
             throw new IllegalArgumentException(String.format(
@@ -80,88 +83,90 @@ public class HugeParallelUnionFindQueue extends GraphUnionFindAlgo<HugeGraph, Pa
                     concurrency,
                     batchSize));
         }
-        stepSize = (int) targetSteps;
+        this.stepSize = (int) targetSteps;
     }
 
     @Override
     public PagedDisjointSetStruct compute() {
-        final List<Future<?>> futures = new ArrayList<>(stepSize);
+        final List<Future<?>> futures = new ArrayList<>(2 * stepSize);
         final BlockingQueue<PagedDisjointSetStruct> queue = new ArrayBlockingQueue<>(stepSize);
+        AtomicInteger expectedStructs = new AtomicInteger();
 
-        int steps = 0;
         for (long i = 0L; i < nodeCount; i += batchSize) {
-            futures.add(executor.submit(new HugeUnionFindTask(queue, i)));
-            ++steps;
+            futures.add(executor.submit(new HugeUnionFindTask(queue, i, expectedStructs)));
         }
+        int steps = futures.size();
 
         for (int i = 1; i < steps; ++i) {
-            futures.add(executor.submit(() -> {
-                try {
-                    final PagedDisjointSetStruct a = queue.take();
-                    final PagedDisjointSetStruct b = queue.take();
-                    queue.add(a.merge(b));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e);
-                }
-            }));
+            futures.add(executor.submit(() -> mergeTask(queue, expectedStructs, PagedDisjointSetStruct::merge)));
         }
 
-        await(futures);
+        awaitTermination(futures);
         return getStruct(queue);
     }
 
+    @Override
     public PagedDisjointSetStruct compute(double threshold) {
-        throw new IllegalArgumentException("Not yet implemented");
-    }
-
-    private void await(final List<Future<?>> futures) {
-        ParallelUtil.awaitTermination(futures);
+        throw new IllegalArgumentException(
+                "Parallel UnionFind with threshold not implemented, please use either `concurrency:1` or one of the exp* variants of UnionFind");
     }
 
     private PagedDisjointSetStruct getStruct(final BlockingQueue<PagedDisjointSetStruct> queue) {
-        try {
-            return queue.take();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+        PagedDisjointSetStruct set = queue.poll();
+        if (set == null) {
+            set = new PagedDisjointSetStruct(nodeCount, tracker);
         }
+        return set;
     }
 
     private class HugeUnionFindTask implements Runnable {
 
         private final HugeRelationshipIterator rels;
         private final BlockingQueue<PagedDisjointSetStruct> queue;
+        private final AtomicInteger expectedStructs;
         private final long offset;
         private final long end;
 
-        HugeUnionFindTask(BlockingQueue<PagedDisjointSetStruct> queue, long offset) {
+        HugeUnionFindTask(
+                BlockingQueue<PagedDisjointSetStruct> queue,
+                long offset,
+                AtomicInteger expectedStructs) {
             this.rels = graph.concurrentCopy();
             this.queue = queue;
+            this.expectedStructs = expectedStructs;
             this.offset = offset;
             this.end = Math.min(offset + batchSize, nodeCount);
+            expectedStructs.incrementAndGet();
         }
 
         @Override
         public void run() {
-            final PagedDisjointSetStruct struct = new PagedDisjointSetStruct(
-                    nodeCount,
-                    tracker).reset();
-            for (long node = offset; node < end; node++) {
-                rels.forEachRelationship(
-                        node,
-                        Direction.OUTGOING,
-                        (sourceNodeId, targetNodeId) -> {
-                            struct.union(sourceNodeId, targetNodeId);
-                            return true;
-                        });
-            }
-            getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
+            boolean pushed = false;
             try {
-                queue.put(struct);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
+                final PagedDisjointSetStruct struct = new PagedDisjointSetStruct(
+                        nodeCount,
+                        tracker).reset();
+                for (long node = offset; node < end; node++) {
+                    rels.forEachRelationship(
+                            node,
+                            Direction.OUTGOING,
+                            (sourceNodeId, targetNodeId) -> {
+                                struct.union(sourceNodeId, targetNodeId);
+                                return true;
+                            });
+                }
+                getProgressLogger().logProgress((end - 1.0) / (nodeCount - 1.0));
+                try {
+                    queue.put(struct);
+                    pushed = true;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            } finally {
+                if (!pushed) {
+                    expectedStructs.decrementAndGet();
+                }
             }
         }
     }

@@ -19,6 +19,7 @@
 package org.neo4j.graphalgo.impl;
 
 import org.neo4j.graphalgo.api.Graph;
+import org.neo4j.graphalgo.core.utils.ExceptionUtil;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.dss.DisjointSetStruct;
 import org.neo4j.graphdb.Direction;
@@ -136,9 +137,7 @@ public class ParallelUnionFindFJMerge extends GraphUnionFindAlgo<Graph, Disjoint
                         return true;
                     });
                 } catch (Exception e) {
-                    System.out.println("exception for nodeid:" + node);
-                    e.printStackTrace();
-                    return;
+                    throw ExceptionUtil.asUnchecked(e);
                 }
             }
             getProgressLogger().logProgress((end - 1) / (nodeCount - 1));
