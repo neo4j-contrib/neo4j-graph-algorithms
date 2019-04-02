@@ -83,3 +83,19 @@ MATCH path = (fantasy:Genre {name: "Fantasy"})-[:NARROWER_THAN*]->(genre)
 RETURN [node in nodes(path) | node.name] AS hierarchy
 ORDER BY length(path)
 // end::query[]
+
+
+// tag::source-target-ids[]
+MATCH (book:Book)-[:HAS_GENRE]->(genre)
+WITH {item:id(genre), name: genre.name, categories: collect(id(book))} as userData
+WITH collect(userData) as data
+
+// create sourceIds list containing ids for Fantasy and Classics
+WITH data,
+     [value in data WHERE value.name IN ["Fantasy", "Classics"] | value.item ] AS sourceIds
+
+CALL algo.similarity.overlap.stream(data, {sourceIds: sourceIds})
+YIELD item1, item2, count1, count2, intersection, similarity
+RETURN algo.getNodeById(item1).name AS from, algo.getNodeById(item2).name AS to, similarity
+ORDER BY similarity DESC
+// end::source-target-ids[]

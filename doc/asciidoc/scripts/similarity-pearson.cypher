@@ -149,3 +149,20 @@ RETURN algo.asNode(item1).name AS from, algo.asNode(item2).name AS to, similarit
 ORDER BY similarity DESC
 
 // end::embedding-graph-stream[]
+
+// tag::source-target-ids[]
+MATCH (p:Person), (m:Movie)
+OPTIONAL MATCH (p)-[rated:RATED]->(m)
+WITH {item:id(p), name: p.name, weights: collect(coalesce(rated.score, algo.NaN()))} as userData
+WITH collect(userData) as personCuisines
+
+// create sourceIds list containing ids for Praveena and Arya
+WITH personCuisines,
+     [value in personCuisines WHERE value.name IN ["Praveena", "Arya"] | value.item ] AS sourceIds
+
+CALL algo.similarity.pearson.stream(personCuisines, {sourceIds: sourceIds, topK: 1})
+YIELD item1, item2, similarity
+WITH algo.getNodeById(item1) AS from, algo.getNodeById(item2) AS to, similarity
+RETURN from.name AS from, to.name AS to, similarity
+ORDER BY similarity DESC
+// end::source-target-ids[]
