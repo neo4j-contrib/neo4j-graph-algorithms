@@ -15,7 +15,10 @@ This section includes:
 
 * <<algorithms-similarity-overlap-context, History and explanation>>
 * <<algorithms-similarity-overlap-usecase, Use-cases - when to use the Overlap Similarity algorithm>>
-* <<algorithms-similarity-overlap-sample, Overlap Similarity algorithm sample>>
+* <<algorithms-similarity-overlap-function-sample, Overlap Similarity algorithm function sample>>
+* <<algorithms-similarity-overlap-procedure-sample, Overlap Similarity algorithm procedures sample>>
+* <<algorithms-similarity-overlap-source-target-ids, Specifying source and target ids>>
+* <<algorithms-similarity-overlap-syntax, Syntax>>
 
 
 [[algorithms-similarity-overlap-context]]
@@ -47,8 +50,8 @@ We might then use these computed subsets to https://jbarrasa.com/2017/03/31/quic
 // end::use-case[]
 
 
-[[algorithms-similarity-overlap-sample]]
-== Overlap Similarity algorithm sample
+[[algorithms-similarity-overlap-function-sample]]
+== Overlap Similarity algorithm function sample
 
 .The following will return the Overlap similarity of two lists of numbers:
 [source, cypher]
@@ -76,6 +79,9 @@ O(A,B) = 2 / min(3,4)
        = 0.66
 ```
 // end::function-explanation[]
+
+[[algorithms-similarity-overlap-procedure-sample]]
+== Overlap Similarity algorithm procedures sample
 
 .The following will create a sample graph:
 [source, cypher]
@@ -148,32 +154,7 @@ include::scripts/similarity-overlap.cypher[tag=stream-topk]
 |===
 // end::stream-topk[]
 
-
-.Parameters
-[opts="header",cols="1,1,1,1,4"]
-|===
-| Name               | Type   | Default        | Optional | Description
-| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
-| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
-| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it  will return as many as it finds.
-| `similarityCutoff` | int    | -1             | yes      | The threshold for Overlap similarity. Values below this will not be returned.
-| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
-| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
-|===
-
-.Results
-[opts="header",cols="1,1,6"]
-|===
-| Name           | Type | Description
-| `item1`        | int  | The ID of one node in the similarity pair.
-| `item2`        | int  | The ID of other node in the similarity pair.
-| `count1`       | int  | The size of the `targets` list of one node.
-| `count2`       | int  | The size of the `targets` list of other node.
-| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
-| `similarity`   | int  | The Overlap similarity of the two nodes.
-|===
-
-.The following will find the most similar user for each user, and store a relationship between those users:
+.The following will find the most similar genre for each genre, and store a relationship between those genres:
 [source, cypher]
 ----
 include::scripts/similarity-overlap.cypher[tag=write-back]
@@ -207,6 +188,42 @@ include::scripts/similarity-overlap.cypher[tag=query]
 |===
 // end::query[]
 
+[[algorithms-similarity-overlap-source-target-ids]]
+== Specifying source and target ids
+
+include::similarity.adoc[tag=source-target-ids]
+
+We could use this technique to compute the similarity of a subset of items to all other items.
+
+.The following will return the super genres for the `Fantasy` and `Classics` genres:
+[source, cypher]
+----
+include::scripts/similarity-overlap.cypher[tag=source-target-ids]
+----
+
+// tag::source-target-ids-2[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| `from`   | `to`     | `similarity`
+| Fantasy  | Science Fiction | 1.0               
+| Classics | Science Fiction | 0.75              
+| Fantasy  | Classics        | 0.6666666666666666
+|===
+// end::source-target-ids-2[]
+
+[[algorithms-similarity-overlap-syntax]]
+== Syntax
+
+.The following will run the algorithm and write back results:
+[source, cypher]
+----
+CALL algo.similarity.overlap(userData:List<Map>, {
+    topK: 1, similarityCutoff: 0.1, write:true, writeProperty: "overlapSimilarity"
+})
+YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, max, mean, stdDev, p25, p50, p75, p90, p95, p99, p999, p100
+----
+
 .Parameters
 [opts="header",cols="1,1,1,1,4"]
 |===
@@ -220,6 +237,9 @@ include::scripts/similarity-overlap.cypher[tag=query]
 | `write`                  | boolean | false          | yes      | Indicates whether results should be stored.
 | `writeRelationshipType`  | string  | NARROWER_THAN        | yes      | The relationship type to use when storing results.
 | `writeProperty`          | string  | score          | yes      | The property to use when storing results.
+| `sourceIds`          | long[] | null | yes | The ids of items from which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+| `targetIds`          | long[] | null | yes | The ids of items to which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+
 |===
 
 .Results
@@ -243,4 +263,40 @@ include::scripts/similarity-overlap.cypher[tag=query]
 | `p99`                   | double  | The 99 percentile of similarities scores computed.
 | `p999`                  | double  | The 99.9 percentile of similarities scores computed.
 | `p100`                  | double  | The 25 percentile of similarities scores computed.
+|===
+
+.The following will run the algorithm and stream results:
+[source,cypher]
+----
+CALL algo.similarity.overlap.stream(userData:List<Map>, {
+    degreeCutoff: 10, similarityCutoff: 0.1, concurrency:4
+})
+YIELD item1, item2, count1, count2, similarity
+
+----
+
+.Parameters
+[opts="header",cols="1,1,1,1,4"]
+|===
+| Name               | Type   | Default        | Optional | Description
+| `data`             | list   | null           | no       | A list of maps of the following structure: `{item: nodeId, categories: [nodeId, nodeId, nodeId]}`
+| `top`              | int    | 0              | yes      | The number of similar pairs to return. If `0`, it will return as many as it finds.
+| `topK`             | int    | 0              | yes      | The number of similar values to return per node. If `0`, it  will return as many as it finds.
+| `similarityCutoff` | int    | -1             | yes      | The threshold for Overlap similarity. Values below this will not be returned.
+| `degreeCutoff`     | int    | 0              | yes      | The threshold for the number of items in the `targets` list. If the list contains less than this amount, that node will be excluded from the calculation.
+| `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
+| `sourceIds`          | long[] | null | yes | The ids of items from which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+| `targetIds`          | long[] | null | yes | The ids of items to which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+|===
+
+.Results
+[opts="header",cols="1,1,6"]
+|===
+| Name           | Type | Description
+| `item1`        | int  | The ID of one node in the similarity pair.
+| `item2`        | int  | The ID of other node in the similarity pair.
+| `count1`       | int  | The size of the `targets` list of one node.
+| `count2`       | int  | The size of the `targets` list of other node.
+| `intersection` | int  | The number of intersecting values in the two nodes `targets` lists.
+| `similarity`   | int  | The Overlap similarity of the two nodes.
 |===

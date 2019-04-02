@@ -145,3 +145,19 @@ ORDER BY similarity DESC
 
 // end::embedding-graph-stream[]
 
+// tag::source-target-ids[]
+MATCH (p:Person), (c:Cuisine)
+OPTIONAL MATCH (p)-[likes:LIKES]->(c)
+WITH {item:id(p), name: p.name, weights: collect(coalesce(likes.score, algo.NaN()))} as userData
+WITH collect(userData) as personCuisines
+
+// create sourceIds list containing ids for Praveena and Arya
+WITH personCuisines,
+     [value in personCuisines WHERE value.name IN ["Praveena", "Arya"] | value.item ] AS sourceIds
+
+CALL algo.similarity.euclidean.stream(personCuisines, {sourceIds: sourceIds, topK: 1})
+YIELD item1, item2, similarity
+WITH algo.getNodeById(item1) AS from, algo.getNodeById(item2) AS to, similarity
+RETURN from.name AS from, to.name AS to, similarity
+ORDER BY similarity DESC
+// end::source-target-ids[]

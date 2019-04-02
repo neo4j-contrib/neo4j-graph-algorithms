@@ -1,3 +1,4 @@
+:procedure-name: Pearson Similarity
 [[algorithms-similarity-pearson]]
 = The Pearson Similarity algorithm
 
@@ -14,9 +15,11 @@ This section includes:
 
 * <<algorithms-similarity-pearson-context, History and explanation>>
 * <<algorithms-similarity-pearson-usecase, Use-cases - when to use the Pearson Similarity algorithm>>
-* <<algorithms-similarity-pearson-sample, Pearson Similarity algorithm sample>>
-* <<algorithms-similarity-pearson-cypher-projection, Cypher projection>>
+* <<algorithms-similarity-pearson-function-sample, Pearson Similarity algorithm function sample>>
+* <<algorithms-similarity-pearson-procedure-sample, Pearson Similarity algorithm procedures sample>>
+* <<algorithms-similarity-pearson-source-target-ids, Specifying source and target ids>>
 * <<algorithms-similarity-pearson-skipping-values, Skipping values>>
+* <<algorithms-similarity-pearson-cypher-projection, Cypher projection>>
 * <<algorithms-similarity-pearson-syntax, Syntax>>
 
 
@@ -35,10 +38,6 @@ The library contains both procedures and functions to calculate similarity betwe
 The function is best used when calculating the similarity between small numbers of sets.
 The procedures parallelize the computation and are therefore more appropriate for computing similarities on bigger datasets.
 
-Pearson similarity is only calculated over non-NULL dimensions.
-When calling the function, we should provide lists that contain the overlapping items.
-The procedures expect to receive the same length lists for all items, so we need to pad those lists with `algo.NaN()` where necessary.
-
 // end::explanation[]
 
 [[algorithms-similarity-pearson-usecase]]
@@ -51,8 +50,14 @@ For example, to get movie recommendations based on the preferences of users who 
 // end::use-case[]
 
 
-[[algorithms-similarity-pearson-sample]]
-== Pearson Similarity algorithm sample
+[[algorithms-similarity-pearson-function-sample]]
+== Pearson Similarity algorithm function sample
+
+The Pearson Similarity function computes the similarity of two lists of numbers.
+
+include::similarity.adoc[tag=weighted-function-note]
+
+We can use it to compute the similarity of two hardcoded lists.
 
 .The following will return the Pearson similarity of two lists of numbers:
 [source, cypher]
@@ -68,6 +73,8 @@ include::scripts/similarity-pearson.cypher[tag=function]
 | 0.28767798089123053
 |===
 // end::function[]
+
+We can also use it to compute the similarity of nodes based on lists computed by a Cypher query.
 
 .The following will create a sample graph:
 [source, cypher]
@@ -114,6 +121,20 @@ include::scripts/similarity-pearson.cypher[tag=function-cypher-all]
 
 |===
 // end::function-cypher-all[]
+
+
+[[algorithms-similarity-pearson-procedure-sample]]
+== Pearson Similarity algorithm procedures sample
+
+include::similarity.adoc[tag=computation]
+include::similarity.adoc[tag=weighted-note]
+
+
+.The following will create a sample graph:
+[source, cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=create-sample-graph]
+----
 
 
 .The following will return a stream of node pairs along with their Pearson similarities:
@@ -247,19 +268,28 @@ include::scripts/similarity-pearson.cypher[tag=query]
 |===
 // end::query[]
 
+[[algorithms-similarity-pearson-source-target-ids]]
+== Specifying source and target ids
 
-[[algorithms-similarity-pearson-cypher-projection]]
-== Cypher projection
+include::similarity.adoc[tag=source-target-ids]
 
-include::projected-graph-model/cypher-projection.adoc[tag=similarity-explanation]
+We could use this technique to compute the similarity of a subset of items to all other items.
 
-.Set `graph:'cypher'` in the config:
-
-[source,cypher]
+.The following will find the most similar person (i.e. `k=1`) to Arya and Praveena:
+[source, cypher]
 ----
-include::scripts/similarity-pearson.cypher[tag=cypher-projection]
+include::scripts/similarity-pearson.cypher[tag=source-target-ids]
 ----
 
+// tag::source-target-ids[]
+.Results
+[opts="header",cols="1,1,1"]
+|===
+| `from`   | `to`     | `similarity`
+| Praveena | Zhen  | 0.8865926413116155 
+| Arya     | Karin | 0.8194651785206903 
+|===
+// end::source-target-ids[]
 
 [[algorithms-similarity-pearson-skipping-values]]
 == Skipping values
@@ -279,6 +309,19 @@ include::scripts/similarity-pearson.cypher[tag=create-sample-embedding-graph]
 ----
 include::scripts/similarity-pearson.cypher[tag=embedding-graph-stream]
 ----
+
+[[algorithms-similarity-pearson-cypher-projection]]
+== Cypher projection
+
+include::projected-graph-model/cypher-projection.adoc[tag=similarity-explanation]
+
+.Set `graph:'cypher'` in the config:
+
+[source,cypher]
+----
+include::scripts/similarity-pearson.cypher[tag=cypher-projection]
+----
+
 
 
 [[algorithms-similarity-pearson-syntax]]
@@ -309,6 +352,8 @@ YIELD nodes, similarityPairs, write, writeRelationshipType, writeProperty, min, 
 | `writeBatchSize`            | int     | 10000 | yes      | The batch size to use when storing results.
 | `writeRelationshipType`  | string  | SIMILAR        | yes      | The relationship type to use when storing results.
 | `writeProperty`          | string  | score          | yes      | The property to use when storing results.
+| `sourceIds`          | long[] | null | yes | The ids of items from which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+| `targetIds`          | long[] | null | yes | The ids of items to which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
 |===
 
 .Results
@@ -356,6 +401,8 @@ YIELD item1, item2, count1, count2, intersection, similarity
 | `skipValue`              | double  | algo.NaN()     | yes      | Value to skip when executing similarity computation. A value of `null` means that skipping is disabled.
 | `concurrency`      | int    | available CPUs | yes      | The number of concurrent threads.
 | `graph`                  | string  | dense          | yes      | The graph name ('dense' or 'cypher').
+| `sourceIds`          | long[] | null | yes | The ids of items from which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
+| `targetIds`          | long[] | null | yes | The ids of items to which we need to compute similarities. Defaults to all the items provided in the `data` parameter.
 |===
 
 .Results
