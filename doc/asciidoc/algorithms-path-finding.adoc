@@ -25,6 +25,15 @@ The following path finding algorithms help find the shortest path or evaluate th
 * <<algorithms-random-walk, Random Walk>> (`algo.randomWalk`)
 // end::summary[]
 
+[WARNING]
+====
+As of the 3.4.7.0 release, all the Shortest Path procedures assume that they are being executed on undirected graphs.
+Therefore, the direction of a relationship can be ignored.
+
+If you are running these algorithms on a graph where the direction is important, you can use the `direction` parameter.
+For example, `direction:"INCOMING"` or `direction:"OUTGOING"`.
+====
+
 include::minimum-weight-spanning-tree.adoc[leveloffset=2]
 
 include::shortest-path.adoc[leveloffset=2]
