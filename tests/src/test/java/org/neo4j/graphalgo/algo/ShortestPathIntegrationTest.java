@@ -92,6 +92,54 @@ public class ShortestPathIntegrationTest {
     public String graphImpl;
 
     @Test
+    public void noWeightStream() throws Exception {
+        PathConsumer consumer = mock(PathConsumer.class);
+        DB.execute(
+                "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
+                        "CALL algo.shortestPath.stream(start, end) " +
+                        "YIELD nodeId, cost RETURN nodeId, cost")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    consumer.accept((Long) row.getNumber("nodeId"), (Double) row.getNumber("cost"));
+                    return true;
+                });
+        verify(consumer, times(2)).accept(anyLong(), anyDouble());
+        verify(consumer, times(1)).accept(anyLong(), eq(0.0));
+        verify(consumer, times(1)).accept(anyLong(), eq(1.0));
+    }
+
+    @Test
+    public void noWeightWrite() throws Exception {
+        DB.execute(
+                "MATCH (start:Node{type:'start'}), (end:Node{type:'end'}) " +
+                        "CALL algo.shortestPath(start, end) " +
+                        "YIELD loadMillis, evalMillis, writeMillis, nodeCount, totalCost\n" +
+                        "RETURN loadMillis, evalMillis, writeMillis, nodeCount, totalCost")
+                .accept((Result.ResultVisitor<Exception>) row -> {
+                    assertEquals(1.0, (Double) row.getNumber("totalCost"), 0.01);
+                    assertEquals(2L, row.getNumber("nodeCount"));
+                    assertNotEquals(-1L, row.getNumber("loadMillis"));
+                    assertNotEquals(-1L, row.getNumber("evalMillis"));
+                    assertNotEquals(-1L, row.getNumber("writeMillis"));
+                    return false;
+                });
+
+        final StepConsumer mock = mock(StepConsumer.class);
+
+        DB.execute("MATCH (n) WHERE exists(n.sssp) RETURN id(n) as id, n.sssp as sssp")
+                .accept(row -> {
+                    mock.accept(
+                            row.getNumber("id").longValue(),
+                            row.getNumber("sssp").intValue());
+                    return true;
+                });
+
+        verify(mock, times(2)).accept(anyLong(), anyInt());
+
+        verify(mock, times(1)).accept(anyLong(), eq(0));
+        verify(mock, times(1)).accept(anyLong(), eq(1));
+    }
+
+    @Test
     public void testDijkstraStream() throws Exception {
         PathConsumer consumer = mock(PathConsumer.class);
         DB.execute(
