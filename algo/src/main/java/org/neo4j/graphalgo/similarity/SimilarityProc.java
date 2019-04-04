@@ -122,7 +122,8 @@ public class SimilarityProc {
     <T> Stream<SimilarityResult> similarityStream(T[] inputs, int[] sourceIndexIds, int[] targetIndexIds, SimilarityComputer<T> computer, ProcedureConfiguration configuration, Supplier<RleDecoder> decoderFactory, double cutoff, int topK) {
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
-        SimilarityStreamGenerator<T> generator = new SimilarityStreamGenerator<>(terminationFlag, configuration, decoderFactory, computer);
+        SimilarityStreamGenerator<T> generator = new SimilarityStreamGenerator<>(
+                api.getDependencyResolver(), terminationFlag, configuration, decoderFactory, computer);
         if (sourceIndexIds.length == 0 && targetIndexIds.length == 0) {
             return generator.stream(inputs, cutoff, topK);
         } else {

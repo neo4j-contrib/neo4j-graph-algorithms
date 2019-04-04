@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.PropertyMapping;
 import org.neo4j.graphalgo.core.DuplicateRelationshipsStrategy;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
+import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
@@ -159,17 +160,7 @@ public class GraphSetup {
      * Setup Graph to load any label, any relationship, no property in single threaded mode
      */
     public GraphSetup() {
-        this(null);
-    }
-
-    /**
-     * Setup graph to load any label, any relationship, no property but
-     * in multithreaded mode (depends on the actual executor)
-     *
-     * @param executor executor service
-     */
-    public GraphSetup(ExecutorService executor) {
-        this(null, null, null, 1.0, executor);
+        this(null, null, null, 1.0, null, null);
     }
 
     public GraphSetup(
@@ -177,6 +168,7 @@ public class GraphSetup {
             String relation,
             String weightProperty,
             double defaultWeight,
+            DependencyResolver dep,
             ExecutorService executor) {
         this(
                 label,
@@ -191,7 +183,7 @@ public class GraphSetup {
                 1.0,
                 Collections.emptyMap(),
                 executor,
-                Pools.DEFAULT_CONCURRENCY,
+                Pools.defaultConcurrency(dep),
                 -1,
                 DuplicateRelationshipsStrategy.NONE,
                 NullLog.getInstance(),

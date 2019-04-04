@@ -84,7 +84,7 @@ public class ClosenessCentralityProc {
 
         final MSBFSCCAlgorithm<?> algo = newAlgo(tracker,
                 graph,
-                configuration.getConcurrency(),
+                configuration.getConcurrency(api),
                 configuration.get("improved", Boolean.FALSE));
         algo
                 .withProgressLogger(ProgressLogger.wrap(log, "ClosenessCentrality(MultiSource)"))
@@ -129,7 +129,7 @@ public class ClosenessCentralityProc {
         final CentralityProcResult.Builder builder = CentralityProcResult.builder();
 
         AllocationTracker tracker = AllocationTracker.create();
-        int concurrency = configuration.getConcurrency();
+        int concurrency = configuration.getConcurrency(api);
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         Graph graph;

@@ -20,7 +20,6 @@ package org.neo4j.graphalgo;
 
 import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.api.GraphFactory;
-import org.neo4j.graphalgo.api.HugeGraph;
 import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.Pools;
@@ -29,7 +28,6 @@ import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.Algorithm;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
-import org.neo4j.graphalgo.impl.pagerank.PageRankResult;
 import org.neo4j.graphalgo.impl.results.CentralityResult;
 import org.neo4j.graphalgo.results.CentralityScore;
 import org.neo4j.graphalgo.results.PageRankScore;
@@ -43,7 +41,6 @@ import org.neo4j.procedure.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -161,7 +158,7 @@ public final class ArticleRankProc {
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
+        final int concurrency = configuration.getConcurrency(api);
         log.debug("Computing article rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
         List<Node> sourceNodes = configuration.get("sourceNodes", new ArrayList<>());

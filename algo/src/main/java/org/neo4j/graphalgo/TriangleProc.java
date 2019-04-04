@@ -92,7 +92,7 @@ public class TriangleProc {
             return Stream.empty();
         }
 
-        final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency())
+        final TriangleStream triangleStream = new TriangleStream(graph, Pools.DEFAULT, configuration.getConcurrency(api))
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleStream"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
@@ -130,7 +130,7 @@ public class TriangleProc {
             return Stream.empty();
         }
 
-        return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
+        return TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency(api))
                 .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
@@ -210,7 +210,7 @@ public class TriangleProc {
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            triangleCount = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency())
+            triangleCount = TriangleCountAlgorithm.instance(graph, Pools.DEFAULT, configuration.getConcurrency(api))
                     .withProgressLogger(ProgressLogger.wrap(log, "triangleCount"))
                     .withTerminationFlag(TerminationFlag.wrap(transaction))
                     .compute();
@@ -262,7 +262,7 @@ public class TriangleProc {
 
         final Exporter exporter = Exporter.of(api, graph)
                 .withLog(log)
-                .parallel(Pools.DEFAULT, configuration.getConcurrency(), flag)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(api), flag)
                 .build();
 
         if (algorithm instanceof IntersectingTriangleCount) {
@@ -364,7 +364,7 @@ public class TriangleProc {
                 final Optional<String> coefficientProperty = configuration.getString(COEFFICIENT_WRITE_PROPERTY_VALUE);
                 final Exporter exporter = Exporter.of(api, graph)
                         .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                         .build();
                 if (coefficientProperty.isPresent()) {
                     exporter.write(

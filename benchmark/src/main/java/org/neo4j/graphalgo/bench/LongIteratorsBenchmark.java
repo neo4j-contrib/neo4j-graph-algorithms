@@ -2,7 +2,7 @@ package org.neo4j.graphalgo.bench;
 
 import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphalgo.core.huge.HugeIdMap;
+import org.neo4j.graphalgo.core.huge.loader.HugeIdMap;
 import org.neo4j.graphalgo.core.utils.RandomLongIterator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

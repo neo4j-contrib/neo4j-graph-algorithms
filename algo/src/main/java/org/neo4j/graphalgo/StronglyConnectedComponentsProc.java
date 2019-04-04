@@ -133,7 +133,7 @@ public class StronglyConnectedComponentsProc {
                 tarjan.release();
                 Exporter.of(api, graph)
                         .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                         .build()
                         .write(
                                 partitionProperty,
@@ -186,7 +186,7 @@ public class StronglyConnectedComponentsProc {
             builder.timeWrite(() -> Exporter
                     .of(api, graph)
                     .withLog(log)
-                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                     .build()
                     .write(
                             partitionProperty,
@@ -285,7 +285,7 @@ public class StronglyConnectedComponentsProc {
             tarjan.release();
             Exporter.of(api, graph)
                     .withLog(log)
-                    .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                    .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                     .build()
                     .write(
                             partitionProperty,
@@ -298,7 +298,7 @@ public class StronglyConnectedComponentsProc {
         final int[] connectedComponents = tarjan.getConnectedComponents();
         Exporter.of(api, graph)
                 .withLog(log)
-                .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                 .build()
                 .write(
                         partitionProperty,
@@ -369,7 +369,7 @@ public class StronglyConnectedComponentsProc {
 
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
-                configuration.getConcurrency(),
+                configuration.getConcurrency(api),
                 configuration.getNumber("cutoff", 100_000).intValue())
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
                 .withTerminationFlag(terminationFlag);
@@ -389,7 +389,7 @@ public class StronglyConnectedComponentsProc {
                 Exporter
                         .of(api, graph)
                         .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                         .build()
                         .write(
                                 partitionProperty,
@@ -421,7 +421,7 @@ public class StronglyConnectedComponentsProc {
             return Stream.empty();
         }
         final MultistepSCC multistep = new MultistepSCC(graph, org.neo4j.graphalgo.core.utils.Pools.DEFAULT,
-                configuration.getConcurrency(),
+                configuration.getConcurrency(api),
                 configuration.getNumber("cutoff", 100_000).intValue())
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(MultiStep)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
@@ -450,7 +450,7 @@ public class StronglyConnectedComponentsProc {
             return Stream.empty();
         }
         final ForwardBackwardScc algo = new ForwardBackwardScc(graph, Pools.DEFAULT,
-                configuration.getConcurrency())
+                configuration.getConcurrency(api))
                 .withProgressLogger(ProgressLogger.wrap(log, "SCC(ForwardBackward)"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute(graph.toMappedNodeId(startNodeId));

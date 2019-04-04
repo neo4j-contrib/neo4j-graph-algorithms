@@ -5,6 +5,8 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
+import org.neo4j.graphdb.DependencyResolver;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -16,12 +18,19 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class SimilarityStreamGenerator<T> {
+    private final DependencyResolver db;
     private final TerminationFlag terminationFlag;
     private final ProcedureConfiguration configuration;
     private final Supplier<RleDecoder> decoderFactory;
     private final SimilarityComputer<T> computer;
 
-    public SimilarityStreamGenerator(TerminationFlag terminationFlag, ProcedureConfiguration configuration, Supplier<RleDecoder> decoderFactory, SimilarityComputer<T> computer) {
+    public SimilarityStreamGenerator(
+            DependencyResolver db,
+            TerminationFlag terminationFlag,
+            ProcedureConfiguration configuration,
+            Supplier<RleDecoder> decoderFactory,
+            SimilarityComputer<T> computer) {
+        this.db = db;
         this.terminationFlag = terminationFlag;
         this.configuration = configuration;
         this.decoderFactory = decoderFactory;
@@ -29,7 +38,7 @@ public class SimilarityStreamGenerator<T> {
     }
 
     public Stream<SimilarityResult> stream(T[] inputs, int[] sourceIndexIds, int[] targetIndexIds, double cutoff, int topK) {
-        int concurrency = configuration.getConcurrency();
+        int concurrency = configuration.getConcurrency(db);
 
         int length = inputs.length;
         if (concurrency == 1) {
@@ -48,7 +57,7 @@ public class SimilarityStreamGenerator<T> {
     }
 
     public Stream<SimilarityResult> stream(T[] inputs, double cutoff, int topK) {
-        int concurrency = configuration.getConcurrency();
+        int concurrency = configuration.getConcurrency(db);
 
         int length = inputs.length;
         if (concurrency == 1) {

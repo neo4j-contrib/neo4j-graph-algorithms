@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphalgo.impl.Algorithm;
+import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import java.util.stream.Stream;
  */
 public class BetweennessCentralitySuccessorBrandes extends Algorithm<BetweennessCentralitySuccessorBrandes> {
 
+    private final int concurrency;
     // the graph
     private Graph graph;
     // atomic double array which supports only atomic-add
@@ -71,7 +73,8 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * @param graph           the graph iface
      * @param executorService the executor service
      */
-    public BetweennessCentralitySuccessorBrandes(Graph graph, ExecutorService executorService) {
+    public BetweennessCentralitySuccessorBrandes(DependencyResolver dep, Graph graph, ExecutorService executorService) {
+        this.concurrency = Pools.defaultConcurrency(dep);
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;
@@ -92,7 +95,7 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
     public BetweennessCentralitySuccessorBrandes compute() {
         graph.forEachNode(this::compute);
         if (direction == Direction.BOTH) {
-            ParallelUtil.iterateParallel(executorService, nodeCount, Pools.DEFAULT_CONCURRENCY, i -> {
+            ParallelUtil.iterateParallel(executorService, nodeCount, concurrency, i -> {
                 centrality.set(i, centrality.get(i) / 2.0);
             });
         }
