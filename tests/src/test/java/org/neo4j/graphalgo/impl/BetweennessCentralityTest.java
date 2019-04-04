@@ -144,7 +144,7 @@ public class BetweennessCentralityTest {
         final TestConsumer mock = mock(TestConsumer.class);
 
         final BetweennessCentralitySuccessorBrandes bc =
-                new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
+                new BetweennessCentralitySuccessorBrandes(null, graph, Pools.DEFAULT)
                         .compute();
 
         final AtomicDoubleArray centrality = bc.getCentrality();

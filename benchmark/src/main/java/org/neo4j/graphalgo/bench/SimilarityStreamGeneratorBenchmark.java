@@ -19,16 +19,14 @@
 package org.neo4j.graphalgo.bench;
 
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
-import org.neo4j.graphalgo.core.utils.Intersections;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.similarity.*;
 import org.neo4j.helpers.collection.MapUtil;
+import org.neo4j.kernel.impl.factory.DatabaseInfo;
+import org.neo4j.kernel.impl.util.Dependencies;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
@@ -82,7 +80,10 @@ public class SimilarityStreamGeneratorBenchmark {
     public void setup() {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(MapUtil.map("concurrency", concurrency));
         TerminationFlag terminationFlag = terminationFlag();
-        streamGenerator = new SimilarityStreamGenerator<>(terminationFlag, configuration, () -> null, ALL_PAIRS_COMPUTER);
+        Dependencies dependencies = new Dependencies();
+        dependencies.satisfyDependency(DatabaseInfo.ENTERPRISE);
+        streamGenerator = new SimilarityStreamGenerator<>(
+                dependencies, terminationFlag, configuration, () -> null, ALL_PAIRS_COMPUTER);
     }
 
     private TerminationFlag terminationFlag() {

@@ -29,10 +29,13 @@ import org.neo4j.graphalgo.core.loading.LoadGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Directions;
+import org.neo4j.graphalgo.core.utils.EditionUtil;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
+import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,7 +57,7 @@ public class ProcedureConfiguration {
 
     private final Map<String, Object> config;
 
-    public ProcedureConfiguration(Map<String, Object> config) {
+    private ProcedureConfiguration(Map<String, Object> config) {
         this.config = new HashMap<>(config);
     }
 
@@ -252,17 +255,25 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
     }
 
-    /**
-     * TODO
-     *
-     * @return
-     */
-    public int getConcurrency(int defaultValue) {
-        return getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
+    public int getConcurrency(final GraphDatabaseAPI db) {
+        return getConcurrency(db.getDependencyResolver());
     }
 
-    public int getConcurrency() {
-        return getConcurrency(Pools.DEFAULT_CONCURRENCY);
+    public int getConcurrency(final DependencyResolver dep) {
+        Number requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, null);
+        if (requestedConcurrency == null) {
+            return Pools.defaultConcurrency(dep);
+        }
+        return Pools.toEditionConcurrency(requestedConcurrency.intValue(), dep);
+    }
+
+    public int getConcurrency(int defaultValue, final GraphDatabaseAPI db) {
+        return getConcurrency(defaultValue, db.getDependencyResolver());
+    }
+
+    public int getConcurrency(int defaultValue, final DependencyResolver dep) {
+        int requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
+        return Pools.toEditionConcurrency(requestedConcurrency, dep);
     }
 
     public String getDirectionName() {
@@ -396,11 +407,13 @@ public class ProcedureConfiguration {
         return (V) value;
     }
 
-    public static ProcedureConfiguration create(Map<String, Object> config) {
+    public static ProcedureConfiguration create(
+            Map<String, Object> config) {
         return new ProcedureConfiguration(config);
     }
 
-    private static String reverseGraphLookup(Class<? extends GraphFactory> cls) {
+    private static String reverseGraphLookup(Class<? extends GraphFactory>cls) {
+
         if (HeavyGraphFactory.class.isAssignableFrom(cls)) {
             return "heavy";
         }

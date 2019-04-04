@@ -35,7 +35,7 @@ public class GraphViewTest extends SimpleGraphTestCase {
 
     @BeforeClass
     public static void setupGraph() {
-        GraphSetup graphSetup = new GraphSetup(LABEL, RELATION, WEIGHT_PROPERTY, 0.0, null);
+        GraphSetup graphSetup = new GraphSetup(LABEL, RELATION, WEIGHT_PROPERTY, 0.0, null, null);
         graph = new GraphViewFactory((GraphDatabaseAPI) setup.getDb(), graphSetup).build();
         v0 = 0;
         v1 = 1;

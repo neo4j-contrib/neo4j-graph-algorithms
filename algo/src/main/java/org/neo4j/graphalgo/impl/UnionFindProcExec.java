@@ -284,7 +284,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
             Graph graph,
             ProcedureConfiguration config,
             final AllocationTracker tracker) {
-        int concurrency = config.getConcurrency();
+        int concurrency = config.getConcurrency(api);
         int minBatchSize = config.getBatchSize();
         final double threshold = config.get(CONFIG_THRESHOLD, Double.NaN);
         UnionFindAlgo uf = concurrency > 1 ? parallel : sequential;
@@ -317,7 +317,7 @@ public final class UnionFindProcExec implements BiConsumer<String, Algorithm<?>>
                 .withLog(log)
                 .parallel(
                         Pools.DEFAULT,
-                        configuration.getConcurrency(),
+                        configuration.getConcurrency(api),
                         TerminationFlag.wrap(transaction))
                 .build();
         if (struct.hugeStruct != null) {

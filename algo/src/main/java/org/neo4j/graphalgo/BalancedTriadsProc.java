@@ -84,7 +84,7 @@ public class BalancedTriadsProc {
         }
 
         // compute
-        return new HugeBalancedTriads(graph, Pools.DEFAULT, configuration.getConcurrency(), AllocationTracker.create())
+        return new HugeBalancedTriads(graph, Pools.DEFAULT, configuration.getConcurrency(api), AllocationTracker.create())
                 .withProgressLogger(ProgressLogger.wrap(log, "balancedTriads"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute()
@@ -126,7 +126,7 @@ public class BalancedTriadsProc {
         // compute
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
         try (ProgressTimer timer = builder.timeEval()) {
-            balancedTriads = new HugeBalancedTriads(graph, Pools.DEFAULT, configuration.getConcurrency(), AllocationTracker.create())
+            balancedTriads = new HugeBalancedTriads(graph, Pools.DEFAULT, configuration.getConcurrency(api), AllocationTracker.create())
                     .withProgressLogger(ProgressLogger.wrap(log, "balancedTriads"))
                     .withTerminationFlag(terminationFlag)
                     .compute();
@@ -145,7 +145,7 @@ public class BalancedTriadsProc {
             try (ProgressTimer timer = builder.timeWrite()) {
                 Exporter.of(api, graph)
                         .withLog(log)
-                        .parallel(Pools.DEFAULT, configuration.getConcurrency(), terminationFlag)
+                        .parallel(Pools.DEFAULT, configuration.getConcurrency(api), terminationFlag)
                         .build()
                         .write(
                                 balancedProperty,

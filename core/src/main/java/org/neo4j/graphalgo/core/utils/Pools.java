@@ -18,6 +18,7 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
+import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.helpers.NamedThreadFactory;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,7 +30,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-public class Pools {
+public final class Pools {
+
+    // should only be used by tests and benchmarks
     public static final int DEFAULT_CONCURRENCY;
 
     static {
@@ -46,15 +49,29 @@ public class Pools {
         }
     }
 
+    public static final int MAX_CE_CONCURRENCY = 4;
+
+    public static int defaultConcurrency(DependencyResolver dep) {
+        return toEditionConcurrency(DEFAULT_CONCURRENCY, dep);
+    }
+
+    public static int toEditionConcurrency(int concurrency, final DependencyResolver dep) {
+        if (EditionUtil.isOnEnterprise(dep)) {
+            return concurrency;
+        }
+        return Math.min(Pools.MAX_CE_CONCURRENCY, concurrency);
+    }
+
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;
 
-    public final static ExecutorService DEFAULT = createDefaultPool();
-    public final static ForkJoinPool FJ_POOL = createFJPool();
+    public static final ExecutorService DEFAULT = createDefaultPool();
+    public static final ForkJoinPool FJ_POOL = createFJPool();
 
     private Pools() {
         throw new UnsupportedOperationException();
     }
 
+    // TODO: limit threadpool size based on edition?
     public static ExecutorService createDefaultPool() {
         return new ThreadPoolExecutor(
                 DEFAULT_CONCURRENCY,
@@ -84,9 +101,5 @@ public class Pools {
                 }
             }
         }
-    }
-
-    public static int getNoThreadsInDefaultPool() {
-        return DEFAULT_CONCURRENCY;
     }
 }

@@ -71,7 +71,7 @@ public class HarmonicCentralityProc {
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withoutNodeProperties()
-                .withConcurrency(configuration.getConcurrency())
+                .withConcurrency(configuration.getConcurrency(api))
                 .withDirection(Direction.BOTH)
                 .withAllocationTracker(tracker)
                 .load(configuration.getGraphImpl());
@@ -81,7 +81,8 @@ public class HarmonicCentralityProc {
             return Stream.empty();
         }
 
-        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, configuration.getConcurrency())
+        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT,
+                configuration.getConcurrency(api))
                 .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute();
@@ -106,7 +107,7 @@ public class HarmonicCentralityProc {
         final CentralityProcResult.Builder builder = CentralityProcResult.builder();
 
         final AllocationTracker tracker = AllocationTracker.create();
-        final int concurrency = configuration.getConcurrency();
+        final int concurrency = configuration.getConcurrency(api);
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         final Graph graph;
