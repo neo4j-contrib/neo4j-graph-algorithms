@@ -17,19 +17,12 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class SimilarityStreamGenerator<T> {
-    private final DependencyResolver db;
     private final TerminationFlag terminationFlag;
     private final ProcedureConfiguration configuration;
     private final Supplier<RleDecoder> decoderFactory;
     private final SimilarityComputer<T> computer;
 
-    public SimilarityStreamGenerator(
-            DependencyResolver db,
-            TerminationFlag terminationFlag,
-            ProcedureConfiguration configuration,
-            Supplier<RleDecoder> decoderFactory,
-            SimilarityComputer<T> computer) {
-        this.db = db;
+    public SimilarityStreamGenerator(TerminationFlag terminationFlag, ProcedureConfiguration configuration, Supplier<RleDecoder> decoderFactory, SimilarityComputer<T> computer) {
         this.terminationFlag = terminationFlag;
         this.configuration = configuration;
         this.decoderFactory = decoderFactory;

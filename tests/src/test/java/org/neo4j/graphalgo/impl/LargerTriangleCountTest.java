@@ -97,7 +97,7 @@ public final class LargerTriangleCountTest {
 
     @Test
     public void testQueuePar() {
-        long triangleCount = new TriangleCountQueue(graph, Pools.DEFAULT, Pools.defaultConcurrency())
+        long triangleCount = new TriangleCountQueue(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY)
                 .compute()
                 .getTriangleCount();
         System.out.printf("[%s][par][ queue] count = %d%n", graphName, triangleCount);
@@ -108,14 +108,14 @@ public final class LargerTriangleCountTest {
         long triangleCount = new TriangleCountForkJoin(
                 graph,
                 Pools.FJ_POOL,
-                ParallelUtil.threadSize(Pools.defaultConcurrency(), TRIANGLE_COUNT)  // 2 * TRIANGLE_COUNT
+                ParallelUtil.threadSize(Pools.DEFAULT_CONCURRENCY, TRIANGLE_COUNT)  // 2 * TRIANGLE_COUNT
         ).compute().getTriangleCount();
         System.out.printf("[%s][par][ forkj] count = %d%n", graphName, triangleCount);
     }
 
     @Test
     public void testStreamPar() {
-        long triangleCount = new TriangleStream(graph, Pools.DEFAULT, Pools.defaultConcurrency()).resultStream().count();
+        long triangleCount = new TriangleStream(graph, Pools.DEFAULT, Pools.DEFAULT_CONCURRENCY).resultStream().count();
         System.out.printf("[%s][par][stream] count = %d%n", graphName, triangleCount);
     }
 

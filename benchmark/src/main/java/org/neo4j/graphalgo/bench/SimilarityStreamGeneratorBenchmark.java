@@ -22,8 +22,6 @@ import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphalgo.similarity.*;
 import org.neo4j.helpers.collection.MapUtil;
-import org.neo4j.kernel.impl.factory.DatabaseInfo;
-import org.neo4j.kernel.impl.util.Dependencies;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -80,10 +78,7 @@ public class SimilarityStreamGeneratorBenchmark {
     public void setup() {
         ProcedureConfiguration configuration = ProcedureConfiguration.create(MapUtil.map("concurrency", concurrency));
         TerminationFlag terminationFlag = terminationFlag();
-        Dependencies dependencies = new Dependencies();
-        dependencies.satisfyDependency(DatabaseInfo.ENTERPRISE);
-        streamGenerator = new SimilarityStreamGenerator<>(
-                dependencies, terminationFlag, configuration, () -> null, ALL_PAIRS_COMPUTER);
+        streamGenerator = new SimilarityStreamGenerator<>(terminationFlag, configuration, () -> null, ALL_PAIRS_COMPUTER);
     }
 
     private TerminationFlag terminationFlag() {

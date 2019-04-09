@@ -253,12 +253,12 @@ public class ProcedureConfiguration {
     }
 
     public int getConcurrency() {
-        return getConcurrency(Pools.defaultConcurrency());
+        return getConcurrency(Pools.DEFAULT_CONCURRENCY);
     }
 
     public int getConcurrency(int defaultValue) {
         int requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
-        return Pools.toEditionConcurrency(requestedConcurrency);
+        return Pools.allowedConcurrency(requestedConcurrency);
     }
 
     public String getDirectionName() {
@@ -385,7 +385,7 @@ public class ProcedureConfiguration {
         Object value = config.get(newKey);
         if (null == value) {
             value = config.get(oldKey);
-            if(null == value) {
+            if (null == value) {
                 return defaultValue;
             }
         }
@@ -397,7 +397,7 @@ public class ProcedureConfiguration {
         return new ProcedureConfiguration(config);
     }
 
-    private static String reverseGraphLookup(Class<? extends GraphFactory>cls) {
+    private static String reverseGraphLookup(Class<? extends GraphFactory> cls) {
 
         if (HeavyGraphFactory.class.isAssignableFrom(cls)) {
             return "heavy";

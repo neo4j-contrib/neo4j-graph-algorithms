@@ -376,7 +376,7 @@ class ScanningMain<Record extends AbstractBaseRecord> extends BaseMain {
         Predicate<Record> alwaysTrue = Predicates.alwaysTrue();
         AbstractStorePageCacheScanner<Record> scanner = access.newScanner(db, prefetchSize);
         List<Future<Long>> futures = new ArrayList<>();
-        for (int i = 0; i < Pools.defaultConcurrency(); i++) {
+        for (int i = 0; i < Pools.DEFAULT_CONCURRENCY; i++) {
             futures.add(Pools.DEFAULT.submit(() -> {
                 long total = 0L;
                 try (AbstractStorePageCacheScanner<Record>.Cursor cursor = scanner.getCursor()) {

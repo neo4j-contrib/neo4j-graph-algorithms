@@ -420,7 +420,7 @@ public class AllShortestPaths427Test {
                 .withRelationshipType("TYPE")
                 .withRelationshipWeightsFromProperty("weight", 1.0)
                 .withDirection(Direction.OUTGOING)
-                .withConcurrency(Pools.defaultConcurrency())
+                .withConcurrency(Pools.DEFAULT_CONCURRENCY)
                 .load(graphImpl);
         expected = calculateExpected(true);
         expectedNonWeighted = calculateExpected(false);
@@ -431,14 +431,14 @@ public class AllShortestPaths427Test {
         compare(new AllShortestPaths(
                 graph,
                 Pools.DEFAULT,
-                Pools.defaultConcurrency(), Direction.OUTGOING), this.expected);
+                Pools.DEFAULT_CONCURRENCY, Direction.OUTGOING), this.expected);
     }
 
     @Test
     public void testMsbfs() throws Exception {
         compare(new MSBFSAllShortestPaths(
                 graph,
-                Pools.defaultConcurrency(),
+                Pools.DEFAULT_CONCURRENCY,
                 Pools.DEFAULT, Direction.OUTGOING), this.expectedNonWeighted);
     }
 

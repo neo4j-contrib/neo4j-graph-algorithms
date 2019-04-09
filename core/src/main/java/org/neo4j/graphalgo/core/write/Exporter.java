@@ -82,7 +82,7 @@ public final class Exporter extends StatementApi {
             this.db = Objects.requireNonNull(db);
             this.nodeCount = idMapping.nodeCount();
             this.toOriginalId = (n) -> idMapping.toOriginalNodeId((int) n);
-            this.concurrency = Pools.defaultConcurrency();
+            this.concurrency = Pools.DEFAULT_CONCURRENCY;
         }
 
         private Builder(GraphDatabaseAPI db, HugeIdMapping idMapping) {
@@ -90,7 +90,7 @@ public final class Exporter extends StatementApi {
             this.db = Objects.requireNonNull(db);
             this.nodeCount = idMapping.nodeCount();
             this.toOriginalId = idMapping::toOriginalNodeId;
-            this.concurrency = Pools.defaultConcurrency();
+            this.concurrency = Pools.DEFAULT_CONCURRENCY;
         }
 
         public Builder withLog(Log log) {
@@ -112,7 +112,7 @@ public final class Exporter extends StatementApi {
 
         public Builder parallel(ExecutorService es, int concurrency, TerminationFlag flag) {
             this.executorService = es;
-            this.concurrency = Pools.toEditionConcurrency(concurrency);
+            this.concurrency = Pools.allowedConcurrency(concurrency);
             this.terminationFlag = flag;
             return this;
         }

@@ -88,7 +88,7 @@ public class PageRankBenchmarkLdbc {
                 0.85,
                 LongStream.empty(),
                 Pools.DEFAULT,
-                Pools.defaultConcurrency(),
+                Pools.DEFAULT_CONCURRENCY,
                 batchSize)
                 .compute(iterations)
                 .result();
