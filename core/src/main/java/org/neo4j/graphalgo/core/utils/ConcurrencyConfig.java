@@ -8,20 +8,7 @@ final class ConcurrencyConfig {
     final int maxConcurrency;
     final int defaultConcurrency;
 
-    ConcurrencyConfig() {
-        this(Package.getPackage("org.neo4j.kernel.impl.enterprise") != null);
-    }
-
-    ConcurrencyConfig(boolean isOnEnterprise) {
-        maxConcurrency = loadMaxConcurrency(isOnEnterprise);
-        defaultConcurrency = loadDefaultConcurrency(isOnEnterprise);
-    }
-
-    static int loadMaxConcurrency(boolean isOnEnterprise) {
-        return isOnEnterprise ? Integer.MAX_VALUE : MAX_CE_CONCURRENCY;
-    }
-
-    static int loadDefaultConcurrency(boolean isOnEnterprise) {
+    static ConcurrencyConfig of() {
         Integer definedProcessors = null;
         try {
             definedProcessors = Integer.getInteger(PROCESSORS_OVERRIDE_PROPERTY);
@@ -30,9 +17,17 @@ final class ConcurrencyConfig {
         if (definedProcessors == null) {
             definedProcessors = Runtime.getRuntime().availableProcessors();
         }
-        if (!isOnEnterprise) {
-            definedProcessors = Math.min(definedProcessors, MAX_CE_CONCURRENCY);
+        boolean isOnEnterprise = Package.getPackage("org.neo4j.kernel.impl.enterprise") != null;
+        return new ConcurrencyConfig(definedProcessors, isOnEnterprise);
+    }
+
+    /* test-private */ ConcurrencyConfig(int availableProcessors, boolean isOnEnterprise) {
+        if (isOnEnterprise) {
+            maxConcurrency = Integer.MAX_VALUE;
+            defaultConcurrency = availableProcessors;
+        } else {
+            maxConcurrency = MAX_CE_CONCURRENCY;
+            defaultConcurrency = Math.min(availableProcessors, MAX_CE_CONCURRENCY);
         }
-        return definedProcessors;
     }
 }
