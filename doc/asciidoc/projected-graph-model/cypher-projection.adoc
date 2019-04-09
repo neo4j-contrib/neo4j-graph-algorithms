@@ -129,7 +129,7 @@ MATCH (start:Loc{name:'A'}), (end:Loc{name:'F'})
 CALL algo.shortestPath(start, end, 'cost', {
   nodeQuery:'MATCH(n:Loc) RETURN id(n) as id',
   relationshipQuery:'MATCH(n:Loc)-[r:ROAD]->(m:Loc) RETURN id(n) as source, id(m) as target, r.cost as weight',
-  {graph:'cypher', duplicateRelationships: 'max'})
+  {graph:'cypher', duplicateRelationships: 'sum'})
 YIELD writeMillis,loadMillis,nodeCount, totalCost
 RETURN writeMillis,loadMillis,nodeCount,totalCost
 ----

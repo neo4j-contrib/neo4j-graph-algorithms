@@ -18,7 +18,7 @@ We can load named graphs using any of the approaches described in the <<projecte
 .The following will load a graph with the name `my-graph`, for node label `Label` and relationship type `REL_TYPE`
 [source,cypher]
 ----
-CALL algo.graph.load('my-graph','Label','REL_TYPE',{graph:'heavy',..other config...})
+CALL algo.graph.load('my-graph','Label','REL_TYPE',{graph:'heavy' /*, ... other config */})
 YIELD name, graph, direction, undirected, sorted, nodes, loadMillis, alreadyLoaded,
       nodeWeight, relationshipWeight, nodeProperty, loadNodes, loadRelationships;
 ----
@@ -31,7 +31,7 @@ If we want to load a graph based on a <<cypher-projection, Cypher projection>>, 
 CALL algo.graph.load('my-graph',
   'MATCH (n) RETURN id(n) AS id',
   'MATCH (a)-->(b) RETURN id(a) AS source, id(b) AS target',
-  {graph:'cypher',..other config...})
+  {graph:'cypher' /*, ... other config */})
 YIELD name, graph, direction, undirected, sorted, nodes, loadMillis, alreadyLoaded,
       nodeWeight, relationshipWeight, nodeProperty, loadNodes, loadRelationships;
 ----
@@ -53,7 +53,7 @@ We can use our named graph in queries by specifying its name in the `graph` key 
 .The following will run the PageRank algorithm on the `my-graph` named graph:
 [source,cypher]
 ----
-CALL algo.pageRank(null,null,{graph:'my-graph',...})
+CALL algo.pageRank(null,null,{graph:'my-graph' /*, ... */})
 ----
 
 
