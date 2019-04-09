@@ -89,7 +89,7 @@ public class NodeWalkerProc  {
 
         TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
-        int concurrency = configuration.getConcurrency(api);
+        int concurrency = configuration.getConcurrency();
 
         Boolean returnPath = configuration.get("path", false);
 

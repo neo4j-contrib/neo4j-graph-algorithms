@@ -152,7 +152,7 @@ public final class LabelPropagation420Test {
                         PropertyMapping.of(PARTITION_TYPE, PARTITION_TYPE, 0.0)
                 )
                 .withDirection(Direction.BOTH)
-                .withConcurrency(Pools.DEFAULT_CONCURRENCY);
+                .withConcurrency(Pools.defaultConcurrency());
 
         if (graphImpl == HeavyCypherGraphFactory.class) {
             graphLoader
@@ -194,7 +194,7 @@ public final class LabelPropagation420Test {
                 graph,
                 (NodeProperties) graph,
                 batchSize,
-                Pools.DEFAULT_CONCURRENCY,
+                Pools.defaultConcurrency(),
                 Pools.DEFAULT));
     }
 
@@ -204,7 +204,7 @@ public final class LabelPropagation420Test {
                     (HugeGraph) graph,
                     (HugeNodeProperties) graph,
                     batchSize,
-                    Pools.DEFAULT_CONCURRENCY,
+                    Pools.defaultConcurrency(),
                     Pools.DEFAULT,
                     AllocationTracker.EMPTY));
         }

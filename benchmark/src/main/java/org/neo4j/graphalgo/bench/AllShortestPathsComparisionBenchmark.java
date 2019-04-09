@@ -131,13 +131,14 @@ public class AllShortestPathsComparisionBenchmark {
 
     @Benchmark
     public long _02_benchmark_MS_ASP() {
-        return new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING)
+        return new MSBFSAllShortestPaths(graph, Pools.defaultConcurrency(), Pools.DEFAULT, Direction.OUTGOING)
                 .resultStream().count();
     }
 
     @Benchmark
     public long _03_benchmark_Huge_MS_ASP() {
-        return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING)
+        return new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY,
+                Pools.defaultConcurrency(), Pools.DEFAULT, Direction.OUTGOING)
                 .resultStream().count();
     }
 }

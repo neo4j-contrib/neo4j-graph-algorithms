@@ -146,7 +146,7 @@ public class LouvainProc {
         final Graph graph = graph(label, relationship, configuration);
 
         // evaluation
-        final Louvain louvain = new Louvain(graph, Pools.DEFAULT, configuration.getConcurrency(api), AllocationTracker.create())
+        final Louvain louvain = new Louvain(graph, Pools.DEFAULT, configuration.getConcurrency(), AllocationTracker.create())
                 .withProgressLogger(ProgressLogger.wrap(log, "Louvain"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction));
 
@@ -191,7 +191,7 @@ public class LouvainProc {
         new LouvainCommunityExporter(
                 api,
                 Pools.DEFAULT,
-                configuration.getConcurrency(api),
+                configuration.getConcurrency(),
                 graph,
                 finalCommunities.length,
                 writeProperty,

@@ -51,7 +51,7 @@ public class WeightedDegreeCentrality extends Algorithm<WeightedDegreeCentrality
             Direction direction
     ) {
         if (concurrency <= 0) {
-            concurrency = Pools.DEFAULT_QUEUE_SIZE;
+            concurrency = Pools.defaultConcurrency();
         }
 
         this.graph = graph;

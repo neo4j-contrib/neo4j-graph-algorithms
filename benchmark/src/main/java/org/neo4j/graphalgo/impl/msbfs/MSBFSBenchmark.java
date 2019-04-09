@@ -77,7 +77,7 @@ public class MSBFSBenchmark {
                 Direction.OUTGOING,
                 consume(bh),
                 source.sources);
-        RunSafely.runSafe(() -> msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
+        RunSafely.runSafe(() -> msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT));
         return msbfs;
     }
 

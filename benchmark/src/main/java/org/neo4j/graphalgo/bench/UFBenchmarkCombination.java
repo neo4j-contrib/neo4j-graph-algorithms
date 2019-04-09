@@ -22,7 +22,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.UnionFindAlgo;
-import org.openjdk.jmh.annotations.Param;
 
 import static org.neo4j.graphalgo.impl.UnionFindAlgo.NOTHING;
 
@@ -45,8 +44,8 @@ public enum UFBenchmarkCombination {
                 graph,
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
-                (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                Pools.DEFAULT_CONCURRENCY,
+                (int) (graph.nodeCount() / Pools.defaultConcurrency()),
+                    Pools.defaultConcurrency(),
                 Double.NaN,
                 NOTHING);
         }
@@ -58,8 +57,8 @@ public enum UFBenchmarkCombination {
                 graph,
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
-                (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                Pools.DEFAULT_CONCURRENCY,
+                (int) (graph.nodeCount() / Pools.defaultConcurrency()),
+                    Pools.defaultConcurrency(),
                 Double.NaN,
                 NOTHING);
         }
@@ -71,8 +70,8 @@ public enum UFBenchmarkCombination {
                 graph,
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
-                (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                Pools.DEFAULT_CONCURRENCY,
+                (int) (graph.nodeCount() / Pools.defaultConcurrency()),
+                    Pools.defaultConcurrency(),
                 Double.NaN,
                 NOTHING);
         }
@@ -84,8 +83,8 @@ public enum UFBenchmarkCombination {
                 graph,
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
-                (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                Pools.DEFAULT_CONCURRENCY,
+                (int) (graph.nodeCount() / Pools.defaultConcurrency()),
+                    Pools.defaultConcurrency(),
                 Double.NaN,
                 NOTHING);
         }
@@ -103,7 +102,7 @@ public enum UFBenchmarkCombination {
         return algo.run(
                 graph,
                 Pools.DEFAULT,
-                (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                Pools.DEFAULT_CONCURRENCY);
+                (int) (graph.nodeCount() / Pools.defaultConcurrency()),
+                Pools.defaultConcurrency());
     }
 }

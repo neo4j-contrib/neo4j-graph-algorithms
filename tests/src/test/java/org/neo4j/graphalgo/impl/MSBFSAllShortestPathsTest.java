@@ -111,13 +111,14 @@ public class MSBFSAllShortestPathsTest {
 
     @Test
     public void testResults() throws Exception {
-        testASP(new MSBFSAllShortestPaths(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING));
+        testASP(new MSBFSAllShortestPaths(graph, Pools.defaultConcurrency(), Pools.DEFAULT, Direction.OUTGOING));
     }
 
     @Test
     public void testHugeResults() throws Exception {
         if (graph instanceof HugeGraph) {
-            testASP(new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, Direction.OUTGOING));
+            testASP(new HugeMSBFSAllShortestPaths((HugeGraph) graph, AllocationTracker.EMPTY,
+                    Pools.defaultConcurrency(), Pools.DEFAULT, Direction.OUTGOING));
         }
     }
 

@@ -94,7 +94,7 @@ public class MSBFSComparisonBenchmark {
 
     private MsBFSAlgo measure(MsBFSAlgo msbfs) throws Throwable {
         try {
-            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+            msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT);
         } catch (StackOverflowError e) {
             Throwable error = e;
             Pools.DEFAULT.shutdownNow();

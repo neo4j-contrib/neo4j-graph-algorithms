@@ -158,7 +158,7 @@ public final class ArticleRankProc {
         double dampingFactor = configuration.get(CONFIG_DAMPING, DEFAULT_DAMPING);
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final int concurrency = configuration.getConcurrency(api);
+        final int concurrency = configuration.getConcurrency();
         log.debug("Computing article rank with damping of " + dampingFactor + " and " + iterations + " iterations.");
 
         List<Node> sourceNodes = configuration.get("sourceNodes", new ArrayList<>());

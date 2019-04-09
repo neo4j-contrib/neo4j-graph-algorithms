@@ -116,7 +116,7 @@ public class ClosenessCentralityTest {
     @Test
     public void testGetCentrality() throws Exception {
 
-        final double[] centrality = new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
+        final double[] centrality = new MSClosenessCentrality(graph, Pools.defaultConcurrency(), Pools.DEFAULT, false)
                 .compute()
                 .exportToArray();
 
@@ -128,7 +128,7 @@ public class ClosenessCentralityTest {
 
         final double[] centrality = new double[(int) graph.nodeCount()];
 
-        new MSClosenessCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
+        new MSClosenessCentrality(graph, Pools.defaultConcurrency(), Pools.DEFAULT, false)
                 .compute()
                 .resultStream()
                 .forEach(r -> centrality[graph.toMappedNodeId(r.nodeId)] = r.centrality);
@@ -141,7 +141,8 @@ public class ClosenessCentralityTest {
         if (graph instanceof HugeGraph) {
             HugeGraph hugeGraph = (HugeGraph) graph;
             final double[] centrality =
-                    new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
+                    new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY,
+                            Pools.defaultConcurrency(), Pools.DEFAULT, false)
                             .compute()
                             .exportToArray();
 
@@ -156,7 +157,8 @@ public class ClosenessCentralityTest {
 
             final double[] centrality = new double[(int) graph.nodeCount()];
 
-            new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT, false)
+            new HugeMSClosenessCentrality(hugeGraph, AllocationTracker.EMPTY,
+                    Pools.defaultConcurrency(), Pools.DEFAULT, false)
                     .compute()
                     .resultStream()
                     .forEach(r -> centrality[graph.toMappedNodeId(r.nodeId)] = r.centrality);

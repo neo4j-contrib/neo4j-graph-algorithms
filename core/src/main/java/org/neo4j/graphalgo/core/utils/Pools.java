@@ -18,7 +18,6 @@
  */
 package org.neo4j.graphalgo.core.utils;
 
-import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.helpers.NamedThreadFactory;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -32,34 +31,43 @@ import java.util.concurrent.locks.LockSupport;
 
 public final class Pools {
 
-    // should only be used by tests and benchmarks
-    public static final int DEFAULT_CONCURRENCY;
+    private static final String PROCESSORS_OVERRIDE_PROPERTY = "neo4j.graphalgo.processors";
+    private static final int MAX_CE_CONCURRENCY = 4;
+    private static final int DEFAULT_CONCURRENCY;
+    private static final int MAX_CONCURRENCY;
 
     static {
+        boolean isOnEnterprise = Package.getPackage("org.neo4j.kernel.impl.enterprise") != null;
+        MAX_CONCURRENCY = loadMaxConcurrency(isOnEnterprise);
+        DEFAULT_CONCURRENCY = loadDefaultConcurrency(isOnEnterprise);
+    }
+
+    // make this is method instead of a public constant so that we may delegate to the extension
+    public static int defaultConcurrency() {
+        return DEFAULT_CONCURRENCY;
+    }
+
+    public static int toEditionConcurrency(int concurrency) {
+        return Math.min(MAX_CONCURRENCY, concurrency);
+    }
+
+    static int loadMaxConcurrency(boolean isOnEnterprise) {
+        return isOnEnterprise ? Integer.MAX_VALUE : MAX_CE_CONCURRENCY;
+    }
+
+    static int loadDefaultConcurrency(boolean isOnEnterprise) {
         Integer definedProcessors = null;
         try {
-            definedProcessors = Integer.getInteger("neo4j.graphalgo.processors");
+            definedProcessors = Integer.getInteger(PROCESSORS_OVERRIDE_PROPERTY);
         } catch (SecurityException ignored) {
         }
-        if (definedProcessors != null) {
-            DEFAULT_CONCURRENCY = definedProcessors;
-        } else {
-            DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
-//            DEFAULT_CONCURRENCY = 2;
+        if (definedProcessors == null) {
+            definedProcessors = Runtime.getRuntime().availableProcessors();
         }
-    }
-
-    public static final int MAX_CE_CONCURRENCY = 4;
-
-    public static int defaultConcurrency(DependencyResolver dep) {
-        return toEditionConcurrency(DEFAULT_CONCURRENCY, dep);
-    }
-
-    public static int toEditionConcurrency(int concurrency, final DependencyResolver dep) {
-        if (EditionUtil.isOnEnterprise(dep)) {
-            return concurrency;
+        if (!isOnEnterprise) {
+            definedProcessors = Math.min(definedProcessors, MAX_CE_CONCURRENCY);
         }
-        return Math.min(Pools.MAX_CE_CONCURRENCY, concurrency);
+        return definedProcessors;
     }
 
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;
@@ -71,7 +79,6 @@ public final class Pools {
         throw new UnsupportedOperationException();
     }
 
-    // TODO: limit threadpool size based on edition?
     public static ExecutorService createDefaultPool() {
         return new ThreadPoolExecutor(
                 DEFAULT_CONCURRENCY,

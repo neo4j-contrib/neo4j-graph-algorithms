@@ -111,7 +111,7 @@ public class WeightedPageRankBenchmarkLdbc {
                 0.85,
                 LongStream.empty(),
                 Pools.DEFAULT,
-                Pools.DEFAULT_CONCURRENCY,
+                Pools.defaultConcurrency(),
                 batchSize,
                 cacheWeights)
                 .compute(iterations)

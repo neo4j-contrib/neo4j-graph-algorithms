@@ -158,8 +158,8 @@ public class UnionFindsTest {
                 graph,
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
-                setSize / Pools.DEFAULT_CONCURRENCY,
-                Pools.DEFAULT_CONCURRENCY,
+                setSize / Pools.defaultConcurrency(),
+                Pools.defaultConcurrency(),
                 Double.NaN,
                 UnionFindAlgo.NOTHING);
     }

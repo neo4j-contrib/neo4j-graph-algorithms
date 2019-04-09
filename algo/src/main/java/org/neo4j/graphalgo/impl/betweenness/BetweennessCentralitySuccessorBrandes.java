@@ -22,7 +22,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.core.utils.container.MultiQueue;
 import org.neo4j.graphalgo.impl.Algorithm;
-import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
@@ -73,8 +72,8 @@ public class BetweennessCentralitySuccessorBrandes extends Algorithm<Betweenness
      * @param graph           the graph iface
      * @param executorService the executor service
      */
-    public BetweennessCentralitySuccessorBrandes(DependencyResolver dep, Graph graph, ExecutorService executorService) {
-        this.concurrency = Pools.defaultConcurrency(dep);
+    public BetweennessCentralitySuccessorBrandes(Graph graph, ExecutorService executorService) {
+        this.concurrency = Pools.defaultConcurrency();
         this.graph = graph;
         this.nodeCount = Math.toIntExact(graph.nodeCount());
         this.executorService = executorService;

@@ -151,7 +151,7 @@ public class BetweennessCentralityTest2 {
     @Test
     public void testSuccessorBrandes() throws Exception {
 
-        new BetweennessCentralitySuccessorBrandes(null, graph, Pools.DEFAULT)
+        new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
                 .compute()
                 .resultStream()
                 .forEach(r -> testConsumer.accept(name(r.nodeId), r.centrality));

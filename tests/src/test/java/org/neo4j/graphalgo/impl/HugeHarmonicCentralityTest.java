@@ -93,7 +93,7 @@ public class HugeHarmonicCentralityTest {
 
         final Consumer mock = mock(Consumer.class);
 
-        new HugeHarmonicCentrality(graph, AllocationTracker.EMPTY, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
+        new HugeHarmonicCentrality(graph, AllocationTracker.EMPTY, Pools.defaultConcurrency(), Pools.DEFAULT)
                 .compute()
                 .resultStream()
                 .peek(System.out::println)
