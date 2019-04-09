@@ -27,7 +27,6 @@ import org.neo4j.graphdb.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,7 +46,7 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
             Direction direction
     ) {
         if (concurrency <= 0) {
-            concurrency = Pools.DEFAULT_QUEUE_SIZE;
+            concurrency = Pools.DEFAULT_CONCURRENCY;
         }
 
         this.graph = graph;

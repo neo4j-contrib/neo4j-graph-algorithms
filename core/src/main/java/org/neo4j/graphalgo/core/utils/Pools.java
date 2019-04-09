@@ -29,27 +29,25 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-public class Pools {
+public final class Pools {
+
+    private static final int MAX_CONCURRENCY;
     public static final int DEFAULT_CONCURRENCY;
 
     static {
-        Integer definedProcessors = null;
-        try {
-            definedProcessors = Integer.getInteger("neo4j.graphalgo.processors");
-        } catch (SecurityException ignored) {
-        }
-        if (definedProcessors != null) {
-            DEFAULT_CONCURRENCY = definedProcessors;
-        } else {
-            DEFAULT_CONCURRENCY = Runtime.getRuntime().availableProcessors();
-//            DEFAULT_CONCURRENCY = 2;
-        }
+        ConcurrencyConfig concurrencyConfig = ConcurrencyConfig.of();
+        MAX_CONCURRENCY = concurrencyConfig.maxConcurrency;
+        DEFAULT_CONCURRENCY = concurrencyConfig.defaultConcurrency;
+    }
+
+    public static int allowedConcurrency(int concurrency) {
+        return Math.min(MAX_CONCURRENCY, concurrency);
     }
 
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;
 
-    public final static ExecutorService DEFAULT = createDefaultPool();
-    public final static ForkJoinPool FJ_POOL = createFJPool();
+    public static final ExecutorService DEFAULT = createDefaultPool();
+    public static final ForkJoinPool FJ_POOL = createFJPool();
 
     private Pools() {
         throw new UnsupportedOperationException();
@@ -84,9 +82,5 @@ public class Pools {
                 }
             }
         }
-    }
-
-    public static int getNoThreadsInDefaultPool() {
-        return DEFAULT_CONCURRENCY;
     }
 }

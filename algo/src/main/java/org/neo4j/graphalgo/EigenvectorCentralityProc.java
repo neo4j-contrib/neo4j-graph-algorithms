@@ -158,7 +158,7 @@ public final class EigenvectorCentralityProc {
         double dampingFactor = 1.0;
         int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
+        final int concurrency = configuration.getConcurrency();
         log.debug("Computing eigenvector centrality with " + iterations + " iterations.");
 
         List<Node> sourceNodes = configuration.get("sourceNodes", new ArrayList<>());

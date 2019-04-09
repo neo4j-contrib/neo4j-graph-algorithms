@@ -54,7 +54,7 @@ public class ProcedureConfiguration {
 
     private final Map<String, Object> config;
 
-    public ProcedureConfiguration(Map<String, Object> config) {
+    private ProcedureConfiguration(Map<String, Object> config) {
         this.config = new HashMap<>(config);
     }
 
@@ -252,17 +252,13 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
     }
 
-    /**
-     * TODO
-     *
-     * @return
-     */
-    public int getConcurrency(int defaultValue) {
-        return getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
-    }
-
     public int getConcurrency() {
         return getConcurrency(Pools.DEFAULT_CONCURRENCY);
+    }
+
+    public int getConcurrency(int defaultValue) {
+        int requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
+        return Pools.allowedConcurrency(requestedConcurrency);
     }
 
     public String getDirectionName() {
@@ -389,7 +385,7 @@ public class ProcedureConfiguration {
         Object value = config.get(newKey);
         if (null == value) {
             value = config.get(oldKey);
-            if(null == value) {
+            if (null == value) {
                 return defaultValue;
             }
         }

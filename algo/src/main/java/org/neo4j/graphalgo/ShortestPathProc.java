@@ -185,7 +185,7 @@ public class ShortestPathProc {
 
         return Stream.of(builder.build());
     }
-    
+
     @Procedure("algo.shortestPath.astar.stream")
     @Description("CALL algo.shortestPath.astar.stream(startNode:Node, endNode:Node, weightProperty:String, propertyKeyLat:String," +
     		"propertyKeyLon:String, {nodeQuery:'labelName', relationshipQuery:'relationshipName', direction:'BOTH', defaultValue:1.0}) " +
@@ -220,7 +220,7 @@ public class ShortestPathProc {
                 graph.release();
                 return Stream.empty();
             }
-    		
+
     		return new ShortestPathAStar(graph, api)
     				.withProgressLogger(ProgressLogger.wrap(log, "ShortestPath(AStar)"))
     				.withTerminationFlag(TerminationFlag.wrap(transaction))

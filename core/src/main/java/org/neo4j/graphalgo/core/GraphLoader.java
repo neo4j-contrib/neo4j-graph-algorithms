@@ -73,10 +73,10 @@ public class GraphLoader {
     private ExecutorService executorService;
     private double relWeightDefault = 0.0;
     private double nodeWeightDefault = 0.0;
-    private Map<String, Object> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
     private double nodePropDefault = 0.0;
     private int batchSize = ParallelUtil.DEFAULT_BATCH_SIZE;
-    private int concurrency = Pools.DEFAULT_CONCURRENCY;
+    private int concurrency;
 
     private DuplicateRelationshipsStrategy duplicateRelationshipsStrategy = DuplicateRelationshipsStrategy.NONE;
 
@@ -93,6 +93,7 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api) {
         this.api = Objects.requireNonNull(api);
         this.executorService = null;
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
     }
 
     /**
@@ -103,6 +104,7 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api, ExecutorService executorService) {
         this.api = Objects.requireNonNull(api);
         this.executorService = Objects.requireNonNull(executorService);
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
     }
 
     /**
@@ -185,7 +187,7 @@ public class GraphLoader {
         if (newConcurrency <= 0) {
             throw new IllegalArgumentException("concurrency: " + newConcurrency);
         }
-        this.concurrency = newConcurrency;
+        this.concurrency = Pools.allowedConcurrency(newConcurrency);
         return this;
     }
 
@@ -504,7 +506,7 @@ public class GraphLoader {
         }
     }
 
-    public  GraphSetup toSetup() {
+    public GraphSetup toSetup() {
         return new GraphSetup(
                     label,
                     null,

@@ -23,7 +23,6 @@ import org.neo4j.graphalgo.core.GraphLoader;
 import org.neo4j.graphalgo.core.ProcedureConfiguration;
 import org.neo4j.graphalgo.core.utils.*;
 import org.neo4j.graphalgo.impl.walking.WalkPath;
-import org.neo4j.graphalgo.impl.yens.WeightedPath;
 import org.neo4j.graphalgo.impl.yens.WeightedPathExporter;
 import org.neo4j.graphalgo.impl.yens.YensKShortestPaths;
 import org.neo4j.graphalgo.results.AbstractResultBuilder;
@@ -39,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntPredicate;
 import java.util.stream.Stream;
 
 /**

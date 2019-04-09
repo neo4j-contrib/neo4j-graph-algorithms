@@ -22,7 +22,6 @@ import org.neo4j.graphalgo.api.Graph;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphalgo.impl.UnionFindAlgo;
-import org.openjdk.jmh.annotations.Param;
 
 import static org.neo4j.graphalgo.impl.UnionFindAlgo.NOTHING;
 

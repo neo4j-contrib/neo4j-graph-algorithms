@@ -159,17 +159,7 @@ public class GraphSetup {
      * Setup Graph to load any label, any relationship, no property in single threaded mode
      */
     public GraphSetup() {
-        this(null);
-    }
-
-    /**
-     * Setup graph to load any label, any relationship, no property but
-     * in multithreaded mode (depends on the actual executor)
-     *
-     * @param executor executor service
-     */
-    public GraphSetup(ExecutorService executor) {
-        this(null, null, null, 1.0, executor);
+        this(null, null, null, 1.0, null);
     }
 
     public GraphSetup(

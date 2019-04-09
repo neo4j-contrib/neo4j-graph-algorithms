@@ -161,7 +161,7 @@ public final class DegreeCentralityProc {
             CentralityScore.Stats.Builder statsBuilder,
             String weightPropertyKey, Direction direction) {
 
-        final int concurrency = configuration.getConcurrency(Pools.getNoThreadsInDefaultPool());
+        final int concurrency = configuration.getConcurrency();
 
         if (direction == Direction.BOTH) {
             direction = Direction.OUTGOING;
