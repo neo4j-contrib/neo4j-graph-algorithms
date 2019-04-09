@@ -35,7 +35,7 @@ public final class Pools {
     public static final int DEFAULT_CONCURRENCY;
 
     static {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig();
+        ConcurrencyConfig concurrencyConfig = ConcurrencyConfig.of();
         MAX_CONCURRENCY = concurrencyConfig.maxConcurrency;
         DEFAULT_CONCURRENCY = concurrencyConfig.defaultConcurrency;
     }
