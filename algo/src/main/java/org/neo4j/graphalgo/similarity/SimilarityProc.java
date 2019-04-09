@@ -85,7 +85,7 @@ public class SimilarityProc {
     }
 
     Long getDegreeCutoff(ProcedureConfiguration configuration) {
-        return configuration.get("degreeCutoff", 0L);
+        return configuration.getNumber("degreeCutoff", 0L).longValue();
     }
 
     Long getWriteBatchSize(ProcedureConfiguration configuration) {
@@ -116,7 +116,7 @@ public class SimilarityProc {
     }
 
     Double getSimilarityCutoff(ProcedureConfiguration configuration) {
-        return configuration.get("similarityCutoff", -1D);
+        return configuration.getNumber("similarityCutoff", -1D).doubleValue();
     }
 
     <T> Stream<SimilarityResult> similarityStream(T[] inputs, int[] sourceIndexIds, int[] targetIndexIds, SimilarityComputer<T> computer, ProcedureConfiguration configuration, Supplier<RleDecoder> decoderFactory, double cutoff, int topK) {
