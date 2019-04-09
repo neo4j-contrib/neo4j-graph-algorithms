@@ -33,8 +33,8 @@ public final class Pools {
 
     private static final String PROCESSORS_OVERRIDE_PROPERTY = "neo4j.graphalgo.processors";
     private static final int MAX_CE_CONCURRENCY = 4;
-    private static final int DEFAULT_CONCURRENCY;
     private static final int MAX_CONCURRENCY;
+    public static final int DEFAULT_CONCURRENCY;
 
     static {
         boolean isOnEnterprise = Package.getPackage("org.neo4j.kernel.impl.enterprise") != null;
@@ -42,12 +42,7 @@ public final class Pools {
         DEFAULT_CONCURRENCY = loadDefaultConcurrency(isOnEnterprise);
     }
 
-    // make this is method instead of a public constant so that we may delegate to the extension
-    public static int defaultConcurrency() {
-        return DEFAULT_CONCURRENCY;
-    }
-
-    public static int toEditionConcurrency(int concurrency) {
+    public static int allowedConcurrency(int concurrency) {
         return Math.min(MAX_CONCURRENCY, concurrency);
     }
 

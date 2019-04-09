@@ -105,7 +105,7 @@ public class MsBfsBenchmarkLdbc {
                     }
                 }
         );
-        RunSafely.runSafe(() -> msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT));
+        RunSafely.runSafe(() -> msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT));
         return msbfs;
     }
 }

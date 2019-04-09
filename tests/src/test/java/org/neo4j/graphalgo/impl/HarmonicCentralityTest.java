@@ -117,7 +117,7 @@ public class HarmonicCentralityTest {
 
         final Consumer mock = mock(Consumer.class);
 
-        new HarmonicCentrality(graph, Pools.defaultConcurrency(), Pools.DEFAULT)
+        new HarmonicCentrality(graph, Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT)
                 .compute()
                 .resultStream()
                 .forEach(r -> mock.consume(r.nodeId, r.centrality));

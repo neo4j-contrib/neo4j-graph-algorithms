@@ -181,7 +181,7 @@ public class GraphSetup {
                 1.0,
                 Collections.emptyMap(),
                 executor,
-                Pools.defaultConcurrency(),
+                Pools.DEFAULT_CONCURRENCY,
                 -1,
                 DuplicateRelationshipsStrategy.NONE,
                 NullLog.getInstance(),

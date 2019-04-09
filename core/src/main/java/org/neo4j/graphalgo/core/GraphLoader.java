@@ -93,7 +93,7 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api) {
         this.api = Objects.requireNonNull(api);
         this.executorService = null;
-        this.concurrency = Pools.defaultConcurrency();
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
     }
 
     /**
@@ -104,7 +104,7 @@ public class GraphLoader {
     public GraphLoader(GraphDatabaseAPI api, ExecutorService executorService) {
         this.api = Objects.requireNonNull(api);
         this.executorService = Objects.requireNonNull(executorService);
-        this.concurrency = Pools.defaultConcurrency();
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
     }
 
     /**
@@ -187,7 +187,7 @@ public class GraphLoader {
         if (newConcurrency <= 0) {
             throw new IllegalArgumentException("concurrency: " + newConcurrency);
         }
-        this.concurrency = Pools.toEditionConcurrency(newConcurrency);
+        this.concurrency = Pools.allowedConcurrency(newConcurrency);
         return this;
     }
 
@@ -198,7 +198,7 @@ public class GraphLoader {
      * @return itself to enable fluent interface
      */
     public GraphLoader withDefaultConcurrency() {
-        this.concurrency = Pools.defaultConcurrency();
+        this.concurrency = Pools.DEFAULT_CONCURRENCY;
         return this;
     }
 

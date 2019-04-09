@@ -81,8 +81,7 @@ public class HarmonicCentralityProc {
             return Stream.empty();
         }
 
-        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT,
-                configuration.getConcurrency())
+        final HarmonicCentralityAlgorithm algo = HarmonicCentralityAlgorithm.instance(graph, tracker, Pools.DEFAULT, configuration.getConcurrency())
                 .withProgressLogger(ProgressLogger.wrap(log, "HarmonicCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute();

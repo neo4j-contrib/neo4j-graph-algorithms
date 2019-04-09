@@ -227,7 +227,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             DegreeComputer degreeComputer,
             long nodeCount) {
         if (concurrency <= 0) {
-            concurrency = Pools.defaultConcurrency();
+            concurrency = Pools.DEFAULT_CONCURRENCY;
         }
         final int expectedParallelism = Math.min(
                 concurrency,
