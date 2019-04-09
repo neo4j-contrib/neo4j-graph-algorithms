@@ -109,7 +109,7 @@ public class InfoMapProc {
                         config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                         config.getNumber("tau", InfoMap.TAU).doubleValue(),
                         Pools.FJ_POOL,
-                        config.getConcurrency(db),
+                        config.getConcurrency(),
                         progressLogger,
                         terminationFlag
                 );
@@ -131,7 +131,7 @@ public class InfoMapProc {
                         config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                         config.getNumber("tau", InfoMap.TAU).doubleValue(),
                         Pools.FJ_POOL,
-                        config.getConcurrency(db),
+                        config.getConcurrency(),
                         progressLogger,
                         terminationFlag
                 );
@@ -150,7 +150,7 @@ public class InfoMapProc {
                         config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                         config.getNumber("tau", InfoMap.TAU).doubleValue(),
                         Pools.FJ_POOL,
-                        config.getConcurrency(db),
+                        config.getConcurrency(),
                         progressLogger,
                         terminationFlag
                 );
@@ -170,7 +170,7 @@ public class InfoMapProc {
                         config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                         config.getNumber("tau", InfoMap.TAU).doubleValue(),
                         Pools.FJ_POOL,
-                        config.getConcurrency(db),
+                        config.getConcurrency(),
                         progressLogger,
                         terminationFlag
                 );
@@ -241,7 +241,7 @@ public class InfoMapProc {
                             config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                             config.getNumber("tau", InfoMap.TAU).doubleValue(),
                             Pools.FJ_POOL,
-                            config.getConcurrency(db),
+                            config.getConcurrency(),
                             progressLogger,
                             terminationFlag
                     );
@@ -265,7 +265,7 @@ public class InfoMapProc {
                             config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                             config.getNumber("tau", InfoMap.TAU).doubleValue(),
                             Pools.FJ_POOL,
-                            config.getConcurrency(db),
+                            config.getConcurrency(),
                             progressLogger,
                             terminationFlag
                     );
@@ -286,7 +286,7 @@ public class InfoMapProc {
                             config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                             config.getNumber("tau", InfoMap.TAU).doubleValue(),
                             Pools.FJ_POOL,
-                            config.getConcurrency(db),
+                            config.getConcurrency(),
                             progressLogger,
                             terminationFlag
                     );
@@ -308,7 +308,7 @@ public class InfoMapProc {
                             config.getNumber("threshold", InfoMap.THRESHOLD).doubleValue(),
                             config.getNumber("tau", InfoMap.TAU).doubleValue(),
                             Pools.FJ_POOL,
-                            config.getConcurrency(db),
+                            config.getConcurrency(),
                             progressLogger,
                             terminationFlag
                     );

@@ -132,7 +132,7 @@ public class KSpanningTreeProc {
                         .withLog(log)
                         .parallel(
                                 Pools.DEFAULT,
-                                configuration.getConcurrency(api),
+                                configuration.getConcurrency(),
                                 TerminationFlag.wrap(transaction))
                         .build();
 

@@ -76,7 +76,7 @@ public class AllShortestPathsProc {
                 .withOptionalRelationshipWeightsFromProperty(
                         propertyName,
                         configuration.getWeightPropertyDefaultValue(1.0))
-                .withConcurrency(configuration.getConcurrency(api))
+                .withConcurrency(configuration.getConcurrency())
                 .withAllocationTracker(tracker);
 
         if(direction == Direction.BOTH) {
@@ -102,13 +102,13 @@ public class AllShortestPathsProc {
                 algo = new HugeMSBFSAllShortestPaths(
                         hugeGraph,
                         tracker,
-                        configuration.getConcurrency(api),
+                        configuration.getConcurrency(),
                         Pools.DEFAULT,
                         direction);
             } else {
                 algo = new MSBFSAllShortestPaths(
                         graph,
-                        configuration.getConcurrency(api),
+                        configuration.getConcurrency(),
                         Pools.DEFAULT,
                         direction);
             }
@@ -117,7 +117,7 @@ public class AllShortestPathsProc {
                     "AllShortestPaths(MultiSource)"));
         } else {
             // weighted ASP otherwise
-            algo = new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency(api), direction)
+            algo = new AllShortestPaths(graph, Pools.DEFAULT, configuration.getConcurrency(), direction)
                     .withProgressLogger(ProgressLogger.wrap(log, "AllShortestPaths)"));
         }
 

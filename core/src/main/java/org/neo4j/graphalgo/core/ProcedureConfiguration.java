@@ -29,13 +29,10 @@ import org.neo4j.graphalgo.core.loading.LoadGraphFactory;
 import org.neo4j.graphalgo.core.neo4jview.GraphView;
 import org.neo4j.graphalgo.core.neo4jview.GraphViewFactory;
 import org.neo4j.graphalgo.core.utils.Directions;
-import org.neo4j.graphalgo.core.utils.EditionUtil;
 import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
-import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -255,25 +252,13 @@ public class ProcedureConfiguration {
         return getNumber(ProcedureConstants.BATCH_SIZE_PARAM, defaultValue).intValue();
     }
 
-    public int getConcurrency(final GraphDatabaseAPI db) {
-        return getConcurrency(db.getDependencyResolver());
+    public int getConcurrency() {
+        return getConcurrency(Pools.defaultConcurrency());
     }
 
-    public int getConcurrency(final DependencyResolver dep) {
-        Number requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, null);
-        if (requestedConcurrency == null) {
-            return Pools.defaultConcurrency(dep);
-        }
-        return Pools.toEditionConcurrency(requestedConcurrency.intValue(), dep);
-    }
-
-    public int getConcurrency(int defaultValue, final GraphDatabaseAPI db) {
-        return getConcurrency(defaultValue, db.getDependencyResolver());
-    }
-
-    public int getConcurrency(int defaultValue, final DependencyResolver dep) {
+    public int getConcurrency(int defaultValue) {
         int requestedConcurrency = getNumber(ProcedureConstants.CONCURRENCY, defaultValue).intValue();
-        return Pools.toEditionConcurrency(requestedConcurrency, dep);
+        return Pools.toEditionConcurrency(requestedConcurrency);
     }
 
     public String getDirectionName() {

@@ -88,7 +88,7 @@ public final class HugeMultiSourceBFSTest {
                     0, 1
             );
 
-            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+            msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT);
 
             verify(mock).accept(3, 1, toList(1, 2));
             verify(mock).accept(4, 1, toList(1, 2));
@@ -112,7 +112,7 @@ public final class HugeMultiSourceBFSTest {
                     AllocationTracker.EMPTY
             );
 
-            msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+            msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT);
 
             verify(mock).accept(1, 1, toList(3, 4));
             verify(mock).accept(2, 1, toList(3, 4));
@@ -186,7 +186,7 @@ public final class HugeMultiSourceBFSTest {
                                 }
                             },
                             AllocationTracker.EMPTY);
-                    msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+                    msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT);
                 });
 
         for (int i = 0; i < maxNodes; i++) {
@@ -277,7 +277,7 @@ public final class HugeMultiSourceBFSTest {
                 },
                 AllocationTracker.EMPTY,
                 sources);
-        msbfs.run(Pools.DEFAULT_CONCURRENCY, Pools.DEFAULT);
+        msbfs.run(Pools.defaultConcurrency(), Pools.DEFAULT);
 
         for (int i = 0; i < seen.length; i++) {
             final int[] nodeSeen = seen[i];

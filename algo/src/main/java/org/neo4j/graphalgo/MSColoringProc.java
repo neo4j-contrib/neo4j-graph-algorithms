@@ -114,7 +114,7 @@ public class MSColoringProc {
 
 
         // evaluation
-        return new MSColoring(graph, Pools.DEFAULT, configuration.getConcurrency(api))
+        return new MSColoring(graph, Pools.DEFAULT, configuration.getConcurrency())
                 .compute()
                 .resultStream();
     }
@@ -130,7 +130,7 @@ public class MSColoringProc {
     }
 
     private AtomicIntegerArray evaluate(Graph graph, ProcedureConfiguration config) {
-        return new MSColoring(graph, Pools.DEFAULT, config.getConcurrency(api))
+        return new MSColoring(graph, Pools.DEFAULT, config.getConcurrency())
                 .compute()
                 .getColors();
     }
@@ -139,7 +139,7 @@ public class MSColoringProc {
         log.debug("Writing results");
         Exporter.of(api, graph)
                 .withLog(log)
-                .parallel(Pools.DEFAULT, configuration.getConcurrency(api), null)
+                .parallel(Pools.DEFAULT, configuration.getConcurrency(), null)
                 .build()
                 .write(
                         configuration.get(CONFIG_CLUSTER_PROPERTY, DEFAULT_CLUSTER_PROPERTY),

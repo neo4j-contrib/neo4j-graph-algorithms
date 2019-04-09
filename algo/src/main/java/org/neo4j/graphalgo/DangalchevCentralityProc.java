@@ -69,7 +69,7 @@ public class DangalchevCentralityProc {
         final Graph graph = new GraphLoader(api, Pools.DEFAULT)
                 .init(log, configuration.getNodeLabelOrQuery(), configuration.getRelationshipOrQuery(), configuration)
                 .withoutNodeProperties()
-                .withConcurrency(configuration.getConcurrency(api))
+                .withConcurrency(configuration.getConcurrency())
                 .withAllocationTracker(tracker)
                 .asUndirected(true)
                 .load(configuration.getGraphImpl("huge"));
@@ -79,7 +79,7 @@ public class DangalchevCentralityProc {
             return Stream.empty();
         }
 
-        final DangalchevClosenessCentrality algo = new DangalchevClosenessCentrality(graph, configuration.getConcurrency(api), Pools.DEFAULT)
+        final DangalchevClosenessCentrality algo = new DangalchevClosenessCentrality(graph, configuration.getConcurrency(), Pools.DEFAULT)
                 .withProgressLogger(ProgressLogger.wrap(log, "DangalchevCentrality"))
                 .withTerminationFlag(TerminationFlag.wrap(transaction))
                 .compute();
@@ -104,7 +104,7 @@ public class DangalchevCentralityProc {
         final CentralityProcResult.Builder builder = CentralityProcResult.builder();
 
         final AllocationTracker tracker = AllocationTracker.create();
-        final int concurrency = configuration.getConcurrency(api);
+        final int concurrency = configuration.getConcurrency();
         final TerminationFlag terminationFlag = TerminationFlag.wrap(transaction);
 
         final Graph graph;

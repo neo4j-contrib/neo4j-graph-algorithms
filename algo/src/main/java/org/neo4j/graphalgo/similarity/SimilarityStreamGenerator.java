@@ -24,7 +24,6 @@ import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
 import org.neo4j.graphdb.DependencyResolver;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -56,7 +55,7 @@ public class SimilarityStreamGenerator<T> {
     }
 
     public Stream<SimilarityResult> stream(T[] inputs, int[] sourceIndexIds, int[] targetIndexIds, double cutoff, int topK) {
-        int concurrency = configuration.getConcurrency(db);
+        int concurrency = configuration.getConcurrency();
 
         int length = inputs.length;
         if (concurrency == 1) {
@@ -75,7 +74,7 @@ public class SimilarityStreamGenerator<T> {
     }
 
     public Stream<SimilarityResult> stream(T[] inputs, double cutoff, int topK) {
-        int concurrency = configuration.getConcurrency(db);
+        int concurrency = configuration.getConcurrency();
 
         int length = inputs.length;
         if (concurrency == 1) {

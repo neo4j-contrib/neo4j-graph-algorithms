@@ -131,7 +131,7 @@ public class BetweennessCentralityIntegrationTest {
 
     @Test
     public void testSuccessorBCDirect() throws Exception {
-        new BetweennessCentralitySuccessorBrandes(null, graph, Pools.DEFAULT)
+        new BetweennessCentralitySuccessorBrandes(graph, Pools.DEFAULT)
                 .compute()
                 .forEach(consumer);
         verify(consumer, times(10)).consume(anyLong(), eq(6.0));

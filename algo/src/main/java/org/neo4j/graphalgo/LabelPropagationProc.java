@@ -103,7 +103,7 @@ public final class LabelPropagationProc {
 
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final int concurrency = configuration.getConcurrency(dbAPI);
+        final int concurrency = configuration.getConcurrency();
         final String partitionProperty = configuration.getString(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String writeProperty = configuration.get(CONFIG_WRITE_KEY, CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
@@ -154,7 +154,7 @@ public final class LabelPropagationProc {
 
         final int iterations = configuration.getIterations(DEFAULT_ITERATIONS);
         final int batchSize = configuration.getBatchSize();
-        final int concurrency = configuration.getConcurrency(dbAPI);
+        final int concurrency = configuration.getConcurrency();
         final String partitionProperty = configuration.getString(CONFIG_PARTITION_KEY, DEFAULT_PARTITION_KEY);
         final String weightProperty = configuration.getString(CONFIG_WEIGHT_KEY, DEFAULT_WEIGHT_KEY);
 

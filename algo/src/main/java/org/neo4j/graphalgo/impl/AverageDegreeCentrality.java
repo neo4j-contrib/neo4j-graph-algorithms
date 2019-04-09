@@ -47,7 +47,7 @@ public class AverageDegreeCentrality extends Algorithm<AverageDegreeCentrality> 
             Direction direction
     ) {
         if (concurrency <= 0) {
-            concurrency = Pools.DEFAULT_QUEUE_SIZE;
+            concurrency = Pools.defaultConcurrency();
         }
 
         this.graph = graph;
