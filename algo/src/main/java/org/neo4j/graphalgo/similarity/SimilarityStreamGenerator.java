@@ -23,7 +23,6 @@ import org.neo4j.graphalgo.core.utils.ParallelUtil;
 import org.neo4j.graphalgo.core.utils.Pools;
 import org.neo4j.graphalgo.core.utils.QueueBasedSpliterator;
 import org.neo4j.graphalgo.core.utils.TerminationFlag;
-import org.neo4j.graphdb.DependencyResolver;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;

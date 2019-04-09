@@ -31,38 +31,17 @@ import java.util.concurrent.locks.LockSupport;
 
 public final class Pools {
 
-    private static final String PROCESSORS_OVERRIDE_PROPERTY = "neo4j.graphalgo.processors";
-    private static final int MAX_CE_CONCURRENCY = 4;
     private static final int MAX_CONCURRENCY;
     public static final int DEFAULT_CONCURRENCY;
 
     static {
-        boolean isOnEnterprise = Package.getPackage("org.neo4j.kernel.impl.enterprise") != null;
-        MAX_CONCURRENCY = loadMaxConcurrency(isOnEnterprise);
-        DEFAULT_CONCURRENCY = loadDefaultConcurrency(isOnEnterprise);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig();
+        MAX_CONCURRENCY = concurrencyConfig.maxConcurrency;
+        DEFAULT_CONCURRENCY = concurrencyConfig.defaultConcurrency;
     }
 
     public static int allowedConcurrency(int concurrency) {
         return Math.min(MAX_CONCURRENCY, concurrency);
-    }
-
-    static int loadMaxConcurrency(boolean isOnEnterprise) {
-        return isOnEnterprise ? Integer.MAX_VALUE : MAX_CE_CONCURRENCY;
-    }
-
-    static int loadDefaultConcurrency(boolean isOnEnterprise) {
-        Integer definedProcessors = null;
-        try {
-            definedProcessors = Integer.getInteger(PROCESSORS_OVERRIDE_PROPERTY);
-        } catch (SecurityException ignored) {
-        }
-        if (definedProcessors == null) {
-            definedProcessors = Runtime.getRuntime().availableProcessors();
-        }
-        if (!isOnEnterprise) {
-            definedProcessors = Math.min(definedProcessors, MAX_CE_CONCURRENCY);
-        }
-        return definedProcessors;
     }
 
     public static final int DEFAULT_QUEUE_SIZE = DEFAULT_CONCURRENCY * 50;

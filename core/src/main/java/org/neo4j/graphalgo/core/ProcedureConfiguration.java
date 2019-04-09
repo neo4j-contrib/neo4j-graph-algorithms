@@ -392,13 +392,11 @@ public class ProcedureConfiguration {
         return (V) value;
     }
 
-    public static ProcedureConfiguration create(
-            Map<String, Object> config) {
+    public static ProcedureConfiguration create(Map<String, Object> config) {
         return new ProcedureConfiguration(config);
     }
 
     private static String reverseGraphLookup(Class<? extends GraphFactory> cls) {
-
         if (HeavyGraphFactory.class.isAssignableFrom(cls)) {
             return "heavy";
         }
