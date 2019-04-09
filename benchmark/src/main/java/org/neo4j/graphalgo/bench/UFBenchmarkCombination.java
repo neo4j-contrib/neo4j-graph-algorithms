@@ -45,7 +45,7 @@ public enum UFBenchmarkCombination {
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
                 (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                    Pools.DEFAULT_CONCURRENCY,
+                Pools.DEFAULT_CONCURRENCY,
                 Double.NaN,
                 NOTHING);
         }
@@ -58,7 +58,7 @@ public enum UFBenchmarkCombination {
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
                 (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                    Pools.DEFAULT_CONCURRENCY,
+                Pools.DEFAULT_CONCURRENCY,
                 Double.NaN,
                 NOTHING);
         }
@@ -71,7 +71,7 @@ public enum UFBenchmarkCombination {
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
                 (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                    Pools.DEFAULT_CONCURRENCY,
+                Pools.DEFAULT_CONCURRENCY,
                 Double.NaN,
                 NOTHING);
         }
@@ -84,7 +84,7 @@ public enum UFBenchmarkCombination {
                 Pools.DEFAULT,
                 AllocationTracker.EMPTY,
                 (int) (graph.nodeCount() / Pools.DEFAULT_CONCURRENCY),
-                    Pools.DEFAULT_CONCURRENCY,
+                Pools.DEFAULT_CONCURRENCY,
                 Double.NaN,
                 NOTHING);
         }
