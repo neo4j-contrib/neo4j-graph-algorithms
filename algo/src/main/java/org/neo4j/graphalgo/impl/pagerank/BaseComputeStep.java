@@ -41,8 +41,8 @@ public abstract class BaseComputeStep implements ComputeStep {
 
     double[] pageRank;
     double[] deltas;
-    int[][] nextScores;
-    private int[][] prevScores;
+    float[][] nextScores;
+    float[][] prevScores;
 
     final int partitionSize;
     final int startNode;
@@ -65,7 +65,7 @@ public abstract class BaseComputeStep implements ComputeStep {
         state = S_INIT;
     }
 
-    public void setStarts(int starts[], int[] lengths) {
+    public void setStarts(int[] starts, int[] lengths) {
         this.starts = starts;
         this.lengths = lengths;
     }
@@ -76,7 +76,7 @@ public abstract class BaseComputeStep implements ComputeStep {
             singleIteration();
             state = S_SYNC;
         } else if (state == S_SYNC) {
-            synchronizeScores(combineScores());
+            combineScores();
             state = S_NORM;
         } else if(state == S_NORM) {
             normalizeDeltas();
@@ -90,8 +90,8 @@ public abstract class BaseComputeStep implements ComputeStep {
     void normalizeDeltas() {}
 
     private void initialize() {
-        this.nextScores = new int[starts.length][];
-        Arrays.setAll(nextScores, i -> new int[lengths[i]]);
+        this.nextScores = new float[starts.length][];
+        Arrays.setAll(nextScores, i -> new float[lengths[i]]);
 
         double[] partitionRank = new double[partitionSize];
 
@@ -99,7 +99,7 @@ public abstract class BaseComputeStep implements ComputeStep {
         if(sourceNodeIds.length == 0) {
             Arrays.fill(partitionRank, initialValue);
         } else {
-            Arrays.fill(partitionRank,0);
+            Arrays.fill(partitionRank, 0.0);
 
             int[] partitionSourceNodeIds = IntStream.of(sourceNodeIds)
                     .filter(sourceNodeId -> sourceNodeId >= startNode && sourceNodeId < endNode)
@@ -126,45 +126,34 @@ public abstract class BaseComputeStep implements ComputeStep {
         this.l2Norm = l2Norm;
     }
 
-    public void prepareNextIteration(int[][] prevScores) {
+    public void prepareNextIteration(float[][] prevScores) {
         this.prevScores = prevScores;
     }
 
-    private int[] combineScores() {
+    void combineScores() {
         assert prevScores != null;
         assert prevScores.length >= 1;
-        int[][] prevScores = this.prevScores;
 
-        int length = prevScores.length;
-        int[] allScores = prevScores[0];
-        for (int i = 1; i < length; i++) {
-            int[] scores = prevScores[i];
-            for (int j = 0; j < scores.length; j++) {
-                allScores[j] += scores[j];
-                scores[j] = 0;
-            }
-        }
-
-        return allScores;
-    }
-
-    void synchronizeScores(int[] allScores) {
         double dampingFactor = this.dampingFactor;
         double[] pageRank = this.pageRank;
+        double[] deltas = this.deltas;
+        float[][] prevScores = this.prevScores;
+        int length = prevScores[0].length;
 
-        int length = allScores.length;
         for (int i = 0; i < length; i++) {
-            int sum = allScores[i];
-
-            double delta = dampingFactor * (sum / 100_000.0);
+            double sum = 0.0;
+            for (float[] scores : prevScores) {
+                sum += (double) scores[i];
+                scores[i] = 0f;
+            }
+            double delta = dampingFactor * sum;
             pageRank[i] += delta;
             deltas[i] = delta;
-            allScores[i] = 0;
         }
     }
 
     @Override
-    public int[][] nextScores() {
+    public float[][] nextScores() {
         return nextScores;
     }
 

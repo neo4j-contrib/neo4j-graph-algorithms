@@ -60,7 +60,7 @@ public class HugeWeightedComputeStep extends HugeBaseComputeStep implements Huge
         HugeRelationshipIterator rels = this.relationshipIterator;
         for (long nodeId = startNode; nodeId < endNode; ++nodeId) {
             delta = deltas[(int) (nodeId - startNode)];
-            if (delta > 0) {
+            if (delta > 0.0) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
                 if (degree > 0) {
                     sumOfWeights = aggregatedDegrees[(int) nodeId];
@@ -76,8 +76,8 @@ public class HugeWeightedComputeStep extends HugeBaseComputeStep implements Huge
 
         if (weight > 0) {
             double proportion = weight / sumOfWeights;
-            int srcRankDelta = (int) (100_000 * (delta * proportion));
-            if (srcRankDelta != 0) {
+            float srcRankDelta = (float) (delta * proportion);
+            if (srcRankDelta != 0f) {
                 int idx = binaryLookup(targetNodeId, starts);
                 nextScores[idx][(int) (targetNodeId - starts[idx])] += srcRankDelta;
             }

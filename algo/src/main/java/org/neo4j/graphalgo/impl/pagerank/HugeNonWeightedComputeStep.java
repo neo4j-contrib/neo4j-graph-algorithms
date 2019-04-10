@@ -26,7 +26,7 @@ import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
 public class HugeNonWeightedComputeStep extends HugeBaseComputeStep implements HugeRelationshipConsumer {
 
-    private int srcRankDelta;
+    private float srcRankDelta;
 
     HugeNonWeightedComputeStep(
             double dampingFactor,
@@ -51,10 +51,10 @@ public class HugeNonWeightedComputeStep extends HugeBaseComputeStep implements H
         HugeRelationshipIterator rels = this.relationshipIterator;
         for (long nodeId = startNode; nodeId < endNode; ++nodeId) {
             double delta = deltas[(int) (nodeId - startNode)];
-            if (delta > 0) {
+            if (delta > 0.0) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
                 if (degree > 0) {
-                    srcRankDelta = (int) (100_000 * (delta / degree));
+                    srcRankDelta = (float) (delta / degree);
                     rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
                 }
             }
@@ -63,7 +63,7 @@ public class HugeNonWeightedComputeStep extends HugeBaseComputeStep implements H
 
     @Override
     public boolean accept(long sourceNodeId, long targetNodeId) {
-        if (srcRankDelta != 0) {
+        if (srcRankDelta != 0f) {
             int idx = binaryLookup(targetNodeId, starts);
             nextScores[idx][(int) (targetNodeId - starts[idx])] += srcRankDelta;
         }

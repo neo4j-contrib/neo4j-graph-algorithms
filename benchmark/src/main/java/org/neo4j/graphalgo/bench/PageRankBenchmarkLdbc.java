@@ -26,7 +26,6 @@ import org.neo4j.graphalgo.helper.ldbc.LdbcDownloader;
 import org.neo4j.graphalgo.impl.pagerank.PageRankAlgorithm;
 import org.neo4j.graphalgo.impl.results.CentralityResult;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.internal.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.openjdk.jmh.annotations.*;
 
@@ -35,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 @Threads(1)
-@Fork(value = 3, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
+@Fork(value = 1, jvmArgs = {"-Xms8g", "-Xmx8g", "-XX:+UseG1GC"})
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 2)
 @State(Scope.Benchmark)
@@ -43,20 +42,16 @@ import java.util.stream.LongStream;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class PageRankBenchmarkLdbc {
 
-//    @Param({"HEAVY", "HUGE"})
-    @Param({"HEAVY"})
+    @Param({"HEAVY", "HUGE"})
     GraphImpl graph;
 
-//    @Param({"true", "false"})
-    @Param({"false"})
+    @Param({"true"})
     boolean parallel;
 
-//    @Param({"L01", "L10"})
     @Param({"L01"})
     String graphId;
 
     @Param({"5"})
-//    @Param({"5", "20"})
     int iterations;
 
     private GraphDatabaseAPI db;
@@ -64,7 +59,7 @@ public class PageRankBenchmarkLdbc {
     private int batchSize;
 
     @Setup
-    public void setup() throws KernelException, IOException {
+    public void setup() throws IOException {
         db = LdbcDownloader.openDb(graphId);
         grph = new GraphLoader(db, Pools.DEFAULT)
                 .withDirection(Direction.OUTGOING)
@@ -81,7 +76,7 @@ public class PageRankBenchmarkLdbc {
     }
 
     @Benchmark
-    public CentralityResult run() throws Exception {
+    public CentralityResult run() {
         return PageRankAlgorithm.of(
                 AllocationTracker.EMPTY,
                 grph,

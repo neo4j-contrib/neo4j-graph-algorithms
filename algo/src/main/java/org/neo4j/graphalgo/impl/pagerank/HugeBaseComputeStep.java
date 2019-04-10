@@ -20,16 +20,13 @@ package org.neo4j.graphalgo.impl.pagerank;
 
 import org.neo4j.graphalgo.api.HugeDegrees;
 import org.neo4j.graphalgo.api.HugeRelationshipIterator;
-import org.neo4j.graphalgo.api.HugeRelationshipWeights;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
-import org.neo4j.graphdb.Direction;
 
 import java.util.Arrays;
 import java.util.stream.LongStream;
 
-import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfDoubleArray;
-import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfIntArray;
+import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.sizeOfFloatArray;
 
 public abstract class HugeBaseComputeStep implements HugeComputeStep {
     private static final int S_INIT = 0;
@@ -51,8 +48,8 @@ public abstract class HugeBaseComputeStep implements HugeComputeStep {
 
     double[] pageRank;
     double[] deltas;
-    int[][] nextScores;
-    int[][] prevScores;
+    float[][] nextScores;
+    float[][] prevScores;
 
     final long startNode;
     final long endNode;
@@ -104,11 +101,11 @@ public abstract class HugeBaseComputeStep implements HugeComputeStep {
     void normalizeDeltas() {}
 
     private void initialize() {
-        this.nextScores = new int[starts.length][];
+        this.nextScores = new float[starts.length][];
         Arrays.setAll(nextScores, i -> {
             int size = lengths[i];
-            tracker.add(sizeOfIntArray(size));
-            return new int[size];
+            tracker.add(sizeOfFloatArray(size));
+            return new float[size];
         });
 
         tracker.add(sizeOfDoubleArray(partitionSize) << 1);
@@ -118,7 +115,7 @@ public abstract class HugeBaseComputeStep implements HugeComputeStep {
         if(sourceNodeIds.length == 0) {
             Arrays.fill(partitionRank, initialValue);
         } else {
-            Arrays.fill(partitionRank,0);
+            Arrays.fill(partitionRank,0.0);
 
             long[] partitionSourceNodeIds = LongStream.of(sourceNodeIds)
                     .filter(sourceNodeId -> sourceNodeId >= startNode && sourceNodeId < endNode)
@@ -144,32 +141,32 @@ public abstract class HugeBaseComputeStep implements HugeComputeStep {
         this.l2Norm = l2Norm;
     }
 
-    public void prepareNextIteration(int[][] prevScores) {
+    public void prepareNextIteration(float[][] prevScores) {
         this.prevScores = prevScores;
     }
 
-    private void combineScores() {
+    void combineScores() {
         assert prevScores != null;
         assert prevScores.length >= 1;
 
         int scoreDim = prevScores.length;
-        int[][] prevScores = this.prevScores;
+        float[][] prevScores = this.prevScores;
 
         int length = prevScores[0].length;
         for (int i = 0; i < length; i++) {
-            int sum = 0;
+            double sum = 0.0;
             for (int j = 0; j < scoreDim; j++) {
-                int[] scores = prevScores[j];
-                sum += scores[i];
-                scores[i] = 0;
+                float[] scores = prevScores[j];
+                sum += (double) scores[i];
+                scores[i] = 0f;
             }
-            double delta = dampingFactor * (sum / 100_000.0);
+            double delta = dampingFactor * sum;
             pageRank[i] += delta;
             deltas[i] = delta;
         }
     }
 
-    public int[][] nextScores() {
+    public float[][] nextScores() {
         return nextScores;
     }
 

@@ -41,7 +41,7 @@ final class ArticleRankComputeStep extends BaseComputeStep implements Relationsh
     }
 
 
-    private int srcRankDelta;
+    private float srcRankDelta;
 
 
     void singleIteration() {
@@ -53,7 +53,7 @@ final class ArticleRankComputeStep extends BaseComputeStep implements Relationsh
             if (delta > 0) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
                 if (degree > 0) {
-                    srcRankDelta = (int) (100_000 * (delta / (degree + averageDegree)));
+                    srcRankDelta = (float) (delta / (degree + averageDegree));
                     rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
                 }
             }
@@ -61,7 +61,7 @@ final class ArticleRankComputeStep extends BaseComputeStep implements Relationsh
     }
 
     public boolean accept(int sourceNodeId, int targetNodeId, long relationId) {
-        if (srcRankDelta != 0) {
+        if (srcRankDelta != 0f) {
             int idx = binaryLookup(targetNodeId, starts);
             nextScores[idx][targetNodeId - starts[idx]] += srcRankDelta;
         }

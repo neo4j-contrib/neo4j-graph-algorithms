@@ -23,9 +23,9 @@ public interface HugeComputeStep extends Runnable {
 
     long[] starts();
 
-    void prepareNextIteration(int[][] score);
+    void prepareNextIteration(float[][] score);
 
-    int[][] nextScores();
+    float[][] nextScores();
 
     void setStarts(long[] startArray, int[] lengthArray);
 
