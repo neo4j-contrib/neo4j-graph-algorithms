@@ -88,4 +88,11 @@ public class ProcedureConfigurationTest {
         ProcedureConfiguration procedureConfiguration = ProcedureConfiguration.create(map);
         assertEquals("scc", procedureConfiguration.getString("writeProperty", "defaultValue"));
     }
+
+    @Test
+    public void convertNonDoubleDefaultValues() {
+        Map<String, Object> map = MapUtil.map("defaultValue", 1L);
+        ProcedureConfiguration procedureConfiguration = ProcedureConfiguration.create(map);
+        assertEquals(1.0, procedureConfiguration.getWeightPropertyDefaultValue(0.0), 0.001);
+    }
 }
