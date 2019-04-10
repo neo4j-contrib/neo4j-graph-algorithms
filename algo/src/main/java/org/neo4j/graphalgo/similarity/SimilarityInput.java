@@ -64,4 +64,26 @@ public interface SimilarityInput {
         }
     }
 
+
+    static List<Number> extractValues(Object rawValues) {
+        if (rawValues == null) {
+            return Collections.emptyList();
+        }
+
+        List<Number> valueList = new ArrayList<>();
+        if (rawValues instanceof long[]) {
+            long[] values = (long[]) rawValues;
+            for (long value : values) {
+                valueList.add(value);
+            }
+        } else if (rawValues instanceof double[]) {
+            double[] values = (double[]) rawValues;
+            for (double value : values) {
+                valueList.add(value);
+            }
+        } else {
+            valueList = (List<Number>) rawValues;
+        }
+        return valueList;
+    }
 }

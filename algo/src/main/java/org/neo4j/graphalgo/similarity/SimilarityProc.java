@@ -134,7 +134,7 @@ public class SimilarityProc {
         CategoricalInput[] ids = new CategoricalInput[data.size()];
         int idx = 0;
         for (Map<String, Object> row : data) {
-            List<Number> targetIds = extractValues(row.get("categories"));
+            List<Number> targetIds = SimilarityInput.extractValues(row.get("categories"));
             int size = targetIds.size();
             if (size > degreeCutoff) {
                 long[] targets = new long[size];
@@ -156,30 +156,12 @@ public class SimilarityProc {
             return prepareSparseWeights(api, (String) rawData,  skipValue, configuration);
         } else {
             List<Map<String, Object>> data = (List<Map<String, Object>>) rawData;
-            return preparseDenseWeights(data, getDegreeCutoff(configuration), skipValue);
+            return WeightedInput.prepareDenseWeights(data, getDegreeCutoff(configuration), skipValue);
         }
     }
 
     Double readSkipValue(ProcedureConfiguration configuration) {
         return configuration.get("skipValue", Double.NaN);
-    }
-
-    private WeightedInput[] preparseDenseWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {
-        WeightedInput[] inputs = new WeightedInput[data.size()];
-        int idx = 0;
-        for (Map<String, Object> row : data) {
-
-            List<Number> weightList = extractValues(row.get("weights"));
-
-            int size = weightList.size();
-            if (size > degreeCutoff) {
-                double[] weights = Weights.buildWeights(weightList);
-                inputs[idx++] = skipValue == null ? WeightedInput.dense((Long) row.get("item"), weights) : WeightedInput.dense((Long) row.get("item"), weights, skipValue);
-            }
-        }
-        if (idx != inputs.length) inputs = Arrays.copyOf(inputs, idx);
-        Arrays.sort(inputs);
-        return inputs;
     }
 
     private WeightedInput[] prepareSparseWeights(GraphDatabaseAPI api, String query, Double skipValue, ProcedureConfiguration configuration) throws Exception {
@@ -228,28 +210,6 @@ public class SimilarityProc {
         if (idx != inputs.length) inputs = Arrays.copyOf(inputs, idx);
         Arrays.sort(inputs);
         return inputs;
-    }
-
-    private List<Number> extractValues(Object rawValues) {
-        if (rawValues == null) {
-            return Collections.emptyList();
-        }
-
-        List<Number> valueList = new ArrayList<>();
-        if (rawValues instanceof long[]) {
-            long[] values = (long[]) rawValues;
-            for (long value : values) {
-                valueList.add(value);
-            }
-        } else if (rawValues instanceof double[]) {
-            double[] values = (double[]) rawValues;
-            for (double value : values) {
-                valueList.add(value);
-            }
-        } else {
-            valueList = (List<Number>) rawValues;
-        }
-        return valueList;
     }
 
     int getTopK(ProcedureConfiguration configuration) {

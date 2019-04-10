@@ -19,11 +19,50 @@
 package org.neo4j.graphalgo.similarity;
 
 import org.junit.Test;
+import org.neo4j.helpers.collection.MapUtil;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 
 public class WeightedInputTest {
+    @Test
+    public void degreeCutoffBasedOnSkipValue() {
+        List<Map<String, Object>> data = new ArrayList<>();
+        data.add(MapUtil.map("item", 1L,"weights", Arrays.asList(2.0, 3.0, 4.0)));
+        data.add(MapUtil.map("item", 2L,"weights", Arrays.asList(2.0, 3.0, Double.NaN)));
+
+        WeightedInput[] weightedInputs = WeightedInput.prepareDenseWeights(data, 2L, Double.NaN);
+
+        assertEquals(1, weightedInputs.length);
+    }
+
+    @Test
+    public void degreeCutoffWithoutSkipValue() {
+        List<Map<String, Object>> data = new ArrayList<>();
+        data.add(MapUtil.map("item", 1L,"weights", Arrays.asList(2.0, 3.0, 4.0)));
+        data.add(MapUtil.map("item", 2L,"weights", Arrays.asList(2.0, 3.0, Double.NaN)));
+
+        WeightedInput[] weightedInputs = WeightedInput.prepareDenseWeights(data, 2L, null);
+
+        assertEquals(2, weightedInputs.length);
+    }
+
+    @Test
+    public void degreeCutoffWithNumericSkipValue() {
+        List<Map<String, Object>> data = new ArrayList<>();
+        data.add(MapUtil.map("item", 1L,"weights", Arrays.asList(2.0, 3.0, 4.0)));
+        data.add(MapUtil.map("item", 2L,"weights", Arrays.asList(2.0, 3.0, 5.0)));
+
+        WeightedInput[] weightedInputs = WeightedInput.prepareDenseWeights(data, 2L, 5.0);
+
+        assertEquals(1, weightedInputs.length);
+    }
+
     @Test
     public void pearsonNoCompression() {
         double[] weights1 = new double[]{1, 2, 3, 4, 4, 4, 4, 5, 6};
