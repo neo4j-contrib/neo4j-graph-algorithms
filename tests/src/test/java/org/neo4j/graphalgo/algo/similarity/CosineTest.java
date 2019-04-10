@@ -238,10 +238,7 @@ public class CosineTest {
         assertTrue(results.hasNext());
         assert01Skip(results.next());
         assert02Skip(results.next());
-        assert03Skip(results.next());
         assert12Skip(results.next());
-        assert13Skip(results.next());
-        assert23Skip(results.next());
         assertFalse(results.hasNext());
     }
 

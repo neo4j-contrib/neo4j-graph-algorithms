@@ -269,7 +269,7 @@ public class Intersections {
         return Double.isNaN(result) ? 0 : result;
     }
 
-    private static boolean shouldSkip(double weight, double skipValue, boolean skipNan) {
+    public static boolean shouldSkip(double weight, double skipValue, boolean skipNan) {
         return weight == skipValue || (skipNan && Double.isNaN(weight));
     }
 

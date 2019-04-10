@@ -20,6 +20,10 @@ package org.neo4j.graphalgo.similarity;
 
 import org.neo4j.graphalgo.core.utils.Intersections;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 class WeightedInput implements Comparable<WeightedInput>, SimilarityInput {
     private final long id;
     private int itemCount;
@@ -60,6 +64,32 @@ class WeightedInput implements Comparable<WeightedInput>, SimilarityInput {
 
     public static WeightedInput dense(long id, double[] weights) {
         return new WeightedInput(id, weights);
+    }
+
+    static  WeightedInput[] prepareDenseWeights(List<Map<String, Object>> data, long degreeCutoff, Double skipValue) {
+        WeightedInput[] inputs = new WeightedInput[data.size()];
+        int idx = 0;
+
+        boolean skipAnything = skipValue != null;
+        boolean skipNan = skipAnything && Double.isNaN(skipValue);
+
+        for (Map<String, Object> row : data) {
+            List<Number> weightList = SimilarityInput.extractValues(row.get("weights"));
+
+            long weightsSize = skipAnything ? skipSize(skipValue, skipNan, weightList) : weightList.size();
+
+            if (weightsSize > degreeCutoff) {
+                double[] weights = Weights.buildWeights(weightList);
+                inputs[idx++] = skipValue == null ? dense((Long) row.get("item"), weights) : dense((Long) row.get("item"), weights, skipValue);
+            }
+        }
+        if (idx != inputs.length) inputs = Arrays.copyOf(inputs, idx);
+        Arrays.sort(inputs);
+        return inputs;
+    }
+
+    private static long skipSize(Double skipValue, boolean skipNan, List<Number> weightList) {
+        return weightList.stream().filter(value -> !Intersections.shouldSkip(value.doubleValue(), skipValue, skipNan)).count();
     }
 
     public int compareTo(WeightedInput o) {
