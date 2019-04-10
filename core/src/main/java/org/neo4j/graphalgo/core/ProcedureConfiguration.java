@@ -226,7 +226,7 @@ public class ProcedureConfiguration {
     }
 
     public double getWeightPropertyDefaultValue(double defaultValue) {
-        return get(ProcedureConstants.DEFAULT_PROPERTY_VALUE_PARAM, defaultValue);
+        return getNumber(ProcedureConstants.DEFAULT_PROPERTY_VALUE_PARAM, defaultValue).doubleValue();
     }
 
     /**
