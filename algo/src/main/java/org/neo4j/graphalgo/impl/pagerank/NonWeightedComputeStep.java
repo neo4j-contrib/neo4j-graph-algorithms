@@ -41,7 +41,7 @@ final class NonWeightedComputeStep extends BaseComputeStep implements Relationsh
     }
 
 
-    private int srcRankDelta;
+    private float srcRankDelta;
 
 
     void singleIteration() {
@@ -53,7 +53,7 @@ final class NonWeightedComputeStep extends BaseComputeStep implements Relationsh
             if (delta > 0) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
                 if (degree > 0) {
-                    srcRankDelta = (int) (100_000 * (delta / degree));
+                    srcRankDelta = (float) (delta / degree);
                     rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
                 }
             }

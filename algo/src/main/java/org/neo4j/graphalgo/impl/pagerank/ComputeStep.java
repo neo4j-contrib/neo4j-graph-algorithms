@@ -19,7 +19,7 @@
 package org.neo4j.graphalgo.impl.pagerank;
 
 public interface ComputeStep extends Runnable {
-    int[][] nextScores();
+    float[][] nextScores();
 
     double[] pageRank();
 
@@ -27,7 +27,7 @@ public interface ComputeStep extends Runnable {
 
     void setStarts(int[] startArray, int[] lengthArray);
 
-    void prepareNextIteration(int[][] score);
+    void prepareNextIteration(float[][] score);
 
     void prepareNormalizeDeltas(double l2Norm, int iteration);
 

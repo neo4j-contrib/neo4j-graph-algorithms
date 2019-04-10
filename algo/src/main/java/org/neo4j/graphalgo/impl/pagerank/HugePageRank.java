@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.LongStream;
 
-import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 import static org.neo4j.graphalgo.core.utils.paged.AllocationTracker.humanReadable;
 import static org.neo4j.graphalgo.core.utils.paged.MemoryUsage.*;
 
@@ -115,7 +114,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
     /**
      * Forces sequential use. If you want parallelism, prefer
-     * {@link #HugePageRank(ExecutorService, int, int, AllocationTracker, HugeIdMapping, HugeNodeIterator, HugeRelationshipIterator, HugeDegrees, double)}
+     * {@link #HugePageRank(ExecutorService, int, int, AllocationTracker, HugeGraph, double, LongStream, PageRankVariant)}
      */
     HugePageRank(
             AllocationTracker tracker,
@@ -459,7 +458,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
     private final class ComputeSteps {
         private List<HugeComputeStep> steps;
         private final ExecutorService pool;
-        private int[][][] scores;
+        private float[][][] scores;
         private final int concurrency;
 
         private ComputeSteps(
@@ -472,7 +471,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
             this.steps = steps;
             this.pool = pool;
             int stepSize = steps.size();
-            scores = new int[stepSize][stepSize][];
+            scores = new float[stepSize][stepSize][];
             if (AllocationTracker.isTracking(tracker)) {
                 tracker.add((stepSize + 1) * sizeOfObjectArray(stepSize));
             }
@@ -536,7 +535,7 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
 
         private void synchronizeScores() {
             int stepSize = steps.size();
-            int[][][] scores = this.scores;
+            float[][][] scores = this.scores;
             int i;
             for (i = 0; i < stepSize; i++) {
                 synchronizeScores(steps.get(i), i, scores);
@@ -546,9 +545,9 @@ public class HugePageRank extends Algorithm<HugePageRank> implements PageRankAlg
         private void synchronizeScores(
                 HugeComputeStep step,
                 int idx,
-                int[][][] scores) {
+                float[][][] scores) {
             step.prepareNextIteration(scores[idx]);
-            int[][] nextScores = step.nextScores();
+            float[][] nextScores = step.nextScores();
             for (int j = 0, len = nextScores.length; j < len; j++) {
                 scores[j][idx] = nextScores[j];
             }

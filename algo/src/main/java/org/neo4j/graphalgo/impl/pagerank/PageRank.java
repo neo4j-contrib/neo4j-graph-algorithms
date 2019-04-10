@@ -92,7 +92,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
     /**
      * Forces sequential use. If you want parallelism, prefer
-     * {@link #PageRank(ExecutorService, int, int, IdMapping, NodeIterator, RelationshipIterator, Degrees, double)}
+     * {@link #PageRank(ExecutorService, int, int, Graph, double, LongStream, PageRankVariant)}
      */
     PageRank(Graph graph,
              double dampingFactor,
@@ -320,7 +320,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private final int concurrency;
         private List<ComputeStep> steps;
         private final ExecutorService pool;
-        private int[][][] scores;
+        private float[][][] scores;
 
         private ComputeSteps(
                 int concurrency,
@@ -331,8 +331,8 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
             this.steps = steps;
             this.pool = pool;
             int stepSize = steps.size();
-            scores = new int[stepSize][][];
-            Arrays.setAll(scores, i -> new int[stepSize][]);
+            scores = new float[stepSize][][];
+            Arrays.setAll(scores, i -> new float[stepSize][]);
         }
 
         CentralityResult getPageRank() {
@@ -389,7 +389,7 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
 
         private void synchronizeScores() {
             int numberOfSteps = steps.size();
-            int[][][] scores = this.scores;
+            float[][][] scores = this.scores;
             int stepIndex;
             for (stepIndex = 0; stepIndex < numberOfSteps; stepIndex++) {
                 synchronizeScoresForStep(steps.get(stepIndex), stepIndex, scores);
@@ -399,9 +399,9 @@ public class PageRank extends Algorithm<PageRank> implements PageRankAlgorithm {
         private void synchronizeScoresForStep(
                 ComputeStep step,
                 int idx,
-                int[][][] scores) {
+                float[][][] scores) {
             step.prepareNextIteration(scores[idx]);
-            int[][] nextScores = step.nextScores();
+            float[][] nextScores = step.nextScores();
             for (int j = 0, len = nextScores.length; j < len; j++) {
                 scores[j][idx] = nextScores[j];
             }

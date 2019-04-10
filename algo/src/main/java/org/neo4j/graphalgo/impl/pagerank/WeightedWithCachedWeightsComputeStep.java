@@ -70,8 +70,8 @@ final class WeightedWithCachedWeightsComputeStep extends BaseComputeStep impleme
     public boolean accept(int sourceNodeId, int targetNodeId, long relationId, double weight) {
         if (weight > 0) {
             double proportion = weight / sumOfWeights;
-            int srcRankDelta = (int) (100_000 * (delta * proportion));
-            if (srcRankDelta != 0) {
+            float srcRankDelta = (float) (delta * proportion);
+            if (srcRankDelta != 0f) {
                 int idx = binaryLookup(targetNodeId, starts);
                 nextScores[idx][targetNodeId - starts[idx]] += srcRankDelta;
             }

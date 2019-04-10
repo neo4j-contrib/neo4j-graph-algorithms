@@ -24,12 +24,10 @@ import org.neo4j.graphalgo.api.HugeRelationshipIterator;
 import org.neo4j.graphalgo.core.utils.paged.AllocationTracker;
 import org.neo4j.graphdb.Direction;
 
-import java.util.Arrays;
-
 import static org.neo4j.graphalgo.core.utils.ArrayUtil.binaryLookup;
 
 final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep implements HugeRelationshipConsumer {
-    private int srcRankDelta;
+    private float srcRankDelta;
     private final double initialValue;
 
     HugeEigenvectorCentralityComputeStep(
@@ -62,10 +60,10 @@ final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep imp
         HugeRelationshipIterator rels = this.relationshipIterator;
         for (long nodeId = startNode; nodeId < endNode; ++nodeId) {
             double delta = deltas[(int) (nodeId - startNode)];
-            if (delta > 0) {
+            if (delta > 0.0) {
                 int degree = degrees.degree(nodeId, Direction.OUTGOING);
                 if (degree > 0) {
-                    srcRankDelta = (int) (100_000 * delta);
+                    srcRankDelta = (float) delta;
                     rels.forEachRelationship(nodeId, Direction.OUTGOING, this);
                 }
             }
@@ -74,11 +72,32 @@ final class HugeEigenvectorCentralityComputeStep extends HugeBaseComputeStep imp
 
     @Override
     public boolean accept(long sourceNodeId, long targetNodeId) {
-        if (srcRankDelta != 0) {
+        if (srcRankDelta != 0f) {
             int idx = binaryLookup(targetNodeId, starts);
             nextScores[idx][(int) (targetNodeId - starts[idx])] += srcRankDelta;
         }
         return true;
+    }
+
+    @Override
+    void combineScores() {
+        assert prevScores != null;
+        assert prevScores.length >= 1;
+
+        double[] pageRank = this.pageRank;
+        double[] deltas = this.deltas;
+        float[][] prevScores = this.prevScores;
+        int length = prevScores[0].length;
+
+        for (int i = 0; i < length; i++) {
+            double delta = 0.0;
+            for (float[] scores : prevScores) {
+                delta += (double) scores[i];
+                scores[i] = 0f;
+            }
+            pageRank[i] += delta;
+            deltas[i] = delta;
+        }
     }
 
     @Override
