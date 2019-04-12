@@ -18,11 +18,30 @@
  */
 package org.neo4j.graphalgo.core.utils.paged;
 
-public final class NewHugeArrays {
-    public static HugeLongArray newPagedArray(long size, AllocationTracker tracker) {
-        return HugeLongArray.newPagedArray(size, tracker);
+public final class HugeObjectArrayTest extends HugeArrayTestBase<String[], String, HugeObjectArray<String>> {
+
+    @Override
+    HugeObjectArray<String> singleArray(final int size) {
+        return HugeObjectArray.newSingleArray(String.class, size, AllocationTracker.EMPTY);
     }
-    public static HugeLongArray newSingleArray(int size, AllocationTracker tracker) {
-        return HugeLongArray.newSingleArray(size, tracker);
+
+    @Override
+    HugeObjectArray<String> pagedArray(final int size) {
+        return HugeObjectArray.newPagedArray(String.class, size, AllocationTracker.EMPTY);
+    }
+
+    @Override
+    long bufferSize(final int size) {
+        return MemoryUsage.sizeOfObjectArray(size);
+    }
+
+    @Override
+    String box(final int value) {
+        return value + "";
+    }
+
+    @Override
+    int unbox(final String value) {
+        return value == null ? 0 : Integer.parseInt(value);
     }
 }
