@@ -37,6 +37,12 @@ The guide covers the following areas:
 * <<algorithms-linkprediction>> -- A detailed guide to each of the link prediction algorithms, including use-cases and examples.
 * <<algorithms-preprocessing>> -- A detailed guide to each of the preprocessing functions and procedures.
 
+In April 2019 O'Reilly published the Graph Algorithms Book, with practical examples in Apache Spark and Neo4j.
+
+image::GraphAlgos-Book.png[width=500]
+
+https://neo4j.com/graph-algorithms-book/[Download your free copy^]
+
 
 [[introduction]]
 == Introduction
