@@ -37,6 +37,8 @@ The guide covers the following areas:
 * <<algorithms-linkprediction>> -- A detailed guide to each of the link prediction algorithms, including use-cases and examples.
 * <<algorithms-preprocessing>> -- A detailed guide to each of the preprocessing functions and procedures.
 
+image:download_book.png[link=https://neo4j.com/graph-algorithms-book/]
+
 
 [[introduction]]
 == Introduction
