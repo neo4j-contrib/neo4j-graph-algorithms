@@ -15,7 +15,7 @@ endif::env-docs[]
 
 Amy Hodler and Mark Needham recently finished writing the O'Reilly Graph Algorithms Book. For a limited time only, you can download your copy from https://neo4j.com/graph-algorithms-book/[neo4j.com/graph-algorithms-book^]
 
-image::doc/images/OReilly-Graph-Algorithms_v2_ol1 (1).jpg[link=https://neo4j.com/graph-algorithms-book/, width=100]
+image::doc/images/OReilly-Graph-Algorithms_v2_ol1 (1).jpg[link=https://neo4j.com/graph-algorithms-book/, width=150]
 
 
 [[introduction-algorithms]]
