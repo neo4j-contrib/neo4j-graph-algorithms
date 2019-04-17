@@ -11,6 +11,10 @@ ifndef::env-docs[]
 You can find documentation at *https://neo4j.com/docs/graph-algorithms/current/[neo4j.com/docs/graph-algorithms^]*
 endif::env-docs[]
 
+== Graph Algorithms Book
+
+Amy Hodler and Mark Needham recently finished writing the O'Reilly Graph Algorithms Book. For a limited time only, you can download your copy from https://neo4j.com/graph-algorithms-book/[neo4j.com/graph-algorithms-book^]
+
 
 [[introduction-algorithms]]
 == Algorithms
