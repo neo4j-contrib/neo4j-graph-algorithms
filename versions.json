@@ -1,5 +1,11 @@
 [
     {
+        "neo4j": "3.5.8",
+        "version": "3.5.7.0",
+        "url": "",
+        "jar": "http://s3-eu-west-1.amazonaws.com/com.neo4j.graphalgorithms.dist/neo4j-graph-algorithms-3.5.7.0-standalone.jar"
+    },
+    {
         "neo4j": "3.5.7",
         "version": "3.5.7.0",
         "url": "",
