@@ -15,7 +15,7 @@ endif::env-docs[]
 
 **Please go to the neo4j download center to download the newest release of the graph algos library:** https://neo4j.com/download-center/
 
-We're hard at work improving and expanding our algorithms library, and while we sort out our code release process, please use the download center to find the most recent jar and release notes. *Our current version is **3.5.7.0**.*
+We're hard at work improving and expanding our algorithms library, and while we sort out our code release process, please use the download center to find the most recent jar and release notes. *Our current version is **3.5.11.0**.*
 
 == Graph Algorithms Book
 
