@@ -736,5 +736,11 @@
         "version": "3.5.12.1",
         "url": "",
         "jar": "https://s3-eu-west-1.amazonaws.com/com.neo4j.graphalgorithms.dist/neo4j-graph-algorithms-3.5.12.1-standalone.jar"
+    },
+    {
+        "neo4j": "3.5.13",
+        "version": "3.5.13.0",
+        "url": "",
+        "jar": "https://s3-eu-west-1.amazonaws.com/com.neo4j.graphalgorithms.dist/neo4j-graph-algorithms-3.5.13.0-standalone.jar"
     }
 ]
