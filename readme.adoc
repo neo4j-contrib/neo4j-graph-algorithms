@@ -17,6 +17,8 @@ We're excited to have released a *preview* of the Graph Data Science (GDS) libra
 
 This is an update to the graph algorithms library, featuing all of your favorite graph algorithms - and some new ones - plus a new, unified and simplified surface, improvements to the graph loaders, better error messaging, and additional features and workflows to support production scale deployments.
 
+Documentation for the Graph Data Science Library is available here: https://neo4j.com/docs/graph-data-science/1.0-preview/
+
 As we are in the process of migrating to the GDS library, **please enter all github issues on the https://github.com/neo4j/graph-data-science/issues[new repo]**
 
 == Download New Releases
