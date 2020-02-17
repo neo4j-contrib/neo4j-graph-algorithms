@@ -11,6 +11,14 @@ ifndef::env-docs[]
 You can find documentation at *https://neo4j.com/docs/graph-algorithms/current/[neo4j.com/docs/graph-algorithms^]*
 endif::env-docs[]
 
+== Preview: Graph Data Science Library
+
+We're excited to have released a *preview* of the Graph Data Science (GDS) library, now available on our  https://neo4j.com/download-center/[download center] or via our github repo at https://github.com/neo4j/graph-data-science/. 
+
+This is an update to the graph algorithms library, featuing all of your favorite graph algorithms - and some new ones - plus a new, unified and simplified surface, improvements to the graph loaders, better error messaging, and additional features and workflows to support production scale deployments.
+
+As we are in the process of migrating to the GDS library, **please enter all github issues on the https://github.com/neo4j/graph-data-science/issues[new repo]**
+
 == Download New Releases
 
 **Please go to the neo4j download center to download the newest release of the graph algos library:** https://neo4j.com/download-center/
