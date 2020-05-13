@@ -45,10 +45,14 @@ public class Similarities {
         if (vector1 == null || vector2 == null) return 0;
 
         HashSet<Number> intersectionSet = new HashSet<>(vector1);
+
+        // add size of vector1 and vector2 (ignoring duplicates) before calling retainAll(vector2)
+        long denom_sum = intersectionSet.size() + new HashSet<>(vector2).size();
+
         intersectionSet.retainAll(vector2);
         int intersection = intersectionSet.size();
 
-        long denominator = vector1.size() + vector2.size() - intersection;
+        long denominator = denom_sum - intersection;
         return denominator == 0 ? 0 : (double) intersection / denominator;
     }
 
@@ -172,10 +176,14 @@ public class Similarities {
         if (vector1 == null || vector2 == null) return 0;
 
         HashSet<Number> intersectionSet = new HashSet<>(vector1);
+
+        long size1 = intersectionSet.size();
+        long size2 = new HashSet<>(vector2).size();
+
         intersectionSet.retainAll(vector2);
         int intersection = intersectionSet.size();
 
-        long denominator = Math.min(vector1.size(), vector2.size());
+        long denominator = Math.min(size1, size2);
         return denominator == 0 ? 0 : (double) intersection / denominator;
     }
 
